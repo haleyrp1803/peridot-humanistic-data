@@ -540,7 +540,6 @@ function DisplayControlsPanelContent({
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setShowLabels((v) => !v)} className={buttonClassName({ active: showLabels })}>Node Labels</button>
-          <button onClick={() => setTimelineMode((v) => v === 'all' ? 'range' : 'all')} className={buttonClassName({ active: timelineMode === 'all' })}>Show all dates</button>
         </div>
       </div>
     </CollapsiblePanelSection>
