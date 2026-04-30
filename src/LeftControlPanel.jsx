@@ -467,6 +467,32 @@ function DisplayControlsPanelContent({
   timelineMode,
   setTimelineMode,
 }) {
+  const [pendingMinCount, setPendingMinCount] = useState(String(minCount ?? 1));
+
+  useEffect(() => {
+    setPendingMinCount(String(minCount ?? 1));
+  }, [minCount]);
+
+  const applyPendingMinCount = () => {
+    const parsed = Number.parseInt(String(pendingMinCount).trim(), 10);
+
+    if (!Number.isFinite(parsed)) {
+      setPendingMinCount(String(minCount ?? 1));
+      return;
+    }
+
+    const nextMinCount = Math.max(1, parsed);
+    setMinCount(nextMinCount);
+    setPendingMinCount(String(nextMinCount));
+  };
+
+  const handlePendingMinCountKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyPendingMinCount();
+    }
+  };
+
   return (
     <CollapsiblePanelSection
       title="Display Controls"
@@ -485,8 +511,32 @@ function DisplayControlsPanelContent({
           />
         </div>
         <div>
-          <label className="mb-1 block font-medium">Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}: {currentMinCountLabel}</label>
-          <StepSlider options={minCountOptions} value={minCount} onChange={setMinCount} ariaLabelPrefix="Set minimum weight to" />
+          <label className="mb-1 block font-medium">
+            Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
+          </label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              inputMode="numeric"
+              min="1"
+              step="1"
+              value={pendingMinCount}
+              onChange={(event) => setPendingMinCount(event.target.value)}
+              onKeyDown={handlePendingMinCountKeyDown}
+              className="w-24 rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+              aria-label="Minimum weight"
+            />
+            <button
+              type="button"
+              onClick={applyPendingMinCount}
+              className={buttonClassName()}
+            >
+              Update
+            </button>
+          </div>
+          <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">
+            Current minimum: {minCount}
+          </div>
         </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setShowLabels((v) => !v)} className={buttonClassName({ active: showLabels })}>Node Labels</button>
