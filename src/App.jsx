@@ -37,6 +37,7 @@ import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespond
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
 import { LeftControlPanel } from './LeftControlPanel';
+import { RightInspectorPanel } from './RightInspectorPanel';
 
 
 // ============================================================
@@ -2420,7 +2421,7 @@ function InspectorEdgeView({
   );
 }
 
-function RightInspectorPanel({
+function LegacyRightInspectorPanel_UNUSED({
   sidebar,
   inspectorState,
   letterState,
@@ -3220,6 +3221,19 @@ export default function EuropeNetworkMapApp() {
     toggleLetterSection,
   });
 
+  const inspectorShellComponents = {
+    SidebarToggleComponent: SidebarToggle,
+    InspectorHeaderComponent: InspectorHeader,
+    InspectorBackButtonComponent: InspectorBackButton,
+  };
+
+  const inspectorViewComponents = {
+    InspectorEmptyState,
+    InspectorClusterView,
+    InspectorNodeView,
+    InspectorEdgeView,
+  };
+
   return (
     <div className={museumShellClassName()} style={themeStyleVars}>
       <div className="relative h-full">
@@ -3238,7 +3252,11 @@ export default function EuropeNetworkMapApp() {
           mapStageProps={mapStageProps}
         />
 
-        <RightInspectorPanel {...rightInspectorPanelProps} />
+        <RightInspectorPanel
+          {...rightInspectorPanelProps}
+          shellComponents={inspectorShellComponents}
+          viewComponents={inspectorViewComponents}
+        />
       </div>
     </div>
   );
