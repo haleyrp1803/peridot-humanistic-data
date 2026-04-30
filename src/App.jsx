@@ -41,6 +41,7 @@ import { RightInspectorPanel } from './RightInspectorPanel';
 import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmptyState';
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';
+import { InspectorNodeView as InspectorNodeViewView } from './InspectorNodeView';
 
 
 // ============================================================
@@ -2327,7 +2328,7 @@ function LegacyInspectorClusterView_UNUSED({ selectedProps, clearSelection }) {
   );
 }
 
-function InspectorNodeView({
+function LegacyInspectorNodeView_UNUSED({
   selectedProps,
   clearSelection,
   viewMode,
@@ -3239,7 +3240,18 @@ export default function EuropeNetworkMapApp() {
         InspectorClearSelectionButtonComponent={InspectorClearSelectionButton}
       />
     ),
-    InspectorNodeView,
+    InspectorNodeView: (props) => (
+      <InspectorNodeViewView
+        {...props}
+        InspectorSummaryCardComponent={InspectorSummaryCard}
+        PersonMetadataCardComponent={PersonMetadataCard}
+        MissingPersonMetadataCardComponent={MissingPersonMetadataCard}
+        InspectorConnectedCorrespondentsComponent={InspectorConnectedCorrespondents}
+        InspectorPersonPlacesComponent={InspectorPersonPlaces}
+        LinkedLettersPanelComponent={LinkedLettersPanel}
+        InspectorClearSelectionButtonComponent={InspectorClearSelectionButton}
+      />
+    ),
     InspectorEdgeView: (props) => (
       <InspectorEdgeViewView
         {...props}
