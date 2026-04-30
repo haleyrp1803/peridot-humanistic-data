@@ -811,14 +811,6 @@ function readFileText(file) {
 }
 
 
-
-
-
-
-
-
-
-
 // -----------------------------
 // Theme system
 // -----------------------------
@@ -1137,8 +1129,6 @@ function LinkedLetterCard({
 // Shared expand/collapse wrapper used throughout the side panels.
 // This keeps section behavior consistent and makes future editing easier:
 // title, optional header content, and expandable body all live in one place.
-
-
 
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
@@ -2208,10 +2198,6 @@ function LinkedLettersPanel({
 }
 
 
-
-
-
-
 function MapStage({
   mapViewportRef,
   mapViewportSize,
@@ -2278,11 +2264,6 @@ function MapStage({
 // boundary that only activates once the cog opens the sidebar.
 
 
-
-
-
-
-
 function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
   return (
     <div className="mb-4">
@@ -2307,215 +2288,6 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
   );
 }
 
-function LegacyInspectorEmptyState_UNUSED() {
-  return (
-    <div className="rounded-2xl border border-dashed border-[var(--empty-state-border)]/80 bg-[var(--empty-state-bg)] p-4 text-sm text-[var(--empty-state-text)]">
-      Click a place or a route to inspect it. Hovering an edge also exposes its weight.
-    </div>
-  );
-}
-
-function LegacyInspectorClusterView_UNUSED({ selectedProps, clearSelection }) {
-  return (
-    <div className="space-y-4">
-      <InspectorSummaryCard>
-        <DetailRow label="Cluster" value={selectedProps.label} />
-        <DetailRow label="Places represented" value={selectedProps.placeCount} />
-        <DetailRow label="Members" value={selectedProps.memberLabelPreview.join('; ')} />
-      </InspectorSummaryCard>
-      <InspectorClearSelectionButton onClear={clearSelection} />
-    </div>
-  );
-}
-
-function LegacyInspectorNodeView_UNUSED({
-  selectedProps,
-  clearSelection,
-  viewMode,
-  linkedLettersToShow,
-  selectedLetterMetadata,
-  showAllLinkedLetters,
-  setShowAllLinkedLetters,
-  isLetterSectionExpanded,
-  toggleLetterSection,
-  onOpenPersonDetail,
-  onOpenPlaceDetail,
-}) {
-  return (
-    <div className="space-y-4">
-      <InspectorSummaryCard>
-        <DetailRow label={viewMode === 'geographic' ? 'Place' : 'Person'} value={selectedProps.label} />
-        <DetailRow label="Latitude" value={selectedProps.lat} />
-        <DetailRow label="Longitude" value={selectedProps.lon} />
-        <DetailRow label="Weighted degree" value={selectedProps.degree} />
-        <DetailRow label="Incident edges" value={selectedProps.incidentEdgeCount} />
-        <DetailRow label="Linked letters" value={selectedProps.linkedLetterCount} />
-        <DetailRow label="Correspondents" value={(selectedProps.counterpartLabels || []).join('; ')} />
-        <DetailRow label="Date span" value={[selectedProps.earliestDate, selectedProps.latestDate].filter(Boolean).join(' → ')} />
-        {selectedProps.anchorLabel ? <DetailRow label="Anchor location" value={selectedProps.anchorLabel} /> : null}
-        {viewMode === 'person' && selectedProps.personMetadata ? (
-          <PersonMetadataCard selectedProps={selectedProps} />
-        ) : viewMode === 'person' ? (
-          <MissingPersonMetadataCard />
-        ) : null}
-      </InspectorSummaryCard>
-
-      {viewMode === 'person' ? (
-        <InspectorConnectedCorrespondents
-          names={selectedProps.counterpartLabels || []}
-          onOpenPerson={onOpenPersonDetail}
-        />
-      ) : null}
-
-      {viewMode === 'person' && (selectedProps.__kind === 'person-detail' || selectedProps.__kind === 'node') ? (
-        <InspectorPersonPlaces
-          sentPlaces={selectedProps.sentPlaceLabels || []}
-          receivedPlaces={selectedProps.receivedPlaceLabels || []}
-          onOpenPlace={onOpenPlaceDetail}
-        />
-      ) : null}
-
-      <InspectorClearSelectionButton onClear={clearSelection} />
-
-      <LinkedLettersPanel
-        linkedLettersToShow={linkedLettersToShow}
-        selectedLetterMetadata={selectedLetterMetadata}
-        showAllLinkedLetters={showAllLinkedLetters}
-        setShowAllLinkedLetters={setShowAllLinkedLetters}
-        isLetterSectionExpanded={isLetterSectionExpanded}
-        toggleLetterSection={toggleLetterSection}
-      />
-    </div>
-  );
-}
-
-function LegacyInspectorEdgeView_UNUSED({
-  selectedProps,
-  clearSelection,
-  linkedLettersToShow,
-  selectedLetterMetadata,
-  showAllLinkedLetters,
-  setShowAllLinkedLetters,
-  isLetterSectionExpanded,
-  toggleLetterSection,
-}) {
-  return (
-    <div className="space-y-4">
-      <InspectorSummaryCard>
-        <DetailRow label="Route" value={`${selectedProps.sourceLabel} → ${selectedProps.targetLabel}`} />
-        <DetailRow label="Weight" value={selectedProps.count} />
-        <DetailRow label="Dates represented" value={(selectedProps.dates || []).join('; ')} />
-        <DetailRow label="Senders" value={(selectedProps.sources || []).join('; ')} />
-        <DetailRow label="Recipients" value={(selectedProps.targets || []).join('; ')} />
-        <DetailRow label="Sample pairs" value={(selectedProps.samplePairs || []).join('; ')} />
-        <DetailRow label="Linked letters" value={(selectedProps.letterMetadata || []).length} />
-      </InspectorSummaryCard>
-
-      <InspectorClearSelectionButton onClear={clearSelection} />
-
-      <LinkedLettersPanel
-        linkedLettersToShow={linkedLettersToShow}
-        selectedLetterMetadata={selectedLetterMetadata}
-        showAllLinkedLetters={showAllLinkedLetters}
-        setShowAllLinkedLetters={setShowAllLinkedLetters}
-        isLetterSectionExpanded={isLetterSectionExpanded}
-        toggleLetterSection={toggleLetterSection}
-      />
-    </div>
-  );
-}
-
-function LegacyRightInspectorPanel_UNUSED({
-  sidebar,
-  inspectorState,
-  letterState,
-}) {
-  const {
-    showRightSidebar,
-    setShowRightSidebar,
-    showInspectorInfo,
-    setShowInspectorInfo,
-  } = sidebar;
-
-  const {
-    selectedProps,
-    selectedKind,
-    clearSelection,
-    viewMode,
-    onOpenPersonDetail,
-    onOpenPlaceDetail,
-    inspectorHistoryLength,
-    canGoBack,
-    onBackInspector,
-  } = inspectorState;
-
-  const {
-    linkedLettersToShow,
-    selectedLetterMetadata,
-    showAllLinkedLetters,
-    setShowAllLinkedLetters,
-    isLetterSectionExpanded,
-    toggleLetterSection,
-  } = letterState;
-
-  const clusterViewProps = {
-    selectedProps,
-    clearSelection,
-  };
-
-  const nodeViewProps = {
-    selectedProps,
-    clearSelection,
-    viewMode,
-    linkedLettersToShow,
-    selectedLetterMetadata,
-    showAllLinkedLetters,
-    setShowAllLinkedLetters,
-    isLetterSectionExpanded,
-    toggleLetterSection,
-    onOpenPersonDetail,
-    onOpenPlaceDetail,
-  };
-
-  const edgeViewProps = {
-    selectedProps,
-    clearSelection,
-    linkedLettersToShow,
-    selectedLetterMetadata,
-    showAllLinkedLetters,
-    setShowAllLinkedLetters,
-    isLetterSectionExpanded,
-    toggleLetterSection,
-  };
-  return (
-    <aside className={`${sidebarSurfaceClassName()} border-l xl:absolute xl:right-0 xl:top-0 xl:h-full xl:z-30 ${showRightSidebar ? 'w-[420px]' : 'w-16'}`}>
-      <SidebarToggle side="right" open={showRightSidebar} onToggle={() => setShowRightSidebar((v) => !v)} />
-      {showRightSidebar ? (
-        <div className="relative h-full overflow-auto p-5 pl-20 pb-24">
-          <InspectorHeader
-            showInspectorInfo={showInspectorInfo}
-            setShowInspectorInfo={setShowInspectorInfo}
-          />
-
-          <InspectorBackButton
-            canGoBack={canGoBack}
-            onBack={onBackInspector}
-          />
-
-          {!selectedProps ? (
-            <InspectorEmptyState />
-          ) : selectedKind === 'cluster' ? (
-            <InspectorClusterView {...clusterViewProps} />
-          ) : selectedKind === 'node' || selectedKind === 'person-detail' || selectedKind === 'place-detail' ? (
-            <InspectorNodeView {...nodeViewProps} />
-          ) : selectedKind === 'edge' ? (
-            <InspectorEdgeView {...edgeViewProps} />
-          ) : null}
-        </div>
-      ) : null}
-    </aside>
-  );
-}
 
 function AppMainWorkspace({
   pageTitle,
@@ -2909,7 +2681,6 @@ export default function EuropeNetworkMapApp() {
     setter(text);
     setLabel(file.name || 'Uploaded file');
   };
-
 
 
   const clearSelection = () => {

@@ -1,5 +1,22 @@
 import React from 'react';
 
+function detailLabelClassName() {
+  return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--detail-label-text)]';
+}
+
+function serifHeadingClassName() {
+  return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] tracking-[-0.02em] text-[var(--heading-text)]';
+}
+
+function DetailRow({ label, value }) {
+  return (
+    <div className="border-b border-[var(--section-border)]/80 py-2 last:border-b-0">
+      <div className={detailLabelClassName()}>{label}</div>
+      <div className="mt-1 break-words text-sm text-[var(--text-main)]">{value || '—'}</div>
+    </div>
+  );
+}
+
 export function InspectorEdgeView({
   InspectorSummaryCardComponent,
   LinkedLettersPanelComponent,
