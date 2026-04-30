@@ -2345,8 +2345,8 @@ export default function EuropeNetworkMapApp() {
   const [playbackSpeed, setPlaybackSpeed] = useState(700);
   const [showAllLinkedLetters, setShowAllLinkedLetters] = useState(false);
   const [expandedLetterSections, setExpandedLetterSections] = useState({});
-  const [viewMode, setViewMode] = useState('geographic');
-  const [personLayoutMode, setPersonLayoutMode] = useState('force');
+  const [viewMode, setViewMode] = useState('person');
+  const [personLayoutMode, setPersonLayoutMode] = useState('geographic');
 
   
   // CONTROL PANEL OPEN/CLOSED STATE FOR INDIVIDUAL SECTIONS

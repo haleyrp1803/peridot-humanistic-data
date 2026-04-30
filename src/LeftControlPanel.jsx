@@ -385,32 +385,67 @@ function ExportPanelContent({
 }
 
 function VisualizationTypePanelContent({
-  showVisualizationTypePanel,
-  setShowVisualizationTypePanel,
   viewMode,
   setViewMode,
   personLayoutMode,
   setPersonLayoutMode,
 }) {
+  const currentVisualizationKey =
+    viewMode === 'geographic'
+      ? 'place'
+      : personLayoutMode === 'force'
+        ? 'force-directed'
+        : 'people';
+
+  const setVisualizationMode = (nextMode) => {
+    if (nextMode === 'place') {
+      setViewMode('geographic');
+      return;
+    }
+
+    setViewMode('person');
+    setPersonLayoutMode(nextMode === 'force-directed' ? 'force' : 'geographic');
+  };
+
+  const options = [
+    {
+      key: 'people',
+      label: 'People',
+      description: 'People anchored to places',
+    },
+    {
+      key: 'place',
+      label: 'Place',
+      description: 'Geographic routes and places',
+    },
+    {
+      key: 'force-directed',
+      label: 'Force-Directed',
+      description: 'People network in force layout',
+    },
+  ];
+
   return (
-    <CollapsiblePanelSection
-      title="Visualization Type"
-      open={showVisualizationTypePanel}
-      onToggle={() => setShowVisualizationTypePanel((v) => !v)}
-    >
-      <div className="space-y-4 text-sm text-[var(--panel-card-muted-text)]">
-        <div className="flex flex-wrap gap-2">
-          <button onClick={() => setViewMode('geographic')} className={buttonClassName({ active: viewMode === 'geographic' })}>Geographic routes</button>
-          <button onClick={() => setViewMode('person')} className={buttonClassName({ active: viewMode === 'person' })}>Person network</button>
-        </div>
-        {viewMode === 'person' ? (
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => setPersonLayoutMode('force')} className={buttonClassName({ active: personLayoutMode === 'force' })}>Force-directed</button>
-            <button onClick={() => setPersonLayoutMode('geographic')} className={buttonClassName({ active: personLayoutMode === 'geographic' })}>Geographic anchor</button>
-          </div>
-        ) : null}
+    <div className="space-y-3">
+      <div className="grid gap-2">
+        {options.map((option) => (
+          <button
+            key={option.key}
+            type="button"
+            onClick={() => setVisualizationMode(option.key)}
+            className={[
+              buttonClassName({ active: currentVisualizationKey === option.key }),
+              'w-full text-left',
+            ].join(' ')}
+          >
+            <div className="font-semibold">{option.label}</div>
+            <div className="mt-0.5 text-xs text-[var(--panel-card-muted-text)]">
+              {option.description}
+            </div>
+          </button>
+        ))}
       </div>
-    </CollapsiblePanelSection>
+    </div>
   );
 }
 
