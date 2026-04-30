@@ -1358,11 +1358,13 @@ function buildRightInspectorPanelProps(args) {
     },
     inspectorState: {
       selectedProps: args.selectedProps,
+      selectedKind: args.selectedProps?.__kind || null,
       clearSelection: args.clearSelection,
       viewMode: args.viewMode,
       onOpenPersonDetail: args.onOpenPersonDetail,
       onOpenPlaceDetail: args.onOpenPlaceDetail,
       inspectorHistoryLength: args.inspectorHistoryLength,
+      canGoBack: args.inspectorHistoryLength > 0,
       onBackInspector: args.onBackInspector,
     },
     letterState: {
@@ -2432,11 +2434,13 @@ function RightInspectorPanel({
 
   const {
     selectedProps,
+    selectedKind,
     clearSelection,
     viewMode,
     onOpenPersonDetail,
     onOpenPlaceDetail,
     inspectorHistoryLength,
+    canGoBack,
     onBackInspector,
   } = inspectorState;
 
@@ -2448,6 +2452,36 @@ function RightInspectorPanel({
     isLetterSectionExpanded,
     toggleLetterSection,
   } = letterState;
+
+  const clusterViewProps = {
+    selectedProps,
+    clearSelection,
+  };
+
+  const nodeViewProps = {
+    selectedProps,
+    clearSelection,
+    viewMode,
+    linkedLettersToShow,
+    selectedLetterMetadata,
+    showAllLinkedLetters,
+    setShowAllLinkedLetters,
+    isLetterSectionExpanded,
+    toggleLetterSection,
+    onOpenPersonDetail,
+    onOpenPlaceDetail,
+  };
+
+  const edgeViewProps = {
+    selectedProps,
+    clearSelection,
+    linkedLettersToShow,
+    selectedLetterMetadata,
+    showAllLinkedLetters,
+    setShowAllLinkedLetters,
+    isLetterSectionExpanded,
+    toggleLetterSection,
+  };
   return (
     <aside className={`${sidebarSurfaceClassName()} border-l xl:absolute xl:right-0 xl:top-0 xl:h-full xl:z-30 ${showRightSidebar ? 'w-[420px]' : 'w-16'}`}>
       <SidebarToggle side="right" open={showRightSidebar} onToggle={() => setShowRightSidebar((v) => !v)} />
@@ -2459,39 +2493,18 @@ function RightInspectorPanel({
           />
 
           <InspectorBackButton
-            canGoBack={inspectorHistoryLength > 0}
+            canGoBack={canGoBack}
             onBack={onBackInspector}
           />
 
           {!selectedProps ? (
             <InspectorEmptyState />
-          ) : selectedProps.__kind === 'cluster' ? (
-            <InspectorClusterView selectedProps={selectedProps} clearSelection={clearSelection} />
-          ) : selectedProps.__kind === 'node' || selectedProps.__kind === 'person-detail' || selectedProps.__kind === 'place-detail' ? (
-            <InspectorNodeView
-              selectedProps={selectedProps}
-              clearSelection={clearSelection}
-              viewMode={viewMode}
-              linkedLettersToShow={linkedLettersToShow}
-              selectedLetterMetadata={selectedLetterMetadata}
-              showAllLinkedLetters={showAllLinkedLetters}
-              setShowAllLinkedLetters={setShowAllLinkedLetters}
-              isLetterSectionExpanded={isLetterSectionExpanded}
-              toggleLetterSection={toggleLetterSection}
-              onOpenPersonDetail={onOpenPersonDetail}
-              onOpenPlaceDetail={onOpenPlaceDetail}
-            />
-          ) : selectedProps.__kind === 'edge' ? (
-            <InspectorEdgeView
-              selectedProps={selectedProps}
-              clearSelection={clearSelection}
-              linkedLettersToShow={linkedLettersToShow}
-              selectedLetterMetadata={selectedLetterMetadata}
-              showAllLinkedLetters={showAllLinkedLetters}
-              setShowAllLinkedLetters={setShowAllLinkedLetters}
-              isLetterSectionExpanded={isLetterSectionExpanded}
-              toggleLetterSection={toggleLetterSection}
-            />
+          ) : selectedKind === 'cluster' ? (
+            <InspectorClusterView {...clusterViewProps} />
+          ) : selectedKind === 'node' || selectedKind === 'person-detail' || selectedKind === 'place-detail' ? (
+            <InspectorNodeView {...nodeViewProps} />
+          ) : selectedKind === 'edge' ? (
+            <InspectorEdgeView {...edgeViewProps} />
           ) : null}
         </div>
       ) : null}
