@@ -1030,13 +1030,6 @@ function sidebarSurfaceClassName() {
   return 'relative overflow-visible border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] backdrop-blur-sm transition-all duration-300';
 }
 
-function groupCardClassName() {
-  return 'mt-5 rounded-[28px] border border-[var(--group-border)] bg-[linear-gradient(180deg,var(--group-bg-top),var(--group-bg-bottom))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.42)]';
-}
-
-function sectionCardClassName() {
-  return 'overflow-hidden rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] shadow-[0_10px_28px_rgba(0,0,0,0.34)]';
-}
 
 function floatingCardClassName() {
   return 'rounded-2xl border border-[var(--floating-border)] bg-[var(--floating-bg)] text-[var(--text-main)] shadow-[0_18px_40px_rgba(0,0,0,0.5)] backdrop-blur';
@@ -1046,42 +1039,15 @@ function panelHeadingClassName() {
   return 'text-[32px] font-bold leading-tight tracking-[-0.02em] text-[var(--heading-text)]';
 }
 
-function groupHeadingClassName() {
-  return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] mb-3 px-2 text-[14px] font-bold uppercase tracking-[0.14em] text-[var(--group-heading-text)]';
-}
-
-function sectionTitleClassName() {
-  return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[17px] font-bold leading-tight tracking-[0.005em] text-[var(--heading-text)]';
-}
-
-function detailLabelClassName() {
-  return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--detail-label-text)]';
-}
 
 function serifHeadingClassName() {
   return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] tracking-[-0.02em] text-[var(--heading-text)]';
 }
 
-function DetailRow({ label, value }) {
-  return (
-    <div className="border-b border-[var(--section-border)]/80 py-2 last:border-b-0">
-      <div className={detailLabelClassName()}>{label}</div>
-      <div className="mt-1 break-words text-sm text-[var(--text-main)]">{value || '—'}</div>
-    </div>
-  );
-}
 
 // Reusable summary/diagnostic stat tile.
 // Use this whenever a section needs the same small card pattern:
 // muted label on top, large value below.
-function StatCard({ label, value }) {
-  return (
-    <div className="rounded-xl bg-[var(--stat-card-bg)] p-3">
-      <div className="text-[var(--panel-card-muted-text)]">{label}</div>
-      <div className="text-2xl font-semibold">{value}</div>
-    </div>
-  );
-}
 
 // Reusable linked-letter card used in both node and edge inspector views.
 // This keeps the letter summary, expandable long-text sections, and metadata
