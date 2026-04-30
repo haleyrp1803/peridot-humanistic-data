@@ -2635,19 +2635,27 @@ function DisplayControlsPanelContent({
 // This group is mostly presentation plus upload wiring. It is one of the safer
 // panel sections because the heavy parsing logic lives elsewhere.
 function DataInputsGroup({
-  showDataInputsPanel,
-  setShowDataInputsPanel,
-  setGeographyCsv,
-  setLettersCsv,
-  setPersonMetadataCsv,
-  geographyFileLabel,
-  lettersFileLabel,
-  personMetadataFileLabel,
-  setGeographyFileLabel,
-  setLettersFileLabel,
-  setPersonMetadataFileLabel,
-  uploadSetter,
+  sectionState,
+  dataInputState,
 }) {
+  const {
+    showDataInputsPanel,
+    setShowDataInputsPanel,
+  } = sectionState;
+
+  const {
+    setGeographyCsv,
+    setLettersCsv,
+    setPersonMetadataCsv,
+    geographyFileLabel,
+    lettersFileLabel,
+    personMetadataFileLabel,
+    setGeographyFileLabel,
+    setLettersFileLabel,
+    setPersonMetadataFileLabel,
+    uploadSetter,
+  } = dataInputState;
+
   return (
     <div className={groupCardClassName()}>
       <div className={groupHeadingClassName()}>DATA</div>
@@ -2694,58 +2702,82 @@ function DataInputsGroup({
 // - This group is a better candidate for careful dependency mapping than for
 //   casual component extraction.
 function DisplayFilteringGroup({
-  showSummaryPanel,
-  setShowSummaryPanel,
-  rowDiagnostics,
-  showVisualizationTypePanel,
-  setShowVisualizationTypePanel,
-  showDisplayControlsPanel,
-  setShowDisplayControlsPanel,
-  showLabels,
-  setShowLabels,
-  viewMode,
-  setViewMode,
-  personLayoutMode,
-  setPersonLayoutMode,
-  search,
-  setSearch,
-  currentMinCountLabel,
-  minCountOptions,
-  minCount,
-  setMinCount,
-  timelineMode,
-  setTimelineMode,
-  showTimelinePanel,
-  setShowTimelinePanel,
-  currentRangeLabel,
-  timelineMonths,
-  rangeStart,
-  setRangeStart,
-  rangeEnd,
-  setRangeEnd,
-  currentPlaybackLabel,
-  currentPlaybackSpeedLabel,
-  playbackSpeedOptions,
-  playbackSpeed,
-  setPlaybackSpeed,
-  isPlaying,
-  setIsPlaying,
-  playbackIndex,
-  setPlaybackIndex,
-  selectedRowsForPlayback,
-  showThemePanel,
-  setShowThemePanel,
-  applyThemePreset,
-  resetTheme,
-  showExportPanel,
-  setShowExportPanel,
-  handleExportSvg,
-  handleExportPng,
-  handleExportEdgesCsv,
-  handleExportNodesCsv,
-  graph,
-  exportStatus,
+  summaryState,
+  visualizationTypeState,
+  displayControlsState,
+  timelinePanelState,
+  themePanelState,
+  exportPanelState,
 }) {
+  const {
+    showSummaryPanel,
+    setShowSummaryPanel,
+    rowDiagnostics,
+  } = summaryState;
+
+  const {
+    showVisualizationTypePanel,
+    setShowVisualizationTypePanel,
+    viewMode,
+    setViewMode,
+    personLayoutMode,
+    setPersonLayoutMode,
+  } = visualizationTypeState;
+
+  const {
+    showDisplayControlsPanel,
+    setShowDisplayControlsPanel,
+    showLabels,
+    setShowLabels,
+    search,
+    setSearch,
+    currentMinCountLabel,
+    minCountOptions,
+    minCount,
+    setMinCount,
+    timelineMode,
+    setTimelineMode,
+  } = displayControlsState;
+
+  const {
+    showTimelinePanel,
+    setShowTimelinePanel,
+    currentRangeLabel,
+    timelineMonths,
+    rangeStart,
+    setRangeStart,
+    rangeEnd,
+    setRangeEnd,
+    currentPlaybackLabel,
+    currentPlaybackSpeedLabel,
+    playbackSpeedOptions,
+    playbackSpeed,
+    setPlaybackSpeed,
+    isPlaying,
+    setIsPlaying,
+    playbackIndex,
+    setPlaybackIndex,
+    selectedRowsForPlayback,
+  } = timelinePanelState;
+
+  const {
+    showThemePanel,
+    setShowThemePanel,
+    applyThemePreset,
+    resetTheme,
+  } = themePanelState;
+
+  const {
+    showExportPanel,
+    setShowExportPanel,
+    handleExportSvg,
+    handleExportPng,
+    handleExportEdgesCsv,
+    handleExportNodesCsv,
+    graph,
+    exportStatus,
+  } = exportPanelState;
+
   return (
     <div className={groupCardClassName()}>
       <div className={groupHeadingClassName()}>OPTIONS</div>
@@ -2940,6 +2972,101 @@ function LeftControlPanel({
     exportStatus,
   } = exportState;
 
+  const dataInputsSectionState = {
+    showDataInputsPanel,
+    setShowDataInputsPanel,
+  };
+
+  const dataInputsGroupProps = {
+    sectionState: dataInputsSectionState,
+    dataInputState: {
+      setGeographyCsv,
+      setLettersCsv,
+      setPersonMetadataCsv,
+      geographyFileLabel,
+      lettersFileLabel,
+      personMetadataFileLabel,
+      setGeographyFileLabel,
+      setLettersFileLabel,
+      setPersonMetadataFileLabel,
+      uploadSetter,
+    },
+  };
+
+  const displayFilteringGroupProps = {
+    summaryState: {
+      showSummaryPanel,
+      setShowSummaryPanel,
+      rowDiagnostics,
+    },
+    visualizationTypeState: {
+      showVisualizationTypePanel,
+      setShowVisualizationTypePanel,
+      viewMode,
+      setViewMode,
+      personLayoutMode,
+      setPersonLayoutMode,
+    },
+    displayControlsState: {
+      showDisplayControlsPanel,
+      setShowDisplayControlsPanel,
+      showLabels,
+      setShowLabels,
+      viewMode,
+      setViewMode,
+      personLayoutMode,
+      setPersonLayoutMode,
+      search,
+      setSearch,
+      currentMinCountLabel,
+      minCountOptions,
+      minCount,
+      setMinCount,
+      timelineMode,
+      setTimelineMode,
+    },
+    timelinePanelState: {
+      showTimelinePanel,
+      setShowTimelinePanel,
+      currentRangeLabel,
+      timelineMonths,
+      rangeStart,
+      setRangeStart,
+      rangeEnd,
+      setRangeEnd,
+      currentPlaybackLabel,
+      currentPlaybackSpeedLabel,
+      playbackSpeedOptions,
+      playbackSpeed,
+      setPlaybackSpeed,
+      isPlaying,
+      setIsPlaying,
+      playbackIndex,
+      setPlaybackIndex,
+      selectedRowsForPlayback,
+    },
+    themePanelState: {
+      showThemePanel,
+      setShowThemePanel,
+      applyThemePreset,
+      resetTheme,
+    },
+    exportPanelState: {
+      showExportPanel,
+      setShowExportPanel,
+      handleExportSvg,
+      handleExportPng,
+      handleExportEdgesCsv,
+      handleExportNodesCsv,
+      viewMode,
+      search,
+      currentMinCountLabel,
+      currentRangeLabel,
+      graph,
+      exportStatus,
+    },
+  };
+
   return (
     <aside className={`${sidebarSurfaceClassName()} border-r xl:absolute xl:left-0 xl:top-0 xl:h-full xl:z-30 ${showLeftSidebar ? 'w-[420px]' : 'w-16'}`}>
       {/*
@@ -2955,74 +3082,9 @@ function LeftControlPanel({
         <div className="h-full overflow-auto p-5 pr-20">
           <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>Control Panel</h1>
 
-          <DataInputsGroup
-            showDataInputsPanel={showDataInputsPanel}
-            setShowDataInputsPanel={setShowDataInputsPanel}
-            setGeographyCsv={setGeographyCsv}
-            setLettersCsv={setLettersCsv}
-            setPersonMetadataCsv={setPersonMetadataCsv}
-            geographyFileLabel={geographyFileLabel}
-            lettersFileLabel={lettersFileLabel}
-            personMetadataFileLabel={personMetadataFileLabel}
-            setGeographyFileLabel={setGeographyFileLabel}
-            setLettersFileLabel={setLettersFileLabel}
-            setPersonMetadataFileLabel={setPersonMetadataFileLabel}
-            uploadSetter={uploadSetter}
-          />
+          <DataInputsGroup {...dataInputsGroupProps} />
 
-          <DisplayFilteringGroup
-            showSummaryPanel={showSummaryPanel}
-            showVisualizationTypePanel={showVisualizationTypePanel}
-            setShowVisualizationTypePanel={setShowVisualizationTypePanel}
-            setShowSummaryPanel={setShowSummaryPanel}
-            rowDiagnostics={rowDiagnostics}
-            showDisplayControlsPanel={showDisplayControlsPanel}
-            setShowDisplayControlsPanel={setShowDisplayControlsPanel}
-            showLabels={showLabels}
-            setShowLabels={setShowLabels}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            personLayoutMode={personLayoutMode}
-            setPersonLayoutMode={setPersonLayoutMode}
-            search={search}
-            setSearch={setSearch}
-            currentMinCountLabel={currentMinCountLabel}
-            minCountOptions={minCountOptions}
-            minCount={minCount}
-            setMinCount={setMinCount}
-            timelineMode={timelineMode}
-            setTimelineMode={setTimelineMode}
-            showTimelinePanel={showTimelinePanel}
-            setShowTimelinePanel={setShowTimelinePanel}
-            currentRangeLabel={currentRangeLabel}
-            timelineMonths={timelineMonths}
-            rangeStart={rangeStart}
-            setRangeStart={setRangeStart}
-            rangeEnd={rangeEnd}
-            setRangeEnd={setRangeEnd}
-            currentPlaybackLabel={currentPlaybackLabel}
-            currentPlaybackSpeedLabel={currentPlaybackSpeedLabel}
-            playbackSpeedOptions={playbackSpeedOptions}
-            playbackSpeed={playbackSpeed}
-            setPlaybackSpeed={setPlaybackSpeed}
-            isPlaying={isPlaying}
-            setIsPlaying={setIsPlaying}
-            playbackIndex={playbackIndex}
-            setPlaybackIndex={setPlaybackIndex}
-            selectedRowsForPlayback={selectedRowsForPlayback}
-            showThemePanel={showThemePanel}
-            setShowThemePanel={setShowThemePanel}
-            applyThemePreset={applyThemePreset}
-            resetTheme={resetTheme}
-            showExportPanel={showExportPanel}
-            setShowExportPanel={setShowExportPanel}
-            handleExportSvg={handleExportSvg}
-            handleExportPng={handleExportPng}
-            handleExportEdgesCsv={handleExportEdgesCsv}
-            handleExportNodesCsv={handleExportNodesCsv}
-            graph={graph}
-            exportStatus={exportStatus}
-          />
+          <DisplayFilteringGroup {...displayFilteringGroupProps} />
         </div>
       ) : null}
     </aside>
