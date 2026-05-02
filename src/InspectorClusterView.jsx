@@ -13,11 +13,58 @@ function DetailRow({ label, value }) {
   );
 }
 
-function ClusterMemberList({ members, viewMode, onOpenPersonDetail, onOpenPlaceDetail }) {
+function formatVolume(value) {
+  const safeValue = Number(value) || 0;
+  return `${safeValue} visible connection${safeValue === 1 ? '' : 's'}`;
+}
+
+function getMemberPlaceLabel(member, isGeographic) {
+  if (isGeographic) {
+    return member?.anchorLabel || member?.placeLabel || member?.locationLabel || member?.label || 'Unspecified place';
+  }
+
+  return member?.anchorLabel || member?.placeLabel || member?.locationLabel || 'Unspecified place';
+}
+
+function buildMemberGroups(members, isGeographic) {
+  const groupsByPlace = new Map();
+
+  members.forEach((member) => {
+    const placeLabel = getMemberPlaceLabel(member, isGeographic);
+    const existing = groupsByPlace.get(placeLabel) || {
+      label: placeLabel,
+      totalDegree: 0,
+      members: [],
+    };
+
+    existing.totalDegree += Number(member.degree) || 0;
+    existing.members.push(member);
+    groupsByPlace.set(placeLabel, existing);
+  });
+
+  return Array.from(groupsByPlace.values())
+    .map((group) => ({
+      ...group,
+      members: group.members.slice().sort((a, b) => {
+        const degreeDelta = (Number(b.degree) || 0) - (Number(a.degree) || 0);
+        if (degreeDelta) return degreeDelta;
+        return a.label.localeCompare(b.label);
+      }),
+    }))
+    .sort((a, b) => {
+      const degreeDelta = (Number(b.totalDegree) || 0) - (Number(a.totalDegree) || 0);
+      if (degreeDelta) return degreeDelta;
+      return a.label.localeCompare(b.label);
+    });
+}
+
+function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlaceDetail }) {
   const isGeographic = viewMode === 'geographic';
   const memberKindLabel = isGeographic ? 'places' : 'people';
+  const memberKindSingular = isGeographic ? 'place' : 'person';
   const actionLabel = isGeographic ? 'Open place detail' : 'Open person detail';
   const openDetail = isGeographic ? onOpenPlaceDetail : onOpenPersonDetail;
+  const groups = buildMemberGroups(members, isGeographic);
 
   if (!members.length) {
     return (
@@ -29,22 +76,36 @@ function ClusterMemberList({ members, viewMode, onOpenPersonDetail, onOpenPlaceD
 
   return (
     <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--card-bg)] p-4">
-      <div className={detailLabelClassName()}>Contained {memberKindLabel}</div>
-      <div className="mt-3 space-y-2">
-        {members.map((member) => (
-          <button
-            key={member.id || member.label}
-            type="button"
-            onClick={() => openDetail?.(member.label)}
-            className="w-full rounded-xl border border-[var(--button-border)] bg-[var(--button-bg)] px-3 py-2 text-left text-sm text-[var(--button-text)] transition-colors hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)]"
-            title={`${actionLabel}: ${member.label}`}
-          >
-            <span className="block font-medium">{member.label}</span>
-            <span className="mt-1 block text-xs text-[var(--text-muted)]">
-              {member.degree ? `${member.degree} visible connection${member.degree === 1 ? '' : 's'} · ` : ''}
-              {actionLabel}
-            </span>
-          </button>
+      <div className={detailLabelClassName()}>Contained {memberKindLabel} by place</div>
+      <div className="mt-3 space-y-4">
+        {groups.map((group) => (
+          <section key={group.label} className="rounded-xl border border-[var(--section-border)]/80 bg-[var(--panel-bg)]/45 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-[var(--text-strong)]">{group.label}</div>
+                <div className="mt-1 text-xs text-[var(--text-muted)]">
+                  {group.members.length} {group.members.length === 1 ? memberKindSingular : memberKindLabel} · {formatVolume(group.totalDegree)}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 space-y-2">
+              {group.members.map((member) => (
+                <button
+                  key={member.id || `${group.label}:${member.label}`}
+                  type="button"
+                  onClick={() => openDetail?.(member.label)}
+                  className="w-full rounded-xl border border-[var(--button-border)] bg-[var(--button-bg)] px-3 py-2 text-left text-sm text-[var(--button-text)] transition-colors hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)]"
+                  title={`${actionLabel}: ${member.label}`}
+                >
+                  <span className="block font-medium">{member.label}</span>
+                  <span className="mt-1 block text-xs text-[var(--text-muted)]">
+                    {formatVolume(member.degree)} · {actionLabel}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
         ))}
       </div>
     </div>
@@ -79,6 +140,7 @@ export function InspectorClusterView({
         id: `cluster-member:${label}:${index}`,
         label,
         degree: 0,
+        anchorLabel: '',
       }));
 
   const representedLabel = viewMode === 'geographic' ? 'Places represented' : 'People represented';
@@ -92,7 +154,7 @@ export function InspectorClusterView({
         <DetailRow label="Members" value={memberLabels.join('; ')} />
       </InspectorSummaryCardComponent>
 
-      <ClusterMemberList
+      <ClusterMemberGroups
         members={members}
         viewMode={viewMode}
         onOpenPersonDetail={onOpenPersonDetail}
