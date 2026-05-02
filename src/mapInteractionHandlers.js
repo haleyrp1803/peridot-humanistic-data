@@ -39,10 +39,10 @@ export function buildMapInteractionHandlers({
     setHoverCard(
       buildHoverCardState(node.label, buildNodeHoverSummary(node, viewMode), point)
     );
-
     setSelectedSelection({
       kind: node.isCluster ? 'cluster' : 'node',
       id: node.id,
+      clusterNode: node.isCluster ? node : null,
     });
     setShowAllLinkedLetters(false);
   };

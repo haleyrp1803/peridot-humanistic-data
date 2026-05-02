@@ -45,14 +45,47 @@ export function buildNearbyCandidates(point, screenNodes, screenEdges, clusterSi
     .slice(0, 12);
 }
 
+function normalizeClusterMember(member, fallbackIndex = 0) {
+  if (typeof member === 'string') {
+    return {
+      id: `cluster-member:${member}:${fallbackIndex}`,
+      label: member,
+      degree: 0,
+      anchorLabel: '',
+    };
+  }
+
+  return {
+    id: member?.id || `cluster-member:${member?.label || 'unknown'}:${fallbackIndex}`,
+    label: member?.label || '',
+    degree: member?.degree || 0,
+    anchorLabel: member?.anchorLabel || '',
+  };
+}
+
 export function buildClusterSelection(clusterNode) {
-  const sortedMembers = (clusterNode.memberLabels || []).slice().sort((a, b) => a.localeCompare(b));
+  const rawMembers = Array.isArray(clusterNode.members) && clusterNode.members.length
+    ? clusterNode.members
+    : clusterNode.memberLabels || [];
+
+  const memberDetails = rawMembers
+    .map((member, index) => normalizeClusterMember(member, index))
+    .filter((member) => member.label)
+    .sort((a, b) => {
+      if (b.degree !== a.degree) return b.degree - a.degree;
+      return a.label.localeCompare(b.label);
+    });
+
+  const memberLabels = memberDetails.map((member) => member.label);
+
   return {
     ...clusterNode,
     __kind: 'cluster',
-    placeCount: clusterNode.clusterSize,
-    memberLabels: sortedMembers,
-    memberLabelPreview: sortedMembers.slice(0, 20),
+    memberCount: clusterNode.clusterSize || memberDetails.length,
+    placeCount: clusterNode.clusterSize || memberDetails.length,
+    memberDetails,
+    memberLabels,
+    memberLabelPreview: memberLabels.slice(0, 20),
   };
 }
 
@@ -81,16 +114,13 @@ function buildDateBounds(incidentEdges) {
 
 function buildCounterpartDetailsFromEdges(label, incidentEdges) {
   const counterpartMap = new Map();
-
   incidentEdges.forEach((edge) => {
     const counterpartLabel = edge.sourceLabel === label ? edge.targetLabel : edge.sourceLabel;
     if (!counterpartLabel) return;
-
     const existing = counterpartMap.get(counterpartLabel) || {
       label: counterpartLabel,
       count: 0,
     };
-
     existing.count += edge.count || 0;
     counterpartMap.set(counterpartLabel, existing);
   });
@@ -120,23 +150,15 @@ function buildTopPlacesFromLetters(linkedLetters) {
 
 function buildPlaceDetailsForPerson(linkedLetters, personLabel, mode) {
   const placeMap = new Map();
-
   linkedLetters.forEach((letter) => {
-    const matchesMode =
-      mode === 'sent'
-        ? letter.sourcePerson === personLabel
-        : letter.targetPerson === personLabel;
-
+    const matchesMode = mode === 'sent' ? letter.sourcePerson === personLabel : letter.targetPerson === personLabel;
     if (!matchesMode) return;
-
     const placeLabel = letter.targetLoc;
     if (!placeLabel) return;
-
     const existing = placeMap.get(placeLabel) || {
       label: placeLabel,
       count: 0,
     };
-
     existing.count += 1;
     placeMap.set(placeLabel, existing);
   });
@@ -284,7 +306,9 @@ export function resolveSelection(selectedSelection, graph, personMetadataByName)
   }
 
   if (selectedSelection.kind === 'cluster') {
-    const clusterNode = graph.nodes.find((item) => item.id === selectedSelection.id && item.isCluster);
+    const clusterNode =
+      selectedSelection.clusterNode ||
+      graph.nodes.find((item) => item.id === selectedSelection.id && item.isCluster);
     return clusterNode ? buildClusterSelection(clusterNode) : null;
   }
 
@@ -306,15 +330,11 @@ export function resolveSelection(selectedSelection, graph, personMetadataByName)
 
 export function enrichSelectedLetters(selectedProps, personMetadataByName) {
   if (!selectedProps) return [];
-
-  const baseLetters =
-    selectedProps.__kind === 'edge'
-      ? selectedProps.letterMetadata || []
-      : selectedProps.__kind === 'node' ||
-          selectedProps.__kind === 'person-detail' ||
-          selectedProps.__kind === 'place-detail'
-        ? selectedProps.linkedLetters || []
-        : [];
+  const baseLetters = selectedProps.__kind === 'edge'
+    ? selectedProps.letterMetadata || []
+    : selectedProps.__kind === 'node' || selectedProps.__kind === 'person-detail' || selectedProps.__kind === 'place-detail'
+      ? selectedProps.linkedLetters || []
+      : [];
 
   return baseLetters.map((letter) => ({
     ...letter,

@@ -33,6 +33,9 @@ export function InspectorBodyRouter({
   const clusterViewProps = {
     selectedProps,
     clearSelection,
+    viewMode,
+    onOpenPersonDetail,
+    onOpenPlaceDetail,
   };
 
   const nodeViewProps = {

@@ -126,9 +126,16 @@ export function buildClusteredNodes(nodes, thresholdPx, clusterSingularLabel, cl
   return clusters.map((cluster) => {
     if (cluster.members.length === 1) {
       const node = cluster.members[0];
-      return { ...node, clusterSize: 1, isCluster: false, memberLabels: [node.label] };
+      return {
+        ...node,
+        clusterSize: 1,
+        isCluster: false,
+        memberLabels: [node.label],
+      };
     }
+
     const topMember = cluster.members.slice().sort((a, b) => (b.degree || 0) - (a.degree || 0))[0];
+
     return {
       id: cluster.id,
       label: `${cluster.members.length} ${cluster.members.length === 1 ? clusterSingularLabel : clusterPluralLabel}`,
@@ -138,6 +145,7 @@ export function buildClusteredNodes(nodes, thresholdPx, clusterSingularLabel, cl
       degree: cluster.totalDegree,
       clusterSize: cluster.members.length,
       isCluster: true,
+      members: cluster.members,
       memberLabels: cluster.members.map((member) => member.label),
       topLabel: topMember?.label || '',
       lat: null,
@@ -165,7 +173,10 @@ export function buildVisibleLabelIds(labelCandidates, showLabels, labelDensityTh
       bottom: node.screenY + (node.screenRadius || 0) + labelOffset + textHeight,
     };
 
-    const overlaps = accepted.some((placed) => !(box.right < placed.left || box.left > placed.right || box.bottom < placed.top || box.top > placed.bottom));
+    const overlaps = accepted.some(
+      (placed) => !(box.right < placed.left || box.left > placed.right || box.bottom < placed.top || box.top > placed.bottom)
+    );
+
     if (!overlaps) {
       accepted.push(box);
       acceptedIds.add(node.id);
