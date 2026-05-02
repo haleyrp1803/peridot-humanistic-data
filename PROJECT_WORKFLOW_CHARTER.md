@@ -2,11 +2,7 @@
 
 ## Purpose
 
-This document defines how changes should be made to the correspondence visualizer app.
-
-Its purpose is to reduce risk, prevent version drift, keep source-of-truth discipline, and make changes easier to review and maintain.
-
-This charter should be consulted before every implementation pass.
+This document defines how changes should be made to the correspondence visualizer app. Its purpose is to reduce risk, prevent version drift, keep source-of-truth discipline, and make changes easier to review and maintain. This charter should be consulted before every implementation pass.
 
 ---
 
@@ -63,9 +59,7 @@ Do not casually mix the following in one pass:
 - structural refactors
 - documentation updates
 
-If a pass truly must combine them, that combination should be explicit and justified.
-
-Default behavior is one change type per pass.
+If a pass truly must combine them, that combination should be explicit and justified. Default behavior is one change type per pass.
 
 ---
 
@@ -91,9 +85,7 @@ Known fragile zones include:
 
 ## 6. Refactor threshold rule
 
-If a requested change can be completed safely with local edits, do that.
-
-If the change would require touching more than one fragile subsystem, do not let it silently expand into a rewrite. Convert it into a planned structural pass instead.
+If a requested change can be completed safely with local edits, do that. If the change would require touching more than one fragile subsystem, do not let it silently expand into a rewrite. Convert it into a planned structural pass instead.
 
 ---
 
@@ -141,119 +133,103 @@ If the acceptance test cannot be clearly stated, the pass is probably too vague.
 Use these terms precisely.
 
 ### Checkpoint
-
 A **checkpoint** is a tested intermediate state that may still be revised soon.
 
 ### Commit
-
 A **commit** is a coherent completed pass with one clear behavioral, visual, structural, or documentation outcome.
 
 Do not blur the distinction.
 
 ---
 
-## 11. Standard delivery format rule
+## 11. Behavior-first / cleanup-second rule
 
-Every implementation pass should end with the following information:
+For UI and interaction changes, prefer this sequence:
 
-- what changed
-- exact files changed
-- one acceptance test
-- whether this should be a checkpoint or commit
-- exact Git commands
-- exact copy commands if files are being moved into the source-of-truth folder
-- any known residual risks
+1. make the behavior change
+2. verify it with the explicit acceptance test
+3. only then run a cleanup pass for dead code, copy changes, or adapter simplification
 
-This standard format should be used consistently.
+Do not combine speculative cleanup with an unverified new behavior if it can be avoided.
 
 ---
 
-## 12. Post-change synchronization rule
+## 12. Live-file targeting rule
 
-After every checkpoint or commit, run the project synchronization ritual and inspect the source-of-truth folder state before starting the next pass.
+When creating scripted patches, target the **exact current live file shape**, not an assumed earlier state.
 
-The purpose is to reduce drift between:
+If a UI change does not visibly appear:
 
-- local folder
-- repository state
-- delivered files
-- remembered assumptions
+- verify the live file immediately with direct inspection
+- confirm whether the patch actually landed
+- do not stack additional speculative patches until the current live file state is known
 
----
-
-## 13. Recovery protocol
-
-If the app becomes unstable, the file becomes structurally unclear, or conflicting sources of truth appear, use this recovery protocol:
-
-1. stop further edits
-2. identify the current source of truth
-3. restore the last known good checkpoint or commit
-4. restate the immediate goal in one sentence
-5. make one bounded fix only
-6. rerun the acceptance test
-
-Do not improvise a large rescue rewrite under pressure.
+This is now a standing reliability rule.
 
 ---
 
-## 14. Lightweight change log rule
+## 13. Recovery rule for drifting passes
 
-Maintain a change log outside memory that records:
+If a pass becomes unstable or starts requiring repeated speculative fixes:
 
-- commit hash
-- one-sentence summary
-- files changed
-- whether the Maintainer's Guide needs updating
-- whether a later cleanup pass is warranted
+- stop stacking patches
+- identify the last safe commit
+- restore the working tree to that safe state
+- document the attempted-but-rolled-back work as deferred if needed
+- restart from a fresh bounded pass
 
-This keeps project history practical without overloading memory.
-
----
-
-## 15. Decision-record rule
-
-For non-obvious implementation choices, record:
-
-- what was chosen
-- what alternative was rejected
-- why
-
-This is especially important for stability-driven decisions that future maintainers might otherwise undo unintentionally.
+A safe rollback is preferable to an increasingly unreliable patch chain.
 
 ---
 
-## 16. Modularization roadmap rule
+## 14. Documentation preservation rule
 
-Maintain a roadmap for eventual `src/App.jsx` decomposition, but do not execute it casually.
+When updating documentation:
 
-Preferred extraction order:
+- preserve older useful text unless it is clearly obsolete
+- add new material rather than rewriting aggressively by default
+- distinguish carefully between:
+  - committed safe-baseline work
+  - attempted but uncommitted / rolled-back work
 
-1. pure data helpers
-2. export helpers
-3. theme/constants
-4. small reusable UI pieces
-5. map interaction helpers
-6. left/right panel components
-7. app orchestration last
-
-This roadmap is for planned structural work, not casual opportunistic cleanup.
+Documentation should be cumulative and trustworthy, not merely tidy.
 
 ---
 
-## 17. Relationship to the Maintainer's Guide
+## 15. Full-history changelog rule
 
-This charter defines how work should be done.
+The changelog should preserve the full development trajectory.
 
-`MAINTAINERS_GUIDE.md` defines what the app is, how it is structured, and where the main maintenance risks are.
+That means:
 
-The two documents should remain aligned.
+- every safe commit should be documented
+- rolled-back work may be noted, but only when clearly labeled as deferred / uncommitted
+- the full-history section should remain cumulative rather than being replaced each time
 
 ---
 
-## 18. Working principle
+## 16. Fresh-chat escalation rule
 
-If a requested change is small, keep it small.
+When a conversation becomes long enough that patching starts becoming unreliable or laggy:
 
-If a requested change reveals deeper structural needs, name that explicitly and convert it into a planned pass rather than letting it sprawl.
+- restore the safe baseline
+- update documentation
+- continue in a new chat
 
-Safe progress is better than fast but destabilizing progress.
+This is a normal recovery procedure, not a failure.
+
+---
+
+## 17. Current safe-baseline handoff rule
+
+When ending a long or unstable sequence of passes, documentation and handoff notes should explicitly record the current safe baseline commit so future work starts from the correct point.
+
+At the current documentation baseline, that safe commit is:
+
+- **`57b946e` — `Make timeline year-based`**
+
+---
+
+## 18. Closing reminder
+
+The app has become safer to modify through bounded extraction work, but it still contains fragile orchestration in `src/App.jsx`. The correct response to this is not broad rewriting; it is disciplined bounded passes, verified outcomes, and clean recovery when needed.

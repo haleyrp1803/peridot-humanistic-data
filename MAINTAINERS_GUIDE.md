@@ -2,71 +2,51 @@
 
 ## Purpose
 
-This guide is the architectural handoff document for **Peridot**. It should stay aligned with the committed repository state and with the workflow rules in `PROJECT_WORKFLOW_CHARTER.md`.
-
-It is meant to let a future maintainer understand:
-
-- what the app currently is
-- what the important recent commits changed
-- what the main fragile zones still are
-- what baseline should be used for future bounded passes
+This document is the architectural reference for the correspondence visualizer app. It should stay aligned with the committed source of truth in the repository and with the workflow rules in `PROJECT_WORKFLOW_CHARTER.md`. This guide is updated on committed architectural changes and should be sufficient to hand off work into a fresh chat session without depending on older conversation context.
 
 ---
 
-## Current source of truth
+## Source of truth and working assumptions
 
-Source-of-truth working folder:
+Current source of truth folder:
 
-`C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
+- `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 
-Current clean baseline:
+Current clean safe baseline:
 
-- `951b450` — **Replace embedded sample data with current publication dataset**
+- **`57b946e` — `Make timeline year-based`**
 
-Important recent stable points:
+This project should continue to follow the user's bounded-pass workflow:
 
-- `f859595` — **Add itch.io HTML5 build packaging support**
-- `f959fac` — **Use countries50m as the fixed basemap**
-- `b1fdbd5` — **Update maintainer handoff documentation**
-- `dd12281` — **Normalize summary panel spacing**
-- `checkpoint-map-theme-c0fc600` — historical theme checkpoint
-
-The app is now called **Peridot**. Older history may still use the earlier working title **Correspondence Visualizer**.
-
----
-
-## Current architecture summary
-
-Peridot is a Vite/React/Tailwind correspondence visualizer with two main analytical modes:
-
-- **Geographic view**
-- **Person view**
-
-The app currently includes:
-
-- CSV ingestion and normalization
-- embedded publication/demo sample data
-- graph derivation and aggregation
-- interactive SVG-based rendering
-- timeline range filtering and playback
-- right-panel inspection and linked-record browsing
-- theme presets and theme-driven chroming
-- export utilities for image and CSV outputs
-- itch.io HTML5 build packaging support
-
-The main structural concentration point remains `src/App.jsx`, although multiple helper and panel-adjacent modules have already been extracted.
+- one source of truth per pass
+- classify each pass as exactly one of: behavior, visual, structural, documentation
+- keep one clear goal per pass
+- use explicit acceptance tests
+- checkpoint before higher-risk work
+- separate behavior changes from visual changes
+- when runtime issues appear after interaction, check the **F12 browser console early**
 
 ---
 
-## Current repository shape
+## Repository shape
 
-Core app files:
+Current live app surface includes:
 
 - `src/App.jsx`
 - `src/index.css`
 - `src/main.jsx`
 
-Extracted support modules in `src/`:
+Extracted panel / inspector boundaries now present in `src/`:
+
+- `src/LeftControlPanel.jsx`
+- `src/RightInspectorPanel.jsx`
+- `src/InspectorBodyRouter.jsx`
+- `src/InspectorEmptyState.jsx`
+- `src/InspectorClusterView.jsx`
+- `src/InspectorEdgeView.jsx`
+- `src/InspectorNodeView.jsx`
+
+Extracted support modules now present in `src/`:
 
 - `src/mapLayoutHelpers.js`
 - `src/mapStageComponents.jsx`
@@ -80,7 +60,7 @@ Extracted support modules in `src/`:
 - `src/InspectorPersonPlaces.jsx`
 - `src/InspectorBackButton.jsx`
 
-Root-level documentation/workflow files:
+Maintainer/workflow documents at repo root:
 
 - `README.md`
 - `MAINTAINERS_GUIDE.md`
@@ -89,65 +69,137 @@ Root-level documentation/workflow files:
 - `CONTROL_PANEL_DEPENDENCY_MAP.md`
 - `VIEWPORT_TIMELINE_AUDIT.md`
 
-Build/publication helpers:
+---
 
-- `vite.config.js`
-- `Build_Itch_Zip.py`
+## Architectural summary
+
+The app is a Vite/React/Tailwind correspondence visualizer with three user-facing visualization choices:
+
+- **People**
+- **Place**
+- **Force-Directed**
+
+Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing control model is now simplified through direct view buttons.
+
+The app includes:
+
+- CSV ingestion and normalization
+- graph derivation
+- interactive SVG-based rendering
+- year-based timeline filtering and playback
+- right-panel inspection workflow
+- theme presets and visual controls
+- export tools for image and tabular outputs
+
+The main maintenance challenge remains structural concentration in `src/App.jsx`, but that concentration has been reduced substantially in bounded passes.
+
+The current person-network layouts are:
+
+- **geographic-anchor**
+- **force-directed** (pre-settled `d3-force`)
+
+The force-directed person view is intentionally rendered on a clean theme-driven background rather than on top of the geographic map backdrop.
+
+The inspector supports internal navigation between **people** and **places**, with a working Back button for returning to the immediately previous internal inspector panel.
 
 ---
 
-## Current committed product baseline
+## Current module responsibilities
 
-### Basemap
+### `src/App.jsx`
+Still the main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, control-panel contract building, timeline state, and inspector navigation state.
 
-The fixed default basemap is now **`countries50m`**.
+### `src/LeftControlPanel.jsx`
+Owns the current left-panel UI boundary and section composition.
 
-This was chosen after a multi-scale atlas experiment proved more complex and less visually satisfying than a stable fixed default. The committed baseline deliberately prefers the simpler stable map state.
+### `src/RightInspectorPanel.jsx`
+Owns the inspector shell boundary.
 
-### Publication dataset
+### `src/InspectorBodyRouter.jsx`
+Routes resolved inspector state to the appropriate extracted view.
 
-The embedded sample/fallback data inside `src/App.jsx` now represents the intended **publication/demo dataset**.
+### `src/InspectorEmptyState.jsx`
+Owns the empty inspector state.
 
-This means the app can launch in a meaningful browser-ready state without requiring users to upload files before anything useful appears.
+### `src/InspectorClusterView.jsx`
+Owns the cluster inspector state boundary.
 
-### Itch.io publication support
+### `src/InspectorEdgeView.jsx`
+Owns the edge inspector state boundary.
 
-The project now includes committed support for generating an itch.io-ready HTML5 package:
+### `src/InspectorNodeView.jsx`
+Owns the node / person-detail / place-detail inspector boundary.
 
-- `vite.config.js` uses a relative base path
-- `Build_Itch_Zip.py` builds the production app and packages the contents of `dist/` into an upload ZIP with `index.html` at the archive root
+### `src/mapLayoutHelpers.js`
+Pure map/layout helper logic.
 
-Generated ZIPs and upload folders are artifacts and should stay out of Git history.
+### `src/mapStageComponents.jsx`
+Map-stage-adjacent UI/chrome components.
+
+### `src/interactionHelpers.js`
+Pure interaction-resolution and selection-building helpers. This file owns helper logic for:
+
+- nearby candidate generation
+- selection resolution
+- weighted connected-correspondent ordering
+- `person-detail` and `place-detail` payload derivation
+- person-detail sent/received place-section derivation
+
+### `src/mapInteractionHandlers.js`
+Top-level map interaction handlers.
+
+### `src/timelinePlaybackHelpers.js`
+Pure timeline/playback derivation helpers.
+
+### `src/timelinePlaybackComponents.jsx`
+Timeline/playback panel UI boundary. The timeline is now **year-based**, not month-based.
+
+### `src/exportHelpers.js`
+Pure export utilities and export row-builder helpers.
+
+### `src/personForceLayoutHelpers.js`
+Pure helper logic for the pre-settled force-directed person-network layout.
+
+### `src/InspectorConnectedCorrespondents.jsx`
+Inspector navigation component for person-to-person movement.
+
+### `src/InspectorPersonPlaces.jsx`
+Inspector navigation component for person-to-place movement. It shows two explicit sections:
+
+- **Places this person sent letters to**
+- **Places where this person received letters**
+
+### `src/InspectorBackButton.jsx`
+Inspector-internal Back button.
+
+It uses a small local history model for **inspector-internal navigation only** and does not attempt to track ordinary map clicks as navigation history.
 
 ---
 
 ## Current functional state
 
 ### Visualization modes
-
-- geographic route view
-- person-network view
+- Place view
+- People view
+- Force-Directed view
 
 ### Person-network layouts
-
 - geographic-anchor layout
 - pre-settled force-directed layout
 
 ### Inspector capabilities
-
 - hover and click inspection
 - linked records browsing
 - internal navigation between people and places
 - Back button support for inspector-internal navigation
 
 ### Timeline capabilities
-
-- full-range vs filtered-range date behavior
+- year-based date filtering
 - playback controls
 - timeline panel UI extracted into supporting components/helpers
+- month selectors removed in favor of start-year / end-year controls
 
 ### Export capabilities
-
 - SVG export
 - PNG export
 - nodes CSV export
@@ -157,7 +209,7 @@ Generated ZIPs and upload folders are artifacts and should stay out of Git histo
 
 ## Current theme and panel state
 
-The default full-app theme is **Peridot-inspired**.
+The default full-app theme remains **Peridot-inspired**.
 
 Other retained presets still function as map-focused alternatives:
 
@@ -176,7 +228,13 @@ Important current control-panel state:
   6. Export
   7. Summary and Diagnostics
 
-The current panel state reflects recent organization and spacing cleanup already committed before the publication passes.
+The current panel state also includes these recent committed behavior changes:
+
+- direct view buttons for **People**, **Place**, and **Force-Directed**
+- **People** as the default startup view
+- committed minimum-weight numeric input with **Enter** / **Update** apply behavior
+- removal of the old **Show all dates** shortcut
+- year-only timeline selectors
 
 ---
 
@@ -184,40 +242,51 @@ The current panel state reflects recent organization and spacing cleanup already
 
 This section is intentionally explicit so a future maintainer can explain how the current state emerged.
 
-### `dd12281` — Normalize summary panel spacing
+### `86ad35f` — Extract left control panel component
+Moved the left control panel out of `src/App.jsx` into `src/LeftControlPanel.jsx`.
 
-This stabilized the vertical rhythm in the left control panel and cleaned up spacing above **Summary and Diagnostics**.
+### `6a32004` — Harden inspector contract in place
+Stabilized the inspector selection contract before extraction work continued.
 
-### `b1fdbd5` — Update maintainer handoff documentation
+### `c0a15fd` — Extract inspector shell and router
+Established the extracted inspector shell and routing boundary.
 
-This refreshed the documentation baseline used for later bounded passes and made later handoff work safer.
+### `003fae1` — Split empty cluster and edge inspector views
+Moved the easier inspector views out of `src/App.jsx`.
 
-### `f959fac` — Use countries50m as the fixed basemap
+### `149315a` — Extract inspector node view
+Completed the main inspector-view extraction by moving node/person/place inspector rendering into its own file.
 
-This is the key map-baseline simplification commit.
+### `2d627e2` — Remove legacy inspector bodies from App
+Removed dead in-file inspector bodies after extraction stabilized.
 
-A more complicated atlas-scale experiment was attempted during development but was intentionally abandoned. The final retained decision was to remove that complexity and use a fixed `countries50m` default.
+### `fa486b8` — Remove orphaned panel helper functions
+Removed now-unused helper/style functions from `src/App.jsx`.
 
-### `f859595` — Add itch.io HTML5 build packaging support
+### `96064e2` — Set people as default view and simplify view buttons
+Replaced the old two-step visualization selection with direct buttons and made **People** the default startup view.
 
-This is the key publication/deployment commit.
+### `3fedd97` — Tighten minimum weight helper text
+Finished the committed minimum-weight control change by simplifying its helper copy after the slider-to-input redesign.
 
-It made the app easier to package and publish as a browser-playable HTML5 upload by:
+### `79d5ae1` — Remove show all dates shortcut
+Removed the old timeline shortcut from Display Controls so date behavior now lives in the Timeline block.
 
-- using a relative base path in Vite
-- adding `Build_Itch_Zip.py`
+### `57b946e` — Make timeline year-based
+Converted the timeline from month-based controls to year-only boundaries while preserving the broader timeline/playback model.
 
-### `951b450` — Replace embedded sample data with current publication dataset
+---
 
-This is the key publication-content commit.
+## Deferred / rolled-back work
 
-It replaced the embedded sample data in `src/App.jsx` so the built app now launches with the intended browser/demo dataset.
+### Cluster drill-down attempt
+After `57b946e`, a bounded attempt was made to make cluster indicators drillable through the inspector:
 
-This is the current clean baseline because it combines:
+- cluster click should open a cluster-member list
+- clicking a represented member should open that member’s detail
+- Back should return to the cluster view
 
-- the stable fixed basemap
-- the committed packaging support
-- the publication-ready embedded data
+That work was **not committed** and was rolled back to preserve the safe baseline. Future work should revisit cluster drill-down in a fresh bounded pass, starting from the clean baseline rather than from the rolled-back experimental state.
 
 ---
 
@@ -243,7 +312,7 @@ Examples of things that should not linger in the repo folder:
 - temporary Python patch scripts
 - temporary PowerShell patch scripts
 - `itch_upload/`
-- backup `.jsx` files made during local patching
+- backup `.jsx` / `.js` files made during local patching
 
 ---
 
@@ -258,8 +327,16 @@ Future work should continue to follow the user’s established workflow:
 - use checkpoints before higher-risk changes
 - only ask for the sync ritual after an actual checkpoint or commit
 - prefer direct file delivery and exact Windows PowerShell commands
-- prefer `.txt` delivery for generated scripts when `.js` downloads are unreliable
+- prefer `.txt` delivery for generated scripts when direct source-file downloads are unreliable
 - when runtime issues appear after interaction, check the **F12 browser console early**
+
+This recent work also reinforced these process rules:
+
+- target patch scripts against the **exact live file shape**
+- if a UI change does not appear, verify the live file before stacking more patches
+- do **behavior pass first**, then cleanup pass second
+- if a pass starts drifting, restore to the last safe commit rather than continuing to stack speculative fixes
+- when a long conversation becomes unreliable or laggy, restore the safe baseline, update docs, and continue in a fresh chat
 
 ---
 
@@ -268,12 +345,18 @@ Future work should continue to follow the user’s established workflow:
 A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
-- clean baseline: `951b450`
+- clean baseline: `57b946e`
 
 A future chat should also be told that:
 
-- the app is now called **Peridot**
+- the app identity is **Peridot**
 - the current fixed basemap is `countries50m`
-- the current embedded dataset is the intended publication/demo dataset
 - itch.io packaging support is already committed
-- the user wants documentation to reflect the commit trajectory clearly and meticulously
+- the panel/inspector extraction work is committed
+- the current safe baseline includes:
+  - direct view buttons
+  - People default view
+  - minimum-weight input
+  - year-based timeline
+- cluster drill-down was attempted and rolled back
+- documentation should preserve the full commit trajectory meticulously

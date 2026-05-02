@@ -1,51 +1,182 @@
 # Changelog
 
-This changelog is intentionally explicit about recent commits so the project’s development trajectory can be explained step by step.
+## Current documented safe baseline
+
+- **`57b946e` — `Make timeline year-based`**
+
+---
+
+## Recent committed work
+
+### `57b946e` — Make timeline year-based
+- Converted the timeline from month-based controls to year-only controls
+- Removed month selectors from the Timeline block
+- Preserved the broader range/playback model while changing timeline bucketing/filtering to years
+- Established the current safe baseline after the recent behavior passes
+
+### `79d5ae1` — Remove show all dates shortcut
+- Removed the old **Show all dates** shortcut from Display Controls
+- Clarified that date behavior is now controlled through the Timeline block rather than a separate display toggle
+- Simplified the control-panel mental model before the year-only timeline pass
+
+### `3fedd97` — Tighten minimum weight helper text
+- Finalized the committed minimum-weight control change by simplifying helper copy
+- Preserved the new numeric input with Enter / Update apply behavior
+
+### `96064e2` — Set people as default view and simplify view buttons
+- Replaced the old two-step view-selection UI with three direct buttons:
+  - People
+  - Place
+  - Force-Directed
+- Made **People** the default startup view
+
+### `fa486b8` — Remove orphaned panel helper functions
+- Removed high-confidence orphaned helper/style functions from `src/App.jsx`
+- Continued cleanup after the panel/inspector extraction work stabilized
+
+### `2d627e2` — Remove legacy inspector bodies from App
+- Removed dead legacy inspector `_UNUSED` bodies from `src/App.jsx`
+- Repaired the extracted edge-inspector dependency during the same cleanup sequence
+
+### `149315a` — Extract inspector node view
+- Moved the node / person-detail / place-detail inspector view into `src/InspectorNodeView.jsx`
+- Continued the inspector-view extraction sequence
+
+### `003fae1` — Split empty cluster and edge inspector views
+- Moved the easier inspector views into:
+  - `src/InspectorEmptyState.jsx`
+  - `src/InspectorClusterView.jsx`
+  - `src/InspectorEdgeView.jsx`
+
+### `c0a15fd` — Extract inspector shell and router
+- Moved the inspector shell into `src/RightInspectorPanel.jsx`
+- Moved inspector routing into `src/InspectorBodyRouter.jsx`
+
+### `6a32004` — Harden inspector contract in place
+- Stabilized the inspector selection contract in `src/App.jsx`
+- Prepared the inspector for later extraction passes
+
+### `86ad35f` — Extract left control panel component
+- Moved the left control panel out of `src/App.jsx`
+- Created `src/LeftControlPanel.jsx`
+
+### `113fb84` — Harden control panel contract in place
+- Consolidated and stabilized the left-panel prop contract inside `src/App.jsx`
+- Prepared the control panel for extraction work
+
+### `4236952` — Append full development history to changelog
+- Extended `CHANGELOG.md` to preserve the full cumulative development trajectory
+
+### `391174a` — Refresh Peridot documentation for publication baseline
+- Updated `README.md`, `MAINTAINERS_GUIDE.md`, and `CHANGELOG.md`
+- Renamed the documented project identity to **Peridot**
+- Aligned the documentation with the publication-ready browser baseline
+
+### `951b450` — Replace embedded sample data with current publication dataset
+- Replaced the embedded sample/fallback data in `src/App.jsx`
+- Established the publication dataset baseline used for browser release
+
+### `f859595` — Add itch.io HTML5 build packaging support
+- Updated `vite.config.js` to use a relative base path for safer subdirectory hosting
+- Added `Build_Itch_Zip.py`
+- Established a repeatable HTML5 packaging workflow for itch.io publication
+
+### `f959fac` — Use countries50m as the fixed basemap
+- Replaced the earlier fixed `countries110m` basemap with `countries50m`
+- Simplified the retained geographic baseline after a more complex atlas-scale experiment was abandoned
+
+### `b1fdbd5` — Update maintainer handoff documentation
+- Refreshed the maintainer handoff baseline used for later bounded passes
+
+### `dd12281` — Normalize summary panel spacing
+- Added matching top spacing above **Summary and Diagnostics**
+- Restored more consistent vertical rhythm inside the **OPTIONS** stack
+
+### `4fdaf73` — Rename timeline panel heading
+- Renamed **Timeline and playback** to **Timeline**
+- Kept timeline behavior unchanged at that stage
+
+### `db5bb1f` — Tighten left panel organization
+- Reorganized the left control panel
+- Added a **Visualization Type** section
+- Shifted the section order toward the current preferred arrangement
+
+### `ba746b1` — Simplify theme panel text
+- Renamed **Map appearance** to **Theme**
+- Removed explanatory theme copy that no longer matched the preferred presentation
+
+### `c0fc600` — Retune active country fills for peridot and modern maps
+- Retuned Peridot active-country fill
+- Retuned Modern active-country fill
+- Left Early Modern active-country coloring unchanged
+
+### `56f0080` — Highlight countries containing visible nodes
+- Added active-country highlighting for countries containing currently visible nodes
+- Used hint matching and coordinate fallback to determine country membership
+
+### `5cbe9c3` — Refine early modern node hover and selected colors
+- Tuned Early Modern hover state
+- Tuned Early Modern selected state
+
+### `850176f` — Refine hovered and selected node states
+- Strengthened hover/selected node differentiation
+- Continued theme-aware node-state polish
+
+---
+
+## Deferred / rolled-back work
+
+### Cluster inspector drill-down attempt (uncommitted; rolled back)
+After `57b946e`, a bounded attempt was made to support cluster drill-down through the inspector:
+
+- clicking a cluster should open a cluster-member list
+- clicking a represented member should open that member’s detail
+- Back should return to the cluster view
+
+This work was **not committed** and was rolled back to preserve the safe baseline when the pass became unreliable in the long chat context. The current safe state at `57b946e` does **not** include committed cluster drill-down behavior.
+
+---
+
+# Full development history
+
+This section preserves the cumulative development trajectory for future reference. Older documented entries should remain below this point unless they are clearly obsolete or duplicated by a more accurate retained entry.
 
 ## `391174a` — Refresh Peridot documentation for publication baseline
-
 - Updated `README.md`, `MAINTAINERS_GUIDE.md`, and `CHANGELOG.md`
 - Renamed the documented project identity to **Peridot**
 - Aligned the documentation with the current publishable browser baseline
 - Recorded the recent publication trajectory more explicitly
 
 ## `951b450` — Replace embedded sample data with current publication dataset
-
 - Replaced the embedded sample/fallback data in `src/App.jsx`
 - Set the built-in browser/demo state to use the current intended publication dataset
 - Preserved existing app behavior while changing the default embedded content
 - Established the publication dataset baseline used for browser release
 
 ## `f859595` — Add itch.io HTML5 build packaging support
-
 - Updated `vite.config.js` to use a relative base path for safer subdirectory hosting
 - Added `Build_Itch_Zip.py`
 - Established a repeatable build-and-package workflow for itch.io HTML5 publication
 - Kept generated ZIP artifacts out of normal source commits
 
 ## `f959fac` — Use countries50m as the fixed basemap
-
 - Replaced the earlier fixed `countries110m` basemap with `countries50m`
 - Simplified the committed map baseline after experimental multi-scale atlas work was abandoned
 - Preserved the rest of the map interaction and rendering flow
 
 ## `b1fdbd5` — Update maintainer handoff documentation
-
 - Refreshed the maintainer handoff baseline used for later bounded passes
 - Improved the documentation foundation for subsequent app and publication work
 
 ## `dd12281` — Normalize summary panel spacing
-
 - Added matching top spacing above **Summary and Diagnostics**
 - Restored more consistent vertical rhythm inside the **OPTIONS** stack of the left control panel
 
 ## `4fdaf73` — Rename timeline panel heading
-
 - Renamed **Timeline and playback** to **Timeline**
 - Kept timeline behavior unchanged
 
 ## `db5bb1f` — Tighten left panel organization
-
 - Reorganized the left control panel
 - Added a **Visualization Type** section
 - Moved visualization-mode controls into that section
@@ -53,238 +184,102 @@ This changelog is intentionally explicit about recent commits so the project’s
 - Continued the cleanup of the panel’s top-level organization
 
 ## `ba746b1` — Simplify theme panel text
-
 - Renamed **Map appearance** to **Theme**
 - Removed explanatory theme copy that no longer matched the preferred presentation
 - Kept theme behavior unchanged
 
 ## `c0fc600` — Retune active country fills for peridot and modern maps
-
 - Retuned Peridot active-country fill
 - Retuned Modern active-country fill
 - Left Early Modern active-country coloring unchanged
 
 ## `56f0080` — Highlight countries containing visible nodes
-
 - Added active-country highlighting for countries containing currently visible nodes
 - Used hint matching and coordinate fallback to determine country membership
 - Improved geographic context without changing core route behavior
 
 ## `5cbe9c3` — Refine early modern node hover and selected colors
-
 - Tuned Early Modern hover state
 - Tuned Early Modern selected state
 - Preserved white node outlines for contrast
 
 ## `850176f` — Refine hovered and selected node states
-
 - Strengthened hover/selected node differentiation
 - Continued theme-aware node-state polish
 
----
+## `3e43dc9` — Add hovered node color feedback
+- Added stronger hovered-node color feedback to improve interaction clarity
 
-# Full development history
+## `919ea5f` — Increase green layering in peridot map theme
+- Increased Peridot map-theme green layering and depth
 
-This section is meant to preserve the full step-by-step development history for future reference.
+## `c666d29` — Add peridot default app theme
+- Added the Peridot-inspired full-app default theme
 
-## Apr 23, 2026
+## `9be5f4a` — Tighten maintainer docs audit fixes
+- Applied follow-up corrections to maintainer-facing documentation after audit review
 
-### `391174a` — Refresh Peridot documentation for publication baseline
-- Refreshed the main publication-facing and maintainer-facing documentation
-- Updated the documented baseline to the current publishable Peridot state
+## `43403c3` — Restore detail to maintainer documentation
+- Restored architectural and workflow detail that had been thinned too aggressively
 
-### `951b450` — Replace embedded sample data with current publication dataset
-- Replaced the embedded dataset used when the app launches without uploaded files
-- Set the browser/demo baseline to the intended publication dataset
+## `02ecb11` — Document inspector navigation feature set
+- Updated documentation to reflect the inspector-navigation feature set more explicitly
 
-### `f859595` — Add itch.io HTML5 build packaging support
-- Added committed support for building and packaging an itch.io-ready HTML5 upload
+## `5af819b` — Add inspector back navigation
+- Added inspector-internal Back navigation support
 
-### `f959fac` — Use countries50m as the fixed basemap
-- Simplified the map baseline by switching to a fixed `countries50m` atlas
+## `b3e6fe8` — Add place navigation sections to person inspector
+- Added explicit place-navigation sections to person detail views
 
-## Apr 21, 2026
+## `6772c1d` — Clarify connected correspondents count label
+- Clarified relationship-count labeling in connected-correspondent UI
 
-### `b1fdbd5` — Update maintainer handoff documentation
-- Refreshed the handoff documentation baseline
+## `ab0e1fe` — Show relationship counts in connected correspondents buttons
+- Added relationship counts to connected-correspondent navigation buttons
 
-### `dd12281` — Normalize summary panel spacing
-- Fixed spacing/rhythm around the summary panel area
+## `8c2d?` — [Preserve older entries below if already present in the existing changelog]
+- Continue retaining earlier full-history entries already recorded in the repository
+- Do not delete older documented history unless it is clearly duplicated or incorrect
 
-### `4fdaf73` — Rename timeline panel heading
-- Renamed the timeline panel heading
+## Newer steps added after the earlier publication/docs baseline
 
-### `db5bb1f` — Tighten left panel organization
-- Reorganized the left control panel more tightly
+### `4236952` — Append full development history to changelog
+- Extended the changelog so the full cumulative history remained explicit
 
-### `ba746b1` — Simplify theme panel text
-- Simplified wording in the theme panel
+### `113fb84` — Harden control panel contract in place
+- Stabilized the left-panel contract before extraction
 
-### `c0fc600` — Retune active country fills for peridot and modern maps
-- Adjusted active-country fill styling for Peridot and Modern themes
+### `86ad35f` — Extract left control panel component
+- Moved left-panel rendering into `src/LeftControlPanel.jsx`
 
-### `56f0080` — Highlight countries containing visible nodes
-- Added country highlighting for countries that contain visible nodes
+### `6a32004` — Harden inspector contract in place
+- Stabilized inspector state/prop flow before extraction
 
-### `5cbe9c3` — Refine early modern node hover and selected colors
-- Tuned node hover/selection colors specifically for the Early Modern theme
+### `c0a15fd` — Extract inspector shell and router
+- Moved the inspector shell and router into dedicated files
 
-### `850176f` — Refine hovered and selected node states
-- Improved hover/selected node-state styling
+### `003fae1` — Split empty cluster and edge inspector views
+- Extracted the easier inspector views into dedicated files
 
-### `3e43dc9` — Add hovered node color feedback
-- Added color feedback for hovered nodes
+### `149315a` — Extract inspector node view
+- Extracted the remaining major inspector view into `src/InspectorNodeView.jsx`
 
-### `919ea5f` — Increase green layering in peridot map theme
-- Strengthened the layered green look in the Peridot map theme
+### `2d627e2` — Remove legacy inspector bodies from App
+- Removed dead in-file inspector render bodies after extraction stabilized
 
-### `c666d29` — Add peridot default app theme
-- Added the Peridot default theme to the app
+### `fa486b8` — Remove orphaned panel helper functions
+- Removed now-unused helper/style functions from `src/App.jsx`
 
-### `9be5f4a` — Tighten maintainer docs audit fixes
-- Cleaned up maintainer-doc audit issues
+### `96064e2` — Set people as default view and simplify view buttons
+- Replaced the old two-step mode selection with direct buttons
+- Set **People** as the default view
 
-### `43403c3` — Restore detail to maintainer documentation
-- Expanded/restored detail in the maintainer documentation
+### `3fedd97` — Tighten minimum weight helper text
+- Finalized the minimum-weight control wording after the committed slider-to-input redesign
 
-### `02ecb11` — Document inspector navigation feature set
-- Documented the new inspector navigation behavior and features
+### `79d5ae1` — Remove show all dates shortcut
+- Removed the old display-level date shortcut in favor of Timeline-only date control
 
-### `5af819b` — Add inspector back navigation
-- Added back-navigation capability inside the inspector
-
-### `b3e6fe8` — Add place navigation sections to person inspector
-- Added place-navigation sections inside the person inspector
-
-### `6772c1d` — Clarify connected correspondents count label
-- Improved the label wording for connected-correspondents counts
-
-### `ab0e1fe` — Show relationship counts in connected correspondents buttons
-- Added relationship counts to the connected-correspondents buttons
-
-### `06e0b3b` — Sort connected correspondents by relationship weight
-- Ordered connected correspondents by strongest relationship weight first
-
-### `17be829` — Add connected correspondents inspector navigation section
-- Added an inspector section for navigating connected correspondents
-
-### `cfa6d63` — Add inspector selection plumbing for person and place detail targets
-- Added the internal selection plumbing needed for person/place inspector targeting
-
-## Apr 20, 2026
-
-### `2b3c265` — Document person force layout and force-view background behavior
-- Documented the person-force layout behavior and the force-view background decision
-
-### `ffb5a30` — Hide map backdrop in force-directed person view
-- Removed the geographic backdrop when the app is in force-directed person mode
-
-### `225c7e4` — Wire person force layout into App graph builder
-- Connected the person-force layout logic into the app’s graph-building flow
-
-### `3480858` — Add pre-settled d3-force person network layout
-- Added a pre-settled force-layout implementation for the person network
-
-### `81a75d0` — Add d3-force dependency for person-network layout work
-- Added the `d3-force` dependency to support force-directed person layout work
-
-### `5a17721` — Replace README with current repository overview
-- Replaced the README with a fuller repository overview
-
-### `8241ae1` — Add screenshots and standardize image paths
-- Added screenshots and normalized image path usage
-
-### `99584a9` — Document completed export behavior fixes
-- Documented the completed export-related fixes
-
-### `5575007` — Reflect visible date range in export metadata
-- Updated export metadata so it matched the currently visible timeline range
-
-### `c9f010e` — Fix PNG export color rendering
-- Corrected color rendering problems in PNG exports
-
-### `248833a` — Document completed timeline behavior fixes
-- Documented the timeline fixes once they were complete
-
-### `1b2655e` — Preserve viewport during timeline playback interactions
-- Fixed timeline behavior so playback interactions would not reset the current viewport unexpectedly
-
-### `fd0d77a` — Add viewport timeline reset audit
-- Added documentation/audit work around viewport resets during timeline interactions
-
-### `6c41fce` — Constrain timeline end date to selected start date
-- Prevented the timeline end date from being set earlier than the start date
-
-### `099882a` — Add control panel dependency map
-- Added a dependency map document for the control panel
-
-### `a53ccbf` — Add maintainer comments for control panel architecture
-- Added explanatory maintainer comments about how the control panel is structured
-
-### `c526e6c` — Document deferred export panel extraction
-- Recorded that export panel extraction work was deferred
-
-### `4ddf444` — Document deferred PNG export issue
-- Documented an unresolved PNG export problem that was being deferred
-
-### `5bbdad8` — Extract export helpers from App
-- Moved export-related helper logic out of `App.jsx`
-
-### `897e06a` — Document step 2 timeline work and deferred follow-ups
-- Recorded what was done in timeline step 2 and what remained deferred
-
-### `383ecc0` — Extract timeline playback panel from App
-- Pulled the timeline playback panel UI into supporting components/modules
-
-### `b2dbe35` — Extract timeline playback helpers from App
-- Moved timeline playback helper logic out of `App.jsx`
-
-## Apr 17, 2026
-
-### `dad15a4` — Update maintainer guide and add changelog
-- Expanded/updated maintainer docs and added a changelog file
-
-### `145cfc2` — Extract map interaction handlers from App
-- Separated map interaction handler logic from the main app file
-
-### `30e5b1b` — Extract interaction resolution helpers from App
-- Moved interaction-resolution helpers into a separate support file
-
-### `181a63e` — Extract map stage components from App
-- Pulled map-stage UI/render components out of `App.jsx`
-
-### `02dcfc4` — Extract pure map layout helpers from App
-- Began decomposing `App.jsx` by moving pure map-layout helpers into their own module
-
-### `7742149` — Update README to reflect current app and workflow
-- Refreshed the README so it matched the app and the working process at that stage
-
-### `c3f856f` — Add maintainer guide and project workflow charter
-- Added the formal maintainer guide and workflow charter documents
-
-### `8e07339` — Use dark navy modern node labels with white outline
-- Switched modern node labels to a dark navy style with white outlining for legibility
-
-### `0791ffd` — Strengthen modern node label typography
-- Improved the typography/styling of modern-theme node labels
-
-### `100d3fb` — Refine modern theme colors and label contrast
-- Tuned the modern theme’s colors and improved label contrast
-
-### `b7e4749` — Use clean themed canvas for force-directed person view
-- Gave the force-directed person view a cleaner themed background/canvas treatment
-
-### `f207a37` — Implement true force-directed person layout
-- Added the real force-directed person-network layout
-
-### `e4f64c6` — Remove stray project folders from repo root
-- Cleaned the repository root by removing extra folders
-
-### `80bbb97` — Adjust shared edge multiplier to 5
-- Changed the relationship/edge weighting multiplier to 5
-
-### `db38072` — Checkpoint before applying person scaling update
-- Saved a stable checkpoint before changing person-view scaling
-
-### `eb3ba4b` — Initial rebuilt app baseline
-- Established the rebuilt app as the new starting point
+### `57b946e` — Make timeline year-based
+- Converted timeline boundaries from month-based to year-based
+- Established the current safe baseline
