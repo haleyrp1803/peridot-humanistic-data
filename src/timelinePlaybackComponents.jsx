@@ -32,11 +32,7 @@ export function TimelinePanelContent({
   const {
     timelineYears,
     startYear,
-    startMonth,
     endYear,
-    endMonth,
-    startMonthsForYear,
-    endMonthsForYear,
   } = buildTimelineBoundaryOptions(timelineMonths, rangeStart, rangeEnd);
 
   const constrainedEndYears = timelineYears.filter((year) => {
@@ -44,20 +40,11 @@ export function TimelinePanelContent({
     return Number(year) >= Number(startYear);
   });
 
-  const constrainedEndMonthsForYear =
-    startYear && endYear === startYear
-      ? endMonthsForYear.filter((monthKey) => {
-          const month = monthKey.split('-')[1];
-          return month >= (startMonth || '01');
-        })
-      : endMonthsForYear;
-
-  const setTimelineBoundaryFromParts = (boundary, year, month) => {
+  const setTimelineBoundaryFromYear = (boundary, year) => {
     const resolvedIndex = resolveTimelineBoundaryIndex(
       timelineMonths,
       boundary,
-      year,
-      month
+      year
     );
     if (resolvedIndex < 0) return;
 
@@ -88,7 +75,7 @@ export function TimelinePanelContent({
         </div>
 
         <div className="text-sm text-[var(--muted-text)]">
-          Available month buckets:{' '}
+          Available year range:{' '}
           {timelineMonths.length
             ? `${timelineMonths[0]} to ${timelineMonths[timelineMonths.length - 1]}`
             : 'none detected'}
@@ -102,13 +89,7 @@ export function TimelinePanelContent({
               </div>
               <select
                 value={startYear || ''}
-                onChange={(e) =>
-                  setTimelineBoundaryFromParts(
-                    'start',
-                    e.target.value,
-                    startMonth || '01'
-                  )
-                }
+                onChange={(e) => setTimelineBoundaryFromYear('start', e.target.value)}
                 className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
               >
                 {timelineYears.map((year) => (
@@ -116,26 +97,6 @@ export function TimelinePanelContent({
                     {year}
                   </option>
                 ))}
-              </select>
-
-              <div className="text-xs font-medium uppercase tracking-wide text-[var(--muted-text)]">
-                Start month
-              </div>
-              <select
-                value={startMonth || ''}
-                onChange={(e) =>
-                  setTimelineBoundaryFromParts('start', startYear, e.target.value)
-                }
-                className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-              >
-                {startMonthsForYear.map((monthKey) => {
-                  const month = monthKey.split('-')[1];
-                  return (
-                    <option key={`start-month-${monthKey}`} value={month}>
-                      {month}
-                    </option>
-                  );
-                })}
               </select>
             </div>
 
@@ -145,13 +106,7 @@ export function TimelinePanelContent({
               </div>
               <select
                 value={endYear || ''}
-                onChange={(e) =>
-                  setTimelineBoundaryFromParts(
-                    'end',
-                    e.target.value,
-                    endMonth || '12'
-                  )
-                }
+                onChange={(e) => setTimelineBoundaryFromYear('end', e.target.value)}
                 className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
               >
                 {constrainedEndYears.map((year) => (
@@ -159,26 +114,6 @@ export function TimelinePanelContent({
                     {year}
                   </option>
                 ))}
-              </select>
-
-              <div className="text-xs font-medium uppercase tracking-wide text-[var(--muted-text)]">
-                End month
-              </div>
-              <select
-                value={endMonth || ''}
-                onChange={(e) =>
-                  setTimelineBoundaryFromParts('end', endYear, e.target.value)
-                }
-                className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-              >
-                {constrainedEndMonthsForYear.map((monthKey) => {
-                  const month = monthKey.split('-')[1];
-                  return (
-                    <option key={`end-month-${monthKey}`} value={month}>
-                      {month}
-                    </option>
-                  );
-                })}
               </select>
             </div>
           </div>

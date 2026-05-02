@@ -232,8 +232,11 @@ function parseHistoricalDate(rawValue) {
   const hasKnownYear = year > 0;
   const hasKnownMonth = month >= 1 && month <= 12;
   const hasKnownDay = day >= 1 && day <= 31;
-  const isTimelineUsable = hasKnownYear && hasKnownMonth;
-  const monthKey = isTimelineUsable ? `${year}-${String(month).padStart(2, '0')}` : null;
+  const isTimelineUsable = hasKnownYear;
+  const monthKey = isTimelineUsable ? String(year) : null;
+  const sortKey = hasKnownYear
+    ? year * 10000 + (hasKnownMonth ? month : 0) * 100 + (hasKnownDay ? day : 0)
+    : null;
 
   return {
     raw,
@@ -244,7 +247,7 @@ function parseHistoricalDate(rawValue) {
     isTimelineUsable,
     precision: hasKnownDay ? 'day' : hasKnownMonth ? 'month' : 'year',
     monthKey,
-    sortKey: isTimelineUsable ? year * 100 + month : null,
+    sortKey,
     label: raw,
   };
 }

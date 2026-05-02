@@ -2,7 +2,7 @@ export function buildTimelineMonths(rows) {
   return Array.from(
     new Set(
       rows
-        .filter((row) => row.parsedDate?.isTimelineUsable)
+        .filter((row) => row.parsedDate?.isTimelineUsable && row.parsedDate?.monthKey)
         .map((row) => row.parsedDate.monthKey)
         .filter(Boolean)
     )
@@ -42,38 +42,18 @@ export function filterRowsForPlayback(baseRows, playbackRows, playbackIndex) {
 }
 
 export function buildTimelineBoundaryOptions(timelineMonths, rangeStart, rangeEnd) {
-  const timelineYears = Array.from(new Set(timelineMonths.map((monthKey) => monthKey.split('-')[0]))).sort();
-  const startMonthKey = timelineMonths[rangeStart] || '';
-  const endMonthKey = timelineMonths[rangeEnd] || '';
-  const startYear = startMonthKey ? startMonthKey.split('-')[0] : '';
-  const startMonth = startMonthKey ? startMonthKey.split('-')[1] : '';
-  const endYear = endMonthKey ? endMonthKey.split('-')[0] : '';
-  const endMonth = endMonthKey ? endMonthKey.split('-')[1] : '';
-  const startMonthsForYear = timelineMonths.filter((monthKey) => monthKey.startsWith(`${startYear}-`));
-  const endMonthsForYear = timelineMonths.filter((monthKey) => monthKey.startsWith(`${endYear}-`));
+  const timelineYears = [...timelineMonths];
+  const startYear = timelineMonths[rangeStart] || '';
+  const endYear = timelineMonths[rangeEnd] || '';
 
   return {
     timelineYears,
     startYear,
-    startMonth,
     endYear,
-    endMonth,
-    startMonthsForYear,
-    endMonthsForYear,
   };
 }
 
-export function resolveTimelineBoundaryIndex(timelineMonths, boundary, year, month) {
-  const matchingMonths = timelineMonths.filter((monthKey) => monthKey.startsWith(`${year}-`));
-  if (!matchingMonths.length) return -1;
-
-  const fallbackMonthKey = boundary === 'start'
-    ? matchingMonths[0]
-    : matchingMonths[matchingMonths.length - 1];
-  const targetMonthKey = `${year}-${month}`;
-  const resolvedMonthKey = timelineMonths.includes(targetMonthKey)
-    ? targetMonthKey
-    : fallbackMonthKey;
-
-  return timelineMonths.indexOf(resolvedMonthKey);
+export function resolveTimelineBoundaryIndex(timelineMonths, boundary, year) {
+  if (!year) return -1;
+  return timelineMonths.indexOf(year);
 }
