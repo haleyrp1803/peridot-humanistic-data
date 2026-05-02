@@ -1567,11 +1567,12 @@ function SvgMap({
     labelFontSize: 16.85,
     labelOffset: 13.7,
     labelThreshold: 1,
-    clusterThreshold: 0,
+    clusterThreshold: 42,
     ...zoomTuning,
   };
 
-  const clusterThresholdPx = Math.max(0, tuning.clusterThreshold);
+  const clusterThresholdScreenPx = Math.max(0, tuning.clusterThreshold);
+  const clusterThresholdPx = clusterThresholdScreenPx / Math.max(view.scale, 0.001);
   const labelDensityThreshold = Math.max(0, tuning.labelThreshold);
   const semanticNodeScale = Math.max(0, tuning.nodeMultiplier);
   const semanticEdgeScale = Math.max(0, tuning.edgeMultiplier);
@@ -2052,7 +2053,7 @@ function SvgMap({
                     cy={node.screenY}
                     r={nodeRadius}
                     fill={nodeFill}
-                    fillOpacity={isSelected ? '0.98' : node.isCluster ? '0.94' : '0.9'}
+                    fillOpacity={isSelected ? '0.98' : node.isCluster ? '0.92' : '0.9'}
                     stroke={nodeStroke}
                     strokeWidth={nodeStrokeWidth}
                   />
@@ -2431,7 +2432,7 @@ export default function EuropeNetworkMapApp() {
     labelFontSize: 16.85,
     labelOffset: 13.7,
     labelThreshold: 1,
-    clusterThreshold: 0,
+    clusterThreshold: 42,
   });
   const [themeTuning, setThemeTuning] = useState(THEME_DEFAULTS);
   const [themePresetKey, setThemePresetKey] = useState('peridot');
