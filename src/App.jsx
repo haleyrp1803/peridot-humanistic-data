@@ -590,6 +590,37 @@ function curvedPath(a, b, bend = 0.16) {
   return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
 }
 
+function createAdaptiveNodeRadiusScale(values, minRadius, maxRadius, contrastPower = 1.35) {
+  const sortedValues = values
+    .map((value) => Number(value) || 0)
+    .filter((value) => Number.isFinite(value) && value > 0)
+    .sort((a, b) => a - b);
+
+  if (!sortedValues.length) {
+    return () => minRadius;
+  }
+
+  const minValue = sortedValues[0];
+  const maxValue = sortedValues[sortedValues.length - 1];
+
+  if (minValue === maxValue) {
+    return () => minRadius;
+  }
+
+  const logDenominator = Math.log1p(maxValue - minValue);
+
+  return (value) => {
+    const safeValue = Math.max(0, Number(value) || 0);
+    if (safeValue <= minValue) {
+      return minRadius;
+    }
+
+    const normalized = Math.min(1, Math.log1p(safeValue - minValue) / logDenominator);
+    const contrasted = Math.pow(normalized, contrastPower);
+    return minRadius + contrasted * (maxRadius - minRadius);
+  };
+}
+
 // Geographic graph builder: projected place nodes plus curved route paths.
 function buildGraph(places, aggregatedEdges, width, height) {
   const placeById = new Map(places.map((place) => [place.id, place]));
@@ -600,7 +631,7 @@ function buildGraph(places, aggregatedEdges, width, height) {
     edgeCountsByPlaceId.set(edge.targetPlaceId, (edgeCountsByPlaceId.get(edge.targetPlaceId) || 0) + edge.count);
   });
 
-  const nodes = places.map((place) => {
+  const nodeDrafts = places.map((place) => {
     const projected = projectToSvg(place.lon, place.lat, width, height);
     const degree = edgeCountsByPlaceId.get(place.id) || 0;
     return {
@@ -608,9 +639,19 @@ function buildGraph(places, aggregatedEdges, width, height) {
       x: projected.x,
       y: projected.y,
       degree,
-      radius: Math.max(5, Math.min(18, 5 + degree * 1.2)),
     };
   });
+
+  const radiusForDegree = createAdaptiveNodeRadiusScale(
+    nodeDrafts.map((node) => node.degree),
+    5,
+    32
+  );
+
+  const nodes = nodeDrafts.map((node) => ({
+    ...node,
+    radius: radiusForDegree(node.degree),
+  }));
 
   const edges = aggregatedEdges
     .map((edge) => {
@@ -632,10 +673,6 @@ function buildGraph(places, aggregatedEdges, width, height) {
     .filter(Boolean);
 
   return { nodes, edges, edgeCountsByPlaceId };
-}
-
-function computePersonNodeRadius(degree) {
-  return Math.max(5.5, Math.min(18, 5.5 + Math.pow(Math.max(degree, 1), 0.9) * 1.0));
 }
 
 function computePersonEdgeWidth(count) {
@@ -750,8 +787,14 @@ function buildPersonGraph(rows, width, height, layoutMode, minCount = 1, searchQ
     target.degree += edge.count;
   });
 
-  people.forEach((p) => {
-    p.radius = computePersonNodeRadius(p.degree);
+  const radiusForPersonDegree = createAdaptiveNodeRadiusScale(
+    people.map((person) => person.degree),
+    5.5,
+    34
+  );
+
+  people.forEach((person) => {
+    person.radius = radiusForPersonDegree(person.degree);
   });
 
   if (layoutMode === 'force') {
