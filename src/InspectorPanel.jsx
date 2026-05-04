@@ -44,7 +44,7 @@ function PanelModeTabs({ activePanel, onShowControls, onShowInspector, onClose }
   );
 }
 
-export function InspectorPanel({
+export function InspectorPanelContent({
   sidebar,
   inspectorState,
   letterState,
@@ -52,7 +52,6 @@ export function InspectorPanel({
   viewComponents,
 }) {
   const {
-    showRightSidebar,
     setShowRightSidebar,
     setShowLeftSidebar,
     showInspectorInfo,
@@ -65,39 +64,37 @@ export function InspectorPanel({
   } = inspectorState;
 
   const {
-    SidebarToggleComponent,
     InspectorHeaderComponent,
     InspectorBackButtonComponent,
   } = shellComponents;
 
-  if (!showRightSidebar) return null;
-
   return (
-    <aside className={`${sidebarSurfaceClassName()} border-r xl:absolute xl:left-0 xl:top-0 xl:h-full xl:z-40 w-[420px]`}>
-      <SidebarToggleComponent side="left" open={showRightSidebar} onToggle={() => setShowRightSidebar(false)} />
-      <div className="relative h-full overflow-auto p-5 pr-20 pb-24">
-          <PanelModeTabs
-            activePanel="inspector"
-            onShowControls={() => setShowLeftSidebar(true)}
-            onShowInspector={() => setShowRightSidebar(true)}
-            onClose={() => setShowRightSidebar(false)}
-          />
-          <InspectorHeaderComponent
-            showInspectorInfo={showInspectorInfo}
-            setShowInspectorInfo={setShowInspectorInfo}
-          />
+    <>
+      <PanelModeTabs
+        activePanel="inspector"
+        onShowControls={() => setShowLeftSidebar(true)}
+        onShowInspector={() => setShowRightSidebar(true)}
+        onClose={() => setShowRightSidebar(false)}
+      />
+      <InspectorHeaderComponent
+        showInspectorInfo={showInspectorInfo}
+        setShowInspectorInfo={setShowInspectorInfo}
+      />
 
-          <InspectorBackButtonComponent
-            canGoBack={canGoBack}
-            onBack={onBackInspector}
-          />
+      <InspectorBackButtonComponent
+        canGoBack={canGoBack}
+        onBack={onBackInspector}
+      />
 
-          <InspectorBodyRouter
-            inspectorState={inspectorState}
-            letterState={letterState}
-            viewComponents={viewComponents}
-          />
-        </div>
-    </aside>
+      <InspectorBodyRouter
+        inspectorState={inspectorState}
+        letterState={letterState}
+        viewComponents={viewComponents}
+      />
+    </>
   );
+}
+
+export function InspectorPanel(props) {
+  return <InspectorPanelContent {...props} />;
 }

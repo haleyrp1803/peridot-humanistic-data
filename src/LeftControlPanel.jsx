@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { TimelinePanelContent } from './timelinePlaybackComponents.jsx';
+import { InspectorPanelContent } from './InspectorPanel.jsx';
 
 function sidebarSurfaceClassName() { return 'relative overflow-visible border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] backdrop-blur-sm transition-all duration-300'; }
 function groupCardClassName() { return 'mt-5 rounded-[28px] border border-[var(--group-border)] bg-[linear-gradient(180deg,var(--group-bg-top),var(--group-bg-bottom))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.42)]'; }
@@ -852,9 +853,13 @@ export function LeftControlPanel({
   timelineState,
   themeState,
   exportState,
+  inspectorPanelProps,
+  inspectorShellComponents,
+  inspectorViewComponents,
 }) {
   const {
     showLeftSidebar,
+    showRightSidebar,
     setShowLeftSidebar,
     setShowRightSidebar,
     showDataInputsPanel,
@@ -1028,37 +1033,51 @@ export function LeftControlPanel({
     },
   };
 
+  const isSidePanelOpen = showLeftSidebar || showRightSidebar;
+  const closeSidePanel = () => {
+    if (showRightSidebar) {
+      setShowRightSidebar(false);
+      return;
+    }
+
+    setShowLeftSidebar(false);
+  };
+
   return (
-    <aside className={`${sidebarSurfaceClassName()} border-r xl:absolute xl:left-0 xl:top-0 xl:h-full xl:z-30 ${showLeftSidebar ? 'w-[420px]' : 'w-16'}`}>
-      {/*
-        PANEL GATING BEHAVIOR
-        The `showLeftSidebar ? (...) : null` block below is crucial. The app can
-        appear normal while closed because the inner control-panel content is
-        not mounted yet. Opening the cog causes that dormant subtree to render.
-        That is why missing props/helper mismatches often surface only at the
-        moment the panel opens.
-      */}
-      {showLeftSidebar ? (
-        <SidebarToggle side="left" open={showLeftSidebar} onToggle={() => setShowLeftSidebar(false)} />
+    <aside className={`${sidebarSurfaceClassName()} border-r xl:absolute xl:left-0 xl:top-0 xl:h-full xl:z-30 ${isSidePanelOpen ? 'w-[420px]' : 'w-16'}`}>
+      {isSidePanelOpen ? (
+        <SidebarToggle side="left" open={true} onToggle={closeSidePanel} />
       ) : (
         <>
           <SidebarToggle side="left" open={false} onToggle={() => setShowLeftSidebar(true)} stackIndex={0} />
           <SidebarToggle side="right" open={false} onToggle={() => setShowRightSidebar(true)} stackIndex={1} />
         </>
       )}
-      {showLeftSidebar ? (
+      {isSidePanelOpen ? (
         <div className="h-full overflow-auto p-5 pr-20">
-          <PanelModeTabs
-            activePanel="controls"
-            onShowControls={() => setShowLeftSidebar(true)}
-            onShowInspector={() => setShowRightSidebar(true)}
-            onClose={() => setShowLeftSidebar(false)}
-          />
-          <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>Control Panel</h1>
+          {showLeftSidebar ? (
+            <>
+              <PanelModeTabs
+                activePanel="controls"
+                onShowControls={() => setShowLeftSidebar(true)}
+                onShowInspector={() => setShowRightSidebar(true)}
+                onClose={closeSidePanel}
+              />
+              <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>Control Panel</h1>
 
-          <DataInputsGroup {...dataInputsGroupProps} />
+              <DataInputsGroup {...dataInputsGroupProps} />
 
-          <DisplayFilteringGroup {...displayFilteringGroupProps} />
+              <DisplayFilteringGroup {...displayFilteringGroupProps} />
+            </>
+          ) : null}
+
+          {showRightSidebar ? (
+            <InspectorPanelContent
+              {...inspectorPanelProps}
+              shellComponents={inspectorShellComponents}
+              viewComponents={inspectorViewComponents}
+            />
+          ) : null}
         </div>
       ) : null}
     </aside>

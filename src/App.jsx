@@ -1278,6 +1278,7 @@ function buildLeftControlPanelProps(args) {
   return {
     sidebarState: {
       showLeftSidebar: args.showLeftSidebar,
+      showRightSidebar: args.showRightSidebar,
       setShowLeftSidebar: args.setShowLeftSidebar,
       setShowRightSidebar: args.setShowRightSidebar,
       showDataInputsPanel: args.showDataInputsPanel,
@@ -2959,6 +2960,7 @@ export default function EuropeNetworkMapApp() {
   // contract and the receiving child props before attempting new extraction.
   const leftControlPanelProps = buildLeftControlPanelProps({
     showLeftSidebar,
+    showRightSidebar,
     setShowLeftSidebar,
     setShowRightSidebar,
     showDataInputsPanel,
@@ -3094,18 +3096,17 @@ export default function EuropeNetworkMapApp() {
           usually somewhere inside the props consumed below this mount point,
           not in the top-level workspace shell itself.
         */}
-        <LeftControlPanel {...leftControlPanelProps} />
+        <LeftControlPanel
+          {...leftControlPanelProps}
+          inspectorPanelProps={inspectorPanelProps}
+          inspectorShellComponents={inspectorShellComponents}
+          inspectorViewComponents={inspectorViewComponents}
+        />
 
         <AppMainWorkspace
           pageTitle={pageTitle}
           setPageTitle={setPageTitle}
           mapStageProps={mapStageProps}
-        />
-
-        <InspectorPanel
-          {...inspectorPanelProps}
-          shellComponents={inspectorShellComponents}
-          viewComponents={inspectorViewComponents}
         />
       </div>
     </div>
