@@ -76,20 +76,36 @@ function SidePanelIconRail({
   onShowControls,
   onShowInspector,
 }) {
-  const buttonClass = (active = false) => [
-    'pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-all duration-150 hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40',
-    active
-      ? 'border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]'
-      : 'border-[var(--toggle-border)] bg-[var(--toggle-bg-open)] text-[var(--toggle-text)] hover:bg-[var(--utility-panel-bg)] hover:text-[var(--toggle-text-hover)]',
+  const buttonClass = (active = false) => {
+    const base = 'pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40';
+
+    if (isSidePanelOpen) {
+      return [
+        base,
+        active
+          ? 'border-[#f5edd8] bg-[#f5edd8] text-[#34452a] shadow-[0_8px_18px_rgba(20,28,16,0.24)] hover:bg-[#fffaf0]'
+          : 'border-[#e1edcf]/90 bg-[#cfe0b6] text-[#25331f] shadow-[0_6px_14px_rgba(20,28,16,0.18)] hover:border-[#f6fbe9] hover:bg-[#e7f3d2] hover:text-[#172112]',
+      ].join(' ');
+    }
+
+    return [
+      base,
+      'shadow-[0_8px_20px_rgba(0,0,0,0.16)] hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)]',
+      active
+        ? 'border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]'
+        : 'border-[var(--toggle-border)] bg-[var(--toggle-bg-open)] text-[var(--toggle-text)] hover:bg-[var(--utility-panel-bg)] hover:text-[var(--toggle-text-hover)]',
+    ].join(' ');
+  };
+
+  const railClassName = [
+    'absolute top-3 z-50 flex flex-col items-center gap-3 transition-all duration-150',
+    isSidePanelOpen
+      ? 'right-5 rounded-full border border-[#536741]/70 bg-[#667a50]/95 p-2 shadow-[0_16px_32px_rgba(35,45,28,0.28)]'
+      : 'left-3',
   ].join(' ');
 
   return (
-    <div
-      className={[
-        'absolute top-3 z-40 flex flex-col gap-3',
-        isSidePanelOpen ? 'right-3' : 'left-3',
-      ].join(' ')}
-    >
+    <div className={railClassName} aria-label="Side panel navigation">
       {isSidePanelOpen ? (
         <button
           type="button"
