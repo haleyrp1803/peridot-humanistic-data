@@ -1362,6 +1362,7 @@ function buildRightInspectorPanelProps(args) {
     sidebar: {
       showRightSidebar: args.showRightSidebar,
       setShowRightSidebar: args.setShowRightSidebar,
+      setShowLeftSidebar: args.setShowLeftSidebar,
       showInspectorInfo: args.showInspectorInfo,
       setShowInspectorInfo: args.setShowInspectorInfo,
     },
@@ -3020,6 +3021,7 @@ export default function EuropeNetworkMapApp() {
   const rightInspectorPanelProps = buildRightInspectorPanelProps({
     showRightSidebar,
     setShowRightSidebar,
+    setShowLeftSidebar,
     showInspectorInfo,
     setShowInspectorInfo,
     selectedProps,
