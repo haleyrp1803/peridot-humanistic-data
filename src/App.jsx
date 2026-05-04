@@ -2410,34 +2410,42 @@ export default function EuropeNetworkMapApp() {
   const [showExportPanel, setShowExportPanel] = useState(false);
   const [showSummaryPanel, setShowSummaryPanel] = useState(false);
   const [showThemePanel, setShowThemePanel] = useState(false);
-  // MASTER PANEL VISIBILITY STATE
-  // Controls and Inspector are mutually exclusive panel modes. The existing
-  // panel components still receive show/set props for compatibility, but those
-  // setters now route through this single activePanel state so only one side
-  // panel can be open at a time.
-  const [activePanel, setActivePanel] = useState(null);
-  const showLeftSidebar = activePanel === 'controls';
-  const showRightSidebar = activePanel === 'inspector';
+  // MASTER SIDE PANEL STATE
+  // The side panel now has two separate concepts:
+  // - isSidePanelOpen controls whether the shared panel shell is open.
+  // - activePanelTab controls which tab the open shell displays.
+  // Existing panel components still receive show/set props for compatibility,
+  // but those setters now route through this split model.
+  const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  const [activePanelTab, setActivePanelTab] = useState('controls');
+  const showLeftSidebar = isSidePanelOpen && activePanelTab === 'controls';
+  const showRightSidebar = isSidePanelOpen && activePanelTab === 'inspector';
 
   const resolvePanelToggleValue = (nextValue, currentValue) => (
     typeof nextValue === 'function' ? nextValue(currentValue) : nextValue
   );
 
   const setShowLeftSidebar = (nextValue) => {
-    setActivePanel((currentPanel) => {
-      const currentlyOpen = currentPanel === 'controls';
-      const shouldOpen = resolvePanelToggleValue(nextValue, currentlyOpen);
-      if (shouldOpen) return 'controls';
-      return currentlyOpen ? null : currentPanel;
+    setIsSidePanelOpen((currentlyOpen) => {
+      const currentlyShowingControls = currentlyOpen && activePanelTab === 'controls';
+      const shouldOpen = resolvePanelToggleValue(nextValue, currentlyShowingControls);
+      if (shouldOpen) {
+        setActivePanelTab('controls');
+        return true;
+      }
+      return currentlyShowingControls ? false : currentlyOpen;
     });
   };
 
   const setShowRightSidebar = (nextValue) => {
-    setActivePanel((currentPanel) => {
-      const currentlyOpen = currentPanel === 'inspector';
-      const shouldOpen = resolvePanelToggleValue(nextValue, currentlyOpen);
-      if (shouldOpen) return 'inspector';
-      return currentlyOpen ? null : currentPanel;
+    setIsSidePanelOpen((currentlyOpen) => {
+      const currentlyShowingInspector = currentlyOpen && activePanelTab === 'inspector';
+      const shouldOpen = resolvePanelToggleValue(nextValue, currentlyShowingInspector);
+      if (shouldOpen) {
+        setActivePanelTab('inspector');
+        return true;
+      }
+      return currentlyShowingInspector ? false : currentlyOpen;
     });
   };
 
