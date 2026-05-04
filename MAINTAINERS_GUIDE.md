@@ -74,8 +74,6 @@ Maintainer/workflow documents at repo root:
 - `MAINTAINERS_GUIDE.md`
 - `PROJECT_WORKFLOW_CHARTER.md`
 - `CHANGELOG.md`
-- `CONTROL_PANEL_DEPENDENCY_MAP.md`
-- `VIEWPORT_TIMELINE_AUDIT.md`
 
 ---
 

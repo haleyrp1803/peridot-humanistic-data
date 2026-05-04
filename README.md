@@ -411,8 +411,6 @@ This repository includes internal maintenance and workflow documents that should
 - **`MAINTAINERS_GUIDE.md`**
 - **`PROJECT_WORKFLOW_CHARTER.md`**
 - **`CHANGELOG.md`**
-- **`CONTROL_PANEL_DEPENDENCY_MAP.md`**
-- **`VIEWPORT_TIMELINE_AUDIT.md`**
 
 ---
 
