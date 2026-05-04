@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This document is the architectural reference for the correspondence visualizer app. It should stay aligned with the committed source of truth in the repository and with the workflow rules in `PROJECT_WORKFLOW_CHARTER.md`. This guide is updated on committed architectural changes and should be sufficient to hand off work into a fresh chat session without depending on older conversation context.
+This document is the architectural reference for the Peridot correspondence visualizer app. It should stay aligned with the committed source of truth in the repository and with the workflow rules in `PROJECT_WORKFLOW_CHARTER.md`.
+
+This guide is updated on committed architectural changes and should be sufficient to hand off work into a fresh chat session without depending on older conversation context.
 
 ---
 
@@ -14,7 +16,13 @@ Current source of truth folder:
 
 Current clean safe baseline:
 
-- **`57b946e` — `Make timeline year-based`**
+- **`4a17d1c` — `Make inspector panel content-only`**
+
+Current GitHub repository:
+
+- `https://github.com/haleyrp1803/correspondence-visualizer`
+
+When the local folder and GitHub are confirmed aligned by the sync ritual, treat the current Git commit as the source of truth.
 
 This project should continue to follow the user's bounded-pass workflow:
 
@@ -36,17 +44,20 @@ Current live app surface includes:
 - `src/index.css`
 - `src/main.jsx`
 
-Extracted panel / inspector boundaries now present in `src/`:
+Current panel / inspector boundaries in `src/`:
 
 - `src/LeftControlPanel.jsx`
-- `src/RightInspectorPanel.jsx`
+- `src/InspectorPanel.jsx`
 - `src/InspectorBodyRouter.jsx`
 - `src/InspectorEmptyState.jsx`
 - `src/InspectorClusterView.jsx`
 - `src/InspectorEdgeView.jsx`
 - `src/InspectorNodeView.jsx`
+- `src/InspectorConnectedCorrespondents.jsx`
+- `src/InspectorPersonPlaces.jsx`
+- `src/InspectorBackButton.jsx`
 
-Extracted support modules now present in `src/`:
+Extracted support modules in `src/`:
 
 - `src/mapLayoutHelpers.js`
 - `src/mapStageComponents.jsx`
@@ -56,9 +67,6 @@ Extracted support modules now present in `src/`:
 - `src/timelinePlaybackComponents.jsx`
 - `src/exportHelpers.js`
 - `src/personForceLayoutHelpers.js`
-- `src/InspectorConnectedCorrespondents.jsx`
-- `src/InspectorPersonPlaces.jsx`
-- `src/InspectorBackButton.jsx`
 
 Maintainer/workflow documents at repo root:
 
@@ -73,13 +81,13 @@ Maintainer/workflow documents at repo root:
 
 ## Architectural summary
 
-The app is a Vite/React/Tailwind correspondence visualizer with three user-facing visualization choices:
+Peridot is a Vite/React/Tailwind correspondence visualizer with three user-facing visualization choices:
 
 - **People**
 - **Place**
 - **Force-Directed**
 
-Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing control model is now simplified through direct view buttons.
+Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing control model uses direct view buttons.
 
 The app includes:
 
@@ -87,119 +95,169 @@ The app includes:
 - graph derivation
 - interactive SVG-based rendering
 - year-based timeline filtering and playback
-- right-panel inspection workflow
+- shared side-panel inspection workflow
 - theme presets and visual controls
 - export tools for image and tabular outputs
 
-The main maintenance challenge remains structural concentration in `src/App.jsx`, but that concentration has been reduced substantially in bounded passes.
+The main maintenance challenge remains structural concentration in `src/App.jsx`, but that concentration has been reduced through bounded extraction passes.
 
 The current person-network layouts are:
 
 - **geographic-anchor**
-- **force-directed** (pre-settled `d3-force`)
+- **force-directed** using pre-settled `d3-force`
 
-The force-directed person view is intentionally rendered on a clean theme-driven background rather than on top of the geographic map backdrop.
-
-The inspector supports internal navigation between **people** and **places**, with a working Back button for returning to the immediately previous internal inspector panel.
+The force-directed person view renders on a clean theme-driven background rather than on top of the geographic map backdrop.
 
 ---
 
 ## Current module responsibilities
 
 ### `src/App.jsx`
-Still the main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, control-panel contract building, timeline state, and inspector navigation state.
+
+Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel contract building, timeline state, inspector navigation state, and export wiring.
 
 ### `src/LeftControlPanel.jsx`
-Owns the current left-panel UI boundary and section composition.
 
-### `src/RightInspectorPanel.jsx`
-Owns the inspector shell boundary.
+Owns the shared side-panel shell. The shell includes:
+
+- collapsed left rail with Controls and Inspector openers
+- open/close shell behavior
+- Controls / Inspector tab switcher
+- Controls content rendering
+- Inspector content rendering through `InspectorPanelContent`
+
+This file currently remains named `LeftControlPanel.jsx`, but it is now conceptually the shared side-panel shell.
+
+### `src/InspectorPanel.jsx`
+
+Owns inspector content only. It no longer owns the outer panel shell. It renders:
+
+- inspector header
+- inspector-internal Back button
+- `InspectorBodyRouter`
 
 ### `src/InspectorBodyRouter.jsx`
+
 Routes resolved inspector state to the appropriate extracted view.
 
 ### `src/InspectorEmptyState.jsx`
+
 Owns the empty inspector state.
 
 ### `src/InspectorClusterView.jsx`
-Owns the cluster inspector state boundary.
+
+Owns the cluster inspector view. Current behavior groups contained members by place and sorts groups/members by represented visible volume.
 
 ### `src/InspectorEdgeView.jsx`
+
 Owns the edge inspector state boundary.
 
 ### `src/InspectorNodeView.jsx`
+
 Owns the node / person-detail / place-detail inspector boundary.
 
 ### `src/mapLayoutHelpers.js`
-Pure map/layout helper logic.
+
+Pure map/layout helper logic, including viewport construction, clustering, cluster radius calculation, label visibility, and geometric calculations.
 
 ### `src/mapStageComponents.jsx`
+
 Map-stage-adjacent UI/chrome components.
 
 ### `src/interactionHelpers.js`
+
 Pure interaction-resolution and selection-building helpers. This file owns helper logic for:
 
 - nearby candidate generation
 - selection resolution
-- weighted connected-correspondent ordering
+- cluster selection payload building
+- connected-correspondent ordering
 - `person-detail` and `place-detail` payload derivation
 - person-detail sent/received place-section derivation
 
 ### `src/mapInteractionHandlers.js`
+
 Top-level map interaction handlers.
 
 ### `src/timelinePlaybackHelpers.js`
+
 Pure timeline/playback derivation helpers.
 
 ### `src/timelinePlaybackComponents.jsx`
+
 Timeline/playback panel UI boundary. The timeline is now **year-based**, not month-based.
 
 ### `src/exportHelpers.js`
+
 Pure export utilities and export row-builder helpers.
 
 ### `src/personForceLayoutHelpers.js`
+
 Pure helper logic for the pre-settled force-directed person-network layout.
 
 ### `src/InspectorConnectedCorrespondents.jsx`
+
 Inspector navigation component for person-to-person movement.
 
 ### `src/InspectorPersonPlaces.jsx`
+
 Inspector navigation component for person-to-place movement. It shows two explicit sections:
 
 - **Places this person sent letters to**
 - **Places where this person received letters**
 
 ### `src/InspectorBackButton.jsx`
-Inspector-internal Back button.
 
-It uses a small local history model for **inspector-internal navigation only** and does not attempt to track ordinary map clicks as navigation history.
+Inspector-internal Back button. It uses a small local history model for inspector-internal navigation only and does not track ordinary map clicks as navigation history.
 
 ---
 
 ## Current functional state
 
 ### Visualization modes
+
 - Place view
 - People view
 - Force-Directed view
 
 ### Person-network layouts
+
 - geographic-anchor layout
 - pre-settled force-directed layout
 
+### Side-panel capabilities
+
+- one shared left-side panel shell
+- Controls and Inspector as tabs inside that shell
+- collapsed left rail with Controls and Inspector icons
+- shell-level open/close behavior
+- Inspector auto-opens from node, edge, and cluster interactions
+
 ### Inspector capabilities
+
 - hover and click inspection
 - linked records browsing
 - internal navigation between people and places
 - Back button support for inspector-internal navigation
+- actionable cluster inspector views
+- cluster members grouped by place and ordered by visible volume
 
 ### Timeline capabilities
+
 - year-based date filtering
 - playback controls
 - timeline panel UI extracted into supporting components/helpers
 - month selectors removed in favor of start-year / end-year controls
 
+### Map and sizing capabilities
+
+- dynamic node radius contrast based on visible active data
+- volume-based zoom-responsive cluster sizing
+- zoom-responsive proximity clustering for nearby nodes/places
+- edge sizing unchanged by the recent node/cluster sizing work
+
 ### Export capabilities
+
 - SVG export
 - PNG export
 - nodes CSV export
@@ -218,7 +276,7 @@ Other retained presets still function as map-focused alternatives:
 
 Important current control-panel state:
 
-- current top-level left-panel grouping uses **DATA** and **OPTIONS**
+- current top-level grouping uses **DATA** and **OPTIONS**
 - key sections include:
   1. Data Inputs
   2. Visualization Type
@@ -228,7 +286,7 @@ Important current control-panel state:
   6. Export
   7. Summary and Diagnostics
 
-The current panel state also includes these recent committed behavior changes:
+Recent committed behavior includes:
 
 - direct view buttons for **People**, **Place**, and **Force-Directed**
 - **People** as the default startup view
@@ -238,55 +296,85 @@ The current panel state also includes these recent committed behavior changes:
 
 ---
 
-## Recent development trajectory (step by step)
+## Recent development trajectory
 
-This section is intentionally explicit so a future maintainer can explain how the current state emerged.
+### Cluster and sizing sequence
 
-### `86ad35f` — Extract left control panel component
-Moved the left control panel out of `src/App.jsx` into `src/LeftControlPanel.jsx`.
+#### `ed39e55` — Make cluster nodes open actionable inspector views
 
-### `6a32004` — Harden inspector contract in place
-Stabilized the inspector selection contract before extraction work continued.
+Made cluster nodes clickable and made contained cluster members navigable through the inspector.
 
-### `c0a15fd` — Extract inspector shell and router
-Established the extracted inspector shell and routing boundary.
+#### `3187d05` — Increase dynamic node radius contrast
 
-### `003fae1` — Split empty cluster and edge inspector views
-Moved the easier inspector views out of `src/App.jsx`.
+Introduced stronger dynamic node radius contrast based on active data while preserving caps.
 
-### `149315a` — Extract inspector node view
-Completed the main inspector-view extraction by moving node/person/place inspector rendering into its own file.
+#### `fed4b5b` — Use volume-based zoom-responsive cluster sizing
 
-### `2d627e2` — Remove legacy inspector bodies from App
-Removed dead in-file inspector bodies after extraction stabilized.
+Made cluster sizing reflect represented letter volume and made clustering respond more appropriately to zoom/proximity.
 
-### `fa486b8` — Remove orphaned panel helper functions
-Removed now-unused helper/style functions from `src/App.jsx`.
+#### `63003c1` — Group cluster inspector members by place
 
-### `96064e2` — Set people as default view and simplify view buttons
-Replaced the old two-step visualization selection with direct buttons and made **People** the default startup view.
+Grouped cluster inspector members by place and ordered groups/members by volume.
 
-### `3fedd97` — Tighten minimum weight helper text
-Finished the committed minimum-weight control change by simplifying its helper copy after the slider-to-input redesign.
+### Shared side-panel sequence
 
-### `79d5ae1` — Remove show all dates shortcut
-Removed the old timeline shortcut from Display Controls so date behavior now lives in the Timeline block.
+#### `0063145` — Use menu icon for inspector toggle
 
-### `57b946e` — Make timeline year-based
-Converted the timeline from month-based controls to year-only boundaries while preserving the broader timeline/playback model.
+Changed the collapsed Inspector toggle icon from magnifying glass to menu/hamburger.
+
+#### `17cf020` — Enforce single active side panel
+
+Ensured only one side panel could be open at a time.
+
+#### `df4075a` — Move side panel toggles to left rail
+
+Moved both panel opener icons to the left rail.
+
+#### `f98b3e5` — Add panel mode switcher tabs
+
+Added Controls / Inspector tabs inside the open panel.
+
+#### `2126c9b` — Open inspector in left panel dock
+
+Moved the inspector to the left-side panel area.
+
+#### `88b0c19` — Rename inspector panel shell for left dock
+
+Renamed `RightInspectorPanel.jsx` to `InspectorPanel.jsx`.
+
+#### `e41d8bc` — Split side panel open state from active tab
+
+Separated side-panel open/closed state from active tab state.
+
+#### `b62c74b` — Use shared side panel shell
+
+Created one shared side-panel shell for both Controls and Inspector.
+
+#### `4a17d1c` — Make inspector panel content-only
+
+Removed obsolete shell/tab code from `InspectorPanel.jsx`.
 
 ---
 
 ## Deferred / rolled-back work
 
-### Cluster drill-down attempt
-After `57b946e`, a bounded attempt was made to make cluster indicators drillable through the inspector:
+### Shared-panel semantic prop rename
 
-- cluster click should open a cluster-member list
-- clicking a represented member should open that member’s detail
-- Back should return to the cluster view
+An attempted cleanup of old `showLeftSidebar` / `showRightSidebar` compatibility names was rolled back because it broke inspector auto-open behavior from node, edge, and cluster clicks.
 
-That work was **not committed** and was rolled back to preserve the safe baseline. Future work should revisit cluster drill-down in a fresh bounded pass, starting from the clean baseline rather than from the rolled-back experimental state.
+Do not rename this compatibility path casually. If revisited, explicitly test:
+
+- node click opens Inspector
+- edge click opens Inspector
+- cluster click opens Inspector
+- contained cluster member opens detail
+- Back behavior still works
+
+### Responsive side-panel sizing
+
+An attempted universal responsive positioning change for the shared side panel was rolled back because it disrupted the normal full-size landscape layout and forced scrolling before the map.
+
+Future responsive work should be a narrow-window-specific override, not a universal replacement of the panel positioning model.
 
 ---
 
@@ -300,10 +388,12 @@ These areas still deserve narrow, explicit passes:
 - timeline/playback state coupling
 - export rendering/state coupling
 - broad orchestration work in `src/App.jsx`
-- control-panel render boundaries
-- inspector-open interactions after map clicks
+- shared side-panel shell and inspector-open interactions
+- cluster grouping and cluster inspector navigation
 
-### Additional caution
+---
+
+## Additional caution
 
 Generated helper scripts and backup files should be removed after use.
 
@@ -318,7 +408,7 @@ Examples of things that should not linger in the repo folder:
 
 ## Workflow reminders
 
-Future work should continue to follow the user’s established workflow:
+Future work should continue to follow the user's established workflow:
 
 - one bounded pass at a time
 - classify each pass as **behavior**, **visual**, **structural**, or **documentation**
@@ -327,14 +417,15 @@ Future work should continue to follow the user’s established workflow:
 - use checkpoints before higher-risk changes
 - only ask for the sync ritual after an actual checkpoint or commit
 - prefer direct file delivery and exact Windows PowerShell commands
-- prefer `.txt` delivery for generated scripts when direct source-file downloads are unreliable
+- prefer `.txt` delivery for generated source replacements when direct source-file downloads are unreliable
 - when runtime issues appear after interaction, check the **F12 browser console early**
 
 This recent work also reinforced these process rules:
 
-- target patch scripts against the **exact live file shape**
+- trust GitHub/local source when a recent sync ritual confirms they match
+- target changes against the exact live file shape
 - if a UI change does not appear, verify the live file before stacking more patches
-- do **behavior pass first**, then cleanup pass second
+- do behavior pass first, then cleanup pass second
 - if a pass starts drifting, restore to the last safe commit rather than continuing to stack speculative fixes
 - when a long conversation becomes unreliable or laggy, restore the safe baseline, update docs, and continue in a fresh chat
 
@@ -345,18 +436,15 @@ This recent work also reinforced these process rules:
 A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
-- clean baseline: `57b946e`
+- clean baseline: **`4a17d1c` — `Make inspector panel content-only`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
-- the current fixed basemap is `countries50m`
+- the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
-- the panel/inspector extraction work is committed
-- the current safe baseline includes:
-  - direct view buttons
-  - People default view
-  - minimum-weight input
-  - year-based timeline
-- cluster drill-down was attempted and rolled back
-- documentation should preserve the full commit trajectory meticulously
+- the current shared side panel is committed
+- `InspectorPanel.jsx` is content-only
+- `LeftControlPanel.jsx` owns the shared panel shell
+- current cluster features are committed, not deferred
+- documentation should preserve the full commit trajectory carefully

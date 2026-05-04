@@ -8,7 +8,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, and export tools. The current safe baseline includes an extracted left control panel, an extracted inspector shell/router/view structure, a year-based timeline, a committed minimum-weight input, and direct view-selection buttons for **People**, **Place**, and **Force-Directed**.
+The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, and export tools. The current app includes a shared left-side panel with Controls and Inspector tabs, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, and image/tabular export tools.
 
 ---
 
@@ -18,7 +18,7 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current safe baseline is:
 
-- **`57b946e` — `Make timeline year-based`**
+- **`4a17d1c` — `Make inspector panel content-only`**
 
 The current state of the project includes:
 
@@ -30,17 +30,19 @@ The current state of the project includes:
 - **People** as the default startup view
 - a committed minimum-weight numeric input with **Enter** / **Update** apply behavior
 - year-based timeline filtering and playback infrastructure
-- extracted inspector and control-panel workflows
+- a shared left-side panel with Controls and Inspector tabs
+- actionable cluster inspector behavior
+- cluster inspector members grouped by place
+- dynamic node radius contrast based on active data
+- volume-based zoom-responsive cluster sizing
 - theme preset support and map-stage overlays
 - export tooling for both images and tabular data
-- several successful bounded refactors that extracted helper modules and panel/view files out of `src/App.jsx`
 - a true pre-settled **force-directed person-network layout** backed by `d3-force`
-- a **geographic-anchor person layout** that still places correspondents by mappable location
-- a force-directed person view that renders on a **clean theme-driven background** rather than over the geographic map
+- a **geographic-anchor person layout** that places correspondents by mappable location
 - inspector-internal navigation between people and places
 - a working inspector **Back** button for internal navigation
 
-The codebase is functional, but it is still under active maintenance. The largest remaining structural issue is that important orchestration logic still lives in `src/App.jsx`, even though the panel/inspector architecture is now substantially cleaner than earlier baselines.
+The codebase is functional, but it is still under active maintenance. The largest remaining structural issue is that important orchestration logic still lives in `src/App.jsx`, even though panel, inspector, map, timeline, interaction, and export logic have been substantially extracted.
 
 ---
 
@@ -55,14 +57,16 @@ The codebase is functional, but it is still under active maintenance. The larges
 ### Data interaction
 
 - CSV-based data ingestion
-- fallback embedded geography-style sample data so the app can render before uploads
+- embedded baseline data so the app can render before uploads
 - derived node, edge, cluster, and timeline structures based on uploaded or embedded data
 
 ### Research workflow tools
 
 - hover and click inspection
-- right-side inspector for selected nodes, edges, clusters, and linked records
+- shared side-panel Inspector tab for selected nodes, edges, clusters, and linked records
 - inspector-internal navigation between people and places
+- actionable cluster inspector lists
+- cluster members grouped by place and ordered by represented visible volume
 - connected-correspondent navigation ordered by relationship weight
 - person-detail place sections for:
   - **Places this person sent letters to**
@@ -71,6 +75,13 @@ The codebase is functional, but it is still under active maintenance. The larges
 - year-based timeline range filtering
 - playback controls for chronological exploration
 - map legend, title bar, and floating control overlays
+
+### Visual encoding
+
+- dynamic node sizing with stronger contrast for high-volume nodes
+- volume-based cluster sizing
+- zoom-responsive cluster grouping for nearby people/places
+- edge sizing preserved independently from node and cluster sizing
 
 ### Visual customization
 
@@ -89,12 +100,18 @@ The codebase is functional, but it is still under active maintenance. The larges
 
 ## 5. Current interface notes
 
-The current control-panel state includes these notable recent behavior changes:
+The current interface includes:
 
-- the old two-step visualization-mode selection has been replaced by three direct buttons:
-  - **People**
-  - **Place**
-  - **Force-Directed**
+- a shared left-side panel
+- collapsed left rail with:
+  - cog icon for Controls
+  - menu/hamburger icon for Inspector
+- open side panel with Controls / Inspector tabs
+- a Controls tab for data, visualization, display, timeline, theme, export, and diagnostics
+- an Inspector tab for selected nodes, edges, clusters, and internal navigation
+
+Other current behavior:
+
 - the app opens in **People** view by default
 - the old minimum-weight slider has been replaced by a committed numeric input
 - the old **Show all dates** shortcut has been removed
@@ -106,31 +123,42 @@ These are part of the current safe baseline and should be treated as live behavi
 
 ## 6. Screenshots
 
-The following screenshots should reflect the current live app state. If future UI changes materially alter the control panel, timeline, or inspector, these images should be refreshed as part of the corresponding documentation pass.
+The screenshots in `docs/images/` may need refresh because the side-panel architecture and cluster inspector behavior have changed materially since the earlier documentation baseline.
+
+Existing screenshot references:
 
 ### Geographic view overview
+
 ![Geographic view overview](docs/images/geographic-view-overview.png)
 
 ### Person view overview
+
 ![Person view overview](docs/images/person-view-overview.png)
 
 ### Timeline and playback controls
+
 ![Timeline and playback controls](docs/images/timeline-playback.png)
 
 ### Inspector detail view
+
 ![Inspector detail view](docs/images/person-network-inspector.png)
 
 ### Geographic inspector example
+
 ![Geographic inspector example](docs/images/geographic-inspector.png)
 
 ### Control panel overview
+
 ![Control panel overview](docs/images/control-panel-overview.png)
 
 ### Additional control panel state
+
 ![Additional control panel state](docs/images/control-panel-secondary.png)
 
 ### Modern theme examples
+
 ![Modern theme example 1](docs/images/modern-theme-1.png)
+
 ![Modern theme example 2](docs/images/modern-theme-2.png)
 
 ---
@@ -167,6 +195,7 @@ src/
   InspectorEdgeView.jsx
   InspectorEmptyState.jsx
   InspectorNodeView.jsx
+  InspectorPanel.jsx
   InspectorPersonPlaces.jsx
   interactionHelpers.js
   LeftControlPanel.jsx
@@ -175,7 +204,6 @@ src/
   mapLayoutHelpers.js
   mapStageComponents.jsx
   personForceLayoutHelpers.js
-  RightInspectorPanel.jsx
   timelinePlaybackComponents.jsx
   timelinePlaybackHelpers.js
 ```
@@ -183,71 +211,94 @@ src/
 ### Module overview
 
 #### `src/main.jsx`
+
 Bootstraps the React application.
 
 #### `src/index.css`
+
 Contains the minimal global layer for Tailwind directives, layout rules, and base font settings.
 
 #### `src/App.jsx`
-The main orchestration layer. It handles top-level application state, data ingestion and normalization, graph derivation, theme token logic, timeline state, inspector state, and workspace composition.
+
+The main orchestration layer. It handles top-level application state, data ingestion and normalization, graph derivation, theme token logic, timeline state, inspector state, shared side-panel state, and workspace composition.
 
 #### `src/LeftControlPanel.jsx`
-Left-panel UI boundary for data inputs, visualization type, display controls, timeline, theme, export, and diagnostics.
 
-#### `src/RightInspectorPanel.jsx`
-Inspector shell boundary.
+Owns the shared side-panel shell. It renders the collapsed rail, panel tabs, Controls content, and Inspector content through `InspectorPanelContent`.
+
+#### `src/InspectorPanel.jsx`
+
+Inspector content boundary. It renders the inspector header, Back button, and body router inside the shared side-panel shell.
 
 #### `src/InspectorBodyRouter.jsx`
+
 Routes inspector state to the appropriate extracted inspector view.
 
 #### `src/InspectorEmptyState.jsx`
+
 Empty inspector state view.
 
 #### `src/InspectorClusterView.jsx`
-Cluster inspector view boundary.
+
+Cluster inspector view. Current behavior groups contained cluster members by place and sorts by visible represented volume.
 
 #### `src/InspectorEdgeView.jsx`
+
 Edge inspector view boundary.
 
 #### `src/InspectorNodeView.jsx`
+
 Node / person-detail / place-detail inspector view boundary.
 
 #### `src/mapLayoutHelpers.js`
-Pure helper logic for viewport construction, clustering, label visibility, and geometric calculations.
+
+Pure helper logic for viewport construction, clustering, cluster radius calculation, label visibility, and geometric calculations.
 
 #### `src/interactionHelpers.js`
+
 Selection and inspection logic, including:
+
 - nearby candidate generation
 - selection resolution
+- cluster selection payload derivation
 - person-detail and place-detail payload derivation
 - weighted connected-correspondent ordering
 - person-detail place-section derivation
 
 #### `src/mapInteractionHandlers.js`
+
 Centralized map interaction handler factory for hover/click/selection behavior.
 
 #### `src/timelinePlaybackHelpers.js`
+
 Pure timeline/playback derivation helpers.
 
 #### `src/timelinePlaybackComponents.jsx`
+
 Timeline/playback UI boundary.
 
 #### `src/mapStageComponents.jsx`
+
 Map-stage-adjacent UI/chrome components.
 
 #### `src/exportHelpers.js`
+
 Export subsystem utilities for CSV, SVG, and PNG output.
 
 #### `src/personForceLayoutHelpers.js`
+
 Pure helper logic for the pre-settled force-directed person-network layout.
 
 #### `src/InspectorConnectedCorrespondents.jsx`
+
 Inspector navigation component for person-to-person navigation, showing correspondents ordered by relationship weight and labeled by letter count.
 
 #### `src/InspectorPersonPlaces.jsx`
+
 Inspector navigation component for person-to-place navigation.
 
 #### `src/InspectorBackButton.jsx`
+
 Inspector-internal Back button component for returning to the previous internal inspector panel.
 
 ---
@@ -295,9 +346,7 @@ https://github.com/haleyrp1803/correspondence-visualizer
 
 ## 10. Data inputs
 
-This is a data-driven visualization app.
-
-The app is intended to work with correspondence-related tabular data that includes some combination of:
+This is a data-driven visualization app. It is intended to work with correspondence-related tabular data that includes some combination of:
 
 - dates
 - source person
@@ -309,7 +358,7 @@ The app is intended to work with correspondence-related tabular data that includ
 - linked letter metadata
 - person metadata
 
-The source code currently includes embedded fallback geography-style sample data so that the app can render before user uploads are provided.
+The source code currently includes embedded baseline data so that the app can render before user uploads are provided.
 
 ---
 
@@ -323,7 +372,7 @@ A typical workflow is:
 4. Adjust display and weight filters.
 5. Use the year-based timeline if needed.
 6. Hover or click nodes, edges, or clusters to inspect them.
-7. Use the inspector to navigate between people and places.
+7. Use the Inspector tab to navigate between people, places, cluster members, and linked records.
 8. Use the inspector **Back** button to return to the previous internal panel.
 9. Export the current state as SVG, PNG, or CSV outputs.
 
@@ -333,7 +382,7 @@ A typical workflow is:
 
 ### Current structural limitation
 
-- `src/App.jsx` still contains a large amount of orchestration logic and remains the main concentration point in the codebase.
+`src/App.jsx` still contains a large amount of orchestration logic and remains the main concentration point in the codebase.
 
 ### Known fragile zones
 
@@ -346,6 +395,8 @@ The maintainer documentation identifies the following areas as especially sensit
 - export rendering/state coupling
 - broad orchestration work inside `src/App.jsx`
 - inspector-open interactions
+- shared side-panel shell behavior
+- cluster grouping and cluster inspector navigation
 
 ### Practical implication
 
@@ -369,18 +420,21 @@ This repository includes internal maintenance and workflow documents that should
 
 Likely near-term priorities include:
 
-- continued safe reduction of orchestration pressure inside `src/App.jsx`
-- future control-panel section splitting if it becomes useful
-- deferred cluster-drilldown behavior revisited in a fresh bounded pass
-- continued documentation maintenance that preserves full commit history
-- further product iteration now that the major panel architecture cleanup is committed
+- continue safe reduction of orchestration pressure inside `src/App.jsx`
+- avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
+- revisit responsive side-panel sizing only as a narrow-window-specific pass
+- refresh screenshots after the shared side-panel UI stabilizes
+- standardize visual export dimensions later if needed
+- preserve full commit history in documentation updates
 
 ---
 
 ## 15. Author / maintainer / license
 
 ### Author / Maintainer
+
 Repository owner: **Haley R. P.**
 
 ### License
+
 Add the project’s chosen license here if and when one is finalized.

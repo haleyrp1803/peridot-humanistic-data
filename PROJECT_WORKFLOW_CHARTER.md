@@ -2,7 +2,9 @@
 
 ## Purpose
 
-This document defines how changes should be made to the correspondence visualizer app. Its purpose is to reduce risk, prevent version drift, keep source-of-truth discipline, and make changes easier to review and maintain. This charter should be consulted before every implementation pass.
+This document defines how changes should be made to the Peridot correspondence visualizer app. Its purpose is to reduce risk, prevent version drift, keep source-of-truth discipline, and make changes easier to review and maintain.
+
+This charter should be consulted before every implementation pass.
 
 ---
 
@@ -14,222 +16,253 @@ During active editing, the source of truth must be exactly one of the following:
 
 - one specific local project folder
 - one specific pasted/exported file
+- one recently synced Git commit when the user has confirmed local and GitHub alignment through the sync ritual
 
-GitHub, canvas copies, temporary zips, and other artifacts may be references, but they must not be treated as co-equal authoritative sources during the same pass unless that divergence is explicitly acknowledged.
+GitHub, canvas copies, temporary zips, downloaded replacements, and other artifacts may be references, but they must not be treated as co-equal authoritative sources during the same pass unless that divergence is explicitly acknowledged.
 
----
+Current project source of truth folder:
 
-## 2. Alignment rule before starting a new pass
+```text
+C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
+```
 
-Do not begin a new implementation pass until the current relationship among these is known:
+Current clean baseline at the time of this documentation pass:
 
-- local folder
-- GitHub repository
-- pasted/exported file
-- temporary delivered artifact
-
-They must be either:
-
-- confirmed aligned, or
-- explicitly acknowledged as intentionally divergent
+```text
+4a17d1c — Make inspector panel content-only
+```
 
 ---
 
-## 3. Bounded-pass template
+## 2. Bounded-pass rule
 
-Every coding pass must begin with a bounded-pass definition that states:
+Before each coding pass, state:
 
-- **change type**: behavior, visual, structural, or documentation
-- **goal**
-- **in-scope files/regions**
-- **out-of-scope files/regions**
-- **one plain-language acceptance test**
-- **expected artifact**: targeted patch, replacement block, full file, zip, or commit-ready instructions
+- change type: exactly one of **behavior**, **visual**, **structural**, or **documentation**
+- goal
+- in-scope files/regions
+- out-of-scope files/regions
+- one plain-language acceptance test
+- expected artifact: pasted diff, full file, `.txt` replacement, zip, or commit-ready instructions
 
-This is mandatory.
-
----
-
-## 4. Change-type separation rule
-
-Do not casually mix the following in one pass:
-
-- behavior changes
-- visual changes
-- structural refactors
-- documentation updates
-
-If a pass truly must combine them, that combination should be explicit and justified. Default behavior is one change type per pass.
+Do not mix functional changes, visual redesign, broad refactors, and documentation updates in a single implementation pass unless the user explicitly chooses that scope.
 
 ---
 
-## 5. Fragile-zones preflight rule
+## 3. Fragile-zones preflight
 
-Before touching a fragile zone, explicitly state:
+Before touching a fragile zone, state:
 
-- which fragile zone is affected
+- affected fragile zone
 - what might break
 - what is intentionally not being touched
 - how the result will be verified afterward
 
-Known fragile zones include:
+Current fragile zones include:
 
-- viewport centering/reset
+- map viewport centering/reset behavior
 - dense-map hover/click interaction
 - selection persistence across filters
-- inspector-open interactions
-- playback/timeline state
-- export rendering
+- playback/timeline state coupling
+- export rendering/state coupling
+- broad orchestration work inside `src/App.jsx`
+- shared side-panel shell behavior
+- inspector-open interactions after map clicks
+- cluster grouping and cluster inspector navigation
 
 ---
 
-## 6. Refactor threshold rule
+## 4. Checkpoint and commit distinction
 
-If a requested change can be completed safely with local edits, do that. If the change would require touching more than one fragile subsystem, do not let it silently expand into a rewrite. Convert it into a planned structural pass instead.
-
----
-
-## 7. Tooling and dependency freeze rule
-
-Unless a pass is explicitly about tooling or architecture, do not introduce:
-
-- package upgrades
-- config rewrites
-- lint/format churn
-- file renames
-- folder moves
-
-These changes create noise and increase risk when mixed into normal feature work.
-
----
-
-## 8. Delivery-mode rule
-
-Use the smallest safe delivery format.
-
-- **small local edit** → targeted patch instructions
-- **medium bounded area** → replacement block with anchors
-- **high-risk or unstable file** → full-file replacement from the current source of truth
-
-The delivery mode should match the risk level, not convenience.
-
----
-
-## 9. Acceptance-test rule
-
-Every bounded pass must end with one explicit plain-language acceptance test.
-
-Examples:
-
-- "Selecting a node still opens the inspector without resetting the viewport."
-- "Changing the theme preset updates panel styling without affecting map interaction."
-
-If the acceptance test cannot be clearly stated, the pass is probably too vague.
-
----
-
-## 10. Checkpoint vs commit rule
-
-Use these terms precisely.
-
-### Checkpoint
 A **checkpoint** is a tested intermediate state that may still be revised soon.
 
-### Commit
-A **commit** is a coherent completed pass with one clear behavioral, visual, structural, or documentation outcome.
+A **commit** is a coherent completed pass with one clear outcome.
 
-Do not blur the distinction.
-
----
-
-## 11. Behavior-first / cleanup-second rule
-
-For UI and interaction changes, prefer this sequence:
-
-1. make the behavior change
-2. verify it with the explicit acceptance test
-3. only then run a cleanup pass for dead code, copy changes, or adapter simplification
-
-Do not combine speculative cleanup with an unverified new behavior if it can be avoided.
+Use commits for coherent completed passes. Use checkpoints when the user wants recoverability before additional risky work.
 
 ---
 
-## 12. Live-file targeting rule
+## 5. Delivery format rule
 
-When creating scripted patches, target the **exact current live file shape**, not an assumed earlier state.
+Use the safest delivery mode for the current pass.
 
-If a UI change does not visibly appear:
+Preferred modes:
 
-- verify the live file immediately with direct inspection
-- confirm whether the patch actually landed
-- do not stack additional speculative patches until the current live file state is known
+- small local edit: targeted replacement block with clear anchors
+- medium bounded file area: replacement block or full replacement file
+- fragile/high-risk file: full replacement from the current source of truth
+- generated source replacement: provide a `.txt` file that the user can copy into place
 
-This is now a standing reliability rule.
+When delivering files, include exact Windows PowerShell copy commands.
 
----
-
-## 13. Recovery rule for drifting passes
-
-If a pass becomes unstable or starts requiring repeated speculative fixes:
-
-- stop stacking patches
-- identify the last safe commit
-- restore the working tree to that safe state
-- document the attempted-but-rolled-back work as deferred if needed
-- restart from a fresh bounded pass
-
-A safe rollback is preferable to an increasingly unreliable patch chain.
+Do not use `git add .` while `itch_upload/` or other generated artifacts are untracked. Use targeted adds or `git add -A src` only when a source-file rename/deletion is intentional.
 
 ---
 
-## 14. Documentation preservation rule
+## 6. Recovery protocol
 
-When updating documentation:
+When something goes wrong:
 
-- preserve older useful text unless it is clearly obsolete
-- add new material rather than rewriting aggressively by default
-- distinguish carefully between:
-  - committed safe-baseline work
-  - attempted but uncommitted / rolled-back work
+1. Stop further edits.
+2. Identify the current source of truth.
+3. Restore the last good checkpoint/commit.
+4. Restate the goal in one sentence.
+5. Make one bounded fix only.
+6. Rerun the acceptance test.
 
-Documentation should be cumulative and trustworthy, not merely tidy.
+Do not stack speculative fixes on top of an unstable state.
 
----
+Recent examples reinforced this rule:
 
-## 15. Full-history changelog rule
-
-The changelog should preserve the full development trajectory.
-
-That means:
-
-- every safe commit should be documented
-- rolled-back work may be noted, but only when clearly labeled as deferred / uncommitted
-- the full-history section should remain cumulative rather than being replaced each time
+- a responsive shared-panel sizing attempt was rolled back after it disrupted the normal landscape layout
+- a semantic shared-panel prop rename was rolled back after it broke inspector auto-open behavior
+- the team returned to the last clean baseline before proceeding
 
 ---
 
-## 16. Fresh-chat escalation rule
+## 7. Sync ritual
 
-When a conversation becomes long enough that patching starts becoming unreliable or laggy:
+Run the sync ritual after actual commits or major checkpoints, not after discussion-only turns.
 
-- restore the safe baseline
-- update documentation
-- continue in a new chat
+Canonical sync ritual:
 
-This is a normal recovery procedure, not a failure.
+```powershell
+git status
+git log --oneline -5
+Get-ChildItem -Name
+Get-ChildItem src -Name
+```
 
----
-
-## 17. Current safe-baseline handoff rule
-
-When ending a long or unstable sequence of passes, documentation and handoff notes should explicitly record the current safe baseline commit so future work starts from the correct point.
-
-At the current documentation baseline, that safe commit is:
-
-- **`57b946e` — `Make timeline year-based`**
+After the user provides a clean sync showing local `HEAD`, `origin/main`, and `origin/HEAD` aligned, trust the synced Git state as the current source of truth. Do not repeatedly ask for uploaded files unless there is a specific reason to believe the file has drifted or the needed file content is not otherwise available.
 
 ---
 
-## 18. Closing reminder
+## 8. Documentation policy
 
-The app has become safer to modify through bounded extraction work, but it still contains fragile orchestration in `src/App.jsx`. The correct response to this is not broad rewriting; it is disciplined bounded passes, verified outcomes, and clean recovery when needed.
+Do not update documentation after every small code commit. That slows development.
+
+Instead, defer README / Maintainer Guide / Changelog updates until:
+
+- a meaningful batch of changes has accumulated
+- a milestone has been reached
+- a fresh-chat handoff is needed
+- the current conversation is becoming laggy or unreliable
+
+When documentation is updated, preserve the full development history in `CHANGELOG.md`.
+
+---
+
+## 9. Dependency and tooling freeze
+
+Do not change dependencies, package manager files, Vite config, Tailwind config, lint/format rules, filenames, or folder structure unless the pass is explicitly about tooling or architecture.
+
+Generated artifacts such as `itch_upload/` should not be committed during ordinary source-development passes.
+
+---
+
+## 10. Modularization roadmap
+
+Maintain a modularization roadmap for eventual `App.jsx` decomposition, but do not execute it casually.
+
+Preferred order:
+
+1. pure data helpers
+2. export helpers
+3. theme/constants
+4. small reusable UI pieces
+5. map interaction helpers
+6. panel and inspector content components
+7. app orchestration last
+
+Stop structural cleanup once the file is stable unless there is a concrete bug, a planned architectural pass, or a specific maintenance pain point.
+
+---
+
+## 11. Decision records
+
+For non-obvious implementation choices, record:
+
+- what was chosen
+- what alternative was rejected
+- why
+
+Current notable decisions:
+
+- The map remains dynamic rather than fixed to a canonical live stage for now.
+- Panel standardization focused on a shared side panel instead of freezing the whole viewport.
+- The Inspector is now content inside the shared side panel, not a separate right-side shell.
+- Cluster sizing now reflects represented letter volume.
+- Cluster grouping is zoom-responsive.
+- Cluster inspector members are grouped by place.
+
+---
+
+## 12. Project-specific cautions
+
+### Shared side-panel compatibility path
+
+The app still contains old compatibility naming around left/right panel visibility in some places. Although the names are misleading, that path currently preserves Inspector auto-open behavior.
+
+Do **not** casually rename these props or setters. If revisited, explicitly test:
+
+- node click opens Inspector
+- edge click opens Inspector
+- cluster click opens Inspector
+- contained cluster member opens detail
+- Back behavior still works
+
+### Responsive panel sizing
+
+A prior attempt to make the shared side panel absolutely positioned at all viewport sizes was rolled back because it disrupted normal full-size landscape layout.
+
+Future responsive panel work should be a narrow-window-specific override, not a universal positioning replacement.
+
+### Cluster behavior
+
+Cluster behavior is now committed and functional. Future cluster changes should preserve:
+
+- cluster click opens Inspector
+- cluster inspector lists contained members
+- members are grouped by place
+- member click opens detail
+- Back returns to the cluster view
+- cluster sizing remains visually meaningful
+
+---
+
+## 13. Standard delivery summary
+
+Each implementation pass should end with:
+
+- what changed
+- exact files changed
+- one acceptance test
+- whether the result is a checkpoint or commit
+- exact Git commands
+- exact copy commands if files are being moved
+- known residual risks
+
+---
+
+## 14. Fresh-chat handoff
+
+For a new chat, start with:
+
+```text
+Source of truth folder:
+C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
+
+Current documented clean baseline:
+4a17d1c — Make inspector panel content-only
+```
+
+The new chat should be told:
+
+- Peridot is the current app identity.
+- The current fixed basemap is `countries50m`.
+- The app uses a shared left-side panel with Controls and Inspector tabs.
+- `LeftControlPanel.jsx` owns the shared side-panel shell.
+- `InspectorPanel.jsx` is content-only.
+- Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed features.
+- The compatibility path for inspector auto-open is fragile; do not rename it casually.
+- Documentation updates are batched, not performed after every small code commit.
