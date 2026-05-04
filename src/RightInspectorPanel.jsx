@@ -73,9 +73,9 @@ export function RightInspectorPanel({
   if (!showRightSidebar) return null;
 
   return (
-    <aside className={`${sidebarSurfaceClassName()} border-l xl:absolute xl:right-0 xl:top-0 xl:h-full xl:z-30 w-[420px]`}>
-      <SidebarToggleComponent side="right" open={showRightSidebar} onToggle={() => setShowRightSidebar(false)} />
-      <div className="relative h-full overflow-auto p-5 pl-20 pb-24">
+    <aside className={`${sidebarSurfaceClassName()} border-r xl:absolute xl:left-0 xl:top-0 xl:h-full xl:z-40 w-[420px]`}>
+      <SidebarToggleComponent side="left" open={showRightSidebar} onToggle={() => setShowRightSidebar(false)} />
+      <div className="relative h-full overflow-auto p-5 pr-20 pb-24">
           <PanelModeTabs
             activePanel="inspector"
             onShowControls={() => setShowLeftSidebar(true)}
