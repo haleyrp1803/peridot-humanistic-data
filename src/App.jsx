@@ -2408,12 +2408,37 @@ export default function EuropeNetworkMapApp() {
   const [showExportPanel, setShowExportPanel] = useState(false);
   const [showSummaryPanel, setShowSummaryPanel] = useState(false);
   const [showThemePanel, setShowThemePanel] = useState(false);
-  // MASTER LEFT PANEL VISIBILITY STATE
-  // This is the state flipped by the cog button. When false, most of the left
-  // control-panel tree does not render. When true, React mounts the control
-  // panel subtree and all of its nested dependencies are exercised.
-  const [showLeftSidebar, setShowLeftSidebar] = useState(false);
-  const [showRightSidebar, setShowRightSidebar] = useState(false);
+  // MASTER PANEL VISIBILITY STATE
+  // Controls and Inspector are mutually exclusive panel modes. The existing
+  // panel components still receive show/set props for compatibility, but those
+  // setters now route through this single activePanel state so only one side
+  // panel can be open at a time.
+  const [activePanel, setActivePanel] = useState(null);
+  const showLeftSidebar = activePanel === 'controls';
+  const showRightSidebar = activePanel === 'inspector';
+
+  const resolvePanelToggleValue = (nextValue, currentValue) => (
+    typeof nextValue === 'function' ? nextValue(currentValue) : nextValue
+  );
+
+  const setShowLeftSidebar = (nextValue) => {
+    setActivePanel((currentPanel) => {
+      const currentlyOpen = currentPanel === 'controls';
+      const shouldOpen = resolvePanelToggleValue(nextValue, currentlyOpen);
+      if (shouldOpen) return 'controls';
+      return currentlyOpen ? null : currentPanel;
+    });
+  };
+
+  const setShowRightSidebar = (nextValue) => {
+    setActivePanel((currentPanel) => {
+      const currentlyOpen = currentPanel === 'inspector';
+      const shouldOpen = resolvePanelToggleValue(nextValue, currentlyOpen);
+      if (shouldOpen) return 'inspector';
+      return currentlyOpen ? null : currentPanel;
+    });
+  };
+
   const [showInspectorInfo, setShowInspectorInfo] = useState(false);
 
   // ------------------------------------------------------------
