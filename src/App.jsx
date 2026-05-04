@@ -1162,7 +1162,7 @@ function edgeKeyFromRow(row) {
 }
 
 // Sidebar toggle behavior:
-// - when collapsed, Controls shows a cog and Inspector shows a magnifying glass
+// - when collapsed, Controls shows a cog and Inspector shows a hamburger/menu icon
 // - when open, both become dark blue circular close buttons
 function SidebarToggle({ side, open, onToggle }) {
   const left = side === 'left';
@@ -1173,9 +1173,10 @@ function SidebarToggle({ side, open, onToggle }) {
       <path d="M12 2.4c-.7 0-1.4.1-2 .3l-.7 2.2c-.5.2-1 .4-1.5.7l-2.1-.9c-1 .6-1.8 1.4-2.4 2.4l.9 2.1c-.3.5-.5 1-.7 1.5l-2.2.7c-.2.7-.3 1.3-.3 2s.1 1.4.3 2l2.2.7c.2.5.4 1 .7 1.5l-.9 2.1c.6 1 1.4 1.8 2.4 2.4l2.1-.9c.5.3 1 .5 1.5.7l.7 2.2c.7.2 1.3.3 2 .3s1.4-.1 2-.3l.7-2.2c.5-.2 1-.4 1.5-.7l2.1.9c1-.6 1.8-1.4 2.4-2.4l-.9-2.1c.3-.5.5-1 .7-1.5l2.2-.7c.2-.7.3-1.3.3-2s-.1-1.4-.3-2l-2.2-.7c-.2-.5-.4-1-.7-1.5l.9-2.1c-.6-1-1.4-1.8-2.4-2.4l-2.1.9c-.5-.3-1-.5-1.5-.7l-.7-2.2c-.6-.2-1.3-.3-2-.3Zm0 5.4a4.2 4.2 0 1 1 0 8.4a4.2 4.2 0 0 1 0-8.4Z" />
     </svg>
   ) : (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10.5" cy="10.5" r="5.75" />
-      <path d="M15 15l5 5" />
+    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4.5 7h15" />
+      <path d="M4.5 12h15" />
+      <path d="M4.5 17h15" />
     </svg>
   );
 
