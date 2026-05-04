@@ -37,7 +37,6 @@ import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespond
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
 import { LeftControlPanel } from './LeftControlPanel';
-import { InspectorPanel } from './InspectorPanel';
 import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmptyState';
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';

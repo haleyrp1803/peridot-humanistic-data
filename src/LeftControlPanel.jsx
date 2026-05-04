@@ -839,12 +839,12 @@ function DisplayFilteringGroup({
   );
 }
 
-// LEFT CONTROL PANEL SHELL
-// This component is the actual subtree behind the cog button. The app may look
-// healthy until this component renders, because the heavy inner tree is gated
-// behind `showLeftSidebar`.
+// SHARED SIDE PANEL SHELL
+// This component is the shared side-panel subtree behind the controls and inspector buttons. The app may look
+// healthy until this component renders, because the heavy inner trees are gated
+// behind the controls and inspector open-state flags.
 // This is the key reason repeated refactor failures show up only after opening
-// the control panel: dormant render-time dependencies live below this shell.
+// the shared side panel: dormant render-time dependencies live below this shell.
 
 export function LeftControlPanel({
   sidebarState,
