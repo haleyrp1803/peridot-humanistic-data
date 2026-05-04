@@ -68,6 +68,76 @@ function SidebarToggle({ side, open, onToggle, stackIndex = 0 }) {
   );
 }
 
+
+function SidePanelIconRail({
+  isSidePanelOpen,
+  activePanel,
+  onClose,
+  onShowControls,
+  onShowInspector,
+}) {
+  const buttonClass = (active = false) => [
+    'pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-all duration-150 hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40',
+    active
+      ? 'border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]'
+      : 'border-[var(--toggle-border)] bg-[var(--toggle-bg-open)] text-[var(--toggle-text)] hover:bg-[var(--utility-panel-bg)] hover:text-[var(--toggle-text-hover)]',
+  ].join(' ');
+
+  return (
+    <div
+      className={[
+        'absolute top-3 z-40 flex flex-col gap-3',
+        isSidePanelOpen ? 'right-3' : 'left-3',
+      ].join(' ')}
+    >
+      {isSidePanelOpen ? (
+        <button
+          type="button"
+          onClick={onClose}
+          className={buttonClass(false)}
+          aria-label="Close side panel"
+          title="Close panel"
+        >
+          <span className="sr-only">Close panel</span>
+          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={onShowControls}
+        className={buttonClass(activePanel === 'controls')}
+        aria-label="Show controls panel"
+        aria-pressed={activePanel === 'controls'}
+        title="Controls"
+      >
+        <span className="sr-only">Show Controls</span>
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="currentColor">
+          <path d="M12 2.4c-.7 0-1.4.1-2 .3l-.7 2.2c-.5.2-1 .4-1.5.7l-2.1-.9c-1 .6-1.8 1.4-2.4 2.4l.9 2.1c-.3.5-.5 1-.7 1.5l-2.2.7c-.2.7-.3 1.3-.3 2s.1 1.4.3 2l2.2.7c.2.5.4 1 .7 1.5l-.9 2.1c.6 1 1.4 1.8 2.4 2.4l2.1-.9c.5.3 1 .5 1.5.7l.7 2.2c.7.2 1.3.3 2 .3s1.4-.1 2-.3l.7-2.2c.5-.2 1-.4 1.5-.7l2.1.9c1-.6 1.8-1.4 2.4-2.4l-.9-2.1c.3-.5.5-1 .7-1.5l2.2-.7c.2-.7.3-1.3.3-2s-.1-1.4-.3-2l-2.2-.7c-.2-.5-.4-1-.7-1.5l.9-2.1c-.6-1-1.4-1.8-2.4-2.4l-2.1.9c-.5-.3-1-.5-1.5-.7l-.7-2.2c-.6-.2-1.3-.3-2-.3Zm0 5.4a4.2 4.2 0 1 1 0 8.4a4.2 4.2 0 0 1 0-8.4Z" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        onClick={onShowInspector}
+        className={buttonClass(activePanel === 'inspector')}
+        aria-label="Show inspector panel"
+        aria-pressed={activePanel === 'inspector'}
+        title="Inspector"
+      >
+        <span className="sr-only">Show Inspector</span>
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 7h16" />
+          <path d="M4 12h16" />
+          <path d="M4 17h16" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
 // Selection helpers.
 // These centralize the logic that converts a lightweight remembered
 // selection ({ kind, id }) into the full inspector-ready object.
@@ -1042,25 +1112,33 @@ export function LeftControlPanel({
 
     setShowLeftSidebar(false);
   };
+  const showControlsPanel = () => {
+    setShowRightSidebar(false);
+    setShowLeftSidebar(true);
+  };
+
+  const showInspectorPanel = () => {
+    setShowLeftSidebar(false);
+    setShowRightSidebar(true);
+  };
 
   return (
-    <aside className={`${sidebarSurfaceClassName()} border-r xl:absolute xl:left-0 xl:top-0 xl:h-full xl:z-30 ${isSidePanelOpen ? 'w-[420px]' : 'w-16'}`}>
-      {isSidePanelOpen ? (
-        <SidebarToggle side="left" open={true} onToggle={closeSidePanel} />
-      ) : (
-        <>
-          <SidebarToggle side="left" open={false} onToggle={() => setShowLeftSidebar(true)} stackIndex={0} />
-          <SidebarToggle side="right" open={false} onToggle={() => setShowRightSidebar(true)} stackIndex={1} />
-        </>
-      )}
+    <aside className={`${sidebarSurfaceClassName()} relative border-r xl:absolute xl:left-0 xl:top-0 xl:h-full xl:z-30 ${isSidePanelOpen ? 'w-[420px]' : 'w-16'}`}>
+      <SidePanelIconRail
+        isSidePanelOpen={isSidePanelOpen}
+        activePanel={showLeftSidebar ? 'controls' : showRightSidebar ? 'inspector' : null}
+        onClose={closeSidePanel}
+        onShowControls={showControlsPanel}
+        onShowInspector={showInspectorPanel}
+      />
       {isSidePanelOpen ? (
         <div className="h-full overflow-auto p-5 pr-20">
           {showLeftSidebar ? (
             <>
               <PanelModeTabs
                 activePanel="controls"
-                onShowControls={() => setShowLeftSidebar(true)}
-                onShowInspector={() => setShowRightSidebar(true)}
+                onShowControls={showControlsPanel}
+                onShowInspector={showInspectorPanel}
                 onClose={closeSidePanel}
               />
               <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>Control Panel</h1>
