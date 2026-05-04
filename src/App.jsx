@@ -1279,6 +1279,7 @@ function buildLeftControlPanelProps(args) {
     sidebarState: {
       showLeftSidebar: args.showLeftSidebar,
       setShowLeftSidebar: args.setShowLeftSidebar,
+      setShowRightSidebar: args.setShowRightSidebar,
       showDataInputsPanel: args.showDataInputsPanel,
       setShowDataInputsPanel: args.setShowDataInputsPanel,
       showVisualizationTypePanel: args.showVisualizationTypePanel,
@@ -2309,7 +2310,7 @@ function AppMainWorkspace({
   mapStageProps,
 }) {
   return (
-    <main className="h-full xl:pl-16 xl:pr-16">
+    <main className="h-full xl:pl-16">
       <div className="flex h-full flex-col">
         <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
         <MapStage {...mapStageProps} />
@@ -2950,6 +2951,7 @@ export default function EuropeNetworkMapApp() {
   const leftControlPanelProps = buildLeftControlPanelProps({
     showLeftSidebar,
     setShowLeftSidebar,
+    setShowRightSidebar,
     showDataInputsPanel,
     setShowDataInputsPanel,
     showVisualizationTypePanel,

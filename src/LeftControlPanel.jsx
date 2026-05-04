@@ -23,7 +23,7 @@ function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   return `${base} ${variants[variant] || variants.secondary}`;
 }
 
-function SidebarToggle({ side, open, onToggle }) {
+function SidebarToggle({ side, open, onToggle, stackIndex = 0 }) {
   const left = side === 'left';
   const panelName = left ? 'Controls' : 'Inspector';
 
@@ -33,8 +33,9 @@ function SidebarToggle({ side, open, onToggle }) {
     </svg>
   ) : (
     <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="10.5" cy="10.5" r="5.75" />
-      <path d="M15 15l5 5" />
+      <path d="M4 7h16" />
+      <path d="M4 12h16" />
+      <path d="M4 17h16" />
     </svg>
   );
 
@@ -44,12 +45,14 @@ function SidebarToggle({ side, open, onToggle }) {
     </svg>
   );
 
+  const topClass = open ? 'top-3' : stackIndex === 1 ? 'top-16' : 'top-3';
+
   return (
     <button
       type="button"
       onClick={onToggle}
       className={[
-        'absolute top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-all duration-150 hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)]',
+        `absolute ${topClass} z-20 flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-all duration-150 hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)]`,
         left ? 'right-3' : 'left-3',
         open
           ? 'border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]'
@@ -814,6 +817,7 @@ export function LeftControlPanel({
   const {
     showLeftSidebar,
     setShowLeftSidebar,
+    setShowRightSidebar,
     showDataInputsPanel,
     setShowDataInputsPanel,
     showVisualizationTypePanel,
@@ -995,7 +999,14 @@ export function LeftControlPanel({
         That is why missing props/helper mismatches often surface only at the
         moment the panel opens.
       */}
-      <SidebarToggle side="left" open={showLeftSidebar} onToggle={() => setShowLeftSidebar((v) => !v)} />
+      {showLeftSidebar ? (
+        <SidebarToggle side="left" open={showLeftSidebar} onToggle={() => setShowLeftSidebar(false)} />
+      ) : (
+        <>
+          <SidebarToggle side="left" open={false} onToggle={() => setShowLeftSidebar(true)} stackIndex={0} />
+          <SidebarToggle side="right" open={false} onToggle={() => setShowRightSidebar(true)} stackIndex={1} />
+        </>
+      )}
       {showLeftSidebar ? (
         <div className="h-full overflow-auto p-5 pr-20">
           <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>Control Panel</h1>

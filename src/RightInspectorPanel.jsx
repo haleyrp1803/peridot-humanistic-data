@@ -30,11 +30,12 @@ export function RightInspectorPanel({
     InspectorBackButtonComponent,
   } = shellComponents;
 
+  if (!showRightSidebar) return null;
+
   return (
-    <aside className={`${sidebarSurfaceClassName()} border-l xl:absolute xl:right-0 xl:top-0 xl:h-full xl:z-30 ${showRightSidebar ? 'w-[420px]' : 'w-16'}`}>
-      <SidebarToggleComponent side="right" open={showRightSidebar} onToggle={() => setShowRightSidebar((v) => !v)} />
-      {showRightSidebar ? (
-        <div className="relative h-full overflow-auto p-5 pl-20 pb-24">
+    <aside className={`${sidebarSurfaceClassName()} border-l xl:absolute xl:right-0 xl:top-0 xl:h-full xl:z-30 w-[420px]`}>
+      <SidebarToggleComponent side="right" open={showRightSidebar} onToggle={() => setShowRightSidebar(false)} />
+      <div className="relative h-full overflow-auto p-5 pl-20 pb-24">
           <InspectorHeaderComponent
             showInspectorInfo={showInspectorInfo}
             setShowInspectorInfo={setShowInspectorInfo}
@@ -51,7 +52,6 @@ export function RightInspectorPanel({
             viewComponents={viewComponents}
           />
         </div>
-      ) : null}
     </aside>
   );
 }
