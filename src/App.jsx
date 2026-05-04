@@ -37,7 +37,7 @@ import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespond
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
 import { LeftControlPanel } from './LeftControlPanel';
-import { RightInspectorPanel } from './RightInspectorPanel';
+import { InspectorPanel } from './InspectorPanel';
 import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmptyState';
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';
@@ -1357,7 +1357,7 @@ function buildLeftControlPanelProps(args) {
   };
 }
 
-function buildRightInspectorPanelProps(args) {
+function buildInspectorPanelProps(args) {
   return {
     sidebar: {
       showRightSidebar: args.showRightSidebar,
@@ -3018,7 +3018,7 @@ export default function EuropeNetworkMapApp() {
     exportStatus,
   });
 
-  const rightInspectorPanelProps = buildRightInspectorPanelProps({
+  const inspectorPanelProps = buildInspectorPanelProps({
     showRightSidebar,
     setShowRightSidebar,
     setShowLeftSidebar,
@@ -3094,8 +3094,8 @@ export default function EuropeNetworkMapApp() {
           mapStageProps={mapStageProps}
         />
 
-        <RightInspectorPanel
-          {...rightInspectorPanelProps}
+        <InspectorPanel
+          {...inspectorPanelProps}
           shellComponents={inspectorShellComponents}
           viewComponents={inspectorViewComponents}
         />

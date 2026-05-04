@@ -44,7 +44,7 @@ function PanelModeTabs({ activePanel, onShowControls, onShowInspector, onClose }
   );
 }
 
-export function RightInspectorPanel({
+export function InspectorPanel({
   sidebar,
   inspectorState,
   letterState,
