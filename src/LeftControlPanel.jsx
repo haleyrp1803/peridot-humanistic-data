@@ -74,6 +74,7 @@ function SidePanelIconRail({
   activePanel,
   onClose,
   onShowControls,
+  onShowDataInputs,
   onShowInspector,
 }) {
   const buttonClass = (active = false) => {
@@ -143,6 +144,22 @@ function SidePanelIconRail({
           <path d="M4 7h16" />
           <path d="M4 12h16" />
           <path d="M4 17h16" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        onClick={onShowDataInputs}
+        className={buttonClass(activePanel === 'dataInputs')}
+        aria-label="Show data inputs panel"
+        aria-pressed={activePanel === 'dataInputs'}
+        title="Data Inputs"
+      >
+        <span className="sr-only">Show Data Inputs</span>
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 15V4" />
+          <path d="M8 8l4-4 4 4" />
+          <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
         </svg>
       </button>
 
@@ -1100,6 +1117,8 @@ export function LeftControlPanel({
     },
   };
 
+  const [activeSidePanelView, setActiveSidePanelView] = useState('controls');
+
   const isSidePanelOpen = showLeftSidebar || showRightSidebar;
   const closeSidePanel = () => {
     if (showRightSidebar) {
@@ -1111,10 +1130,18 @@ export function LeftControlPanel({
   };
   const showControlsPanel = () => {
     setShowRightSidebar(false);
+    setActiveSidePanelView('controls');
+    setShowLeftSidebar(true);
+  };
+
+  const showDataInputsPanelView = () => {
+    setShowRightSidebar(false);
+    setActiveSidePanelView('dataInputs');
     setShowLeftSidebar(true);
   };
 
   const showInspectorPanel = () => {
+    setActiveSidePanelView('inspector');
     setShowLeftSidebar(false);
     setShowRightSidebar(true);
   };
@@ -1123,20 +1150,24 @@ export function LeftControlPanel({
     <aside className={`${sidebarSurfaceClassName()} relative border-r xl:absolute xl:left-0 xl:top-0 xl:h-full xl:z-30 ${isSidePanelOpen ? 'w-[420px]' : 'w-16'}`}>
       <SidePanelIconRail
         isSidePanelOpen={isSidePanelOpen}
-        activePanel={showLeftSidebar ? 'controls' : showRightSidebar ? 'inspector' : null}
+        activePanel={showRightSidebar ? 'inspector' : showLeftSidebar ? activeSidePanelView : null}
         onClose={closeSidePanel}
         onShowControls={showControlsPanel}
+        onShowDataInputs={showDataInputsPanelView}
         onShowInspector={showInspectorPanel}
       />
       {isSidePanelOpen ? (
         <div className="h-full overflow-auto p-5 pr-20">
           {showLeftSidebar ? (
             <>
-              <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>Control Panel</h1>
-
-              <DataInputsGroup {...dataInputsGroupProps} />
-
-              <DisplayFilteringGroup {...displayFilteringGroupProps} />
+              <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>
+                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : 'Control Panel'}
+              </h1>
+              {activeSidePanelView === 'dataInputs' ? (
+                <DataInputsGroup {...dataInputsGroupProps} />
+              ) : (
+                <DisplayFilteringGroup {...displayFilteringGroupProps} />
+              )}
             </>
           ) : null}
 
