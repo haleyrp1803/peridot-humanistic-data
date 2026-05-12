@@ -8,7 +8,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, and export tools. The current app includes a shared left-side panel with Controls and Inspector tabs, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, and image/tabular export tools.
+The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Export, Timeline, and Inspector, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, and image/tabular export tools.
 
 ---
 
@@ -18,7 +18,7 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current safe baseline is:
 
-- **`4a17d1c` — `Make inspector panel content-only`**
+- **`8539c68` — `Clarify timeline rail icon`**
 
 The current state of the project includes:
 
@@ -30,7 +30,7 @@ The current state of the project includes:
 - **People** as the default startup view
 - a committed minimum-weight numeric input with **Enter** / **Update** apply behavior
 - year-based timeline filtering and playback infrastructure
-- a shared left-side panel with Controls and Inspector tabs
+- a shared left-side panel with a persistent rail for Controls, Data Inputs, Export, Timeline, and Inspector
 - actionable cluster inspector behavior
 - cluster inspector members grouped by place
 - dynamic node radius contrast based on active data
@@ -64,6 +64,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 
 - hover and click inspection
 - shared side-panel Inspector tab for selected nodes, edges, clusters, and linked records
+- dedicated side-panel tabs for Data Inputs, Export, and Timeline workflows
 - inspector-internal navigation between people and places
 - actionable cluster inspector lists
 - cluster members grouped by place and ordered by represented visible volume
@@ -102,13 +103,16 @@ The codebase is functional, but it is still under active maintenance. The larges
 
 The current interface includes:
 
-- a shared left-side panel
-- collapsed left rail with:
-  - cog icon for Controls
-  - menu/hamburger icon for Inspector
-- open side panel with Controls / Inspector tabs
-- a Controls tab for data, visualization, display, timeline, theme, export, and diagnostics
-- an Inspector tab for selected nodes, edges, clusters, and internal navigation
+- a shared left-side panel shell owned by `src/LeftControlPanel.jsx`
+- a persistent icon rail that remains available when the panel is closed and when it is open
+- a close button at the top of the icon rail when the panel is open
+- a mossy/peridot-toned rail background with lighter green buttons, lighter hover states, and cream active-state styling
+- rail-driven panel tabs for:
+  - **Controls** — general visualization, display, theme, summary, and diagnostics controls
+  - **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
+  - **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
+  - **Timeline** — year-range filtering and playback controls
+  - **Inspector** — selected nodes, edges, clusters, linked records, and internal navigation
 
 Other current behavior:
 
@@ -116,8 +120,21 @@ Other current behavior:
 - the old minimum-weight slider has been replaced by a committed numeric input
 - the old **Show all dates** shortcut has been removed
 - the timeline now uses **year-only** start/end selectors rather than month selectors
+- the old horizontal Controls / Inspector top tab row has been removed; the persistent rail now functions as the panel-view switcher
 
 These are part of the current safe baseline and should be treated as live behavior unless changed in a later committed pass.
+
+### Recent shared-panel rail milestone
+
+The current side-panel rail milestone was completed through a sequence of bounded passes ending at **`8539c68` — `Clarify timeline rail icon`**. This milestone:
+
+- anchored the rail to the panel shell rather than to fixed viewport coordinates
+- kept the close button at the top of the rail when open
+- made the rail visually distinct from the rest of the panel
+- removed the obsolete horizontal tab row
+- corrected the Controls and Inspector icon meanings
+- added dedicated **Data Inputs**, **Export**, and **Timeline** tabs
+- preserved existing upload, export, timeline/playback, and inspector behavior
 
 ---
 
@@ -224,7 +241,7 @@ The main orchestration layer. It handles top-level application state, data inges
 
 #### `src/LeftControlPanel.jsx`
 
-Owns the shared side-panel shell. It renders the collapsed rail, panel tabs, Controls content, and Inspector content through `InspectorPanelContent`.
+Owns the shared side-panel shell and persistent icon rail. It renders the rail-driven panel views for Controls, Data Inputs, Export, Timeline, and Inspector. Inspector content is rendered through `InspectorPanelContent`, while the Data Inputs, Export, and Timeline tabs reuse existing panel content boundaries rather than changing ingestion, export, or playback logic.
 
 #### `src/InspectorPanel.jsx`
 
@@ -369,12 +386,13 @@ A typical workflow is:
 1. Open the app.
 2. Load data or work from the embedded baseline data.
 3. Choose **People**, **Place**, or **Force-Directed**.
-4. Adjust display and weight filters.
-5. Use the year-based timeline if needed.
-6. Hover or click nodes, edges, or clusters to inspect them.
-7. Use the Inspector tab to navigate between people, places, cluster members, and linked records.
-8. Use the inspector **Back** button to return to the previous internal panel.
-9. Export the current state as SVG, PNG, or CSV outputs.
+4. Use **Data Inputs** to upload or replace Geography, Raw Data, and Person Metadata files as needed.
+5. Adjust display, theme, and weight filters in **Controls**.
+6. Use **Timeline** for year-based filtering and playback.
+7. Hover or click nodes, edges, or clusters to inspect them.
+8. Use **Inspector** to navigate between people, places, cluster members, and linked records.
+9. Use the inspector **Back** button to return to the previous internal panel.
+10. Use **Export** to save the current state as SVG, PNG, or CSV outputs.
 
 ---
 

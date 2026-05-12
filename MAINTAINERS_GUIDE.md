@@ -16,7 +16,7 @@ Current source of truth folder:
 
 Current clean safe baseline:
 
-- **`4a17d1c` — `Make inspector panel content-only`**
+- **`8539c68` — `Clarify timeline rail icon`**
 
 Current GitHub repository:
 
@@ -94,6 +94,7 @@ The app includes:
 - interactive SVG-based rendering
 - year-based timeline filtering and playback
 - shared side-panel inspection workflow
+- persistent side-panel icon rail with dedicated Controls, Data Inputs, Export, Timeline, and Inspector tabs
 - theme presets and visual controls
 - export tools for image and tabular outputs
 
@@ -116,15 +117,18 @@ Main orchestration file. It owns top-level state, derived data wiring, workspace
 
 ### `src/LeftControlPanel.jsx`
 
-Owns the shared side-panel shell. The shell includes:
+Owns the shared side-panel shell and persistent icon rail. The shell includes:
 
-- collapsed left rail with Controls and Inspector openers
-- open/close shell behavior
-- Controls / Inspector tab switcher
-- Controls content rendering
+- persistent icon rail that is available when the panel is closed and when it is open
+- open-state close button at the top of the rail
+- rail-driven panel views for **Controls**, **Data Inputs**, **Export**, **Timeline**, and **Inspector**
+- Controls content rendering for visualization, display, theme, summary, and diagnostics controls
+- Data Inputs content rendering for Geography, Raw Data, and Person Metadata uploads
+- Export content rendering for SVG, PNG, nodes CSV, and edges/routes CSV controls
+- Timeline content rendering for year-range and playback controls
 - Inspector content rendering through `InspectorPanelContent`
 
-This file currently remains named `LeftControlPanel.jsx`, but it is now conceptually the shared side-panel shell.
+This file currently remains named `LeftControlPanel.jsx`, but it is now conceptually the shared side-panel shell and rail-tab host. Compatibility-sensitive `showLeftSidebar` / `showRightSidebar` state names still exist and should not be casually renamed because they are tied to inspector auto-open behavior.
 
 ### `src/InspectorPanel.jsx`
 
@@ -226,8 +230,10 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 ### Side-panel capabilities
 
 - one shared left-side panel shell
-- Controls and Inspector as tabs inside that shell
-- collapsed left rail with Controls and Inspector icons
+- persistent icon rail as the panel-view switcher
+- close button at the top of the open-state rail
+- dedicated rail tabs for Controls, Data Inputs, Export, Timeline, and Inspector
+- Data Inputs, Export, and Timeline moved out of the general Controls panel into dedicated views
 - shell-level open/close behavior
 - Inspector auto-opens from node, edge, and cluster interactions
 
@@ -244,8 +250,10 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - year-based date filtering
 - playback controls
+- timeline controls now appear in a dedicated side-panel Timeline tab
 - timeline panel UI extracted into supporting components/helpers
 - month selectors removed in favor of start-year / end-year controls
+- active start/end year controls and playback behavior were preserved during the Timeline-tab move
 
 ### Map and sizing capabilities
 
@@ -260,6 +268,7 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - PNG export
 - nodes CSV export
 - edges/routes CSV export
+- export controls now appear in a dedicated side-panel Export tab
 
 ---
 
@@ -272,17 +281,16 @@ Other retained presets still function as map-focused alternatives:
 - Early modern map
 - Modern map
 
-Important current control-panel state:
+Important current side-panel state:
 
-- current top-level grouping uses **DATA** and **OPTIONS**
-- key sections include:
-  1. Data Inputs
-  2. Visualization Type
-  3. Display Controls
-  4. Timeline
-  5. Theme
-  6. Export
-  7. Summary and Diagnostics
+- the persistent rail, not a horizontal top-tab row, is now the panel-view switcher
+- rail tabs are:
+  1. **Controls** — Visualization Type, Display Controls, Theme, Summary and Diagnostics, and remaining general options
+  2. **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
+  3. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
+  4. **Timeline** — year-range filtering and playback controls
+  5. **Inspector** — selected nodes, edges, clusters, linked records, and inspector-internal navigation
+- the open-state rail has a mossy/peridot background, lighter green inactive buttons, lighter hover states, and cream active-state buttons
 
 Recent committed behavior includes:
 
@@ -291,6 +299,8 @@ Recent committed behavior includes:
 - committed minimum-weight numeric input with **Enter** / **Update** apply behavior
 - removal of the old **Show all dates** shortcut
 - year-only timeline selectors
+- removal of the old horizontal Controls / Inspector top tabs
+- dedicated rail tabs for Data Inputs, Export, and Timeline
 
 ---
 
@@ -351,6 +361,56 @@ Created one shared side-panel shell for both Controls and Inspector.
 #### `4a17d1c` — Make inspector panel content-only
 
 Removed obsolete shell/tab code from `InspectorPanel.jsx`.
+
+### Shared side-panel rail-tab sequence
+
+#### `f7407eb` — Refresh documentation for shared panel baseline
+
+Refreshed documentation after the shared side-panel baseline and recorded the then-current shared panel architecture before later rail-tab expansion.
+
+#### `06c1843` — Clean shared side panel source comments
+
+Cleaned obsolete shared-panel source comments and avoided renaming compatibility-sensitive side-panel state paths.
+
+#### `8882b69` — Remove obsolete audit documentation references
+
+Removed obsolete root-level audit documentation files that no longer served as active maintainer references.
+
+#### `4653f20` — Remove obsolete audit documentation listings
+
+Removed stale references to the obsolete audit documents from active documentation.
+
+#### `6142817` — Anchor shared panel icon rail to panel shell
+
+Anchored the icon rail to the shared panel shell rather than hard-coded viewport coordinates. The rail remains available when the panel is open and closed, and the close button appears at the top of the rail when open.
+
+#### `2acdb91` — Remove obsolete side panel top tabs
+
+Removed the horizontal Controls / Inspector tab row and made the persistent rail the active panel-view switcher.
+
+#### `dcce703` — Style shared panel icon rail
+
+Styled the rail as a distinct mossy/peridot visual zone with lighter green inactive buttons, lighter hover states, and cream active-state buttons.
+
+#### `5b38c4e` — Update shared panel rail icons
+
+Updated Controls to use the three-line stack icon and Inspector to use a magnifying-glass icon.
+
+#### `f1394c6` — Add data inputs side panel tab
+
+Added the **Data Inputs** rail tab and moved Geography, Raw Data, and Person Metadata upload controls into that dedicated panel view.
+
+#### `6a672d9` — Add export side panel tab
+
+Added the **Export** rail tab, moved existing export controls into that dedicated panel view, and kept export options visible when the tab opens.
+
+#### `def4265` — Add timeline side panel tab
+
+Added the **Timeline** rail tab and moved existing year-range and playback controls into that dedicated panel view while preserving active year adjustment and playback behavior.
+
+#### `8539c68` — Clarify timeline rail icon
+
+Settled the Timeline rail icon on a simple clock-style symbol after horizontal progression icons lost too much detail at rail-button size.
 
 ---
 
@@ -434,15 +494,15 @@ This recent work also reinforced these process rules:
 A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
-- clean baseline: **`4a17d1c` — `Make inspector panel content-only`**
+- clean baseline: **`8539c68` — `Clarify timeline rail icon`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
-- the current shared side panel is committed
+- the current shared side panel and rail-tab structure are committed
 - `InspectorPanel.jsx` is content-only
-- `LeftControlPanel.jsx` owns the shared panel shell
+- `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Export/Timeline/Inspector panel views
 - current cluster features are committed, not deferred
 - documentation should preserve the full commit trajectory carefully

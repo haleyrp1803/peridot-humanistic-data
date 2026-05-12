@@ -2,13 +2,88 @@
 
 ## Current documented safe baseline
 
-- **`4a17d1c` — `Make inspector panel content-only`**
+- **`8539c68` — `Clarify timeline rail icon`**
 
-This baseline reflects the current clean Peridot state after the cluster-interaction, node-sizing, cluster-sizing, cluster-inspector, and shared side-panel work completed in bounded passes.
+This baseline reflects the current clean Peridot state after the cluster-interaction, node-sizing, cluster-sizing, cluster-inspector, shared side-panel, persistent icon-rail, and dedicated Data Inputs / Export / Timeline tab work completed in bounded passes.
 
 ---
 
 ## Recent committed work
+
+### `8539c68` — Clarify timeline rail icon
+
+- Replaced the timeline rail icon after testing several small-format timeline concepts.
+- Settled on a simple clock-style icon because the earlier horizontal progression concepts lost detail at rail-button size.
+- Preserved Timeline tab behavior, playback, and active start/end year controls.
+
+### `def4265` — Add timeline side panel tab
+
+- Added a dedicated **Timeline** icon button to the shared side-panel rail.
+- Moved existing year-range and playback controls out of the general Control Panel and into the Timeline tab.
+- Preserved year-based filtering, playback behavior, and active start/end year adjustment after restoring required timeline props.
+- Kept timeline/playback logic unchanged; this pass moved the UI boundary only.
+
+### `6a672d9` — Add export side panel tab
+
+- Added a dedicated **Export** icon button to the shared side-panel rail.
+- Moved existing export controls out of the general Control Panel and into the Export tab.
+- Kept export options visible by default when the Export tab opens.
+- Replaced the export icon with a distinct outward/share-style icon so it does not duplicate the upload/Data Inputs icon.
+- Preserved SVG, PNG, nodes CSV, and edges/routes CSV export behavior.
+
+### `f1394c6` — Add data inputs side panel tab
+
+- Added a dedicated **Data Inputs** icon button to the shared side-panel rail.
+- Moved Geography, Raw Data, and Person Metadata upload controls out of the general Control Panel and into the Data Inputs tab.
+- Preserved the upload controls and their existing data-ingestion behavior.
+- Kept Data Inputs terminology to avoid confusion with the broader concept of app data.
+
+### `5b38c4e` — Update shared panel rail icons
+
+- Updated the Controls rail icon from a cog to a three-line stack.
+- Updated the Inspector rail icon from a three-line stack to a magnifying glass.
+- Preserved existing Controls and Inspector switching behavior.
+
+### `dcce703` — Style shared panel icon rail
+
+- Styled the persistent side-panel icon rail as its own visual zone.
+- Added a mossy/peridot-toned rail background.
+- Tuned inactive, hover, and active rail-button colors so the buttons remain legible against the rail.
+- Added comfortable spacing between the rail and the panel scrollbar.
+
+### `2acdb91` — Remove obsolete side panel top tabs
+
+- Removed the redundant horizontal Controls / Inspector tab row from the open shared side panel.
+- Made the persistent icon rail the sole panel-view switcher.
+- Preserved Controls, Inspector, close, and map-click auto-open behavior.
+
+### `6142817` — Anchor shared panel icon rail to panel shell
+
+- Changed the persistent icon rail from viewport-anchored positioning to panel-shell anchoring.
+- Kept the rail positioned on the right side of the open panel where the spare space already exists.
+- Preserved closed-panel access to the rail buttons.
+- Kept the close button at the top of the rail when the panel is open.
+
+### `4653f20` — Remove obsolete audit documentation listings
+
+- Removed stale listings for obsolete audit documents from active documentation.
+- Preserved active documentation references to `README.md`, `MAINTAINERS_GUIDE.md`, `PROJECT_WORKFLOW_CHARTER.md`, and `CHANGELOG.md`.
+
+### `8882b69` — Remove obsolete audit documentation references
+
+- Deleted obsolete root-level audit documentation files that no longer functioned as active maintainer references.
+- Removed `CONTROL_PANEL_DEPENDENCY_MAP.md` and `VIEWPORT_TIMELINE_AUDIT.md` from the committed repository.
+
+### `06c1843` — Clean shared side panel source comments
+
+- Removed obsolete source comments and unused import residue from the shared side-panel cleanup.
+- Clarified source comments so `LeftControlPanel.jsx` is described as the shared side-panel shell rather than only a left control panel.
+- Avoided renaming compatibility-sensitive `showLeftSidebar` / `showRightSidebar` state paths.
+
+### `f7407eb` — Refresh documentation for shared panel baseline
+
+- Refreshed documentation after the shared side-panel baseline.
+- Recorded the then-current shared panel architecture before later rail-tab work expanded it.
 
 ### `4a17d1c` — Make inspector panel content-only
 
