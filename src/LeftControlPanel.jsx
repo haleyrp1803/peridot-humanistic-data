@@ -76,6 +76,7 @@ function SidePanelIconRail({
   onShowControls,
   onShowDataInputs,
   onShowExport,
+  onShowTimeline,
   onShowInspector,
 }) {
   const buttonClass = (active = false) => {
@@ -178,6 +179,23 @@ function SidePanelIconRail({
           <path d="M14 4h6v6" />
           <path d="M10 14 20 4" />
           <path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        onClick={onShowTimeline}
+        className={buttonClass(activePanel === 'timeline')}
+        aria-label="Show timeline panel"
+        aria-pressed={activePanel === 'timeline'}
+        title="Timeline"
+      >
+        <span className="sr-only">Show Timeline</span>
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="10" cy="12" r="6.25" />
+          <path d="M10 8.5v3.8l2.6 1.7" />
+          <path d="M15.5 7.5h3.8v3.8" />
+          <path d="M14.9 8.1 19.3 12.5" />
         </svg>
       </button>
       <button
@@ -871,38 +889,6 @@ function DisplayFilteringGroup({
         setTimelineMode={setTimelineMode}
       />
 
-      {/*
-        TIMELINE PANEL HANDOFF
-        This is one of the known fragile boundaries. Earlier cleanup attempts
-        proved that the timeline panel is sensitive to render-time dependency
-        changes, even when the surrounding app still boots normally.
-      */}
-      <TimelinePanelContent
-        showTimelinePanel={showTimelinePanel}
-        setShowTimelinePanel={setShowTimelinePanel}
-        currentRangeLabel={currentRangeLabel}
-        timelineMonths={timelineMonths}
-        rangeStart={rangeStart}
-        setRangeStart={setRangeStart}
-        rangeEnd={rangeEnd}
-        setRangeEnd={setRangeEnd}
-        currentPlaybackLabel={currentPlaybackLabel}
-        currentPlaybackSpeedLabel={currentPlaybackSpeedLabel}
-        playbackSpeedOptions={playbackSpeedOptions}
-        playbackSpeed={playbackSpeed}
-        setPlaybackSpeed={setPlaybackSpeed}
-        isPlaying={isPlaying}
-        setIsPlaying={setIsPlaying}
-        playbackIndex={playbackIndex}
-        setPlaybackIndex={setPlaybackIndex}
-        selectedRowsForPlayback={selectedRowsForPlayback}
-        timelineMode={timelineMode}
-        setTimelineMode={setTimelineMode}
-        CollapsiblePanelSection={CollapsiblePanelSection}
-        StepSlider={StepSlider}
-        buttonClassName={buttonClassName}
-      />
-
       <MapAppearancePanelContent
         showThemePanel={showThemePanel}
         setShowThemePanel={setShowThemePanel}
@@ -1142,6 +1128,12 @@ export function LeftControlPanel({
     setActiveSidePanelView('export');
     setShowLeftSidebar(true);
   };
+
+  const showTimelineSidePanel = () => {
+    setShowRightSidebar(false);
+    setActiveSidePanelView('timeline');
+    setShowLeftSidebar(true);
+  };
   const showInspectorPanel = () => {
     setActiveSidePanelView('inspector');
     setShowLeftSidebar(false);
@@ -1157,6 +1149,7 @@ export function LeftControlPanel({
         onShowControls={showControlsPanel}
         onShowDataInputs={showDataInputsPanelView}
         onShowExport={showExportSidePanel}
+        onShowTimeline={showTimelineSidePanel}
         onShowInspector={showInspectorPanel}
       />
       {isSidePanelOpen ? (
@@ -1164,12 +1157,24 @@ export function LeftControlPanel({
           {showLeftSidebar ? (
             <>
               <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>
-                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : activeSidePanelView === 'export' ? 'Export' : 'Control Panel'}
+                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : activeSidePanelView === 'export' ? 'Export' : activeSidePanelView === 'timeline' ? 'Timeline' : 'Control Panel'}
               </h1>
               {activeSidePanelView === 'dataInputs' ? (
                 <DataInputsGroup {...dataInputsGroupProps} />
               ) : activeSidePanelView === 'export' ? (
                 <ExportPanelContent {...displayFilteringGroupProps.exportPanelState} />
+              ) : activeSidePanelView === 'timeline' ? (
+                <TimelinePanelContent
+                  {...displayFilteringGroupProps.timelinePanelState}
+                  showTimelinePanel={true}
+                  setShowTimelinePanel={() => {}}
+                  timelineMode={timelineMode}
+                  setTimelineMode={setTimelineMode}
+                
+                CollapsiblePanelSection={CollapsiblePanelSection}
+                StepSlider={StepSlider}
+                buttonClassName={buttonClassName}
+              />
               ) : (
                 <DisplayFilteringGroup {...displayFilteringGroupProps} />
               )}
