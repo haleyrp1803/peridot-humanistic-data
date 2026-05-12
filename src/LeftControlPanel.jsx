@@ -191,11 +191,9 @@ function SidePanelIconRail({
         title="Timeline"
       >
         <span className="sr-only">Show Timeline</span>
-        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="10" cy="12" r="6.25" />
-          <path d="M10 8.5v3.8l2.6 1.7" />
-          <path d="M15.5 7.5h3.8v3.8" />
-          <path d="M14.9 8.1 19.3 12.5" />
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="7.25" />
+          <path d="M12 7.8v4.5l3 1.8" />
         </svg>
       </button>
       <button
