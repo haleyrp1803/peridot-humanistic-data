@@ -26,10 +26,10 @@ Current project source of truth folder:
 C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 ```
 
-Current clean baseline at the time of this documentation pass:
+Current clean baseline:
 
 ```text
-4a17d1c — Make inspector panel content-only
+See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 ---
@@ -253,7 +253,7 @@ Source of truth folder:
 C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 
 Current documented clean baseline:
-4a17d1c — Make inspector panel content-only
+See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 The new chat should be told:
