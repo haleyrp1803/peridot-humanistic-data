@@ -75,6 +75,7 @@ function SidePanelIconRail({
   onClose,
   onShowControls,
   onShowDataInputs,
+  onShowExport,
   onShowInspector,
 }) {
   const buttonClass = (active = false) => {
@@ -163,6 +164,22 @@ function SidePanelIconRail({
         </svg>
       </button>
 
+
+      <button
+        type="button"
+        onClick={onShowExport}
+        className={buttonClass(activePanel === 'export')}
+        aria-label="Show export panel"
+        aria-pressed={activePanel === 'export'}
+        title="Export"
+      >
+        <span className="sr-only">Show Export</span>
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 4h6v6" />
+          <path d="M10 14 20 4" />
+          <path d="M20 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h4" />
+        </svg>
+      </button>
       <button
         type="button"
         onClick={onShowInspector}
@@ -478,8 +495,8 @@ function ExportPanelContent({
   return (
     <CollapsiblePanelSection
       title="Export"
-      open={showExportPanel}
-      onToggle={() => setShowExportPanel((v) => !v)}
+      open={true}
+      onToggle={() => {}}
       className="mt-3"
     >
       <div className="space-y-4 text-sm text-[var(--panel-card-muted-text)]">
@@ -893,27 +910,6 @@ function DisplayFilteringGroup({
         resetTheme={resetTheme}
       />
 
-      {/*
-        EXPORT PANEL HANDOFF
-        This is another known fragile boundary. The export panel can look like a
-        simple button section, but it depends on shared helpers, status state,
-        and export handlers supplied by the parent panel tree.
-      */}
-      <ExportPanelContent
-        showExportPanel={showExportPanel}
-        setShowExportPanel={setShowExportPanel}
-        handleExportSvg={handleExportSvg}
-        handleExportPng={handleExportPng}
-        handleExportEdgesCsv={handleExportEdgesCsv}
-        handleExportNodesCsv={handleExportNodesCsv}
-        viewMode={viewMode}
-        search={search}
-        currentMinCountLabel={currentMinCountLabel}
-        currentRangeLabel={currentRangeLabel}
-        graph={graph}
-        exportStatus={exportStatus}
-      />
-
       <SummaryPanelContent
         showSummaryPanel={showSummaryPanel}
         setShowSummaryPanel={setShowSummaryPanel}
@@ -1140,6 +1136,12 @@ export function LeftControlPanel({
     setShowLeftSidebar(true);
   };
 
+
+  const showExportSidePanel = () => {
+    setShowRightSidebar(false);
+    setActiveSidePanelView('export');
+    setShowLeftSidebar(true);
+  };
   const showInspectorPanel = () => {
     setActiveSidePanelView('inspector');
     setShowLeftSidebar(false);
@@ -1154,6 +1156,7 @@ export function LeftControlPanel({
         onClose={closeSidePanel}
         onShowControls={showControlsPanel}
         onShowDataInputs={showDataInputsPanelView}
+        onShowExport={showExportSidePanel}
         onShowInspector={showInspectorPanel}
       />
       {isSidePanelOpen ? (
@@ -1161,10 +1164,12 @@ export function LeftControlPanel({
           {showLeftSidebar ? (
             <>
               <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>
-                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : 'Control Panel'}
+                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : activeSidePanelView === 'export' ? 'Export' : 'Control Panel'}
               </h1>
               {activeSidePanelView === 'dataInputs' ? (
                 <DataInputsGroup {...dataInputsGroupProps} />
+              ) : activeSidePanelView === 'export' ? (
+                <ExportPanelContent {...displayFilteringGroupProps.exportPanelState} />
               ) : (
                 <DisplayFilteringGroup {...displayFilteringGroupProps} />
               )}
