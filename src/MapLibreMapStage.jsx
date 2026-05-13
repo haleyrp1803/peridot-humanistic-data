@@ -33,6 +33,7 @@ const DEFAULT_ZOOM = 4.8;
 
 const DYNAMIC_CLUSTER_SOURCE_ID = 'peridot-dynamic-cluster-source';
 const DYNAMIC_CLUSTER_LAYER_ID = 'peridot-dynamic-cluster-circles';
+const DYNAMIC_CLUSTER_LABEL_LAYER_ID = 'peridot-dynamic-cluster-labels';
 const AGGREGATED_ROUTE_SOURCE_ID = 'peridot-visible-aggregated-route-source';
 const AGGREGATED_ROUTE_LAYER_ID = 'peridot-visible-aggregated-route-layer';
 const AGGREGATED_ROUTE_HIT_LAYER_ID = 'peridot-visible-aggregated-route-hit-layer';
@@ -500,6 +501,41 @@ function ensureDynamicClusterLayer(map, featureCollection = EMPTY_FEATURE_COLLEC
     }
   }
 
+  if (!map.getLayer(DYNAMIC_CLUSTER_LABEL_LAYER_ID)) {
+    const labelLayerDefinition = {
+      id: DYNAMIC_CLUSTER_LABEL_LAYER_ID,
+      type: 'symbol',
+      source: DYNAMIC_CLUSTER_SOURCE_ID,
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['get', 'point_count_abbreviated'],
+        'text-size': [
+          'step',
+          ['get', 'point_count'],
+          12,
+          8,
+          13,
+          20,
+          14,
+        ],
+        'text-font': ['Open Sans Bold', 'Arial Unicode MS Bold'],
+        'text-allow-overlap': true,
+        'text-ignore-placement': true,
+      },
+      paint: {
+        'text-color': '#111827',
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 1.5,
+      },
+    };
+
+    if (map.getLayer(NODE_LAYER_ID)) {
+      map.addLayer(labelLayerDefinition, NODE_LAYER_ID);
+    } else {
+      map.addLayer(labelLayerDefinition);
+    }
+  }
+
   if (!map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
     map.addLayer({
       id: SELECTED_DYNAMIC_CLUSTER_LAYER_ID,
@@ -530,11 +566,19 @@ function ensureDynamicClusterLayer(map, featureCollection = EMPTY_FEATURE_COLLEC
     map.moveLayer(DYNAMIC_CLUSTER_LAYER_ID, NODE_LAYER_ID);
   }
 
+  if (map.getLayer(DYNAMIC_CLUSTER_LABEL_LAYER_ID) && map.getLayer(NODE_LAYER_ID)) {
+    map.moveLayer(DYNAMIC_CLUSTER_LABEL_LAYER_ID, NODE_LAYER_ID);
+  }
+
   if (map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
     map.moveLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID);
   }
 
-  return Boolean(map.getSource(DYNAMIC_CLUSTER_SOURCE_ID) && map.getLayer(DYNAMIC_CLUSTER_LAYER_ID));
+  return Boolean(
+    map.getSource(DYNAMIC_CLUSTER_SOURCE_ID) &&
+      map.getLayer(DYNAMIC_CLUSTER_LAYER_ID) &&
+      map.getLayer(DYNAMIC_CLUSTER_LABEL_LAYER_ID),
+  );
 }
 
 function ensureSelectedFilterLayers(map) {
@@ -679,8 +723,10 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
       selectedNodeLayerExists: false,
       dynamicClusterSourceExists: false,
       dynamicClusterLayerExists: false,
+      dynamicClusterLabelLayerExists: false,
       selectedDynamicClusterLayerExists: false,
       renderedDynamicClusterCount: 0,
+      renderedDynamicClusterLabelCount: 0,
       hiddenClusterMemberCount: 0,
       aggregatedRouteSourceExists: false,
       aggregatedRouteLayerExists: false,
@@ -706,6 +752,7 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
   const aggregatedRouteHitLayerExists = Boolean(map.getLayer(AGGREGATED_ROUTE_HIT_LAYER_ID));
   const nodeLayerExists = Boolean(map.getLayer(NODE_LAYER_ID));
   const dynamicClusterLayerExists = Boolean(map.getLayer(DYNAMIC_CLUSTER_LAYER_ID));
+  const dynamicClusterLabelLayerExists = Boolean(map.getLayer(DYNAMIC_CLUSTER_LABEL_LAYER_ID));
 
   return {
     styleLoaded: readStyleLoaded(map),
@@ -721,9 +768,13 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
     selectedNodeLayerExists: Boolean(map.getLayer(SELECTED_NODE_LAYER_ID)),
     dynamicClusterSourceExists: Boolean(map.getSource(DYNAMIC_CLUSTER_SOURCE_ID)),
     dynamicClusterLayerExists,
+    dynamicClusterLabelLayerExists,
     selectedDynamicClusterLayerExists: Boolean(map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)),
     renderedDynamicClusterCount: dynamicClusterLayerExists
       ? queryRenderedFeatureCount(map, DYNAMIC_CLUSTER_LAYER_ID)
+      : 0,
+    renderedDynamicClusterLabelCount: dynamicClusterLabelLayerExists
+      ? queryRenderedFeatureCount(map, DYNAMIC_CLUSTER_LABEL_LAYER_ID)
       : 0,
     hiddenClusterMemberCount: setupDiagnostics.hiddenClusterMemberCount || 0,
     aggregatedRouteSourceExists: Boolean(map.getSource(AGGREGATED_ROUTE_SOURCE_ID)),
@@ -1778,11 +1829,20 @@ export function MapLibreMapStage({
             <dt className="text-slate-400">Dynamic cluster layer</dt>
             <dd>{layerDiagnostics.dynamicClusterLayerExists ? 'yes' : 'no'}</dd>
 
+            <dt className="text-slate-400">Dynamic cluster labels</dt>
+            <dd>{layerDiagnostics.dynamicClusterLabelLayerExists ? 'yes' : 'no'}</dd>
+
             <dt className="text-slate-400">Selected cluster layer</dt>
             <dd>{layerDiagnostics.selectedDynamicClusterLayerExists ? 'yes' : 'no'}</dd>
 
             <dt className="text-slate-400">Dynamic clusters rendered</dt>
             <dd>{layerDiagnostics.renderedDynamicClusterCount}</dd>
+
+            <dt className="text-slate-400">Cluster labels rendered</dt>
+            <dd>{layerDiagnostics.renderedDynamicClusterLabelCount || 0}</dd>
+
+            <dt className="text-slate-400">Aggregated route width basis</dt>
+            <dd>total represented letters</dd>
 
             <dt className="text-slate-400">Hidden clustered nodes</dt>
             <dd>{layerDiagnostics.hiddenClusterMemberCount || 0}</dd>
@@ -1802,7 +1862,7 @@ export function MapLibreMapStage({
 
           <p className="mt-3 leading-relaxed text-slate-300">
             This is still not the migrated production overlay. It now reports MapLibre source,
-            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster clicks now attempt to read MapLibre cluster leaves and open the existing Inspector. Node hiding is now diagnostic and based on currently rendered MapLibre clusters. Routes are now rebuilt into diagnostic visible-endpoint aggregate routes, so edges combine between visible nodes and cluster centers instead of being merely de-emphasized. Playback highlighting, hover cards, cluster labels, final route styling, and production export parity remain out of scope.
+            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster clicks now attempt to read MapLibre cluster leaves and open the existing Inspector. Node hiding is now diagnostic and based on currently rendered MapLibre clusters. Routes are now rebuilt into diagnostic visible-endpoint aggregate routes, so edges combine between visible nodes and cluster centers instead of being merely de-emphasized. Playback highlighting, hover cards, final route styling, route labels, and production export parity remain out of scope.
           </p>
         </div>
       ) : null}
