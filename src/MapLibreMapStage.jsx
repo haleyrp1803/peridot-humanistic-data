@@ -13,19 +13,11 @@ import {
 } from './mapLibreFeatureBuilders';
 import {
   EMPTY_SELECTED_FILTER,
-  AGGREGATED_ROUTE_HIT_LAYER_ID,
-  AGGREGATED_ROUTE_LAYER_ID,
-  AGGREGATED_ROUTE_SOURCE_ID,
-  DYNAMIC_CLUSTER_LABEL_LAYER_ID,
-  DYNAMIC_CLUSTER_LAYER_ID,
-  DYNAMIC_CLUSTER_SOURCE_ID,
   NODE_LAYER_ID,
   NODE_SOURCE_ID,
   ROUTE_HIT_LAYER_ID,
   ROUTE_LAYER_ID,
   ROUTE_SOURCE_ID,
-  SELECTED_AGGREGATED_ROUTE_LAYER_ID,
-  SELECTED_DYNAMIC_CLUSTER_LAYER_ID,
   SELECTED_NODE_LAYER_ID,
   SELECTED_ROUTE_LAYER_ID,
   buildNodeLayerDefinition,
@@ -39,6 +31,14 @@ import {
 const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
 
+const DYNAMIC_CLUSTER_SOURCE_ID = 'peridot-dynamic-cluster-source';
+const DYNAMIC_CLUSTER_LAYER_ID = 'peridot-dynamic-cluster-circles';
+const DYNAMIC_CLUSTER_LABEL_LAYER_ID = 'peridot-dynamic-cluster-labels';
+const AGGREGATED_ROUTE_SOURCE_ID = 'peridot-visible-aggregated-route-source';
+const AGGREGATED_ROUTE_LAYER_ID = 'peridot-visible-aggregated-route-layer';
+const AGGREGATED_ROUTE_HIT_LAYER_ID = 'peridot-visible-aggregated-route-hit-layer';
+const SELECTED_AGGREGATED_ROUTE_LAYER_ID = 'peridot-selected-visible-aggregated-route-layer';
+const SELECTED_DYNAMIC_CLUSTER_LAYER_ID = 'peridot-selected-dynamic-cluster-circles';
 const MAX_CLUSTER_LEAVES_FOR_NODE_HIDING = 5000;
 
 const EMPTY_FEATURE_COLLECTION = {
