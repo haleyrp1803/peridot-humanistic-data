@@ -7,8 +7,11 @@ const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
 const MAX_PROBE_POINTS = 30;
 const MAX_GEOJSON_ROUTES = 75;
+const MAX_GEOJSON_NODES = 150;
 const ROUTE_SOURCE_ID = 'peridot-route-probe-source';
 const ROUTE_LAYER_ID = 'peridot-route-probe-layer';
+const NODE_SOURCE_ID = 'peridot-node-probe-source';
+const NODE_LAYER_ID = 'peridot-node-probe-layer';
 
 function formatNumber(value, digits = 4) {
   if (!Number.isFinite(value)) return 'n/a';
@@ -78,6 +81,53 @@ function buildProjectionProbePoints(map, graph) {
         y: point.y,
       };
     });
+}
+
+function readNodeWeight(node) {
+  return (
+    Number(node?.count) ||
+    Number(node?.weight) ||
+    Number(node?.degree) ||
+    Number(node?.totalLetters) ||
+    0
+  );
+}
+
+function buildNodeProbeFeatureCollection(graph) {
+  const emptyCollection = {
+    type: 'FeatureCollection',
+    features: [],
+  };
+
+  if (!Array.isArray(graph?.nodes)) return emptyCollection;
+
+  const features = graph.nodes
+    .filter(hasUsableLngLat)
+    .map((node) => {
+      const weight = readNodeWeight(node);
+
+      return {
+        type: 'Feature',
+        id: node.id,
+        properties: {
+          id: node.id,
+          label: node.label || node.name || node.id,
+          weight,
+          degree: Number(node.degree) || 0,
+        },
+        geometry: {
+          type: 'Point',
+          coordinates: [node.lon, node.lat],
+        },
+      };
+    })
+    .sort((a, b) => (b.properties.weight || 0) - (a.properties.weight || 0))
+    .slice(0, MAX_GEOJSON_NODES);
+
+  return {
+    ...emptyCollection,
+    features,
+  };
 }
 
 function buildRouteProbeFeatureCollection(graph) {
@@ -184,6 +234,76 @@ function ensureRouteProbeLayer(map, featureCollection) {
   return true;
 }
 
+function ensureNodeProbeLayer(map, featureCollection) {
+  if (!map || !map.isStyleLoaded()) return false;
+
+  const existingSource = map.getSource(NODE_SOURCE_ID);
+
+  if (existingSource) {
+    existingSource.setData(featureCollection);
+  } else {
+    map.addSource(NODE_SOURCE_ID, {
+      type: 'geojson',
+      data: featureCollection,
+    });
+  }
+
+  if (!map.getLayer(NODE_LAYER_ID)) {
+    map.addLayer({
+      id: NODE_LAYER_ID,
+      type: 'circle',
+      source: NODE_SOURCE_ID,
+      paint: {
+        'circle-radius': 18,
+        'circle-color': '#00e5ff',
+        'circle-opacity': 0.95,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 4,
+      },
+    });
+  }
+
+  if (map.getLayer(NODE_LAYER_ID)) {
+    map.moveLayer(NODE_LAYER_ID);
+  }
+
+  return Boolean(map.getSource(NODE_SOURCE_ID) && map.getLayer(NODE_LAYER_ID));
+}
+
+function readNodeProbeLayerDiagnostics(map) {
+  if (!map) {
+    return {
+      sourceExists: false,
+      layerExists: false,
+      renderedCount: 0,
+    };
+  }
+
+  const sourceExists = Boolean(map.getSource(NODE_SOURCE_ID));
+  const layerExists = Boolean(map.getLayer(NODE_LAYER_ID));
+  let renderedCount = 0;
+
+  if (layerExists) {
+    try {
+      renderedCount = map.queryRenderedFeatures({ layers: [NODE_LAYER_ID] }).length;
+    } catch {
+      renderedCount = 0;
+    }
+  }
+
+  return {
+    sourceExists,
+    layerExists,
+    renderedCount,
+  };
+}
+
+function ensureAndReportNodeProbeLayer(map, featureCollection, setNodeLayerDiagnostics) {
+  const ready = ensureNodeProbeLayer(map, featureCollection);
+  setNodeLayerDiagnostics(readNodeProbeLayerDiagnostics(map));
+  return ready;
+}
+
 export function MapLibreMapStage({
   className = '',
   styleId,
@@ -200,6 +320,7 @@ export function MapLibreMapStage({
   const mapRef = useRef(null);
   const frameRef = useRef(null);
   const pendingRouteDataRef = useRef(null);
+  const pendingNodeDataRef = useRef(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [viewState, setViewState] = useState(() => ({
     center,
@@ -210,10 +331,17 @@ export function MapLibreMapStage({
   }));
   const [probePoints, setProbePoints] = useState([]);
   const [routeFeatureCount, setRouteFeatureCount] = useState(0);
+  const [nodeFeatureCount, setNodeFeatureCount] = useState(0);
+  const [nodeLayerDiagnostics, setNodeLayerDiagnostics] = useState(() => ({
+    sourceExists: false,
+    layerExists: false,
+    renderedCount: 0,
+  }));
 
   const styleConfig = useMemo(() => getMapLibreStyleConfig(styleId), [styleId]);
 
   const routeFeatureCollection = useMemo(() => buildRouteProbeFeatureCollection(graph), [graph]);
+  const nodeFeatureCollection = useMemo(() => buildNodeProbeFeatureCollection(graph), [graph]);
 
   const projectableNodeCount = useMemo(
     () => (Array.isArray(graph?.nodes) ? graph.nodes.filter(hasUsableLngLat).length : 0),
@@ -237,10 +365,21 @@ export function MapLibreMapStage({
     ensureRouteProbeLayer(map, featureCollection);
   };
 
+  const updateNodeLayer = (featureCollection = nodeFeatureCollection) => {
+    const map = mapRef.current;
+    pendingNodeDataRef.current = featureCollection;
+    setNodeFeatureCount(featureCollection.features.length);
+
+    if (!map) return;
+
+    ensureAndReportNodeProbeLayer(map, featureCollection, setNodeLayerDiagnostics);
+  };
+
   useEffect(() => {
     updateProjectionProbePoints();
     updateRouteLayer(routeFeatureCollection);
-  }, [graph, routeFeatureCollection]);
+    updateNodeLayer(nodeFeatureCollection);
+  }, [graph, routeFeatureCollection, nodeFeatureCollection]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
@@ -289,11 +428,29 @@ export function MapLibreMapStage({
         setErrorMessage('');
         onMapReady?.({ map, styleConfig });
         ensureRouteProbeLayer(map, pendingRouteDataRef.current || routeFeatureCollection);
+        ensureAndReportNodeProbeLayer(
+          map,
+          pendingNodeDataRef.current || nodeFeatureCollection,
+          setNodeLayerDiagnostics,
+        );
         reportViewChange();
       });
 
       map.on('styledata', () => {
         ensureRouteProbeLayer(map, pendingRouteDataRef.current || routeFeatureCollection);
+        ensureAndReportNodeProbeLayer(
+          map,
+          pendingNodeDataRef.current || nodeFeatureCollection,
+          setNodeLayerDiagnostics,
+        );
+      });
+
+      map.on('idle', () => {
+        ensureAndReportNodeProbeLayer(
+          map,
+          pendingNodeDataRef.current || nodeFeatureCollection,
+          setNodeLayerDiagnostics,
+        );
       });
 
       map.on('move', scheduleReportViewChange);
@@ -330,7 +487,7 @@ export function MapLibreMapStage({
       setErrorMessage(error instanceof Error ? error.message : String(error));
       return undefined;
     }
-  }, [center, graph, interactive, onMapReady, onViewChange, routeFeatureCollection, styleConfig, zoom]);
+  }, [center, graph, interactive, nodeFeatureCollection, onMapReady, onViewChange, routeFeatureCollection, styleConfig, zoom]);
 
   return (
     <div className={`relative h-full min-h-[420px] w-full overflow-hidden bg-slate-950 ${className}`}>
@@ -358,7 +515,7 @@ export function MapLibreMapStage({
 
       {showDiagnostics ? (
         <div className="absolute left-4 top-4 z-10 max-w-sm rounded-2xl border border-white/20 bg-slate-950/88 p-4 text-xs text-white shadow-2xl backdrop-blur">
-          <div className="mb-2 text-sm font-semibold text-emerald-200">MapLibre GeoJSON route preview</div>
+          <div className="mb-2 text-sm font-semibold text-emerald-200">MapLibre GeoJSON route preview + simple node layer</div>
           <p className="mb-3 leading-relaxed text-slate-200">
             Development-only test path. Gold routes are now rendered by a MapLibre GeoJSON
             source/layer. Green points remain SVG projection probes.
@@ -384,6 +541,16 @@ export function MapLibreMapStage({
             <dd>
               {routeFeatureCount} / {projectableRouteCount} rendered
             </dd>
+            <dt className="text-slate-400">GeoJSON nodes</dt>
+            <dd>
+              {nodeFeatureCount} / {projectableNodeCount} source
+            </dd>
+            <dt className="text-slate-400">Node source</dt>
+            <dd>{nodeLayerDiagnostics.sourceExists ? 'yes' : 'no'}</dd>
+            <dt className="text-slate-400">Node layer</dt>
+            <dd>{nodeLayerDiagnostics.layerExists ? 'yes' : 'no'}</dd>
+            <dt className="text-slate-400">Nodes rendered</dt>
+            <dd>{nodeLayerDiagnostics.renderedCount}</dd>
           </dl>
           <p className="mt-3 leading-relaxed text-slate-300">
             This is still not the migrated production overlay. It does not provide inspector hit
