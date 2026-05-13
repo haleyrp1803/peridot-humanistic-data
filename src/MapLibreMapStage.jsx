@@ -286,6 +286,10 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
       dynamicClusterSourceExists: false,
       dynamicClusterLayerExists: false,
       renderedDynamicClusterCount: 0,
+      lastClusterClickId: '',
+      lastClusterClickPointCount: 0,
+      lastClusterClickLeafCount: 0,
+      lastClusterClickError: '',
       renderedRouteCount: 0,
       renderedRouteHitCount: 0,
       renderedNodeCount: 0,
@@ -314,6 +318,10 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
     renderedDynamicClusterCount: dynamicClusterLayerExists
       ? queryRenderedFeatureCount(map, DYNAMIC_CLUSTER_LAYER_ID)
       : 0,
+    lastClusterClickId: setupDiagnostics.lastClusterClickId || '',
+    lastClusterClickPointCount: setupDiagnostics.lastClusterClickPointCount || 0,
+    lastClusterClickLeafCount: setupDiagnostics.lastClusterClickLeafCount || 0,
+    lastClusterClickError: setupDiagnostics.lastClusterClickError || '',
     renderedRouteCount: routeLayerExists ? queryRenderedFeatureCount(map, ROUTE_LAYER_ID) : 0,
     renderedRouteHitCount: routeHitLayerExists ? queryRenderedFeatureCount(map, ROUTE_HIT_LAYER_ID) : 0,
     renderedNodeCount: nodeLayerExists ? queryRenderedFeatureCount(map, NODE_LAYER_ID) : 0,
@@ -372,6 +380,89 @@ function findGraphEdgeForFeature(graph, feature) {
   );
 }
 
+
+function normalizeClusterLeafFeature(graph, leafFeature, fallbackIndex = 0) {
+  const graphNode = findGraphNodeForFeature(graph, leafFeature);
+
+  if (graphNode) {
+    return graphNode;
+  }
+
+  const properties = leafFeature?.properties || {};
+  const id = String(properties.id || leafFeature?.id || `maplibre-cluster-leaf:${fallbackIndex}`);
+  const label = String(properties.label || id);
+  const degree = Number(properties.degree) || Number(properties.weight) || 0;
+  const coordinates = Array.isArray(leafFeature?.geometry?.coordinates)
+    ? leafFeature.geometry.coordinates
+    : [];
+
+  return {
+    id,
+    label,
+    degree,
+    weight: Number(properties.weight) || degree,
+    lon: Number(coordinates[0]),
+    lat: Number(coordinates[1]),
+    anchorLabel: properties.anchorLabel || properties.placeLabel || label,
+  };
+}
+
+function buildClusterNodeFromLeaves(clusterFeature, leaves, graph) {
+  const properties = clusterFeature?.properties || {};
+  const clusterId = String(properties.cluster_id ?? clusterFeature?.id ?? 'unknown');
+  const pointCount = Number(properties.point_count) || leaves.length;
+  const coordinates = Array.isArray(clusterFeature?.geometry?.coordinates)
+    ? clusterFeature.geometry.coordinates
+    : DEFAULT_CENTER;
+  const memberNodes = leaves
+    .map((leaf, index) => normalizeClusterLeafFeature(graph, leaf, index))
+    .filter((member) => member?.label)
+    .sort((a, b) => {
+      const degreeDelta = (Number(b.degree) || 0) - (Number(a.degree) || 0);
+      if (degreeDelta) return degreeDelta;
+      return String(a.label || '').localeCompare(String(b.label || ''));
+    });
+  const totalDegree = memberNodes.reduce((sum, member) => sum + (Number(member.degree) || 0), 0);
+  const topMember = memberNodes[0] || null;
+  const memberCount = Math.max(pointCount, memberNodes.length);
+
+  return {
+    id: `maplibre-dynamic-cluster:${clusterId}`,
+    label: topMember ? `${topMember.label} +${Math.max(0, memberCount - 1)}` : `MapLibre cluster ${clusterId}`,
+    isCluster: true,
+    clusterSize: memberCount,
+    degree: totalDegree,
+    count: totalDegree,
+    radius: 10,
+    lon: Number(coordinates[0]),
+    lat: Number(coordinates[1]),
+    topLabel: topMember?.label || '',
+    memberLabels: memberNodes.map((member) => member.label),
+    members: memberNodes.map((member) => ({
+      ...member,
+      anchorLabel: member.anchorLabel || member.placeLabel || member.locationLabel || member.label,
+    })),
+  };
+}
+
+async function readClusterLeaves(source, clusterId, limit) {
+  if (!source || typeof source.getClusterLeaves !== 'function') {
+    return [];
+  }
+
+  const result = source.getClusterLeaves(clusterId, limit, 0);
+
+  if (result && typeof result.then === 'function') {
+    return result;
+  }
+
+  if (Array.isArray(result)) {
+    return result;
+  }
+
+  return [];
+}
+
 export function MapLibreMapStage({
   className = '',
   styleId,
@@ -393,7 +484,15 @@ export function MapLibreMapStage({
   const pendingRouteDataRef = useRef(null);
   const pendingNodeDataRef = useRef(null);
   const selectedFeatureRef = useRef({ kind: null, id: null });
-  const layerSetupDiagnosticsRef = useRef({ attempts: 0, phase: 'not-started', error: '' });
+  const layerSetupDiagnosticsRef = useRef({
+    attempts: 0,
+    phase: 'not-started',
+    error: '',
+    lastClusterClickId: '',
+    lastClusterClickPointCount: 0,
+    lastClusterClickLeafCount: 0,
+    lastClusterClickError: '',
+  });
   const clickHandlersRef = useRef({
     graph,
     handleNodeClick,
@@ -443,6 +542,17 @@ export function MapLibreMapStage({
       ...layerSetupDiagnosticsRef.current,
       phase,
       error: error instanceof Error ? error.message : String(error),
+    };
+  };
+
+
+  const markClusterClickDiagnostics = ({ clusterId = '', pointCount = 0, leafCount = 0, error = '' }) => {
+    layerSetupDiagnosticsRef.current = {
+      ...layerSetupDiagnosticsRef.current,
+      lastClusterClickId: clusterId,
+      lastClusterClickPointCount: pointCount,
+      lastClusterClickLeafCount: leafCount,
+      lastClusterClickError: error,
     };
   };
 
@@ -630,6 +740,48 @@ export function MapLibreMapStage({
         }, 0);
       };
 
+      const handleMapLibreClusterClick = async (event) => {
+        const feature = event?.features?.[0];
+        const clusterId = feature?.properties?.cluster_id;
+        const pointCount = Number(feature?.properties?.point_count) || 0;
+        const { graph: currentGraph, handleNodeClick: currentHandleNodeClick } = clickHandlersRef.current;
+
+        if (clusterId === undefined || clusterId === null || typeof currentHandleNodeClick !== 'function') {
+          return;
+        }
+
+        markFeatureClick();
+        event?.preventDefault?.();
+        event?.originalEvent?.stopPropagation?.();
+
+        try {
+          const clusterSource = map.getSource(DYNAMIC_CLUSTER_SOURCE_ID);
+          const leafLimit = Math.max(1000, pointCount || 0);
+          const leaves = await readClusterLeaves(clusterSource, clusterId, leafLimit);
+          const clusterNode = buildClusterNodeFromLeaves(feature, leaves, currentGraph);
+
+          selectedFeatureRef.current = { kind: 'cluster', id: clusterNode.id };
+          clearSelectedFilterLayers(map);
+          markClusterClickDiagnostics({
+            clusterId: String(clusterId),
+            pointCount,
+            leafCount: leaves.length,
+            error: '',
+          });
+          reportLayerDiagnostics(map);
+          currentHandleNodeClick(clusterNode, buildMapLibreClickPoint(event));
+        } catch (error) {
+          markClusterClickDiagnostics({
+            clusterId: String(clusterId),
+            pointCount,
+            leafCount: 0,
+            error: error instanceof Error ? error.message : String(error),
+          });
+          reportLayerDiagnostics(map);
+          setErrorMessage(error instanceof Error ? error.message : String(error));
+        }
+      };
+
       const handleMapLibreNodeClick = (event) => {
         const feature = event?.features?.[0];
         const { graph: currentGraph, handleNodeClick: currentHandleNodeClick } = clickHandlersRef.current;
@@ -678,7 +830,7 @@ export function MapLibreMapStage({
         if (typeof currentHandleBlankMapClick !== 'function') return;
 
         const hitFeatures = map.queryRenderedFeatures(event.point, {
-          layers: [NODE_LAYER_ID, ROUTE_HIT_LAYER_ID, ROUTE_LAYER_ID].filter((layerId) =>
+          layers: [DYNAMIC_CLUSTER_LAYER_ID, NODE_LAYER_ID, ROUTE_HIT_LAYER_ID, ROUTE_LAYER_ID].filter((layerId) =>
             map.getLayer(layerId),
           ),
         });
@@ -691,6 +843,7 @@ export function MapLibreMapStage({
         currentHandleBlankMapClick();
       };
 
+      map.on('click', DYNAMIC_CLUSTER_LAYER_ID, handleMapLibreClusterClick);
       map.on('click', NODE_LAYER_ID, handleMapLibreNodeClick);
       map.on('click', ROUTE_HIT_LAYER_ID, handleMapLibreRouteClick);
       map.on('click', handleMapLibreBlankClick);
@@ -703,6 +856,8 @@ export function MapLibreMapStage({
         map.getCanvas().style.cursor = '';
       };
 
+      map.on('mouseenter', DYNAMIC_CLUSTER_LAYER_ID, setPointerCursor);
+      map.on('mouseleave', DYNAMIC_CLUSTER_LAYER_ID, clearPointerCursor);
       map.on('mouseenter', NODE_LAYER_ID, setPointerCursor);
       map.on('mouseleave', NODE_LAYER_ID, clearPointerCursor);
       map.on('mouseenter', ROUTE_HIT_LAYER_ID, setPointerCursor);
@@ -863,12 +1018,23 @@ export function MapLibreMapStage({
 
             <dt className="text-slate-400">Dynamic clusters rendered</dt>
             <dd>{layerDiagnostics.renderedDynamicClusterCount}</dd>
+
+            <dt className="text-slate-400">Last cluster click</dt>
+            <dd>{layerDiagnostics.lastClusterClickId || 'none'}</dd>
+
+            <dt className="text-slate-400">Cluster point count</dt>
+            <dd>{layerDiagnostics.lastClusterClickPointCount || 0}</dd>
+
+            <dt className="text-slate-400">Cluster leaves read</dt>
+            <dd>{layerDiagnostics.lastClusterClickLeafCount || 0}</dd>
+
+            <dt className="text-slate-400">Cluster click error</dt>
+            <dd>{layerDiagnostics.lastClusterClickError || 'none'}</dd>
           </dl>
 
           <p className="mt-3 leading-relaxed text-slate-300">
             This is still not the migrated production overlay. It now reports MapLibre source,
-            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster Inspector routing,
-            node hiding, route changes, playback highlighting, hover cards, and final route styling
+            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster clicks now attempt to read MapLibre cluster leaves and open the existing Inspector. Node hiding, route changes, playback highlighting, hover cards, and final route styling
             remain out of scope.
           </p>
         </div>
