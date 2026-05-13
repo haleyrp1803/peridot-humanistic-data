@@ -31,55 +31,12 @@ import {
 const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
 
-const DIAGNOSTIC_CLUSTER_SOURCE_ID = 'peridot-diagnostic-clusters';
-const DIAGNOSTIC_CLUSTER_LAYER_ID = 'peridot-diagnostic-cluster-circles';
+const DYNAMIC_CLUSTER_SOURCE_ID = 'peridot-dynamic-cluster-source';
+const DYNAMIC_CLUSTER_LAYER_ID = 'peridot-dynamic-cluster-circles';
 
-const DIAGNOSTIC_CLUSTER_FEATURE_COLLECTION = {
+const EMPTY_FEATURE_COLLECTION = {
   type: 'FeatureCollection',
-  features: [
-    {
-      type: 'Feature',
-      id: 'diagnostic-cluster-florence',
-      properties: {
-        id: 'diagnostic-cluster-florence',
-        label: 'Diagnostic cluster: Florence region',
-        memberCount: 12,
-        totalWeight: 34,
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [11.2558, 43.7696],
-      },
-    },
-    {
-      type: 'Feature',
-      id: 'diagnostic-cluster-venice',
-      properties: {
-        id: 'diagnostic-cluster-venice',
-        label: 'Diagnostic cluster: Venice region',
-        memberCount: 9,
-        totalWeight: 21,
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [12.3155, 45.4408],
-      },
-    },
-    {
-      type: 'Feature',
-      id: 'diagnostic-cluster-rome',
-      properties: {
-        id: 'diagnostic-cluster-rome',
-        label: 'Diagnostic cluster: Rome region',
-        memberCount: 7,
-        totalWeight: 18,
-      },
-      geometry: {
-        type: 'Point',
-        coordinates: [12.4964, 41.9028],
-      },
-    },
-  ],
+  features: [],
 };
 
 function formatNumber(value, digits = 4) {
@@ -189,34 +146,41 @@ function ensureNodeProbeLayer(map, featureCollection) {
   return Boolean(map.getSource(NODE_SOURCE_ID) && map.getLayer(NODE_LAYER_ID));
 }
 
-function ensureDiagnosticClusterLayer(map) {
+function ensureDynamicClusterLayer(map, featureCollection = EMPTY_FEATURE_COLLECTION) {
   if (!hasMapStyle(map)) return false;
 
-  const existingSource = map.getSource(DIAGNOSTIC_CLUSTER_SOURCE_ID);
+  const clusterData = featureCollection || EMPTY_FEATURE_COLLECTION;
+  const existingSource = map.getSource(DYNAMIC_CLUSTER_SOURCE_ID);
 
   if (existingSource) {
-    existingSource.setData(DIAGNOSTIC_CLUSTER_FEATURE_COLLECTION);
+    existingSource.setData(clusterData);
   } else {
-    map.addSource(DIAGNOSTIC_CLUSTER_SOURCE_ID, {
+    map.addSource(DYNAMIC_CLUSTER_SOURCE_ID, {
       type: 'geojson',
-      data: DIAGNOSTIC_CLUSTER_FEATURE_COLLECTION,
+      data: clusterData,
+      cluster: true,
+      clusterMaxZoom: 9,
+      clusterRadius: 44,
     });
   }
 
-  if (!map.getLayer(DIAGNOSTIC_CLUSTER_LAYER_ID)) {
+  if (!map.getLayer(DYNAMIC_CLUSTER_LAYER_ID)) {
     const layerDefinition = {
-      id: DIAGNOSTIC_CLUSTER_LAYER_ID,
+      id: DYNAMIC_CLUSTER_LAYER_ID,
       type: 'circle',
-      source: DIAGNOSTIC_CLUSTER_SOURCE_ID,
+      source: DYNAMIC_CLUSTER_SOURCE_ID,
+      filter: ['has', 'point_count'],
       paint: {
         'circle-radius': [
-          'interpolate',
-          ['linear'],
-          ['get', 'memberCount'],
-          1,
-          12,
-          15,
-          22,
+          'step',
+          ['get', 'point_count'],
+          14,
+          3,
+          18,
+          8,
+          23,
+          20,
+          30,
         ],
         'circle-color': '#f472b6',
         'circle-opacity': 0.82,
@@ -232,13 +196,11 @@ function ensureDiagnosticClusterLayer(map) {
     }
   }
 
-  if (map.getLayer(DIAGNOSTIC_CLUSTER_LAYER_ID) && map.getLayer(NODE_LAYER_ID)) {
-    map.moveLayer(DIAGNOSTIC_CLUSTER_LAYER_ID, NODE_LAYER_ID);
+  if (map.getLayer(DYNAMIC_CLUSTER_LAYER_ID) && map.getLayer(NODE_LAYER_ID)) {
+    map.moveLayer(DYNAMIC_CLUSTER_LAYER_ID, NODE_LAYER_ID);
   }
 
-  return Boolean(
-    map.getSource(DIAGNOSTIC_CLUSTER_SOURCE_ID) && map.getLayer(DIAGNOSTIC_CLUSTER_LAYER_ID),
-  );
+  return Boolean(map.getSource(DYNAMIC_CLUSTER_SOURCE_ID) && map.getLayer(DYNAMIC_CLUSTER_LAYER_ID));
 }
 
 function ensureSelectedFilterLayers(map) {
@@ -321,9 +283,9 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
       nodeSourceExists: false,
       nodeLayerExists: false,
       selectedNodeLayerExists: false,
-      diagnosticClusterSourceExists: false,
-      diagnosticClusterLayerExists: false,
-      renderedDiagnosticClusterCount: 0,
+      dynamicClusterSourceExists: false,
+      dynamicClusterLayerExists: false,
+      renderedDynamicClusterCount: 0,
       renderedRouteCount: 0,
       renderedRouteHitCount: 0,
       renderedNodeCount: 0,
@@ -333,7 +295,7 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
   const routeLayerExists = Boolean(map.getLayer(ROUTE_LAYER_ID));
   const routeHitLayerExists = Boolean(map.getLayer(ROUTE_HIT_LAYER_ID));
   const nodeLayerExists = Boolean(map.getLayer(NODE_LAYER_ID));
-  const diagnosticClusterLayerExists = Boolean(map.getLayer(DIAGNOSTIC_CLUSTER_LAYER_ID));
+  const dynamicClusterLayerExists = Boolean(map.getLayer(DYNAMIC_CLUSTER_LAYER_ID));
 
   return {
     styleLoaded: readStyleLoaded(map),
@@ -347,10 +309,10 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
     nodeSourceExists: Boolean(map.getSource(NODE_SOURCE_ID)),
     nodeLayerExists,
     selectedNodeLayerExists: Boolean(map.getLayer(SELECTED_NODE_LAYER_ID)),
-    diagnosticClusterSourceExists: Boolean(map.getSource(DIAGNOSTIC_CLUSTER_SOURCE_ID)),
-    diagnosticClusterLayerExists,
-    renderedDiagnosticClusterCount: diagnosticClusterLayerExists
-      ? queryRenderedFeatureCount(map, DIAGNOSTIC_CLUSTER_LAYER_ID)
+    dynamicClusterSourceExists: Boolean(map.getSource(DYNAMIC_CLUSTER_SOURCE_ID)),
+    dynamicClusterLayerExists,
+    renderedDynamicClusterCount: dynamicClusterLayerExists
+      ? queryRenderedFeatureCount(map, DYNAMIC_CLUSTER_LAYER_ID)
       : 0,
     renderedRouteCount: routeLayerExists ? queryRenderedFeatureCount(map, ROUTE_LAYER_ID) : 0,
     renderedRouteHitCount: routeHitLayerExists ? queryRenderedFeatureCount(map, ROUTE_HIT_LAYER_ID) : 0,
@@ -545,6 +507,7 @@ export function MapLibreMapStage({
         setLayerDiagnostics,
         layerSetupDiagnosticsRef.current,
       );
+      ensureDynamicClusterLayer(map, featureCollection);
       ensureSelectedFilterLayers(map);
       reapplySelectedFilters(map);
       reportLayerDiagnostics(map);
@@ -624,7 +587,7 @@ export function MapLibreMapStage({
             setLayerDiagnostics,
             layerSetupDiagnosticsRef.current,
           );
-          ensureDiagnosticClusterLayer(map);
+          ensureDynamicClusterLayer(map, pendingNodeDataRef.current || nodeFeatureCollection);
           ensureSelectedFilterLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
@@ -648,7 +611,7 @@ export function MapLibreMapStage({
             setLayerDiagnostics,
             layerSetupDiagnosticsRef.current,
           );
-          ensureDiagnosticClusterLayer(map);
+          ensureDynamicClusterLayer(map, pendingNodeDataRef.current || nodeFeatureCollection);
           ensureSelectedFilterLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
@@ -755,7 +718,7 @@ export function MapLibreMapStage({
             setLayerDiagnostics,
             layerSetupDiagnosticsRef.current,
           );
-          ensureDiagnosticClusterLayer(map);
+          ensureDynamicClusterLayer(map, pendingNodeDataRef.current || nodeFeatureCollection);
           ensureSelectedFilterLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
@@ -889,23 +852,22 @@ export function MapLibreMapStage({
             <dt className="text-slate-400">Nodes rendered</dt>
             <dd>{layerDiagnostics.renderedNodeCount}</dd>
 
-            <dt className="text-slate-400">Diagnostic cluster features</dt>
-            <dd>{DIAGNOSTIC_CLUSTER_FEATURE_COLLECTION.features.length} static</dd>
+            <dt className="text-slate-400">Dynamic cluster features</dt>
+            <dd>{nodeFeatureCount} node source features</dd>
 
-            <dt className="text-slate-400">Diagnostic cluster source</dt>
-            <dd>{layerDiagnostics.diagnosticClusterSourceExists ? 'yes' : 'no'}</dd>
+            <dt className="text-slate-400">Dynamic cluster source</dt>
+            <dd>{layerDiagnostics.dynamicClusterSourceExists ? 'yes' : 'no'}</dd>
 
-            <dt className="text-slate-400">Diagnostic cluster layer</dt>
-            <dd>{layerDiagnostics.diagnosticClusterLayerExists ? 'yes' : 'no'}</dd>
+            <dt className="text-slate-400">Dynamic cluster layer</dt>
+            <dd>{layerDiagnostics.dynamicClusterLayerExists ? 'yes' : 'no'}</dd>
 
-            <dt className="text-slate-400">Diagnostic clusters rendered</dt>
-            <dd>{layerDiagnostics.renderedDiagnosticClusterCount}</dd>
+            <dt className="text-slate-400">Dynamic clusters rendered</dt>
+            <dd>{layerDiagnostics.renderedDynamicClusterCount}</dd>
           </dl>
 
           <p className="mt-3 leading-relaxed text-slate-300">
             This is still not the migrated production overlay. It now reports MapLibre source,
-            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink static
-            cluster circles are diagnostic-only; graph-derived clusters, cluster Inspector routing,
+            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster Inspector routing,
             node hiding, route changes, playback highlighting, hover cards, and final route styling
             remain out of scope.
           </p>
