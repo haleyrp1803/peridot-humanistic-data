@@ -90,6 +90,44 @@ function readRouteCount(feature) {
   return Number(feature?.properties?.count) || Number(feature?.properties?.weight) || 0;
 }
 
+function normalizePropertyArray(value) {
+  if (Array.isArray(value)) return value;
+
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.keys(value)
+      .sort((a, b) => Number(a) - Number(b))
+      .map((key) => value[key]);
+  }
+
+  return [];
+}
+
+function summarizeRouteFeature(feature) {
+  const properties = feature?.properties || {};
+  const id = routeEndpointId(feature, 'id') || String(feature?.id || stableFeatureKey(feature));
+  const sourceId = routeEndpointId(feature, 'sourceId');
+  const targetId = routeEndpointId(feature, 'targetId');
+
+  return {
+    id,
+    sourceId,
+    targetId,
+    sourceLabel: properties.sourceLabel || sourceId,
+    targetLabel: properties.targetLabel || targetId,
+    count: readRouteCount(feature),
+    label: `${properties.sourceLabel || sourceId || 'Source'} → ${properties.targetLabel || targetId || 'Target'}`,
+  };
+}
+
 function readCoordinates(feature) {
   const coordinates = feature?.geometry?.coordinates;
   if (!Array.isArray(coordinates) || coordinates.length < 2) return null;
@@ -169,6 +207,7 @@ function buildVisibleAggregatedRouteFeatureCollection({
         count: 0,
         memberRouteCount: 0,
         memberRouteIds: [],
+        memberRouteSummaries: [],
         originalSourceIds: new Set(),
         originalTargetIds: new Set(),
       });
@@ -178,6 +217,7 @@ function buildVisibleAggregatedRouteFeatureCollection({
     group.count += count;
     group.memberRouteCount += 1;
     group.memberRouteIds.push(routeId);
+    group.memberRouteSummaries.push(summarizeRouteFeature(feature));
     if (sourceOriginalId) group.originalSourceIds.add(sourceOriginalId);
     if (targetOriginalId) group.originalTargetIds.add(targetOriginalId);
   });
@@ -200,6 +240,8 @@ function buildVisibleAggregatedRouteFeatureCollection({
         count: group.count,
         memberRouteCount: group.memberRouteCount,
         memberRouteIds: group.memberRouteIds,
+        memberRouteSummaries: group.memberRouteSummaries,
+        memberRouteSummariesJson: JSON.stringify(group.memberRouteSummaries),
         originalSourceIds: Array.from(group.originalSourceIds),
         originalTargetIds: Array.from(group.originalTargetIds),
         sourceIsCluster: group.sourceIsCluster,
@@ -770,17 +812,84 @@ function buildClusterNodeFromLeaves(clusterFeature, leaves, graph) {
   };
 }
 
+function graphEdgeLabel(edge, fallback = '') {
+  return (
+    edge?.label ||
+    `${edge?.sourceLabel || edge?.source || edge?.sourcePlaceId || 'Source'} → ${
+      edge?.targetLabel || edge?.target || edge?.targetPlaceId || 'Target'
+    }` ||
+    fallback
+  );
+}
+
+function summarizeGraphEdge(edge, fallback = {}) {
+  if (!edge) return fallback;
+
+  const sourceLabel = edge.sourceLabel || edge.source || edge.sourcePlaceId || fallback.sourceLabel || '';
+  const targetLabel = edge.targetLabel || edge.target || edge.targetPlaceId || fallback.targetLabel || '';
+  const count = Number(edge.count) || Number(edge.weight) || Number(fallback.count) || 0;
+
+  return {
+    id: String(edge.id || fallback.id || `${sourceLabel}-->${targetLabel}`),
+    sourceId: String(edge.sourcePlaceId || edge.source || fallback.sourceId || ''),
+    targetId: String(edge.targetPlaceId || edge.target || fallback.targetId || ''),
+    sourceLabel,
+    targetLabel,
+    count,
+    weight: count,
+    label: graphEdgeLabel(edge, fallback.label),
+    originalEdge: edge,
+  };
+}
+
+function buildMemberRouteSummaries(graph, memberRouteIds, fallbackSummaries) {
+  const graphEdges = Array.isArray(graph?.edges) ? graph.edges : [];
+  const summariesById = new Map(
+    normalizePropertyArray(fallbackSummaries)
+      .filter((summary) => summary?.id)
+      .map((summary) => [String(summary.id), summary]),
+  );
+
+  const ids = memberRouteIds.length ? memberRouteIds : Array.from(summariesById.keys());
+  const seen = new Set();
+
+  return ids
+    .map((routeId) => {
+      const id = String(routeId || '');
+      if (!id || seen.has(id)) return null;
+      seen.add(id);
+
+      const fallback = summariesById.get(id) || { id };
+      const graphEdge = graphEdges.find((edge) => String(edge?.id || '') === id);
+      return summarizeGraphEdge(graphEdge, fallback);
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const countDelta = (Number(b.count) || 0) - (Number(a.count) || 0);
+      if (countDelta) return countDelta;
+      return String(a.label || '').localeCompare(String(b.label || ''));
+    });
+}
+
 function buildAggregatedEdgeFromFeature(graph, feature) {
   const properties = feature?.properties || {};
   const id = String(properties.id || feature?.id || 'maplibre-aggregated-route');
-  const memberRouteIds = Array.isArray(properties.memberRouteIds)
-    ? properties.memberRouteIds.map((routeId) => String(routeId))
-    : [];
+  const memberRouteIds = normalizePropertyArray(properties.memberRouteIds).map((routeId) => String(routeId));
+  const fallbackSummaries = normalizePropertyArray(properties.memberRouteSummaries).length
+    ? normalizePropertyArray(properties.memberRouteSummaries)
+    : normalizePropertyArray(properties.memberRouteSummariesJson);
+  const memberRoutes = buildMemberRouteSummaries(graph, memberRouteIds, fallbackSummaries);
 
   if (memberRouteIds.length === 1 && Array.isArray(graph?.edges)) {
     const directMatch = graph.edges.find((edge) => String(edge?.id || '') === memberRouteIds[0]);
-    if (directMatch) return directMatch;
+    if (directMatch && !properties.sourceIsCluster && !properties.targetIsCluster) return directMatch;
   }
+
+  const sourceLabel = properties.sourceLabel || properties.sourceId || 'Visible source';
+  const targetLabel = properties.targetLabel || properties.targetId || 'Visible target';
+  const count = Number(properties.count) || memberRoutes.reduce((sum, route) => sum + (Number(route.count) || 0), 0);
+  const memberRouteCount = Number(properties.memberRouteCount) || memberRoutes.length || memberRouteIds.length;
+  const label = `${sourceLabel} → ${targetLabel}`;
 
   return {
     id,
@@ -788,16 +897,31 @@ function buildAggregatedEdgeFromFeature(graph, feature) {
     target: properties.targetId || '',
     sourcePlaceId: properties.sourceId || '',
     targetPlaceId: properties.targetId || '',
-    sourceLabel: properties.sourceLabel || properties.sourceId || '',
-    targetLabel: properties.targetLabel || properties.targetId || '',
-    count: Number(properties.count) || 0,
-    weight: Number(properties.count) || 0,
+    sourceLabel,
+    targetLabel,
+    count,
+    weight: count,
     isAggregatedRoute: true,
-    memberRouteCount: Number(properties.memberRouteCount) || memberRouteIds.length,
+    aggregateKind: 'maplibre-visible-endpoint-route',
+    aggregateLabel: label,
+    aggregateSummary: `${memberRouteCount} underlying ${memberRouteCount === 1 ? 'route' : 'routes'} · ${count} visible ${count === 1 ? 'letter' : 'letters'}`,
+    sourceIsCluster: Boolean(properties.sourceIsCluster),
+    targetIsCluster: Boolean(properties.targetIsCluster),
+    memberRouteCount,
     memberRouteIds,
-    label: `${properties.sourceLabel || properties.sourceId || 'Visible source'} → ${
-      properties.targetLabel || properties.targetId || 'Visible target'
-    }`,
+    linkedRouteIds: memberRouteIds,
+    memberRoutes,
+    routeMembers: memberRoutes,
+    members: memberRoutes.map((route) => ({
+      id: route.id,
+      label: route.label,
+      degree: Number(route.count) || 0,
+      sourceLabel: route.sourceLabel,
+      targetLabel: route.targetLabel,
+      anchorLabel: `${route.sourceLabel || route.sourceId || 'Source'} → ${route.targetLabel || route.targetId || 'Target'}`,
+    })),
+    memberLabels: memberRoutes.map((route) => route.label),
+    label,
   };
 }
 
@@ -916,6 +1040,15 @@ export function MapLibreMapStage({
       lastClusterClickPointCount: pointCount,
       lastClusterClickLeafCount: leafCount,
       lastClusterClickError: error,
+    };
+  };
+
+  const markAggregatedRouteClickDiagnostics = ({ routeId = '', memberRouteCount = 0, count = 0 }) => {
+    layerSetupDiagnosticsRef.current = {
+      ...layerSetupDiagnosticsRef.current,
+      lastAggregatedRouteClickId: routeId,
+      lastAggregatedRouteClickMemberCount: memberRouteCount,
+      lastAggregatedRouteClickWeight: count,
     };
   };
 
@@ -1319,6 +1452,11 @@ export function MapLibreMapStage({
         if (!edge || !selectedId || typeof currentHandleEdgeClick !== 'function') return;
 
         markFeatureClick();
+        markAggregatedRouteClickDiagnostics({
+          routeId: selectedId,
+          memberRouteCount: Number(edge.memberRouteCount) || 0,
+          count: Number(edge.count) || 0,
+        });
         selectedFeatureRef.current = { kind: 'aggregatedRoute', id: selectedId };
         setSelectedAggregatedRouteFilter(map, selectedId);
         reportLayerDiagnostics(map);
@@ -1526,6 +1664,15 @@ export function MapLibreMapStage({
 
             <dt className="text-slate-400">Internal clustered routes skipped</dt>
             <dd>{layerDiagnostics.internalClusterRouteCount || 0}</dd>
+
+            <dt className="text-slate-400">Last aggregated route click</dt>
+            <dd>{layerDiagnostics.lastAggregatedRouteClickId || 'none'}</dd>
+
+            <dt className="text-slate-400">Aggregated click members</dt>
+            <dd>{layerDiagnostics.lastAggregatedRouteClickMemberCount || 0}</dd>
+
+            <dt className="text-slate-400">Aggregated click weight</dt>
+            <dd>{layerDiagnostics.lastAggregatedRouteClickWeight || 0}</dd>
 
             <dt className="text-slate-400">Node features</dt>
             <dd>
