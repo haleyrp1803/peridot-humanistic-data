@@ -7,11 +7,16 @@ const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
 const MAX_GEOJSON_ROUTES = 75;
 const MAX_GEOJSON_NODES = 150;
+
 const ROUTE_SOURCE_ID = 'peridot-route-probe-source';
 const ROUTE_LAYER_ID = 'peridot-route-probe-layer';
 const ROUTE_HIT_LAYER_ID = 'peridot-route-probe-hit-layer';
 const NODE_SOURCE_ID = 'peridot-node-probe-source';
 const NODE_LAYER_ID = 'peridot-node-probe-layer';
+const SELECTED_ROUTE_LAYER_ID = 'peridot-selected-route-filter-layer';
+const SELECTED_NODE_LAYER_ID = 'peridot-selected-node-filter-layer';
+
+const EMPTY_FILTER = ['==', ['get', 'id'], '__peridot-no-selected-feature__'];
 
 function formatNumber(value, digits = 4) {
   if (!Number.isFinite(value)) return 'n/a';
@@ -42,9 +47,9 @@ function readMapViewState(map) {
 
 function hasUsableLngLat(node) {
   return (
-    Number.isFinite(node?.lon) &&
-    Number.isFinite(node?.lat) &&
-    !(node.lat === 0 && node.lon === 0)
+    Number.isFinite(node?.lon)
+    && Number.isFinite(node?.lat)
+    && !(node.lat === 0 && node.lon === 0)
   );
 }
 
@@ -64,11 +69,11 @@ function buildProjectableNodeMap(graph) {
 
 function readNodeWeight(node) {
   return (
-    Number(node?.count) ||
-    Number(node?.weight) ||
-    Number(node?.degree) ||
-    Number(node?.totalLetters) ||
-    0
+    Number(node?.count)
+    || Number(node?.weight)
+    || Number(node?.degree)
+    || Number(node?.totalLetters)
+    || 0
   );
 }
 
@@ -224,7 +229,11 @@ function ensureRouteProbeLayer(map, featureCollection) {
     });
   }
 
-  return Boolean(map.getSource(ROUTE_SOURCE_ID) && map.getLayer(ROUTE_LAYER_ID) && map.getLayer(ROUTE_HIT_LAYER_ID));
+  return Boolean(
+    map.getSource(ROUTE_SOURCE_ID)
+      && map.getLayer(ROUTE_LAYER_ID)
+      && map.getLayer(ROUTE_HIT_LAYER_ID)
+  );
 }
 
 function ensureNodeProbeLayer(map, featureCollection) {
@@ -261,6 +270,102 @@ function ensureNodeProbeLayer(map, featureCollection) {
   }
 
   return Boolean(map.getSource(NODE_SOURCE_ID) && map.getLayer(NODE_LAYER_ID));
+}
+
+function ensureSelectedFilterLayers(map) {
+  if (!map || !map.isStyleLoaded()) return false;
+
+  if (map.getSource(ROUTE_SOURCE_ID) && !map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
+    map.addLayer({
+      id: SELECTED_ROUTE_LAYER_ID,
+      type: 'line',
+      source: ROUTE_SOURCE_ID,
+      filter: EMPTY_FILTER,
+      paint: {
+        'line-color': '#fff7a8',
+        'line-opacity': 0.98,
+        'line-width': 10,
+      },
+    });
+  }
+
+  if (map.getSource(NODE_SOURCE_ID) && !map.getLayer(SELECTED_NODE_LAYER_ID)) {
+    map.addLayer({
+      id: SELECTED_NODE_LAYER_ID,
+      type: 'circle',
+      source: NODE_SOURCE_ID,
+      filter: EMPTY_FILTER,
+      paint: {
+        'circle-radius': 27,
+        'circle-color': '#fff7a8',
+        'circle-opacity': 0.34,
+        'circle-stroke-color': '#ffffff',
+        'circle-stroke-width': 5,
+        'circle-stroke-opacity': 1,
+      },
+    });
+  }
+
+  if (map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
+    map.moveLayer(SELECTED_ROUTE_LAYER_ID);
+  }
+
+  if (map.getLayer(ROUTE_HIT_LAYER_ID)) {
+    map.moveLayer(ROUTE_HIT_LAYER_ID);
+  }
+
+  if (map.getLayer(NODE_LAYER_ID)) {
+    map.moveLayer(NODE_LAYER_ID);
+  }
+
+  if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
+    map.moveLayer(SELECTED_NODE_LAYER_ID);
+  }
+
+  return Boolean(
+    map.getLayer(SELECTED_ROUTE_LAYER_ID)
+      || map.getLayer(SELECTED_NODE_LAYER_ID)
+  );
+}
+
+function selectedIdFilter(id) {
+  return ['==', ['get', 'id'], String(id || '')];
+}
+
+function clearSelectedFilterLayers(map) {
+  if (!map) return;
+
+  if (map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
+    map.setFilter(SELECTED_ROUTE_LAYER_ID, EMPTY_FILTER);
+  }
+
+  if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
+    map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_FILTER);
+  }
+}
+
+function setSelectedNodeFilter(map, id) {
+  if (!ensureSelectedFilterLayers(map)) return;
+
+  if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
+    map.setFilter(SELECTED_NODE_LAYER_ID, selectedIdFilter(id));
+  }
+
+  if (map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
+    map.setFilter(SELECTED_ROUTE_LAYER_ID, EMPTY_FILTER);
+  }
+}
+
+function setSelectedRouteFilter(map, id) {
+  if (!ensureSelectedFilterLayers(map)) return;
+
+  if (map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
+    map.setFilter(SELECTED_ROUTE_LAYER_ID, selectedIdFilter(id));
+  }
+
+  if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
+    map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_FILTER);
+  }
 }
 
 function readNodeProbeLayerDiagnostics(map) {
@@ -307,7 +412,9 @@ function featureProperty(feature, key) {
 
 function findGraphNodeForFeature(graph, feature) {
   const nodeId = featureProperty(feature, 'id') || String(feature?.id || '');
+
   if (!nodeId || !Array.isArray(graph?.nodes)) return null;
+
   return graph.nodes.find((node) => String(node?.id || '') === nodeId) || null;
 }
 
@@ -315,6 +422,7 @@ function findGraphEdgeForFeature(graph, feature) {
   if (!Array.isArray(graph?.edges)) return null;
 
   const edgeId = featureProperty(feature, 'id') || String(feature?.id || '');
+
   if (edgeId) {
     const directMatch = graph.edges.find((edge) => String(edge?.id || '') === edgeId);
     if (directMatch) return directMatch;
@@ -329,6 +437,7 @@ function findGraphEdgeForFeature(graph, feature) {
     graph.edges.find((edge) => {
       const edgeSource = String(edge?.sourcePlaceId || edge?.source || '');
       const edgeTarget = String(edge?.targetPlaceId || edge?.target || '');
+
       return edgeSource === sourceId && edgeTarget === targetId;
     }) || null
   );
@@ -360,6 +469,7 @@ export function MapLibreMapStage({
   const frameRef = useRef(null);
   const pendingRouteDataRef = useRef(null);
   const pendingNodeDataRef = useRef(null);
+  const selectedFeatureRef = useRef({ kind: null, id: null });
   const clickHandlersRef = useRef({
     graph,
     handleNodeClick,
@@ -367,6 +477,7 @@ export function MapLibreMapStage({
     handleBlankMapClick,
   });
   const featureClickInProgressRef = useRef(false);
+
   const [errorMessage, setErrorMessage] = useState('');
   const [viewState, setViewState] = useState(() => ({
     center,
@@ -392,8 +503,25 @@ export function MapLibreMapStage({
     () => (Array.isArray(graph?.nodes) ? graph.nodes.filter(hasUsableLngLat).length : 0),
     [graph],
   );
-
   const projectableRouteCount = useMemo(() => countProjectableRoutes(graph), [graph]);
+
+  const reapplySelectedFilters = (map) => {
+    const selection = selectedFeatureRef.current;
+
+    if (!selection?.kind || !selection?.id) {
+      clearSelectedFilterLayers(map);
+      return;
+    }
+
+    if (selection.kind === 'node') {
+      setSelectedNodeFilter(map, selection.id);
+      return;
+    }
+
+    if (selection.kind === 'route') {
+      setSelectedRouteFilter(map, selection.id);
+    }
+  };
 
   const updateRouteLayer = (featureCollection = routeFeatureCollection) => {
     const map = mapRef.current;
@@ -403,6 +531,8 @@ export function MapLibreMapStage({
     if (!map) return;
 
     ensureRouteProbeLayer(map, featureCollection);
+    ensureSelectedFilterLayers(map);
+    reapplySelectedFilters(map);
   };
 
   const updateNodeLayer = (featureCollection = nodeFeatureCollection) => {
@@ -413,6 +543,8 @@ export function MapLibreMapStage({
     if (!map) return;
 
     ensureAndReportNodeProbeLayer(map, featureCollection, setNodeLayerDiagnostics);
+    ensureSelectedFilterLayers(map);
+    reapplySelectedFilters(map);
   };
 
   useEffect(() => {
@@ -480,6 +612,8 @@ export function MapLibreMapStage({
           pendingNodeDataRef.current || nodeFeatureCollection,
           setNodeLayerDiagnostics,
         );
+        ensureSelectedFilterLayers(map);
+        reapplySelectedFilters(map);
         reportViewChange();
       });
 
@@ -490,6 +624,8 @@ export function MapLibreMapStage({
           pendingNodeDataRef.current || nodeFeatureCollection,
           setNodeLayerDiagnostics,
         );
+        ensureSelectedFilterLayers(map);
+        reapplySelectedFilters(map);
       });
 
       const markFeatureClick = () => {
@@ -503,10 +639,13 @@ export function MapLibreMapStage({
         const feature = event?.features?.[0];
         const { graph: currentGraph, handleNodeClick: currentHandleNodeClick } = clickHandlersRef.current;
         const node = findGraphNodeForFeature(currentGraph, feature);
+        const selectedId = featureProperty(feature, 'id') || String(feature?.id || '');
 
-        if (!node || typeof currentHandleNodeClick !== 'function') return;
+        if (!node || !selectedId || typeof currentHandleNodeClick !== 'function') return;
 
         markFeatureClick();
+        selectedFeatureRef.current = { kind: 'node', id: selectedId };
+        setSelectedNodeFilter(map, selectedId);
         event?.preventDefault?.();
         event?.originalEvent?.stopPropagation?.();
         currentHandleNodeClick(node, buildMapLibreClickPoint(event));
@@ -522,10 +661,13 @@ export function MapLibreMapStage({
         const feature = event?.features?.[0];
         const { graph: currentGraph, handleEdgeClick: currentHandleEdgeClick } = clickHandlersRef.current;
         const edge = findGraphEdgeForFeature(currentGraph, feature);
+        const selectedId = featureProperty(feature, 'id') || String(feature?.id || '');
 
-        if (!edge || typeof currentHandleEdgeClick !== 'function') return;
+        if (!edge || !selectedId || typeof currentHandleEdgeClick !== 'function') return;
 
         markFeatureClick();
+        selectedFeatureRef.current = { kind: 'route', id: selectedId };
+        setSelectedRouteFilter(map, selectedId);
         event?.preventDefault?.();
         event?.originalEvent?.stopPropagation?.();
         currentHandleEdgeClick(edge, buildMapLibreClickPoint(event));
@@ -538,10 +680,15 @@ export function MapLibreMapStage({
         if (typeof currentHandleBlankMapClick !== 'function') return;
 
         const hitFeatures = map.queryRenderedFeatures(event.point, {
-          layers: [NODE_LAYER_ID, ROUTE_HIT_LAYER_ID, ROUTE_LAYER_ID].filter((layerId) => map.getLayer(layerId)),
+          layers: [NODE_LAYER_ID, ROUTE_HIT_LAYER_ID, ROUTE_LAYER_ID].filter((layerId) =>
+            map.getLayer(layerId),
+          ),
         });
 
         if (hitFeatures.length) return;
+
+        selectedFeatureRef.current = { kind: null, id: null };
+        clearSelectedFilterLayers(map);
         currentHandleBlankMapClick();
       };
 
@@ -568,6 +715,8 @@ export function MapLibreMapStage({
           pendingNodeDataRef.current || nodeFeatureCollection,
           setNodeLayerDiagnostics,
         );
+        ensureSelectedFilterLayers(map);
+        reapplySelectedFilters(map);
       });
 
       map.on('move', scheduleReportViewChange);
@@ -612,7 +761,9 @@ export function MapLibreMapStage({
 
       {showDiagnostics ? (
         <div className="absolute left-4 top-4 z-10 max-w-sm rounded-2xl border border-white/20 bg-slate-950/88 p-4 text-xs text-white shadow-2xl backdrop-blur">
-          <div className="mb-2 text-sm font-semibold text-emerald-200">MapLibre GeoJSON node/route preview + click routing</div>
+          <div className="mb-2 text-sm font-semibold text-emerald-200">
+            MapLibre GeoJSON node/route preview + click routing
+          </div>
           <p className="mb-3 leading-relaxed text-slate-200">
             Development-only test path. Gold routes and cyan nodes are rendered by MapLibre
             GeoJSON sources/layers.
