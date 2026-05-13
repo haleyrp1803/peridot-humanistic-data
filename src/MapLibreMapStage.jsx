@@ -1,12 +1,3 @@
-// Isolated MapLibre map-stage shell for Peridot.
-//
-// This component is part of the MapLibre migration foothold. It is deliberately
-// gated behind the development-only MapLibre preview path and does not replace
-// the production D3/SVG map. Its job is to prove that MapLibre can be installed,
-// imported, initialized, resized, cleaned up, inspected, and used for coordinate
-// projection safely inside the real Peridot workspace before any existing map
-// behavior is migrated.
-
 import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -15,6 +6,7 @@ import { getMapLibreStyleConfig } from './mapStyleConfig';
 const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
 const MAX_PROBE_POINTS = 30;
+const MAX_PROBE_ROUTES = 30;
 
 function formatNumber(value, digits = 4) {
   if (!Number.isFinite(value)) return 'n/a';
@@ -43,7 +35,24 @@ function readMapViewState(map) {
 }
 
 function hasUsableLngLat(node) {
-  return Number.isFinite(node?.lon) && Number.isFinite(node?.lat) && !(node.lat === 0 && node.lon === 0);
+  return (
+    Number.isFinite(node?.lon) &&
+    Number.isFinite(node?.lat) &&
+    !(node.lat === 0 && node.lon === 0)
+  );
+}
+
+function buildProjectableNodeMap(graph) {
+  const nodeMap = new Map();
+  if (!Array.isArray(graph?.nodes)) return nodeMap;
+
+  graph.nodes.forEach((node) => {
+    if (node?.id && hasUsableLngLat(node)) {
+      nodeMap.set(node.id, node);
+    }
+  });
+
+  return nodeMap;
 }
 
 function buildProjectionProbePoints(map, graph) {
@@ -64,6 +73,39 @@ function buildProjectionProbePoints(map, graph) {
         y: point.y,
       };
     });
+}
+
+function buildProjectionProbeRoutes(map, graph) {
+  if (!map || !Array.isArray(graph?.edges)) return [];
+
+  const projectableNodes = buildProjectableNodeMap(graph);
+
+  return graph.edges
+    .map((edge) => {
+      const sourceId = edge?.sourcePlaceId || edge?.source;
+      const targetId = edge?.targetPlaceId || edge?.target;
+      const source = projectableNodes.get(sourceId);
+      const target = projectableNodes.get(targetId);
+
+      if (!source || !target) return null;
+
+      const a = map.project([source.lon, source.lat]);
+      const b = map.project([target.lon, target.lat]);
+
+      return {
+        id: edge.id || `${sourceId}-->${targetId}`,
+        sourceLabel: edge.sourceLabel || source.label || sourceId,
+        targetLabel: edge.targetLabel || target.label || targetId,
+        count: Number(edge.count) || 0,
+        x1: a.x,
+        y1: a.y,
+        x2: b.x,
+        y2: b.y,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, MAX_PROBE_ROUTES);
 }
 
 export function MapLibreMapStage({
@@ -90,18 +132,33 @@ export function MapLibreMapStage({
     loaded: false,
   }));
   const [probePoints, setProbePoints] = useState([]);
+  const [probeRoutes, setProbeRoutes] = useState([]);
+
   const styleConfig = useMemo(() => getMapLibreStyleConfig(styleId), [styleId]);
+
   const projectableNodeCount = useMemo(
     () => (Array.isArray(graph?.nodes) ? graph.nodes.filter(hasUsableLngLat).length : 0),
     [graph],
   );
 
-  const updateProbePoints = () => {
-    setProbePoints(buildProjectionProbePoints(mapRef.current, graph));
+  const projectableRouteCount = useMemo(() => {
+    if (!Array.isArray(graph?.edges)) return 0;
+    const nodeMap = buildProjectableNodeMap(graph);
+    return graph.edges.filter((edge) => {
+      const sourceId = edge?.sourcePlaceId || edge?.source;
+      const targetId = edge?.targetPlaceId || edge?.target;
+      return nodeMap.has(sourceId) && nodeMap.has(targetId);
+    }).length;
+  }, [graph]);
+
+  const updateProjectionProbes = () => {
+    const map = mapRef.current;
+    setProbePoints(buildProjectionProbePoints(map, graph));
+    setProbeRoutes(buildProjectionProbeRoutes(map, graph));
   };
 
   useEffect(() => {
-    updateProbePoints();
+    updateProjectionProbes();
   }, [graph]);
 
   useEffect(() => {
@@ -114,6 +171,7 @@ export function MapLibreMapStage({
       const nextViewState = readMapViewState(map);
       setViewState(nextViewState);
       setProbePoints(buildProjectionProbePoints(map, graph));
+      setProbeRoutes(buildProjectionProbeRoutes(map, graph));
       onViewChange?.(nextViewState);
     };
 
@@ -136,6 +194,7 @@ export function MapLibreMapStage({
       });
 
       mapRef.current = map;
+
       map.addControl(
         new maplibregl.NavigationControl({
           visualizePitch: false,
@@ -150,6 +209,7 @@ export function MapLibreMapStage({
         onMapReady?.({ map, styleConfig });
         reportViewChange();
       });
+
       map.on('move', scheduleReportViewChange);
       map.on('zoom', scheduleReportViewChange);
       map.on('rotate', scheduleReportViewChange);
@@ -166,6 +226,7 @@ export function MapLibreMapStage({
         map.resize();
         reportViewChange();
       });
+
       resizeObserver.observe(containerRef.current);
 
       return () => {
@@ -184,66 +245,89 @@ export function MapLibreMapStage({
   }, [center, graph, interactive, onMapReady, onViewChange, styleConfig, zoom]);
 
   return (
-    <div className={`relative h-full w-full overflow-hidden ${className}`}>
+    <div className={`relative h-full w-full overflow-hidden bg-[#101c1b] ${className}`}>
       <div ref={containerRef} className="absolute inset-0" />
 
-      <svg className="pointer-events-none absolute inset-0 z-10 h-full w-full" aria-hidden="true">
-        {probePoints.map((point) => (
-          <g key={point.id} transform={`translate(${point.x}, ${point.y})`}>
-            <circle r="7" fill="rgba(95, 123, 75, 0.9)" stroke="#fff8ea" strokeWidth="2" />
-            <circle r="13" fill="none" stroke="rgba(95, 123, 75, 0.45)" strokeWidth="2" />
-            <text
-              x="11"
-              y="4"
-              fontSize="11"
-              fontWeight="700"
-              fill="#243321"
-              stroke="#fff8ea"
-              strokeWidth="3"
-              paintOrder="stroke"
-            >
-              {point.label}
-            </text>
-          </g>
-        ))}
+      <svg
+        className="pointer-events-none absolute inset-0 z-10 h-full w-full"
+        aria-hidden="true"
+      >
+        <g opacity="0.78">
+          {probeRoutes.map((route) => (
+            <line
+              key={route.id}
+              x1={route.x1}
+              y1={route.y1}
+              x2={route.x2}
+              y2={route.y2}
+              stroke="#f3d78f"
+              strokeWidth={Math.max(1.4, Math.min(5.2, 1.4 + Math.sqrt(route.count || 1) * 0.34))}
+              strokeLinecap="round"
+            />
+          ))}
+        </g>
+
+        <g>
+          {probePoints.map((point) => (
+            <g key={point.id} transform={`translate(${point.x}, ${point.y})`}>
+              <circle r="6" fill="#8be36d" stroke="#102016" strokeWidth="2" />
+              <text
+                x="9"
+                y="4"
+                fill="#f8fff2"
+                stroke="#102016"
+                strokeWidth="3"
+                paintOrder="stroke"
+                fontSize="11"
+                fontWeight="700"
+              >
+                {point.label}
+              </text>
+            </g>
+          ))}
+        </g>
       </svg>
 
       {showDiagnostics ? (
-        <div className="pointer-events-none absolute left-4 top-4 z-20 max-w-sm rounded-xl border border-black/15 bg-white/90 p-4 text-xs text-slate-800 shadow-lg backdrop-blur">
-          <div className="mb-2 text-sm font-bold">MapLibre projection preview</div>
-          <div className="mb-3 text-[11px] leading-snug text-slate-600">
-            Development-only test path. Green probe points use MapLibre <code>map.project()</code> against
-            Peridot graph nodes that already expose longitude/latitude.
+        <div className="pointer-events-none absolute left-4 top-4 z-20 max-w-sm rounded-2xl border border-white/20 bg-slate-950/82 p-4 text-xs leading-relaxed text-white shadow-2xl backdrop-blur">
+          <div className="mb-2 text-sm font-semibold uppercase tracking-[0.24em] text-emerald-200">
+            MapLibre route projection preview
           </div>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1">
-            <dt className="font-semibold">Style</dt>
+          <p className="mb-3 text-slate-200">
+            Development-only test path. Gold lines and green points use MapLibre projection against Peridot graph records that already preserve longitude/latitude.
+          </p>
+          <dl className="grid grid-cols-[5.75rem_1fr] gap-x-3 gap-y-1">
+            <dt className="text-slate-400">Style</dt>
             <dd>{styleConfig.label}</dd>
-            <dt className="font-semibold">Loaded</dt>
+            <dt className="text-slate-400">Loaded</dt>
             <dd>{viewState.loaded ? 'yes' : 'loading'}</dd>
-            <dt className="font-semibold">View</dt>
+            <dt className="text-slate-400">View</dt>
             <dd>{viewMode || 'n/a'}</dd>
-            <dt className="font-semibold">Center</dt>
+            <dt className="text-slate-400">Center</dt>
             <dd>
               {formatNumber(viewState.center?.[0])}, {formatNumber(viewState.center?.[1])}
             </dd>
-            <dt className="font-semibold">Zoom</dt>
+            <dt className="text-slate-400">Zoom</dt>
             <dd>{formatNumber(viewState.zoom, 2)}</dd>
-            <dt className="font-semibold">Projected</dt>
+            <dt className="text-slate-400">Points</dt>
             <dd>
-              {probePoints.length} / {projectableNodeCount} nodes shown
+              {probePoints.length} / {projectableNodeCount} shown
+            </dd>
+            <dt className="text-slate-400">Routes</dt>
+            <dd>
+              {probeRoutes.length} / {projectableRouteCount} shown
             </dd>
           </dl>
-          <div className="mt-3 text-[11px] leading-snug text-slate-600">
-            This is not the migrated Peridot overlay. It is only a coordinate-projection probe. It does not
-            render routes, clusters, labels, inspector hit targets, or production styling.
-          </div>
+          <p className="mt-3 text-slate-300">
+            This is still not the migrated production overlay. It does not provide inspector hit targets, clusters, playback highlighting, or final route styling.
+          </p>
         </div>
       ) : null}
 
       {errorMessage ? (
-        <div className="absolute bottom-4 left-4 z-20 max-w-md rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-900 shadow-lg">
-          <div className="font-bold">MapLibre test map error</div>
-          <div className="mt-1">{errorMessage}</div>
+        <div className="absolute bottom-4 left-4 z-20 max-w-md rounded-2xl border border-red-300/40 bg-red-950/85 p-4 text-sm text-red-50 shadow-2xl">
+          <div className="font-semibold">MapLibre test map error</div>
+          <div className="mt-1 opacity-90">{errorMessage}</div>
         </div>
       ) : null}
     </div>
