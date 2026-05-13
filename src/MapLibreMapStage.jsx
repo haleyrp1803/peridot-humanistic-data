@@ -5,7 +5,6 @@ import { getMapLibreStyleConfig } from './mapStyleConfig';
 
 const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
-const MAX_PROBE_POINTS = 30;
 const MAX_GEOJSON_ROUTES = 75;
 const MAX_GEOJSON_NODES = 150;
 const ROUTE_SOURCE_ID = 'peridot-route-probe-source';
@@ -60,27 +59,6 @@ function buildProjectableNodeMap(graph) {
   });
 
   return nodeMap;
-}
-
-function buildProjectionProbePoints(map, graph) {
-  if (!map || !Array.isArray(graph?.nodes)) return [];
-
-  return graph.nodes
-    .filter(hasUsableLngLat)
-    .slice(0, MAX_PROBE_POINTS)
-    .map((node) => {
-      const point = map.project([node.lon, node.lat]);
-
-      return {
-        id: node.id,
-        label: node.label || node.id,
-        degree: Number(node.degree) || 0,
-        lng: node.lon,
-        lat: node.lat,
-        x: point.x,
-        y: point.y,
-      };
-    });
 }
 
 function readNodeWeight(node) {
@@ -329,7 +307,6 @@ export function MapLibreMapStage({
     pitch: 0,
     loaded: false,
   }));
-  const [probePoints, setProbePoints] = useState([]);
   const [routeFeatureCount, setRouteFeatureCount] = useState(0);
   const [nodeFeatureCount, setNodeFeatureCount] = useState(0);
   const [nodeLayerDiagnostics, setNodeLayerDiagnostics] = useState(() => ({
@@ -349,11 +326,6 @@ export function MapLibreMapStage({
   );
 
   const projectableRouteCount = useMemo(() => countProjectableRoutes(graph), [graph]);
-
-  const updateProjectionProbePoints = () => {
-    const map = mapRef.current;
-    setProbePoints(buildProjectionProbePoints(map, graph));
-  };
 
   const updateRouteLayer = (featureCollection = routeFeatureCollection) => {
     const map = mapRef.current;
@@ -376,7 +348,6 @@ export function MapLibreMapStage({
   };
 
   useEffect(() => {
-    updateProjectionProbePoints();
     updateRouteLayer(routeFeatureCollection);
     updateNodeLayer(nodeFeatureCollection);
   }, [graph, routeFeatureCollection, nodeFeatureCollection]);
@@ -390,7 +361,6 @@ export function MapLibreMapStage({
 
       const nextViewState = readMapViewState(map);
       setViewState(nextViewState);
-      setProbePoints(buildProjectionProbePoints(map, graph));
       onViewChange?.(nextViewState);
     };
 
@@ -493,32 +463,12 @@ export function MapLibreMapStage({
     <div className={`relative h-full min-h-[420px] w-full overflow-hidden bg-slate-950 ${className}`}>
       <div ref={containerRef} className="absolute inset-0" aria-label="MapLibre preview map" />
 
-      <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
-        {probePoints.map((point) => (
-          <g key={point.id} transform={`translate(${point.x}, ${point.y})`}>
-            <circle r="5" fill="#8af06b" stroke="#123524" strokeWidth="1.5" opacity="0.95" />
-            <text
-              x="8"
-              y="-8"
-              fill="#d9fdd3"
-              stroke="#123524"
-              strokeWidth="2"
-              paintOrder="stroke"
-              fontSize="11"
-              fontWeight="700"
-            >
-              {point.label}
-            </text>
-          </g>
-        ))}
-      </svg>
-
       {showDiagnostics ? (
         <div className="absolute left-4 top-4 z-10 max-w-sm rounded-2xl border border-white/20 bg-slate-950/88 p-4 text-xs text-white shadow-2xl backdrop-blur">
-          <div className="mb-2 text-sm font-semibold text-emerald-200">MapLibre GeoJSON route preview + simple node layer</div>
+          <div className="mb-2 text-sm font-semibold text-emerald-200">MapLibre GeoJSON node/route preview</div>
           <p className="mb-3 leading-relaxed text-slate-200">
-            Development-only test path. Gold routes are now rendered by a MapLibre GeoJSON
-            source/layer. Green points remain SVG projection probes.
+            Development-only test path. Gold routes and cyan nodes are rendered by MapLibre
+            GeoJSON sources/layers.
           </p>
           <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 leading-relaxed">
             <dt className="text-slate-400">Style</dt>
@@ -533,10 +483,6 @@ export function MapLibreMapStage({
             </dd>
             <dt className="text-slate-400">Zoom</dt>
             <dd>{formatNumber(viewState.zoom, 2)}</dd>
-            <dt className="text-slate-400">Points</dt>
-            <dd>
-              {probePoints.length} / {projectableNodeCount} shown
-            </dd>
             <dt className="text-slate-400">Routes</dt>
             <dd>
               {routeFeatureCount} / {projectableRouteCount} rendered
