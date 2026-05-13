@@ -6,7 +6,9 @@ import { getMapLibreStyleConfig } from './mapStyleConfig';
 const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
 const MAX_PROBE_POINTS = 30;
-const MAX_PROBE_ROUTES = 30;
+const MAX_GEOJSON_ROUTES = 75;
+const ROUTE_SOURCE_ID = 'peridot-route-probe-source';
+const ROUTE_LAYER_ID = 'peridot-route-probe-layer';
 
 function formatNumber(value, digits = 4) {
   if (!Number.isFinite(value)) return 'n/a';
@@ -25,6 +27,7 @@ function readMapViewState(map) {
   }
 
   const currentCenter = map.getCenter();
+
   return {
     center: [currentCenter.lng, currentCenter.lat],
     zoom: map.getZoom(),
@@ -44,6 +47,7 @@ function hasUsableLngLat(node) {
 
 function buildProjectableNodeMap(graph) {
   const nodeMap = new Map();
+
   if (!Array.isArray(graph?.nodes)) return nodeMap;
 
   graph.nodes.forEach((node) => {
@@ -63,6 +67,7 @@ function buildProjectionProbePoints(map, graph) {
     .slice(0, MAX_PROBE_POINTS)
     .map((node) => {
       const point = map.project([node.lon, node.lat]);
+
       return {
         id: node.id,
         label: node.label || node.id,
@@ -75,12 +80,17 @@ function buildProjectionProbePoints(map, graph) {
     });
 }
 
-function buildProjectionProbeRoutes(map, graph) {
-  if (!map || !Array.isArray(graph?.edges)) return [];
+function buildRouteProbeFeatureCollection(graph) {
+  const emptyCollection = {
+    type: 'FeatureCollection',
+    features: [],
+  };
+
+  if (!Array.isArray(graph?.edges)) return emptyCollection;
 
   const projectableNodes = buildProjectableNodeMap(graph);
 
-  return graph.edges
+  const features = graph.edges
     .map((edge) => {
       const sourceId = edge?.sourcePlaceId || edge?.source;
       const targetId = edge?.targetPlaceId || edge?.target;
@@ -89,23 +99,89 @@ function buildProjectionProbeRoutes(map, graph) {
 
       if (!source || !target) return null;
 
-      const a = map.project([source.lon, source.lat]);
-      const b = map.project([target.lon, target.lat]);
+      const count = Number(edge.count) || Number(edge.weight) || 0;
 
       return {
+        type: 'Feature',
         id: edge.id || `${sourceId}-->${targetId}`,
-        sourceLabel: edge.sourceLabel || source.label || sourceId,
-        targetLabel: edge.targetLabel || target.label || targetId,
-        count: Number(edge.count) || 0,
-        x1: a.x,
-        y1: a.y,
-        x2: b.x,
-        y2: b.y,
+        properties: {
+          id: edge.id || `${sourceId}-->${targetId}`,
+          sourceId,
+          targetId,
+          sourceLabel: edge.sourceLabel || source.label || sourceId,
+          targetLabel: edge.targetLabel || target.label || targetId,
+          count,
+        },
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [source.lon, source.lat],
+            [target.lon, target.lat],
+          ],
+        },
       };
     })
     .filter(Boolean)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, MAX_PROBE_ROUTES);
+    .sort((a, b) => (b.properties.count || 0) - (a.properties.count || 0))
+    .slice(0, MAX_GEOJSON_ROUTES);
+
+  return {
+    ...emptyCollection,
+    features,
+  };
+}
+
+function countProjectableRoutes(graph) {
+  if (!Array.isArray(graph?.edges)) return 0;
+
+  const nodeMap = buildProjectableNodeMap(graph);
+
+  return graph.edges.filter((edge) => {
+    const sourceId = edge?.sourcePlaceId || edge?.source;
+    const targetId = edge?.targetPlaceId || edge?.target;
+    return nodeMap.has(sourceId) && nodeMap.has(targetId);
+  }).length;
+}
+
+function ensureRouteProbeLayer(map, featureCollection) {
+  if (!map || !map.isStyleLoaded()) return false;
+
+  const existingSource = map.getSource(ROUTE_SOURCE_ID);
+
+  if (existingSource) {
+    existingSource.setData(featureCollection);
+    return true;
+  }
+
+  map.addSource(ROUTE_SOURCE_ID, {
+    type: 'geojson',
+    data: featureCollection,
+  });
+
+  map.addLayer({
+    id: ROUTE_LAYER_ID,
+    type: 'line',
+    source: ROUTE_SOURCE_ID,
+    paint: {
+      'line-color': '#f5b942',
+      'line-opacity': 0.82,
+      'line-width': [
+        'interpolate',
+        ['linear'],
+        ['coalesce', ['get', 'count'], 1],
+        1,
+        1,
+        10,
+        2,
+        50,
+        4,
+        150,
+        7,
+      ],
+    },
+  });
+
+  return true;
 }
 
 export function MapLibreMapStage({
@@ -123,6 +199,7 @@ export function MapLibreMapStage({
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const frameRef = useRef(null);
+  const pendingRouteDataRef = useRef(null);
   const [errorMessage, setErrorMessage] = useState('');
   const [viewState, setViewState] = useState(() => ({
     center,
@@ -132,34 +209,38 @@ export function MapLibreMapStage({
     loaded: false,
   }));
   const [probePoints, setProbePoints] = useState([]);
-  const [probeRoutes, setProbeRoutes] = useState([]);
+  const [routeFeatureCount, setRouteFeatureCount] = useState(0);
 
   const styleConfig = useMemo(() => getMapLibreStyleConfig(styleId), [styleId]);
+
+  const routeFeatureCollection = useMemo(() => buildRouteProbeFeatureCollection(graph), [graph]);
 
   const projectableNodeCount = useMemo(
     () => (Array.isArray(graph?.nodes) ? graph.nodes.filter(hasUsableLngLat).length : 0),
     [graph],
   );
 
-  const projectableRouteCount = useMemo(() => {
-    if (!Array.isArray(graph?.edges)) return 0;
-    const nodeMap = buildProjectableNodeMap(graph);
-    return graph.edges.filter((edge) => {
-      const sourceId = edge?.sourcePlaceId || edge?.source;
-      const targetId = edge?.targetPlaceId || edge?.target;
-      return nodeMap.has(sourceId) && nodeMap.has(targetId);
-    }).length;
-  }, [graph]);
+  const projectableRouteCount = useMemo(() => countProjectableRoutes(graph), [graph]);
 
-  const updateProjectionProbes = () => {
+  const updateProjectionProbePoints = () => {
     const map = mapRef.current;
     setProbePoints(buildProjectionProbePoints(map, graph));
-    setProbeRoutes(buildProjectionProbeRoutes(map, graph));
+  };
+
+  const updateRouteLayer = (featureCollection = routeFeatureCollection) => {
+    const map = mapRef.current;
+    pendingRouteDataRef.current = featureCollection;
+    setRouteFeatureCount(featureCollection.features.length);
+
+    if (!map) return;
+
+    ensureRouteProbeLayer(map, featureCollection);
   };
 
   useEffect(() => {
-    updateProjectionProbes();
-  }, [graph]);
+    updateProjectionProbePoints();
+    updateRouteLayer(routeFeatureCollection);
+  }, [graph, routeFeatureCollection]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
@@ -171,12 +252,12 @@ export function MapLibreMapStage({
       const nextViewState = readMapViewState(map);
       setViewState(nextViewState);
       setProbePoints(buildProjectionProbePoints(map, graph));
-      setProbeRoutes(buildProjectionProbeRoutes(map, graph));
       onViewChange?.(nextViewState);
     };
 
     const scheduleReportViewChange = () => {
       if (frameRef.current) return;
+
       frameRef.current = window.requestAnimationFrame(() => {
         frameRef.current = null;
         reportViewChange();
@@ -207,7 +288,12 @@ export function MapLibreMapStage({
       map.on('load', () => {
         setErrorMessage('');
         onMapReady?.({ map, styleConfig });
+        ensureRouteProbeLayer(map, pendingRouteDataRef.current || routeFeatureCollection);
         reportViewChange();
+      });
+
+      map.on('styledata', () => {
+        ensureRouteProbeLayer(map, pendingRouteDataRef.current || routeFeatureCollection);
       });
 
       map.on('move', scheduleReportViewChange);
@@ -217,6 +303,7 @@ export function MapLibreMapStage({
       map.on('moveend', reportViewChange);
       map.on('zoomend', reportViewChange);
       map.on('resize', reportViewChange);
+
       map.on('error', (event) => {
         const message = event?.error?.message || 'MapLibre reported a map loading error.';
         setErrorMessage(message);
@@ -234,6 +321,7 @@ export function MapLibreMapStage({
           window.cancelAnimationFrame(frameRef.current);
           frameRef.current = null;
         }
+
         resizeObserver.disconnect();
         map.remove();
         mapRef.current = null;
@@ -242,61 +330,40 @@ export function MapLibreMapStage({
       setErrorMessage(error instanceof Error ? error.message : String(error));
       return undefined;
     }
-  }, [center, graph, interactive, onMapReady, onViewChange, styleConfig, zoom]);
+  }, [center, graph, interactive, onMapReady, onViewChange, routeFeatureCollection, styleConfig, zoom]);
 
   return (
-    <div className={`relative h-full w-full overflow-hidden bg-[#101c1b] ${className}`}>
-      <div ref={containerRef} className="absolute inset-0" />
+    <div className={`relative h-full min-h-[420px] w-full overflow-hidden bg-slate-950 ${className}`}>
+      <div ref={containerRef} className="absolute inset-0" aria-label="MapLibre preview map" />
 
-      <svg
-        className="pointer-events-none absolute inset-0 z-10 h-full w-full"
-        aria-hidden="true"
-      >
-        <g opacity="0.78">
-          {probeRoutes.map((route) => (
-            <line
-              key={route.id}
-              x1={route.x1}
-              y1={route.y1}
-              x2={route.x2}
-              y2={route.y2}
-              stroke="#f3d78f"
-              strokeWidth={Math.max(1.4, Math.min(5.2, 1.4 + Math.sqrt(route.count || 1) * 0.34))}
-              strokeLinecap="round"
-            />
-          ))}
-        </g>
-
-        <g>
-          {probePoints.map((point) => (
-            <g key={point.id} transform={`translate(${point.x}, ${point.y})`}>
-              <circle r="6" fill="#8be36d" stroke="#102016" strokeWidth="2" />
-              <text
-                x="9"
-                y="4"
-                fill="#f8fff2"
-                stroke="#102016"
-                strokeWidth="3"
-                paintOrder="stroke"
-                fontSize="11"
-                fontWeight="700"
-              >
-                {point.label}
-              </text>
-            </g>
-          ))}
-        </g>
+      <svg className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden="true">
+        {probePoints.map((point) => (
+          <g key={point.id} transform={`translate(${point.x}, ${point.y})`}>
+            <circle r="5" fill="#8af06b" stroke="#123524" strokeWidth="1.5" opacity="0.95" />
+            <text
+              x="8"
+              y="-8"
+              fill="#d9fdd3"
+              stroke="#123524"
+              strokeWidth="2"
+              paintOrder="stroke"
+              fontSize="11"
+              fontWeight="700"
+            >
+              {point.label}
+            </text>
+          </g>
+        ))}
       </svg>
 
       {showDiagnostics ? (
-        <div className="pointer-events-none absolute left-4 top-4 z-20 max-w-sm rounded-2xl border border-white/20 bg-slate-950/82 p-4 text-xs leading-relaxed text-white shadow-2xl backdrop-blur">
-          <div className="mb-2 text-sm font-semibold uppercase tracking-[0.24em] text-emerald-200">
-            MapLibre route projection preview
-          </div>
-          <p className="mb-3 text-slate-200">
-            Development-only test path. Gold lines and green points use MapLibre projection against Peridot graph records that already preserve longitude/latitude.
+        <div className="absolute left-4 top-4 z-10 max-w-sm rounded-2xl border border-white/20 bg-slate-950/88 p-4 text-xs text-white shadow-2xl backdrop-blur">
+          <div className="mb-2 text-sm font-semibold text-emerald-200">MapLibre GeoJSON route preview</div>
+          <p className="mb-3 leading-relaxed text-slate-200">
+            Development-only test path. Gold routes are now rendered by a MapLibre GeoJSON
+            source/layer. Green points remain SVG projection probes.
           </p>
-          <dl className="grid grid-cols-[5.75rem_1fr] gap-x-3 gap-y-1">
+          <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 leading-relaxed">
             <dt className="text-slate-400">Style</dt>
             <dd>{styleConfig.label}</dd>
             <dt className="text-slate-400">Loaded</dt>
@@ -315,19 +382,20 @@ export function MapLibreMapStage({
             </dd>
             <dt className="text-slate-400">Routes</dt>
             <dd>
-              {probeRoutes.length} / {projectableRouteCount} shown
+              {routeFeatureCount} / {projectableRouteCount} rendered
             </dd>
           </dl>
-          <p className="mt-3 text-slate-300">
-            This is still not the migrated production overlay. It does not provide inspector hit targets, clusters, playback highlighting, or final route styling.
+          <p className="mt-3 leading-relaxed text-slate-300">
+            This is still not the migrated production overlay. It does not provide inspector hit
+            targets, clusters, playback highlighting, or final route styling.
           </p>
         </div>
       ) : null}
 
       {errorMessage ? (
-        <div className="absolute bottom-4 left-4 z-20 max-w-md rounded-2xl border border-red-300/40 bg-red-950/85 p-4 text-sm text-red-50 shadow-2xl">
+        <div className="absolute bottom-4 left-4 z-10 max-w-md rounded-xl border border-red-300/60 bg-red-950/90 p-3 text-sm text-red-100 shadow-xl">
           <div className="font-semibold">MapLibre test map error</div>
-          <div className="mt-1 opacity-90">{errorMessage}</div>
+          <div>{errorMessage}</div>
         </div>
       ) : null}
     </div>
