@@ -33,6 +33,7 @@ const DEFAULT_ZOOM = 4.8;
 
 const DYNAMIC_CLUSTER_SOURCE_ID = 'peridot-dynamic-cluster-source';
 const DYNAMIC_CLUSTER_LAYER_ID = 'peridot-dynamic-cluster-circles';
+const MAX_CLUSTER_LEAVES_FOR_NODE_HIDING = 5000;
 
 const EMPTY_FEATURE_COLLECTION = {
   type: 'FeatureCollection',
@@ -286,6 +287,7 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
       dynamicClusterSourceExists: false,
       dynamicClusterLayerExists: false,
       renderedDynamicClusterCount: 0,
+      hiddenClusterMemberCount: 0,
       lastClusterClickId: '',
       lastClusterClickPointCount: 0,
       lastClusterClickLeafCount: 0,
@@ -318,6 +320,7 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
     renderedDynamicClusterCount: dynamicClusterLayerExists
       ? queryRenderedFeatureCount(map, DYNAMIC_CLUSTER_LAYER_ID)
       : 0,
+    hiddenClusterMemberCount: setupDiagnostics.hiddenClusterMemberCount || 0,
     lastClusterClickId: setupDiagnostics.lastClusterClickId || '',
     lastClusterClickPointCount: setupDiagnostics.lastClusterClickPointCount || 0,
     lastClusterClickLeafCount: setupDiagnostics.lastClusterClickLeafCount || 0,
@@ -349,8 +352,22 @@ function featureProperty(feature, key) {
   return value === undefined || value === null ? '' : String(value);
 }
 
+function featureId(feature) {
+  return featureProperty(feature, 'id') || String(feature?.id || '');
+}
+
+function serializeHiddenNodeIds(hiddenNodeIds) {
+  if (!hiddenNodeIds?.size) return '';
+  return Array.from(hiddenNodeIds).sort().join('\u001f');
+}
+
+function buildVisibleNodeFilter(hiddenNodeIds) {
+  if (!hiddenNodeIds?.size) return null;
+  return ['!', ['in', ['get', 'id'], ['literal', Array.from(hiddenNodeIds)]]];
+}
+
 function findGraphNodeForFeature(graph, feature) {
-  const nodeId = featureProperty(feature, 'id') || String(feature?.id || '');
+  const nodeId = featureId(feature);
   if (!nodeId || !Array.isArray(graph?.nodes)) return null;
 
   return graph.nodes.find((node) => String(node?.id || '') === nodeId) || null;
@@ -500,6 +517,9 @@ export function MapLibreMapStage({
     handleBlankMapClick,
   });
   const featureClickInProgressRef = useRef(false);
+  const hiddenClusterMemberIdsRef = useRef(new Set());
+  const hiddenClusterMemberKeyRef = useRef('');
+  const nodeVisibilityUpdateTokenRef = useRef(0);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [viewState, setViewState] = useState(() => ({
@@ -554,6 +574,76 @@ export function MapLibreMapStage({
       lastClusterClickLeafCount: leafCount,
       lastClusterClickError: error,
     };
+  };
+
+  const markHiddenClusterMemberCount = (hiddenClusterMemberCount) => {
+    layerSetupDiagnosticsRef.current = {
+      ...layerSetupDiagnosticsRef.current,
+      hiddenClusterMemberCount,
+    };
+  };
+
+  const updateNodeVisibilityForVisibleClusters = async (phase = 'node-visibility-update') => {
+    const map = mapRef.current;
+
+    if (!map || !map.getLayer(NODE_LAYER_ID) || !map.getLayer(DYNAMIC_CLUSTER_LAYER_ID)) {
+      return;
+    }
+
+    const clusterSource = map.getSource(DYNAMIC_CLUSTER_SOURCE_ID);
+
+    if (!clusterSource || typeof clusterSource.getClusterLeaves !== 'function') {
+      return;
+    }
+
+    const updateToken = nodeVisibilityUpdateTokenRef.current + 1;
+    nodeVisibilityUpdateTokenRef.current = updateToken;
+
+    try {
+      const renderedClusters = map.queryRenderedFeatures({ layers: [DYNAMIC_CLUSTER_LAYER_ID] });
+      const hiddenNodeIds = new Set();
+
+      for (const clusterFeature of renderedClusters) {
+        if (nodeVisibilityUpdateTokenRef.current !== updateToken) return;
+
+        const clusterId = clusterFeature?.properties?.cluster_id;
+        const pointCount = Number(clusterFeature?.properties?.point_count) || 0;
+
+        if (clusterId === undefined || clusterId === null || pointCount <= 0) {
+          continue;
+        }
+
+        const leafLimit = Math.min(Math.max(pointCount, 1), MAX_CLUSTER_LEAVES_FOR_NODE_HIDING);
+        const leaves = await readClusterLeaves(clusterSource, clusterId, leafLimit);
+
+        if (nodeVisibilityUpdateTokenRef.current !== updateToken) return;
+
+        leaves.forEach((leafFeature) => {
+          const id = featureId(leafFeature);
+          if (id) hiddenNodeIds.add(id);
+        });
+      }
+
+      if (nodeVisibilityUpdateTokenRef.current !== updateToken) return;
+
+      const nextHiddenKey = serializeHiddenNodeIds(hiddenNodeIds);
+
+      if (nextHiddenKey === hiddenClusterMemberKeyRef.current) {
+        markHiddenClusterMemberCount(hiddenClusterMemberIdsRef.current.size);
+        reportLayerDiagnostics(map);
+        return;
+      }
+
+      hiddenClusterMemberIdsRef.current = hiddenNodeIds;
+      hiddenClusterMemberKeyRef.current = nextHiddenKey;
+      markHiddenClusterMemberCount(hiddenNodeIds.size);
+      map.setFilter(NODE_LAYER_ID, buildVisibleNodeFilter(hiddenNodeIds));
+      reportLayerDiagnostics(map);
+    } catch (error) {
+      markLayerSetupError(phase, error);
+      reportLayerDiagnostics(map);
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
   };
 
   const reapplySelectedFilters = (map) => {
@@ -618,6 +708,7 @@ export function MapLibreMapStage({
         layerSetupDiagnosticsRef.current,
       );
       ensureDynamicClusterLayer(map, featureCollection);
+      void updateNodeVisibilityForVisibleClusters('node-data-update-node-visibility');
       ensureSelectedFilterLayers(map);
       reapplySelectedFilters(map);
       reportLayerDiagnostics(map);
@@ -698,6 +789,7 @@ export function MapLibreMapStage({
             layerSetupDiagnosticsRef.current,
           );
           ensureDynamicClusterLayer(map, pendingNodeDataRef.current || nodeFeatureCollection);
+          void updateNodeVisibilityForVisibleClusters('lifecycle-node-visibility');
           ensureSelectedFilterLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
@@ -722,6 +814,7 @@ export function MapLibreMapStage({
             layerSetupDiagnosticsRef.current,
           );
           ensureDynamicClusterLayer(map, pendingNodeDataRef.current || nodeFeatureCollection);
+          void updateNodeVisibilityForVisibleClusters('lifecycle-node-visibility');
           ensureSelectedFilterLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
@@ -874,6 +967,7 @@ export function MapLibreMapStage({
             layerSetupDiagnosticsRef.current,
           );
           ensureDynamicClusterLayer(map, pendingNodeDataRef.current || nodeFeatureCollection);
+          void updateNodeVisibilityForVisibleClusters('lifecycle-node-visibility');
           ensureSelectedFilterLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
@@ -888,8 +982,14 @@ export function MapLibreMapStage({
       map.on('zoom', scheduleReportViewChange);
       map.on('rotate', scheduleReportViewChange);
       map.on('pitch', scheduleReportViewChange);
-      map.on('moveend', reportViewChange);
-      map.on('zoomend', reportViewChange);
+      map.on('moveend', () => {
+        reportViewChange();
+        void updateNodeVisibilityForVisibleClusters('moveend-node-visibility');
+      });
+      map.on('zoomend', () => {
+        reportViewChange();
+        void updateNodeVisibilityForVisibleClusters('zoomend-node-visibility');
+      });
       map.on('resize', reportViewChange);
 
       map.on('error', (event) => {
@@ -1019,6 +1119,9 @@ export function MapLibreMapStage({
             <dt className="text-slate-400">Dynamic clusters rendered</dt>
             <dd>{layerDiagnostics.renderedDynamicClusterCount}</dd>
 
+            <dt className="text-slate-400">Hidden clustered nodes</dt>
+            <dd>{layerDiagnostics.hiddenClusterMemberCount || 0}</dd>
+
             <dt className="text-slate-400">Last cluster click</dt>
             <dd>{layerDiagnostics.lastClusterClickId || 'none'}</dd>
 
@@ -1034,8 +1137,7 @@ export function MapLibreMapStage({
 
           <p className="mt-3 leading-relaxed text-slate-300">
             This is still not the migrated production overlay. It now reports MapLibre source,
-            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster clicks now attempt to read MapLibre cluster leaves and open the existing Inspector. Node hiding, route changes, playback highlighting, hover cards, and final route styling
-            remain out of scope.
+            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster clicks now attempt to read MapLibre cluster leaves and open the existing Inspector. Node hiding is now diagnostic and based on currently rendered MapLibre clusters. Route changes, playback highlighting, hover cards, and final route styling remain out of scope.
           </p>
         </div>
       ) : null}
