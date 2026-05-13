@@ -9,6 +9,7 @@ const MAX_GEOJSON_ROUTES = 75;
 const MAX_GEOJSON_NODES = 150;
 const ROUTE_SOURCE_ID = 'peridot-route-probe-source';
 const ROUTE_LAYER_ID = 'peridot-route-probe-layer';
+const ROUTE_HIT_LAYER_ID = 'peridot-route-probe-hit-layer';
 const NODE_SOURCE_ID = 'peridot-node-probe-source';
 const NODE_LAYER_ID = 'peridot-node-probe-layer';
 
@@ -178,38 +179,52 @@ function ensureRouteProbeLayer(map, featureCollection) {
 
   if (existingSource) {
     existingSource.setData(featureCollection);
-    return true;
+  } else {
+    map.addSource(ROUTE_SOURCE_ID, {
+      type: 'geojson',
+      data: featureCollection,
+    });
   }
 
-  map.addSource(ROUTE_SOURCE_ID, {
-    type: 'geojson',
-    data: featureCollection,
-  });
+  if (!map.getLayer(ROUTE_LAYER_ID)) {
+    map.addLayer({
+      id: ROUTE_LAYER_ID,
+      type: 'line',
+      source: ROUTE_SOURCE_ID,
+      paint: {
+        'line-color': '#f5b942',
+        'line-opacity': 0.82,
+        'line-width': [
+          'interpolate',
+          ['linear'],
+          ['coalesce', ['get', 'count'], 1],
+          1,
+          1,
+          10,
+          2,
+          50,
+          4,
+          150,
+          7,
+        ],
+      },
+    });
+  }
 
-  map.addLayer({
-    id: ROUTE_LAYER_ID,
-    type: 'line',
-    source: ROUTE_SOURCE_ID,
-    paint: {
-      'line-color': '#f5b942',
-      'line-opacity': 0.82,
-      'line-width': [
-        'interpolate',
-        ['linear'],
-        ['coalesce', ['get', 'count'], 1],
-        1,
-        1,
-        10,
-        2,
-        50,
-        4,
-        150,
-        7,
-      ],
-    },
-  });
+  if (!map.getLayer(ROUTE_HIT_LAYER_ID)) {
+    map.addLayer({
+      id: ROUTE_HIT_LAYER_ID,
+      type: 'line',
+      source: ROUTE_SOURCE_ID,
+      paint: {
+        'line-color': '#ffffff',
+        'line-opacity': 0.01,
+        'line-width': 24,
+      },
+    });
+  }
 
-  return true;
+  return Boolean(map.getSource(ROUTE_SOURCE_ID) && map.getLayer(ROUTE_LAYER_ID) && map.getLayer(ROUTE_HIT_LAYER_ID));
 }
 
 function ensureNodeProbeLayer(map, featureCollection) {
@@ -498,6 +513,12 @@ export function MapLibreMapStage({
       };
 
       const handleMapLibreRouteClick = (event) => {
+        const nodeHits = map.queryRenderedFeatures(event.point, {
+          layers: [NODE_LAYER_ID].filter((layerId) => map.getLayer(layerId)),
+        });
+
+        if (nodeHits.length) return;
+
         const feature = event?.features?.[0];
         const { graph: currentGraph, handleEdgeClick: currentHandleEdgeClick } = clickHandlersRef.current;
         const edge = findGraphEdgeForFeature(currentGraph, feature);
@@ -517,7 +538,7 @@ export function MapLibreMapStage({
         if (typeof currentHandleBlankMapClick !== 'function') return;
 
         const hitFeatures = map.queryRenderedFeatures(event.point, {
-          layers: [NODE_LAYER_ID, ROUTE_LAYER_ID].filter((layerId) => map.getLayer(layerId)),
+          layers: [NODE_LAYER_ID, ROUTE_HIT_LAYER_ID, ROUTE_LAYER_ID].filter((layerId) => map.getLayer(layerId)),
         });
 
         if (hitFeatures.length) return;
@@ -525,7 +546,7 @@ export function MapLibreMapStage({
       };
 
       map.on('click', NODE_LAYER_ID, handleMapLibreNodeClick);
-      map.on('click', ROUTE_LAYER_ID, handleMapLibreRouteClick);
+      map.on('click', ROUTE_HIT_LAYER_ID, handleMapLibreRouteClick);
       map.on('click', handleMapLibreBlankClick);
 
       const setPointerCursor = () => {
@@ -538,8 +559,8 @@ export function MapLibreMapStage({
 
       map.on('mouseenter', NODE_LAYER_ID, setPointerCursor);
       map.on('mouseleave', NODE_LAYER_ID, clearPointerCursor);
-      map.on('mouseenter', ROUTE_LAYER_ID, setPointerCursor);
-      map.on('mouseleave', ROUTE_LAYER_ID, clearPointerCursor);
+      map.on('mouseenter', ROUTE_HIT_LAYER_ID, setPointerCursor);
+      map.on('mouseleave', ROUTE_HIT_LAYER_ID, clearPointerCursor);
 
       map.on('idle', () => {
         ensureAndReportNodeProbeLayer(
