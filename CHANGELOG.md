@@ -1,42 +1,186 @@
 # Changelog
 
-## Current documented safe baseline
+## Current documented safe baselines
 
-- **`8539c68` — `Clarify timeline rail icon`**
+### Active MapLibre-native branch baseline
 
-This baseline reflects the current clean Peridot state after the cluster-interaction, node-sizing, cluster-sizing, cluster-inspector, shared side-panel, persistent icon-rail, and dedicated Data Inputs / Export / Timeline tab work completed in bounded passes.
+- **`4c9ed6f` — `Extract MapLibre layer configuration`** on branch `maplibre-native-geographic-view`
+
+This branch is a MapLibre-native geographic subsystem design branch. The production D3/SVG map remains unchanged; MapLibre work is gated behind `?maplibrePreview=1`.
+
+### Main / MapLibre preview prototype checkpoint
+
+- **`10051c0` — `Add MapLibre selected filter layers`** on `main`
+- Tag: **`checkpoint-maplibre-preview-prototype`**
+
+### Pre-MapLibre clean rollback point
+
+- **`4e08720` — `Direct workflow charter baseline reference to changelog`**
+
+Use this rollback landmark if the project needs to return to the clean pre-MapLibre state.
 
 ---
 
-## Recent committed work
+## Recent committed work: MapLibre-native subsystem branch
+
+### `4c9ed6f` — Extract MapLibre layer configuration
+
+- Added `src/mapLibreLayerConfig.js`.
+- Moved MapLibre source IDs, layer IDs, selected filters, selected ID filter helpers, and route/node/selected layer definition builders out of `src/MapLibreMapStage.jsx`.
+- Preserved existing MapLibre preview behavior: route rendering, node rendering, route hit layer, Inspector click routing, cursor-only hover, and selected filter layers.
+- Preserved production D3/SVG map behavior.
+
+### `c420a5d` — Extract MapLibre feature builders
+
+- Added `src/mapLibreFeatureBuilders.js`.
+- Moved pure MapLibre feature-building helpers out of `src/MapLibreMapStage.jsx`.
+- Extracted node GeoJSON feature construction, route GeoJSON feature construction, projectable node mapping, node-weight reading, and projectable route counting.
+- Preserved MapLibre preview behavior and production D3/SVG behavior.
+
+### `b7fb244` — Add MapLibre native geographic view plan
+
+- Added `docs/MAPLIBRE_NATIVE_GEOGRAPHIC_VIEW_PLAN.md`.
+- Recorded the decision to pivot from incremental D3/SVG-to-MapLibre adaptation toward a MapLibre-native geographic subsystem.
+- Recorded rollback landmarks:
+  - pre-MapLibre clean baseline: `4e08720`
+  - MapLibre preview prototype checkpoint: `10051c0` / `checkpoint-maplibre-preview-prototype`
+  - active native subsystem branch: `maplibre-native-geographic-view`
+- Documented the intended MapLibre-native source/layer/event/selection/cluster architecture and staged migration plan.
+
+---
+
+## Recent committed work: MapLibre preview prototype on main
+
+### `10051c0` — Add MapLibre selected filter layers
+
+- Added selected node and selected route feedback in the MapLibre preview path.
+- Reused existing MapLibre node and route GeoJSON sources instead of creating a separate selected GeoJSON source.
+- Added selected layers with filters updated on MapLibre node/route click.
+- Preserved existing Inspector click routing and avoided passing `selectedProps` from `App.jsx` to prevent map reset/flash.
+
+### `b7c61a2` — Add MapLibre route hit layer
+
+- Added a wide, nearly transparent MapLibre route hit layer above the visible route layer.
+- Made route hover/click targeting easier without changing visible route styling.
+- Kept node click precedence and preserved existing Inspector routing.
+
+### `f2fdcf9` — Add cursor-only MapLibre hover detection
+
+- Added cursor-only hover feedback for MapLibre node and route layers.
+- Preserved click routing and avoided hover cards/diagnostic state after earlier broader hover patches proved too fragile.
+
+### `5f3f053` — Route MapLibre feature clicks to inspector
+
+- Routed clicks on MapLibre-rendered nodes and routes into the existing Peridot Inspector.
+- Reused existing `handleNodeClick`, `handleEdgeClick`, and blank-map click behavior from the map-stage prop contract.
+- Preserved the production D3/SVG map path.
+
+### `2597462` — Remove MapLibre SVG node probe overlay
+
+- Removed the obsolete SVG node-probe overlay from the MapLibre preview path.
+- Left MapLibre-rendered GeoJSON nodes and routes as the preview rendering path.
+
+### `7eebdee` — Add simple MapLibre node layer probe
+
+- Added a simple MapLibre GeoJSON node source/layer to the gated preview path.
+- Confirmed MapLibre can render Peridot node points as circle layers.
+- Retained route rendering and Inspector-neutral diagnostics.
+
+### `1f0d322` — Render MapLibre route probes as GeoJSON layer
+
+- Moved route probes from SVG into a MapLibre-native GeoJSON source and line layer.
+- Kept the MapLibre preview gated behind `?maplibrePreview=1`.
+- Preserved production D3/SVG map behavior.
+
+### `443d7ac` — Add MapLibre route projection probe
+
+- Added diagnostic route projection probes to the MapLibre preview path.
+- Confirmed Peridot route endpoint coordinates could be projected onto the MapLibre map.
+
+### `6096069` — Add MapLibre projection probe
+
+- Added diagnostic projected node probes to the MapLibre preview path.
+- Passed graph/view-mode context into the dev-only MapLibre preview branch.
+
+### `33afaae` — Add MapLibre preview diagnostics
+
+- Added visible MapLibre preview diagnostics, including view state, center, zoom, and loading status.
+- Preserved normal production map behavior.
+
+### `da1463f` — Add MapLibre workspace preview path
+
+- Wired the isolated MapLibre stage into the real Peridot workspace behind `?maplibrePreview=1`.
+- Left the default production map as the existing D3/SVG path.
+
+### `93f0961` — Add isolated MapLibre map stage
+
+- Installed `maplibre-gl`.
+- Added `src/MapLibreMapStage.jsx`.
+- Added `src/mapStyleConfig.js`.
+- Established an isolated MapLibre shell without replacing production map behavior.
+
+### `1d816a5` — Add MapLibre hybrid map-system audit
+
+- Added a planning/audit document for the initial MapLibre hybrid strategy.
+- Recorded risks around projection, export, inspector interactions, cluster behavior, and tile/map-provider concerns.
+
+### `4e08720` — Direct workflow charter baseline reference to changelog
+
+- Updated `PROJECT_WORKFLOW_CHARTER.md` so baseline references point to `CHANGELOG.md` rather than hard-coding an outdated baseline.
+- This commit is the clean pre-MapLibre rollback point.
+
+---
+
+## Deferred / rolled-back MapLibre work
+
+### Cluster diagnostics, after `4c9ed6f`
+
+Several uncommitted cluster diagnostic attempts were restored. Observed behavior:
+
+- cluster feature data could be constructed in React-side diagnostics;
+- MapLibre cluster source/layer setup repeatedly reported `source no` / `layer no`;
+- in a broader attempt, nodes began disappearing at plausible clustering thresholds while clusters did not render and routes did not respond to node disappearance;
+- one attempted cluster pass caused zoom/pan flashes and map reset behavior.
+
+Conclusion: cluster work should not continue as a visual styling/layer-order problem. The next cluster pass should first instrument the MapLibre source/layer setup lifecycle directly, then add clusters through the same known-good imperative source/layer path already used by nodes and routes.
+
+### Broad hover diagnostics, before `f2fdcf9`
+
+Earlier hover-card and diagnostic patches were not committed because they either failed to apply cleanly or interfered with route click/hover behavior. The committed `f2fdcf9` intentionally kept the narrower cursor-only hover behavior.
+
+### Selected-feedback attempt using `App.jsx` selected props
+
+An earlier selected-feedback attempt passed selection state through `App.jsx`. It caused screen flash and map center/zoom reset, so it was restored. The successful approach in `10051c0` uses local MapLibre selected filter layers on existing sources.
+
+---
+
+## Existing D3/SVG and side-panel committed history
+
+The following history remains relevant and should be preserved. Earlier entries should remain below this point unless clearly superseded by a more accurate retained entry.
 
 ### `8539c68` — Clarify timeline rail icon
 
 - Replaced the timeline rail icon after testing several small-format timeline concepts.
-- Settled on a simple clock-style icon because the earlier horizontal progression concepts lost detail at rail-button size.
+- Settled on a simple clock-style icon because earlier horizontal progression concepts lost detail at rail-button size.
 - Preserved Timeline tab behavior, playback, and active start/end year controls.
 
 ### `def4265` — Add timeline side panel tab
 
 - Added a dedicated **Timeline** icon button to the shared side-panel rail.
 - Moved existing year-range and playback controls out of the general Control Panel and into the Timeline tab.
-- Preserved year-based filtering, playback behavior, and active start/end year adjustment after restoring required timeline props.
-- Kept timeline/playback logic unchanged; this pass moved the UI boundary only.
+- Preserved year-based filtering, playback behavior, and active start/end year adjustment.
 
 ### `6a672d9` — Add export side panel tab
 
 - Added a dedicated **Export** icon button to the shared side-panel rail.
 - Moved existing export controls out of the general Control Panel and into the Export tab.
-- Kept export options visible by default when the Export tab opens.
-- Replaced the export icon with a distinct outward/share-style icon so it does not duplicate the upload/Data Inputs icon.
 - Preserved SVG, PNG, nodes CSV, and edges/routes CSV export behavior.
 
 ### `f1394c6` — Add data inputs side panel tab
 
 - Added a dedicated **Data Inputs** icon button to the shared side-panel rail.
 - Moved Geography, Raw Data, and Person Metadata upload controls out of the general Control Panel and into the Data Inputs tab.
-- Preserved the upload controls and their existing data-ingestion behavior.
-- Kept Data Inputs terminology to avoid confusion with the broader concept of app data.
+- Preserved upload and data-ingestion behavior.
 
 ### `5b38c4e` — Update shared panel rail icons
 
@@ -48,299 +192,135 @@ This baseline reflects the current clean Peridot state after the cluster-interac
 
 - Styled the persistent side-panel icon rail as its own visual zone.
 - Added a mossy/peridot-toned rail background.
-- Tuned inactive, hover, and active rail-button colors so the buttons remain legible against the rail.
-- Added comfortable spacing between the rail and the panel scrollbar.
+- Tuned inactive, hover, and active rail-button colors.
 
 ### `2acdb91` — Remove obsolete side panel top tabs
 
-- Removed the redundant horizontal Controls / Inspector tab row from the open shared side panel.
+- Removed the redundant horizontal Controls / Inspector tab row.
 - Made the persistent icon rail the sole panel-view switcher.
 - Preserved Controls, Inspector, close, and map-click auto-open behavior.
 
 ### `6142817` — Anchor shared panel icon rail to panel shell
 
 - Changed the persistent icon rail from viewport-anchored positioning to panel-shell anchoring.
-- Kept the rail positioned on the right side of the open panel where the spare space already exists.
-- Preserved closed-panel access to the rail buttons.
-- Kept the close button at the top of the rail when the panel is open.
+- Preserved closed-panel access and open-state close-button placement.
 
 ### `4653f20` — Remove obsolete audit documentation listings
 
 - Removed stale listings for obsolete audit documents from active documentation.
-- Preserved active documentation references to `README.md`, `MAINTAINERS_GUIDE.md`, `PROJECT_WORKFLOW_CHARTER.md`, and `CHANGELOG.md`.
 
 ### `8882b69` — Remove obsolete audit documentation references
 
 - Deleted obsolete root-level audit documentation files that no longer functioned as active maintainer references.
-- Removed `CONTROL_PANEL_DEPENDENCY_MAP.md` and `VIEWPORT_TIMELINE_AUDIT.md` from the committed repository.
 
 ### `06c1843` — Clean shared side panel source comments
 
-- Removed obsolete source comments and unused import residue from the shared side-panel cleanup.
-- Clarified source comments so `LeftControlPanel.jsx` is described as the shared side-panel shell rather than only a left control panel.
+- Removed obsolete source comments and unused import residue.
 - Avoided renaming compatibility-sensitive `showLeftSidebar` / `showRightSidebar` state paths.
 
 ### `f7407eb` — Refresh documentation for shared panel baseline
 
 - Refreshed documentation after the shared side-panel baseline.
-- Recorded the then-current shared panel architecture before later rail-tab work expanded it.
 
 ### `4a17d1c` — Make inspector panel content-only
 
 - Removed obsolete inspector shell/tab code from `src/InspectorPanel.jsx`.
-- Kept inspector header, Back button, and body-router rendering intact.
-- Clarified that the shared side-panel shell and tabs now live in `src/LeftControlPanel.jsx`.
-- Preserved existing inspector behavior, including map-click auto-open, cluster inspector grouping, and Back behavior.
+- Preserved inspector behavior, including map-click auto-open, cluster inspector grouping, and Back behavior.
 
 ### `b62c74b` — Use shared side panel shell
 
 - Converted the prior split panel arrangement into a single shared left-side panel shell.
-- Made Controls and Inspector behave as tabs inside one side panel.
-- Put open/close animation on the shared shell rather than on separate panel bodies.
-- Preserved Inspector auto-open behavior from node, edge, and cluster interactions.
+- Preserved Inspector auto-open behavior.
 
 ### `e41d8bc` — Split side panel open state from active tab
 
-- Split the side-panel model into two concepts:
-  - whether the side panel is open
-  - which tab is active: Controls or Inspector
-- Prepared the app for a single shared side-panel shell where tab switching does not imply open/close animation.
+- Split whether the side panel is open from which tab is active.
 
 ### `88b0c19` — Rename inspector panel shell for left dock
 
 - Renamed the former `RightInspectorPanel.jsx` file to `InspectorPanel.jsx`.
-- Updated imports and component names so the source structure no longer implies a right-side inspector shell.
 
 ### `2126c9b` — Open inspector in left panel dock
 
-- Changed the inspector shell positioning so the Inspector opens on the left rather than the right.
-- Preserved existing inspector content, Back behavior, and map-click auto-open behavior.
+- Changed the inspector shell positioning so the Inspector opens on the left.
 
 ### `f98b3e5` — Add panel mode switcher tabs
 
 - Added Controls / Inspector tabs to the open panel.
-- Allowed switching between Controls and Inspector from inside the panel.
-- Preserved the single-active-panel behavior.
 
 ### `df4075a` — Move side panel toggles to left rail
 
 - Moved both collapsed toggle icons to the left rail.
-- Kept the cog as the Controls opener.
-- Kept the menu/hamburger icon as the Inspector opener.
-- Removed the need for a separate right-side collapsed inspector rail.
 
 ### `17cf020` — Enforce single active side panel
 
-- Replaced independent left/right panel visibility behavior with a single active-panel model.
-- Ensured only one panel could be open at a time.
-- Preserved Inspector auto-open behavior on node, edge, and cluster interaction.
+- Ensured only one side panel could be open at a time.
 
 ### `0063145` — Use menu icon for inspector toggle
 
-- Changed the collapsed Inspector toggle icon from a magnifying glass to a three-line menu/hamburger icon.
-- Preserved the Controls cog icon.
+- Changed the collapsed Inspector toggle icon from magnifying glass to menu/hamburger.
 
 ### `63003c1` — Group cluster inspector members by place
 
-- Updated the cluster inspector so contained members are grouped by place.
-- Ordered place groups from highest represented visible volume to lowest.
-- Ordered members inside each place group from highest individual volume to lowest.
-- Preserved contained-item click navigation and Back behavior.
+- Grouped cluster inspector members by place and ordered groups/members by volume.
 
 ### `fed4b5b` — Use volume-based zoom-responsive cluster sizing
 
-- Updated cluster sizing so cluster radius reflects total represented letter volume.
-- Made cluster grouping more responsive to zoom/proximity so nearby locations can merge at lower zoom and separate at higher zoom.
-- Preserved cluster click and inspector behavior.
+- Made cluster sizing reflect represented letter volume and respond to zoom/proximity.
 
 ### `3187d05` — Increase dynamic node radius contrast
 
 - Replaced overly compressed node sizing with dynamic log/max sizing.
-- Increased visual contrast between low-, medium-, and high-volume nodes.
-- Preserved caps so high-volume nodes remain legible.
-- Left edge sizing unchanged.
 
 ### `ed39e55` — Make cluster nodes open actionable inspector views
 
-- Made cluster nodes clickable.
-- Preserved full cluster member payloads during cluster selection.
-- Allowed cluster inspector members to open person/place detail views.
-- Preserved Back behavior inside the inspector.
-
-### `04eb8b5` — Refresh documentation for safe year-based baseline
-
-- Refreshed documentation around the then-current year-based timeline baseline.
-- This documentation has now been superseded by the current `4a17d1c` baseline.
+- Made cluster nodes clickable and allowed cluster inspector members to open person/place detail views.
 
 ### `57b946e` — Make timeline year-based
 
 - Converted the timeline from month-based controls to year-only controls.
-- Removed month selectors from the Timeline block.
-- Preserved the broader range/playback model while changing timeline bucketing/filtering to years.
 
 ### `79d5ae1` — Remove show all dates shortcut
 
 - Removed the old **Show all dates** shortcut from Display Controls.
-- Clarified that date behavior is now controlled through the Timeline block rather than a separate display toggle.
 
 ### `3fedd97` — Tighten minimum weight helper text
 
-- Finalized the committed minimum-weight control change by simplifying helper copy.
-- Preserved the numeric input with Enter / Update apply behavior.
+- Simplified minimum-weight helper copy while preserving the numeric input with Enter / Update behavior.
 
 ### `96064e2` — Set people as default view and simplify view buttons
 
-- Replaced the old two-step view-selection UI with three direct buttons:
-  - People
-  - Place
-  - Force-Directed
+- Replaced the old two-step view-selection UI with direct People / Place / Force-Directed buttons.
 - Made **People** the default startup view.
 
 ---
 
-## Deferred / rolled-back work
+## Earlier development history
 
-### Shared-panel prop rename attempt, after `4a17d1c`
+Earlier documented entries should remain part of the repository history. Previously recorded entries include, but are not limited to:
 
-A cleanup attempt was made to rename the old `showLeftSidebar` / `showRightSidebar` compatibility prop path to newer shared-panel naming. This was rolled back because it broke Inspector auto-open behavior when clicking nodes, edges, or clusters.
-
-Future work should treat this path as fragile. If the old names are renamed later, the pass must explicitly test:
-
-- node click opens Inspector
-- edge click opens Inspector
-- cluster click opens Inspector
-- contained cluster-member click opens detail
-- Back behavior remains intact
-
-### Panel responsive sizing attempt, after `b62c74b`
-
-A responsive panel-sizing experiment attempted to make the shared side panel absolutely positioned at all viewport sizes. It was rolled back because it disrupted the full-size landscape layout and forced scrolling before the map.
-
-Future responsive-panel work should be designed as a narrow-window override rather than a universal positioning replacement.
-
-### Superseded cluster drill-down note
-
-Earlier documentation described cluster drill-down as attempted but uncommitted. That note is now superseded by committed cluster work:
-
-- `ed39e55` made cluster nodes actionable in the inspector.
-- `63003c1` grouped cluster inspector members by place.
-
----
-
-# Full development history
-
-This section preserves the cumulative development trajectory for future reference. Older documented entries should remain below this point unless they are clearly obsolete or duplicated by a more accurate retained entry.
-
-## `391174a` — Refresh Peridot documentation for publication baseline
-
-- Updated `README.md`, `MAINTAINERS_GUIDE.md`, and `CHANGELOG.md`.
-- Renamed the documented project identity to **Peridot**.
-- Aligned the documentation with the publishable browser baseline.
-
-## `951b450` — Replace embedded sample data with current publication dataset
-
-- Replaced the embedded sample/fallback data in `src/App.jsx`.
-- Set the built-in browser/demo state to use the intended publication dataset.
-- Established the publication dataset baseline used for browser release.
-
-## `f859595` — Add itch.io HTML5 build packaging support
-
-- Updated `vite.config.js` to use a relative base path for safer subdirectory hosting.
-- Added `Build_Itch_Zip.py`.
-- Established a repeatable HTML5 packaging workflow for itch.io publication.
-- Kept generated ZIP artifacts out of normal source commits.
-
-## `f959fac` — Use countries50m as the fixed basemap
-
-- Replaced the earlier fixed `countries110m` basemap with `countries50m`.
-- Simplified the committed map baseline after experimental multi-scale atlas work was abandoned.
-
-## `b1fdbd5` — Update maintainer handoff documentation
-
-- Refreshed maintainer handoff documentation used for later bounded passes.
-
-## `dd12281` — Normalize summary panel spacing
-
-- Added matching top spacing above **Summary and Diagnostics**.
-- Restored more consistent vertical rhythm inside the **OPTIONS** stack.
-
-## `4fdaf73` — Rename timeline panel heading
-
-- Renamed **Timeline and playback** to **Timeline**.
-- Kept timeline behavior unchanged.
-
-## `db5bb1f` — Tighten left panel organization
-
-- Reorganized the left control panel.
-- Added a **Visualization Type** section.
-- Moved visualization-mode controls into that section.
-
-## `ba746b1` — Simplify theme panel text
-
-- Renamed **Map appearance** to **Theme**.
-- Removed explanatory theme copy that no longer matched the preferred presentation.
-
-## `c0fc600` — Retune active country fills for peridot and modern maps
-
-- Retuned Peridot active-country fill.
-- Retuned Modern active-country fill.
-- Left Early Modern active-country coloring unchanged.
-
-## `56f0080` — Highlight countries containing visible nodes
-
-- Added active-country highlighting for countries containing currently visible nodes.
-- Used hint matching and coordinate fallback to determine country membership.
-
-## `5cbe9c3` — Refine early modern node hover and selected colors
-
-- Tuned Early Modern hover state.
-- Tuned Early Modern selected state.
-
-## `850176f` — Refine hovered and selected node states
-
-- Strengthened hover/selected node differentiation.
-- Continued theme-aware node-state polish.
-
-## `3e43dc9` — Add hovered node color feedback
-
-- Added stronger hovered-node color feedback to improve interaction clarity.
-
-## `919ea5f` — Increase green layering in peridot map theme
-
-- Increased Peridot map-theme green layering and depth.
-
-## `c666d29` — Add peridot default app theme
-
-- Added the Peridot-inspired full-app default theme.
-
-## `9be5f4a` — Tighten maintainer docs audit fixes
-
-- Applied follow-up corrections to maintainer-facing documentation after audit review.
-
-## `43403c3` — Restore detail to maintainer documentation
-
-- Restored architectural and workflow detail that had been thinned too aggressively.
-
-## `02ecb11` — Document inspector navigation feature set
-
-- Updated documentation to reflect the inspector-navigation feature set more explicitly.
-
-## `5af819b` — Add inspector back navigation
-
-- Added inspector-internal Back navigation support.
-
-## `b3e6fe8` — Add place navigation sections to person inspector
-
-- Added explicit place-navigation sections to person detail views.
-
-## `6772c1d` — Clarify connected correspondents count label
-
-- Clarified relationship-count labeling in connected-correspondent UI.
-
-## `ab0e1fe` — Show relationship counts in connected correspondents buttons
-
-- Added relationship counts to connected-correspondent navigation buttons.
-
-## Earlier history
+- `391174a` — Refresh Peridot documentation for publication baseline
+- `951b450` — Replace embedded sample data with current publication dataset
+- `f859595` — Add itch.io HTML5 build packaging support
+- `f959fac` — Use countries50m as the fixed basemap
+- `b1fdbd5` — Update maintainer handoff documentation
+- `dd12281` — Normalize summary panel spacing
+- `4fdaf73` — Rename timeline panel heading
+- `db5bb1f` — Tighten left panel organization
+- `ba746b1` — Simplify theme panel text
+- `c0fc600` — Retune active country fills for peridot and modern maps
+- `56f0080` — Highlight countries containing visible nodes
+- `5cbe9c3` — Refine early modern node hover and selected colors
+- `850176f` — Refine hovered and selected node states
+- `3e43dc9` — Add hovered node color feedback
+- `919ea5f` — Increase green layering in peridot map theme
+- `c666d29` — Add peridot default app theme
+- `9be5f4a` — Tighten maintainer docs audit fixes
+- `43403c3` — Restore detail to maintainer documentation
+- `02ecb11` — Document inspector navigation feature set
+- `5af819b` — Add inspector back navigation
+- `b3e6fe8` — Add place navigation sections to person inspector
+- `6772c1d` — Clarify connected correspondents count label
+- `ab0e1fe` — Show relationship counts in connected correspondents buttons
 
 Continue preserving older entries already recorded in repository history. Do not delete older documented history unless it is clearly duplicated by a more accurate retained entry.

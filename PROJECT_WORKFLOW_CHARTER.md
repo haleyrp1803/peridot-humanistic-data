@@ -26,11 +26,14 @@ Current project source of truth folder:
 C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 ```
 
-Current clean baseline:
+For the current documented safe baseline, consult `CHANGELOG.md`. The current MapLibre-native development branch at this handoff is:
 
 ```text
-See `CHANGELOG.md` for the most recent documented safe baseline.
+maplibre-native-geographic-view
+4c9ed6f — Extract MapLibre layer configuration
 ```
+
+Rollback landmarks are recorded in `CHANGELOG.md` and `MAINTAINERS_GUIDE.md`.
 
 ---
 
@@ -69,6 +72,9 @@ Current fragile zones include:
 - shared side-panel shell behavior
 - inspector-open interactions after map clicks
 - cluster grouping and cluster inspector navigation
+- MapLibre source/layer lifecycle
+- MapLibre cluster source/layer setup
+- MapLibre zoom/move state that could trigger map reconstruction/reset
 
 ---
 
@@ -97,6 +103,23 @@ When delivering files, include exact Windows PowerShell copy commands.
 
 Do not use `git add .` while `itch_upload/` or other generated artifacts are untracked. Use targeted adds or `git add -A src` only when a source-file rename/deletion is intentional.
 
+### Special delivery mode for `src/MapLibreMapStage.jsx`
+
+When GitHub/local alignment has been confirmed by the sync ritual and the change is confined to `src/MapLibreMapStage.jsx`, default to the following protocol:
+
+1. Read the exact current committed file from GitHub.
+2. Treat that file as the source of truth.
+3. Generate a complete replacement file from that exact source.
+4. Make only the planned bounded changes.
+5. Provide `.txt` and `.jsx` versions.
+6. The user copies the `.txt` into place.
+7. Build/test.
+8. Commit if accepted.
+
+This protocol was adopted after patch scripts repeatedly failed on `MapLibreMapStage.jsx` anchors, while a full replacement generated from the exact current file succeeded for `10051c0`.
+
+Patch scripts remain appropriate for `App.jsx` or other large/high-risk files when a full replacement would be riskier.
+
 ---
 
 ## 6. Recovery protocol
@@ -116,7 +139,8 @@ Recent examples reinforced this rule:
 
 - a responsive shared-panel sizing attempt was rolled back after it disrupted the normal landscape layout
 - a semantic shared-panel prop rename was rolled back after it broke inspector auto-open behavior
-- the team returned to the last clean baseline before proceeding
+- a selected-feedback attempt that used `App.jsx` selected props was restored after it caused MapLibre map flash/reset
+- several MapLibre cluster attempts were restored after cluster source/layer setup failed or zoom/pan caused map reset behavior
 
 ---
 
@@ -133,7 +157,7 @@ Get-ChildItem -Name
 Get-ChildItem src -Name
 ```
 
-After the user provides a clean sync showing local `HEAD`, `origin/main`, and `origin/HEAD` aligned, trust the synced Git state as the current source of truth. Do not repeatedly ask for uploaded files unless there is a specific reason to believe the file has drifted or the needed file content is not otherwise available.
+After the user provides a clean sync showing local `HEAD`, `origin/main`, and `origin/HEAD` aligned, trust the synced Git state as the current source of truth. On feature branches, use the same principle for `HEAD` and the corresponding `origin/<branch>`.
 
 ---
 
@@ -149,6 +173,8 @@ Instead, defer README / Maintainer Guide / Changelog updates until:
 - the current conversation is becoming laggy or unreliable
 
 When documentation is updated, preserve the full development history in `CHANGELOG.md`.
+
+Default to additive documentation updates. Do not delete or overwrite historical information unless it is clearly obsolete, duplicated by a more accurate retained entry, or actively misleading.
 
 ---
 
@@ -174,6 +200,15 @@ Preferred order:
 6. panel and inspector content components
 7. app orchestration last
 
+For the MapLibre-native subsystem, the preferred current order is:
+
+1. preserve working preview behavior
+2. extract pure MapLibre feature builders
+3. extract MapLibre layer/source configuration
+4. instrument map lifecycle/source setup before cluster work
+5. add cluster rendering only after source/layer lifecycle is proven
+6. only then add cluster click routing, node hiding, and route behavior decisions
+
 Stop structural cleanup once the file is stable unless there is a concrete bug, a planned architectural pass, or a specific maintenance pain point.
 
 ---
@@ -188,12 +223,15 @@ For non-obvious implementation choices, record:
 
 Current notable decisions:
 
-- The map remains dynamic rather than fixed to a canonical live stage for now.
+- The production map remains dynamic rather than fixed to a canonical live stage for now.
 - Panel standardization focused on a shared side panel instead of freezing the whole viewport.
 - The Inspector is now content inside the shared side panel, not a separate right-side shell.
-- Cluster sizing now reflects represented letter volume.
-- Cluster grouping is zoom-responsive.
+- Cluster sizing now reflects represented letter volume in the production D3/SVG path.
+- Cluster grouping is zoom-responsive in the production D3/SVG path.
 - Cluster inspector members are grouped by place.
+- MapLibre migration has pivoted from incremental adaptation to a MapLibre-native geographic subsystem plan.
+- The MapLibre preview prototype is preserved at `10051c0` and tagged as `checkpoint-maplibre-preview-prototype`.
+- The pre-MapLibre rollback point is `4e08720`.
 
 ---
 
@@ -219,7 +257,7 @@ Future responsive panel work should be a narrow-window-specific override, not a 
 
 ### Cluster behavior
 
-Cluster behavior is now committed and functional. Future cluster changes should preserve:
+Production D3/SVG cluster behavior is committed and functional. Future production cluster changes should preserve:
 
 - cluster click opens Inspector
 - cluster inspector lists contained members
@@ -227,6 +265,10 @@ Cluster behavior is now committed and functional. Future cluster changes should 
 - member click opens detail
 - Back returns to the cluster view
 - cluster sizing remains visually meaningful
+
+### MapLibre cluster work
+
+MapLibre cluster work is not yet solved. Future work should not begin with node hiding, route rerouting, or zoom-responsive cluster behavior. Start with lifecycle/source setup instrumentation inside `MapLibreMapStage.jsx` and prove that the MapLibre map receives a cluster source/layer before adding cluster behavior.
 
 ---
 
@@ -252,17 +294,29 @@ For a new chat, start with:
 Source of truth folder:
 C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 
-Current documented clean baseline:
-See `CHANGELOG.md` for the most recent documented safe baseline.
+Active branch:
+maplibre-native-geographic-view
+
+Current branch baseline:
+4c9ed6f — Extract MapLibre layer configuration
+
+Main / MapLibre preview checkpoint:
+10051c0 — Add MapLibre selected filter layers
+Tag: checkpoint-maplibre-preview-prototype
+
+Pre-MapLibre clean rollback point:
+4e08720 — Direct workflow charter baseline reference to changelog
 ```
 
 The new chat should be told:
 
 - Peridot is the current app identity.
-- The current fixed basemap is `countries50m`.
-- The app uses a shared left-side panel with Controls and Inspector tabs.
+- The current fixed production basemap is `countries50m`.
+- The app uses a shared left-side panel with a persistent icon rail.
 - `LeftControlPanel.jsx` owns the shared side-panel shell.
 - `InspectorPanel.jsx` is content-only.
-- Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed features.
-- The compatibility path for inspector auto-open is fragile; do not rename it casually.
-- Documentation updates are batched, not performed after every small code commit.
+- Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed in the production D3/SVG path.
+- The MapLibre-native branch currently has extracted feature builders and layer configuration.
+- `MapLibreMapStage.jsx` has a special full-file replacement delivery protocol.
+- MapLibre cluster source/layer setup is unresolved and should be handled through lifecycle instrumentation before new rendering attempts.
+- Documentation updates are batched and additive by default.

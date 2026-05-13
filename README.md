@@ -8,7 +8,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Export, Timeline, and Inspector, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, and image/tabular export tools.
+The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, and export tools. The production app currently uses the committed D3/SVG geographic map path and the pre-settled D3 force-directed person-network path. On the `maplibre-native-geographic-view` branch, Peridot also contains a gated MapLibre preview/prototype path used to design a future MapLibre-native geographic subsystem without replacing the production map.
 
 ---
 
@@ -16,17 +16,34 @@ The application ingests correspondence-related tabular data, derives network str
 
 This repository represents an **active prototype / research tool in ongoing development**.
 
-The current safe baseline is:
+### Current branch context at this handoff
 
-- **`8539c68` — `Clarify timeline rail icon`**
+- Active development branch: **`maplibre-native-geographic-view`**
+- Current branch baseline: **`4c9ed6f` — `Extract MapLibre layer configuration`**
+- Current `main` baseline / MapLibre preview prototype checkpoint: **`10051c0` — `Add MapLibre selected filter layers`**
+- Tag for current MapLibre preview prototype: **`checkpoint-maplibre-preview-prototype`**
+- Pre-MapLibre clean rollback point: **`4e08720` — `Direct workflow charter baseline reference to changelog`**
 
-The current state of the project includes:
+The production app remains functional. The MapLibre work is still gated behind the development/test URL parameter:
+
+```text
+?maplibrePreview=1
+```
+
+The current branch includes a MapLibre-native subsystem plan and two structural extraction passes:
+
+- `b7fb244` — `Add MapLibre native geographic view plan`
+- `c420a5d` — `Extract MapLibre feature builders`
+- `4c9ed6f` — `Extract MapLibre layer configuration`
+
+The most recent attempted cluster diagnostics were **not committed**. The current committed branch state is clean at `4c9ed6f`.
+
+### Current production behavior
+
+The production behavior includes:
 
 - working geographic and person-network visualization modes
-- direct view-selection buttons for:
-  - **People**
-  - **Place**
-  - **Force-Directed**
+- direct view-selection buttons for **People**, **Place**, and **Force-Directed**
 - **People** as the default startup view
 - a committed minimum-weight numeric input with **Enter** / **Update** apply behavior
 - year-based timeline filtering and playback infrastructure
@@ -42,7 +59,7 @@ The current state of the project includes:
 - inspector-internal navigation between people and places
 - a working inspector **Back** button for internal navigation
 
-The codebase is functional, but it is still under active maintenance. The largest remaining structural issue is that important orchestration logic still lives in `src/App.jsx`, even though panel, inspector, map, timeline, interaction, and export logic have been substantially extracted.
+The codebase is functional, but it remains under active maintenance. The largest remaining structural issue is that important orchestration logic still lives in `src/App.jsx`, even though panel, inspector, map, timeline, interaction, export, and now MapLibre feature/layer logic have been substantially extracted.
 
 ---
 
@@ -80,8 +97,8 @@ The codebase is functional, but it is still under active maintenance. The larges
 ### Visual encoding
 
 - dynamic node sizing with stronger contrast for high-volume nodes
-- volume-based cluster sizing
-- zoom-responsive cluster grouping for nearby people/places
+- volume-based cluster sizing in the production D3/SVG path
+- zoom-responsive cluster grouping for nearby people/places in the production D3/SVG path
 - edge sizing preserved independently from node and cluster sizing
 
 ### Visual customization
@@ -122,25 +139,11 @@ Other current behavior:
 - the timeline now uses **year-only** start/end selectors rather than month selectors
 - the old horizontal Controls / Inspector top tab row has been removed; the persistent rail now functions as the panel-view switcher
 
-These are part of the current safe baseline and should be treated as live behavior unless changed in a later committed pass.
-
-### Recent shared-panel rail milestone
-
-The current side-panel rail milestone was completed through a sequence of bounded passes ending at **`8539c68` — `Clarify timeline rail icon`**. This milestone:
-
-- anchored the rail to the panel shell rather than to fixed viewport coordinates
-- kept the close button at the top of the rail when open
-- made the rail visually distinct from the rest of the panel
-- removed the obsolete horizontal tab row
-- corrected the Controls and Inspector icon meanings
-- added dedicated **Data Inputs**, **Export**, and **Timeline** tabs
-- preserved existing upload, export, timeline/playback, and inspector behavior
-
 ---
 
 ## 6. Screenshots
 
-The screenshots in `docs/images/` may need refresh because the side-panel architecture and cluster inspector behavior have changed materially since the earlier documentation baseline.
+The screenshots in `docs/images/` may need refresh because the side-panel architecture, MapLibre preview work, and cluster inspector behavior have changed materially since the earlier documentation baseline.
 
 Existing screenshot references:
 
@@ -187,18 +190,19 @@ This project currently uses:
 - **React 18** for UI composition and stateful interaction
 - **Vite** for development/build tooling
 - **Tailwind CSS** for utility-driven styling
-- **d3-geo** for projection and map geometry work
+- **d3-geo** for projection and map geometry work in the production D3/SVG geographic path
 - **d3-force** for pre-settled force-directed person-network layout
 - **topojson-client** for geographic feature handling
 - **world-atlas** for world basemap data
+- **MapLibre GL JS** for the gated MapLibre geographic preview/prototype path on the native MapLibre branch
 
-The map-stage rendering logic is SVG-based, with exported SVG optionally rasterized to PNG during export workflows.
+The production map-stage rendering logic remains SVG-based, with exported SVG optionally rasterized to PNG during export workflows. The MapLibre path is a development/prototype subsystem and is not yet the production geographic renderer.
 
 ---
 
 ## 8. Project structure
 
-The current `src/` structure is:
+The current `src/` structure includes:
 
 ```text
 src/
@@ -219,7 +223,11 @@ src/
   main.jsx
   mapInteractionHandlers.js
   mapLayoutHelpers.js
+  mapLibreFeatureBuilders.js
+  mapLibreLayerConfig.js
+  MapLibreMapStage.jsx
   mapStageComponents.jsx
+  mapStyleConfig.js
   personForceLayoutHelpers.js
   timelinePlaybackComponents.jsx
   timelinePlaybackHelpers.js
@@ -237,7 +245,7 @@ Contains the minimal global layer for Tailwind directives, layout rules, and bas
 
 #### `src/App.jsx`
 
-The main orchestration layer. It handles top-level application state, data ingestion and normalization, graph derivation, theme token logic, timeline state, inspector state, shared side-panel state, and workspace composition.
+The main orchestration layer. It handles top-level application state, data ingestion and normalization, graph derivation, theme token logic, timeline state, inspector state, shared side-panel state, and workspace composition. It also gates the current MapLibre preview behind `?maplibrePreview=1`.
 
 #### `src/LeftControlPanel.jsx`
 
@@ -257,7 +265,7 @@ Empty inspector state view.
 
 #### `src/InspectorClusterView.jsx`
 
-Cluster inspector view. Current behavior groups contained cluster members by place and sorts by visible represented volume.
+Cluster inspector view. Current production behavior groups contained members by place and sorts by visible represented volume.
 
 #### `src/InspectorEdgeView.jsx`
 
@@ -269,22 +277,31 @@ Node / person-detail / place-detail inspector view boundary.
 
 #### `src/mapLayoutHelpers.js`
 
-Pure helper logic for viewport construction, clustering, cluster radius calculation, label visibility, and geometric calculations.
+Pure map/layout helper logic for the production D3/SVG path, including viewport construction, clustering, cluster radius calculation, label visibility, and geometric calculations.
 
 #### `src/interactionHelpers.js`
 
-Selection and inspection logic, including:
-
-- nearby candidate generation
-- selection resolution
-- cluster selection payload derivation
-- person-detail and place-detail payload derivation
-- weighted connected-correspondent ordering
-- person-detail place-section derivation
+Selection and inspection logic, including nearby candidate generation, selection resolution, cluster selection payload derivation, person-detail and place-detail payload derivation, weighted connected-correspondent ordering, and person-detail place-section derivation.
 
 #### `src/mapInteractionHandlers.js`
 
-Centralized map interaction handler factory for hover/click/selection behavior.
+Centralized map interaction handler factory for hover/click/selection behavior in the production D3/SVG path.
+
+#### `src/MapLibreMapStage.jsx`
+
+Development/prototype MapLibre stage. Current branch behavior renders MapLibre route/node GeoJSON layers, route hit layer, selected filter layers, cursor-only hover, and node/route Inspector click routing. Cluster implementation is not yet solved.
+
+#### `src/mapLibreFeatureBuilders.js`
+
+Pure MapLibre feature-building helpers. Current branch owns node and route GeoJSON feature construction and projectable route counting for the MapLibre preview.
+
+#### `src/mapLibreLayerConfig.js`
+
+MapLibre source/layer IDs, empty selected filters, selected ID filter helpers, and layer definition builders for the current route, node, route-hit, and selected-feature layers.
+
+#### `src/mapStyleConfig.js`
+
+MapLibre style configuration for the current preview path.
 
 #### `src/timelinePlaybackHelpers.js`
 
@@ -353,6 +370,16 @@ npm run build
 npm run preview
 ```
 
+### Test the MapLibre preview path
+
+On the `maplibre-native-geographic-view` branch or a branch containing the MapLibre preview commits, start the development server and open:
+
+```text
+http://localhost:5173/?maplibrePreview=1
+```
+
+Use the actual Vite port if it differs.
+
 ### Repository location
 
 ```text
@@ -381,7 +408,7 @@ The source code currently includes embedded baseline data so that the app can re
 
 ## 11. How to use the app
 
-A typical workflow is:
+A typical production workflow is:
 
 1. Open the app.
 2. Load data or work from the embedded baseline data.
@@ -394,6 +421,8 @@ A typical workflow is:
 9. Use the inspector **Back** button to return to the previous internal panel.
 10. Use **Export** to save the current state as SVG, PNG, or CSV outputs.
 
+The MapLibre preview path is for development and should not yet be treated as a production replacement for the geographic view.
+
 ---
 
 ## 12. Known limitations and fragile zones
@@ -401,6 +430,10 @@ A typical workflow is:
 ### Current structural limitation
 
 `src/App.jsx` still contains a large amount of orchestration logic and remains the main concentration point in the codebase.
+
+### Current MapLibre limitation
+
+The MapLibre preview has working node and route rendering, node/route click routing into the Inspector, cursor-only hover, route hit layers, and selected filter layers. Cluster rendering and cluster interaction are not yet solved in the MapLibre-native path. Multiple uncommitted cluster diagnostics were restored after cluster source/layer setup did not reach the MapLibre map instance.
 
 ### Known fragile zones
 
@@ -415,6 +448,7 @@ The maintainer documentation identifies the following areas as especially sensit
 - inspector-open interactions
 - shared side-panel shell behavior
 - cluster grouping and cluster inspector navigation
+- MapLibre map lifecycle/source setup, especially if future cluster work depends on zoom/move state
 
 ### Practical implication
 
@@ -429,6 +463,7 @@ This repository includes internal maintenance and workflow documents that should
 - **`MAINTAINERS_GUIDE.md`**
 - **`PROJECT_WORKFLOW_CHARTER.md`**
 - **`CHANGELOG.md`**
+- **`docs/MAPLIBRE_NATIVE_GEOGRAPHIC_VIEW_PLAN.md`**
 
 ---
 
@@ -436,10 +471,13 @@ This repository includes internal maintenance and workflow documents that should
 
 Likely near-term priorities include:
 
+- preserve the current production D3/SVG map behavior unless and until the MapLibre subsystem reaches parity
+- continue MapLibre-native subsystem design on `maplibre-native-geographic-view`
+- instrument the MapLibre map lifecycle/source setup before attempting cluster rendering again
+- avoid deriving zoom-responsive clusters inside the MapLibre map-construction effect
 - continue safe reduction of orchestration pressure inside `src/App.jsx`
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
-- revisit responsive side-panel sizing only as a narrow-window-specific pass
-- refresh screenshots after the shared side-panel UI stabilizes
+- refresh screenshots after the MapLibre direction and shared side-panel UI stabilize
 - standardize visual export dimensions later if needed
 - preserve full commit history in documentation updates
 

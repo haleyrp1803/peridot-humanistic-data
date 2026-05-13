@@ -14,9 +14,22 @@ Current source of truth folder:
 
 - `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 
-Current clean safe baseline:
+Current active development branch for MapLibre-native work:
 
-- **`8539c68` — `Clarify timeline rail icon`**
+- `maplibre-native-geographic-view`
+
+Current branch baseline at this handoff:
+
+- **`4c9ed6f` — `Extract MapLibre layer configuration`**
+
+Current `main` / MapLibre preview prototype checkpoint:
+
+- **`10051c0` — `Add MapLibre selected filter layers`**
+- Tag: **`checkpoint-maplibre-preview-prototype`**
+
+Pre-MapLibre clean rollback point:
+
+- **`4e08720` — `Direct workflow charter baseline reference to changelog`**
 
 Current GitHub repository:
 
@@ -67,13 +80,17 @@ Extracted support modules in `src/`:
 - `src/timelinePlaybackComponents.jsx`
 - `src/exportHelpers.js`
 - `src/personForceLayoutHelpers.js`
+- `src/mapLibreFeatureBuilders.js`
+- `src/mapLibreLayerConfig.js`
+- `src/mapStyleConfig.js`
 
-Maintainer/workflow documents at repo root:
+Maintainer/workflow documents:
 
 - `README.md`
 - `MAINTAINERS_GUIDE.md`
 - `PROJECT_WORKFLOW_CHARTER.md`
 - `CHANGELOG.md`
+- `docs/MAPLIBRE_NATIVE_GEOGRAPHIC_VIEW_PLAN.md`
 
 ---
 
@@ -87,7 +104,7 @@ Peridot is a Vite/React/Tailwind correspondence visualizer with three user-facin
 
 Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing control model uses direct view buttons.
 
-The app includes:
+The production app includes:
 
 - CSV ingestion and normalization
 - graph derivation
@@ -109,108 +126,114 @@ The force-directed person view renders on a clean theme-driven background rather
 
 ---
 
+## MapLibre-native branch status
+
+The `maplibre-native-geographic-view` branch is a design and implementation branch for a future MapLibre-native geographic subsystem.
+
+Current committed state at `4c9ed6f`:
+
+- `src/MapLibreMapStage.jsx` owns the MapLibre map instance, lifecycle, source/layer updates, preview diagnostics, interaction wiring, route hit layer, cursor-only hover, and selected filter-layer behavior.
+- `src/mapLibreFeatureBuilders.js` owns pure MapLibre feature construction for nodes and routes.
+- `src/mapLibreLayerConfig.js` owns MapLibre source/layer IDs, selected filters, and layer definition builders.
+- `src/mapStyleConfig.js` owns MapLibre style configuration.
+- The preview remains gated behind `?maplibrePreview=1`.
+- The production D3/SVG map remains unchanged.
+
+Confirmed MapLibre preview capabilities:
+
+- renders Peridot route GeoJSON as MapLibre line layers
+- renders Peridot node GeoJSON as MapLibre circle layers
+- uses a route hit layer for easier route targeting
+- routes node/route clicks into the existing Inspector
+- supports cursor-only hover detection
+- supports selected node/route visual feedback through selected filter layers
+
+Unsolved MapLibre-native area:
+
+- cluster source/layer setup and eventual cluster behavior.
+
+Important cluster finding:
+
+- Multiple uncommitted cluster diagnostic passes built cluster feature data in React-side diagnostics, but MapLibre repeatedly reported `cluster source: no` and `cluster layer: no`.
+- This means the next cluster pass should instrument source/layer setup lifecycle rather than trying more styling or layer-order changes.
+
+---
+
 ## Current module responsibilities
 
 ### `src/App.jsx`
 
-Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel contract building, timeline state, inspector navigation state, and export wiring.
+Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel contract building, timeline state, inspector navigation state, and export wiring. It also gates the MapLibre preview path behind `?maplibrePreview=1`.
+
+### `src/MapLibreMapStage.jsx`
+
+MapLibre preview/prototype stage. It should be treated as a bounded file with its own delivery protocol: read the exact current committed GitHub file, generate a full-file replacement, make only the bounded planned changes, provide `.txt` and `.jsx` versions, and have the user copy the `.txt` into place.
+
+Current responsibilities:
+
+- initialize and manage the MapLibre map instance
+- add/update MapLibre route and node sources/layers
+- add/update route hit layer
+- add/update selected node/route filter layers
+- route MapLibre node/route clicks into the existing Inspector handlers
+- provide cursor-only hover detection
+- display preview diagnostics
+
+Do not casually add zoom-responsive cluster logic to the map-construction effect. Future cluster work must protect viewport centering/reset behavior.
+
+### `src/mapLibreFeatureBuilders.js`
+
+Pure MapLibre feature-building helper module. Current responsibilities:
+
+- determine usable longitude/latitude values
+- build projectable node maps
+- build node GeoJSON features
+- build route GeoJSON features
+- count projectable routes
+
+Future cluster feature builders should be added here only after a local source/layer lifecycle diagnostic proves the cluster source can be added and rendered correctly.
+
+### `src/mapLibreLayerConfig.js`
+
+MapLibre layer/source schema module. Current responsibilities:
+
+- route source/layer IDs
+- route hit-layer ID
+- node source/layer ID
+- selected node/route layer IDs
+- empty selected filters
+- selected ID filter builder
+- route, route-hit, node, selected route, and selected node layer definition builders
+
+Future cluster layer configuration should be added only after cluster source/layer lifecycle is understood.
+
+### `src/mapStyleConfig.js`
+
+MapLibre style configuration for the current preview path.
 
 ### `src/LeftControlPanel.jsx`
 
-Owns the shared side-panel shell and persistent icon rail. The shell includes:
-
-- persistent icon rail that is available when the panel is closed and when it is open
-- open-state close button at the top of the rail
-- rail-driven panel views for **Controls**, **Data Inputs**, **Export**, **Timeline**, and **Inspector**
-- Controls content rendering for visualization, display, theme, summary, and diagnostics controls
-- Data Inputs content rendering for Geography, Raw Data, and Person Metadata uploads
-- Export content rendering for SVG, PNG, nodes CSV, and edges/routes CSV controls
-- Timeline content rendering for year-range and playback controls
-- Inspector content rendering through `InspectorPanelContent`
-
-This file currently remains named `LeftControlPanel.jsx`, but it is now conceptually the shared side-panel shell and rail-tab host. Compatibility-sensitive `showLeftSidebar` / `showRightSidebar` state names still exist and should not be casually renamed because they are tied to inspector auto-open behavior.
+Owns the shared side-panel shell and persistent icon rail. Compatibility-sensitive `showLeftSidebar` / `showRightSidebar` state names still exist and should not be casually renamed because they are tied to inspector auto-open behavior.
 
 ### `src/InspectorPanel.jsx`
 
-Owns inspector content only. It no longer owns the outer panel shell. It renders:
-
-- inspector header
-- inspector-internal Back button
-- `InspectorBodyRouter`
-
-### `src/InspectorBodyRouter.jsx`
-
-Routes resolved inspector state to the appropriate extracted view.
-
-### `src/InspectorEmptyState.jsx`
-
-Owns the empty inspector state.
+Owns inspector content only. It no longer owns the outer panel shell.
 
 ### `src/InspectorClusterView.jsx`
 
-Owns the cluster inspector view. Current behavior groups contained members by place and sorts groups/members by represented visible volume.
-
-### `src/InspectorEdgeView.jsx`
-
-Owns the edge inspector state boundary.
-
-### `src/InspectorNodeView.jsx`
-
-Owns the node / person-detail / place-detail inspector boundary.
+Owns the production cluster inspector view. Current behavior groups contained members by place and sorts groups/members by represented visible volume.
 
 ### `src/mapLayoutHelpers.js`
 
-Pure map/layout helper logic, including viewport construction, clustering, cluster radius calculation, label visibility, and geometric calculations.
-
-### `src/mapStageComponents.jsx`
-
-Map-stage-adjacent UI/chrome components.
+Pure D3/SVG map/layout helper logic for viewport construction, clustering, cluster radius calculation, label visibility, and geometric calculations.
 
 ### `src/interactionHelpers.js`
 
-Pure interaction-resolution and selection-building helpers. This file owns helper logic for:
-
-- nearby candidate generation
-- selection resolution
-- cluster selection payload building
-- connected-correspondent ordering
-- `person-detail` and `place-detail` payload derivation
-- person-detail sent/received place-section derivation
+Pure interaction-resolution and selection-building helpers.
 
 ### `src/mapInteractionHandlers.js`
 
-Top-level map interaction handlers.
-
-### `src/timelinePlaybackHelpers.js`
-
-Pure timeline/playback derivation helpers.
-
-### `src/timelinePlaybackComponents.jsx`
-
-Timeline/playback panel UI boundary. The timeline is now **year-based**, not month-based.
-
-### `src/exportHelpers.js`
-
-Pure export utilities and export row-builder helpers.
-
-### `src/personForceLayoutHelpers.js`
-
-Pure helper logic for the pre-settled force-directed person-network layout.
-
-### `src/InspectorConnectedCorrespondents.jsx`
-
-Inspector navigation component for person-to-person movement.
-
-### `src/InspectorPersonPlaces.jsx`
-
-Inspector navigation component for person-to-place movement. It shows two explicit sections:
-
-- **Places this person sent letters to**
-- **Places where this person received letters**
-
-### `src/InspectorBackButton.jsx`
-
-Inspector-internal Back button. It uses a small local history model for inspector-internal navigation only and does not track ordinary map clicks as navigation history.
+Top-level map interaction handlers for the production D3/SVG path.
 
 ---
 
@@ -253,13 +276,12 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - timeline controls now appear in a dedicated side-panel Timeline tab
 - timeline panel UI extracted into supporting components/helpers
 - month selectors removed in favor of start-year / end-year controls
-- active start/end year controls and playback behavior were preserved during the Timeline-tab move
 
 ### Map and sizing capabilities
 
 - dynamic node radius contrast based on visible active data
-- volume-based zoom-responsive cluster sizing
-- zoom-responsive proximity clustering for nearby nodes/places
+- volume-based zoom-responsive cluster sizing in the production D3/SVG path
+- zoom-responsive proximity clustering for nearby nodes/places in the production D3/SVG path
 - edge sizing unchanged by the recent node/cluster sizing work
 
 ### Export capabilities
@@ -290,23 +312,78 @@ Important current side-panel state:
   3. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
   4. **Timeline** — year-range filtering and playback controls
   5. **Inspector** — selected nodes, edges, clusters, linked records, and inspector-internal navigation
-- the open-state rail has a mossy/peridot background, lighter green inactive buttons, lighter hover states, and cream active-state buttons
-
-Recent committed behavior includes:
-
-- direct view buttons for **People**, **Place**, and **Force-Directed**
-- **People** as the default startup view
-- committed minimum-weight numeric input with **Enter** / **Update** apply behavior
-- removal of the old **Show all dates** shortcut
-- year-only timeline selectors
-- removal of the old horizontal Controls / Inspector top tabs
-- dedicated rail tabs for Data Inputs, Export, and Timeline
 
 ---
 
 ## Recent development trajectory
 
-### Cluster and sizing sequence
+### MapLibre preview and native subsystem sequence
+
+#### `1d816a5` — Add MapLibre hybrid map-system audit
+
+Added the first MapLibre migration audit and planning document.
+
+#### `93f0961` — Add isolated MapLibre map stage
+
+Installed `maplibre-gl`, added `MapLibreMapStage.jsx`, and added `mapStyleConfig.js`.
+
+#### `da1463f` — Add MapLibre workspace preview path
+
+Inserted the MapLibre preview into the real workspace behind `?maplibrePreview=1`.
+
+#### `33afaae` — Add MapLibre preview diagnostics
+
+Added visible diagnostics to the MapLibre preview path.
+
+#### `6096069` — Add MapLibre projection probe
+
+Added projected node probes to confirm coordinate alignment.
+
+#### `443d7ac` — Add MapLibre route projection probe
+
+Added projected route probes.
+
+#### `1f0d322` — Render MapLibre route probes as GeoJSON layer
+
+Moved routes into a MapLibre GeoJSON source/layer.
+
+#### `7eebdee` — Add simple MapLibre node layer probe
+
+Moved nodes into a MapLibre GeoJSON source/layer.
+
+#### `2597462` — Remove MapLibre SVG node probe overlay
+
+Removed obsolete SVG node probes from the MapLibre preview.
+
+#### `5f3f053` — Route MapLibre feature clicks to inspector
+
+Routed MapLibre node/route clicks into the existing Inspector.
+
+#### `f2fdcf9` — Add cursor-only MapLibre hover detection
+
+Added safe cursor-only hover detection.
+
+#### `b7c61a2` — Add MapLibre route hit layer
+
+Added a transparent route hit layer for easier route interaction.
+
+#### `10051c0` — Add MapLibre selected filter layers
+
+Added selected node/route visual feedback through source filters.
+
+#### `b7fb244` — Add MapLibre native geographic view plan
+
+Added the native subsystem design document.
+
+#### `c420a5d` — Extract MapLibre feature builders
+
+Moved pure feature-building logic to `mapLibreFeatureBuilders.js`.
+
+#### `4c9ed6f` — Extract MapLibre layer configuration
+
+Moved MapLibre source/layer schema and definitions to `mapLibreLayerConfig.js`.
+
+### Existing production D3/SVG cluster and sizing sequence
 
 #### `ed39e55` — Make cluster nodes open actionable inspector views
 
@@ -326,95 +403,15 @@ Grouped cluster inspector members by place and ordered groups/members by volume.
 
 ### Shared side-panel sequence
 
-#### `0063145` — Use menu icon for inspector toggle
-
-Changed the collapsed Inspector toggle icon from magnifying glass to menu/hamburger.
-
-#### `17cf020` — Enforce single active side panel
-
-Ensured only one side panel could be open at a time.
-
-#### `df4075a` — Move side panel toggles to left rail
-
-Moved both panel opener icons to the left rail.
-
-#### `f98b3e5` — Add panel mode switcher tabs
-
-Added Controls / Inspector tabs inside the open panel.
-
-#### `2126c9b` — Open inspector in left panel dock
-
-Moved the inspector to the left-side panel area.
-
-#### `88b0c19` — Rename inspector panel shell for left dock
-
-Renamed `RightInspectorPanel.jsx` to `InspectorPanel.jsx`.
-
-#### `e41d8bc` — Split side panel open state from active tab
-
-Separated side-panel open/closed state from active tab state.
-
-#### `b62c74b` — Use shared side panel shell
-
-Created one shared side-panel shell for both Controls and Inspector.
-
-#### `4a17d1c` — Make inspector panel content-only
-
-Removed obsolete shell/tab code from `InspectorPanel.jsx`.
-
-### Shared side-panel rail-tab sequence
-
-#### `f7407eb` — Refresh documentation for shared panel baseline
-
-Refreshed documentation after the shared side-panel baseline and recorded the then-current shared panel architecture before later rail-tab expansion.
-
-#### `06c1843` — Clean shared side panel source comments
-
-Cleaned obsolete shared-panel source comments and avoided renaming compatibility-sensitive side-panel state paths.
-
-#### `8882b69` — Remove obsolete audit documentation references
-
-Removed obsolete root-level audit documentation files that no longer served as active maintainer references.
-
-#### `4653f20` — Remove obsolete audit documentation listings
-
-Removed stale references to the obsolete audit documents from active documentation.
-
-#### `6142817` — Anchor shared panel icon rail to panel shell
-
-Anchored the icon rail to the shared panel shell rather than hard-coded viewport coordinates. The rail remains available when the panel is open and closed, and the close button appears at the top of the rail when open.
-
-#### `2acdb91` — Remove obsolete side panel top tabs
-
-Removed the horizontal Controls / Inspector tab row and made the persistent rail the active panel-view switcher.
-
-#### `dcce703` — Style shared panel icon rail
-
-Styled the rail as a distinct mossy/peridot visual zone with lighter green inactive buttons, lighter hover states, and cream active-state buttons.
-
-#### `5b38c4e` — Update shared panel rail icons
-
-Updated Controls to use the three-line stack icon and Inspector to use a magnifying-glass icon.
-
-#### `f1394c6` — Add data inputs side panel tab
-
-Added the **Data Inputs** rail tab and moved Geography, Raw Data, and Person Metadata upload controls into that dedicated panel view.
-
-#### `6a672d9` — Add export side panel tab
-
-Added the **Export** rail tab, moved existing export controls into that dedicated panel view, and kept export options visible when the tab opens.
-
-#### `def4265` — Add timeline side panel tab
-
-Added the **Timeline** rail tab and moved existing year-range and playback controls into that dedicated panel view while preserving active year adjustment and playback behavior.
-
-#### `8539c68` — Clarify timeline rail icon
-
-Settled the Timeline rail icon on a simple clock-style symbol after horizontal progression icons lost too much detail at rail-button size.
+The shared side-panel and icon rail sequence remains documented in `CHANGELOG.md`. It includes the transition to a shared side-panel shell, persistent icon rail, dedicated Data Inputs / Export / Timeline tabs, and the content-only Inspector panel.
 
 ---
 
 ## Deferred / rolled-back work
+
+### MapLibre cluster diagnostic attempts, after `4c9ed6f`
+
+Several uncommitted cluster attempts were restored. The repeated diagnostic result was that cluster features existed in React-side state but MapLibre reported no cluster source and no cluster layer. A broader attempt also caused zoom/pan flashes and reset behavior. Future cluster work should start with lifecycle instrumentation inside `MapLibreMapStage.jsx`, not another visual or layer-order adjustment.
 
 ### Shared-panel semantic prop rename
 
@@ -448,6 +445,9 @@ These areas still deserve narrow, explicit passes:
 - broad orchestration work in `src/App.jsx`
 - shared side-panel shell and inspector-open interactions
 - cluster grouping and cluster inspector navigation
+- MapLibre source/layer lifecycle
+- MapLibre cluster setup
+- MapLibre zoom/move state and map reconstruction risk
 
 ---
 
@@ -478,14 +478,20 @@ Future work should continue to follow the user's established workflow:
 - prefer `.txt` delivery for generated source replacements when direct source-file downloads are unreliable
 - when runtime issues appear after interaction, check the **F12 browser console early**
 
-This recent work also reinforced these process rules:
+### Special delivery rule for `src/MapLibreMapStage.jsx`
 
-- trust GitHub/local source when a recent sync ritual confirms they match
-- target changes against the exact live file shape
-- if a UI change does not appear, verify the live file before stacking more patches
-- do behavior pass first, then cleanup pass second
-- if a pass starts drifting, restore to the last safe commit rather than continuing to stack speculative fixes
-- when a long conversation becomes unreliable or laggy, restore the safe baseline, update docs, and continue in a fresh chat
+When the sync ritual confirms GitHub/local alignment, future changes to `src/MapLibreMapStage.jsx` should default to this protocol:
+
+1. Read the exact current committed file from GitHub.
+2. Treat that file as the source of truth.
+3. Generate a complete replacement file from that exact source.
+4. Make only the planned bounded changes.
+5. Provide `.txt` and `.jsx` versions.
+6. The user copies the `.txt` into place.
+7. Build/test.
+8. Commit if accepted.
+
+Patch scripts should be reserved mainly for `App.jsx` or other large/high-risk files where full replacement is less safe.
 
 ---
 
@@ -493,16 +499,33 @@ This recent work also reinforced these process rules:
 
 A future chat should start from:
 
-- source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
-- clean baseline: **`8539c68` — `Clarify timeline rail icon`**
+```text
+Source of truth folder:
+C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
+
+Active branch:
+maplibre-native-geographic-view
+
+Current branch baseline:
+4c9ed6f — Extract MapLibre layer configuration
+
+Current main / MapLibre preview checkpoint:
+10051c0 — Add MapLibre selected filter layers
+Tag: checkpoint-maplibre-preview-prototype
+
+Pre-MapLibre rollback point:
+4e08720 — Direct workflow charter baseline reference to changelog
+```
 
 A future chat should also be told that:
 
-- the app identity is **Peridot**
-- the fixed basemap is `countries50m`
-- itch.io packaging support is already committed
-- the current shared side panel and rail-tab structure are committed
-- `InspectorPanel.jsx` is content-only
-- `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Export/Timeline/Inspector panel views
-- current cluster features are committed, not deferred
-- documentation should preserve the full commit trajectory carefully
+- Peridot is the current app identity.
+- The production fixed basemap is `countries50m`.
+- itch.io packaging support is already committed.
+- the production app uses a shared left-side panel with a persistent icon rail.
+- `InspectorPanel.jsx` is content-only.
+- `LeftControlPanel.jsx` owns the shared panel shell and rail-tab views.
+- current production cluster features are committed in the D3/SVG path.
+- MapLibre route/node rendering, route hit layer, Inspector click routing, cursor-only hover, and selected filter layers are working in the preview path.
+- MapLibre cluster source/layer setup is unresolved and should be investigated through lifecycle instrumentation before any more cluster rendering attempts.
+- documentation should preserve the full commit trajectory carefully.
