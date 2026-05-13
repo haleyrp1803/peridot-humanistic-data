@@ -528,6 +528,19 @@ export function MapLibreMapStage({
       map.on('click', ROUTE_LAYER_ID, handleMapLibreRouteClick);
       map.on('click', handleMapLibreBlankClick);
 
+      const setPointerCursor = () => {
+        map.getCanvas().style.cursor = 'pointer';
+      };
+
+      const clearPointerCursor = () => {
+        map.getCanvas().style.cursor = '';
+      };
+
+      map.on('mouseenter', NODE_LAYER_ID, setPointerCursor);
+      map.on('mouseleave', NODE_LAYER_ID, clearPointerCursor);
+      map.on('mouseenter', ROUTE_LAYER_ID, setPointerCursor);
+      map.on('mouseleave', ROUTE_LAYER_ID, clearPointerCursor);
+
       map.on('idle', () => {
         ensureAndReportNodeProbeLayer(
           map,
