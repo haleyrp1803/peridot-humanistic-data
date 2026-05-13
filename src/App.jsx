@@ -36,7 +36,7 @@ import { buildForcePersonPositions } from './personForceLayoutHelpers';
 import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespondents';
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
-import { LeftControlPanel } from './LeftControlPanel';
+import { LeftControlPanel } from './LeftControlPanel'; import { MapLibreMapStage } from './MapLibreMapStage';
 import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmptyState';
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';
@@ -2214,7 +2214,7 @@ function LinkedLettersPanel({
 }
 
 
-function MapStage({
+function LegacyD3MapStage({
   mapViewportRef,
   mapViewportSize,
   graph,
@@ -2271,6 +2271,33 @@ function MapStage({
 
     </div>
   );
+}
+
+
+function MapStage(props) {
+  const showMapLibrePreview =
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('maplibrePreview') === '1';
+
+  if (showMapLibrePreview) {
+    return (
+      <div
+        ref={props.mapViewportRef}
+        className="relative h-full min-h-[520px] w-full overflow-hidden rounded-2xl border border-[var(--panel-border)] bg-[var(--map-water)]"
+      >
+        <MapLibreMapStage className="h-full min-h-full w-full rounded-none" />
+        <div className="pointer-events-none absolute left-4 top-4 max-w-sm rounded-xl border border-[var(--panel-border)] bg-[var(--panel-bg)]/95 px-4 py-3 text-xs text-[var(--panel-muted)] shadow-lg">
+          <div className="font-semibold text-[var(--panel-text)]">MapLibre workspace preview</div>
+          <div className="mt-1">
+            Development-only preview enabled by <code>?maplibrePreview=1</code>. The production D3/SVG map remains the default path.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return <LegacyD3MapStage {...props} />;
 }
 
 // DISPLAY CONTROLS SECTION
