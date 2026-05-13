@@ -276,6 +276,49 @@ function readNodeProbeLayerDiagnostics(map) {
   };
 }
 
+function buildMapLibreClickPoint(event) {
+  return {
+    x: event?.point?.x ?? 24,
+    y: event?.point?.y ?? 24,
+    clientX: event?.originalEvent?.clientX ?? event?.point?.x ?? 0,
+    clientY: event?.originalEvent?.clientY ?? event?.point?.y ?? 0,
+  };
+}
+
+function featureProperty(feature, key) {
+  const value = feature?.properties?.[key];
+  return value === undefined || value === null ? '' : String(value);
+}
+
+function findGraphNodeForFeature(graph, feature) {
+  const nodeId = featureProperty(feature, 'id') || String(feature?.id || '');
+  if (!nodeId || !Array.isArray(graph?.nodes)) return null;
+  return graph.nodes.find((node) => String(node?.id || '') === nodeId) || null;
+}
+
+function findGraphEdgeForFeature(graph, feature) {
+  if (!Array.isArray(graph?.edges)) return null;
+
+  const edgeId = featureProperty(feature, 'id') || String(feature?.id || '');
+  if (edgeId) {
+    const directMatch = graph.edges.find((edge) => String(edge?.id || '') === edgeId);
+    if (directMatch) return directMatch;
+  }
+
+  const sourceId = featureProperty(feature, 'sourceId');
+  const targetId = featureProperty(feature, 'targetId');
+
+  if (!sourceId || !targetId) return null;
+
+  return (
+    graph.edges.find((edge) => {
+      const edgeSource = String(edge?.sourcePlaceId || edge?.source || '');
+      const edgeTarget = String(edge?.targetPlaceId || edge?.target || '');
+      return edgeSource === sourceId && edgeTarget === targetId;
+    }) || null
+  );
+}
+
 function ensureAndReportNodeProbeLayer(map, featureCollection, setNodeLayerDiagnostics) {
   const ready = ensureNodeProbeLayer(map, featureCollection);
   setNodeLayerDiagnostics(readNodeProbeLayerDiagnostics(map));
@@ -291,6 +334,9 @@ export function MapLibreMapStage({
   showDiagnostics = true,
   graph,
   viewMode,
+  handleNodeClick,
+  handleEdgeClick,
+  handleBlankMapClick,
   onMapReady,
   onViewChange,
 }) {
@@ -299,6 +345,13 @@ export function MapLibreMapStage({
   const frameRef = useRef(null);
   const pendingRouteDataRef = useRef(null);
   const pendingNodeDataRef = useRef(null);
+  const clickHandlersRef = useRef({
+    graph,
+    handleNodeClick,
+    handleEdgeClick,
+    handleBlankMapClick,
+  });
+  const featureClickInProgressRef = useRef(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [viewState, setViewState] = useState(() => ({
     center,
@@ -346,6 +399,15 @@ export function MapLibreMapStage({
 
     ensureAndReportNodeProbeLayer(map, featureCollection, setNodeLayerDiagnostics);
   };
+
+  useEffect(() => {
+    clickHandlersRef.current = {
+      graph,
+      handleNodeClick,
+      handleEdgeClick,
+      handleBlankMapClick,
+    };
+  }, [graph, handleNodeClick, handleEdgeClick, handleBlankMapClick]);
 
   useEffect(() => {
     updateRouteLayer(routeFeatureCollection);
@@ -415,6 +477,57 @@ export function MapLibreMapStage({
         );
       });
 
+      const markFeatureClick = () => {
+        featureClickInProgressRef.current = true;
+        window.setTimeout(() => {
+          featureClickInProgressRef.current = false;
+        }, 0);
+      };
+
+      const handleMapLibreNodeClick = (event) => {
+        const feature = event?.features?.[0];
+        const { graph: currentGraph, handleNodeClick: currentHandleNodeClick } = clickHandlersRef.current;
+        const node = findGraphNodeForFeature(currentGraph, feature);
+
+        if (!node || typeof currentHandleNodeClick !== 'function') return;
+
+        markFeatureClick();
+        event?.preventDefault?.();
+        event?.originalEvent?.stopPropagation?.();
+        currentHandleNodeClick(node, buildMapLibreClickPoint(event));
+      };
+
+      const handleMapLibreRouteClick = (event) => {
+        const feature = event?.features?.[0];
+        const { graph: currentGraph, handleEdgeClick: currentHandleEdgeClick } = clickHandlersRef.current;
+        const edge = findGraphEdgeForFeature(currentGraph, feature);
+
+        if (!edge || typeof currentHandleEdgeClick !== 'function') return;
+
+        markFeatureClick();
+        event?.preventDefault?.();
+        event?.originalEvent?.stopPropagation?.();
+        currentHandleEdgeClick(edge, buildMapLibreClickPoint(event));
+      };
+
+      const handleMapLibreBlankClick = (event) => {
+        if (featureClickInProgressRef.current) return;
+
+        const { handleBlankMapClick: currentHandleBlankMapClick } = clickHandlersRef.current;
+        if (typeof currentHandleBlankMapClick !== 'function') return;
+
+        const hitFeatures = map.queryRenderedFeatures(event.point, {
+          layers: [NODE_LAYER_ID, ROUTE_LAYER_ID].filter((layerId) => map.getLayer(layerId)),
+        });
+
+        if (hitFeatures.length) return;
+        currentHandleBlankMapClick();
+      };
+
+      map.on('click', NODE_LAYER_ID, handleMapLibreNodeClick);
+      map.on('click', ROUTE_LAYER_ID, handleMapLibreRouteClick);
+      map.on('click', handleMapLibreBlankClick);
+
       map.on('idle', () => {
         ensureAndReportNodeProbeLayer(
           map,
@@ -465,7 +578,7 @@ export function MapLibreMapStage({
 
       {showDiagnostics ? (
         <div className="absolute left-4 top-4 z-10 max-w-sm rounded-2xl border border-white/20 bg-slate-950/88 p-4 text-xs text-white shadow-2xl backdrop-blur">
-          <div className="mb-2 text-sm font-semibold text-emerald-200">MapLibre GeoJSON node/route preview</div>
+          <div className="mb-2 text-sm font-semibold text-emerald-200">MapLibre GeoJSON node/route preview + click routing</div>
           <p className="mb-3 leading-relaxed text-slate-200">
             Development-only test path. Gold routes and cyan nodes are rendered by MapLibre
             GeoJSON sources/layers.

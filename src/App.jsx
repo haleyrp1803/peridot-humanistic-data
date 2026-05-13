@@ -2288,7 +2288,11 @@ function MapStage(props) {
       >
         <MapLibreMapStage
           graph={props.graph}
-          viewMode={props.viewMode} className="h-full min-h-full w-full rounded-none" />
+          viewMode={props.viewMode} className="h-full min-h-full w-full rounded-none"
+          handleNodeClick={props.handleNodeClick}
+          handleEdgeClick={props.handleEdgeClick}
+          handleBlankMapClick={props.handleBlankMapClick}
+        />
         <div className="pointer-events-none absolute left-4 top-4 max-w-sm rounded-xl border border-[var(--panel-border)] bg-[var(--panel-bg)]/95 px-4 py-3 text-xs text-[var(--panel-muted)] shadow-lg">
           <div className="font-semibold text-[var(--panel-text)]">MapLibre workspace preview</div>
           <div className="mt-1">
