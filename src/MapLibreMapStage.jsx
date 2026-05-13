@@ -37,6 +37,7 @@ const AGGREGATED_ROUTE_SOURCE_ID = 'peridot-visible-aggregated-route-source';
 const AGGREGATED_ROUTE_LAYER_ID = 'peridot-visible-aggregated-route-layer';
 const AGGREGATED_ROUTE_HIT_LAYER_ID = 'peridot-visible-aggregated-route-hit-layer';
 const SELECTED_AGGREGATED_ROUTE_LAYER_ID = 'peridot-selected-visible-aggregated-route-layer';
+const SELECTED_DYNAMIC_CLUSTER_LAYER_ID = 'peridot-selected-dynamic-cluster-circles';
 const MAX_CLUSTER_LEAVES_FOR_NODE_HIDING = 5000;
 
 const EMPTY_FEATURE_COLLECTION = {
@@ -499,8 +500,38 @@ function ensureDynamicClusterLayer(map, featureCollection = EMPTY_FEATURE_COLLEC
     }
   }
 
+  if (!map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.addLayer({
+      id: SELECTED_DYNAMIC_CLUSTER_LAYER_ID,
+      type: 'circle',
+      source: DYNAMIC_CLUSTER_SOURCE_ID,
+      filter: EMPTY_SELECTED_FILTER,
+      paint: {
+        'circle-radius': [
+          'step',
+          ['get', 'point_count'],
+          20,
+          3,
+          24,
+          8,
+          30,
+          20,
+          38,
+        ],
+        'circle-color': '#fff7a8',
+        'circle-opacity': 0.96,
+        'circle-stroke-color': '#111827',
+        'circle-stroke-width': 4,
+      },
+    });
+  }
+
   if (map.getLayer(DYNAMIC_CLUSTER_LAYER_ID) && map.getLayer(NODE_LAYER_ID)) {
     map.moveLayer(DYNAMIC_CLUSTER_LAYER_ID, NODE_LAYER_ID);
+  }
+
+  if (map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.moveLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID);
   }
 
   return Boolean(map.getSource(DYNAMIC_CLUSTER_SOURCE_ID) && map.getLayer(DYNAMIC_CLUSTER_LAYER_ID));
@@ -547,6 +578,10 @@ function clearSelectedFilterLayers(map) {
     map.setFilter(SELECTED_AGGREGATED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
 
+  if (map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(SELECTED_DYNAMIC_CLUSTER_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
   if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
     map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
@@ -566,6 +601,28 @@ function setSelectedNodeFilter(map, id) {
   if (map.getLayer(SELECTED_AGGREGATED_ROUTE_LAYER_ID)) {
     map.setFilter(SELECTED_AGGREGATED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
+
+  if (map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(SELECTED_DYNAMIC_CLUSTER_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+}
+
+function setSelectedDynamicClusterFilter(map, clusterId) {
+  if (map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(SELECTED_DYNAMIC_CLUSTER_LAYER_ID, selectedClusterIdFilter(clusterId));
+  }
+
+  if (map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
+    map.setFilter(SELECTED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(SELECTED_AGGREGATED_ROUTE_LAYER_ID)) {
+    map.setFilter(SELECTED_AGGREGATED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
+    map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
 }
 
 function setSelectedAggregatedRouteFilter(map, id) {
@@ -579,6 +636,10 @@ function setSelectedAggregatedRouteFilter(map, id) {
 
   if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
     map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(SELECTED_DYNAMIC_CLUSTER_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
 }
 
@@ -595,6 +656,10 @@ function setSelectedRouteFilter(map, id) {
 
   if (map.getLayer(SELECTED_AGGREGATED_ROUTE_LAYER_ID)) {
     map.setFilter(SELECTED_AGGREGATED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(SELECTED_DYNAMIC_CLUSTER_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
 }
 
@@ -614,6 +679,7 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
       selectedNodeLayerExists: false,
       dynamicClusterSourceExists: false,
       dynamicClusterLayerExists: false,
+      selectedDynamicClusterLayerExists: false,
       renderedDynamicClusterCount: 0,
       hiddenClusterMemberCount: 0,
       aggregatedRouteSourceExists: false,
@@ -655,6 +721,7 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
     selectedNodeLayerExists: Boolean(map.getLayer(SELECTED_NODE_LAYER_ID)),
     dynamicClusterSourceExists: Boolean(map.getSource(DYNAMIC_CLUSTER_SOURCE_ID)),
     dynamicClusterLayerExists,
+    selectedDynamicClusterLayerExists: Boolean(map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)),
     renderedDynamicClusterCount: dynamicClusterLayerExists
       ? queryRenderedFeatureCount(map, DYNAMIC_CLUSTER_LAYER_ID)
       : 0,
@@ -714,6 +781,12 @@ function serializeHiddenNodeIds(hiddenNodeIds) {
 function buildVisibleNodeFilter(hiddenNodeIds) {
   if (!hiddenNodeIds?.size) return null;
   return ['!', ['in', ['get', 'id'], ['literal', Array.from(hiddenNodeIds)]]];
+}
+
+function selectedClusterIdFilter(clusterId) {
+  const numericClusterId = Number(clusterId);
+  if (!Number.isFinite(numericClusterId)) return EMPTY_SELECTED_FILTER;
+  return ['all', ['has', 'point_count'], ['==', ['get', 'cluster_id'], numericClusterId]];
 }
 
 function findGraphNodeForFeature(graph, feature) {
@@ -1196,6 +1269,11 @@ export function MapLibreMapStage({
       return;
     }
 
+    if (selection.kind === 'cluster') {
+      setSelectedDynamicClusterFilter(map, selection.id);
+      return;
+    }
+
     if (selection.kind === 'aggregatedRoute') {
       setSelectedAggregatedRouteFilter(map, selection.id);
       return;
@@ -1398,8 +1476,8 @@ export function MapLibreMapStage({
           const leaves = await readClusterLeaves(clusterSource, clusterId, leafLimit);
           const clusterNode = buildClusterNodeFromLeaves(feature, leaves, currentGraph);
 
-          selectedFeatureRef.current = { kind: 'cluster', id: clusterNode.id };
-          clearSelectedFilterLayers(map);
+          selectedFeatureRef.current = { kind: 'cluster', id: clusterId };
+          setSelectedDynamicClusterFilter(map, clusterId);
           markClusterClickDiagnostics({
             clusterId: String(clusterId),
             pointCount,
@@ -1700,6 +1778,9 @@ export function MapLibreMapStage({
             <dt className="text-slate-400">Dynamic cluster layer</dt>
             <dd>{layerDiagnostics.dynamicClusterLayerExists ? 'yes' : 'no'}</dd>
 
+            <dt className="text-slate-400">Selected cluster layer</dt>
+            <dd>{layerDiagnostics.selectedDynamicClusterLayerExists ? 'yes' : 'no'}</dd>
+
             <dt className="text-slate-400">Dynamic clusters rendered</dt>
             <dd>{layerDiagnostics.renderedDynamicClusterCount}</dd>
 
@@ -1721,7 +1802,7 @@ export function MapLibreMapStage({
 
           <p className="mt-3 leading-relaxed text-slate-300">
             This is still not the migrated production overlay. It now reports MapLibre source,
-            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster clicks now attempt to read MapLibre cluster leaves and open the existing Inspector. Node hiding is now diagnostic and based on currently rendered MapLibre clusters. Routes are now rebuilt into diagnostic visible-endpoint aggregate routes, so edges combine between visible nodes and cluster centers instead of being merely de-emphasized. Playback highlighting, hover cards, final route styling, and production export parity remain out of scope.
+            layer, selected-layer, setup-phase, and rendered-feature diagnostics. The pink dynamic cluster circles are generated from the current MapLibre node features; cluster clicks now attempt to read MapLibre cluster leaves and open the existing Inspector. Node hiding is now diagnostic and based on currently rendered MapLibre clusters. Routes are now rebuilt into diagnostic visible-endpoint aggregate routes, so edges combine between visible nodes and cluster centers instead of being merely de-emphasized. Playback highlighting, hover cards, cluster labels, final route styling, and production export parity remain out of scope.
           </p>
         </div>
       ) : null}
