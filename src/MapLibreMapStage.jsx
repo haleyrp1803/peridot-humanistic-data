@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+
 import { getMapLibreStyleConfig } from './mapStyleConfig';
 import {
   buildNodeProbeFeatureCollection,
@@ -8,18 +9,25 @@ import {
   countProjectableRoutes,
   hasUsableLngLat,
 } from './mapLibreFeatureBuilders';
+import {
+  EMPTY_SELECTED_FILTER,
+  NODE_LAYER_ID,
+  NODE_SOURCE_ID,
+  ROUTE_HIT_LAYER_ID,
+  ROUTE_LAYER_ID,
+  ROUTE_SOURCE_ID,
+  SELECTED_NODE_LAYER_ID,
+  SELECTED_ROUTE_LAYER_ID,
+  buildNodeLayerDefinition,
+  buildRouteHitLayerDefinition,
+  buildRouteLayerDefinition,
+  buildSelectedNodeLayerDefinition,
+  buildSelectedRouteLayerDefinition,
+  selectedIdFilter,
+} from './mapLibreLayerConfig';
 
 const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
-const ROUTE_SOURCE_ID = 'peridot-route-probe-source';
-const ROUTE_LAYER_ID = 'peridot-route-probe-layer';
-const ROUTE_HIT_LAYER_ID = 'peridot-route-probe-hit-layer';
-const NODE_SOURCE_ID = 'peridot-node-probe-source';
-const NODE_LAYER_ID = 'peridot-node-probe-layer';
-const SELECTED_ROUTE_LAYER_ID = 'peridot-selected-route-filter-layer';
-const SELECTED_NODE_LAYER_ID = 'peridot-selected-node-filter-layer';
-
-const EMPTY_FILTER = ['==', ['get', 'id'], '__peridot-no-selected-feature__'];
 
 function formatNumber(value, digits = 4) {
   if (!Number.isFinite(value)) return 'n/a';
@@ -63,47 +71,15 @@ function ensureRouteProbeLayer(map, featureCollection) {
   }
 
   if (!map.getLayer(ROUTE_LAYER_ID)) {
-    map.addLayer({
-      id: ROUTE_LAYER_ID,
-      type: 'line',
-      source: ROUTE_SOURCE_ID,
-      paint: {
-        'line-color': '#f5b942',
-        'line-opacity': 0.82,
-        'line-width': [
-          'interpolate',
-          ['linear'],
-          ['coalesce', ['get', 'count'], 1],
-          1,
-          1,
-          10,
-          2,
-          50,
-          4,
-          150,
-          7,
-        ],
-      },
-    });
+    map.addLayer(buildRouteLayerDefinition());
   }
 
   if (!map.getLayer(ROUTE_HIT_LAYER_ID)) {
-    map.addLayer({
-      id: ROUTE_HIT_LAYER_ID,
-      type: 'line',
-      source: ROUTE_SOURCE_ID,
-      paint: {
-        'line-color': '#ffffff',
-        'line-opacity': 0.01,
-        'line-width': 24,
-      },
-    });
+    map.addLayer(buildRouteHitLayerDefinition());
   }
 
   return Boolean(
-    map.getSource(ROUTE_SOURCE_ID)
-      && map.getLayer(ROUTE_LAYER_ID)
-      && map.getLayer(ROUTE_HIT_LAYER_ID)
+    map.getSource(ROUTE_SOURCE_ID) && map.getLayer(ROUTE_LAYER_ID) && map.getLayer(ROUTE_HIT_LAYER_ID),
   );
 }
 
@@ -122,18 +98,7 @@ function ensureNodeProbeLayer(map, featureCollection) {
   }
 
   if (!map.getLayer(NODE_LAYER_ID)) {
-    map.addLayer({
-      id: NODE_LAYER_ID,
-      type: 'circle',
-      source: NODE_SOURCE_ID,
-      paint: {
-        'circle-radius': 18,
-        'circle-color': '#00e5ff',
-        'circle-opacity': 0.95,
-        'circle-stroke-color': '#ffffff',
-        'circle-stroke-width': 4,
-      },
-    });
+    map.addLayer(buildNodeLayerDefinition());
   }
 
   if (map.getLayer(NODE_LAYER_ID)) {
@@ -147,34 +112,11 @@ function ensureSelectedFilterLayers(map) {
   if (!map || !map.isStyleLoaded()) return false;
 
   if (map.getSource(ROUTE_SOURCE_ID) && !map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
-    map.addLayer({
-      id: SELECTED_ROUTE_LAYER_ID,
-      type: 'line',
-      source: ROUTE_SOURCE_ID,
-      filter: EMPTY_FILTER,
-      paint: {
-        'line-color': '#fff7a8',
-        'line-opacity': 0.98,
-        'line-width': 10,
-      },
-    });
+    map.addLayer(buildSelectedRouteLayerDefinition());
   }
 
   if (map.getSource(NODE_SOURCE_ID) && !map.getLayer(SELECTED_NODE_LAYER_ID)) {
-    map.addLayer({
-      id: SELECTED_NODE_LAYER_ID,
-      type: 'circle',
-      source: NODE_SOURCE_ID,
-      filter: EMPTY_FILTER,
-      paint: {
-        'circle-radius': 27,
-        'circle-color': '#fff7a8',
-        'circle-opacity': 0.34,
-        'circle-stroke-color': '#ffffff',
-        'circle-stroke-width': 5,
-        'circle-stroke-opacity': 1,
-      },
-    });
+    map.addLayer(buildSelectedNodeLayerDefinition());
   }
 
   if (map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
@@ -193,25 +135,18 @@ function ensureSelectedFilterLayers(map) {
     map.moveLayer(SELECTED_NODE_LAYER_ID);
   }
 
-  return Boolean(
-    map.getLayer(SELECTED_ROUTE_LAYER_ID)
-      || map.getLayer(SELECTED_NODE_LAYER_ID)
-  );
-}
-
-function selectedIdFilter(id) {
-  return ['==', ['get', 'id'], String(id || '')];
+  return Boolean(map.getLayer(SELECTED_ROUTE_LAYER_ID) || map.getLayer(SELECTED_NODE_LAYER_ID));
 }
 
 function clearSelectedFilterLayers(map) {
   if (!map) return;
 
   if (map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
-    map.setFilter(SELECTED_ROUTE_LAYER_ID, EMPTY_FILTER);
+    map.setFilter(SELECTED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
 
   if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
-    map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_FILTER);
+    map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
 }
 
@@ -223,7 +158,7 @@ function setSelectedNodeFilter(map, id) {
   }
 
   if (map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
-    map.setFilter(SELECTED_ROUTE_LAYER_ID, EMPTY_FILTER);
+    map.setFilter(SELECTED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
 }
 
@@ -235,7 +170,7 @@ function setSelectedRouteFilter(map, id) {
   }
 
   if (map.getLayer(SELECTED_NODE_LAYER_ID)) {
-    map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_FILTER);
+    map.setFilter(SELECTED_NODE_LAYER_ID, EMPTY_SELECTED_FILTER);
   }
 }
 
@@ -437,6 +372,7 @@ export function MapLibreMapStage({
 
     const reportViewChange = () => {
       const map = mapRef.current;
+
       if (!map) return;
 
       const nextViewState = readMapViewState(map);
@@ -548,6 +484,7 @@ export function MapLibreMapStage({
         if (featureClickInProgressRef.current) return;
 
         const { handleBlankMapClick: currentHandleBlankMapClick } = clickHandlersRef.current;
+
         if (typeof currentHandleBlankMapClick !== 'function') return;
 
         const hitFeatures = map.queryRenderedFeatures(event.point, {
@@ -597,7 +534,6 @@ export function MapLibreMapStage({
       map.on('moveend', reportViewChange);
       map.on('zoomend', reportViewChange);
       map.on('resize', reportViewChange);
-
       map.on('error', (event) => {
         const message = event?.error?.message || 'MapLibre reported a map loading error.';
         setErrorMessage(message);
