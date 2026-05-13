@@ -1,4 +1,4 @@
-import { pointToQuadraticDistance } from './mapLayoutHelpers';
+﻿import { pointToQuadraticDistance } from './mapLayoutHelpers';
 
 export function buildNearbyCandidates(point, screenNodes, screenEdges, clusterSingularLabel, clusterPluralLabel) {
   const nodeCandidates = screenNodes
@@ -28,7 +28,7 @@ export function buildNearbyCandidates(point, screenNodes, screenEdges, clusterSi
       return {
         id: `edge:${edge.id}`,
         kind: 'edge',
-        label: `${edge.sourceLabel} → ${edge.targetLabel}`,
+        label: `${edge.sourceLabel} â†’ ${edge.targetLabel}`,
         subtitle: `Weight: ${edge.count}`,
         distance,
         payload: edge,
@@ -301,6 +301,9 @@ export function resolveSelection(selectedSelection, graph, personMetadataByName)
   if (!selectedSelection) return null;
 
   if (selectedSelection.kind === 'edge') {
+    if (selectedSelection.edgeOverride) {
+      return { ...selectedSelection.edgeOverride, __kind: 'edge' };
+    }
     const edge = graph.edges.find((item) => item.id === selectedSelection.id);
     return edge ? { ...edge, __kind: 'edge' } : null;
   }
@@ -342,3 +345,4 @@ export function enrichSelectedLetters(selectedProps, personMetadataByName) {
     targetPersonMetadata: personMetadataByName.get(letter.target) || null,
   }));
 }
+

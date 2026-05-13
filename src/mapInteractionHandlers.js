@@ -1,4 +1,4 @@
-export function buildMapInteractionHandlers({
+﻿export function buildMapInteractionHandlers({
   clearSelection,
   setHoverCard,
   setHoveredEdgeId,
@@ -17,11 +17,15 @@ export function buildMapInteractionHandlers({
 
   const handleEdgeClick = (edge, point) => {
     setShowRightSidebar(true);
-    setSelectedSelection({ kind: 'edge', id: edge.id });
+    setSelectedSelection({
+    kind: 'edge',
+    id: edge.id,
+    edgeOverride: edge?.isAggregatedRoute ? edge : null,
+  });
     setShowAllLinkedLetters(false);
     setHoverCard(
       buildHoverCardState(
-        `${edge.sourceLabel} → ${edge.targetLabel}`,
+        `${edge.sourceLabel} â†’ ${edge.targetLabel}`,
         `Weight: ${edge.count}`,
         point
       )
@@ -54,3 +58,4 @@ export function buildMapInteractionHandlers({
     handleNodeClick,
   };
 }
+
