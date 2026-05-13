@@ -5,8 +5,18 @@ export const ROUTE_HIT_LAYER_ID = 'peridot-route-probe-hit-layer';
 export const NODE_SOURCE_ID = 'peridot-node-probe-source';
 export const NODE_LAYER_ID = 'peridot-node-probe-layer';
 
+export const DYNAMIC_CLUSTER_SOURCE_ID = 'peridot-dynamic-cluster-source';
+export const DYNAMIC_CLUSTER_LAYER_ID = 'peridot-dynamic-cluster-circles';
+export const DYNAMIC_CLUSTER_LABEL_LAYER_ID = 'peridot-dynamic-cluster-labels';
+
+export const AGGREGATED_ROUTE_SOURCE_ID = 'peridot-visible-aggregated-route-source';
+export const AGGREGATED_ROUTE_LAYER_ID = 'peridot-visible-aggregated-route-layer';
+export const AGGREGATED_ROUTE_HIT_LAYER_ID = 'peridot-visible-aggregated-route-hit-layer';
+
 export const SELECTED_ROUTE_LAYER_ID = 'peridot-selected-route-filter-layer';
 export const SELECTED_NODE_LAYER_ID = 'peridot-selected-node-filter-layer';
+export const SELECTED_AGGREGATED_ROUTE_LAYER_ID = 'peridot-selected-visible-aggregated-route-layer';
+export const SELECTED_DYNAMIC_CLUSTER_LAYER_ID = 'peridot-selected-dynamic-cluster-circles';
 
 export const EMPTY_SELECTED_FILTER = ['==', ['get', 'id'], '__peridot-no-selected-feature__'];
 
