@@ -2,12 +2,15 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { getMapLibreStyleConfig } from './mapStyleConfig';
+import {
+  buildNodeProbeFeatureCollection,
+  buildRouteProbeFeatureCollection,
+  countProjectableRoutes,
+  hasUsableLngLat,
+} from './mapLibreFeatureBuilders';
 
 const DEFAULT_CENTER = [12.5, 43.4];
 const DEFAULT_ZOOM = 4.8;
-const MAX_GEOJSON_ROUTES = 75;
-const MAX_GEOJSON_NODES = 150;
-
 const ROUTE_SOURCE_ID = 'peridot-route-probe-source';
 const ROUTE_LAYER_ID = 'peridot-route-probe-layer';
 const ROUTE_HIT_LAYER_ID = 'peridot-route-probe-hit-layer';
@@ -43,138 +46,6 @@ function readMapViewState(map) {
     pitch: map.getPitch(),
     loaded: map.loaded(),
   };
-}
-
-function hasUsableLngLat(node) {
-  return (
-    Number.isFinite(node?.lon)
-    && Number.isFinite(node?.lat)
-    && !(node.lat === 0 && node.lon === 0)
-  );
-}
-
-function buildProjectableNodeMap(graph) {
-  const nodeMap = new Map();
-
-  if (!Array.isArray(graph?.nodes)) return nodeMap;
-
-  graph.nodes.forEach((node) => {
-    if (node?.id && hasUsableLngLat(node)) {
-      nodeMap.set(node.id, node);
-    }
-  });
-
-  return nodeMap;
-}
-
-function readNodeWeight(node) {
-  return (
-    Number(node?.count)
-    || Number(node?.weight)
-    || Number(node?.degree)
-    || Number(node?.totalLetters)
-    || 0
-  );
-}
-
-function buildNodeProbeFeatureCollection(graph) {
-  const emptyCollection = {
-    type: 'FeatureCollection',
-    features: [],
-  };
-
-  if (!Array.isArray(graph?.nodes)) return emptyCollection;
-
-  const features = graph.nodes
-    .filter(hasUsableLngLat)
-    .map((node) => {
-      const weight = readNodeWeight(node);
-
-      return {
-        type: 'Feature',
-        id: node.id,
-        properties: {
-          id: node.id,
-          label: node.label || node.name || node.id,
-          weight,
-          degree: Number(node.degree) || 0,
-        },
-        geometry: {
-          type: 'Point',
-          coordinates: [node.lon, node.lat],
-        },
-      };
-    })
-    .sort((a, b) => (b.properties.weight || 0) - (a.properties.weight || 0))
-    .slice(0, MAX_GEOJSON_NODES);
-
-  return {
-    ...emptyCollection,
-    features,
-  };
-}
-
-function buildRouteProbeFeatureCollection(graph) {
-  const emptyCollection = {
-    type: 'FeatureCollection',
-    features: [],
-  };
-
-  if (!Array.isArray(graph?.edges)) return emptyCollection;
-
-  const projectableNodes = buildProjectableNodeMap(graph);
-
-  const features = graph.edges
-    .map((edge) => {
-      const sourceId = edge?.sourcePlaceId || edge?.source;
-      const targetId = edge?.targetPlaceId || edge?.target;
-      const source = projectableNodes.get(sourceId);
-      const target = projectableNodes.get(targetId);
-
-      if (!source || !target) return null;
-
-      const count = Number(edge.count) || Number(edge.weight) || 0;
-
-      return {
-        type: 'Feature',
-        id: edge.id || `${sourceId}-->${targetId}`,
-        properties: {
-          id: edge.id || `${sourceId}-->${targetId}`,
-          sourceId,
-          targetId,
-          sourceLabel: edge.sourceLabel || source.label || sourceId,
-          targetLabel: edge.targetLabel || target.label || targetId,
-          count,
-        },
-        geometry: {
-          type: 'LineString',
-          coordinates: [
-            [source.lon, source.lat],
-            [target.lon, target.lat],
-          ],
-        },
-      };
-    })
-    .filter(Boolean)
-    .sort((a, b) => (b.properties.count || 0) - (a.properties.count || 0))
-    .slice(0, MAX_GEOJSON_ROUTES);
-
-  return {
-    ...emptyCollection,
-    features,
-  };
-}
-
-function countProjectableRoutes(graph) {
-  if (!Array.isArray(graph?.edges)) return 0;
-
-  const nodeMap = buildProjectableNodeMap(graph);
-
-  return graph.edges.filter((edge) => {
-    const sourceId = edge?.sourcePlaceId || edge?.source;
-    const targetId = edge?.targetPlaceId || edge?.target;
-    return nodeMap.has(sourceId) && nodeMap.has(targetId);
-  }).length;
 }
 
 function ensureRouteProbeLayer(map, featureCollection) {
