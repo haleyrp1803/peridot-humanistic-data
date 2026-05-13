@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+
 import maplibregl from 'maplibre-gl';
+
 import 'maplibre-gl/dist/maplibre-gl.css';
 
 import { getMapLibreStyleConfig } from './mapStyleConfig';
@@ -34,6 +36,25 @@ function formatNumber(value, digits = 4) {
   return value.toFixed(digits);
 }
 
+function readStyleLoaded(map) {
+  if (!map) return false;
+  try {
+    return Boolean(map.isStyleLoaded());
+  } catch {
+    return false;
+  }
+}
+
+function queryRenderedFeatureCount(map, layerId) {
+  if (!map || !map.getLayer(layerId)) return 0;
+
+  try {
+    return map.queryRenderedFeatures({ layers: [layerId] }).length;
+  } catch {
+    return 0;
+  }
+}
+
 function readMapViewState(map) {
   if (!map) {
     return {
@@ -57,7 +78,7 @@ function readMapViewState(map) {
 }
 
 function ensureRouteProbeLayer(map, featureCollection) {
-  if (!map || !map.isStyleLoaded()) return false;
+  if (!map || !readStyleLoaded(map)) return false;
 
   const existingSource = map.getSource(ROUTE_SOURCE_ID);
 
@@ -84,7 +105,7 @@ function ensureRouteProbeLayer(map, featureCollection) {
 }
 
 function ensureNodeProbeLayer(map, featureCollection) {
-  if (!map || !map.isStyleLoaded()) return false;
+  if (!map || !readStyleLoaded(map)) return false;
 
   const existingSource = map.getSource(NODE_SOURCE_ID);
 
@@ -109,7 +130,7 @@ function ensureNodeProbeLayer(map, featureCollection) {
 }
 
 function ensureSelectedFilterLayers(map) {
-  if (!map || !map.isStyleLoaded()) return false;
+  if (!map || !readStyleLoaded(map)) return false;
 
   if (map.getSource(ROUTE_SOURCE_ID) && !map.getLayer(SELECTED_ROUTE_LAYER_ID)) {
     map.addLayer(buildSelectedRouteLayerDefinition());
@@ -174,32 +195,53 @@ function setSelectedRouteFilter(map, id) {
   }
 }
 
-function readNodeProbeLayerDiagnostics(map) {
+function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
   if (!map) {
     return {
-      sourceExists: false,
-      layerExists: false,
-      renderedCount: 0,
+      styleLoaded: false,
+      lastSetupPhase: setupDiagnostics.phase || 'not-started',
+      setupAttempts: setupDiagnostics.attempts || 0,
+      setupError: setupDiagnostics.error || '',
+      routeSourceExists: false,
+      routeLayerExists: false,
+      routeHitLayerExists: false,
+      selectedRouteLayerExists: false,
+      nodeSourceExists: false,
+      nodeLayerExists: false,
+      selectedNodeLayerExists: false,
+      renderedRouteCount: 0,
+      renderedRouteHitCount: 0,
+      renderedNodeCount: 0,
     };
   }
 
-  const sourceExists = Boolean(map.getSource(NODE_SOURCE_ID));
-  const layerExists = Boolean(map.getLayer(NODE_LAYER_ID));
-  let renderedCount = 0;
-
-  if (layerExists) {
-    try {
-      renderedCount = map.queryRenderedFeatures({ layers: [NODE_LAYER_ID] }).length;
-    } catch {
-      renderedCount = 0;
-    }
-  }
+  const routeLayerExists = Boolean(map.getLayer(ROUTE_LAYER_ID));
+  const routeHitLayerExists = Boolean(map.getLayer(ROUTE_HIT_LAYER_ID));
+  const nodeLayerExists = Boolean(map.getLayer(NODE_LAYER_ID));
 
   return {
-    sourceExists,
-    layerExists,
-    renderedCount,
+    styleLoaded: readStyleLoaded(map),
+    lastSetupPhase: setupDiagnostics.phase || 'unknown',
+    setupAttempts: setupDiagnostics.attempts || 0,
+    setupError: setupDiagnostics.error || '',
+    routeSourceExists: Boolean(map.getSource(ROUTE_SOURCE_ID)),
+    routeLayerExists,
+    routeHitLayerExists,
+    selectedRouteLayerExists: Boolean(map.getLayer(SELECTED_ROUTE_LAYER_ID)),
+    nodeSourceExists: Boolean(map.getSource(NODE_SOURCE_ID)),
+    nodeLayerExists,
+    selectedNodeLayerExists: Boolean(map.getLayer(SELECTED_NODE_LAYER_ID)),
+    renderedRouteCount: routeLayerExists ? queryRenderedFeatureCount(map, ROUTE_LAYER_ID) : 0,
+    renderedRouteHitCount: routeHitLayerExists ? queryRenderedFeatureCount(map, ROUTE_HIT_LAYER_ID) : 0,
+    renderedNodeCount: nodeLayerExists ? queryRenderedFeatureCount(map, NODE_LAYER_ID) : 0,
   };
+}
+
+
+function ensureAndReportNodeProbeLayer(map, featureCollection, setLayerDiagnostics, setupDiagnostics = {}) {
+  const ready = ensureNodeProbeLayer(map, featureCollection);
+  setLayerDiagnostics(readMapLibreLayerDiagnostics(map, setupDiagnostics));
+  return ready;
 }
 
 function buildMapLibreClickPoint(event) {
@@ -218,7 +260,6 @@ function featureProperty(feature, key) {
 
 function findGraphNodeForFeature(graph, feature) {
   const nodeId = featureProperty(feature, 'id') || String(feature?.id || '');
-
   if (!nodeId || !Array.isArray(graph?.nodes)) return null;
 
   return graph.nodes.find((node) => String(node?.id || '') === nodeId) || null;
@@ -243,16 +284,9 @@ function findGraphEdgeForFeature(graph, feature) {
     graph.edges.find((edge) => {
       const edgeSource = String(edge?.sourcePlaceId || edge?.source || '');
       const edgeTarget = String(edge?.targetPlaceId || edge?.target || '');
-
       return edgeSource === sourceId && edgeTarget === targetId;
     }) || null
   );
-}
-
-function ensureAndReportNodeProbeLayer(map, featureCollection, setNodeLayerDiagnostics) {
-  const ready = ensureNodeProbeLayer(map, featureCollection);
-  setNodeLayerDiagnostics(readNodeProbeLayerDiagnostics(map));
-  return ready;
 }
 
 export function MapLibreMapStage({
@@ -276,6 +310,7 @@ export function MapLibreMapStage({
   const pendingRouteDataRef = useRef(null);
   const pendingNodeDataRef = useRef(null);
   const selectedFeatureRef = useRef({ kind: null, id: null });
+  const layerSetupDiagnosticsRef = useRef({ attempts: 0, phase: 'not-started', error: '' });
   const clickHandlersRef = useRef({
     graph,
     handleNodeClick,
@@ -294,22 +329,39 @@ export function MapLibreMapStage({
   }));
   const [routeFeatureCount, setRouteFeatureCount] = useState(0);
   const [nodeFeatureCount, setNodeFeatureCount] = useState(0);
-  const [nodeLayerDiagnostics, setNodeLayerDiagnostics] = useState(() => ({
-    sourceExists: false,
-    layerExists: false,
-    renderedCount: 0,
-  }));
+  const [layerDiagnostics, setLayerDiagnostics] = useState(() =>
+    readMapLibreLayerDiagnostics(null, layerSetupDiagnosticsRef.current),
+  );
 
   const styleConfig = useMemo(() => getMapLibreStyleConfig(styleId), [styleId]);
-
   const routeFeatureCollection = useMemo(() => buildRouteProbeFeatureCollection(graph), [graph]);
   const nodeFeatureCollection = useMemo(() => buildNodeProbeFeatureCollection(graph), [graph]);
-
   const projectableNodeCount = useMemo(
     () => (Array.isArray(graph?.nodes) ? graph.nodes.filter(hasUsableLngLat).length : 0),
     [graph],
   );
   const projectableRouteCount = useMemo(() => countProjectableRoutes(graph), [graph]);
+
+  const reportLayerDiagnostics = (map = mapRef.current) => {
+    setLayerDiagnostics(readMapLibreLayerDiagnostics(map, layerSetupDiagnosticsRef.current));
+  };
+
+  const markLayerSetupPhase = (phase) => {
+    layerSetupDiagnosticsRef.current = {
+      ...layerSetupDiagnosticsRef.current,
+      attempts: layerSetupDiagnosticsRef.current.attempts + 1,
+      phase,
+      error: '',
+    };
+  };
+
+  const markLayerSetupError = (phase, error) => {
+    layerSetupDiagnosticsRef.current = {
+      ...layerSetupDiagnosticsRef.current,
+      phase,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  };
 
   const reapplySelectedFilters = (map) => {
     const selection = selectedFeatureRef.current;
@@ -334,11 +386,23 @@ export function MapLibreMapStage({
     pendingRouteDataRef.current = featureCollection;
     setRouteFeatureCount(featureCollection.features.length);
 
-    if (!map) return;
+    if (!map) {
+      reportLayerDiagnostics(null);
+      return;
+    }
 
-    ensureRouteProbeLayer(map, featureCollection);
-    ensureSelectedFilterLayers(map);
-    reapplySelectedFilters(map);
+    markLayerSetupPhase('route-data-update');
+
+    try {
+      ensureRouteProbeLayer(map, featureCollection);
+      ensureSelectedFilterLayers(map);
+      reapplySelectedFilters(map);
+      reportLayerDiagnostics(map);
+    } catch (error) {
+      markLayerSetupError('route-data-update', error);
+      reportLayerDiagnostics(map);
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
   };
 
   const updateNodeLayer = (featureCollection = nodeFeatureCollection) => {
@@ -346,11 +410,28 @@ export function MapLibreMapStage({
     pendingNodeDataRef.current = featureCollection;
     setNodeFeatureCount(featureCollection.features.length);
 
-    if (!map) return;
+    if (!map) {
+      reportLayerDiagnostics(null);
+      return;
+    }
 
-    ensureAndReportNodeProbeLayer(map, featureCollection, setNodeLayerDiagnostics);
-    ensureSelectedFilterLayers(map);
-    reapplySelectedFilters(map);
+    markLayerSetupPhase('node-data-update');
+
+    try {
+      ensureAndReportNodeProbeLayer(
+        map,
+        featureCollection,
+        setLayerDiagnostics,
+        layerSetupDiagnosticsRef.current,
+      );
+      ensureSelectedFilterLayers(map);
+      reapplySelectedFilters(map);
+      reportLayerDiagnostics(map);
+    } catch (error) {
+      markLayerSetupError('node-data-update', error);
+      reportLayerDiagnostics(map);
+      setErrorMessage(error instanceof Error ? error.message : String(error));
+    }
   };
 
   useEffect(() => {
@@ -372,7 +453,6 @@ export function MapLibreMapStage({
 
     const reportViewChange = () => {
       const map = mapRef.current;
-
       if (!map) return;
 
       const nextViewState = readMapViewState(map);
@@ -413,30 +493,52 @@ export function MapLibreMapStage({
       map.on('load', () => {
         setErrorMessage('');
         onMapReady?.({ map, styleConfig });
-        ensureRouteProbeLayer(map, pendingRouteDataRef.current || routeFeatureCollection);
-        ensureAndReportNodeProbeLayer(
-          map,
-          pendingNodeDataRef.current || nodeFeatureCollection,
-          setNodeLayerDiagnostics,
-        );
-        ensureSelectedFilterLayers(map);
-        reapplySelectedFilters(map);
+        markLayerSetupPhase('load');
+
+        try {
+          ensureRouteProbeLayer(map, pendingRouteDataRef.current || routeFeatureCollection);
+          ensureAndReportNodeProbeLayer(
+            map,
+            pendingNodeDataRef.current || nodeFeatureCollection,
+            setLayerDiagnostics,
+            layerSetupDiagnosticsRef.current,
+          );
+          ensureSelectedFilterLayers(map);
+          reapplySelectedFilters(map);
+          reportLayerDiagnostics(map);
+        } catch (error) {
+          markLayerSetupError('load', error);
+          reportLayerDiagnostics(map);
+          setErrorMessage(error instanceof Error ? error.message : String(error));
+        }
+
         reportViewChange();
       });
 
       map.on('styledata', () => {
-        ensureRouteProbeLayer(map, pendingRouteDataRef.current || routeFeatureCollection);
-        ensureAndReportNodeProbeLayer(
-          map,
-          pendingNodeDataRef.current || nodeFeatureCollection,
-          setNodeLayerDiagnostics,
-        );
-        ensureSelectedFilterLayers(map);
-        reapplySelectedFilters(map);
+        markLayerSetupPhase('styledata');
+
+        try {
+          ensureRouteProbeLayer(map, pendingRouteDataRef.current || routeFeatureCollection);
+          ensureAndReportNodeProbeLayer(
+            map,
+            pendingNodeDataRef.current || nodeFeatureCollection,
+            setLayerDiagnostics,
+            layerSetupDiagnosticsRef.current,
+          );
+          ensureSelectedFilterLayers(map);
+          reapplySelectedFilters(map);
+          reportLayerDiagnostics(map);
+        } catch (error) {
+          markLayerSetupError('styledata', error);
+          reportLayerDiagnostics(map);
+          setErrorMessage(error instanceof Error ? error.message : String(error));
+        }
       });
 
       const markFeatureClick = () => {
         featureClickInProgressRef.current = true;
+
         window.setTimeout(() => {
           featureClickInProgressRef.current = false;
         }, 0);
@@ -453,6 +555,7 @@ export function MapLibreMapStage({
         markFeatureClick();
         selectedFeatureRef.current = { kind: 'node', id: selectedId };
         setSelectedNodeFilter(map, selectedId);
+        reportLayerDiagnostics(map);
         event?.preventDefault?.();
         event?.originalEvent?.stopPropagation?.();
         currentHandleNodeClick(node, buildMapLibreClickPoint(event));
@@ -475,6 +578,7 @@ export function MapLibreMapStage({
         markFeatureClick();
         selectedFeatureRef.current = { kind: 'route', id: selectedId };
         setSelectedRouteFilter(map, selectedId);
+        reportLayerDiagnostics(map);
         event?.preventDefault?.();
         event?.originalEvent?.stopPropagation?.();
         currentHandleEdgeClick(edge, buildMapLibreClickPoint(event));
@@ -497,6 +601,7 @@ export function MapLibreMapStage({
 
         selectedFeatureRef.current = { kind: null, id: null };
         clearSelectedFilterLayers(map);
+        reportLayerDiagnostics(map);
         currentHandleBlankMapClick();
       };
 
@@ -518,13 +623,23 @@ export function MapLibreMapStage({
       map.on('mouseleave', ROUTE_HIT_LAYER_ID, clearPointerCursor);
 
       map.on('idle', () => {
-        ensureAndReportNodeProbeLayer(
-          map,
-          pendingNodeDataRef.current || nodeFeatureCollection,
-          setNodeLayerDiagnostics,
-        );
-        ensureSelectedFilterLayers(map);
-        reapplySelectedFilters(map);
+        markLayerSetupPhase('idle');
+
+        try {
+          ensureAndReportNodeProbeLayer(
+            map,
+            pendingNodeDataRef.current || nodeFeatureCollection,
+            setLayerDiagnostics,
+            layerSetupDiagnosticsRef.current,
+          );
+          ensureSelectedFilterLayers(map);
+          reapplySelectedFilters(map);
+          reportLayerDiagnostics(map);
+        } catch (error) {
+          markLayerSetupError('idle', error);
+          reportLayerDiagnostics(map);
+          setErrorMessage(error instanceof Error ? error.message : String(error));
+        }
       });
 
       map.on('move', scheduleReportViewChange);
@@ -534,8 +649,11 @@ export function MapLibreMapStage({
       map.on('moveend', reportViewChange);
       map.on('zoomend', reportViewChange);
       map.on('resize', reportViewChange);
+
       map.on('error', (event) => {
         const message = event?.error?.message || 'MapLibre reported a map loading error.';
+        markLayerSetupError('map-error', message);
+        reportLayerDiagnostics(map);
         setErrorMessage(message);
       });
 
@@ -557,6 +675,7 @@ export function MapLibreMapStage({
         mapRef.current = null;
       };
     } catch (error) {
+      markLayerSetupError('construction-error', error);
       setErrorMessage(error instanceof Error ? error.message : String(error));
       return undefined;
     }
@@ -569,43 +688,88 @@ export function MapLibreMapStage({
       {showDiagnostics ? (
         <div className="absolute left-4 top-4 z-10 max-w-sm rounded-2xl border border-white/20 bg-slate-950/88 p-4 text-xs text-white shadow-2xl backdrop-blur">
           <div className="mb-2 text-sm font-semibold text-emerald-200">
-            MapLibre GeoJSON node/route preview + click routing
+            MapLibre source/layer lifecycle diagnostics
           </div>
           <p className="mb-3 leading-relaxed text-slate-200">
             Development-only test path. Gold routes and cyan nodes are rendered by MapLibre
             GeoJSON sources/layers.
           </p>
+
           <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1 leading-relaxed">
             <dt className="text-slate-400">Style</dt>
             <dd>{styleConfig.label}</dd>
+
             <dt className="text-slate-400">Loaded</dt>
             <dd>{viewState.loaded ? 'yes' : 'loading'}</dd>
+
+            <dt className="text-slate-400">Style loaded</dt>
+            <dd>{layerDiagnostics.styleLoaded ? 'yes' : 'no'}</dd>
+
+            <dt className="text-slate-400">Setup phase</dt>
+            <dd>{layerDiagnostics.lastSetupPhase}</dd>
+
+            <dt className="text-slate-400">Setup attempts</dt>
+            <dd>{layerDiagnostics.setupAttempts}</dd>
+
+            <dt className="text-slate-400">Setup error</dt>
+            <dd>{layerDiagnostics.setupError || 'none'}</dd>
+
             <dt className="text-slate-400">View</dt>
             <dd>{viewMode || 'n/a'}</dd>
+
             <dt className="text-slate-400">Center</dt>
             <dd>
               {formatNumber(viewState.center?.[0])}, {formatNumber(viewState.center?.[1])}
             </dd>
+
             <dt className="text-slate-400">Zoom</dt>
             <dd>{formatNumber(viewState.zoom, 2)}</dd>
-            <dt className="text-slate-400">Routes</dt>
+
+            <dt className="text-slate-400">Route features</dt>
             <dd>
-              {routeFeatureCount} / {projectableRouteCount} rendered
+              {routeFeatureCount} / {projectableRouteCount} source
             </dd>
-            <dt className="text-slate-400">GeoJSON nodes</dt>
+
+            <dt className="text-slate-400">Route source</dt>
+            <dd>{layerDiagnostics.routeSourceExists ? 'yes' : 'no'}</dd>
+
+            <dt className="text-slate-400">Route layer</dt>
+            <dd>{layerDiagnostics.routeLayerExists ? 'yes' : 'no'}</dd>
+
+            <dt className="text-slate-400">Route hit layer</dt>
+            <dd>{layerDiagnostics.routeHitLayerExists ? 'yes' : 'no'}</dd>
+
+            <dt className="text-slate-400">Selected route layer</dt>
+            <dd>{layerDiagnostics.selectedRouteLayerExists ? 'yes' : 'no'}</dd>
+
+            <dt className="text-slate-400">Routes rendered</dt>
+            <dd>{layerDiagnostics.renderedRouteCount}</dd>
+
+            <dt className="text-slate-400">Route hits rendered</dt>
+            <dd>{layerDiagnostics.renderedRouteHitCount}</dd>
+
+            <dt className="text-slate-400">Node features</dt>
             <dd>
               {nodeFeatureCount} / {projectableNodeCount} source
             </dd>
+
             <dt className="text-slate-400">Node source</dt>
-            <dd>{nodeLayerDiagnostics.sourceExists ? 'yes' : 'no'}</dd>
+            <dd>{layerDiagnostics.nodeSourceExists ? 'yes' : 'no'}</dd>
+
             <dt className="text-slate-400">Node layer</dt>
-            <dd>{nodeLayerDiagnostics.layerExists ? 'yes' : 'no'}</dd>
+            <dd>{layerDiagnostics.nodeLayerExists ? 'yes' : 'no'}</dd>
+
+            <dt className="text-slate-400">Selected node layer</dt>
+            <dd>{layerDiagnostics.selectedNodeLayerExists ? 'yes' : 'no'}</dd>
+
             <dt className="text-slate-400">Nodes rendered</dt>
-            <dd>{nodeLayerDiagnostics.renderedCount}</dd>
+            <dd>{layerDiagnostics.renderedNodeCount}</dd>
           </dl>
+
           <p className="mt-3 leading-relaxed text-slate-300">
-            This is still not the migrated production overlay. It does not provide inspector hit
-            targets, clusters, playback highlighting, or final route styling.
+            This is still not the migrated production overlay. It now reports MapLibre source,
+            layer, selected-layer, setup-phase, and rendered-feature diagnostics; clusters,
+            playback highlighting, hover cards, and final route styling remain out of scope.
           </p>
         </div>
       ) : null}
