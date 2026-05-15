@@ -39,6 +39,10 @@ const AGGREGATED_ROUTE_LAYER_ID = 'peridot-visible-aggregated-route-layer';
 const AGGREGATED_ROUTE_HIT_LAYER_ID = 'peridot-visible-aggregated-route-hit-layer';
 const SELECTED_AGGREGATED_ROUTE_LAYER_ID = 'peridot-selected-visible-aggregated-route-layer';
 const SELECTED_DYNAMIC_CLUSTER_LAYER_ID = 'peridot-selected-dynamic-cluster-circles';
+const HOVER_NODE_LAYER_ID = 'peridot-hover-node-layer';
+const HOVER_DYNAMIC_CLUSTER_LAYER_ID = 'peridot-hover-dynamic-cluster-circles';
+const HOVER_AGGREGATED_ROUTE_LAYER_ID = 'peridot-hover-visible-aggregated-route-layer';
+const HOVER_AGGREGATED_ROUTE_HIT_LAYER_ID = 'peridot-hover-visible-aggregated-route-hit-layer';
 const MAX_CLUSTER_LEAVES_FOR_NODE_HIDING = 5000;
 
 const EMPTY_FEATURE_COLLECTION = {
@@ -468,8 +472,43 @@ function ensureAggregatedRouteLayers(map, featureCollection = EMPTY_FEATURE_COLL
     });
   }
 
+  if (!map.getLayer(HOVER_AGGREGATED_ROUTE_HIT_LAYER_ID)) {
+    map.addLayer({
+      id: HOVER_AGGREGATED_ROUTE_HIT_LAYER_ID,
+      type: 'line',
+      source: AGGREGATED_ROUTE_SOURCE_ID,
+      paint: {
+        'line-color': '#ffffff',
+        'line-opacity': 0.01,
+        'line-width': [
+          '+',
+          [
+            'interpolate',
+            ['linear'],
+            ['coalesce', ['get', 'count'], 1],
+            1,
+            1.5,
+            10,
+            3,
+            50,
+            7,
+            150,
+            12,
+            300,
+            18,
+          ],
+          2,
+        ],
+      },
+    });
+  }
+
   if (map.getLayer(AGGREGATED_ROUTE_LAYER_ID)) {
     map.moveLayer(AGGREGATED_ROUTE_LAYER_ID);
+  }
+
+  if (map.getLayer(HOVER_AGGREGATED_ROUTE_HIT_LAYER_ID)) {
+    map.moveLayer(HOVER_AGGREGATED_ROUTE_HIT_LAYER_ID);
   }
 
   if (map.getLayer(SELECTED_AGGREGATED_ROUTE_LAYER_ID)) {
@@ -688,6 +727,235 @@ function ensureSelectedFilterLayers(map) {
   return Boolean(map.getLayer(SELECTED_ROUTE_LAYER_ID) || map.getLayer(SELECTED_NODE_LAYER_ID));
 }
 
+
+function ensureHoverFilterLayers(map) {
+  if (!hasMapStyle(map)) return false;
+
+  if (map.getSource(AGGREGATED_ROUTE_SOURCE_ID) && !map.getLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID)) {
+    map.addLayer({
+      id: HOVER_AGGREGATED_ROUTE_LAYER_ID,
+      type: 'line',
+      source: AGGREGATED_ROUTE_SOURCE_ID,
+      filter: EMPTY_SELECTED_FILTER,
+      paint: {
+        'line-color': '#fff7a8',
+        'line-opacity': 0.9,
+        'line-width': [
+          'interpolate',
+          ['linear'],
+          ['coalesce', ['get', 'count'], 1],
+          1,
+          4,
+          10,
+          7,
+          50,
+          12,
+          150,
+          18,
+          300,
+          26,
+        ],
+      },
+    });
+  }
+
+  if (map.getSource(DYNAMIC_CLUSTER_SOURCE_ID) && !map.getLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.addLayer({
+      id: HOVER_DYNAMIC_CLUSTER_LAYER_ID,
+      type: 'circle',
+      source: DYNAMIC_CLUSTER_SOURCE_ID,
+      filter: EMPTY_SELECTED_FILTER,
+      paint: {
+        'circle-radius': [
+          'step',
+          ['get', 'point_count'],
+          18,
+          3,
+          22,
+          8,
+          28,
+          20,
+          36,
+        ],
+        'circle-color': '#fbcfe8',
+        'circle-opacity': 0.92,
+        'circle-stroke-color': '#111827',
+        'circle-stroke-width': 4,
+      },
+    });
+  }
+
+  if (map.getSource(NODE_SOURCE_ID) && !map.getLayer(HOVER_NODE_LAYER_ID)) {
+    map.addLayer({
+      id: HOVER_NODE_LAYER_ID,
+      type: 'circle',
+      source: NODE_SOURCE_ID,
+      filter: EMPTY_SELECTED_FILTER,
+      paint: {
+        'circle-radius': [
+          '+',
+          [
+            'interpolate',
+            ['linear'],
+            ['coalesce', ['get', 'weight'], 1],
+            1,
+            6,
+            10,
+            9,
+            50,
+            14,
+            200,
+            22,
+          ],
+          3,
+        ],
+        'circle-color': '#e0f2fe',
+        'circle-opacity': 0.95,
+        'circle-stroke-color': '#0f172a',
+        'circle-stroke-width': 4,
+      },
+    });
+  }
+
+  if (map.getLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID)) {
+    map.moveLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID);
+  }
+
+  if (map.getLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.moveLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID);
+  }
+
+  if (map.getLayer(HOVER_NODE_LAYER_ID)) {
+    map.moveLayer(HOVER_NODE_LAYER_ID);
+  }
+
+  return Boolean(
+    map.getLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID) ||
+      map.getLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID) ||
+      map.getLayer(HOVER_NODE_LAYER_ID),
+  );
+}
+
+function promoteNodeAndClusterInteractionLayers(map) {
+  if (!map) return;
+
+  const moveLayerToTop = (layerId) => {
+    try {
+      if (map.getLayer(layerId)) {
+        map.moveLayer(layerId);
+      }
+    } catch {
+      // Layer ordering is best-effort; source/layer creation should not fail because ordering failed.
+    }
+  };
+
+  // Keep route interaction layers below node and cluster interaction layers so dense route
+  // crossings do not steal hover priority from visible endpoint features.
+  [
+    AGGREGATED_ROUTE_LAYER_ID,
+    HOVER_AGGREGATED_ROUTE_HIT_LAYER_ID,
+    AGGREGATED_ROUTE_HIT_LAYER_ID,
+    HOVER_AGGREGATED_ROUTE_LAYER_ID,
+    SELECTED_AGGREGATED_ROUTE_LAYER_ID,
+  ].forEach(moveLayerToTop);
+
+  [
+    DYNAMIC_CLUSTER_LAYER_ID,
+    DYNAMIC_CLUSTER_LABEL_LAYER_ID,
+    NODE_LAYER_ID,
+    HOVER_DYNAMIC_CLUSTER_LAYER_ID,
+    HOVER_NODE_LAYER_ID,
+    SELECTED_DYNAMIC_CLUSTER_LAYER_ID,
+    SELECTED_NODE_LAYER_ID,
+  ].forEach(moveLayerToTop);
+}
+
+function queryFirstRenderedFeatureNearPoint(map, point, layerIds, radius = 0) {
+  if (!map || !point) return null;
+
+  const layers = layerIds.filter((layerId) => map.getLayer(layerId));
+  if (!layers.length) return null;
+
+  const queryGeometry =
+    radius > 0
+      ? [
+          [point.x - radius, point.y - radius],
+          [point.x + radius, point.y + radius],
+        ]
+      : point;
+
+  try {
+    const features = map.queryRenderedFeatures(queryGeometry, { layers });
+    return features?.[0] || null;
+  } catch {
+    return null;
+  }
+}
+
+function clearHoverFilterLayers(map) {
+  if (!map) return;
+
+  if (map.getLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID)) {
+    map.setFilter(HOVER_AGGREGATED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(HOVER_DYNAMIC_CLUSTER_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(HOVER_NODE_LAYER_ID)) {
+    map.setFilter(HOVER_NODE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+}
+
+function setHoveredNodeFilter(map, id) {
+  if (!map) return;
+
+  if (map.getLayer(HOVER_NODE_LAYER_ID)) {
+    map.setFilter(HOVER_NODE_LAYER_ID, selectedIdFilter(id));
+  }
+
+  if (map.getLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(HOVER_DYNAMIC_CLUSTER_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID)) {
+    map.setFilter(HOVER_AGGREGATED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+}
+
+function setHoveredDynamicClusterFilter(map, clusterId) {
+  if (!map) return;
+
+  if (map.getLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(HOVER_DYNAMIC_CLUSTER_LAYER_ID, selectedClusterIdFilter(clusterId));
+  }
+
+  if (map.getLayer(HOVER_NODE_LAYER_ID)) {
+    map.setFilter(HOVER_NODE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID)) {
+    map.setFilter(HOVER_AGGREGATED_ROUTE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+}
+
+function setHoveredAggregatedRouteFilter(map, id) {
+  if (!map) return;
+
+  if (map.getLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID)) {
+    map.setFilter(HOVER_AGGREGATED_ROUTE_LAYER_ID, selectedIdFilter(id));
+  }
+
+  if (map.getLayer(HOVER_NODE_LAYER_ID)) {
+    map.setFilter(HOVER_NODE_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+
+  if (map.getLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID)) {
+    map.setFilter(HOVER_DYNAMIC_CLUSTER_LAYER_ID, EMPTY_SELECTED_FILTER);
+  }
+}
+
 function clearSelectedFilterLayers(map) {
   if (!map) return;
 
@@ -798,10 +1066,12 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
       nodeSourceExists: false,
       nodeLayerExists: false,
       selectedNodeLayerExists: false,
+      hoverNodeLayerExists: false,
       dynamicClusterSourceExists: false,
       dynamicClusterLayerExists: false,
       dynamicClusterLabelLayerExists: false,
       selectedDynamicClusterLayerExists: false,
+      hoverDynamicClusterLayerExists: false,
       renderedDynamicClusterCount: 0,
       renderedDynamicClusterLabelCount: 0,
       hiddenClusterMemberCount: 0,
@@ -809,6 +1079,7 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
       aggregatedRouteLayerExists: false,
       aggregatedRouteHitLayerExists: false,
       selectedAggregatedRouteLayerExists: false,
+      hoverAggregatedRouteLayerExists: false,
       aggregatedRouteCount: 0,
       renderedAggregatedRouteCount: 0,
       renderedAggregatedRouteHitCount: 0,
@@ -843,10 +1114,12 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
     nodeSourceExists: Boolean(map.getSource(NODE_SOURCE_ID)),
     nodeLayerExists,
     selectedNodeLayerExists: Boolean(map.getLayer(SELECTED_NODE_LAYER_ID)),
+    hoverNodeLayerExists: Boolean(map.getLayer(HOVER_NODE_LAYER_ID)),
     dynamicClusterSourceExists: Boolean(map.getSource(DYNAMIC_CLUSTER_SOURCE_ID)),
     dynamicClusterLayerExists,
     dynamicClusterLabelLayerExists,
     selectedDynamicClusterLayerExists: Boolean(map.getLayer(SELECTED_DYNAMIC_CLUSTER_LAYER_ID)),
+    hoverDynamicClusterLayerExists: Boolean(map.getLayer(HOVER_DYNAMIC_CLUSTER_LAYER_ID)),
     renderedDynamicClusterCount: dynamicClusterLayerExists
       ? queryRenderedFeatureCount(map, DYNAMIC_CLUSTER_LAYER_ID)
       : 0,
@@ -858,6 +1131,7 @@ function readMapLibreLayerDiagnostics(map, setupDiagnostics = {}) {
     aggregatedRouteLayerExists,
     aggregatedRouteHitLayerExists,
     selectedAggregatedRouteLayerExists: Boolean(map.getLayer(SELECTED_AGGREGATED_ROUTE_LAYER_ID)),
+    hoverAggregatedRouteLayerExists: Boolean(map.getLayer(HOVER_AGGREGATED_ROUTE_LAYER_ID)),
     aggregatedRouteCount: setupDiagnostics.aggregatedRouteCount || 0,
     renderedAggregatedRouteCount: aggregatedRouteLayerExists
       ? queryRenderedFeatureCount(map, AGGREGATED_ROUTE_LAYER_ID)
@@ -1144,6 +1418,16 @@ async function readClusterLeaves(source, clusterId, limit) {
   return [];
 }
 
+function firstFeatureIdFromEvent(event) {
+  const feature = event?.features?.[0];
+  return featureId(feature);
+}
+
+function firstClusterIdFromEvent(event) {
+  const feature = event?.features?.[0];
+  return featureProperty(feature, 'cluster_id');
+}
+
 export function MapLibreMapStage({
   className = '',
   styleId,
@@ -1188,6 +1472,7 @@ export function MapLibreMapStage({
   const clusteredEndpointByNodeIdRef = useRef(new Map());
   const aggregatedRouteFeatureKeyRef = useRef('');
   const nodeVisibilityUpdateTokenRef = useRef(0);
+  const hoveredFeatureRef = useRef({ kind: null, id: null });
 
   const [errorMessage, setErrorMessage] = useState('');
   const [viewState, setViewState] = useState(() => ({
@@ -1541,6 +1826,8 @@ export function MapLibreMapStage({
           updateAggregatedRoutesForVisibleEndpoints(map);
           void updateNodeVisibilityForVisibleClusters('lifecycle-node-visibility');
           ensureSelectedFilterLayers(map);
+          ensureHoverFilterLayers(map);
+          promoteNodeAndClusterInteractionLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
         } catch (error) {
@@ -1567,6 +1854,8 @@ export function MapLibreMapStage({
           updateAggregatedRoutesForVisibleEndpoints(map);
           void updateNodeVisibilityForVisibleClusters('lifecycle-node-visibility');
           ensureSelectedFilterLayers(map);
+          ensureHoverFilterLayers(map);
+          promoteNodeAndClusterInteractionLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
         } catch (error) {
@@ -1688,6 +1977,8 @@ export function MapLibreMapStage({
 
         selectedFeatureRef.current = { kind: null, id: null };
         clearSelectedFilterLayers(map);
+        hoveredFeatureRef.current = { kind: null, id: null };
+        clearHoverFilterLayers(map);
         reportLayerDiagnostics(map);
         currentHandleBlankMapClick();
       };
@@ -1705,12 +1996,93 @@ export function MapLibreMapStage({
         map.getCanvas().style.cursor = '';
       };
 
-      map.on('mouseenter', DYNAMIC_CLUSTER_LAYER_ID, setPointerCursor);
-      map.on('mouseleave', DYNAMIC_CLUSTER_LAYER_ID, clearPointerCursor);
-      map.on('mouseenter', NODE_LAYER_ID, setPointerCursor);
-      map.on('mouseleave', NODE_LAYER_ID, clearPointerCursor);
-      map.on('mouseenter', AGGREGATED_ROUTE_HIT_LAYER_ID, setPointerCursor);
-      map.on('mouseleave', AGGREGATED_ROUTE_HIT_LAYER_ID, clearPointerCursor);
+      const updateHoveredFeature = (kind, id) => {
+        const nextId = id === undefined || id === null ? '' : String(id);
+        const previous = hoveredFeatureRef.current;
+
+        if (previous.kind === kind && previous.id === nextId) {
+          return;
+        }
+
+        hoveredFeatureRef.current = nextId ? { kind, id: nextId } : { kind: null, id: null };
+
+        if (!nextId) {
+          clearHoverFilterLayers(map);
+          return;
+        }
+
+        if (kind === 'cluster') {
+          setHoveredDynamicClusterFilter(map, nextId);
+          return;
+        }
+
+        if (kind === 'node') {
+          setHoveredNodeFilter(map, nextId);
+          return;
+        }
+
+        if (kind === 'aggregatedRoute') {
+          setHoveredAggregatedRouteFilter(map, nextId);
+        }
+      };
+
+      const clearHoveredFeature = () => {
+        hoveredFeatureRef.current = { kind: null, id: null };
+        clearHoverFilterLayers(map);
+      };
+
+      const handleMapLibreHoverMove = (event) => {
+        // Resolve hover priority globally rather than relying on delegated layer events.
+        // In dense cities, many route curves pass through a visible node/cluster; visible
+        // endpoint features should win hover before route hit layers are considered.
+        const clusterFeature = queryFirstRenderedFeatureNearPoint(
+          map,
+          event.point,
+          [DYNAMIC_CLUSTER_LABEL_LAYER_ID, DYNAMIC_CLUSTER_LAYER_ID],
+          5,
+        );
+        const clusterId = featureProperty(clusterFeature, 'cluster_id');
+
+        if (clusterId) {
+          setPointerCursor();
+          updateHoveredFeature('cluster', clusterId);
+          return;
+        }
+
+        const nodeFeature = queryFirstRenderedFeatureNearPoint(map, event.point, [NODE_LAYER_ID], 4);
+        const nodeId = featureId(nodeFeature);
+
+        if (nodeId) {
+          setPointerCursor();
+          updateHoveredFeature('node', nodeId);
+          return;
+        }
+
+        const routeFeature = queryFirstRenderedFeatureNearPoint(
+          map,
+          event.point,
+          [HOVER_AGGREGATED_ROUTE_HIT_LAYER_ID, AGGREGATED_ROUTE_LAYER_ID],
+          0,
+        );
+        const routeId = featureId(routeFeature);
+
+        if (routeId) {
+          setPointerCursor();
+          updateHoveredFeature('aggregatedRoute', routeId);
+          return;
+        }
+
+        clearPointerCursor();
+        clearHoveredFeature();
+      };
+
+      const handleMapLibreHoverOut = () => {
+        clearPointerCursor();
+        clearHoveredFeature();
+      };
+
+      map.on('mousemove', handleMapLibreHoverMove);
+      map.on('mouseout', handleMapLibreHoverOut);
 
       map.on('idle', () => {
         markLayerSetupPhase('idle');
@@ -1726,6 +2098,8 @@ export function MapLibreMapStage({
           updateAggregatedRoutesForVisibleEndpoints(map);
           void updateNodeVisibilityForVisibleClusters('lifecycle-node-visibility');
           ensureSelectedFilterLayers(map);
+          ensureHoverFilterLayers(map);
+          promoteNodeAndClusterInteractionLayers(map);
           reapplySelectedFilters(map);
           reportLayerDiagnostics(map);
         } catch (error) {
@@ -1858,6 +2232,8 @@ export function MapLibreMapStage({
 
             <dt className="text-slate-400">Selected aggregated route layer</dt>
             <dd>{layerDiagnostics.selectedAggregatedRouteLayerExists ? 'yes' : 'no'}</dd>
+            <dt className="text-slate-400">Hover aggregated route layer</dt>
+            <dd>{layerDiagnostics.hoverAggregatedRouteLayerExists ? 'yes' : 'no'}</dd>
 
             <dt className="text-slate-400">Aggregated routes</dt>
             <dd>{layerDiagnostics.aggregatedRouteCount || 0}</dd>
@@ -1893,6 +2269,8 @@ export function MapLibreMapStage({
 
             <dt className="text-slate-400">Selected node layer</dt>
             <dd>{layerDiagnostics.selectedNodeLayerExists ? 'yes' : 'no'}</dd>
+            <dt className="text-slate-400">Hover node layer</dt>
+            <dd>{layerDiagnostics.hoverNodeLayerExists ? 'yes' : 'no'}</dd>
 
             <dt className="text-slate-400">Nodes rendered</dt>
             <dd>{layerDiagnostics.renderedNodeCount}</dd>
@@ -1911,6 +2289,8 @@ export function MapLibreMapStage({
 
             <dt className="text-slate-400">Selected cluster layer</dt>
             <dd>{layerDiagnostics.selectedDynamicClusterLayerExists ? 'yes' : 'no'}</dd>
+            <dt className="text-slate-400">Hover cluster layer</dt>
+            <dd>{layerDiagnostics.hoverDynamicClusterLayerExists ? 'yes' : 'no'}</dd>
 
             <dt className="text-slate-400">Dynamic clusters rendered</dt>
             <dd>{layerDiagnostics.renderedDynamicClusterCount}</dd>
