@@ -1,4 +1,4 @@
-﻿// Core React hooks used throughout the app.
+// Core React hooks used throughout the app.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { geoContains, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
@@ -1132,10 +1132,10 @@ function LinkedLetterCard({
 
   return (
     <div className="rounded-xl bg-[var(--stat-card-bg)] p-3 text-sm">
-      <div className="font-medium text-[var(--panel-card-text)]">{letter.source} â†’ {letter.target}</div>
+      {letter.source} {String.fromCharCode(8594)} {letter.target}
       <div className="mt-1 text-[var(--panel-card-muted-text)]">{letter.archivalCollection}</div>
-      <div className="text-[var(--panel-card-muted-text)]">Archival page: {letter.archivalPage || 'â€”'} </div>
-      <div className="text-[var(--panel-card-muted-text)]">Relationship: {letter.relationship || 'â€”'} | Language: {letter.language || 'â€”'}</div>
+      Archival page: {letter.archivalPage || String.fromCharCode(8212)}
+      Relationship: {letter.relationship || String.fromCharCode(8212)} | Language: {letter.language || String.fromCharCode(8212)}
       {renderExpandableTextBlock('notes', 'Notes', letter.notes, 'notes')}
       {renderExpandableTextBlock('transcription', 'Transcription', letter.transcription, 'transcription')}
       {renderExpandableTextBlock('translation', 'Translation', letter.translation, 'translation')}
