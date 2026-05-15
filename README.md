@@ -16,11 +16,13 @@ The application ingests correspondence-related tabular data, derives network str
 
 This repository represents an **active prototype / research tool in ongoing development**.
 
-The current safe baseline is:
+The current legacy-continuation baseline is:
 
-- **`8539c68` — `Clarify timeline rail icon`**
+- **`10051c0` — `Add MapLibre selected filter layers`** on branch **`legacy-peridot-continuation`**
 
-The current state of the project includes:
+This branch intentionally returns work to the normal legacy Peridot production path. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction.
+
+The current state of the active legacy-continuation project includes:
 
 - working geographic and person-network visualization modes
 - direct view-selection buttons for:
@@ -192,7 +194,9 @@ This project currently uses:
 - **topojson-client** for geographic feature handling
 - **world-atlas** for world basemap data
 
-The map-stage rendering logic is SVG-based, with exported SVG optionally rasterized to PNG during export workflows.
+The normal production map-stage rendering logic is SVG-based, with exported SVG optionally rasterized to PNG during export workflows.
+
+Early MapLibre preview code may still exist in the repository because `main` includes the gated preview prototype at `10051c0`. That code is dormant in ordinary use and is not the current production map direction.
 
 ---
 
@@ -219,7 +223,9 @@ src/
   main.jsx
   mapInteractionHandlers.js
   mapLayoutHelpers.js
+  MapLibreMapStage.jsx          # dormant gated preview path on this branch
   mapStageComponents.jsx
+  mapStyleConfig.js             # dormant MapLibre preview style config
   personForceLayoutHelpers.js
   timelinePlaybackComponents.jsx
   timelinePlaybackHelpers.js
@@ -297,6 +303,14 @@ Timeline/playback UI boundary.
 #### `src/mapStageComponents.jsx`
 
 Map-stage-adjacent UI/chrome components.
+
+#### `src/MapLibreMapStage.jsx`
+
+Dormant development-only MapLibre preview stage inherited from `main` at `10051c0`. It should not be used as the active production map path unless work explicitly resumes on MapLibre.
+
+#### `src/mapStyleConfig.js`
+
+Dormant MapLibre preview style configuration used only by the gated MapLibre prototype path.
 
 #### `src/exportHelpers.js`
 
@@ -396,7 +410,17 @@ A typical workflow is:
 
 ---
 
-## 12. Known limitations and fragile zones
+## 12. MapLibre status
+
+MapLibre work is currently paused. The active branch for continued work is **`legacy-peridot-continuation`**, which keeps the normal D3/SVG Peridot behavior as the working app direction.
+
+The branch still contains early gated MapLibre preview files from `main` at `10051c0`, including `src/MapLibreMapStage.jsx` and `src/mapStyleConfig.js`. These files are dormant unless a developer explicitly opens the development URL with `?maplibrePreview=1`. Do not use the MapLibre preview flag for ordinary legacy Peridot testing.
+
+A later experimental branch, `maplibre-native-geographic-view`, explored a fuller MapLibre migrated overlay with clusters, aggregated routes, hover feedback, and partial view-mode support. That work is intentionally set aside for now and should be treated as archived research rather than the active implementation baseline.
+
+---
+
+## 13. Known limitations and fragile zones
 
 ### Current structural limitation
 
@@ -422,7 +446,7 @@ If you are making changes, avoid broad mixed-purpose edits. Prefer bounded passe
 
 ---
 
-## 13. Maintainer documents
+## 14. Maintainer documents
 
 This repository includes internal maintenance and workflow documents that should be consulted before major edits:
 
@@ -432,9 +456,12 @@ This repository includes internal maintenance and workflow documents that should
 
 ---
 
-## 14. Roadmap / near-term priorities
+## 15. Roadmap / near-term priorities
 
 Likely near-term priorities include:
+
+- continue from the legacy D3/SVG Peridot path on `legacy-peridot-continuation`
+- keep dormant MapLibre files untouched unless explicitly resuming that experiment
 
 - continue safe reduction of orchestration pressure inside `src/App.jsx`
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
@@ -445,7 +472,7 @@ Likely near-term priorities include:
 
 ---
 
-## 15. Author / maintainer / license
+## 16. Author / maintainer / license
 
 ### Author / Maintainer
 

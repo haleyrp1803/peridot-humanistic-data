@@ -32,6 +32,12 @@ Current clean baseline:
 See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
+Current branch note:
+
+```text
+The current active continuation branch may intentionally differ from experimental branches. As of the legacy-continuation handoff, MapLibre migrated-overlay work is set aside and should not be treated as the active source of truth unless explicitly resumed.
+```
+
 ---
 
 ## 2. Bounded-pass rule
@@ -150,6 +156,8 @@ Instead, defer README / Maintainer Guide / Changelog updates until:
 
 When documentation is updated, preserve the full development history in `CHANGELOG.md`.
 
+Documentation passes should default to adding new milestone/current-state information where reasonable. Subtract or rewrite existing documentation only when the text is clearly obsolete, duplicated by a more accurate retained entry, or actively misleading.
+
 ---
 
 ## 9. Dependency and tooling freeze
@@ -194,6 +202,7 @@ Current notable decisions:
 - Cluster sizing now reflects represented letter volume.
 - Cluster grouping is zoom-responsive.
 - Cluster inspector members are grouped by place.
+- MapLibre migrated-overlay work is paused; legacy D3/SVG Peridot is the active continuation path unless the user explicitly resumes MapLibre.
 
 ---
 
@@ -216,6 +225,10 @@ Do **not** casually rename these props or setters. If revisited, explicitly test
 A prior attempt to make the shared side panel absolutely positioned at all viewport sizes was rolled back because it disrupted normal full-size landscape layout.
 
 Future responsive panel work should be a narrow-window-specific override, not a universal positioning replacement.
+
+### Dormant MapLibre work
+
+The repository may contain dormant MapLibre preview files from `main`. These should not be treated as active production code during legacy Peridot work. Do not remove, revive, or refactor MapLibre code unless the pass is explicitly about MapLibre. If MapLibre work resumes, first establish the correct branch/source-of-truth and perform a fresh audit.
 
 ### Cluster behavior
 
@@ -266,3 +279,4 @@ The new chat should be told:
 - Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed features.
 - The compatibility path for inspector auto-open is fragile; do not rename it casually.
 - Documentation updates are batched, not performed after every small code commit.
+- MapLibre migrated-overlay work is paused while legacy Peridot continuation proceeds.

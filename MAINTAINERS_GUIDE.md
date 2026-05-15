@@ -14,7 +14,17 @@ Current source of truth folder:
 
 - `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 
-Current clean safe baseline:
+Current active branch for continued legacy work:
+
+- **`legacy-peridot-continuation`**
+
+Current documented baseline:
+
+- **`10051c0` — `Add MapLibre selected filter layers`**
+
+This branch intentionally continues from `main` while returning active work to the normal legacy D3/SVG Peridot path. The earlier MapLibre preview files remain present but dormant unless `?maplibrePreview=1` is used.
+
+The last fully documented pre-MapLibre UI milestone remains:
 
 - **`8539c68` — `Clarify timeline rail icon`**
 
@@ -67,6 +77,8 @@ Extracted support modules in `src/`:
 - `src/timelinePlaybackComponents.jsx`
 - `src/exportHelpers.js`
 - `src/personForceLayoutHelpers.js`
+- `src/MapLibreMapStage.jsx` — dormant gated preview path inherited from `main`
+- `src/mapStyleConfig.js` — dormant MapLibre preview style config
 
 Maintainer/workflow documents at repo root:
 
@@ -99,6 +111,12 @@ The app includes:
 - export tools for image and tabular outputs
 
 The main maintenance challenge remains structural concentration in `src/App.jsx`, but that concentration has been reduced through bounded extraction passes.
+
+### MapLibre status
+
+MapLibre work is currently paused. The active continuation branch should be treated as a legacy D3/SVG Peridot branch. Early MapLibre preview files remain in the repository because `main` includes the gated preview prototype at `10051c0`, but those files are dormant in ordinary use.
+
+A later branch, `maplibre-native-geographic-view`, explored a much larger MapLibre migrated overlay. That branch is not the active source of truth. It should be preserved as an experiment and revisited only after an explicit fresh audit.
 
 The current person-network layouts are:
 
@@ -196,6 +214,14 @@ Pure export utilities and export row-builder helpers.
 ### `src/personForceLayoutHelpers.js`
 
 Pure helper logic for the pre-settled force-directed person-network layout.
+
+### `src/MapLibreMapStage.jsx`
+
+Dormant development-only MapLibre preview stage inherited from `main` at `10051c0`. It is not the active production renderer on `legacy-peridot-continuation`. Avoid changing it unless the user explicitly resumes MapLibre work.
+
+### `src/mapStyleConfig.js`
+
+Dormant MapLibre preview style configuration.
 
 ### `src/InspectorConnectedCorrespondents.jsx`
 
@@ -416,6 +442,13 @@ Settled the Timeline rail icon on a simple clock-style symbol after horizontal p
 
 ## Deferred / rolled-back work
 
+### MapLibre migrated-overlay branch paused
+
+The later `maplibre-native-geographic-view` branch explored a fuller MapLibre migrated overlay. It produced substantial experimental progress but also accumulated fragility around structural extraction and Force-Directed fallback behavior. The project has set this work aside and returned to a legacy continuation branch.
+
+Current practice: keep the MapLibre files dormant; do not remove them casually, and do not use `?maplibrePreview=1` for ordinary legacy testing. If MapLibre work resumes, begin with a fresh source-of-truth audit.
+
+
 ### Shared-panel semantic prop rename
 
 An attempted cleanup of old `showLeftSidebar` / `showRightSidebar` compatibility names was rolled back because it broke inspector auto-open behavior from node, edge, and cluster clicks.
@@ -448,6 +481,7 @@ These areas still deserve narrow, explicit passes:
 - broad orchestration work in `src/App.jsx`
 - shared side-panel shell and inspector-open interactions
 - cluster grouping and cluster inspector navigation
+- dormant MapLibre preview code if it is ever reactivated
 
 ---
 
@@ -494,7 +528,9 @@ This recent work also reinforced these process rules:
 A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
-- clean baseline: **`8539c68` — `Clarify timeline rail icon`**
+- active branch: `legacy-peridot-continuation`
+- current documented baseline: **`10051c0` — `Add MapLibre selected filter layers`**
+- last documented legacy UI milestone: **`8539c68` — `Clarify timeline rail icon`**
 
 A future chat should also be told that:
 
@@ -505,4 +541,5 @@ A future chat should also be told that:
 - `InspectorPanel.jsx` is content-only
 - `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Export/Timeline/Inspector panel views
 - current cluster features are committed, not deferred
+- MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
 - documentation should preserve the full commit trajectory carefully

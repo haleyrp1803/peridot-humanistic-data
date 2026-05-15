@@ -2,11 +2,33 @@
 
 ## Current documented safe baseline
 
+- **`10051c0` — `Add MapLibre selected filter layers`** on branch **`legacy-peridot-continuation`**
+
+This baseline intentionally continues from `main` while returning active development attention to the normal legacy D3/SVG Peridot path. The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment has been set aside rather than merged into this continuation branch.
+
+The preceding stable legacy UI milestone remains:
+
 - **`8539c68` — `Clarify timeline rail icon`**
 
-This baseline reflects the current clean Peridot state after the cluster-interaction, node-sizing, cluster-sizing, cluster-inspector, shared side-panel, persistent icon-rail, and dedicated Data Inputs / Export / Timeline tab work completed in bounded passes.
+That milestone reflects the current clean Peridot state after the cluster-interaction, node-sizing, cluster-sizing, cluster-inspector, shared side-panel, persistent icon-rail, and dedicated Data Inputs / Export / Timeline tab work completed in bounded passes.
 
 ---
+
+## Current branch transition
+
+### `10051c0` — Add MapLibre selected filter layers
+
+- This commit is the current `main` / `legacy-peridot-continuation` starting point.
+- It includes an early, development-only MapLibre preview path gated behind `?maplibrePreview=1`.
+- The default app path remains the D3/SVG Peridot production renderer.
+- Current active work is returning to the legacy Peridot path rather than continuing the larger MapLibre migrated-overlay experiment.
+
+### MapLibre migrated-overlay branch paused
+
+- The branch `maplibre-native-geographic-view` explored a fuller MapLibre migrated overlay after `10051c0`.
+- That work reached a later stopping point that included dynamic MapLibre clusters, cluster labels, hidden cluster-member nodes, curved aggregated routes, aggregated route Inspector details, selected feedback, hover feedback, and a People-view coordinate fix.
+- A Force-Directed fallback issue remained unresolved, and the project has chosen to set that work aside for now.
+- Do not treat the MapLibre migrated-overlay branch as the active implementation baseline unless the user explicitly resumes it.
 
 ## Recent committed work
 
@@ -199,6 +221,15 @@ This baseline reflects the current clean Peridot state after the cluster-interac
 ---
 
 ## Deferred / rolled-back work
+
+### MapLibre migrated-overlay work paused
+
+The later MapLibre migrated-overlay branch is paused. It should be retained as an archived experiment, not deleted. The current continuation branch keeps early gated MapLibre preview files dormant while returning active development to the legacy D3/SVG app. If MapLibre is revisited later, start from a fresh audit and do not assume the experimental branch can be merged wholesale.
+
+### Force-Directed fallback issue on MapLibre experiment
+
+During the later MapLibre experiment, Force-Directed was intended to bypass MapLibre and use the legacy D3/SVG force-directed view. That routing was partly established, but the force view still blanked after briefly rendering. Several speculative sizing fixes were rolled back, and the branch was set aside. Future work should diagnose the legacy force-render path directly before attempting new fixes.
+
 
 ### Shared-panel prop rename attempt, after `4a17d1c`
 
