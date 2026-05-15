@@ -30,7 +30,7 @@ For the current documented safe baseline, consult `CHANGELOG.md`. The current Ma
 
 ```text
 maplibre-native-geographic-view
-4c9ed6f — Extract MapLibre layer configuration
+268b18c — Add MapLibre hover feedback
 ```
 
 Rollback landmarks are recorded in `CHANGELOG.md` and `MAINTAINERS_GUIDE.md`.
@@ -174,7 +174,7 @@ Instead, defer README / Maintainer Guide / Changelog updates until:
 
 When documentation is updated, preserve the full development history in `CHANGELOG.md`.
 
-Default to additive documentation updates. Do not delete or overwrite historical information unless it is clearly obsolete, duplicated by a more accurate retained entry, or actively misleading.
+Default to additive documentation updates. Documentation passes should normally add new milestone information, current-state notes, cautions, and roadmap updates rather than rewriting history. Subtractive edits are appropriate only when the existing text is clearly obsolete, duplicated by a more accurate retained entry, or actively misleading.
 
 ---
 
@@ -266,9 +266,11 @@ Production D3/SVG cluster behavior is committed and functional. Future productio
 - Back returns to the cluster view
 - cluster sizing remains visually meaningful
 
-### MapLibre cluster work
+### MapLibre migrated overlay work
 
-MapLibre cluster work is not yet solved. Future work should not begin with node hiding, route rerouting, or zoom-responsive cluster behavior. Start with lifecycle/source setup instrumentation inside `MapLibreMapStage.jsx` and prove that the MapLibre map receives a cluster source/layer before adding cluster behavior.
+MapLibre cluster and aggregated-route behavior now exists in the gated Place-view preview path. Future MapLibre work should preserve dynamic clusters, cluster labels, hidden cluster-member nodes, curved aggregated visible-endpoint routes, Inspector routing, selected feedback, and hover feedback unless a pass explicitly changes one of those behaviors.
+
+Current next priorities are: make People / Place / Force-Directed functional in the MapLibre branch; explore prettier Peridot-aligned map aesthetics; then add playback highlighting parity. Broad structural extraction of `MapLibreMapStage.jsx` should be avoided unless there is a concrete maintenance pain point and a tiny source-of-truth-verified pass.
 
 ---
 
@@ -298,7 +300,7 @@ Active branch:
 maplibre-native-geographic-view
 
 Current branch baseline:
-4c9ed6f — Extract MapLibre layer configuration
+268b18c — Add MapLibre hover feedback
 
 Main / MapLibre preview checkpoint:
 10051c0 — Add MapLibre selected filter layers
@@ -318,5 +320,6 @@ The new chat should be told:
 - Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed in the production D3/SVG path.
 - The MapLibre-native branch currently has extracted feature builders and layer configuration.
 - `MapLibreMapStage.jsx` has a special full-file replacement delivery protocol.
-- MapLibre cluster source/layer setup is unresolved and should be handled through lifecycle instrumentation before new rendering attempts.
-- Documentation updates are batched and additive by default.
+- The MapLibre branch now has a migrated Place-view overlay with dynamic clusters, cluster labels, hidden cluster-member nodes, curved aggregated routes, aggregated route Inspector details, selected feedback, and hover feedback.
+- The next planned MapLibre priorities are: make People / Place / Force-Directed functional in the branch; explore prettier Peridot-aligned basemaps/visual styling; then add playback highlighting parity.
+- Documentation updates are batched and additive by default; remove old text only when clearly justified.

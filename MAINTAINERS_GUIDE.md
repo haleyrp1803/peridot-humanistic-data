@@ -20,7 +20,7 @@ Current active development branch for MapLibre-native work:
 
 Current branch baseline at this handoff:
 
-- **`4c9ed6f` — `Extract MapLibre layer configuration`**
+- **`268b18c` — `Add MapLibre hover feedback`**
 
 Current `main` / MapLibre preview prototype checkpoint:
 
@@ -130,32 +130,42 @@ The force-directed person view renders on a clean theme-driven background rather
 
 The `maplibre-native-geographic-view` branch is a design and implementation branch for a future MapLibre-native geographic subsystem.
 
-Current committed state at `4c9ed6f`:
+Current committed state at `268b18c`:
 
-- `src/MapLibreMapStage.jsx` owns the MapLibre map instance, lifecycle, source/layer updates, preview diagnostics, interaction wiring, route hit layer, cursor-only hover, and selected filter-layer behavior.
-- `src/mapLibreFeatureBuilders.js` owns pure MapLibre feature construction for nodes and routes.
-- `src/mapLibreLayerConfig.js` owns MapLibre source/layer IDs, selected filters, and layer definition builders.
+- `src/MapLibreMapStage.jsx` owns the MapLibre map instance, lifecycle, source/layer updates, preview diagnostics, interaction wiring, dynamic clusters, hidden cluster-member nodes, curved aggregated visible-endpoint routes, hover feedback, selected feedback, and Inspector routing for nodes, clusters, and aggregated routes.
+- `src/mapLibreFeatureBuilders.js` owns pure MapLibre feature construction for the original node and route GeoJSON features.
+- `src/mapLibreLayerConfig.js` owns the earlier route/node source IDs, selected filters, selected ID filter helpers, and route/node layer definition builders. Newer cluster/aggregate behavior currently remains mostly in `MapLibreMapStage.jsx` after the extraction regression.
 - `src/mapStyleConfig.js` owns MapLibre style configuration.
 - The preview remains gated behind `?maplibrePreview=1`.
 - The production D3/SVG map remains unchanged.
 
-Confirmed MapLibre preview capabilities:
+Confirmed MapLibre preview capabilities at `268b18c`:
 
-- renders Peridot route GeoJSON as MapLibre line layers
-- renders Peridot node GeoJSON as MapLibre circle layers
-- uses a route hit layer for easier route targeting
-- routes node/route clicks into the existing Inspector
-- supports cursor-only hover detection
-- supports selected node/route visual feedback through selected filter layers
+- renders Peridot node features as MapLibre circle layers in the Place-view preview path
+- renders dynamic MapLibre clusters from current node features
+- renders cluster count labels
+- hides individual blue nodes when represented by visible clusters
+- routes cluster clicks into the existing Inspector path
+- renders curved aggregated visible-endpoint routes between visible nodes and visible clusters
+- aggregates route thickness by represented letter volume
+- routes aggregated route clicks into the Inspector and displays aggregated route details
+- supports selected visual feedback for clusters and aggregated routes
+- supports hover feedback for unclustered nodes, dynamic clusters, and aggregated routes
+- prioritizes node/cluster hover over crossing routes in dense areas
+- keeps the production D3/SVG path unchanged
 
-Unsolved MapLibre-native area:
+Unsolved MapLibre-native areas:
 
-- cluster source/layer setup and eventual cluster behavior.
+- only the **Place** view currently has visible MapLibre nodes/edges; **People** and **Force-Directed** still need functional treatment in the MapLibre branch
+- playback highlighting parity remains unimplemented in the MapLibre preview
+- final Peridot-aligned basemap and styling choices remain open
+- export parity remains undecided because the live MapLibre map is canvas/WebGL-based while the existing export path is SVG-oriented
+- `src/MapLibreMapStage.jsx` now contains substantial working lifecycle, clustering, route aggregation, hover, selection, and Inspector-bridge logic; broad extraction is risky
 
-Important cluster finding:
+Important migration findings:
 
-- Multiple uncommitted cluster diagnostic passes built cluster feature data in React-side diagnostics, but MapLibre repeatedly reported `cluster source: no` and `cluster layer: no`.
-- This means the next cluster pass should instrument source/layer setup lifecycle rather than trying more styling or layer-order changes.
+- The cluster source/layer lifecycle problem was solved incrementally: static cluster source/layer proof, dynamic cluster source, cluster click routing, node hiding, route aggregation, labels, and hover feedback.
+- The `dd148e1` structural extraction attempt regressed the migrated overlay and was superseded by `c0a4b8a`. Future extraction should be tiny, source-of-truth verified, and tested immediately.
 
 ---
 
@@ -173,13 +183,16 @@ Current responsibilities:
 
 - initialize and manage the MapLibre map instance
 - add/update MapLibre route and node sources/layers
-- add/update route hit layer
-- add/update selected node/route filter layers
-- route MapLibre node/route clicks into the existing Inspector handlers
-- provide cursor-only hover detection
+- add/update dynamic cluster sources/layers and cluster label layers
+- hide cluster-member nodes when represented by visible clusters
+- build curved aggregated visible-endpoint routes between visible nodes/clusters
+- add/update route, node, cluster, aggregated-route hit and selected/hover feedback layers
+- route MapLibre node, cluster, and aggregated-route clicks into the existing Inspector handlers
+- preserve aggregated route payloads for Inspector display
+- provide hover feedback with node/cluster priority over crossing routes
 - display preview diagnostics
 
-Do not casually add zoom-responsive cluster logic to the map-construction effect. Future cluster work must protect viewport centering/reset behavior.
+Do not casually add zoom-responsive cluster or aggregation logic to the map-construction effect. Future cluster and aggregation work must protect viewport centering/reset behavior.
 
 ### `src/mapLibreFeatureBuilders.js`
 
@@ -383,6 +396,54 @@ Moved pure feature-building logic to `mapLibreFeatureBuilders.js`.
 
 Moved MapLibre source/layer schema and definitions to `mapLibreLayerConfig.js`.
 
+#### `3f26cc2` — Broaden MapLibre lifecycle diagnostics
+
+Broadened passive diagnostics for sources, layers, setup phase, and rendered counts while preserving route/node rendering.
+
+#### `bb11f6a` — Add static MapLibre cluster lifecycle diagnostic
+
+Proved that MapLibre could receive and render a static cluster-like source/layer in the current stage lifecycle.
+
+#### `1e8456f` — Add dynamic MapLibre cluster diagnostic
+
+Added a dynamic MapLibre clustered source derived from current node features.
+
+#### `be7d9ae` — Route MapLibre cluster clicks to inspector
+
+Routed dynamic MapLibre cluster clicks into the existing Inspector path.
+
+#### `8a563cc` — Hide MapLibre cluster member nodes
+
+Hid individual node features when represented by visible clusters.
+
+#### `526534a` — Aggregate MapLibre routes between visible endpoints
+
+Aggregated directed routes between visible nodes and visible clusters.
+
+#### `084ce9d` — Enrich MapLibre aggregated route inspector payload
+
+Added richer metadata to aggregated route click payloads.
+
+#### `2ccaaeb` — Show MapLibre aggregated route details in inspector
+
+Rendered aggregated route details in the edge Inspector.
+
+#### `57d3cc1` — Add MapLibre cluster count labels
+
+Added count labels to dynamic MapLibre clusters.
+
+#### `dd148e1` / `c0a4b8a` — Extraction regression and restore
+
+A constants extraction attempt regressed the migrated overlay and was immediately superseded by a restore commit. Use this as a cautionary example for future `MapLibreMapStage.jsx` structural work.
+
+#### `8137db7` — Curve MapLibre aggregated routes
+
+Changed aggregated routes to curved multi-point LineStrings.
+
+#### `268b18c` — Add MapLibre hover feedback
+
+Added immediate hover feedback for nodes, clusters, and aggregated routes, with node/cluster hover priority over crossing routes.
+
 ### Existing production D3/SVG cluster and sizing sequence
 
 #### `ed39e55` — Make cluster nodes open actionable inspector views
@@ -412,6 +473,12 @@ The shared side-panel and icon rail sequence remains documented in `CHANGELOG.md
 ### MapLibre cluster diagnostic attempts, after `4c9ed6f`
 
 Several uncommitted cluster attempts were restored. The repeated diagnostic result was that cluster features existed in React-side state but MapLibre reported no cluster source and no cluster layer. A broader attempt also caused zoom/pan flashes and reset behavior. Future cluster work should start with lifecycle instrumentation inside `MapLibreMapStage.jsx`, not another visual or layer-order adjustment.
+
+### MapLibre structural extraction caution, after `dd148e1`
+
+The `dd148e1` extraction attempt showed that broad structural rewrites of `MapLibreMapStage.jsx` can silently reintroduce older preview-stage behavior and remove newer migration features. Future extraction should proceed only when there is a concrete maintenance reason, and should use tiny, directly verified patches rather than broad replacement.
+
+Safe candidates include ID constants and pure layer-definition builders. Unsafe candidates include live map lifecycle setup, zoom/move recalculation, hidden-node filtering, selected/hover filter application, and Inspector payload construction.
 
 ### Shared-panel semantic prop rename
 
@@ -507,7 +574,7 @@ Active branch:
 maplibre-native-geographic-view
 
 Current branch baseline:
-4c9ed6f — Extract MapLibre layer configuration
+268b18c — Add MapLibre hover feedback
 
 Current main / MapLibre preview checkpoint:
 10051c0 — Add MapLibre selected filter layers
@@ -526,6 +593,7 @@ A future chat should also be told that:
 - `InspectorPanel.jsx` is content-only.
 - `LeftControlPanel.jsx` owns the shared panel shell and rail-tab views.
 - current production cluster features are committed in the D3/SVG path.
-- MapLibre route/node rendering, route hit layer, Inspector click routing, cursor-only hover, and selected filter layers are working in the preview path.
-- MapLibre cluster source/layer setup is unresolved and should be investigated through lifecycle instrumentation before any more cluster rendering attempts.
-- documentation should preserve the full commit trajectory carefully.
+- The MapLibre branch now has a migrated Place-view overlay with dynamic clusters, cluster labels, hidden cluster-member nodes, curved aggregated routes, aggregated route Inspector details, selected feedback, and hover feedback.
+- Only Place view currently has visible MapLibre nodes/edges; People and Force-Directed functionality are the next branch-level parity priority.
+- After all three views are functional, the next design priority is prettier / more Peridot-aligned map aesthetics, followed by playback highlighting parity.
+- documentation should preserve the full commit trajectory carefully and default to additive updates.

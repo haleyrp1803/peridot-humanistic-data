@@ -4,9 +4,9 @@
 
 ### Active MapLibre-native branch baseline
 
-- **`4c9ed6f` — `Extract MapLibre layer configuration`** on branch `maplibre-native-geographic-view`
+- **`268b18c` — `Add MapLibre hover feedback`** on branch `maplibre-native-geographic-view`
 
-This branch is a MapLibre-native geographic subsystem design branch. The production D3/SVG map remains unchanged; MapLibre work is gated behind `?maplibrePreview=1`.
+This branch is a MapLibre-native geographic subsystem design branch. The production D3/SVG map remains unchanged; MapLibre work is gated behind `?maplibrePreview=1`. The current migrated MapLibre overlay is functional primarily for **Place** view and now includes dynamic clusters, cluster-member node hiding, cluster labels, curved aggregated visible-endpoint routes, Inspector integration for clusters and aggregated routes, selected feedback, and hover feedback.
 
 ### Main / MapLibre preview prototype checkpoint
 
@@ -22,6 +22,86 @@ Use this rollback landmark if the project needs to return to the clean pre-MapLi
 ---
 
 ## Recent committed work: MapLibre-native subsystem branch
+
+### `268b18c` — Add MapLibre hover feedback
+
+- Added MapLibre hover feedback for unclustered nodes, dynamic clusters, and aggregated visible-endpoint routes.
+- Improved hover responsiveness by using direct hover resolution rather than waiting for slower lifecycle/diagnostic updates.
+- Prioritized nodes and clusters over crossing routes during hover resolution, which makes dense areas such as Florence easier to inspect.
+- Preserved node, cluster, aggregated-route click routing, selected feedback, curved route rendering, cluster labels, and production D3/SVG behavior.
+
+### `8137db7` — Curve MapLibre aggregated routes
+
+- Changed MapLibre aggregated visible-endpoint routes from straight two-point lines to deterministic curved multi-point `LineString` geometries.
+- Preserved source-to-target direction, aggregation behavior, route thickness, Inspector payloads, selected feedback, and cluster behavior.
+
+### `c0a4b8a` — Restore MapLibre migrated overlay after extraction regression
+
+- Restored the working migrated MapLibre overlay after `dd148e1` reintroduced an older preview-stage shape.
+- Re-established dynamic clusters, cluster labels, cluster-member node hiding, aggregated visible-endpoint routes, aggregated route Inspector behavior, and selected feedback.
+- Recorded that future structural extraction should be much narrower and source-of-truth verified.
+
+### `dd148e1` — Extract MapLibre cluster and aggregate IDs
+
+- Attempted to move cluster and aggregate route ID constants from `src/MapLibreMapStage.jsx` into `src/mapLibreLayerConfig.js`.
+- This pass regressed the migrated overlay and was superseded by `c0a4b8a`.
+- Keep this entry as a cautionary record: structural extraction around `MapLibreMapStage.jsx` should proceed only in small, directly verified patches.
+
+### `57d3cc1` — Add MapLibre cluster count labels
+
+- Added a MapLibre symbol layer for dynamic cluster count labels using cluster point counts.
+- Preserved dynamic clusters, selected cluster feedback, aggregated routes, Inspector routing, and production D3/SVG behavior.
+
+### `c7da28c` — Add MapLibre cluster selection feedback
+
+- Added selected visual feedback for dynamic MapLibre clusters.
+- Preserved selected feedback for aggregated routes and existing node/route selection behavior.
+- Ensured blank-map clicks clear selected MapLibre visual state.
+
+### `2ccaaeb` — Show MapLibre aggregated route details in inspector
+
+- Taught the edge Inspector to render aggregated MapLibre route details.
+- Preserved ordinary edge Inspector behavior for non-aggregated routes.
+- Added display of visible source/target endpoints, represented letter totals, underlying route counts, and underlying directed route summaries.
+
+### `084ce9d` — Enrich MapLibre aggregated route inspector payload
+
+- Enriched aggregated route click payloads with member-route metadata, represented weights, endpoint types, linked route IDs, and aggregate summaries.
+- Preserved route aggregation, route rendering, and existing click behavior.
+
+### `526534a` — Aggregate MapLibre routes between visible endpoints
+
+- Replaced faded original routes under clusters with aggregated visible-endpoint routes.
+- Combined directed routes between visible nodes and visible clusters into thicker lines based on represented letter volume.
+- Skipped routes that collapse into the same visible cluster.
+
+### `8a563cc` — Hide MapLibre cluster member nodes
+
+- Hid individual blue node features when they are represented by visible dynamic MapLibre clusters.
+- Recalculated hidden node membership as clusters form or break apart during zoom/pan.
+- Preserved cluster clicks, node clicks, route clicks, and production D3/SVG behavior.
+
+### `be7d9ae` — Route MapLibre cluster clicks to inspector
+
+- Routed clicks on dynamic MapLibre clusters into the existing Inspector pathway.
+- Used MapLibre cluster leaves to recover represented member features and build a cluster-like selection payload.
+- Preserved node/route Inspector behavior.
+
+### `1e8456f` — Add dynamic MapLibre cluster diagnostic
+
+- Replaced static diagnostic cluster points with a dynamic MapLibre clustered GeoJSON source derived from current node features.
+- Confirmed that MapLibre can form clusters from Peridot node data without replacing the production D3/SVG path.
+
+### `bb11f6a` — Add static MapLibre cluster lifecycle diagnostic
+
+- Added a static diagnostic cluster source/layer to prove MapLibre could receive and render a cluster-like source/layer.
+- Helped isolate source/layer lifecycle issues before dynamic cluster behavior was added.
+
+### `3f26cc2` — Broaden MapLibre lifecycle diagnostics
+
+- Broadened MapLibre diagnostics to report route, route-hit, node, selected-layer, source/layer, setup-phase, and rendered-count status.
+- The initial implementation was too invasive and was repaired before commit; the committed version preserved route/node rendering while adding passive diagnostics.
+
 
 ### `4c9ed6f` — Extract MapLibre layer configuration
 
@@ -151,6 +231,10 @@ Earlier hover-card and diagnostic patches were not committed because they either
 ### Selected-feedback attempt using `App.jsx` selected props
 
 An earlier selected-feedback attempt passed selection state through `App.jsx`. It caused screen flash and map center/zoom reset, so it was restored. The successful approach in `10051c0` uses local MapLibre selected filter layers on existing sources.
+
+### Broad MapLibre structural extraction attempt, `dd148e1`
+
+The `dd148e1` constants extraction attempt regressed the migrated overlay by reintroducing an older preview-stage shape. It was superseded by `c0a4b8a`, which restored the migrated overlay. Future `MapLibreMapStage.jsx` structural work should avoid broad full-file rewrites unless the exact current source has been verified, and should prefer very small extraction passes with one acceptance test per pass.
 
 ---
 

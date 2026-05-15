@@ -14,7 +14,7 @@ The goal is not a wholesale rewrite of Peridot. The goal is to rebuild the geogr
 - Main / MapLibre preview prototype checkpoint: **`10051c0` — `Add MapLibre selected filter layers`**
 - Prototype tag: **`checkpoint-maplibre-preview-prototype`**
 - Active native subsystem branch: **`maplibre-native-geographic-view`**
-- Current branch baseline at this handoff: **`4c9ed6f` — `Extract MapLibre layer configuration`**
+- Current branch baseline at this handoff: **`268b18c` — `Add MapLibre hover feedback`**
 
 ---
 
@@ -46,26 +46,29 @@ The current MapLibre preview is gated behind:
 ?maplibrePreview=1
 ```
 
-Confirmed working in the MapLibre preview/prototype path:
+Confirmed working in the MapLibre preview/prototype path at `268b18c`:
 
 - MapLibre map renders inside the Peridot workspace.
-- Peridot routes render as MapLibre GeoJSON line layers.
-- Peridot nodes render as MapLibre GeoJSON circle layers.
-- A transparent route hit layer improves route targeting.
-- Node and route clicks route into the existing Inspector.
-- Cursor-only hover works for nodes/routes.
-- Selected node/route visual feedback works through selected filter layers on existing sources.
-- Pure feature-building logic has been extracted to `src/mapLibreFeatureBuilders.js`.
-- Source/layer IDs and layer definitions have been extracted to `src/mapLibreLayerConfig.js`.
+- Peridot Place-view nodes render as MapLibre GeoJSON circle layers.
+- Dynamic MapLibre clusters render from current node features.
+- Cluster count labels render above dynamic clusters.
+- Cluster-member nodes are hidden when represented by visible clusters.
+- Cluster clicks route into the existing Inspector path.
+- Curved aggregated visible-endpoint routes render between visible nodes and visible clusters.
+- Aggregated routes use represented letter volume for route thickness.
+- Aggregated route clicks route into the Inspector and show aggregated route details.
+- Selected visual feedback works for clusters and aggregated routes.
+- Hover feedback works for unclustered nodes, dynamic clusters, and aggregated routes, with node/cluster priority over crossing routes.
+- Pure feature-building logic has been extracted to `src/mapLibreFeatureBuilders.js` for the original route/node feature builders.
+- Source/layer IDs and route/node layer definitions have been partially extracted to `src/mapLibreLayerConfig.js`; newer cluster/aggregate behavior currently remains mostly in `src/MapLibreMapStage.jsx` after an extraction regression.
 
 Not yet solved:
 
-- MapLibre cluster source/layer setup.
-- MapLibre cluster click routing.
-- MapLibre node hiding under clusters.
-- Route behavior when nodes cluster.
-- Production replacement decision.
-- Export parity under a MapLibre live map.
+- People and Force-Directed views do not yet have visible nodes/edges in the MapLibre branch; only Place view currently has the migrated MapLibre overlay.
+- Final Peridot-aligned basemap and style design remain open.
+- Playback highlighting parity under MapLibre remains open.
+- Production replacement decision remains open.
+- Export parity under a MapLibre live map remains open.
 
 ---
 
@@ -165,15 +168,14 @@ Future cluster selection should follow the same pattern once cluster source/laye
 
 MapLibre does not solve Peridot cluster semantics automatically. Peridot clusters are research objects, not just display blobs.
 
-Open route-behavior options when nodes are clustered:
+Route behavior under clustered nodes has moved from an open question to a current working diagnostic policy:
 
-1. Keep original routes even when member nodes are hidden.
-2. Hide routes involving hidden member nodes.
-3. Reroute original routes to cluster centers.
-4. Aggregate cluster-to-cluster routes.
-5. Show original routes faintly under clusters.
+- hidden member nodes are represented by visible clusters;
+- routes are aggregated between currently visible endpoints, which may be visible nodes or visible clusters;
+- multiple directed routes between the same visible source and target are combined into thicker curved lines based on represented letter volume;
+- routes whose source and target collapse into the same visible cluster are skipped.
 
-No route behavior should be implemented until cluster source/layer rendering and cluster click routing are stable.
+This policy is currently implemented in the gated MapLibre preview path and should remain subject to revision as People / Place / Force-Directed parity and final visual design are developed.
 
 ---
 
@@ -197,49 +199,33 @@ Conclusion:
 
 ---
 
-## Recommended next implementation pass
+## Recommended next implementation sequence
 
-### Pass: Instrument MapLibre cluster source/layer lifecycle
+### Pass group: make all three views functional in the MapLibre branch
 
-**Change type:** diagnostic / structural
+**Change type:** behavior
 
-**File:** `src/MapLibreMapStage.jsx` only at first
-
-**Goal:** determine why static cluster features are built but never appear as a MapLibre source/layer.
+**Goal:** preserve the migrated MapLibre Place-view overlay while making **People**, **Place**, and **Force-Directed** functional in the branch. At this handoff, only Place view has visible MapLibre nodes/edges.
 
 **In scope:**
 
-- add hard-coded local cluster features inside `MapLibreMapStage.jsx`
-- add local cluster source/layer setup in the same file
-- add diagnostic counters:
-  - setup attempts
-  - last setup phase: update / load / styledata / idle
-  - readiness guard result
-  - setup error message if any
-  - source exists yes/no
-  - layer exists yes/no
-  - rendered count
+- audit the current `App.jsx` → `MapLibreMapStage.jsx` prop path for People / Place / Force-Directed
+- determine whether People view should share the migrated MapLibre geographic overlay or needs a separate node/edge projection path
+- preserve the existing non-geographic D3-force Force-Directed view or deliberately route around MapLibre for that mode
+- keep the production D3/SVG path unchanged
 
-**Out of scope:**
+**Out of scope for the first pass:**
 
-- no `App.jsx` changes
-- no helper/config extraction changes yet
-- no node hiding
-- no route changes
-- no cluster labels
-- no cluster Inspector routing
-- no zoom-responsive derived clusters
+- no basemap redesign
+- no playback highlighting parity
+- no export changes
+- no broad structural extraction of `MapLibreMapStage.jsx`
 
-**Acceptance test:**
+**Later pass groups:**
 
-```text
-?maplibrePreview=1 shows diagnostics for cluster setup attempts.
-If source/layer still report no, the panel explains why.
-Zoom/pan does not flash or reset.
-Nodes/routes/selection still work.
-Normal production URL remains unchanged.
-npm.cmd run build succeeds.
-```
+1. Explore prettier / more Peridot-aligned MapLibre basemap and visual-style options.
+2. Add playback highlighting parity for MapLibre.
+3. Revisit structural extraction only after behavior and visual direction stabilize.
 
 ---
 
@@ -248,14 +234,21 @@ npm.cmd run build succeeds.
 1. Preserve current production D3/SVG behavior.
 2. Preserve current MapLibre preview prototype at `10051c0` / tag `checkpoint-maplibre-preview-prototype`.
 3. Continue native subsystem work on `maplibre-native-geographic-view`.
-4. Instrument and solve MapLibre cluster source/layer lifecycle.
-5. Add stable static cluster rendering.
-6. Add cluster click routing into existing Inspector cluster view.
-7. Add derived cluster features from node data.
-8. Add node hiding under clusters only after cluster rendering/click routing works.
-9. Decide route behavior under clustered nodes.
-10. Decide whether and when MapLibre replaces the production geographic map.
-11. Revisit export policy separately.
+4. Preserve the migrated MapLibre Place-view overlay now available at `268b18c`.
+5. Make People, Place, and Force-Directed functional in the MapLibre branch.
+6. Explore prettier / more Peridot-aligned MapLibre basemap and visual styles.
+7. Add playback highlighting parity.
+8. Decide whether and when MapLibre replaces the production geographic map.
+9. Revisit export policy separately.
+10. Revisit structural extraction only with tiny, source-of-truth-verified passes.
+
+---
+
+## Structural extraction caution
+
+The `dd148e1` constants extraction attempt regressed the migrated overlay by reintroducing an older preview-stage shape. It was superseded by `c0a4b8a`, which restored the migrated overlay. Future extraction should be treated as a high-risk structural operation unless it is a very small patch against the exact current source of truth.
+
+Safe later extraction candidates include static ID constants and pure layer-definition builders. Do not extract live map lifecycle setup, zoom/move recalculation, hidden-node filtering, selected/hover filter application, or Inspector payload construction until the subsystem is more stable.
 
 ---
 
