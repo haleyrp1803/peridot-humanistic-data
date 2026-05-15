@@ -169,6 +169,78 @@ function stableFeatureKey(feature) {
   return `${id}:${count}`;
 }
 
+
+function deterministicCurveDirection(sourceId, targetId) {
+  const source = String(sourceId || '');
+  const target = String(targetId || '');
+
+  if (source && target && source !== target) {
+    return source.localeCompare(target) <= 0 ? 1 : -1;
+  }
+
+  const key = `${source}-->${target}`;
+  let hash = 0;
+  for (let index = 0; index < key.length; index += 1) {
+    hash = (hash * 31 + key.charCodeAt(index)) % 9973;
+  }
+  return hash % 2 === 0 ? 1 : -1;
+}
+
+function buildCurvedLineCoordinates(sourceCoordinates, targetCoordinates, sourceId, targetId) {
+  if (!Array.isArray(sourceCoordinates) || !Array.isArray(targetCoordinates)) {
+    return [sourceCoordinates, targetCoordinates].filter(Boolean);
+  }
+
+  const sourceLon = Number(sourceCoordinates[0]);
+  const sourceLat = Number(sourceCoordinates[1]);
+  const targetLon = Number(targetCoordinates[0]);
+  const targetLat = Number(targetCoordinates[1]);
+
+  if (
+    !Number.isFinite(sourceLon) ||
+    !Number.isFinite(sourceLat) ||
+    !Number.isFinite(targetLon) ||
+    !Number.isFinite(targetLat)
+  ) {
+    return [sourceCoordinates, targetCoordinates];
+  }
+
+  const dx = targetLon - sourceLon;
+  const dy = targetLat - sourceLat;
+  const distance = Math.hypot(dx, dy);
+
+  if (!Number.isFinite(distance) || distance < 0.05) {
+    return [sourceCoordinates, targetCoordinates];
+  }
+
+  const midpointLon = (sourceLon + targetLon) / 2;
+  const midpointLat = (sourceLat + targetLat) / 2;
+  const direction = deterministicCurveDirection(sourceId, targetId);
+  const bend = Math.min(1.4, Math.max(0.18, distance * 0.1));
+  const normalLon = (-dy / distance) * bend * direction;
+  const normalLat = (dx / distance) * bend * direction;
+  const controlLon = midpointLon + normalLon;
+  const controlLat = midpointLat + normalLat;
+  const steps = 28;
+  const coordinates = [];
+
+  for (let step = 0; step <= steps; step += 1) {
+    const t = step / steps;
+    const oneMinusT = 1 - t;
+    const lon =
+      oneMinusT * oneMinusT * sourceLon +
+      2 * oneMinusT * t * controlLon +
+      t * t * targetLon;
+    const lat =
+      oneMinusT * oneMinusT * sourceLat +
+      2 * oneMinusT * t * controlLat +
+      t * t * targetLat;
+    coordinates.push([lon, lat]);
+  }
+
+  return coordinates;
+}
+
 function buildVisibleAggregatedRouteFeatureCollection({
   routeFeatureCollection,
   nodeFeatureCollection,
@@ -252,7 +324,12 @@ function buildVisibleAggregatedRouteFeatureCollection({
       },
       geometry: {
         type: 'LineString',
-        coordinates: [group.sourceCoordinates, group.targetCoordinates],
+        coordinates: buildCurvedLineCoordinates(
+          group.sourceCoordinates,
+          group.targetCoordinates,
+          group.sourceId,
+          group.targetId,
+        ),
       },
     }));
 
