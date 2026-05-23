@@ -181,8 +181,15 @@ function ChartTypeButton({ option, active, onSelect }) {
 function ChartUseDescription({ chartDefinition }) {
   return (
     <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-sm">
-      <div className="font-semibold text-[var(--panel-card-text)]">{chartDefinition.label}</div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="font-semibold text-[var(--panel-card-text)]">{chartDefinition.label}</div>
+        <div className="rounded-full border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--panel-card-muted-text)]">
+          {chartDefinition.variableCountLabel}
+        </div>
+      </div>
       <div className="mt-1 text-[var(--panel-card-muted-text)]">{chartDefinition.descriptor}</div>
+      <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">{chartDefinition.variableSummary}</div>
+      <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">{chartDefinition.defaultUseCase}</div>
       <div className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--panel-card-muted-text)]">Example questions</div>
       <div className="mt-2 space-y-1 text-xs text-[var(--panel-card-muted-text)]">
         {chartDefinition.exampleQuestions.map((question) => (
@@ -193,14 +200,15 @@ function ChartUseDescription({ chartDefinition }) {
   );
 }
 
-function SelectControl({ label, value, onChange, options, description }) {
+function SelectControl({ label, value, onChange, options, description, disabled = false }) {
   return (
     <label className="block text-sm">
       <span className="mb-1 block font-medium text-[var(--panel-card-text)]">{label}</span>
       <select
         value={value || ''}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+        disabled={disabled}
+        className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:cursor-not-allowed disabled:opacity-70"
       >
         {options.map((field) => (
           <option key={field.key ?? field} value={field.key ?? field}>{field.label ?? field}</option>
@@ -208,6 +216,15 @@ function SelectControl({ label, value, onChange, options, description }) {
       </select>
       {description ? <span className="mt-1 block text-xs text-[var(--panel-card-muted-text)]">{description}</span> : null}
     </label>
+  );
+}
+
+function VariableControlsShell({ children }) {
+  return (
+    <div className="mt-4 space-y-3">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--panel-card-muted-text)]">Variables</div>
+      {children}
+    </div>
   );
 }
 
@@ -287,59 +304,81 @@ export function AnalyticsPanelContent({
 
   const renderChartControls = () => {
     if (chartType === 'bar') {
-      return canRenderBarControls ? (
-        <>
-          <SelectControl label="Group by" value={selectedBarField?.key || ''} onChange={setBarGroupBy} options={availableBarFields} description={selectedBarField?.description} />
-          <SelectControl label="Show" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-        </>
-      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported categorical fields are available in the current data.</div>;
+      return (
+        <VariableControlsShell>
+          {canRenderBarControls ? (
+            <>
+              <SelectControl label="Variable 1: category to rank" value={selectedBarField?.key || ''} onChange={setBarGroupBy} options={availableBarFields} description={selectedBarField?.description} />
+              <SelectControl label="Limit displayed categories" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+            </>
+          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported categorical fields are available in the current data.</div>}
+        </VariableControlsShell>
+      );
     }
 
     if (chartType === 'line') {
       return (
-        <div className="space-y-2 text-sm text-[var(--panel-card-muted-text)]">
-          <div>X-axis: Year</div>
-          <div>Metric: Letter count</div>
-          {!canRenderLine ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3">No usable year values are available in the current data.</div> : null}
-        </div>
+        <VariableControlsShell>
+          <SelectControl label="Variable 1: x-axis" value="year" onChange={() => {}} options={[{ key: 'year', label: 'Year' }]} description="Year is the available ordered variable for this first line-chart version." disabled />
+          <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Metric: letter count. Later versions can add filtered or split line modes.</div>
+          {!canRenderLine ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No usable year values are available in the current data.</div> : null}
+        </VariableControlsShell>
       );
     }
 
     if (chartType === 'pie') {
-      return availablePieFields.length ? (
-        <>
-          <SelectControl label="Slice by" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} />
-          <SelectControl label="Show" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-        </>
-      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported part-to-whole fields are available in the current data.</div>;
+      return (
+        <VariableControlsShell>
+          {availablePieFields.length ? (
+            <>
+              <SelectControl label="Variable 1: slice category" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} />
+              <SelectControl label="Limit displayed slices" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+            </>
+          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported part-to-whole fields are available in the current data.</div>}
+        </VariableControlsShell>
+      );
     }
 
     if (chartType === 'stackedBar') {
-      return availableSegmentFields.length ? (
-        <>
-          <SelectControl label="Split yearly bars by" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
-          <SelectControl label="Show categories" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-        </>
-      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported split fields are available in the current data.</div>;
+      return (
+        <VariableControlsShell>
+          {availableSegmentFields.length ? (
+            <>
+              <SelectControl label="Variable 1: x-axis" value="year" onChange={() => {}} options={[{ key: 'year', label: 'Year' }]} description="Year groups the bars chronologically." disabled />
+              <SelectControl label="Variable 2: segment field" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
+              <SelectControl label="Limit displayed segments" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+            </>
+          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported split fields are available in the current data.</div>}
+        </VariableControlsShell>
+      );
     }
 
     if (chartType === 'multiLine') {
-      return availableSegmentFields.length ? (
-        <>
-          <SelectControl label="Draw one line per" value={selectedMultiLineField?.key || ''} onChange={setMultiLineGroupBy} options={availableSegmentFields} description={selectedMultiLineField?.description} />
-          <SelectControl label="Show lines" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-        </>
-      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported line-splitting fields are available in the current data.</div>;
+      return (
+        <VariableControlsShell>
+          {availableSegmentFields.length ? (
+            <>
+              <SelectControl label="Variable 1: x-axis" value="year" onChange={() => {}} options={[{ key: 'year', label: 'Year' }]} description="Year places every line on a common chronological scale." disabled />
+              <SelectControl label="Variable 2: line grouping" value={selectedMultiLineField?.key || ''} onChange={setMultiLineGroupBy} options={availableSegmentFields} description={selectedMultiLineField?.description} />
+              <SelectControl label="Limit displayed lines" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+            </>
+          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported line-splitting fields are available in the current data.</div>}
+        </VariableControlsShell>
+      );
     }
 
     if (chartType === 'heatmap') {
-      return availableHeatmapRows.length && availableHeatmapColumns.length ? (
-        <>
-          <SelectControl label="Rows" value={selectedHeatmapRowField?.key || ''} onChange={setHeatmapRowBy} options={availableHeatmapRows} description={selectedHeatmapRowField?.description} />
-          <SelectControl label="Columns" value={selectedHeatmapColumnField?.key || ''} onChange={setHeatmapColumnBy} options={availableHeatmapColumns} description={selectedHeatmapColumnField?.description} />
-          <SelectControl label="Show rows/columns" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-        </>
-      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported heat-map fields are available in the current data.</div>;
+      return (
+        <VariableControlsShell>
+          {availableHeatmapRows.length && availableHeatmapColumns.length ? (
+            <>
+              <SelectControl label="Variable 1: rows" value={selectedHeatmapRowField?.key || ''} onChange={setHeatmapRowBy} options={availableHeatmapRows} description={selectedHeatmapRowField?.description} />
+              <SelectControl label="Variable 2: columns" value={selectedHeatmapColumnField?.key || ''} onChange={setHeatmapColumnBy} options={availableHeatmapColumns} description={selectedHeatmapColumnField?.description} />
+              <SelectControl label="Limit displayed rows/columns" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+            </>
+          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported heat-map fields are available in the current data.</div>}
+        </VariableControlsShell>
+      );
     }
 
     return null;
@@ -370,7 +409,7 @@ export function AnalyticsPanelContent({
       <section className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-4">
         <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Configure chart</div>
         <ChartUseDescription chartDefinition={chartDefinition} />
-        <div className="mt-4 space-y-3">{renderChartControls()}</div>
+        {renderChartControls()}
       </section>
 
       <section className="space-y-3">

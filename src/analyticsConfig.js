@@ -3,6 +3,9 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     key: 'bar',
     label: 'Bar chart',
     descriptor: 'Ranked categorical comparison',
+    variableSummary: 'Uses 1 selectable variable: the category to rank. Metric is fixed to letter count.',
+    variableCountLabel: '1 variable',
+    defaultUseCase: 'Best default: Source person, to rank correspondents by letters sent.',
     exampleQuestions: [
       'Who sent the most letters?',
       'Which routes are most active?',
@@ -13,6 +16,9 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     key: 'line',
     label: 'Line chart',
     descriptor: 'Change over time',
+    variableSummary: 'Uses 1 variable: year. Metric is fixed to letter count.',
+    variableCountLabel: '1 variable',
+    defaultUseCase: 'Best default: Year, to show overall correspondence volume over time.',
     exampleQuestions: [
       'How does correspondence volume change by year?',
       'When does a relationship become active?',
@@ -22,6 +28,9 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     key: 'stackedBar',
     label: 'Stacked bar chart',
     descriptor: 'Compare categories across time or groups',
+    variableSummary: 'Uses 2 variables: year plus a selectable segment field. Metric is fixed to letter count.',
+    variableCountLabel: '2 variables',
+    defaultUseCase: 'Best default: Year split by source person, to compare major correspondents across time.',
     exampleQuestions: [
       'How do yearly letter totals break down by sender?',
       'Which languages or relationships dominate different periods?',
@@ -31,6 +40,9 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     key: 'multiLine',
     label: 'Multi-line chart',
     descriptor: 'Compare several trends over time',
+    variableSummary: 'Uses 2 variables: year plus a selectable line grouping. Metric is fixed to letter count.',
+    variableCountLabel: '2 variables',
+    defaultUseCase: 'Best default: Year with one line per source person, to compare correspondence trends.',
     exampleQuestions: [
       'How do different correspondents change over time?',
       'Which places become more or less active across years?',
@@ -40,6 +52,9 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     key: 'pie',
     label: 'Pie chart',
     descriptor: 'Limited part-to-whole summaries',
+    variableSummary: 'Uses 1 selectable variable: the category used for slices. Metric is fixed to letter count.',
+    variableCountLabel: '1 variable',
+    defaultUseCase: 'Best default: Language or relationship, to show a compact share of the whole.',
     exampleQuestions: [
       'What share of letters are in each language?',
       'What share of letters belongs to each relationship type?',
@@ -49,6 +64,9 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     key: 'heatmap',
     label: 'Heat map',
     descriptor: 'Matrix comparison between two categorical fields',
+    variableSummary: 'Uses 2 selectable variables: rows and columns. Cell intensity is fixed to letter count.',
+    variableCountLabel: '2 variables',
+    defaultUseCase: 'Best default: Source person × target person, to identify dominant correspondence pairs.',
     exampleQuestions: [
       'Which sender-recipient pairs dominate the network?',
       'Which source and target places are most connected?',
