@@ -14,6 +14,31 @@ That milestone reflects the clean Peridot state after the cluster-interaction, n
 
 ---
 
+## Current planning note
+
+### Search & Filter panel contract
+
+- Agreed on a new design direction to consolidate global filtering into a dedicated **Search & Filter** panel tab.
+- Defined the long-term model as:
+
+```text
+data source
+→ active filtered dataset
+→ visualization / inspection / analytics / export
+```
+
+- Established that Search & Filter should eventually own or coordinate global filters including date range, minimum correspondence weight, person filters, place filters, route filters, language, relationship, mappability, and safe categorical metadata fields.
+- Clarified that Controls/View should define display and presentation, Timeline should focus on chronological playback/navigation, Analytics should chart the current filtered dataset, Inspector should remain selection-driven, and Export should label whether it exports loaded, filtered, visible, selected, or charted data.
+- Recorded the planned implementation sequence:
+  1. add a placeholder/read-only Search & Filter rail tab
+  2. move the existing minimum-weight control into Search & Filter
+  3. move or mirror date filtering while preserving Timeline playback
+  4. add lightweight person/place/route search
+  5. add an Analytics data-scope summary
+- This is a documentation/design milestone only; it does not change runtime behavior or the current documented safe baseline.
+
+---
+
 ## Current branch transition
 
 ### `3352403` — Fix Analytics expanded overlay and variable options

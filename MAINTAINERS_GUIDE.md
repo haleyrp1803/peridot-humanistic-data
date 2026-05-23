@@ -111,6 +111,7 @@ The app includes:
 - year-based timeline filtering and playback
 - shared side-panel inspection workflow
 - persistent side-panel icon rail with dedicated Controls, Data Inputs, Export, Timeline, Analytics, and Inspector tabs
+- planned Search & Filter consolidation so global filtering can eventually define one active filtered dataset for map, Inspector, Analytics, Timeline, and Export workflows
 - theme presets and visual controls
 - export tools for image and tabular outputs
 - Analytics charting tools with compact previews, expanded overlay, variable controls, date-range controls, and PNG chart export
@@ -145,6 +146,7 @@ Owns the shared side-panel shell and persistent icon rail. The shell includes:
 - persistent icon rail that is available when the panel is closed and when it is open
 - open-state close button at the top of the rail
 - rail-driven panel views for **Controls**, **Data Inputs**, **Export**, **Timeline**, **Analytics**, and **Inspector**
+- future planned rail support for **Search & Filter**, which should be added in a narrow panel-shell pass before any filtering behavior is moved
 - Controls content rendering for visualization, display, theme, summary, and diagnostics controls
 - Data Inputs content rendering for Geography, Raw Data, and Person Metadata uploads
 - Export content rendering for SVG, PNG, nodes CSV, and edges/routes CSV controls
@@ -370,6 +372,57 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 ---
 
+## Planned Search & Filter panel contract
+
+The next planned panel-design direction is a dedicated **Search & Filter** tab. This is not yet implemented in the current safe baseline, but it is now the agreed design contract for the next sequence of bounded passes.
+
+### Core model
+
+Peridot should distinguish:
+
+```text
+data source
+→ active filtered dataset
+→ visualization / inspection / analytics / export
+```
+
+Search & Filter should become the primary owner of the **active filtered dataset**: the subset of loaded correspondence records that pass all enabled global filters.
+
+### Intended responsibilities
+
+- **Data Inputs** defines which data is loaded.
+- **Search & Filter** defines which records, people, places, routes, and metadata categories are in scope.
+- **Controls / View** defines how the active dataset is displayed.
+- **Timeline** focuses on chronological playback and temporal navigation.
+- **Analytics** charts the current filtered dataset by default.
+- **Inspector** remains selection-driven, with possible later actions to filter to the selected person/place/route.
+- **Export** should label whether it exports loaded, filtered, visible, selected, or charted data.
+
+### Filter taxonomy
+
+Search & Filter work should distinguish:
+
+- **record-level filters:** date range, sender, recipient, source/target place, language, relationship, categorical metadata, mappability
+- **derived edge/route filters:** minimum correspondence weight, reciprocal/one-way routes, routes involving selected entities
+- **view/display controls:** visualization mode, labels, theme, cluster display, node sizing, map styling
+- **Analytics chart controls:** chart type, variables, grouping, top-N, orientation, chart-specific time bucketing
+
+Minimum weight is user-facing filter behavior, but internally it is a derived edge/route filter rather than a raw-record filter. Treat that distinction carefully when moving it from Controls/View into Search & Filter.
+
+### Initial implementation sequence
+
+1. Add a Search & Filter rail tab with placeholder/read-only content only.
+2. Move the existing minimum-weight numeric input into Search & Filter.
+3. Move or mirror date filtering carefully, preserving Timeline playback.
+4. Add lightweight person/place/route search.
+5. Add an Analytics data-scope summary showing which filtered records are being charted.
+
+### Cautions
+
+Do not use this sequence as an opportunity for broad `App.jsx` refactoring. Do not merge Timeline, Analytics, and Inspector into one panel. Do not make Analytics or Inspector the global filter owner. Do not rename compatibility-sensitive `showLeftSidebar` / `showRightSidebar` paths during this work. Do not touch dormant MapLibre files as part of Search & Filter work.
+
+---
+
 ## Current theme and panel state
 
 The default full-app theme remains **Peridot-inspired**.
@@ -382,13 +435,14 @@ Other retained presets still function as map-focused alternatives:
 Important current side-panel state:
 
 - the persistent rail, not a horizontal top-tab row, is now the panel-view switcher
-- rail tabs are:
+- rail tabs are currently:
   1. **Controls** — Visualization Type, Display Controls, Theme, Summary and Diagnostics, and remaining general options
   2. **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
   3. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
   4. **Timeline** — year-range filtering and playback controls
   5. **Analytics** — chart selection, chart configuration, expanded chart overlay, and chart PNG export
   6. **Inspector** — selected nodes, edges, clusters, linked records, and inspector-internal navigation
+- the planned next rail-tab addition is **Search & Filter**, initially as placeholder/read-only panel content before any filtering behavior moves
 - the open-state rail has a mossy/peridot background, lighter green inactive buttons, lighter hover states, and cream active-state buttons
 
 Recent committed behavior includes:
@@ -591,6 +645,7 @@ These areas still deserve narrow, explicit passes:
 - Analytics expanded overlay positioning above the map area
 - Analytics dynamic variable detection from uploaded/current row data
 - Analytics SVG-to-PNG chart export rendering
+- future Search & Filter active-dataset state, especially once it begins coordinating date, weight, person/place/route, metadata, Timeline, Analytics, Inspector, and Export behavior
 - dormant MapLibre preview code if it is ever reactivated
 
 ---
@@ -654,3 +709,4 @@ A future chat should also be told that:
 - current cluster features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
 - documentation should preserve the full commit trajectory carefully
+- the planned Search & Filter panel should consolidate global filtering and define the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it

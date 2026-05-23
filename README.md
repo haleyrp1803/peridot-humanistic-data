@@ -47,6 +47,8 @@ The current state of the active `main` project includes:
 
 The codebase is functional, but it is still under active maintenance. The largest remaining structural issue is that important orchestration logic still lives in `src/App.jsx`, even though panel, inspector, map, timeline, interaction, and export logic have been substantially extracted.
 
+A near-term design direction is to add a dedicated **Search & Filter** panel tab that consolidates global filtering and defines one active filtered dataset for map, Inspector, Timeline, Analytics, and Export workflows. This is planned design work rather than current implemented behavior in the documented safe baseline.
+
 ---
 
 ## 4. Key features
@@ -68,6 +70,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 - hover and click inspection
 - shared side-panel Inspector tab for selected nodes, edges, clusters, and linked records
 - dedicated side-panel tabs for Data Inputs, Export, Timeline, and Analytics workflows
+- planned Search & Filter workflow to consolidate global filters that are currently distributed across Controls, Timeline, Analytics, and interaction state
 - inspector-internal navigation between people and places
 - actionable cluster inspector lists
 - cluster members grouped by place and ordered by represented visible volume
@@ -144,6 +147,8 @@ The current interface includes:
   - **Timeline** — year-range filtering and playback controls
   - **Analytics** — compact charting, chart configuration, expanded chart overlay, and PNG chart export
   - **Inspector** — selected nodes, edges, clusters, linked records, and internal navigation
+
+A planned next panel addition is **Search & Filter**, which should eventually consolidate date, weight, person/place/route, metadata, and mappability filters into one coherent active-dataset workflow. The first implementation step should be a placeholder/read-only rail tab, not a behavioral rewrite.
 
 Other current behavior:
 
@@ -458,6 +463,28 @@ A typical workflow is:
 10. Use **Analytics** to generate compact charts from the current data, expand a chart over the map area, and export chart previews as PNG files.
 11. Use **Export** to save the current visualization state as SVG, PNG, or CSV outputs.
 
+### Planned Search & Filter workflow
+
+The next major UI/UX direction is to consolidate global search and filtering into a dedicated **Search & Filter** panel tab. The intended long-term model is:
+
+```text
+data source
+→ active filtered dataset
+→ visualization / inspection / analytics / export
+```
+
+Under that model:
+
+- **Data Inputs** defines which data is loaded.
+- **Search & Filter** defines which records, people, places, routes, and metadata categories are in scope.
+- **Controls / View** defines how the active dataset is displayed.
+- **Timeline** focuses on playback and chronological navigation.
+- **Analytics** charts the current filtered dataset by default.
+- **Inspector** remains selection-driven.
+- **Export** labels whether it is exporting loaded, filtered, visible, selected, or charted data.
+
+The planned implementation sequence is to add a placeholder Search & Filter rail tab first, then move the minimum-weight control, then carefully mirror or move date filtering, then add lightweight person/place/route search, and finally add an Analytics data-scope summary.
+
 ---
 
 ## 12. MapLibre status
@@ -516,6 +543,9 @@ Likely near-term priorities include:
 - continue from the legacy D3/SVG Peridot path on `main`
 - keep dormant MapLibre files untouched unless explicitly resuming that experiment
 - continue improving Analytics usability after the current charting milestone
+- add a dedicated Search & Filter panel tab as the next UI/UX consolidation direction
+- move filtering behavior into Search & Filter in narrow passes, beginning with placeholder content and then the minimum-weight control
+- add Analytics data-scope summaries so charts clearly state which filtered records they summarize
 
 - continue safe reduction of orchestration pressure inside `src/App.jsx`
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested

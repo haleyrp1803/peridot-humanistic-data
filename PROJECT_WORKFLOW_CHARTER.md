@@ -78,6 +78,7 @@ Current fragile zones include:
 - Analytics expanded overlay positioning above the map area
 - Analytics dynamic variable detection from uploaded/current row data
 - Analytics SVG-to-PNG chart export rendering
+- future Search & Filter active-dataset state, especially when it begins coordinating date, weight, person/place/route, metadata, Analytics, Timeline, Inspector, and Export behavior
 
 ---
 
@@ -208,10 +209,168 @@ Current notable decisions:
 - MapLibre migrated-overlay work is paused; legacy D3/SVG Peridot on `main` is the active continuation path unless the user explicitly resumes MapLibre.
 - Analytics variables should combine curated semantic fields with conservatively detected categorical metadata fields rather than exposing every raw column indiscriminately.
 - Analytics route variables are split into **Route (Place)** and **Route (Person)** to avoid ambiguity.
+- Add a dedicated **Search & Filter** panel tab as the long-term owner of global dataset filtering, so Controls/View defines presentation, Timeline focuses on chronological playback, Analytics charts the current filtered dataset, Inspector remains selection-driven, and Export labels whether it exports loaded, filtered, visible, selected, or charted data.
 
 ---
 
-## 12. Project-specific cautions
+## 12. Search & Filter panel contract
+
+### Purpose
+
+Peridot should distinguish between:
+
+```text
+data source
+→ active filtered dataset
+→ visualization / inspection / analytics / export
+```
+
+The future **Search & Filter** panel should become the primary place where the user defines the **active filtered dataset**. The user should not need to remember that date filtering, weight filtering, chart data scope, and entity exploration are distributed across several implementation-era panel locations.
+
+The governing research question for this subsystem is:
+
+```text
+What subset of the correspondence corpus am I looking at right now?
+```
+
+### Panel responsibility model
+
+#### Data Inputs
+
+**Purpose:** define the available dataset.
+
+Data Inputs should continue to own Geography, Raw Data, and Person Metadata upload/replacement tools. It should not become the filter owner.
+
+#### Search & Filter
+
+**Purpose:** define the active subset of the loaded dataset.
+
+Search & Filter should eventually contain global filters, search tools, sorting/ranking controls, and a visible summary of the active corpus.
+
+Likely global filters include:
+
+- date range
+- minimum correspondence weight
+- sender / source person
+- recipient / target person
+- source place
+- target place
+- route, including both place-route and person-route concepts
+- relationship
+- language
+- mappability status
+- safe categorical metadata fields
+
+Likely search tools include:
+
+- person search
+- place search
+- route search
+- metadata keyword search, if feasible later
+
+Likely sorting/ranking tools include:
+
+- sort people by total letters
+- sort places by total letters
+- sort routes by volume
+- sort correspondents by relationship weight
+- sort records chronologically
+
+Search & Filter should eventually show an active-scope summary such as:
+
+```text
+Active records: 284
+Date range: 1600–1625
+Minimum route weight: 2
+Person filter: Suor Colomba
+Place filter: Siena
+Metadata filters: Language = Italian
+```
+
+#### Controls / View
+
+**Purpose:** define how the active dataset is displayed.
+
+Controls/View should retain visualization mode, display options, theme controls, map/view settings, and diagnostics. It should gradually lose controls whose primary purpose is filtering the dataset, such as minimum weight.
+
+#### Timeline
+
+**Purpose:** animate and navigate the active date range.
+
+Long term, Search & Filter should own or clearly mirror the active date range, while Timeline focuses on playback, chronological animation, play/pause, stepping behavior, and temporal context.
+
+Preferred long-term model:
+
+```text
+Search & Filter owns the active date range.
+Timeline consumes that range for playback and chronological exploration.
+```
+
+#### Analytics
+
+**Purpose:** chart the active filtered dataset.
+
+Analytics should continue to own chart type selection, chart-specific variable choices, chart preview, expanded chart overlay, PNG export, chart descriptions, and example questions. It should clearly inherit the active filtered dataset by default and eventually show a data-scope statement such as:
+
+```text
+Charting 284 records from current filters.
+Date range: 1600–1625.
+Minimum weight: 2.
+Includes unmappable records: Yes.
+```
+
+#### Inspector
+
+**Purpose:** inspect selected entities within the active view.
+
+Inspector should remain selection-driven and should not become the global filter owner. Later, Inspector may offer explicit actions such as **Filter to this person**, **Filter to this place**, **Filter to this route**, or **Show only linked records**. Those actions should be added only in narrow behavior passes because inspector-open interactions are fragile.
+
+#### Export
+
+**Purpose:** export the current visualized or filtered result.
+
+Export should eventually make clear whether it is exporting all loaded data, current filtered data, current visible nodes/edges, the current chart, the current selected entity, or the current map view.
+
+### Active filtered dataset definition
+
+The **active filtered dataset** is the subset of loaded correspondence records that pass all enabled global filters in Search & Filter.
+
+Derived structures should then be computed from that active filtered dataset:
+
+```text
+active filtered records
+→ visible people
+→ visible places
+→ visible routes/edges
+→ visible clusters
+→ Analytics chart inputs
+→ export rows, where relevant
+```
+
+Minimum weight requires special care because it is usually a derived edge/route filter rather than a raw-record filter. The implementation should distinguish among:
+
+- **record-level filters** — date, sender, recipient, places, language, relationship, metadata, mappability
+- **derived edge/route filters** — minimum weight, reciprocal-only routes, one-way-only routes, routes involving selected entities
+- **view/display controls** — theme, labels, cluster display, node sizing, map style, visualization mode
+- **Analytics chart controls** — chart type, variables, grouping, top-N, orientation, chart-specific date bucketing
+
+### Initial implementation sequence
+
+1. Add a Search & Filter rail tab with placeholder/read-only content only. Do not move behavior yet.
+2. Move the existing minimum-weight numeric input from Controls/View to Search & Filter.
+3. Move or mirror date filtering carefully, preserving Timeline playback.
+4. Add lightweight person/place/route search.
+5. Add an Analytics data-scope summary showing which filtered records are being charted.
+
+### Search & Filter cautions
+
+Do not begin by rewriting the whole filtering pipeline. Do not merge Timeline, Analytics, and Inspector into one panel. Do not make Analytics or Inspector the owner of global filters. Do not rename compatibility-sensitive shared-panel state during this work. Do not touch MapLibre as part of this effort.
+
+Search & Filter work should proceed as narrow bounded passes because it will eventually touch multiple fragile zones: timeline state, selection persistence, map rendering, Analytics derivation, export rows, inspector behavior, and broad `App.jsx` orchestration.
+
+---
+
+## 13. Project-specific cautions
 
 ### Shared side-panel compatibility path
 
@@ -261,7 +420,7 @@ Cluster behavior is now committed and functional. Future cluster changes should 
 
 ---
 
-## 13. Standard delivery summary
+## 14. Standard delivery summary
 
 Each implementation pass should end with:
 
@@ -275,7 +434,7 @@ Each implementation pass should end with:
 
 ---
 
-## 14. Fresh-chat handoff
+## 15. Fresh-chat handoff
 
 For a new chat, start with:
 
@@ -291,7 +450,8 @@ The new chat should be told:
 
 - Peridot is the current app identity.
 - The current fixed basemap is `countries50m`.
-- The app uses a shared left-side panel with Controls, Data Inputs, Export, Timeline, Analytics, and Inspector tabs.
+- The app currently uses a shared left-side panel with Controls, Data Inputs, Export, Timeline, Analytics, and Inspector tabs.
+- The next planned panel-design direction is a dedicated Search & Filter tab that will consolidate global filtering and define the active filtered dataset.
 - `LeftControlPanel.jsx` owns the shared side-panel shell.
 - `InspectorPanel.jsx` is content-only.
 - Analytics is handled by `AnalyticsPanel.jsx`, `analyticsConfig.js`, `analyticsDerivationHelpers.js`, and `analyticsChartComponents.jsx`.
