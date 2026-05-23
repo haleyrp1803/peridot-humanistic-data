@@ -19,11 +19,34 @@ function slugifyFilenamePart(value, fallback = 'analytics-chart') {
   return cleaned || fallback;
 }
 
+function withResolvedSvgStyles(svgElement) {
+  const clone = svgElement.cloneNode(true);
+  const sourceNodes = [svgElement, ...svgElement.querySelectorAll('*')];
+  const cloneNodes = [clone, ...clone.querySelectorAll('*')];
+
+  sourceNodes.forEach((sourceNode, index) => {
+    const cloneNode = cloneNodes[index];
+    if (!cloneNode || !(sourceNode instanceof Element)) return;
+
+    const computed = window.getComputedStyle(sourceNode);
+    ['fill', 'stroke', 'color', 'font-family', 'font-size', 'font-weight', 'opacity'].forEach((property) => {
+      const value = computed.getPropertyValue(property);
+      if (value && value !== 'none' && !value.includes('var(')) {
+        cloneNode.style.setProperty(property, value);
+      }
+    });
+  });
+
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  return clone;
+}
+
 async function exportSvgElementToPng(svgElement, filename) {
   if (!svgElement) throw new Error('No chart SVG is available to export.');
 
+  const exportSvg = withResolvedSvgStyles(svgElement);
   const serializer = new XMLSerializer();
-  const svgText = serializer.serializeToString(svgElement);
+  const svgText = serializer.serializeToString(exportSvg);
   const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
   const svgUrl = URL.createObjectURL(svgBlob);
 
@@ -71,26 +94,62 @@ async function exportSvgElementToPng(svgElement, filename) {
   }
 }
 
-function ChartOptionCard({ option, active, onSelect }) {
+function ChartTypeIcon({ chartType }) {
+  if (chartType === 'line') {
+    return (
+      <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
+        <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
+        <polyline points="9,33 18,25 27,29 39,15" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="9" cy="33" r="3" fill="currentColor" />
+        <circle cx="18" cy="25" r="3" fill="currentColor" />
+        <circle cx="27" cy="29" r="3" fill="currentColor" />
+        <circle cx="39" cy="15" r="3" fill="currentColor" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
+      <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
+      <rect x="12" y="25" width="5" height="12" rx="2" fill="currentColor" />
+      <rect x="21.5" y="17" width="5" height="20" rx="2" fill="currentColor" />
+      <rect x="31" y="10" width="5" height="27" rx="2" fill="currentColor" />
+    </svg>
+  );
+}
+
+function ChartTypeButton({ option, active, onSelect }) {
   return (
     <button
       type="button"
       onClick={onSelect}
       className={[
-        'w-full rounded-2xl border p-3 text-left transition-all',
+        'aspect-square rounded-2xl border p-3 text-center transition-all',
+        'flex flex-col items-center justify-center gap-2',
         active
           ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.22)]'
           : 'border-[var(--section-border)] bg-[var(--section-bg)] text-[var(--text-main)] hover:bg-[var(--button-secondary-hover)]',
       ].join(' ')}
+      aria-pressed={active}
     >
-      <div className="text-sm font-semibold">{option.label}</div>
-      <div className="mt-1 text-xs opacity-85">{option.descriptor}</div>
-      <div className="mt-2 space-y-1 text-xs opacity-80">
-        {option.exampleQuestions.map((question) => (
+      <ChartTypeIcon chartType={option.key} />
+      <span className="text-sm font-semibold">{option.label}</span>
+    </button>
+  );
+}
+
+function ChartUseDescription({ chartDefinition }) {
+  return (
+    <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-sm">
+      <div className="font-semibold text-[var(--panel-card-text)]">{chartDefinition.label}</div>
+      <div className="mt-1 text-[var(--panel-card-muted-text)]">{chartDefinition.descriptor}</div>
+      <div className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--panel-card-muted-text)]">Example questions</div>
+      <div className="mt-2 space-y-1 text-xs text-[var(--panel-card-muted-text)]">
+        {chartDefinition.exampleQuestions.map((question) => (
           <div key={question}>{question}</div>
         ))}
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -135,33 +194,32 @@ export function AnalyticsPanelContent({
     <div className="space-y-5">
       <div>
         <div className="text-sm text-[var(--muted-text)]">
-          Build compact charts from the current Peridot data. The first version supports ranked bar charts and yearly line charts.
+          Build compact charts from the current Peridot data. This first version supports ranked bar charts and yearly line charts.
         </div>
       </div>
 
       <section className="space-y-3">
         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Choose a chart</div>
-        <ChartOptionCard
-          option={ANALYTICS_CHART_DEFINITIONS.bar}
-          active={chartType === 'bar'}
-          onSelect={() => setChartType('bar')}
-        />
-        <ChartOptionCard
-          option={ANALYTICS_CHART_DEFINITIONS.line}
-          active={chartType === 'line'}
-          onSelect={() => setChartType('line')}
-        />
+        <div className="grid grid-cols-2 gap-3">
+          <ChartTypeButton
+            option={ANALYTICS_CHART_DEFINITIONS.bar}
+            active={chartType === 'bar'}
+            onSelect={() => setChartType('bar')}
+          />
+          <ChartTypeButton
+            option={ANALYTICS_CHART_DEFINITIONS.line}
+            active={chartType === 'line'}
+            onSelect={() => setChartType('line')}
+          />
+        </div>
       </section>
 
       <section className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-4">
         <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Configure chart</div>
-        <div className="mb-3 rounded-xl bg-[var(--utility-tint-bg)] p-3 text-sm">
-          <div className="font-semibold text-[var(--panel-card-text)]">{chartDefinition.label}</div>
-          <div className="mt-1 text-[var(--panel-card-muted-text)]">{chartDefinition.descriptor}</div>
-        </div>
+        <ChartUseDescription chartDefinition={chartDefinition} />
 
         {chartType === 'bar' ? (
-          <div className="space-y-3">
+          <div className="mt-4 space-y-3">
             {canRenderBarControls ? (
               <>
                 <label className="block text-sm">
@@ -200,7 +258,7 @@ export function AnalyticsPanelContent({
             )}
           </div>
         ) : (
-          <div className="space-y-2 text-sm text-[var(--panel-card-muted-text)]">
+          <div className="mt-4 space-y-2 text-sm text-[var(--panel-card-muted-text)]">
             <div>X-axis: Year</div>
             <div>Metric: Letter count</div>
             {!canRenderLine ? (
@@ -224,12 +282,13 @@ export function AnalyticsPanelContent({
           Export chart PNG
         </button>
         {exportStatus ? (
-          <div className={[
-            'rounded-xl border p-3 text-sm',
-            exportStatus.type === 'error'
-              ? 'border-red-300 bg-red-50 text-red-800'
-              : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)]',
-          ].join(' ')}
+          <div
+            className={[
+              'rounded-xl border p-3 text-sm',
+              exportStatus.type === 'error'
+                ? 'border-red-300 bg-red-50 text-red-800'
+                : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)]',
+            ].join(' ')}
           >
             {exportStatus.message}
           </div>

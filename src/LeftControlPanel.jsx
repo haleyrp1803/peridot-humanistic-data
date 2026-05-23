@@ -181,7 +181,7 @@ function SidePanelIconRail({
         </svg>
       </button>
 
-      <button type="button" onClick={onShowAnalytics} className={buttonClass(activePanel === 'analytics')} aria-label="Show Analytics" title="Show Analytics"><svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true"><rect x="5" y="11" width="3" height="8" rx="1" fill="currentColor" /><rect x="10.5" y="7" width="3" height="12" rx="1" fill="currentColor" /><rect x="16" y="4" width="3" height="15" rx="1" fill="currentColor" /></svg></button> <button
+      <button type="button" onClick={onShowAnalytics} className={buttonClass(activePanel === 'analytics')} aria-label="Analytics" title="Analytics"><svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true"><rect x="5" y="11" width="3" height="8" rx="1" fill="currentColor" /><rect x="10.5" y="7" width="3" height="12" rx="1" fill="currentColor" /><rect x="16" y="4" width="3" height="15" rx="1" fill="currentColor" /></svg></button> <button
         type="button"
         onClick={onShowTimeline}
         className={buttonClass(activePanel === 'timeline')}
@@ -1188,4 +1188,5 @@ export function LeftControlPanel({
     </aside>
   );
 }
+
 
