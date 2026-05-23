@@ -134,16 +134,34 @@ function ChartTypeIcon({ chartType }) {
   }
 
   if (chartType === 'stackedBar' || chartType === 'groupedBar') {
+    const bars = [
+      { x: 12, h: 14 },
+      { x: 22, h: 22 },
+      { x: 32, h: 18 },
+    ];
     return (
       <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
         <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
-        {[12, 22, 32].map((x, index) => (
-          <g key={x}>
-            <rect x={x} y={26 - index * 3} width="5" height="11" rx="1.5" fill="currentColor" opacity={chartType === 'groupedBar' ? '0.72' : '0.35'} />
-            <rect x={chartType === 'groupedBar' ? x + 5 : x} y={17 - index * 3} width="5" height="9" rx="1.5" fill="currentColor" opacity="0.62" />
-            {chartType === 'stackedBar' ? <rect x={x} y={11 - index * 2} width="5" height="6" rx="1.5" fill="currentColor" /> : null}
-          </g>
-        ))}
+        <line x1="10" y1="37" x2="39" y2="37" stroke="currentColor" strokeWidth="2" opacity="0.28" />
+        {chartType === 'groupedBar'
+          ? bars.map(({ x, h }, index) => (
+            <g key={x}>
+              <rect x={x - 2} y={37 - h} width="4" height={h} rx="1.2" fill="currentColor" opacity="0.42" />
+              <rect x={x + 3} y={37 - h - 5 + index * 2} width="4" height={h + 5 - index * 2} rx="1.2" fill="currentColor" opacity="0.86" />
+            </g>
+          ))
+          : bars.map(({ x, h }) => {
+            const bottom = Math.round(h * 0.42);
+            const middle = Math.round(h * 0.34);
+            const top = h - bottom - middle;
+            return (
+              <g key={x}>
+                <rect x={x} y={37 - bottom} width="6" height={bottom} rx="1.4" fill="currentColor" opacity="0.35" />
+                <rect x={x} y={37 - bottom - middle} width="6" height={middle} rx="1.4" fill="currentColor" opacity="0.62" />
+                <rect x={x} y={37 - h} width="6" height={top} rx="1.4" fill="currentColor" opacity="0.9" />
+              </g>
+            );
+          })}
       </svg>
     );
   }
@@ -152,6 +170,7 @@ function ChartTypeIcon({ chartType }) {
     return (
       <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
         <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
+        <line x1="10" y1="37" x2="39" y2="37" stroke="currentColor" strokeWidth="2" opacity="0.28" />
         <rect x="10" y="29" width="4" height="8" rx="1.5" fill="currentColor" opacity="0.45" />
         <rect x="16" y="23" width="4" height="14" rx="1.5" fill="currentColor" opacity="0.7" />
         <rect x="22" y="14" width="4" height="23" rx="1.5" fill="currentColor" />
@@ -164,6 +183,7 @@ function ChartTypeIcon({ chartType }) {
   return (
     <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
       <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
+      <line x1="10" y1="37" x2="39" y2="37" stroke="currentColor" strokeWidth="2" opacity="0.28" />
       <rect x="12" y="25" width="5" height="12" rx="2" fill="currentColor" />
       <rect x="21.5" y="17" width="5" height="20" rx="2" fill="currentColor" />
       <rect x="31" y="10" width="5" height="27" rx="2" fill="currentColor" />
@@ -241,11 +261,37 @@ function VariableControlsShell({ children }) {
   );
 }
 
+function ExpandedChartModal({ chartData, onClose }) {
+  const expandedSvgRef = useRef(null);
+
+  return (
+    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 p-6" role="dialog" aria-modal="true" aria-label="Expanded Analytics chart">
+      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col rounded-3xl border border-[var(--panel-card-border)] bg-[var(--shell-bg)] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Expanded Analytics View</div>
+            <h2 className="mt-1 text-2xl font-semibold text-[var(--text-main)]">{chartData?.title || 'Analytics chart'}</h2>
+          </div>
+          <button type="button" onClick={onClose} className={buttonClassName()}>
+            Close
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto rounded-2xl bg-[var(--panel-card-bg)] p-4">
+          <div className="mx-auto w-full max-w-5xl">
+            <AnalyticsChartPreview chartData={chartData} svgRef={expandedSvgRef} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function AnalyticsPanelContent({
   analyticsState,
 }) {
   const chartSvgRef = useRef(null);
   const [exportStatus, setExportStatus] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [barOrientation, setBarOrientation] = useState('vertical');
   const [pieGroupBy, setPieGroupBy] = useState('language');
   const [histogramGroupBy, setHistogramGroupBy] = useState('sourcePerson');
@@ -471,6 +517,8 @@ export function AnalyticsPanelContent({
 
   return (
     <div className="space-y-5">
+      {isExpanded ? <ExpandedChartModal chartData={chartData} onClose={() => setIsExpanded(false)} /> : null}
+
       <div>
         <div className="text-sm text-[var(--muted-text)]">
           Build compact charts from the current Peridot data. Charts reflect the current filtered data where applicable.
@@ -501,7 +549,12 @@ export function AnalyticsPanelContent({
       </section>
 
       <section className="space-y-3">
-        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Preview</div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Preview</div>
+          <button type="button" onClick={() => setIsExpanded(true)} className="rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]">
+            Expand Chart
+          </button>
+        </div>
         <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
         <button type="button" onClick={handleExportPng} className={buttonClassName()} disabled={!chartData}>
           Export chart PNG

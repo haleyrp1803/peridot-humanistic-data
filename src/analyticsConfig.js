@@ -1,7 +1,7 @@
 export const ANALYTICS_CHART_DEFINITIONS = {
   bar: {
     key: 'bar',
-    label: 'Bar chart',
+    label: 'Bar Chart',
     descriptor: 'Ranked categorical comparison',
     variableSummary: 'Uses 1 selectable variable: the category to rank. Metric is fixed to letter count.',
     variableCountLabel: '1 variable',
@@ -12,21 +12,9 @@ export const ANALYTICS_CHART_DEFINITIONS = {
       'Which places appear most often?',
     ],
   },
-  line: {
-    key: 'line',
-    label: 'Line chart',
-    descriptor: 'Change over time',
-    variableSummary: 'Uses 1 variable: time period. Metric is fixed to letter count.',
-    variableCountLabel: '1 variable',
-    defaultUseCase: 'Best default: Time period, to show overall correspondence volume over time.',
-    exampleQuestions: [
-      'How does correspondence volume change by year?',
-      'When does a relationship become active?',
-    ],
-  },
   groupedBar: {
     key: 'groupedBar',
-    label: 'Grouped bar chart',
+    label: 'Grouped Bar Chart',
     descriptor: 'Compare category groups side by side across time',
     variableSummary: 'Uses 2 variables: time period plus a selectable group field. Metric is fixed to letter count.',
     variableCountLabel: '2 variables',
@@ -38,7 +26,7 @@ export const ANALYTICS_CHART_DEFINITIONS = {
   },
   stackedBar: {
     key: 'stackedBar',
-    label: 'Stacked bar chart',
+    label: 'Stacked Bar Chart',
     descriptor: 'Compare categories across time or groups',
     variableSummary: 'Uses 2 variables: time period plus a selectable segment field. Metric is fixed to letter count.',
     variableCountLabel: '2 variables',
@@ -48,9 +36,21 @@ export const ANALYTICS_CHART_DEFINITIONS = {
       'Which languages or relationships dominate different periods?',
     ],
   },
+  line: {
+    key: 'line',
+    label: 'Line Chart',
+    descriptor: 'Change over time',
+    variableSummary: 'Uses 1 variable: time period. Metric is fixed to letter count.',
+    variableCountLabel: '1 variable',
+    defaultUseCase: 'Best default: Time period, to show overall correspondence volume over time.',
+    exampleQuestions: [
+      'How does correspondence volume change by year?',
+      'When does a relationship become active?',
+    ],
+  },
   multiLine: {
     key: 'multiLine',
-    label: 'Multi-line chart',
+    label: 'Multi-Line Chart',
     descriptor: 'Compare several trends over time',
     variableSummary: 'Uses 2 variables: time period plus a selectable line grouping. Metric is fixed to letter count.',
     variableCountLabel: '2 variables',
@@ -58,18 +58,6 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     exampleQuestions: [
       'How do different correspondents change over time?',
       'Which places become more or less active across periods?',
-    ],
-  },
-  pie: {
-    key: 'pie',
-    label: 'Pie chart',
-    descriptor: 'Limited part-to-whole summaries',
-    variableSummary: 'Uses 1 selectable variable: the category used for slices. Metric is fixed to letter count.',
-    variableCountLabel: '1 variable',
-    defaultUseCase: 'Best default: Language or relationship, to show a compact share of the whole.',
-    exampleQuestions: [
-      'What share of letters are in each language?',
-      'What share of letters belongs to each relationship type?',
     ],
   },
   histogram: {
@@ -84,21 +72,21 @@ export const ANALYTICS_CHART_DEFINITIONS = {
       'Is the dataset dominated by a small number of high-volume people?',
     ],
   },
-  heatmap: {
-    key: 'heatmap',
-    label: 'Heat map',
-    descriptor: 'Matrix comparison between two categorical fields',
-    variableSummary: 'Uses 2 selectable variables: rows and columns. Cell intensity is fixed to letter count.',
-    variableCountLabel: '2 variables',
-    defaultUseCase: 'Best default: Source person × target person, to identify dominant correspondence pairs.',
+  pie: {
+    key: 'pie',
+    label: 'Pie Chart',
+    descriptor: 'Limited part-to-whole summaries',
+    variableSummary: 'Uses 1 selectable variable: the category used for slices. Metric is fixed to letter count.',
+    variableCountLabel: '1 variable',
+    defaultUseCase: 'Best default: Language or relationship, to show a compact share of the whole.',
     exampleQuestions: [
-      'Which sender-recipient pairs dominate the network?',
-      'Which source and target places are most connected?',
+      'What share of letters are in each language?',
+      'What share of letters belongs to each relationship type?',
     ],
   },
   sunburst: {
     key: 'sunburst',
-    label: 'Sunburst chart',
+    label: 'Sunburst Chart',
     descriptor: 'Hierarchical part-to-whole summaries',
     variableSummary: 'Uses 2 selectable variables: an inner-ring parent category and an outer-ring child category.',
     variableCountLabel: '2 variables',
@@ -106,6 +94,18 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     exampleQuestions: [
       'Which places dominate the dataset, and which people account for that volume?',
       'How does a broad category break down into smaller contributing categories?',
+    ],
+  },
+  heatmap: {
+    key: 'heatmap',
+    label: 'Heatmap',
+    descriptor: 'Matrix comparison between two categorical fields',
+    variableSummary: 'Uses 2 selectable variables: rows and columns. Cell intensity is fixed to letter count.',
+    variableCountLabel: '2 variables',
+    defaultUseCase: 'Best default: Source person × target person, to identify dominant correspondence pairs.',
+    exampleQuestions: [
+      'Which sender-recipient pairs dominate the network?',
+      'Which source and target places are most connected?',
     ],
   },
 };
