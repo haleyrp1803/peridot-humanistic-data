@@ -265,19 +265,24 @@ function ExpandedChartModal({ chartData, onClose }) {
   const expandedSvgRef = useRef(null);
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/55 p-6" role="dialog" aria-modal="true" aria-label="Expanded Analytics chart">
-      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col rounded-3xl border border-[var(--panel-card-border)] bg-[var(--shell-bg)] p-5 shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Expanded Analytics View</div>
-            <h2 className="mt-1 text-2xl font-semibold text-[var(--text-main)]">{chartData?.title || 'Analytics chart'}</h2>
-          </div>
-          <button type="button" onClick={onClose} className={buttonClassName()}>
-            Close
-          </button>
+    <div className="fixed bottom-4 right-4 top-[112px] z-[90] left-[460px] max-xl:left-[86px]" role="dialog" aria-modal="true" aria-label="Expanded Analytics chart">
+      <div className="relative flex h-full w-full flex-col rounded-3xl border border-[var(--panel-card-border)] bg-[var(--shell-bg)]/95 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.38)] backdrop-blur">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-xl font-semibold text-[var(--button-secondary-text)] shadow hover:bg-[var(--button-secondary-hover)]"
+          aria-label="Close expanded chart"
+          title="Close expanded chart"
+        >
+          ×
+        </button>
+        <div className="mb-4 pr-14">
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Expanded Analytics View</div>
+          <h2 className="mt-1 text-2xl font-semibold text-[var(--text-main)]">{chartData?.title || 'Analytics chart'}</h2>
+          {chartData?.subtitle ? <div className="mt-1 text-sm text-[var(--muted-text)]">{chartData.subtitle}</div> : null}
         </div>
         <div className="min-h-0 flex-1 overflow-auto rounded-2xl bg-[var(--panel-card-bg)] p-4">
-          <div className="mx-auto w-full max-w-5xl">
+          <div className="mx-auto w-full max-w-6xl">
             <AnalyticsChartPreview chartData={chartData} svgRef={expandedSvgRef} />
           </div>
         </div>

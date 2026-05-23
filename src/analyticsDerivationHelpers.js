@@ -138,6 +138,113 @@ function periodLabelForRow(row, granularity) {
   return formatPeriod(parts, granularity);
 }
 
+function humanizeFieldLabel(key) {
+  const explicitLabels = {
+    sourcePerson: 'Source person',
+    targetPerson: 'Target person',
+    sourceLoc: 'Source place',
+    targetLoc: 'Target place',
+    archivalCollection: 'Archival collection',
+  };
+
+  if (explicitLabels[key]) return explicitLabels[key];
+
+  return String(key)
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^./, (first) => first.toUpperCase());
+}
+
+function isUsableDynamicFieldValue(value) {
+  if (value == null) return false;
+  if (Array.isArray(value)) return false;
+  if (typeof value === 'object') return false;
+
+  const text = normalizeText(value);
+  if (!text) return false;
+  if (text.length > 140) return false;
+  if (/^-?\d+(\.\d+)?$/.test(text)) return false;
+
+  return true;
+}
+
+function isDynamicFieldCandidate(rows, key) {
+  const excluded = new Set([
+    'id',
+    'rowId',
+    'parsedDate',
+    'date',
+    'sourceLat',
+    'sourceLong',
+    'targetLat',
+    'targetLong',
+    'lat',
+    'lng',
+    'long',
+    'longitude',
+    'latitude',
+    'sourceLatitude',
+    'sourceLongitude',
+    'targetLatitude',
+    'targetLongitude',
+  ]);
+
+  if (!key || excluded.has(key)) return false;
+  if (key.startsWith('__')) return false;
+
+  const values = rows
+    .map((row) => row?.[key])
+    .filter((value) => value != null);
+
+  if (!values.length) return false;
+
+  const usableValues = values.filter(isUsableDynamicFieldValue);
+  if (!usableValues.length) return false;
+
+  const uniqueValues = new Set(usableValues.map((value) => normalizeText(value)));
+  if (!uniqueValues.size) return false;
+
+  // Avoid fields that are effectively unique row identifiers or long notes.
+  if (values.length >= 5 && uniqueValues.size / values.length > 0.95) return false;
+
+  return true;
+}
+
+function buildDynamicFieldDefinitions(rows = [], existingDefinitions = []) {
+  const existingKeys = new Set(existingDefinitions.map((definition) => definition.key));
+  const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row || {}))));
+
+  return keys
+    .filter((key) => !existingKeys.has(key))
+    .filter((key) => isDynamicFieldCandidate(rows, key))
+    .map((key) => ({
+      key,
+      label: humanizeFieldLabel(key),
+      description: `Letters grouped by the uploaded “${humanizeFieldLabel(key)}” field.`,
+      requiredFields: [key],
+      dynamic: true,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function mergeFieldDefinitions(baseDefinitions, dynamicDefinitions, { allowRoute = true } = {}) {
+  const byKey = new Map();
+
+  baseDefinitions
+    .filter((definition) => allowRoute || definition.key !== 'route')
+    .forEach((definition) => byKey.set(definition.key, definition));
+
+  dynamicDefinitions
+    .filter((definition) => allowRoute || definition.key !== 'route')
+    .forEach((definition) => {
+      if (!byKey.has(definition.key)) byKey.set(definition.key, definition);
+    });
+
+  return Array.from(byKey.values());
+}
+
 export function getAnalyticsYearRange(rows = []) {
   const years = Array.from(
     new Set(
@@ -159,15 +266,20 @@ export function getAnalyticsPeriodGranularity(startYear, endYear) {
 }
 
 export function getAvailableAnalyticsFields(rows = []) {
-  const barGroupOptions = ANALYTICS_BAR_FIELD_DEFINITIONS.filter((definition) =>
+  const dynamicDefinitions = buildDynamicFieldDefinitions(rows, ANALYTICS_BAR_FIELD_DEFINITIONS);
+  const allBarDefinitions = mergeFieldDefinitions(ANALYTICS_BAR_FIELD_DEFINITIONS, dynamicDefinitions);
+  const allSegmentDefinitions = mergeFieldDefinitions(ANALYTICS_SEGMENT_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoute: false });
+  const allHeatmapDefinitions = mergeFieldDefinitions(ANALYTICS_HEATMAP_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoute: false });
+
+  const barGroupOptions = allBarDefinitions.filter((definition) =>
     hasRequiredField(rows, definition)
   );
 
-  const segmentGroupOptions = ANALYTICS_SEGMENT_FIELD_DEFINITIONS.filter((definition) =>
+  const segmentGroupOptions = allSegmentDefinitions.filter((definition) =>
     hasRequiredField(rows, definition)
   );
 
-  const heatmapOptions = ANALYTICS_HEATMAP_FIELD_DEFINITIONS.filter((definition) =>
+  const heatmapOptions = allHeatmapDefinitions.filter((definition) =>
     hasRequiredField(rows, definition)
   );
 
@@ -432,33 +544,30 @@ export function buildAnalyticsChartData({
   }
 
   if (chartType === 'pie') {
-    const field = ANALYTICS_BAR_FIELD_DEFINITIONS.find((option) => option.key === pieGroupBy);
     const data = buildBarChartData(filteredRows, pieGroupBy, topN);
     return {
       chartType: 'pie',
-      title: `${field?.label || 'Category'} share`,
-      subtitle: `${field?.description || 'Letters grouped by selected category'}${rangeSuffix}`,
+      title: `${humanizeFieldLabel(pieGroupBy)} share`,
+      subtitle: `Letters grouped by selected category.${rangeSuffix}`,
       data,
     };
   }
 
   if (chartType === 'histogram') {
-    const field = ANALYTICS_SEGMENT_FIELD_DEFINITIONS.find((option) => option.key === histogramGroupBy);
     const data = buildHistogramChartData(filteredRows, histogramGroupBy);
     return {
       chartType: 'histogram',
-      title: `Distribution by ${field?.label || 'category'} volume`,
+      title: `Distribution by ${humanizeFieldLabel(histogramGroupBy)} volume`,
       subtitle: `Number of categories falling into each letter-count range.${rangeSuffix}`,
       data,
     };
   }
 
   if (chartType === 'groupedBar') {
-    const field = ANALYTICS_SEGMENT_FIELD_DEFINITIONS.find((option) => option.key === groupedBarGroupBy);
     const { granularity, series, data } = buildGroupedBarChartData(filteredRows, groupedBarGroupBy, topN, startYear, endYear);
     return {
       chartType: 'groupedBar',
-      title: `${field?.label || 'Category'} by ${granularity}`,
+      title: `${humanizeFieldLabel(groupedBarGroupBy)} by ${granularity}`,
       subtitle: `Side-by-side period counts for top ${Math.max(1, Number(topN) || 10)} categories.${rangeSuffix}`,
       series,
       data,
@@ -466,61 +575,54 @@ export function buildAnalyticsChartData({
   }
 
   if (chartType === 'stackedBar') {
-    const field = ANALYTICS_SEGMENT_FIELD_DEFINITIONS.find((option) => option.key === stackSegmentBy);
     const { granularity, series, data } = buildStackedBarChartData(filteredRows, stackSegmentBy, topN, startYear, endYear);
     return {
       chartType: 'stackedBar',
-      title: `Letters by ${granularity} and ${field?.label || 'category'}`,
-      subtitle: `Period letter counts split by ${field?.label || 'category'}.${rangeSuffix}`,
+      title: `Letters by ${granularity} and ${humanizeFieldLabel(stackSegmentBy)}`,
+      subtitle: `Period letter counts split by ${humanizeFieldLabel(stackSegmentBy)}.${rangeSuffix}`,
       series,
       data,
     };
   }
 
   if (chartType === 'multiLine') {
-    const field = ANALYTICS_SEGMENT_FIELD_DEFINITIONS.find((option) => option.key === multiLineGroupBy);
     const data = buildMultiLineChartData(filteredRows, multiLineGroupBy, topN, startYear, endYear);
     return {
       chartType: 'multiLine',
-      title: `Period trends by ${field?.label || 'category'}`,
+      title: `Period trends by ${humanizeFieldLabel(multiLineGroupBy)}`,
       subtitle: `Top ${Math.max(1, Number(topN) || 10)} categories shown across available periods.${rangeSuffix}`,
       ...data,
     };
   }
 
   if (chartType === 'heatmap') {
-    const rowField = ANALYTICS_HEATMAP_FIELD_DEFINITIONS.find((option) => option.key === heatmapRowBy);
-    const columnField = ANALYTICS_HEATMAP_FIELD_DEFINITIONS.find((option) => option.key === heatmapColumnBy);
     const data = buildHeatmapChartData(filteredRows, heatmapRowBy, heatmapColumnBy, topN);
     return {
       chartType: 'heatmap',
-      title: `${rowField?.label || 'Rows'} × ${columnField?.label || 'columns'}`,
+      title: `${humanizeFieldLabel(heatmapRowBy)} × ${humanizeFieldLabel(heatmapColumnBy)}`,
       subtitle: `Letter count by paired categorical fields.${rangeSuffix}`,
       ...data,
     };
   }
 
   if (chartType === 'sunburst') {
-    const parentField = ANALYTICS_SEGMENT_FIELD_DEFINITIONS.find((option) => option.key === sunburstParentBy);
-    const childField = ANALYTICS_SEGMENT_FIELD_DEFINITIONS.find((option) => option.key === sunburstChildBy);
     const data = buildSunburstChartData(filteredRows, sunburstParentBy, sunburstChildBy, topN);
     return {
       chartType: 'sunburst',
-      title: `${parentField?.label || 'Parent'} → ${childField?.label || 'child'}`,
+      title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`,
       subtitle: `Hierarchical part-to-whole view by selected parent and child fields.${rangeSuffix}`,
       ...data,
     };
   }
 
-  const field = ANALYTICS_BAR_FIELD_DEFINITIONS.find((option) => option.key === barGroupBy);
   const data = buildBarChartData(filteredRows, barGroupBy, topN);
 
   return {
     chartType: 'bar',
     orientation: barOrientation,
-    title: `Top ${Math.max(1, Number(topN) || 10)} ${field?.label || 'categories'}`,
-    subtitle: `${field?.description || 'Letters grouped by selected category'}${rangeSuffix}`,
-    xLabel: field?.label || 'Category',
+    title: `Top ${Math.max(1, Number(topN) || 10)} ${humanizeFieldLabel(barGroupBy)}`,
+    subtitle: `Letters grouped by selected category.${rangeSuffix}`,
+    xLabel: humanizeFieldLabel(barGroupBy),
     yLabel: 'Letters',
     data,
   };

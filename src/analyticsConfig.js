@@ -110,7 +110,7 @@ export const ANALYTICS_CHART_DEFINITIONS = {
   },
 };
 
-export const ANALYTICS_TOP_N_OPTIONS = [5, 10, 20];
+export const ANALYTICS_TOP_N_OPTIONS = [1, 2, 3, 4, 5, 10, 15, 20];
 
 export const DEFAULT_ANALYTICS_STATE = {
   chartType: 'bar',
