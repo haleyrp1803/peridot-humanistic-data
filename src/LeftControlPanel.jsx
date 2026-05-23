@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+﻿import React, { useEffect, useRef, useState } from 'react';
 import { TimelinePanelContent } from './timelinePlaybackComponents.jsx';
-import { InspectorPanelContent } from './InspectorPanel.jsx';
+import { InspectorPanelContent } from './InspectorPanel.jsx'; import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 
 function sidebarSurfaceClassName() { return 'relative overflow-visible border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] backdrop-blur-sm transition-all duration-300'; }
 function groupCardClassName() { return 'mt-5 rounded-[28px] border border-[var(--group-border)] bg-[linear-gradient(180deg,var(--group-bg-top),var(--group-bg-bottom))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.42)]'; }
@@ -75,8 +75,7 @@ function SidePanelIconRail({
   onClose,
   onShowControls,
   onShowDataInputs,
-  onShowExport,
-  onShowTimeline,
+  onShowExport, onShowAnalytics, onShowTimeline,
   onShowInspector,
 }) {
   const buttonClass = (active = false) => {
@@ -182,7 +181,7 @@ function SidePanelIconRail({
         </svg>
       </button>
 
-      <button
+      <button type="button" onClick={onShowAnalytics} className={buttonClass(activePanel === 'analytics')} aria-label="Show Analytics" title="Show Analytics"><svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true"><rect x="5" y="11" width="3" height="8" rx="1" fill="currentColor" /><rect x="10.5" y="7" width="3" height="12" rx="1" fill="currentColor" /><rect x="16" y="4" width="3" height="15" rx="1" fill="currentColor" /></svg></button> <button
         type="button"
         onClick={onShowTimeline}
         className={buttonClass(activePanel === 'timeline')}
@@ -250,7 +249,7 @@ function CollapsiblePanelSection({
           {headerContent ? <div className="mt-2">{headerContent}</div> : null}
         </div>
         <div className="mt-1 flex justify-center">
-          <span className="text-[15px] font-semibold text-[var(--panel-card-muted-text)]">{open ? '⌃' : '⌄'}</span>
+          <span className="text-[15px] font-semibold text-[var(--panel-card-muted-text)]">{open ? 'âŒƒ' : 'âŒ„'}</span>
         </div>
       </button>
       {open ? <div className={bodyClassName}>{children}</div> : null}
@@ -915,9 +914,7 @@ export function LeftControlPanel({
   dataInputState,
   displayState,
   timelineState,
-  themeState,
-  exportState,
-  inspectorPanelProps,
+  themeState, exportState, analyticsState, inspectorPanelProps,
   inspectorShellComponents,
   inspectorViewComponents,
 }) {
@@ -1000,7 +997,7 @@ export function LeftControlPanel({
     handleExportNodesCsv,
     graph,
     exportStatus,
-  } = exportState;
+  } = exportState; const analyticsPanelState = analyticsState || {};
 
   const dataInputsSectionState = {
     showDataInputsPanel,
@@ -1125,7 +1122,7 @@ export function LeftControlPanel({
     setShowRightSidebar(false);
     setActiveSidePanelView('export');
     setShowLeftSidebar(true);
-  };
+  }; const showAnalyticsSidePanel = () => { setShowRightSidebar(false); setActiveSidePanelView('analytics'); setShowLeftSidebar(true); };
 
   const showTimelineSidePanel = () => {
     setShowRightSidebar(false);
@@ -1147,7 +1144,7 @@ export function LeftControlPanel({
         onShowControls={showControlsPanel}
         onShowDataInputs={showDataInputsPanelView}
         onShowExport={showExportSidePanel}
-        onShowTimeline={showTimelineSidePanel}
+        onShowAnalytics={showAnalyticsSidePanel} onShowTimeline={showTimelineSidePanel}
         onShowInspector={showInspectorPanel}
       />
       {isSidePanelOpen ? (
@@ -1155,13 +1152,13 @@ export function LeftControlPanel({
           {showLeftSidebar ? (
             <>
               <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>
-                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : activeSidePanelView === 'export' ? 'Export' : activeSidePanelView === 'timeline' ? 'Timeline' : 'Control Panel'}
+                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : activeSidePanelView === 'export' ? 'Export' : activeSidePanelView === 'analytics' ? 'Analytics' : activeSidePanelView === 'timeline' ? 'Timeline' : 'Control Panel'}
               </h1>
               {activeSidePanelView === 'dataInputs' ? (
                 <DataInputsGroup {...dataInputsGroupProps} />
               ) : activeSidePanelView === 'export' ? (
                 <ExportPanelContent {...displayFilteringGroupProps.exportPanelState} />
-              ) : activeSidePanelView === 'timeline' ? (
+              ) : activeSidePanelView === 'analytics' ? ( <AnalyticsPanelContent analyticsState={analyticsPanelState} /> ) : activeSidePanelView === 'timeline' ? (
                 <TimelinePanelContent
                   {...displayFilteringGroupProps.timelinePanelState}
                   showTimelinePanel={true}
@@ -1191,3 +1188,4 @@ export function LeftControlPanel({
     </aside>
   );
 }
+
