@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { TimelinePanelContent } from './timelinePlaybackComponents.jsx';
+import { TimelineDateRangeControls, TimelinePanelContent } from './timelinePlaybackComponents.jsx';
 import { InspectorPanelContent } from './InspectorPanel.jsx'; import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 
 function sidebarSurfaceClassName() { return 'relative overflow-visible border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] backdrop-blur-sm transition-all duration-300'; }
@@ -741,6 +741,13 @@ function SearchFilterPanelContent({
   viewMode,
   minCount,
   setMinCount,
+  timelineMonths,
+  rangeStart,
+  setRangeStart,
+  rangeEnd,
+  setRangeEnd,
+  timelineMode,
+  setTimelineMode,
 }) {
   const currentSearch = search?.trim() || 'None';
 
@@ -751,7 +758,7 @@ function SearchFilterPanelContent({
           <h2 className={sectionTitleClassName()}>Global search and filters</h2>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
             This panel consolidates the controls that define the active filtered dataset.
-            The minimum-weight filter now lives here; other filters will move in later bounded passes.
+            Minimum-weight and date-range filters now live here; other filters will move in later bounded passes.
           </p>
         </div>
       </div>
@@ -773,15 +780,30 @@ function SearchFilterPanelContent({
 
       <div className={sectionCardClassName()}>
         <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Date range</h3>
+          <p className="text-sm leading-6 text-[var(--muted-text)]">
+            This filter defines the active date window. Timeline playback uses the same range.
+          </p>
+          <TimelineDateRangeControls
+            currentRangeLabel={currentRangeLabel}
+            timelineMonths={timelineMonths}
+            rangeStart={rangeStart}
+            setRangeStart={setRangeStart}
+            rangeEnd={rangeEnd}
+            setRangeEnd={setRangeEnd}
+            timelineMode={timelineMode}
+            setTimelineMode={setTimelineMode}
+          />
+        </div>
+      </div>
+
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
           <h3 className={serifHeadingClassName()}>Current filter locations</h3>
           <dl className="space-y-2 text-sm text-[var(--muted-text)]">
             <div className="flex items-start justify-between gap-4">
               <dt className="font-semibold text-[var(--text-main)]">Keyword search</dt>
               <dd className="text-right">{currentSearch}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Date window</dt>
-              <dd className="text-right">{currentRangeLabel}</dd>
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="font-semibold text-[var(--text-main)]">Nodes in view</dt>
@@ -803,14 +825,13 @@ function SearchFilterPanelContent({
         <div className="space-y-3 p-4">
           <h3 className={serifHeadingClassName()}>Planned consolidated filters</h3>
           <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-[var(--muted-text)]">
-            <li>Date range</li>
             <li>Person, place, and route search</li>
             <li>Language and relationship metadata</li>
             <li>Mappability and safe categorical metadata fields</li>
           </ul>
           <p className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
-            The minimum-weight control has moved here without changing the filtering pipeline.
-            Date range and entity filters remain planned for later bounded passes.
+            Minimum-weight and date-range controls have moved here without changing the filtering pipeline.
+            Entity and metadata filters remain planned for later bounded passes.
           </p>
         </div>
       </div>
@@ -1285,6 +1306,13 @@ export function LeftControlPanel({
                   viewMode={viewMode}
                   minCount={minCount}
                   setMinCount={setMinCount}
+                  timelineMonths={timelineMonths}
+                  rangeStart={rangeStart}
+                  setRangeStart={setRangeStart}
+                  rangeEnd={rangeEnd}
+                  setRangeEnd={setRangeEnd}
+                  timelineMode={timelineMode}
+                  setTimelineMode={setTimelineMode}
                 />
               ) : activeSidePanelView === 'export' ? (
                 <ExportPanelContent {...displayFilteringGroupProps.exportPanelState} />

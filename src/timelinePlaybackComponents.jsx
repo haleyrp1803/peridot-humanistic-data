@@ -4,30 +4,15 @@ import {
   resolveTimelineBoundaryIndex,
 } from './timelinePlaybackHelpers';
 
-export function TimelinePanelContent({
-  showTimelinePanel,
-  setShowTimelinePanel,
+export function TimelineDateRangeControls({
   currentRangeLabel,
   timelineMonths,
   rangeStart,
   setRangeStart,
   rangeEnd,
   setRangeEnd,
-  currentPlaybackLabel,
-  currentPlaybackSpeedLabel,
-  playbackSpeedOptions,
-  playbackSpeed,
-  setPlaybackSpeed,
-  isPlaying,
-  setIsPlaying,
-  playbackIndex,
-  setPlaybackIndex,
-  selectedRowsForPlayback,
   timelineMode,
   setTimelineMode,
-  CollapsiblePanelSection,
-  StepSlider,
-  buttonClassName,
 }) {
   const {
     timelineYears,
@@ -63,6 +48,85 @@ export function TimelinePanelContent({
   };
 
   return (
+    <div className="space-y-3">
+      <div className="text-sm text-[var(--muted-text)]">
+        Current window: {currentRangeLabel}
+      </div>
+
+      <div className="text-sm text-[var(--muted-text)]">
+        Available year range:{' '}
+        {timelineMonths.length
+          ? `${timelineMonths[0]} to ${timelineMonths[timelineMonths.length - 1]}`
+          : 'none detected'}
+      </div>
+
+      {timelineMonths.length ? (
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <div className="text-xs font-medium uppercase tracking-wide text-[var(--muted-text)]">
+              Start year
+            </div>
+            <select
+              value={startYear || ''}
+              onChange={(e) => setTimelineBoundaryFromYear('start', e.target.value)}
+              className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+            >
+              {timelineYears.map((year) => (
+                <option key={`start-year-${year}`} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-xs font-medium uppercase tracking-wide text-[var(--muted-text)]">
+              End year
+            </div>
+            <select
+              value={endYear || ''}
+              onChange={(e) => setTimelineBoundaryFromYear('end', e.target.value)}
+              className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+            >
+              {constrainedEndYears.map((year) => (
+                <option key={`end-year-${year}`} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function TimelinePanelContent({
+  showTimelinePanel,
+  setShowTimelinePanel,
+  currentRangeLabel,
+  timelineMonths,
+  rangeStart,
+  setRangeStart,
+  rangeEnd,
+  setRangeEnd,
+  currentPlaybackLabel,
+  currentPlaybackSpeedLabel,
+  playbackSpeedOptions,
+  playbackSpeed,
+  setPlaybackSpeed,
+  isPlaying,
+  setIsPlaying,
+  playbackIndex,
+  setPlaybackIndex,
+  selectedRowsForPlayback,
+  timelineMode,
+  setTimelineMode,
+  CollapsiblePanelSection,
+  StepSlider,
+  buttonClassName,
+}) {
+  return (
     <CollapsiblePanelSection
       title="Timeline"
       open={showTimelinePanel}
@@ -74,50 +138,9 @@ export function TimelinePanelContent({
           Current window: {currentRangeLabel}
         </div>
 
-        <div className="text-sm text-[var(--muted-text)]">
-          Available year range:{' '}
-          {timelineMonths.length
-            ? `${timelineMonths[0]} to ${timelineMonths[timelineMonths.length - 1]}`
-            : 'none detected'}
+        <div className="text-xs text-[var(--muted-text)]">
+          Date range controls now live in Search & Filter. Timeline controls remain here for playback.
         </div>
-
-        {timelineMonths.length ? (
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <div className="text-xs font-medium uppercase tracking-wide text-[var(--muted-text)]">
-                Start year
-              </div>
-              <select
-                value={startYear || ''}
-                onChange={(e) => setTimelineBoundaryFromYear('start', e.target.value)}
-                className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-              >
-                {timelineYears.map((year) => (
-                  <option key={`start-year-${year}`} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <div className="text-xs font-medium uppercase tracking-wide text-[var(--muted-text)]">
-                End year
-              </div>
-              <select
-                value={endYear || ''}
-                onChange={(e) => setTimelineBoundaryFromYear('end', e.target.value)}
-                className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-              >
-                {constrainedEndYears.map((year) => (
-                  <option key={`end-year-${year}`} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ) : null}
 
         <div className="rounded-2xl border border-[var(--panel-border)]/70 bg-[var(--panel-bg)]/60 p-3">
           <div className="text-sm text-[var(--muted-text)]">
@@ -148,7 +171,7 @@ export function TimelinePanelContent({
               title="Play animation"
               className={buttonClassName({ active: isPlaying })}
             >
-              ▶
+              Play
             </button>
 
             <button
@@ -160,7 +183,7 @@ export function TimelinePanelContent({
                 active: !isPlaying && playbackIndex >= 0,
               })}
             >
-              ❚❚
+              Pause
             </button>
 
             <button
