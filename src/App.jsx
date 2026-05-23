@@ -1346,7 +1346,7 @@ function buildLeftControlPanelProps(args) {
       applyThemePreset: args.applyThemePreset,
       resetTheme: args.resetTheme,
     },
-    exportState: { handleExportSvg: args.handleExportSvg, handleExportPng: args.handleExportPng, handleExportEdgesCsv: args.handleExportEdgesCsv, handleExportNodesCsv: args.handleExportNodesCsv, graph: args.graph, exportStatus: args.exportStatus, }, analyticsState: { chartType: args.analyticsChartType, setChartType: args.setAnalyticsChartType, barGroupBy: args.analyticsBarGroupBy, setBarGroupBy: args.setAnalyticsBarGroupBy, topN: args.analyticsTopN, setTopN: args.setAnalyticsTopN, availableFields: args.analyticsFields, chartData: args.analyticsChartData, },
+    exportState: { handleExportSvg: args.handleExportSvg, handleExportPng: args.handleExportPng, handleExportEdgesCsv: args.handleExportEdgesCsv, handleExportNodesCsv: args.handleExportNodesCsv, graph: args.graph, exportStatus: args.exportStatus, }, analyticsState: { chartType: args.analyticsChartType, setChartType: args.setAnalyticsChartType, barGroupBy: args.analyticsBarGroupBy, setBarGroupBy: args.setAnalyticsBarGroupBy, topN: args.analyticsTopN, setTopN: args.setAnalyticsTopN, availableFields: args.analyticsFields, chartData: args.analyticsChartData, rows: args.analyticsRows, },
   };
 }
 
@@ -3049,7 +3049,7 @@ export default function EuropeNetworkMapApp() {
     handleExportPng,
     handleExportEdgesCsv,
     handleExportNodesCsv,
-    graph, exportStatus, analyticsChartType, setAnalyticsChartType, analyticsBarGroupBy, setAnalyticsBarGroupBy, analyticsTopN, setAnalyticsTopN, analyticsFields, analyticsChartData, }); const inspectorPanelProps = buildInspectorPanelProps({
+    graph, exportStatus, analyticsChartType, setAnalyticsChartType, analyticsBarGroupBy, setAnalyticsBarGroupBy, analyticsTopN, setAnalyticsTopN, analyticsFields, analyticsChartData, analyticsRows: filteredRowsByTime, }); const inspectorPanelProps = buildInspectorPanelProps({
     showRightSidebar,
     setShowRightSidebar,
     setShowLeftSidebar,
@@ -3133,4 +3133,5 @@ export default function EuropeNetworkMapApp() {
     </div>
   );
 }
+
 

@@ -1,6 +1,7 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
+import { buildAnalyticsChartData } from './analyticsDerivationHelpers';
 
 function buttonClassName({ active = false } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
@@ -95,15 +96,54 @@ async function exportSvgElementToPng(svgElement, filename) {
 }
 
 function ChartTypeIcon({ chartType }) {
-  if (chartType === 'line') {
+  if (chartType === 'line' || chartType === 'multiLine') {
+    const secondLine = chartType === 'multiLine';
     return (
       <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
         <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
         <polyline points="9,33 18,25 27,29 39,15" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+        {secondLine ? <polyline points="9,21 18,28 28,18 39,24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" opacity="0.55" /> : null}
         <circle cx="9" cy="33" r="3" fill="currentColor" />
         <circle cx="18" cy="25" r="3" fill="currentColor" />
         <circle cx="27" cy="29" r="3" fill="currentColor" />
         <circle cx="39" cy="15" r="3" fill="currentColor" />
+      </svg>
+    );
+  }
+
+  if (chartType === 'pie') {
+    return (
+      <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
+        <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
+        <path d="M24 10 A14 14 0 1 1 11.9 31 L24 24 Z" fill="currentColor" opacity="0.35" />
+        <path d="M24 10 A14 14 0 0 1 38 24 L24 24 Z" fill="currentColor" />
+        <circle cx="24" cy="24" r="5" fill="currentColor" opacity="0.16" />
+      </svg>
+    );
+  }
+
+  if (chartType === 'heatmap') {
+    return (
+      <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
+        <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
+        {[0, 1, 2].map((row) => [0, 1, 2].map((column) => (
+          <rect key={`${row}-${column}`} x={13 + column * 8} y={13 + row * 8} width="6" height="6" rx="1.5" fill="currentColor" opacity={0.25 + (row + column) * 0.12} />
+        )))}
+      </svg>
+    );
+  }
+
+  if (chartType === 'stackedBar') {
+    return (
+      <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
+        <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
+        {[12, 22, 32].map((x, index) => (
+          <g key={x}>
+            <rect x={x} y={26 - index * 3} width="5" height="11" rx="1.5" fill="currentColor" opacity="0.35" />
+            <rect x={x} y={17 - index * 3} width="5" height="9" rx="1.5" fill="currentColor" opacity="0.62" />
+            <rect x={x} y={11 - index * 2} width="5" height="6" rx="1.5" fill="currentColor" />
+          </g>
+        ))}
       </svg>
     );
   }
@@ -153,11 +193,34 @@ function ChartUseDescription({ chartDefinition }) {
   );
 }
 
+function SelectControl({ label, value, onChange, options, description }) {
+  return (
+    <label className="block text-sm">
+      <span className="mb-1 block font-medium text-[var(--panel-card-text)]">{label}</span>
+      <select
+        value={value || ''}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+      >
+        {options.map((field) => (
+          <option key={field.key ?? field} value={field.key ?? field}>{field.label ?? field}</option>
+        ))}
+      </select>
+      {description ? <span className="mt-1 block text-xs text-[var(--panel-card-muted-text)]">{description}</span> : null}
+    </label>
+  );
+}
+
 export function AnalyticsPanelContent({
   analyticsState,
 }) {
   const chartSvgRef = useRef(null);
   const [exportStatus, setExportStatus] = useState(null);
+  const [pieGroupBy, setPieGroupBy] = useState('language');
+  const [stackSegmentBy, setStackSegmentBy] = useState('sourcePerson');
+  const [multiLineGroupBy, setMultiLineGroupBy] = useState('sourcePerson');
+  const [heatmapRowBy, setHeatmapRowBy] = useState('sourcePerson');
+  const [heatmapColumnBy, setHeatmapColumnBy] = useState('targetPerson');
 
   const {
     chartType,
@@ -167,17 +230,49 @@ export function AnalyticsPanelContent({
     topN,
     setTopN,
     availableFields,
-    chartData,
+    rows = [],
   } = analyticsState;
 
   const chartDefinition = getAnalyticsChartDefinition(chartType);
   const availableBarFields = availableFields?.barGroupOptions || [];
+  const availablePieFields = availableFields?.pieGroupOptions || availableBarFields;
+  const availableSegmentFields = availableFields?.segmentGroupOptions || [];
+  const availableHeatmapRows = availableFields?.heatmapRowOptions || [];
+  const availableHeatmapColumns = availableFields?.heatmapColumnOptions || [];
   const canRenderBarControls = chartType === 'bar' && availableBarFields.length > 0;
   const canRenderLine = chartType === 'line' && availableFields?.hasYearData;
 
-  const selectedBarField = useMemo(() => {
-    return availableBarFields.find((field) => field.key === barGroupBy) || availableBarFields[0];
-  }, [availableBarFields, barGroupBy]);
+  const selectedBarField = useMemo(() => availableBarFields.find((field) => field.key === barGroupBy) || availableBarFields[0], [availableBarFields, barGroupBy]);
+  const selectedPieField = useMemo(() => availablePieFields.find((field) => field.key === pieGroupBy) || availablePieFields[0], [availablePieFields, pieGroupBy]);
+  const selectedStackField = useMemo(() => availableSegmentFields.find((field) => field.key === stackSegmentBy) || availableSegmentFields[0], [availableSegmentFields, stackSegmentBy]);
+  const selectedMultiLineField = useMemo(() => availableSegmentFields.find((field) => field.key === multiLineGroupBy) || availableSegmentFields[0], [availableSegmentFields, multiLineGroupBy]);
+  const selectedHeatmapRowField = useMemo(() => availableHeatmapRows.find((field) => field.key === heatmapRowBy) || availableHeatmapRows[0], [availableHeatmapRows, heatmapRowBy]);
+  const selectedHeatmapColumnField = useMemo(() => availableHeatmapColumns.find((field) => field.key === heatmapColumnBy) || availableHeatmapColumns[1] || availableHeatmapColumns[0], [availableHeatmapColumns, heatmapColumnBy]);
+
+  useEffect(() => {
+    if (chartType === 'pie' && selectedPieField && selectedPieField.key !== pieGroupBy) setPieGroupBy(selectedPieField.key);
+    if (chartType === 'stackedBar' && selectedStackField && selectedStackField.key !== stackSegmentBy) setStackSegmentBy(selectedStackField.key);
+    if (chartType === 'multiLine' && selectedMultiLineField && selectedMultiLineField.key !== multiLineGroupBy) setMultiLineGroupBy(selectedMultiLineField.key);
+    if (chartType === 'heatmap') {
+      if (selectedHeatmapRowField && selectedHeatmapRowField.key !== heatmapRowBy) setHeatmapRowBy(selectedHeatmapRowField.key);
+      if (selectedHeatmapColumnField && selectedHeatmapColumnField.key !== heatmapColumnBy) setHeatmapColumnBy(selectedHeatmapColumnField.key);
+    }
+  }, [chartType, heatmapColumnBy, heatmapRowBy, multiLineGroupBy, pieGroupBy, selectedHeatmapColumnField, selectedHeatmapRowField, selectedMultiLineField, selectedPieField, selectedStackField, stackSegmentBy]);
+
+  const chartData = useMemo(
+    () => buildAnalyticsChartData({
+      rows,
+      chartType,
+      barGroupBy,
+      pieGroupBy: selectedPieField?.key || pieGroupBy,
+      stackSegmentBy: selectedStackField?.key || stackSegmentBy,
+      heatmapRowBy: selectedHeatmapRowField?.key || heatmapRowBy,
+      heatmapColumnBy: selectedHeatmapColumnField?.key || heatmapColumnBy,
+      multiLineGroupBy: selectedMultiLineField?.key || multiLineGroupBy,
+      topN,
+    }),
+    [barGroupBy, chartType, heatmapColumnBy, heatmapRowBy, multiLineGroupBy, pieGroupBy, rows, selectedHeatmapColumnField, selectedHeatmapRowField, selectedMultiLineField, selectedPieField, selectedStackField, stackSegmentBy, topN]
+  );
 
   const handleExportPng = async () => {
     setExportStatus(null);
@@ -190,106 +285,102 @@ export function AnalyticsPanelContent({
     }
   };
 
+  const renderChartControls = () => {
+    if (chartType === 'bar') {
+      return canRenderBarControls ? (
+        <>
+          <SelectControl label="Group by" value={selectedBarField?.key || ''} onChange={setBarGroupBy} options={availableBarFields} description={selectedBarField?.description} />
+          <SelectControl label="Show" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+        </>
+      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported categorical fields are available in the current data.</div>;
+    }
+
+    if (chartType === 'line') {
+      return (
+        <div className="space-y-2 text-sm text-[var(--panel-card-muted-text)]">
+          <div>X-axis: Year</div>
+          <div>Metric: Letter count</div>
+          {!canRenderLine ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3">No usable year values are available in the current data.</div> : null}
+        </div>
+      );
+    }
+
+    if (chartType === 'pie') {
+      return availablePieFields.length ? (
+        <>
+          <SelectControl label="Slice by" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} />
+          <SelectControl label="Show" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+        </>
+      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported part-to-whole fields are available in the current data.</div>;
+    }
+
+    if (chartType === 'stackedBar') {
+      return availableSegmentFields.length ? (
+        <>
+          <SelectControl label="Split yearly bars by" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
+          <SelectControl label="Show categories" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+        </>
+      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported split fields are available in the current data.</div>;
+    }
+
+    if (chartType === 'multiLine') {
+      return availableSegmentFields.length ? (
+        <>
+          <SelectControl label="Draw one line per" value={selectedMultiLineField?.key || ''} onChange={setMultiLineGroupBy} options={availableSegmentFields} description={selectedMultiLineField?.description} />
+          <SelectControl label="Show lines" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+        </>
+      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported line-splitting fields are available in the current data.</div>;
+    }
+
+    if (chartType === 'heatmap') {
+      return availableHeatmapRows.length && availableHeatmapColumns.length ? (
+        <>
+          <SelectControl label="Rows" value={selectedHeatmapRowField?.key || ''} onChange={setHeatmapRowBy} options={availableHeatmapRows} description={selectedHeatmapRowField?.description} />
+          <SelectControl label="Columns" value={selectedHeatmapColumnField?.key || ''} onChange={setHeatmapColumnBy} options={availableHeatmapColumns} description={selectedHeatmapColumnField?.description} />
+          <SelectControl label="Show rows/columns" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+        </>
+      ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported heat-map fields are available in the current data.</div>;
+    }
+
+    return null;
+  };
+
   return (
     <div className="space-y-5">
       <div>
         <div className="text-sm text-[var(--muted-text)]">
-          Build compact charts from the current Peridot data. This first version supports ranked bar charts and yearly line charts.
+          Build compact charts from the current Peridot data. Charts reflect the current filtered data where applicable.
         </div>
       </div>
 
       <section className="space-y-3">
         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Choose a chart</div>
         <div className="grid grid-cols-2 gap-3">
-          <ChartTypeButton
-            option={ANALYTICS_CHART_DEFINITIONS.bar}
-            active={chartType === 'bar'}
-            onSelect={() => setChartType('bar')}
-          />
-          <ChartTypeButton
-            option={ANALYTICS_CHART_DEFINITIONS.line}
-            active={chartType === 'line'}
-            onSelect={() => setChartType('line')}
-          />
+          {Object.values(ANALYTICS_CHART_DEFINITIONS).map((option) => (
+            <ChartTypeButton
+              key={option.key}
+              option={option}
+              active={chartType === option.key}
+              onSelect={() => setChartType(option.key)}
+            />
+          ))}
         </div>
       </section>
 
       <section className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-4">
         <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Configure chart</div>
         <ChartUseDescription chartDefinition={chartDefinition} />
-
-        {chartType === 'bar' ? (
-          <div className="mt-4 space-y-3">
-            {canRenderBarControls ? (
-              <>
-                <label className="block text-sm">
-                  <span className="mb-1 block font-medium text-[var(--panel-card-text)]">Group by</span>
-                  <select
-                    value={selectedBarField?.key || ''}
-                    onChange={(event) => setBarGroupBy(event.target.value)}
-                    className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                  >
-                    {availableBarFields.map((field) => (
-                      <option key={field.key} value={field.key}>{field.label}</option>
-                    ))}
-                  </select>
-                  {selectedBarField?.description ? (
-                    <span className="mt-1 block text-xs text-[var(--panel-card-muted-text)]">{selectedBarField.description}</span>
-                  ) : null}
-                </label>
-
-                <label className="block text-sm">
-                  <span className="mb-1 block font-medium text-[var(--panel-card-text)]">Show</span>
-                  <select
-                    value={topN}
-                    onChange={(event) => setTopN(Number(event.target.value))}
-                    className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                  >
-                    {ANALYTICS_TOP_N_OPTIONS.map((value) => (
-                      <option key={value} value={value}>Top {value}</option>
-                    ))}
-                  </select>
-                </label>
-              </>
-            ) : (
-              <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">
-                No supported categorical fields are available in the current data.
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="mt-4 space-y-2 text-sm text-[var(--panel-card-muted-text)]">
-            <div>X-axis: Year</div>
-            <div>Metric: Letter count</div>
-            {!canRenderLine ? (
-              <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3">
-                No usable year values are available in the current data.
-              </div>
-            ) : null}
-          </div>
-        )}
+        <div className="mt-4 space-y-3">{renderChartControls()}</div>
       </section>
 
       <section className="space-y-3">
         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Preview</div>
         <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
-        <button
-          type="button"
-          onClick={handleExportPng}
-          className={buttonClassName()}
-          disabled={!chartData?.data?.length}
-        >
+        <button type="button" onClick={handleExportPng} className={buttonClassName()} disabled={!chartData}>
           Export chart PNG
         </button>
         {exportStatus ? (
-          <div
-            className={[
-              'rounded-xl border p-3 text-sm',
-              exportStatus.type === 'error'
-                ? 'border-red-300 bg-red-50 text-red-800'
-                : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)]',
-            ].join(' ')}
-          >
+          <div className={['rounded-xl border p-3 text-sm', exportStatus.type === 'error' ? 'border-red-300 bg-red-50 text-red-800' : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)]'].join(' ')}>
             {exportStatus.message}
           </div>
         ) : null}
