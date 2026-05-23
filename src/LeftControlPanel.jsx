@@ -630,65 +630,6 @@ function VisualizationTypePanelContent({
   );
 }
 
-function MinimumWeightControl({ viewMode, minCount, setMinCount }) {
-  const [pendingMinCount, setPendingMinCount] = useState(String(minCount ?? 1));
-
-  useEffect(() => {
-    setPendingMinCount(String(minCount ?? 1));
-  }, [minCount]);
-
-  const applyPendingMinCount = () => {
-    const parsed = Number.parseInt(String(pendingMinCount).trim(), 10);
-
-    if (!Number.isFinite(parsed)) {
-      setPendingMinCount(String(minCount ?? 1));
-      return;
-    }
-
-    const nextMinCount = Math.max(1, parsed);
-    setMinCount(nextMinCount);
-    setPendingMinCount(String(nextMinCount));
-  };
-
-  const handlePendingMinCountKeyDown = (event) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      applyPendingMinCount();
-    }
-  };
-
-  return (
-    <div className="space-y-2">
-      <label className="mb-1 block font-medium">
-        Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
-      </label>
-      <div className="flex items-center gap-2">
-        <input
-          type="number"
-          inputMode="numeric"
-          min="1"
-          step="1"
-          value={pendingMinCount}
-          onChange={(event) => setPendingMinCount(event.target.value)}
-          onKeyDown={handlePendingMinCountKeyDown}
-          className="w-24 rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-          aria-label="Minimum weight"
-        />
-        <button
-          type="button"
-          onClick={applyPendingMinCount}
-          className={buttonClassName()}
-        >
-          Update
-        </button>
-      </div>
-      <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">
-        Current minimum: {minCount}
-      </div>
-    </div>
-  );
-}
-
 function DisplayControlsPanelContent({
   showDisplayControlsPanel,
   setShowDisplayControlsPanel,
@@ -715,15 +656,6 @@ function DisplayControlsPanelContent({
       className="mt-3"
     >
       <div className="space-y-4 text-sm text-[var(--panel-card-muted-text)]">
-        <div>
-          <label className="mb-1 block font-medium">Search</label>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
-            className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
-          />
-        </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setShowLabels((v) => !v)} className={buttonClassName({ active: showLabels })}>Node Labels</button>
         </div>
@@ -734,6 +666,7 @@ function DisplayControlsPanelContent({
 
 function SearchFilterPanelContent({
   search,
+  setSearch,
   currentMinCountLabel,
   currentRangeLabel,
   graph,
@@ -749,7 +682,80 @@ function SearchFilterPanelContent({
   timelineMode,
   setTimelineMode,
 }) {
-  const currentSearch = search?.trim() || 'None';
+  const getAppliedStartYear = () => String(timelineMonths[rangeStart] || '').slice(0, 4);
+  const getAppliedEndYear = () => String(timelineMonths[rangeEnd] || '').slice(0, 4);
+
+  const [draftSearch, setDraftSearch] = useState(search ?? '');
+  const [draftMinCount, setDraftMinCount] = useState(String(minCount ?? 1));
+  const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
+  const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
+
+  useEffect(() => {
+    setDraftSearch(search ?? '');
+    setDraftMinCount(String(minCount ?? 1));
+    setDraftStartYear(getAppliedStartYear());
+    setDraftEndYear(getAppliedEndYear());
+  }, [
+    search,
+    minCount,
+    rangeStart,
+    rangeEnd,
+    timelineMonths.length,
+    timelineMonths[rangeStart],
+    timelineMonths[rangeEnd],
+  ]);
+
+  const resetDraftFilters = () => {
+    setDraftSearch(search ?? '');
+    setDraftMinCount(String(minCount ?? 1));
+    setDraftStartYear(getAppliedStartYear());
+    setDraftEndYear(getAppliedEndYear());
+  };
+
+  const resolveTimelineBoundaryIndexFromYear = (boundary, year) => {
+    if (!timelineMonths.length || !year) return -1;
+
+    if (boundary === 'start') {
+      return timelineMonths.findIndex((month) => String(month).slice(0, 4) === String(year));
+    }
+
+    for (let index = timelineMonths.length - 1; index >= 0; index -= 1) {
+      if (String(timelineMonths[index]).slice(0, 4) === String(year)) {
+        return index;
+      }
+    }
+
+    return -1;
+  };
+
+  const applyDraftFilters = () => {
+    const parsedMinCount = Number.parseInt(String(draftMinCount).trim(), 10);
+    const nextMinCount = Number.isFinite(parsedMinCount)
+      ? Math.max(1, parsedMinCount)
+      : minCount;
+
+    setSearch(String(draftSearch ?? '').trim());
+    setMinCount(nextMinCount);
+    setDraftMinCount(String(nextMinCount));
+
+    const nextStartIndex = resolveTimelineBoundaryIndexFromYear('start', draftStartYear);
+    const nextEndIndex = resolveTimelineBoundaryIndexFromYear('end', draftEndYear);
+
+    if (nextStartIndex >= 0 && nextEndIndex >= 0) {
+      const safeStart = Math.min(nextStartIndex, nextEndIndex);
+      const safeEnd = Math.max(nextStartIndex, nextEndIndex);
+      setTimelineMode('range');
+      setRangeStart(safeStart);
+      setRangeEnd(safeEnd);
+    }
+  };
+
+  const handleDraftKeyDown = (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      applyDraftFilters();
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -757,9 +763,43 @@ function SearchFilterPanelContent({
         <div className="space-y-3 p-4">
           <h2 className={sectionTitleClassName()}>Global search and filters</h2>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
-            This panel consolidates the controls that define the active filtered dataset.
-            Minimum-weight and date-range filters now live here; other filters will move in later bounded passes.
+            Edit filters here, then press Apply Filters to update the active dataset.
           </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={applyDraftFilters}
+              className={buttonClassName({ active: true })}
+            >
+              Apply Filters
+            </button>
+            <button
+              type="button"
+              onClick={resetDraftFilters}
+              className={buttonClassName()}
+            >
+              Reset Draft
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Keyword search</h3>
+          <p className="text-sm leading-6 text-[var(--muted-text)]">
+            This search narrows the active dataset using the existing Peridot keyword-search behavior.
+          </p>
+          <div className="space-y-2">
+            <label className="mb-1 block font-medium">Keyword search</label>
+            <input
+              value={draftSearch}
+              onChange={(event) => setDraftSearch(event.target.value)}
+              onKeyDown={handleDraftKeyDown}
+              placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
+              className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
+            />
+          </div>
         </div>
       </div>
 
@@ -770,11 +810,25 @@ function SearchFilterPanelContent({
             This filter controls the minimum represented weight required for routes or connections
             to appear in the current view.
           </p>
-          <MinimumWeightControl
-            viewMode={viewMode}
-            minCount={minCount}
-            setMinCount={setMinCount}
-          />
+          <div className="space-y-2">
+            <label className="mb-1 block font-medium">
+              Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
+            </label>
+            <input
+              type="number"
+              inputMode="numeric"
+              min="1"
+              step="1"
+              value={draftMinCount}
+              onChange={(event) => setDraftMinCount(event.target.value)}
+              onKeyDown={handleDraftKeyDown}
+              className="w-24 rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+              aria-label="Minimum weight"
+            />
+            <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">
+              Current applied minimum: {currentMinCountLabel}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -782,28 +836,34 @@ function SearchFilterPanelContent({
         <div className="space-y-3 p-4">
           <h3 className={serifHeadingClassName()}>Date range</h3>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
-            This filter defines the active date window. Timeline playback uses the same range.
+            This filter defines the active date window. Timeline playback uses the same applied range.
           </p>
           <TimelineDateRangeControls
             currentRangeLabel={currentRangeLabel}
             timelineMonths={timelineMonths}
-            rangeStart={rangeStart}
-            setRangeStart={setRangeStart}
-            rangeEnd={rangeEnd}
-            setRangeEnd={setRangeEnd}
-            timelineMode={timelineMode}
-            setTimelineMode={setTimelineMode}
+            draftStartYear={draftStartYear}
+            setDraftStartYear={setDraftStartYear}
+            draftEndYear={draftEndYear}
+            setDraftEndYear={setDraftEndYear}
           />
         </div>
       </div>
 
       <div className={sectionCardClassName()}>
         <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Current filter locations</h3>
+          <h3 className={serifHeadingClassName()}>Current applied filter scope</h3>
           <dl className="space-y-2 text-sm text-[var(--muted-text)]">
             <div className="flex items-start justify-between gap-4">
               <dt className="font-semibold text-[var(--text-main)]">Keyword search</dt>
-              <dd className="text-right">{currentSearch}</dd>
+              <dd className="text-right">{search?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Minimum weight</dt>
+              <dd className="text-right">{currentMinCountLabel}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Date window</dt>
+              <dd className="text-right">{currentRangeLabel}</dd>
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="font-semibold text-[var(--text-main)]">Nodes in view</dt>
@@ -830,8 +890,8 @@ function SearchFilterPanelContent({
             <li>Mappability and safe categorical metadata fields</li>
           </ul>
           <p className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
-            Minimum-weight and date-range controls have moved here without changing the filtering pipeline.
-            Entity and metadata filters remain planned for later bounded passes.
+            Keyword search, minimum-weight, and date-range controls now apply together through the Apply Filters button.
+            Entity-specific and metadata filters remain planned for later bounded passes.
           </p>
         </div>
       </div>
@@ -1299,6 +1359,7 @@ export function LeftControlPanel({
               ) : activeSidePanelView === 'searchFilter' ? (
                 <SearchFilterPanelContent
                   search={search}
+                  setSearch={setSearch}
                   currentMinCountLabel={currentMinCountLabel}
                   currentRangeLabel={currentRangeLabel}
                   graph={graph}

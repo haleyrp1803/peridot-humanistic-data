@@ -7,50 +7,36 @@ import {
 export function TimelineDateRangeControls({
   currentRangeLabel,
   timelineMonths,
-  rangeStart,
-  setRangeStart,
-  rangeEnd,
-  setRangeEnd,
-  timelineMode,
-  setTimelineMode,
+  draftStartYear,
+  setDraftStartYear,
+  draftEndYear,
+  setDraftEndYear,
 }) {
   const {
     timelineYears,
-    startYear,
-    endYear,
-  } = buildTimelineBoundaryOptions(timelineMonths, rangeStart, rangeEnd);
+  } = buildTimelineBoundaryOptions(
+    timelineMonths,
+    0,
+    Math.max(timelineMonths.length - 1, 0)
+  );
 
   const constrainedEndYears = timelineYears.filter((year) => {
-    if (!startYear) return true;
-    return Number(year) >= Number(startYear);
+    if (!draftStartYear) return true;
+    return Number(year) >= Number(draftStartYear);
   });
 
-  const setTimelineBoundaryFromYear = (boundary, year) => {
-    const resolvedIndex = resolveTimelineBoundaryIndex(
-      timelineMonths,
-      boundary,
-      year
-    );
-    if (resolvedIndex < 0) return;
+  const handleStartYearChange = (nextStartYear) => {
+    setDraftStartYear(nextStartYear);
 
-    setTimelineMode('range');
-
-    if (boundary === 'start') {
-      setRangeStart(resolvedIndex);
-      if (resolvedIndex > rangeEnd) {
-        setRangeEnd(resolvedIndex);
-      }
-      return;
+    if (draftEndYear && Number(nextStartYear) > Number(draftEndYear)) {
+      setDraftEndYear(nextStartYear);
     }
-
-    const nextEndIndex = Math.max(resolvedIndex, rangeStart);
-    setRangeEnd(nextEndIndex);
   };
 
   return (
     <div className="space-y-3">
       <div className="text-sm text-[var(--muted-text)]">
-        Current window: {currentRangeLabel}
+        Current applied window: {currentRangeLabel}
       </div>
 
       <div className="text-sm text-[var(--muted-text)]">
@@ -67,8 +53,8 @@ export function TimelineDateRangeControls({
               Start year
             </div>
             <select
-              value={startYear || ''}
-              onChange={(e) => setTimelineBoundaryFromYear('start', e.target.value)}
+              value={draftStartYear || ''}
+              onChange={(event) => handleStartYearChange(event.target.value)}
               className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
             >
               {timelineYears.map((year) => (
@@ -84,8 +70,8 @@ export function TimelineDateRangeControls({
               End year
             </div>
             <select
-              value={endYear || ''}
-              onChange={(e) => setTimelineBoundaryFromYear('end', e.target.value)}
+              value={draftEndYear || ''}
+              onChange={(event) => setDraftEndYear(event.target.value)}
               className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
             >
               {constrainedEndYears.map((year) => (
