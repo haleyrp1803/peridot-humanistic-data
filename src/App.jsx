@@ -1,4 +1,4 @@
-﻿// Core React hooks used throughout the app.
+// Core React hooks used throughout the app.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { geoContains, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
@@ -846,6 +846,59 @@ function buildPersonGraph(rows, width, height, layoutMode, minCount = 1, searchQ
   return { nodes: people, edges };
 }
 
+function normalizeFilterTerm(value) {
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function matchesFilterTerm(values, filterTerm) {
+  const q = normalizeFilterTerm(filterTerm);
+  if (!q) return true;
+
+  return values
+    .filter((value) => value !== null && value !== undefined)
+    .some((value) => String(value).toLowerCase().includes(q));
+}
+
+function filterRowsBySearchAndEntity(rows, {
+  searchQuery = '',
+  personQuery = '',
+  placeQuery = '',
+} = {}) {
+  const q = normalizeFilterTerm(searchQuery);
+  const personQ = normalizeFilterTerm(personQuery);
+  const placeQ = normalizeFilterTerm(placeQuery);
+
+  if (!q && !personQ && !placeQ) {
+    return rows;
+  }
+
+  return rows.filter((row) => {
+    if (personQ && !matchesFilterTerm([row.sourcePerson, row.targetPerson], personQ)) {
+      return false;
+    }
+
+    if (placeQ && !matchesFilterTerm([row.sourceLoc, row.targetLoc], placeQ)) {
+      return false;
+    }
+
+    if (!q) {
+      return true;
+    }
+
+    return matchesFilterTerm([
+      row.date,
+      row.parsedDate?.monthKey,
+      row.sourceLoc,
+      row.targetLoc,
+      row.sourcePerson,
+      row.targetPerson,
+      row.sourcePlaceId,
+      row.targetPlaceId,
+    ], q);
+  });
+}
+
+
 function readFileText(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1317,6 +1370,10 @@ function buildLeftControlPanelProps(args) {
       setPersonLayoutMode: args.setPersonLayoutMode,
       search: args.search,
       setSearch: args.setSearch,
+      personFilter: args.personFilter,
+      setPersonFilter: args.setPersonFilter,
+      placeFilter: args.placeFilter,
+      setPlaceFilter: args.setPlaceFilter,
       currentMinCountLabel: args.currentMinCountLabel,
       minCountOptions: args.minCountOptions,
       minCount: args.minCount,
@@ -2363,6 +2420,8 @@ export default function EuropeNetworkMapApp() {
   const [showLabels, setShowLabels] = useState(true);
   const [minCount, setMinCount] = useState(1);
   const [search, setSearch] = useState('');
+  const [personFilter, setPersonFilter] = useState('');
+  const [placeFilter, setPlaceFilter] = useState('');
   const [selectedSelection, setSelectedSelection] = useState(null);
   const [inspectorHistory, setInspectorHistory] = useState([]);
   const inspectorNavigationRef = useRef(false);
@@ -2567,10 +2626,21 @@ export default function EuropeNetworkMapApp() {
     setPlaybackIndex(-1);
   }, [timelineMonths.length]);
 
-  const selectedRowsForPlayback = useMemo(() => {
-    const rowsInWindow = filterRowsByTimelineWindow(normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd);
-    return buildPlaybackRows(rowsInWindow);
+  const timelineWindowRows = useMemo(() => {
+    return filterRowsByTimelineWindow(normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd);
   }, [normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd]);
+
+  const filteredRowsForActiveFilters = useMemo(() => {
+    return filterRowsBySearchAndEntity(timelineWindowRows, {
+      searchQuery: search,
+      personQuery: personFilter,
+      placeQuery: placeFilter,
+    });
+  }, [timelineWindowRows, search, personFilter, placeFilter]);
+
+  const selectedRowsForPlayback = useMemo(() => {
+    return buildPlaybackRows(filteredRowsForActiveFilters);
+  }, [filteredRowsForActiveFilters]);
 
   useEffect(() => {
     if (!isPlaying || !selectedRowsForPlayback.length) return undefined;
@@ -2588,9 +2658,8 @@ export default function EuropeNetworkMapApp() {
   }, [isPlaying, selectedRowsForPlayback, playbackSpeed]);
 
   const filteredRowsByTime = useMemo(() => {
-    const baseRows = filterRowsByTimelineWindow(normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd);
-    return filterRowsForPlayback(baseRows, selectedRowsForPlayback, playbackIndex);
-  }, [normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd, playbackIndex, selectedRowsForPlayback]);
+    return filterRowsForPlayback(filteredRowsForActiveFilters, selectedRowsForPlayback, playbackIndex);
+  }, [filteredRowsForActiveFilters, playbackIndex, selectedRowsForPlayback]);
 
   // ------------------------------------------------------------
   // Graph derivations
@@ -2598,14 +2667,8 @@ export default function EuropeNetworkMapApp() {
   const aggregatedEdges = useMemo(() => aggregateEdgesFromRows(filteredRowsByTime, normalizedLetters), [filteredRowsByTime, normalizedLetters]);
 
   const filteredAggregatedEdges = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return aggregatedEdges.filter((edge) => {
-      if (edge.count < minCount) return false;
-      if (!q) return true;
-      const haystack = [...edge.sources, ...edge.targets, ...edge.dates, ...edge.samplePairs, edge.sourcePlaceId, edge.targetPlaceId].join(' ').toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [aggregatedEdges, minCount, search]);
+    return aggregatedEdges.filter((edge) => edge.count >= minCount);
+  }, [aggregatedEdges, minCount]);
 
   const placeIdsInUse = useMemo(() => {
     const ids = new Set();
@@ -2627,10 +2690,9 @@ export default function EuropeNetworkMapApp() {
       mapViewportSize.width,
       mapViewportSize.height,
       personLayoutMode,
-      minCount,
-      search
+      minCount
     ),
-    [filteredRowsByTime, mapViewportSize.width, mapViewportSize.height, personLayoutMode, minCount, search]
+    [filteredRowsByTime, mapViewportSize.width, mapViewportSize.height, personLayoutMode, minCount]
   );
   const graph = viewMode === 'geographic' ? geographicGraph : personGraph; const analyticsFields = useMemo(() => getAvailableAnalyticsFields(filteredRowsByTime), [filteredRowsByTime]); useEffect(() => { if (analyticsChartType !== 'bar') return; const available = analyticsFields.barGroupOptions || []; if (!available.length) return; if (!available.some((field) => field.key === analyticsBarGroupBy)) { setAnalyticsBarGroupBy(available[0].key); } }, [analyticsBarGroupBy, analyticsChartType, analyticsFields]); const analyticsChartData = useMemo(() => buildAnalyticsChartData({ rows: filteredRowsByTime, chartType: analyticsChartType, barGroupBy: analyticsBarGroupBy, topN: analyticsTopN, }), [filteredRowsByTime, analyticsChartType, analyticsBarGroupBy, analyticsTopN]);
   const viewResetKey = useMemo(() => {
@@ -2730,11 +2792,13 @@ export default function EuropeNetworkMapApp() {
   const exportSubtitleLines = useMemo(() => {
     return [
       `View: ${viewMode === 'geographic' ? 'Geographic routes' : 'Person network'}`,
-      `Search: ${search.trim() || 'None'}`,
+      `Keyword search: ${search.trim() || 'None'}`,
+      `Person filter: ${personFilter.trim() || 'None'}`,
+      `Place filter: ${placeFilter.trim() || 'None'}`,
       `Minimum weight: ${currentMinCountLabel}`,
       `Visible dates: ${exportVisibleDateLabel}`,
     ];
-  }, [viewMode, search, currentMinCountLabel, exportVisibleDateLabel]);
+  }, [viewMode, search, personFilter, placeFilter, currentMinCountLabel, exportVisibleDateLabel]);
 
   const exportEdgesRows = useMemo(() => buildExportEdgeRows(graph.edges), [graph.edges]);
 
@@ -3021,6 +3085,10 @@ export default function EuropeNetworkMapApp() {
     setPersonLayoutMode,
     search,
     setSearch,
+    personFilter,
+    setPersonFilter,
+    placeFilter,
+    setPlaceFilter,
     currentMinCountLabel,
     minCountOptions,
     minCount,

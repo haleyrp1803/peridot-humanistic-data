@@ -667,6 +667,10 @@ function DisplayControlsPanelContent({
 function SearchFilterPanelContent({
   search,
   setSearch,
+  personFilter,
+  setPersonFilter,
+  placeFilter,
+  setPlaceFilter,
   currentMinCountLabel,
   currentRangeLabel,
   graph,
@@ -690,17 +694,23 @@ function SearchFilterPanelContent({
   const getDefaultEndYear = () => String(timelineMonths[Math.max(timelineMonths.length - 1, 0)] || '').slice(0, 4);
 
   const [draftSearch, setDraftSearch] = useState(search ?? '');
+  const [draftPersonFilter, setDraftPersonFilter] = useState(personFilter ?? '');
+  const [draftPlaceFilter, setDraftPlaceFilter] = useState(placeFilter ?? '');
   const [draftMinCount, setDraftMinCount] = useState(String(minCount ?? 1));
   const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
 
   useEffect(() => {
     setDraftSearch(search ?? '');
+    setDraftPersonFilter(personFilter ?? '');
+    setDraftPlaceFilter(placeFilter ?? '');
     setDraftMinCount(String(minCount ?? 1));
     setDraftStartYear(getAppliedStartYear());
     setDraftEndYear(getAppliedEndYear());
   }, [
     search,
+    personFilter,
+    placeFilter,
     minCount,
     rangeStart,
     rangeEnd,
@@ -711,6 +721,8 @@ function SearchFilterPanelContent({
 
   const resetDraftFilters = () => {
     setDraftSearch(search ?? '');
+    setDraftPersonFilter(personFilter ?? '');
+    setDraftPlaceFilter(placeFilter ?? '');
     setDraftMinCount(String(minCount ?? 1));
     setDraftStartYear(getAppliedStartYear());
     setDraftEndYear(getAppliedEndYear());
@@ -720,11 +732,15 @@ function SearchFilterPanelContent({
     const defaultEndIndex = Math.max(timelineMonths.length - 1, 0);
 
     setDraftSearch('');
+    setDraftPersonFilter('');
+    setDraftPlaceFilter('');
     setDraftMinCount('1');
     setDraftStartYear(getDefaultStartYear());
     setDraftEndYear(getDefaultEndYear());
 
     setSearch('');
+    setPersonFilter('');
+    setPlaceFilter('');
     setMinCount(1);
     setTimelineMode('all');
     setRangeStart(0);
@@ -756,6 +772,8 @@ function SearchFilterPanelContent({
       : minCount;
 
     setSearch(String(draftSearch ?? '').trim());
+    setPersonFilter(String(draftPersonFilter ?? '').trim());
+    setPlaceFilter(String(draftPlaceFilter ?? '').trim());
     setMinCount(nextMinCount);
     setDraftMinCount(String(nextMinCount));
 
@@ -791,7 +809,7 @@ function SearchFilterPanelContent({
         <div className="space-y-3 p-4">
           <h2 className={sectionTitleClassName()}>Global search and filters</h2>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Edit filters here, then press Apply Filters to update the active dataset. Use Clear Filters to return keyword search, minimum weight, and date range to their defaults.
+            Edit filters here, then press Apply Filters to update the active dataset. Use Clear Filters to return keyword search, person filter, place filter, minimum weight, and date range to their defaults.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -825,6 +843,44 @@ function SearchFilterPanelContent({
               onChange={(event) => setDraftSearch(event.target.value)}
               onKeyDown={handleDraftKeyDown}
               placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
+              className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Person filter</h3>
+          <p className="text-sm leading-6 text-[var(--muted-text)]">
+            Match letters where either correspondent contains this text.
+          </p>
+          <div className="space-y-2">
+            <label className="mb-1 block font-medium">Person</label>
+            <input
+              value={draftPersonFilter}
+              onChange={(event) => setDraftPersonFilter(event.target.value)}
+              onKeyDown={handleDraftKeyDown}
+              placeholder="e.g. Colomba, Medici, Maria"
+              className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Place filter</h3>
+          <p className="text-sm leading-6 text-[var(--muted-text)]">
+            Match letters where either source or target place contains this text.
+          </p>
+          <div className="space-y-2">
+            <label className="mb-1 block font-medium">Place</label>
+            <input
+              value={draftPlaceFilter}
+              onChange={(event) => setDraftPlaceFilter(event.target.value)}
+              onKeyDown={handleDraftKeyDown}
+              placeholder="e.g. Siena, Florence, Rome"
               className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
             />
           </div>
@@ -886,6 +942,14 @@ function SearchFilterPanelContent({
               <dd className="text-right">{search?.trim() || 'None'}</dd>
             </div>
             <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Person filter</dt>
+              <dd className="text-right">{personFilter?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Place filter</dt>
+              <dd className="text-right">{placeFilter?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
               <dt className="font-semibold text-[var(--text-main)]">Minimum weight</dt>
               <dd className="text-right">{currentMinCountLabel}</dd>
             </div>
@@ -913,12 +977,12 @@ function SearchFilterPanelContent({
         <div className="space-y-3 p-4">
           <h3 className={serifHeadingClassName()}>Planned consolidated filters</h3>
           <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-[var(--muted-text)]">
-            <li>Person, place, and route search</li>
+            <li>Route search</li>
             <li>Language and relationship metadata</li>
             <li>Mappability and safe categorical metadata fields</li>
           </ul>
           <p className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
-            Keyword search, minimum-weight, and date-range controls now apply together through the Apply Filters button. Clear Filters returns these controls to their default unfiltered state.
+            Keyword search, person, place, minimum-weight, and date-range controls now apply together through the Apply Filters button. Clear Filters returns these controls to their default unfiltered state.
             Entity-specific and metadata filters remain planned for later bounded passes.
           </p>
         </div>
@@ -1183,6 +1247,10 @@ export function LeftControlPanel({
     setPersonLayoutMode,
     search,
     setSearch,
+    personFilter,
+    setPersonFilter,
+    placeFilter,
+    setPlaceFilter,
     currentMinCountLabel,
     minCountOptions,
     minCount,
@@ -1388,6 +1456,10 @@ export function LeftControlPanel({
                 <SearchFilterPanelContent
                   search={search}
                   setSearch={setSearch}
+                  personFilter={personFilter}
+                  setPersonFilter={setPersonFilter}
+                  placeFilter={placeFilter}
+                  setPlaceFilter={setPlaceFilter}
                   currentMinCountLabel={currentMinCountLabel}
                   currentRangeLabel={currentRangeLabel}
                   graph={graph}
