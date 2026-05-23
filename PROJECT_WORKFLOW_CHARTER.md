@@ -35,7 +35,7 @@ See `CHANGELOG.md` for the most recent documented safe baseline.
 Current branch note:
 
 ```text
-The current active continuation branch may intentionally differ from experimental branches. As of the legacy-continuation handoff, MapLibre migrated-overlay work is set aside and should not be treated as the active source of truth unless explicitly resumed.
+The current active continuation path is on `main` unless the user explicitly creates or switches to another branch. MapLibre migrated-overlay work remains set aside and should not be treated as the active source of truth unless explicitly resumed.
 ```
 
 ---
@@ -75,6 +75,9 @@ Current fragile zones include:
 - shared side-panel shell behavior
 - inspector-open interactions after map clicks
 - cluster grouping and cluster inspector navigation
+- Analytics expanded overlay positioning above the map area
+- Analytics dynamic variable detection from uploaded/current row data
+- Analytics SVG-to-PNG chart export rendering
 
 ---
 
@@ -202,7 +205,9 @@ Current notable decisions:
 - Cluster sizing now reflects represented letter volume.
 - Cluster grouping is zoom-responsive.
 - Cluster inspector members are grouped by place.
-- MapLibre migrated-overlay work is paused; legacy D3/SVG Peridot is the active continuation path unless the user explicitly resumes MapLibre.
+- MapLibre migrated-overlay work is paused; legacy D3/SVG Peridot on `main` is the active continuation path unless the user explicitly resumes MapLibre.
+- Analytics variables should combine curated semantic fields with conservatively detected categorical metadata fields rather than exposing every raw column indiscriminately.
+- Analytics route variables are split into **Route (Place)** and **Route (Person)** to avoid ambiguity.
 
 ---
 
@@ -229,6 +234,19 @@ Future responsive panel work should be a narrow-window-specific override, not a 
 ### Dormant MapLibre work
 
 The repository may contain dormant MapLibre preview files from `main`. These should not be treated as active production code during legacy Peridot work. Do not remove, revive, or refactor MapLibre code unless the pass is explicitly about MapLibre. If MapLibre work resumes, first establish the correct branch/source-of-truth and perform a fresh audit.
+
+### Analytics behavior
+
+Analytics is now an active side-panel subsystem. Future Analytics changes should preserve:
+
+- chart picker opens from the Analytics rail tab
+- chart descriptions and example questions remain visible in the Configure area
+- variable options include curated semantic fields and useful categorical metadata fields
+- technical fields such as IDs, coordinates, dates, mappability flags, object/array values, purely numeric values, long note-like fields, and near-unique row identifiers are not treated as ordinary chart variables
+- **Route (Place)** remains source-place to target-place
+- **Route (Person)** remains sender to recipient
+- expanded chart view overlays the map area without resetting map state
+- PNG chart export still works
 
 ### Cluster behavior
 
@@ -273,10 +291,11 @@ The new chat should be told:
 
 - Peridot is the current app identity.
 - The current fixed basemap is `countries50m`.
-- The app uses a shared left-side panel with Controls and Inspector tabs.
+- The app uses a shared left-side panel with Controls, Data Inputs, Export, Timeline, Analytics, and Inspector tabs.
 - `LeftControlPanel.jsx` owns the shared side-panel shell.
 - `InspectorPanel.jsx` is content-only.
+- Analytics is handled by `AnalyticsPanel.jsx`, `analyticsConfig.js`, `analyticsDerivationHelpers.js`, and `analyticsChartComponents.jsx`.
 - Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed features.
 - The compatibility path for inspector auto-open is fragile; do not rename it casually.
 - Documentation updates are batched, not performed after every small code commit.
-- MapLibre migrated-overlay work is paused while legacy Peridot continuation proceeds.
+- MapLibre migrated-overlay work is paused while legacy Peridot continuation proceeds on `main`.

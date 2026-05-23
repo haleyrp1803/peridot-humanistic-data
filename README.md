@@ -8,7 +8,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Export, Timeline, and Inspector, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, and image/tabular export tools.
+The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, Analytics charting, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Export, Timeline, Analytics, and Inspector, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, compact and expanded chart views, and image/tabular export tools.
 
 ---
 
@@ -16,13 +16,13 @@ The application ingests correspondence-related tabular data, derives network str
 
 This repository represents an **active prototype / research tool in ongoing development**.
 
-The current legacy-continuation baseline is:
+The current documented safe baseline is:
 
-- **`10051c0` — `Add MapLibre selected filter layers`** on branch **`legacy-peridot-continuation`**
+- **`3352403` — `Fix Analytics expanded overlay and variable options`** on branch **`main`**
 
-This branch intentionally returns work to the normal legacy Peridot production path. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction.
+This baseline records the active legacy D3/SVG Peridot path after the Analytics feature milestone. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
-The current state of the active legacy-continuation project includes:
+The current state of the active `main` project includes:
 
 - working geographic and person-network visualization modes
 - direct view-selection buttons for:
@@ -32,13 +32,14 @@ The current state of the active legacy-continuation project includes:
 - **People** as the default startup view
 - a committed minimum-weight numeric input with **Enter** / **Update** apply behavior
 - year-based timeline filtering and playback infrastructure
-- a shared left-side panel with a persistent rail for Controls, Data Inputs, Export, Timeline, and Inspector
+- a shared left-side panel with a persistent rail for Controls, Data Inputs, Export, Timeline, Analytics, and Inspector
 - actionable cluster inspector behavior
 - cluster inspector members grouped by place
 - dynamic node radius contrast based on active data
 - volume-based zoom-responsive cluster sizing
 - theme preset support and map-stage overlays
 - export tooling for both images and tabular data
+- an Analytics side-panel tab with compact chart previews, expanded chart overlay, PNG chart export, dynamic variable controls, and multiple chart types
 - a true pre-settled **force-directed person-network layout** backed by `d3-force`
 - a **geographic-anchor person layout** that places correspondents by mappable location
 - inspector-internal navigation between people and places
@@ -66,7 +67,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 
 - hover and click inspection
 - shared side-panel Inspector tab for selected nodes, edges, clusters, and linked records
-- dedicated side-panel tabs for Data Inputs, Export, and Timeline workflows
+- dedicated side-panel tabs for Data Inputs, Export, Timeline, and Analytics workflows
 - inspector-internal navigation between people and places
 - actionable cluster inspector lists
 - cluster members grouped by place and ordered by represented visible volume
@@ -78,6 +79,32 @@ The codebase is functional, but it is still under active maintenance. The larges
 - year-based timeline range filtering
 - playback controls for chronological exploration
 - map legend, title bar, and floating control overlays
+
+### Analytics tools
+
+- dedicated **Analytics** side-panel tab
+- chart picker with:
+  - **Bar Chart**
+  - **Grouped Bar Chart**
+  - **Stacked Bar Chart**
+  - **Line Chart**
+  - **Multi-Line Chart**
+  - **Histogram**
+  - **Pie Chart**
+  - **Sunburst Chart**
+  - **Heatmap**
+- chart-specific descriptions and example research questions
+- chart-specific variable controls derived from curated Peridot fields and usable categorical metadata in the current rows
+- explicit **Route (Place)** and **Route (Person)** variables
+- Analytics-local date-range controls for time-based charts
+- automatic period granularity for time charts:
+  - more than 5 years = yearly
+  - 5 years or less = half-year periods
+  - 3 years or less = quarter periods
+  - 1 year or less = monthly periods
+- compact chart preview inside the side panel
+- expanded chart overlay over the map area, with an X close button
+- PNG export for chart previews
 
 ### Visual encoding
 
@@ -98,6 +125,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 - render SVG export to **PNG**
 - export derived **nodes CSV**
 - export derived **edges/routes CSV**
+- export Analytics chart previews as **PNG**
 
 ---
 
@@ -114,6 +142,7 @@ The current interface includes:
   - **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
   - **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
   - **Timeline** — year-range filtering and playback controls
+  - **Analytics** — compact charting, chart configuration, expanded chart overlay, and PNG chart export
   - **Inspector** — selected nodes, edges, clusters, linked records, and internal navigation
 
 Other current behavior:
@@ -206,6 +235,10 @@ The current `src/` structure is:
 
 ```text
 src/
+  analyticsChartComponents.jsx
+  analyticsConfig.js
+  analyticsDerivationHelpers.js
+  AnalyticsPanel.jsx
   App.jsx
   exportHelpers.js
   index.css
@@ -247,7 +280,23 @@ The main orchestration layer. It handles top-level application state, data inges
 
 #### `src/LeftControlPanel.jsx`
 
-Owns the shared side-panel shell and persistent icon rail. It renders the rail-driven panel views for Controls, Data Inputs, Export, Timeline, and Inspector. Inspector content is rendered through `InspectorPanelContent`, while the Data Inputs, Export, and Timeline tabs reuse existing panel content boundaries rather than changing ingestion, export, or playback logic.
+Owns the shared side-panel shell and persistent icon rail. It renders the rail-driven panel views for Controls, Data Inputs, Export, Timeline, Analytics, and Inspector. Inspector content is rendered through `InspectorPanelContent`, while the Data Inputs, Export, Timeline, and Analytics tabs reuse existing panel content boundaries rather than changing ingestion, export, playback, or map-rendering logic.
+
+#### `src/AnalyticsPanel.jsx`
+
+Analytics panel UI boundary. It owns the chart picker, chart configuration controls, Analytics-local date-range controls, PNG chart export action, compact preview region, and expanded chart overlay trigger.
+
+#### `src/analyticsConfig.js`
+
+Analytics configuration module. It defines chart metadata, chart labels, descriptions, example questions, default Analytics state, top-N display options, curated variable definitions, and the explicit **Route (Place)** / **Route (Person)** variable distinction.
+
+#### `src/analyticsDerivationHelpers.js`
+
+Analytics data-derivation module. It derives available variable options from current row data, filters unsuitable dynamic metadata fields, builds chart data, handles time-period bucketing, and prepares chart-specific data structures.
+
+#### `src/analyticsChartComponents.jsx`
+
+SVG chart-rendering module for the Analytics panel. It renders compact and expanded chart previews for bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap chart types.
 
 #### `src/InspectorPanel.jsx`
 
@@ -406,13 +455,14 @@ A typical workflow is:
 7. Hover or click nodes, edges, or clusters to inspect them.
 8. Use **Inspector** to navigate between people, places, cluster members, and linked records.
 9. Use the inspector **Back** button to return to the previous internal panel.
-10. Use **Export** to save the current state as SVG, PNG, or CSV outputs.
+10. Use **Analytics** to generate compact charts from the current data, expand a chart over the map area, and export chart previews as PNG files.
+11. Use **Export** to save the current visualization state as SVG, PNG, or CSV outputs.
 
 ---
 
 ## 12. MapLibre status
 
-MapLibre work is currently paused. The active branch for continued work is **`legacy-peridot-continuation`**, which keeps the normal D3/SVG Peridot behavior as the working app direction.
+MapLibre work is currently paused. The active branch for continued work is **`main`**, which keeps the normal D3/SVG Peridot behavior as the working app direction.
 
 The branch still contains early gated MapLibre preview files from `main` at `10051c0`, including `src/MapLibreMapStage.jsx` and `src/mapStyleConfig.js`. These files are dormant unless a developer explicitly opens the development URL with `?maplibrePreview=1`. Do not use the MapLibre preview flag for ordinary legacy Peridot testing.
 
@@ -439,6 +489,9 @@ The maintainer documentation identifies the following areas as especially sensit
 - inspector-open interactions
 - shared side-panel shell behavior
 - cluster grouping and cluster inspector navigation
+- Analytics expanded overlay positioning above the map area
+- Analytics dynamic variable detection from uploaded/current row data
+- Analytics SVG-to-PNG chart export rendering
 
 ### Practical implication
 
@@ -460,8 +513,9 @@ This repository includes internal maintenance and workflow documents that should
 
 Likely near-term priorities include:
 
-- continue from the legacy D3/SVG Peridot path on `legacy-peridot-continuation`
+- continue from the legacy D3/SVG Peridot path on `main`
 - keep dormant MapLibre files untouched unless explicitly resuming that experiment
+- continue improving Analytics usability after the current charting milestone
 
 - continue safe reduction of orchestration pressure inside `src/App.jsx`
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested

@@ -16,15 +16,15 @@ Current source of truth folder:
 
 Current active branch for continued legacy work:
 
-- **`legacy-peridot-continuation`**
+- **`main`**
 
 Current documented baseline:
 
-- **`10051c0` — `Add MapLibre selected filter layers`**
+- **`3352403` — `Fix Analytics expanded overlay and variable options`**
 
-This branch intentionally continues from `main` while returning active work to the normal legacy D3/SVG Peridot path. The earlier MapLibre preview files remain present but dormant unless `?maplibrePreview=1` is used.
+This baseline records the active legacy D3/SVG Peridot path after the Analytics feature milestone. The earlier MapLibre preview files remain present but dormant unless `?maplibrePreview=1` is used.
 
-The last fully documented pre-MapLibre UI milestone remains:
+The last fully documented pre-Analytics UI milestone remains:
 
 - **`8539c68` — `Clarify timeline rail icon`**
 
@@ -54,8 +54,9 @@ Current live app surface includes:
 - `src/index.css`
 - `src/main.jsx`
 
-Current panel / inspector boundaries in `src/`:
+Current panel / inspector / Analytics boundaries in `src/`:
 
+- `src/AnalyticsPanel.jsx`
 - `src/LeftControlPanel.jsx`
 - `src/InspectorPanel.jsx`
 - `src/InspectorBodyRouter.jsx`
@@ -69,6 +70,9 @@ Current panel / inspector boundaries in `src/`:
 
 Extracted support modules in `src/`:
 
+- `src/analyticsChartComponents.jsx`
+- `src/analyticsConfig.js`
+- `src/analyticsDerivationHelpers.js`
 - `src/mapLayoutHelpers.js`
 - `src/mapStageComponents.jsx`
 - `src/interactionHelpers.js`
@@ -106,9 +110,10 @@ The app includes:
 - interactive SVG-based rendering
 - year-based timeline filtering and playback
 - shared side-panel inspection workflow
-- persistent side-panel icon rail with dedicated Controls, Data Inputs, Export, Timeline, and Inspector tabs
+- persistent side-panel icon rail with dedicated Controls, Data Inputs, Export, Timeline, Analytics, and Inspector tabs
 - theme presets and visual controls
 - export tools for image and tabular outputs
+- Analytics charting tools with compact previews, expanded overlay, variable controls, date-range controls, and PNG chart export
 
 The main maintenance challenge remains structural concentration in `src/App.jsx`, but that concentration has been reduced through bounded extraction passes.
 
@@ -139,14 +144,66 @@ Owns the shared side-panel shell and persistent icon rail. The shell includes:
 
 - persistent icon rail that is available when the panel is closed and when it is open
 - open-state close button at the top of the rail
-- rail-driven panel views for **Controls**, **Data Inputs**, **Export**, **Timeline**, and **Inspector**
+- rail-driven panel views for **Controls**, **Data Inputs**, **Export**, **Timeline**, **Analytics**, and **Inspector**
 - Controls content rendering for visualization, display, theme, summary, and diagnostics controls
 - Data Inputs content rendering for Geography, Raw Data, and Person Metadata uploads
 - Export content rendering for SVG, PNG, nodes CSV, and edges/routes CSV controls
 - Timeline content rendering for year-range and playback controls
+- Analytics content rendering through `AnalyticsPanelContent`
 - Inspector content rendering through `InspectorPanelContent`
 
 This file currently remains named `LeftControlPanel.jsx`, but it is now conceptually the shared side-panel shell and rail-tab host. Compatibility-sensitive `showLeftSidebar` / `showRightSidebar` state names still exist and should not be casually renamed because they are tied to inspector auto-open behavior.
+
+### `src/AnalyticsPanel.jsx`
+
+Owns the Analytics panel UI. It renders:
+
+- chart selection grid
+- chart descriptions and example questions
+- variable controls
+- Analytics-local date-range controls
+- compact chart preview
+- expanded chart overlay trigger
+- chart PNG export action
+
+The expanded chart view is rendered through a React portal and overlays the map area without changing map state.
+
+### `src/analyticsConfig.js`
+
+Owns Analytics chart configuration, including:
+
+- chart labels and descriptions
+- example research questions
+- default Analytics state
+- top-N display options
+- curated variable definitions
+- **Route (Place)** and **Route (Person)** definitions
+
+### `src/analyticsDerivationHelpers.js`
+
+Owns Analytics data derivation, including:
+
+- available variable detection
+- conservative filtering of dynamic metadata fields
+- time-period bucketing for date-range charts
+- chart data construction
+- semantic alias handling for curated fields such as Language and Relationship
+
+Dynamic variable detection should exclude technical or non-categorical fields such as IDs, latitude/longitude fields, date fields, mappability flags, object/array values, purely numeric values, long note-like fields, and near-unique row identifiers.
+
+### `src/analyticsChartComponents.jsx`
+
+Owns SVG chart rendering for:
+
+- Bar Chart
+- Grouped Bar Chart
+- Stacked Bar Chart
+- Line Chart
+- Multi-Line Chart
+- Histogram
+- Pie Chart
+- Sunburst Chart
+- Heatmap
 
 ### `src/InspectorPanel.jsx`
 
@@ -217,7 +274,7 @@ Pure helper logic for the pre-settled force-directed person-network layout.
 
 ### `src/MapLibreMapStage.jsx`
 
-Dormant development-only MapLibre preview stage inherited from `main` at `10051c0`. It is not the active production renderer on `legacy-peridot-continuation`. Avoid changing it unless the user explicitly resumes MapLibre work.
+Dormant development-only MapLibre preview stage inherited from `main` at `10051c0`. It is not the active production renderer on `main`. Avoid changing it unless the user explicitly resumes MapLibre work.
 
 ### `src/mapStyleConfig.js`
 
@@ -258,8 +315,8 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - one shared left-side panel shell
 - persistent icon rail as the panel-view switcher
 - close button at the top of the open-state rail
-- dedicated rail tabs for Controls, Data Inputs, Export, Timeline, and Inspector
-- Data Inputs, Export, and Timeline moved out of the general Controls panel into dedicated views
+- dedicated rail tabs for Controls, Data Inputs, Export, Timeline, Analytics, and Inspector
+- Data Inputs, Export, Timeline, and Analytics moved out of the general Controls panel into dedicated views
 - shell-level open/close behavior
 - Inspector auto-opens from node, edge, and cluster interactions
 
@@ -294,7 +351,22 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - PNG export
 - nodes CSV export
 - edges/routes CSV export
+- Analytics chart PNG export
 - export controls now appear in a dedicated side-panel Export tab
+
+### Analytics capabilities
+
+- dedicated side-panel Analytics tab
+- chart picker with Bar, Grouped Bar, Stacked Bar, Line, Multi-Line, Histogram, Pie, Sunburst, and Heatmap chart types
+- chart descriptions and example questions
+- chart-specific variable controls
+- curated semantic variables plus usable dynamically detected categorical metadata fields
+- explicit **Route (Place)** and **Route (Person)** variables
+- Analytics-local date-range controls for time-based charts
+- automatic time-period granularity based on selected date range
+- compact side-panel chart preview
+- expanded chart overlay over the map area
+- PNG chart export
 
 ---
 
@@ -315,7 +387,8 @@ Important current side-panel state:
   2. **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
   3. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
   4. **Timeline** — year-range filtering and playback controls
-  5. **Inspector** — selected nodes, edges, clusters, linked records, and inspector-internal navigation
+  5. **Analytics** — chart selection, chart configuration, expanded chart overlay, and chart PNG export
+  6. **Inspector** — selected nodes, edges, clusters, linked records, and inspector-internal navigation
 - the open-state rail has a mossy/peridot background, lighter green inactive buttons, lighter hover states, and cream active-state buttons
 
 Recent committed behavior includes:
@@ -326,11 +399,45 @@ Recent committed behavior includes:
 - removal of the old **Show all dates** shortcut
 - year-only timeline selectors
 - removal of the old horizontal Controls / Inspector top tabs
-- dedicated rail tabs for Data Inputs, Export, and Timeline
+- dedicated rail tabs for Data Inputs, Export, Timeline, and Analytics
 
 ---
 
 ## Recent development trajectory
+
+### Analytics sequence
+
+#### `04d95a7` — Add Analytics side panel charts
+
+Added the Analytics side-panel tab, initial Bar Chart and Line Chart support, chart descriptions/example questions, variable availability, compact preview, and PNG export.
+
+#### `caddd3c` — Refine Analytics chart panel interactions
+
+Replaced the chart selector with square chart-icon buttons, moved descriptive chart text into the Configure area, added hover tooltips, and improved chart PNG export behavior.
+
+#### `4b90e4e` — Add additional Analytics chart types
+
+Added Pie Chart, Heatmap, Stacked Bar Chart, and Multi-Line Chart support.
+
+#### `961bf45` — Clarify Analytics chart variable controls
+
+Clarified chart variable counts, variable roles, and default best-use cases.
+
+#### `2320bfe` — Expand Analytics chart controls
+
+Added Grouped Bar Chart, Sunburst Chart, Histogram, bar-chart orientation control, Analytics-local date-range controls, and automatic period granularity.
+
+#### `416dced` — Refine Analytics chart icons and expanded view
+
+Reordered chart icons, capitalized labels, fixed grouped/stacked bar icon baselines, and added the first expanded chart view.
+
+#### `4b631be` — Refine Analytics variables and expanded chart overlay
+
+Expanded top-N options, added dynamic categorical metadata field detection, and moved the expanded chart view toward the map area.
+
+#### `3352403` — Fix Analytics expanded overlay and variable options
+
+Fixed the expanded chart overlay so it renders through a React portal over the map area, strengthened dynamic variable filtering, added semantic aliases for curated variables, and split route variables into **Route (Place)** and **Route (Person)**.
 
 ### Cluster and sizing sequence
 
@@ -481,6 +588,9 @@ These areas still deserve narrow, explicit passes:
 - broad orchestration work in `src/App.jsx`
 - shared side-panel shell and inspector-open interactions
 - cluster grouping and cluster inspector navigation
+- Analytics expanded overlay positioning above the map area
+- Analytics dynamic variable detection from uploaded/current row data
+- Analytics SVG-to-PNG chart export rendering
 - dormant MapLibre preview code if it is ever reactivated
 
 ---
@@ -528,9 +638,9 @@ This recent work also reinforced these process rules:
 A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
-- active branch: `legacy-peridot-continuation`
-- current documented baseline: **`10051c0` — `Add MapLibre selected filter layers`**
-- last documented legacy UI milestone: **`8539c68` — `Clarify timeline rail icon`**
+- active branch: `main`
+- current documented baseline: **`3352403` — `Fix Analytics expanded overlay and variable options`**
+- last documented pre-Analytics UI milestone: **`8539c68` — `Clarify timeline rail icon`**
 
 A future chat should also be told that:
 
@@ -539,7 +649,8 @@ A future chat should also be told that:
 - itch.io packaging support is already committed
 - the current shared side panel and rail-tab structure are committed
 - `InspectorPanel.jsx` is content-only
-- `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Export/Timeline/Inspector panel views
+- `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Export/Timeline/Analytics/Inspector panel views
+- `AnalyticsPanel.jsx`, `analyticsConfig.js`, `analyticsDerivationHelpers.js`, and `analyticsChartComponents.jsx` own the Analytics subsystem
 - current cluster features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
 - documentation should preserve the full commit trajectory carefully

@@ -2,26 +2,33 @@
 
 ## Current documented safe baseline
 
-- **`10051c0` — `Add MapLibre selected filter layers`** on branch **`legacy-peridot-continuation`**
+- **`3352403` — `Fix Analytics expanded overlay and variable options`** on branch **`main`**
 
-This baseline intentionally continues from `main` while returning active development attention to the normal legacy D3/SVG Peridot path. The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment has been set aside rather than merged into this continuation branch.
+This baseline records the active legacy D3/SVG Peridot path after the Analytics feature milestone. The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment remains set aside rather than merged into the active implementation path.
 
-The preceding stable legacy UI milestone remains:
+The preceding pre-Analytics legacy UI milestone remains:
 
 - **`8539c68` — `Clarify timeline rail icon`**
 
-That milestone reflects the current clean Peridot state after the cluster-interaction, node-sizing, cluster-sizing, cluster-inspector, shared side-panel, persistent icon-rail, and dedicated Data Inputs / Export / Timeline tab work completed in bounded passes.
+That milestone reflects the clean Peridot state after the cluster-interaction, node-sizing, cluster-sizing, cluster-inspector, shared side-panel, persistent icon-rail, and dedicated Data Inputs / Export / Timeline tab work completed in bounded passes.
 
 ---
 
 ## Current branch transition
 
+### `3352403` — Fix Analytics expanded overlay and variable options
+
+- This commit is the current documented `main` baseline.
+- It keeps the active app on the D3/SVG Peridot production renderer.
+- It records the Analytics feature milestone after the expanded chart overlay and variable-menu fixes.
+- The default app path remains the legacy Peridot path; MapLibre work remains dormant unless explicitly resumed.
+
 ### `10051c0` — Add MapLibre selected filter layers
 
-- This commit is the current `main` / `legacy-peridot-continuation` starting point.
+- This commit was the earlier `main` / `legacy-peridot-continuation` starting point for returning to the legacy path.
 - It includes an early, development-only MapLibre preview path gated behind `?maplibrePreview=1`.
 - The default app path remains the D3/SVG Peridot production renderer.
-- Current active work is returning to the legacy Peridot path rather than continuing the larger MapLibre migrated-overlay experiment.
+- Active work has continued on `main` rather than on the temporary `legacy-peridot-continuation` branch.
 
 ### MapLibre migrated-overlay branch paused
 
@@ -31,6 +38,63 @@ That milestone reflects the current clean Peridot state after the cluster-intera
 - Do not treat the MapLibre migrated-overlay branch as the active implementation baseline unless the user explicitly resumes it.
 
 ## Recent committed work
+
+### `3352403` — Fix Analytics expanded overlay and variable options
+
+- Fixed the expanded chart view so it renders through a React portal and overlays the map area rather than being constrained by the Analytics panel.
+- Strengthened dynamic variable filtering so technical fields such as mappability flags, IDs, coordinates, dates, numeric-only fields, and near-unique row identifiers are excluded from ordinary chart-variable menus.
+- Added semantic alias handling for curated variables such as Language and Relationship.
+- Split the ambiguous Route variable into:
+  - **Route (Place)**
+  - **Route (Person)**
+
+### `4b631be` — Refine Analytics variables and expanded chart overlay
+
+- Added top-N options for 1, 2, 3, 4, 5, 10, 15, and 20 displayed categories.
+- Added dynamic categorical metadata field detection from current/uploaded row data.
+- Moved the expanded chart view toward the map area rather than using a centered full-screen modal.
+
+### `416dced` — Refine Analytics chart icons and expanded view
+
+- Reordered Analytics chart icons into a 3-column chart grid.
+- Capitalized chart option labels.
+- Corrected grouped and stacked bar-chart icon baselines.
+- Added the first expanded chart view.
+
+### `2320bfe` — Expand Analytics chart controls
+
+- Added Grouped Bar Chart, Sunburst Chart, and Histogram.
+- Made the Bar Chart default to vertical orientation, with a horizontal-orientation option.
+- Added Analytics-local date-range controls.
+- Added automatic period granularity for time-based charts:
+  - more than 5 years = year
+  - 5 years or less = half-year
+  - 3 years or less = quarter
+  - 1 year or less = month
+
+### `961bf45` — Clarify Analytics chart variable controls
+
+- Clarified how many variables each chart type accepts.
+- Labeled chart variable controls explicitly.
+- Added best-use-case notes for chart defaults.
+
+### `4b90e4e` — Add additional Analytics chart types
+
+- Added Pie Chart, Heatmap, Stacked Bar Chart, and Multi-Line Chart.
+- Added chart data derivation and SVG rendering for the additional chart types.
+
+### `caddd3c` — Refine Analytics chart panel interactions
+
+- Replaced the chart selector with square chart-icon buttons.
+- Moved chart descriptions and example questions into the Configure area.
+- Added hover tooltips for chart elements.
+- Improved PNG export behavior for chart previews.
+
+### `04d95a7` — Add Analytics side panel charts
+
+- Added the Analytics side-panel tab.
+- Added initial Bar Chart and Line Chart support.
+- Added compact chart preview, variable availability, descriptors/example questions, and PNG export.
 
 ### `8539c68` — Clarify timeline rail icon
 
