@@ -681,9 +681,13 @@ function SearchFilterPanelContent({
   setRangeEnd,
   timelineMode,
   setTimelineMode,
+  setIsPlaying,
+  setPlaybackIndex,
 }) {
   const getAppliedStartYear = () => String(timelineMonths[rangeStart] || '').slice(0, 4);
   const getAppliedEndYear = () => String(timelineMonths[rangeEnd] || '').slice(0, 4);
+  const getDefaultStartYear = () => String(timelineMonths[0] || '').slice(0, 4);
+  const getDefaultEndYear = () => String(timelineMonths[Math.max(timelineMonths.length - 1, 0)] || '').slice(0, 4);
 
   const [draftSearch, setDraftSearch] = useState(search ?? '');
   const [draftMinCount, setDraftMinCount] = useState(String(minCount ?? 1));
@@ -710,6 +714,23 @@ function SearchFilterPanelContent({
     setDraftMinCount(String(minCount ?? 1));
     setDraftStartYear(getAppliedStartYear());
     setDraftEndYear(getAppliedEndYear());
+  };
+
+  const clearFilters = () => {
+    const defaultEndIndex = Math.max(timelineMonths.length - 1, 0);
+
+    setDraftSearch('');
+    setDraftMinCount('1');
+    setDraftStartYear(getDefaultStartYear());
+    setDraftEndYear(getDefaultEndYear());
+
+    setSearch('');
+    setMinCount(1);
+    setTimelineMode('all');
+    setRangeStart(0);
+    setRangeEnd(defaultEndIndex);
+    setIsPlaying(false);
+    setPlaybackIndex(-1);
   };
 
   const resolveTimelineBoundaryIndexFromYear = (boundary, year) => {
@@ -747,7 +768,14 @@ function SearchFilterPanelContent({
       setTimelineMode('range');
       setRangeStart(safeStart);
       setRangeEnd(safeEnd);
+    } else {
+      setTimelineMode('all');
+      setRangeStart(0);
+      setRangeEnd(Math.max(timelineMonths.length - 1, 0));
     }
+
+    setIsPlaying(false);
+    setPlaybackIndex(-1);
   };
 
   const handleDraftKeyDown = (event) => {
@@ -763,7 +791,7 @@ function SearchFilterPanelContent({
         <div className="space-y-3 p-4">
           <h2 className={sectionTitleClassName()}>Global search and filters</h2>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Edit filters here, then press Apply Filters to update the active dataset.
+            Edit filters here, then press Apply Filters to update the active dataset. Use Clear Filters to return keyword search, minimum weight, and date range to their defaults.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -775,10 +803,10 @@ function SearchFilterPanelContent({
             </button>
             <button
               type="button"
-              onClick={resetDraftFilters}
+              onClick={clearFilters}
               className={buttonClassName()}
             >
-              Reset Draft
+              Clear Filters
             </button>
           </div>
         </div>
@@ -890,7 +918,7 @@ function SearchFilterPanelContent({
             <li>Mappability and safe categorical metadata fields</li>
           </ul>
           <p className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
-            Keyword search, minimum-weight, and date-range controls now apply together through the Apply Filters button.
+            Keyword search, minimum-weight, and date-range controls now apply together through the Apply Filters button. Clear Filters returns these controls to their default unfiltered state.
             Entity-specific and metadata filters remain planned for later bounded passes.
           </p>
         </div>
@@ -1374,6 +1402,8 @@ export function LeftControlPanel({
                   setRangeEnd={setRangeEnd}
                   timelineMode={timelineMode}
                   setTimelineMode={setTimelineMode}
+                  setIsPlaying={setIsPlaying}
+                  setPlaybackIndex={setPlaybackIndex}
                 />
               ) : activeSidePanelView === 'export' ? (
                 <ExportPanelContent {...displayFilteringGroupProps.exportPanelState} />
