@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TimelinePanelContent } from './timelinePlaybackComponents.jsx';
 import { InspectorPanelContent } from './InspectorPanel.jsx'; import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 
@@ -630,24 +630,7 @@ function VisualizationTypePanelContent({
   );
 }
 
-function DisplayControlsPanelContent({
-  showDisplayControlsPanel,
-  setShowDisplayControlsPanel,
-  showLabels,
-  setShowLabels,
-  viewMode,
-  setViewMode,
-  personLayoutMode,
-  setPersonLayoutMode,
-  search,
-  setSearch,
-  currentMinCountLabel,
-  minCountOptions,
-  minCount,
-  setMinCount,
-  timelineMode,
-  setTimelineMode,
-}) {
+function MinimumWeightControl({ viewMode, minCount, setMinCount }) {
   const [pendingMinCount, setPendingMinCount] = useState(String(minCount ?? 1));
 
   useEffect(() => {
@@ -675,6 +658,56 @@ function DisplayControlsPanelContent({
   };
 
   return (
+    <div className="space-y-2">
+      <label className="mb-1 block font-medium">
+        Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
+      </label>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="numeric"
+          min="1"
+          step="1"
+          value={pendingMinCount}
+          onChange={(event) => setPendingMinCount(event.target.value)}
+          onKeyDown={handlePendingMinCountKeyDown}
+          className="w-24 rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+          aria-label="Minimum weight"
+        />
+        <button
+          type="button"
+          onClick={applyPendingMinCount}
+          className={buttonClassName()}
+        >
+          Update
+        </button>
+      </div>
+      <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">
+        Current minimum: {minCount}
+      </div>
+    </div>
+  );
+}
+
+function DisplayControlsPanelContent({
+  showDisplayControlsPanel,
+  setShowDisplayControlsPanel,
+  showLabels,
+  setShowLabels,
+  viewMode,
+  setViewMode,
+  personLayoutMode,
+  setPersonLayoutMode,
+  search,
+  setSearch,
+  currentMinCountLabel,
+  minCountOptions,
+  minCount,
+  setMinCount,
+  timelineMode,
+  setTimelineMode,
+}) {
+  return (
     <CollapsiblePanelSection
       title="Display Controls"
       open={showDisplayControlsPanel}
@@ -691,34 +724,6 @@ function DisplayControlsPanelContent({
             className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
           />
         </div>
-        <div>
-          <label className="mb-1 block font-medium">
-            Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              min="1"
-              step="1"
-              value={pendingMinCount}
-              onChange={(event) => setPendingMinCount(event.target.value)}
-              onKeyDown={handlePendingMinCountKeyDown}
-              className="w-24 rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-              aria-label="Minimum weight"
-            />
-            <button
-              type="button"
-              onClick={applyPendingMinCount}
-              className={buttonClassName()}
-            >
-              Update
-            </button>
-          </div>
-          <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">
-            Current minimum: {minCount}
-          </div>
-        </div>
         <div className="flex flex-wrap gap-2">
           <button onClick={() => setShowLabels((v) => !v)} className={buttonClassName({ active: showLabels })}>Node Labels</button>
         </div>
@@ -733,6 +738,9 @@ function SearchFilterPanelContent({
   currentRangeLabel,
   graph,
   rowDiagnostics,
+  viewMode,
+  minCount,
+  setMinCount,
 }) {
   const currentSearch = search?.trim() || 'None';
 
@@ -742,9 +750,24 @@ function SearchFilterPanelContent({
         <div className="space-y-3 p-4">
           <h2 className={sectionTitleClassName()}>Global search and filters</h2>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
-            This panel will consolidate the controls that define the active filtered dataset.
-            No filters have been moved here yet.
+            This panel consolidates the controls that define the active filtered dataset.
+            The minimum-weight filter now lives here; other filters will move in later bounded passes.
           </p>
+        </div>
+      </div>
+
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Minimum correspondence weight</h3>
+          <p className="text-sm leading-6 text-[var(--muted-text)]">
+            This filter controls the minimum represented weight required for routes or connections
+            to appear in the current view.
+          </p>
+          <MinimumWeightControl
+            viewMode={viewMode}
+            minCount={minCount}
+            setMinCount={setMinCount}
+          />
         </div>
       </div>
 
@@ -755,10 +778,6 @@ function SearchFilterPanelContent({
             <div className="flex items-start justify-between gap-4">
               <dt className="font-semibold text-[var(--text-main)]">Keyword search</dt>
               <dd className="text-right">{currentSearch}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Minimum weight</dt>
-              <dd className="text-right">{currentMinCountLabel}</dd>
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="font-semibold text-[var(--text-main)]">Date window</dt>
@@ -785,14 +804,13 @@ function SearchFilterPanelContent({
           <h3 className={serifHeadingClassName()}>Planned consolidated filters</h3>
           <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-[var(--muted-text)]">
             <li>Date range</li>
-            <li>Minimum correspondence weight</li>
             <li>Person, place, and route search</li>
             <li>Language and relationship metadata</li>
             <li>Mappability and safe categorical metadata fields</li>
           </ul>
           <p className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
-            This shell is intentionally read-only for now. The next bounded pass can move the
-            minimum-weight control here without changing the rest of the filtering pipeline.
+            The minimum-weight control has moved here without changing the filtering pipeline.
+            Date range and entity filters remain planned for later bounded passes.
           </p>
         </div>
       </div>
@@ -1264,6 +1282,9 @@ export function LeftControlPanel({
                   currentRangeLabel={currentRangeLabel}
                   graph={graph}
                   rowDiagnostics={rowDiagnostics}
+                  viewMode={viewMode}
+                  minCount={minCount}
+                  setMinCount={setMinCount}
                 />
               ) : activeSidePanelView === 'export' ? (
                 <ExportPanelContent {...displayFilteringGroupProps.exportPanelState} />
