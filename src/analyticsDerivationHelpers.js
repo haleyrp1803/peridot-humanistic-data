@@ -10,6 +10,48 @@ function normalizeText(value) {
   return text;
 }
 
+function normalizeKey(value) {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/["'’‘“”]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function keyMatchesCandidate(key, candidate) {
+  return normalizeKey(key) === normalizeKey(candidate);
+}
+
+function getAliasedRowValue(row, canonicalKey, aliases = []) {
+  if (!row) return '';
+
+  const direct = normalizeText(row[canonicalKey]);
+  if (direct) return direct;
+
+  const candidates = [canonicalKey, ...aliases];
+  const rowKeys = Object.keys(row);
+
+  for (const candidate of candidates) {
+    const foundKey = rowKeys.find((key) => keyMatchesCandidate(key, candidate));
+    if (!foundKey) continue;
+
+    const value = normalizeText(row[foundKey]);
+    if (value) return value;
+  }
+
+  return '';
+}
+
+function getFieldDefinition(fieldKey) {
+  return [
+    ...ANALYTICS_BAR_FIELD_DEFINITIONS,
+    ...ANALYTICS_HEATMAP_FIELD_DEFINITIONS,
+    ...ANALYTICS_SEGMENT_FIELD_DEFINITIONS,
+  ].find((definition) => definition.key === fieldKey);
+}
+
 function getDatePartsFromRow(row) {
   const parsedYear = row?.parsedDate?.year;
   const parsedMonth = row?.parsedDate?.month;
@@ -20,7 +62,7 @@ function getDatePartsFromRow(row) {
     return { year: yearFromParsed, month: monthFromParsed || 1 };
   }
 
-  const dateText = String(row?.date ?? '').trim();
+  const dateText = String(row?.date ?? row?.Date ?? '').trim();
   const match = dateText.match(/^(\d{4})(?:[-/](\d{1,2}))?/);
   if (!match || match[1] === '0000') return null;
 
@@ -83,24 +125,35 @@ function periodSortValue(label) {
 }
 
 function fieldValue(row, fieldKey) {
-  if (fieldKey === 'route') {
-    const source = normalizeText(row.sourceLoc);
-    const target = normalizeText(row.targetLoc);
+  if (fieldKey === 'routePlace') {
+    const source = fieldValue(row, 'sourceLoc');
+    const target = fieldValue(row, 'targetLoc');
     if (!source || !target) return '';
     return `${source} → ${target}`;
+  }
+
+  if (fieldKey === 'routePerson') {
+    const source = fieldValue(row, 'sourcePerson');
+    const target = fieldValue(row, 'targetPerson');
+    if (!source || !target) return '';
+    return `${source} → ${target}`;
+  }
+
+  // Backward compatibility with the former place-route key.
+  if (fieldKey === 'route') {
+    return fieldValue(row, 'routePlace');
+  }
+
+  const definition = getFieldDefinition(fieldKey);
+  if (definition) {
+    return getAliasedRowValue(row, definition.key, definition.aliases || []);
   }
 
   return normalizeText(row[fieldKey]);
 }
 
 function hasRequiredField(rows, definition) {
-  return rows.some((row) => {
-    if (definition.key === 'route') {
-      return Boolean(normalizeText(row.sourceLoc) && normalizeText(row.targetLoc));
-    }
-
-    return definition.requiredFields.some((field) => Boolean(normalizeText(row[field])));
-  });
+  return rows.some((row) => Boolean(fieldValue(row, definition.key)));
 }
 
 function incrementNestedMap(map, outerKey, innerKey, increment = 1) {
@@ -144,6 +197,8 @@ function humanizeFieldLabel(key) {
     targetPerson: 'Target person',
     sourceLoc: 'Source place',
     targetLoc: 'Target place',
+    routePlace: 'Route (Place)',
+    routePerson: 'Route (Person)',
     archivalCollection: 'Archival collection',
   };
 
@@ -155,6 +210,49 @@ function humanizeFieldLabel(key) {
     .replace(/\s+/g, ' ')
     .trim()
     .replace(/^./, (first) => first.toUpperCase());
+}
+
+function isTechnicalFieldKey(key) {
+  const normalized = normalizeKey(key);
+  if (!normalized) return true;
+
+  const exactExclusions = new Set([
+    'id',
+    'row id',
+    'parsed date',
+    'date',
+    'mappable',
+    'map able',
+    'source place id',
+    'target place id',
+    'source id',
+    'target id',
+    'person id',
+    'place id',
+    'source lat',
+    'source long',
+    'source lng',
+    'target lat',
+    'target long',
+    'target lng',
+    'lat',
+    'lng',
+    'long',
+    'latitude',
+    'longitude',
+    'source latitude',
+    'source longitude',
+    'target latitude',
+    'target longitude',
+  ]);
+
+  if (exactExclusions.has(normalized)) return true;
+  if (normalized.startsWith('__')) return true;
+  if (/\b(id|uuid|guid)\b/.test(normalized)) return true;
+  if (/\b(lat|lng|long|latitude|longitude)\b/.test(normalized)) return true;
+  if (/\bmappable\b/.test(normalized)) return true;
+
+  return false;
 }
 
 function isUsableDynamicFieldValue(value) {
@@ -171,28 +269,7 @@ function isUsableDynamicFieldValue(value) {
 }
 
 function isDynamicFieldCandidate(rows, key) {
-  const excluded = new Set([
-    'id',
-    'rowId',
-    'parsedDate',
-    'date',
-    'sourceLat',
-    'sourceLong',
-    'targetLat',
-    'targetLong',
-    'lat',
-    'lng',
-    'long',
-    'longitude',
-    'latitude',
-    'sourceLatitude',
-    'sourceLongitude',
-    'targetLatitude',
-    'targetLongitude',
-  ]);
-
-  if (!key || excluded.has(key)) return false;
-  if (key.startsWith('__')) return false;
+  if (!key || isTechnicalFieldKey(key)) return false;
 
   const values = rows
     .map((row) => row?.[key])
@@ -212,11 +289,23 @@ function isDynamicFieldCandidate(rows, key) {
   return true;
 }
 
+function canonicalKeyForUploadedKey(key, existingDefinitions = []) {
+  const normalized = normalizeKey(key);
+
+  for (const definition of existingDefinitions) {
+    const candidates = [definition.key, definition.label, ...(definition.aliases || [])].map(normalizeKey);
+    if (candidates.includes(normalized)) return definition.key;
+  }
+
+  return null;
+}
+
 function buildDynamicFieldDefinitions(rows = [], existingDefinitions = []) {
   const existingKeys = new Set(existingDefinitions.map((definition) => definition.key));
   const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row || {}))));
 
   return keys
+    .filter((key) => !canonicalKeyForUploadedKey(key, existingDefinitions))
     .filter((key) => !existingKeys.has(key))
     .filter((key) => isDynamicFieldCandidate(rows, key))
     .map((key) => ({
@@ -229,15 +318,15 @@ function buildDynamicFieldDefinitions(rows = [], existingDefinitions = []) {
     .sort((a, b) => a.label.localeCompare(b.label));
 }
 
-function mergeFieldDefinitions(baseDefinitions, dynamicDefinitions, { allowRoute = true } = {}) {
+function mergeFieldDefinitions(baseDefinitions, dynamicDefinitions, { allowRoutes = true } = {}) {
   const byKey = new Map();
 
   baseDefinitions
-    .filter((definition) => allowRoute || definition.key !== 'route')
+    .filter((definition) => allowRoutes || (definition.key !== 'routePlace' && definition.key !== 'routePerson'))
     .forEach((definition) => byKey.set(definition.key, definition));
 
   dynamicDefinitions
-    .filter((definition) => allowRoute || definition.key !== 'route')
+    .filter((definition) => allowRoutes || (definition.key !== 'routePlace' && definition.key !== 'routePerson'))
     .forEach((definition) => {
       if (!byKey.has(definition.key)) byKey.set(definition.key, definition);
     });
@@ -268,8 +357,8 @@ export function getAnalyticsPeriodGranularity(startYear, endYear) {
 export function getAvailableAnalyticsFields(rows = []) {
   const dynamicDefinitions = buildDynamicFieldDefinitions(rows, ANALYTICS_BAR_FIELD_DEFINITIONS);
   const allBarDefinitions = mergeFieldDefinitions(ANALYTICS_BAR_FIELD_DEFINITIONS, dynamicDefinitions);
-  const allSegmentDefinitions = mergeFieldDefinitions(ANALYTICS_SEGMENT_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoute: false });
-  const allHeatmapDefinitions = mergeFieldDefinitions(ANALYTICS_HEATMAP_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoute: false });
+  const allSegmentDefinitions = mergeFieldDefinitions(ANALYTICS_SEGMENT_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoutes: false });
+  const allHeatmapDefinitions = mergeFieldDefinitions(ANALYTICS_HEATMAP_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoutes: false });
 
   const barGroupOptions = allBarDefinitions.filter((definition) =>
     hasRequiredField(rows, definition)

@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
 import { buildAnalyticsChartData, getAnalyticsYearRange } from './analyticsDerivationHelpers';
@@ -264,8 +265,14 @@ function VariableControlsShell({ children }) {
 function ExpandedChartModal({ chartData, onClose }) {
   const expandedSvgRef = useRef(null);
 
-  return (
-    <div className="fixed bottom-4 right-4 top-[112px] z-[90] left-[460px] max-xl:left-[86px]" role="dialog" aria-modal="true" aria-label="Expanded Analytics chart">
+  return createPortal(
+    <div
+      className="fixed bottom-4 right-4 top-[112px] z-[120]"
+      style={{ left: 'clamp(86px, 22vw, 420px)' }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Expanded Analytics chart"
+    >
       <div className="relative flex h-full w-full flex-col rounded-3xl border border-[var(--panel-card-border)] bg-[var(--shell-bg)]/95 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.38)] backdrop-blur">
         <button
           type="button"
@@ -274,7 +281,7 @@ function ExpandedChartModal({ chartData, onClose }) {
           aria-label="Close expanded chart"
           title="Close expanded chart"
         >
-          ×
+          Ã—
         </button>
         <div className="mb-4 pr-14">
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Expanded Analytics View</div>
@@ -287,10 +294,10 @@ function ExpandedChartModal({ chartData, onClose }) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
-
 export function AnalyticsPanelContent({
   analyticsState,
 }) {
@@ -573,3 +580,4 @@ export function AnalyticsPanelContent({
     </div>
   );
 }
+

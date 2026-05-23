@@ -124,53 +124,66 @@ export const ANALYTICS_BAR_FIELD_DEFINITIONS = [
     label: 'Source person',
     description: 'Letters grouped by sender.',
     requiredFields: ['sourcePerson'],
+    aliases: ['source person', 'source_person', 'sender', 'source', 'from'],
   },
   {
     key: 'targetPerson',
     label: 'Target person',
     description: 'Letters grouped by recipient.',
     requiredFields: ['targetPerson'],
+    aliases: ['target person', 'target_person', 'recipient', 'target', 'to'],
   },
   {
     key: 'sourceLoc',
     label: 'Source place',
     description: 'Letters grouped by place of origin.',
     requiredFields: ['sourceLoc'],
+    aliases: ['source loc', 'source_loc', 'source place', 'source_place', 'origin place', 'origin'],
   },
   {
     key: 'targetLoc',
     label: 'Target place',
     description: 'Letters grouped by destination or inferred target place.',
     requiredFields: ['targetLoc'],
+    aliases: ['target loc', 'target_loc', 'target place', 'target_place', 'destination place', 'destination'],
   },
   {
-    key: 'route',
-    label: 'Route',
-    description: 'Letters grouped by source-to-target route.',
+    key: 'routePlace',
+    label: 'Route (Place)',
+    description: 'Letters grouped by source-place to target-place route.',
     requiredFields: ['sourceLoc', 'targetLoc'],
+  },
+  {
+    key: 'routePerson',
+    label: 'Route (Person)',
+    description: 'Letters grouped by sender-to-recipient route.',
+    requiredFields: ['sourcePerson', 'targetPerson'],
   },
   {
     key: 'language',
     label: 'Language',
     description: 'Letters grouped by language metadata.',
     requiredFields: ['language'],
+    aliases: ['language', 'lang'],
   },
   {
     key: 'relationship',
     label: 'Relationship',
     description: 'Letters grouped by relationship metadata.',
     requiredFields: ['relationship'],
+    aliases: ['relationship', 'relation', 'relationship type'],
   },
   {
     key: 'archivalCollection',
     label: 'Archival collection',
     description: 'Letters grouped by archival collection.',
     requiredFields: ['archivalCollection'],
+    aliases: ['archival collection', 'archive', 'collection', 'repository'],
   },
 ];
 
 export const ANALYTICS_SEGMENT_FIELD_DEFINITIONS = ANALYTICS_BAR_FIELD_DEFINITIONS.filter(
-  (field) => field.key !== 'route'
+  (field) => field.key !== 'routePlace' && field.key !== 'routePerson'
 );
 
 export const ANALYTICS_HEATMAP_FIELD_DEFINITIONS = [
@@ -179,24 +192,28 @@ export const ANALYTICS_HEATMAP_FIELD_DEFINITIONS = [
     label: 'Source person',
     description: 'Rows or columns keyed to sender.',
     requiredFields: ['sourcePerson'],
+    aliases: ['source person', 'source_person', 'sender', 'source', 'from'],
   },
   {
     key: 'targetPerson',
     label: 'Target person',
     description: 'Rows or columns keyed to recipient.',
     requiredFields: ['targetPerson'],
+    aliases: ['target person', 'target_person', 'recipient', 'target', 'to'],
   },
   {
     key: 'sourceLoc',
     label: 'Source place',
     description: 'Rows or columns keyed to source place.',
     requiredFields: ['sourceLoc'],
+    aliases: ['source loc', 'source_loc', 'source place', 'source_place', 'origin place', 'origin'],
   },
   {
     key: 'targetLoc',
     label: 'Target place',
     description: 'Rows or columns keyed to target place.',
     requiredFields: ['targetLoc'],
+    aliases: ['target loc', 'target_loc', 'target place', 'target_place', 'destination place', 'destination'],
   },
 ];
 
