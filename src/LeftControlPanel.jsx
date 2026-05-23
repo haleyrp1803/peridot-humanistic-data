@@ -75,6 +75,7 @@ function SidePanelIconRail({
   onClose,
   onShowControls,
   onShowDataInputs,
+  onShowSearchFilter,
   onShowExport, onShowAnalytics, onShowTimeline,
   onShowInspector,
 }) {
@@ -161,6 +162,27 @@ function SidePanelIconRail({
           <path d="M12 15V4" />
           <path d="M8 8l4-4 4 4" />
           <path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        className={buttonClass(activePanel === 'searchFilter')}
+        onClick={onShowSearchFilter}
+        aria-label="Show Search & Filter"
+        title="Show Search & Filter"
+      >
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+          <path
+            d="M4 7h10M18 7h2M4 12h4M12 12h8M4 17h12M20 17h0"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <circle cx="16" cy="7" r="2" fill="currentColor" />
+          <circle cx="10" cy="12" r="2" fill="currentColor" />
+          <circle cx="18" cy="17" r="2" fill="currentColor" />
         </svg>
       </button>
 
@@ -705,6 +727,78 @@ function DisplayControlsPanelContent({
   );
 }
 
+function SearchFilterPanelContent({
+  search,
+  currentMinCountLabel,
+  currentRangeLabel,
+  graph,
+  rowDiagnostics,
+}) {
+  const currentSearch = search?.trim() || 'None';
+
+  return (
+    <div className="space-y-4">
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
+          <h2 className={sectionTitleClassName()}>Global search and filters</h2>
+          <p className="text-sm leading-6 text-[var(--muted-text)]">
+            This panel will consolidate the controls that define the active filtered dataset.
+            No filters have been moved here yet.
+          </p>
+        </div>
+      </div>
+
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Current filter locations</h3>
+          <dl className="space-y-2 text-sm text-[var(--muted-text)]">
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Keyword search</dt>
+              <dd className="text-right">{currentSearch}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Minimum weight</dt>
+              <dd className="text-right">{currentMinCountLabel}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Date window</dt>
+              <dd className="text-right">{currentRangeLabel}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Nodes in view</dt>
+              <dd className="text-right">{graph?.nodes?.length ?? 0}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Routes in view</dt>
+              <dd className="text-right">{graph?.edges?.length ?? 0}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Filtered rows</dt>
+              <dd className="text-right">{rowDiagnostics?.filteredRows ?? 'Unknown'}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Planned consolidated filters</h3>
+          <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-[var(--muted-text)]">
+            <li>Date range</li>
+            <li>Minimum correspondence weight</li>
+            <li>Person, place, and route search</li>
+            <li>Language and relationship metadata</li>
+            <li>Mappability and safe categorical metadata fields</li>
+          </ul>
+          <p className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
+            This shell is intentionally read-only for now. The next bounded pass can move the
+            minimum-weight control here without changing the rest of the filtering pipeline.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
 // DATA INPUTS GROUP
 // This group is mostly presentation plus upload wiring. It is one of the safer
 // panel sections because the heavy parsing logic lives elsewhere.
@@ -1117,6 +1211,12 @@ export function LeftControlPanel({
     setShowLeftSidebar(true);
   };
 
+  const showSearchFilterPanel = () => {
+    setShowRightSidebar(false);
+    setActiveSidePanelView('searchFilter');
+    setShowLeftSidebar(true);
+  };
+
 
   const showExportSidePanel = () => {
     setShowRightSidebar(false);
@@ -1143,7 +1243,8 @@ export function LeftControlPanel({
         onClose={closeSidePanel}
         onShowControls={showControlsPanel}
         onShowDataInputs={showDataInputsPanelView}
-        onShowExport={showExportSidePanel}
+          onShowSearchFilter={showSearchFilterPanel}
+          onShowExport={showExportSidePanel}
         onShowAnalytics={showAnalyticsSidePanel} onShowTimeline={showTimelineSidePanel}
         onShowInspector={showInspectorPanel}
       />
@@ -1152,10 +1253,18 @@ export function LeftControlPanel({
           {showLeftSidebar ? (
             <>
               <h1 className={`${panelHeadingClassName()} ${serifHeadingClassName()}`}>
-                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : activeSidePanelView === 'export' ? 'Export' : activeSidePanelView === 'analytics' ? 'Analytics' : activeSidePanelView === 'timeline' ? 'Timeline' : 'Control Panel'}
+                {activeSidePanelView === 'dataInputs' ? 'Data Inputs' : activeSidePanelView === 'searchFilter' ? 'Search & Filter' : activeSidePanelView === 'export' ? 'Export' : activeSidePanelView === 'analytics' ? 'Analytics' : activeSidePanelView === 'timeline' ? 'Timeline' : 'Control Panel'}
               </h1>
               {activeSidePanelView === 'dataInputs' ? (
                 <DataInputsGroup {...dataInputsGroupProps} />
+              ) : activeSidePanelView === 'searchFilter' ? (
+                <SearchFilterPanelContent
+                  search={search}
+                  currentMinCountLabel={currentMinCountLabel}
+                  currentRangeLabel={currentRangeLabel}
+                  graph={graph}
+                  rowDiagnostics={rowDiagnostics}
+                />
               ) : activeSidePanelView === 'export' ? (
                 <ExportPanelContent {...displayFilteringGroupProps.exportPanelState} />
               ) : activeSidePanelView === 'analytics' ? ( <AnalyticsPanelContent analyticsState={analyticsPanelState} /> ) : activeSidePanelView === 'timeline' ? (
@@ -1188,5 +1297,6 @@ export function LeftControlPanel({
     </aside>
   );
 }
+
 
 
