@@ -20,13 +20,13 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
+- **`bdd0843` — `Refine expanded analytics backdrop contrast`**
+
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter visual redesign and Analytics visual-polish sequence. Search & Filter now uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filters, predictive suggestions, year text inputs with suggestions, and pre-update status feedback. Analytics now has higher-contrast chart tooltips and an expanded chart view with a dark green translucent backdrop, cool off-white text/borders, the blurred map visible behind it, and the chart itself retained on a white/cream card.
+
+The preceding Search & Filter implementation milestone remains:
+
 - **`01de3d8` — `Show filter update status before applying changes`**
-
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter milestone. Search & Filter now owns draft/apply global filters for keyword, person, place, route-place, route-people, minimum weight, and date range, with predictive suggestions and pre-update status feedback. The earlier MapLibre preview files remain present but dormant unless `?maplibrePreview=1` is used.
-
-The preceding Analytics milestone remains:
-
-- **`3352403` — `Fix Analytics expanded overlay and variable options`**
 
 Current GitHub repository:
 
@@ -146,9 +146,11 @@ Owns the shared side-panel shell and persistent icon rail. The shell includes:
 - persistent icon rail that is available when the panel is closed and when it is open
 - open-state close button at the top of the rail
 - rail-driven panel views for **Controls**, **Data Inputs**, **Export**, **Timeline**, **Analytics**, and **Inspector**
-- **Search & Filter** content rendering for keyword, person, place, route-place, route-people, minimum-weight, and date-range filters
-- predictive suggestion menus for person, place, route-place, and route-people fields
-- draft/apply filter UI with Apply Filters, Clear Filters, current applied scope, and pre-update status feedback
+- **Search & Filter** content rendering for the compact advanced-search layout
+- current applied filter scope at the top of Search & Filter
+- keyword, person, place, route-place, route-people, minimum-weight, and date-range filters
+- predictive suggestion menus for person, place, route-place, route-people, start-year, and end-year fields
+- draft/apply filter UI with Apply Filters, Clear Filters, current applied scope, and pre-update status feedback above the action buttons
 - Controls content rendering for visualization, display, theme, summary, and diagnostics controls
 - Data Inputs content rendering for Geography, Raw Data, and Person Metadata uploads
 - Export content rendering for SVG, PNG, nodes CSV, and edges/routes CSV controls
@@ -170,7 +172,7 @@ Owns the Analytics panel UI. It renders:
 - expanded chart overlay trigger
 - chart PNG export action
 
-The expanded chart view is rendered through a React portal and overlays the map area without changing map state.
+The expanded chart view is rendered through a React portal and overlays the map area without changing map state. Its current visual treatment uses a dark green translucent backdrop (`#182c25` at 70% opacity), cool off-white text/borders, the existing blurred-map effect behind the overlay, and a white/cream chart card.
 
 ### `src/analyticsConfig.js`
 
@@ -197,7 +199,7 @@ Dynamic variable detection should exclude technical or non-categorical fields su
 
 ### `src/analyticsChartComponents.jsx`
 
-Owns SVG chart rendering for:
+Owns SVG chart rendering and shared chart hover tooltip styling for:
 
 - Bar Chart
 - Grouped Bar Chart
@@ -208,6 +210,8 @@ Owns SVG chart rendering for:
 - Pie Chart
 - Sunburst Chart
 - Heatmap
+
+The shared chart tooltip uses a mossy/title-green background with light text for legibility over dense charts such as heatmaps.
 
 ### `src/InspectorPanel.jsx`
 
@@ -331,7 +335,8 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - **Apply Filters** commits all filter changes together
 - **Clear Filters** clears keyword/person/place/route fields, restores minimum weight to `1`, restores the full date range, and resets playback
 - status feedback appears before expensive filter recomputation begins
-- current applied filter scope is displayed in the panel
+- current applied filter scope is displayed at the top of the panel
+- compact advanced-search criteria form modeled on database/library advanced-search interfaces
 - text filters include:
   - keyword search
   - person filter
@@ -346,6 +351,8 @@ Inspector-internal Back button. It uses a small local history model for inspecto
   - place
   - route-place
   - route-people
+  - start year
+  - end year
 - suggestion menus show after at least two typed characters, show about five suggestions at once, and scroll for more matches
 - selecting a suggestion fills a draft field only; the map/network updates only after **Apply Filters**
 
@@ -394,7 +401,8 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - Analytics-local date-range controls for time-based charts
 - automatic time-period granularity based on selected date range
 - compact side-panel chart preview
-- expanded chart overlay over the map area
+- higher-contrast shared chart hover tooltips
+- expanded chart overlay over the map area with dark green translucent backdrop, cool off-white text/borders, preserved blur, and white/cream chart card
 - PNG chart export
 
 ---
@@ -475,7 +483,7 @@ Important current side-panel state:
 - rail tabs are currently:
   1. **Controls** — Visualization Type, Display Controls, Theme, Summary and Diagnostics, and remaining general options
   2. **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
-  3. **Search & Filter** — active-dataset filters, predictive suggestions, Apply Filters, Clear Filters, and filter status feedback
+  3. **Search & Filter** — compact advanced-search form, current applied scope, active-dataset filters, predictive suggestions, Apply Filters, Clear Filters, and filter status feedback
   4. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
   5. **Timeline** — year-range filtering and playback controls
   6. **Analytics** — chart selection, chart configuration, expanded chart overlay, and chart PNG export
@@ -486,7 +494,9 @@ Recent committed behavior includes:
 
 - direct view buttons for **People**, **Place**, and **Force-Directed**
 - **People** as the default startup view
+- compact Search & Filter advanced-search layout with current applied scope at the top and predictive year inputs
 - Search & Filter draft/apply model for keyword, person, place, route-place, route-people, minimum-weight, and date-range controls
+- higher-contrast Analytics tooltips and expanded chart backdrop styling
 - removal of the old **Show all dates** shortcut
 - year-only timeline selectors
 - removal of the old horizontal Controls / Inspector top tabs
@@ -687,6 +697,30 @@ Split route filtering into **Route Filter (Place)** and **Route Filter (People)*
 
 Added pre-update Search & Filter status feedback so users see feedback before expensive map updates begin.
 
+#### `b2147bb` — Consolidate Search and Filter layout
+
+Converted Search & Filter into a compact database-style advanced-search form and removed repeated explanatory cards.
+
+#### `8bfd422` — Refine compact Search and Filter layout
+
+Moved current applied scope to the top, simplified explanatory copy, and changed start/end year controls to predictive text inputs.
+
+#### `e02c1de` — Move filter status above action buttons
+
+Moved update status feedback above the action buttons to avoid clipping near the bottom of the visible panel.
+
+---
+
+### Analytics visual-polish sequence
+
+#### `64d44f2` — Improve analytics tooltip contrast
+
+Changed shared chart tooltips to a mossy/title-green background with light text for better readability over heatmaps and dense labels.
+
+#### `bdd0843` — Refine expanded analytics backdrop contrast
+
+Set the expanded Analytics overlay backdrop to `#182c25` at 70% opacity, switched expanded-view text and borders to cool off-white, preserved the blurred-map layer, and kept the chart on a white/cream card.
+
 ---
 
 ## Deferred / rolled-back work
@@ -730,7 +764,7 @@ These areas still deserve narrow, explicit passes:
 - broad orchestration work in `src/App.jsx`
 - shared side-panel shell and inspector-open interactions
 - cluster grouping and cluster inspector navigation
-- Analytics expanded overlay positioning above the map area
+- Analytics expanded overlay positioning and backdrop contrast above the map area
 - Analytics dynamic variable detection from uploaded/current row data
 - Analytics SVG-to-PNG chart export rendering
 - Search & Filter active-dataset state, especially draft/apply coordination across keyword, person, place, route-place, route-people, date, weight, Timeline, Analytics, Inspector, and Export behavior
@@ -782,7 +816,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`01de3d8` — `Show filter update status before applying changes`**
+- current documented baseline: **`bdd0843` — `Refine expanded analytics backdrop contrast`**
 - last documented pre-Analytics UI milestone: **`8539c68` — `Clarify timeline rail icon`**
 
 A future chat should also be told that:
@@ -798,3 +832,5 @@ A future chat should also be told that:
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
 - documentation should preserve the full commit trajectory carefully
 - the implemented Search & Filter panel consolidates global filtering and defines the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it
+- Search & Filter currently uses a compact advanced-search layout with current applied scope at the top
+- Analytics currently uses higher-contrast tooltips and a dark green translucent expanded-view backdrop

@@ -76,7 +76,7 @@ Current fragile zones include:
 - inspector-open interactions after map clicks
 - cluster grouping and cluster inspector navigation
 - Search & Filter active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, predictive-suggestion, apply/clear, and future metadata filters
-- Analytics expanded overlay positioning
+- Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
 - Analytics SVG-to-PNG export rendering
 
@@ -258,6 +258,8 @@ Current notable decisions:
 - Search & Filter uses draft inputs plus explicit Apply Filters rather than live filtering.
 - Predictive suggestions should support discovery without becoming full dropdown selectors.
 - Route filtering is split into Route Filter (Place) and Route Filter (People).
+- Search & Filter should visually resemble a compact database/library advanced-search interface rather than a stack of explanatory cards.
+- Expanded Analytics charts should keep the chart on a white/cream card while the layer behind it can use a dark translucent green with blur to preserve map context.
 
 ---
 
@@ -317,7 +319,7 @@ Committed Search & Filter controls include:
 - **Route Filter (People)**
 - minimum correspondence weight
 - date range
-- predictive suggestions for person, place, route-place, and route-people fields
+- predictive suggestions for person, place, route-place, route-people, start-year, and end-year fields
 - **Apply Filters**
 - **Clear Filters**
 - pre-update status feedback
@@ -335,7 +337,7 @@ When changing Search & Filter, explicitly test:
 
 - typing in a text field does not freeze the app
 - filters apply only when intended
-- current applied filter scope is clear to the user
+- current applied filter scope is clear to the user and remains visible near the top of the panel
 - Timeline playback remains functional
 - Analytics receives the intended filtered scope
 - Export scope remains clear
@@ -380,3 +382,5 @@ The new chat should be told:
 - Use full-file replacements by default for code changes in affected files, especially dense or fragile files.
 - Avoid brittle snippet-based patching unless the full file has been reviewed and the edit is clearly unambiguous.
 - When the user uploads source files after being asked for current files, treat the most recent uploads as authoritative for that pass unless told otherwise.
+- Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout.
+- Analytics expanded chart views currently use a dark translucent green backdrop with cool off-white text/borders and a white/cream chart card.

@@ -2,23 +2,23 @@
 
 ## Current documented safe baseline
 
-- **`01de3d8` — `Show filter update status before applying changes`** on branch **`main`**
+- **`bdd0843` — `Refine expanded analytics backdrop contrast`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter milestone. The Search & Filter rail tab now owns the draft/apply global filtering workflow for keyword, person, place, place-route, people-route, minimum-weight, and date-range filters. Predictive suggestions are available for person, place, route-place, and route-people fields. Filter updates are applied only when the user presses **Apply Filters**, and **Clear Filters** resets all Search & Filter controls and playback while showing pre-update feedback before expensive map recomputation begins.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter visual redesign and Analytics visual-polish sequence. Search & Filter now uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filtering, predictive suggestions, year text inputs with suggestions, and pre-update status feedback. Analytics now has higher-contrast chart tooltips and an expanded chart view with a dark green translucent backdrop, cool off-white text/borders, a preserved blurred-map layer, and the chart itself retained on a white/cream card.
 
 The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment remains set aside rather than merged into the active implementation path.
 
-The preceding Analytics milestone remains:
+The preceding Search & Filter implementation milestone remains:
 
-- **`3352403` — `Fix Analytics expanded overlay and variable options`**
+- **`01de3d8` — `Show filter update status before applying changes`**
 
-That milestone records the active legacy D3/SVG Peridot path after the Analytics feature milestone.
+That milestone records the first full draft/apply Search & Filter implementation before later visual layout refinements.
 
 ---
 
 ## Current milestone note
 
-### Search & Filter implementation milestone
+### Search & Filter implementation and layout milestone
 
 - Implemented the dedicated **Search & Filter** rail tab and promoted it from planning contract to active global-filtering UI.
 - Search & Filter now owns draft/apply controls for:
@@ -55,18 +55,40 @@ data source
 - Controls/View remains responsible for display and presentation, not dataset filtering.
 - Timeline remains responsible for chronological playback/navigation while consuming the applied date scope.
 - Analytics and Export should continue to label or consume filtered data scope clearly in future passes.
+- Later visual refinements converted the Search & Filter tab from stacked explanatory cards into a compact advanced-search form:
+  - current applied filter scope appears at the top
+  - advanced search criteria are consolidated into one form
+  - instructional text was reduced
+  - start/end year controls became text inputs with predictive suggestions
+  - the update status message appears above the action buttons so it is not clipped
+
+### Analytics visual-polish milestone
+
+- Improved Analytics chart hover tooltip contrast by giving shared chart tooltips an opaque mossy/title-green background with light text.
+- Refined the expanded Analytics view:
+  - outer layer uses `#182c25` at 70% opacity
+  - border and expanded-view text use cool off-white tones
+  - the existing blurred-map effect remains visible behind the overlay
+  - the chart itself remains on its white/cream card
+- These changes are visual only; chart data derivation, chart controls, and export behavior were not changed.
 
 ---
 
 
 ## Current branch transition
 
-### `01de3d8` — Show filter update status before applying changes
+### `bdd0843` — Refine expanded analytics backdrop contrast
 
 - This commit is the current documented `main` baseline.
 - It keeps the active app on the D3/SVG Peridot production renderer.
-- It records the Search & Filter feature milestone after the full draft/apply filter workflow, predictive suggestions, split route filters, and pre-update status feedback were completed.
+- It records the Search & Filter visual redesign and Analytics visual-polish sequence.
 - The default app path remains the legacy Peridot path; MapLibre work remains dormant unless explicitly resumed.
+
+### `01de3d8` — Show filter update status before applying changes
+
+- This commit was the preceding Search & Filter implementation milestone.
+- It recorded the full draft/apply filter workflow, predictive suggestions, split route filters, and pre-update status feedback before later visual layout refinements.
+- It remains an important prior baseline but is no longer the current documented safe baseline.
 
 ### `3352403` — Fix Analytics expanded overlay and variable options
 
@@ -89,6 +111,40 @@ data source
 - Do not treat the MapLibre migrated-overlay branch as the active implementation baseline unless the user explicitly resumes it.
 
 ## Recent committed work
+
+### `bdd0843` — Refine expanded analytics backdrop contrast
+
+- Refined the expanded Analytics view backdrop after several visual tests.
+- Set the expanded overlay background to `#182c25` at 70% opacity.
+- Set expanded-view text and borders to cool off-white tones.
+- Preserved the existing blurred-map backdrop effect.
+- Preserved the chart itself on its white/cream card.
+
+### `64d44f2` — Improve analytics tooltip contrast
+
+- Improved Analytics chart hover-tooltip legibility.
+- Gave shared chart tooltips a mossy/title-green background with light text.
+- Strengthened the tooltip border/shadow so hover data remains readable over heatmaps and dense chart labels.
+
+### `e02c1de` — Move filter status above action buttons
+
+- Moved the Search & Filter status message above **Apply Filters** and **Clear Filters**.
+- Prevented the status message from being cut off near the lower edge of the visible panel area.
+- Preserved pre-update status timing and existing filter behavior.
+
+### `8bfd422` — Refine compact Search and Filter layout
+
+- Moved **Current applied filter scope** to the top of the Search & Filter panel.
+- Replaced date-range dropdowns with start/end year text fields using predictive suggestions.
+- Simplified panel copy to clarify that applied filters affect the map, charts, and timeline animation.
+- Removed redundant suggestion-helper text.
+
+### `b2147bb` — Consolidate Search and Filter layout
+
+- Converted Search & Filter from a stack of explanatory cards into one compact database-style advanced-search form.
+- Consolidated keyword, person, place, route-place, route-people, minimum-weight, and date-range controls into a single criteria card.
+- Removed repeated per-filter helper text.
+- Retained the applied-scope summary, Apply Filters, Clear Filters, predictive suggestions, and pre-update status feedback.
 
 ### `01de3d8` — Show filter update status before applying changes
 
