@@ -920,14 +920,68 @@ function SearchFilterPanelContent({
     }
   };
 
+  const timelineYearSuggestions = Array.from(
+    new Set(timelineMonths.map((month) => String(month || '').slice(0, 4)).filter(Boolean))
+  ).sort((a, b) => Number(a) - Number(b));
+
   return (
     <div className="space-y-4">
+      <div className={sectionCardClassName()}>
+        <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Current applied filter scope</h3>
+          <dl className="space-y-2 text-sm text-[var(--muted-text)]">
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Keyword search</dt>
+              <dd className="text-right">{search?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Person filter</dt>
+              <dd className="text-right">{personFilter?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Place filter</dt>
+              <dd className="text-right">{placeFilter?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Route filter (place)</dt>
+              <dd className="text-right">{routePlaceFilter?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Route filter (people)</dt>
+              <dd className="text-right">{routePeopleFilter?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Minimum weight</dt>
+              <dd className="text-right">{currentMinCountLabel}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Date window</dt>
+              <dd className="text-right">{currentRangeLabel}</dd>
+            </div>
+            <div className="grid grid-cols-3 gap-2 border-t border-[var(--panel-card-border)]/70 pt-3 text-center">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Nodes</dt>
+                <dd className="mt-1 font-semibold text-[var(--text-main)]">{graph?.nodes?.length ?? 0}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Routes</dt>
+                <dd className="mt-1 font-semibold text-[var(--text-main)]">{graph?.edges?.length ?? 0}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Rows</dt>
+                <dd className="mt-1 font-semibold text-[var(--text-main)]">{rowDiagnostics?.filteredRows ?? 'Unknown'}</dd>
+              </div>
+            </div>
+          </dl>
+        </div>
+      </div>
+
       <div className={sectionCardClassName({ allowOverflow: true })}>
         <div className="space-y-4 p-4">
           <div className="space-y-2">
             <h2 className={sectionTitleClassName()}>Advanced search criteria</h2>
             <p className="text-sm leading-6 text-[var(--muted-text)]">
-              Edit one or more criteria, then click Apply Filters. Suggestions fill fields but do not apply automatically.
+              Applied filters will change what is displayed on the map, on charts, and in the timeline animation.
             </p>
           </div>
 
@@ -1030,23 +1084,43 @@ function SearchFilterPanelContent({
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="text-sm font-semibold text-[var(--text-main)]">Date range</div>
-                  <TimelineDateRangeControls
-                    currentRangeLabel={currentRangeLabel}
-                    timelineMonths={timelineMonths}
-                    draftStartYear={draftStartYear}
-                    setDraftStartYear={setDraftStartYear}
-                    draftEndYear={draftEndYear}
-                    setDraftEndYear={setDraftEndYear}
-                  />
+                <div className="space-y-3">
+                  <div>
+                    <div className="text-sm font-semibold text-[var(--text-main)]">Date range</div>
+                    <div className="mt-1 text-xs leading-5 text-[var(--muted-text)]">
+                      Current applied window: {currentRangeLabel}
+                    </div>
+                    <div className="text-xs leading-5 text-[var(--muted-text)]">
+                      Available year range:{' '}
+                      {timelineMonths.length
+                        ? `${timelineMonths[0]} to ${timelineMonths[timelineMonths.length - 1]}`
+                        : 'none detected'}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <AutocompleteTextInput
+                      id="date-start-year-input"
+                      label="Start year"
+                      value={draftStartYear}
+                      onChange={setDraftStartYear}
+                      onKeyDown={handleDraftKeyDown}
+                      placeholder="e.g. 1608"
+                      suggestions={timelineYearSuggestions}
+                    />
+                    <AutocompleteTextInput
+                      id="date-end-year-input"
+                      label="End year"
+                      value={draftEndYear}
+                      onChange={setDraftEndYear}
+                      onKeyDown={handleDraftKeyDown}
+                      placeholder="e.g. 1636"
+                      suggestions={timelineYearSuggestions}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
-            Start typing at least two characters in person, place, or route fields to see matching suggestions from the dataset.
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -1070,56 +1144,6 @@ function SearchFilterPanelContent({
               {filterStatusMessage}
             </div>
           ) : null}
-        </div>
-      </div>
-
-      <div className={sectionCardClassName()}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Current applied filter scope</h3>
-          <dl className="space-y-2 text-sm text-[var(--muted-text)]">
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Keyword search</dt>
-              <dd className="text-right">{search?.trim() || 'None'}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Person filter</dt>
-              <dd className="text-right">{personFilter?.trim() || 'None'}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Place filter</dt>
-              <dd className="text-right">{placeFilter?.trim() || 'None'}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Route filter (place)</dt>
-              <dd className="text-right">{routePlaceFilter?.trim() || 'None'}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Route filter (people)</dt>
-              <dd className="text-right">{routePeopleFilter?.trim() || 'None'}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Minimum weight</dt>
-              <dd className="text-right">{currentMinCountLabel}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Date window</dt>
-              <dd className="text-right">{currentRangeLabel}</dd>
-            </div>
-            <div className="grid grid-cols-3 gap-2 border-t border-[var(--panel-card-border)]/70 pt-3 text-center">
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Nodes</dt>
-                <dd className="mt-1 font-semibold text-[var(--text-main)]">{graph?.nodes?.length ?? 0}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Routes</dt>
-                <dd className="mt-1 font-semibold text-[var(--text-main)]">{graph?.edges?.length ?? 0}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Rows</dt>
-                <dd className="mt-1 font-semibold text-[var(--text-main)]">{rowDiagnostics?.filteredRows ?? 'Unknown'}</dd>
-              </div>
-            </div>
-          </dl>
         </div>
       </div>
     </div>
