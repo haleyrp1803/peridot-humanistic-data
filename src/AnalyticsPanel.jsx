@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
@@ -273,20 +273,20 @@ function ExpandedChartModal({ chartData, onClose }) {
       aria-modal="true"
       aria-label="Expanded Analytics chart"
     >
-      <div className="relative flex h-full w-full flex-col rounded-3xl border border-[var(--panel-card-border)] bg-[var(--shell-bg)]/95 p-5 shadow-[0_28px_80px_rgba(0,0,0,0.38)] backdrop-blur">
+      <div className="relative flex h-full w-full flex-col rounded-3xl border border-[#e8eee8] bg-[#182c25]/70 p-5 text-[#e8eee8] shadow-[0_28px_80px_rgba(0,0,0,0.38)] backdrop-blur">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-xl font-semibold text-[var(--button-secondary-text)] shadow hover:bg-[var(--button-secondary-hover)]"
+          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#e8eee8] bg-[#182c25]/40 text-xl font-semibold text-[#f4f7f2] shadow hover:bg-[#182c25]/60"
           aria-label="Close expanded chart"
           title="Close expanded chart"
         >
           Ã—
         </button>
         <div className="mb-4 pr-14">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Expanded Analytics View</div>
-          <h2 className="mt-1 text-2xl font-semibold text-[var(--text-main)]">{chartData?.title || 'Analytics chart'}</h2>
-          {chartData?.subtitle ? <div className="mt-1 text-sm text-[var(--muted-text)]">{chartData.subtitle}</div> : null}
+          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#dfe8df]">Expanded Analytics View</div>
+          <h2 className="mt-1 text-2xl font-semibold text-[#f4f7f2]">{chartData?.title || 'Analytics chart'}</h2>
+          {chartData?.subtitle ? <div className="mt-1 text-sm text-[#dfe8df]">{chartData.subtitle}</div> : null}
         </div>
         <div className="min-h-0 flex-1 overflow-auto rounded-2xl bg-[var(--panel-card-bg)] p-4">
           <div className="mx-auto w-full max-w-6xl">
