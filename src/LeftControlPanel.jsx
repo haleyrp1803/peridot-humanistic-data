@@ -1123,6 +1123,12 @@ function SearchFilterPanelContent({
             </div>
           </div>
 
+          {filterStatusMessage ? (
+            <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2 text-xs font-medium text-[var(--muted-text)]">
+              {filterStatusMessage}
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -1139,11 +1145,6 @@ function SearchFilterPanelContent({
               Clear Filters
             </button>
           </div>
-          {filterStatusMessage ? (
-            <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2 text-xs font-medium text-[var(--muted-text)]">
-              {filterStatusMessage}
-            </div>
-          ) : null}
         </div>
       </div>
     </div>
