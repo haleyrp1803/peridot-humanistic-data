@@ -630,6 +630,72 @@ function VisualizationTypePanelContent({
   );
 }
 
+
+function AutocompleteTextInput({
+  id,
+  label,
+  value,
+  onChange,
+  onKeyDown,
+  placeholder,
+  suggestions = [],
+  helperText,
+}) {
+  const [isFocused, setIsFocused] = useState(false);
+  const query = String(value ?? '').trim().toLowerCase();
+  const matchingSuggestions = query.length >= 2
+    ? suggestions
+        .filter((suggestion) => String(suggestion ?? '').toLowerCase().includes(query))
+        .slice(0, 8)
+    : [];
+  const showSuggestions = isFocused && matchingSuggestions.length > 0;
+
+  const chooseSuggestion = (suggestion) => {
+    onChange(suggestion);
+    setIsFocused(false);
+  };
+
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="mb-1 block font-medium">{label}</label>
+      <div className="relative">
+        <input
+          id={id}
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={onKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => {
+            window.setTimeout(() => setIsFocused(false), 120);
+          }}
+          placeholder={placeholder}
+          autoComplete="off"
+          className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
+        />
+        {showSuggestions ? (
+          <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-50 overflow-hidden rounded-2xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] shadow-[0_16px_34px_rgba(0,0,0,0.35)]">
+            <div className="border-b border-[var(--panel-card-border)]/70 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">
+              Suggestions
+            </div>
+            {matchingSuggestions.map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => chooseSuggestion(suggestion)}
+                className="block w-full px-3 py-2 text-left text-sm text-[var(--text-main)] transition-colors hover:bg-[var(--panel-card-hover)]"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      {helperText ? <p className="text-xs leading-5 text-[var(--muted-text)]">{helperText}</p> : null}
+    </div>
+  );
+}
+
 function DisplayControlsPanelContent({
   showDisplayControlsPanel,
   setShowDisplayControlsPanel,
@@ -671,6 +737,8 @@ function SearchFilterPanelContent({
   setPersonFilter,
   placeFilter,
   setPlaceFilter,
+  personSuggestions = [],
+  placeSuggestions = [],
   currentMinCountLabel,
   currentRangeLabel,
   graph,
@@ -855,16 +923,16 @@ function SearchFilterPanelContent({
           <p className="text-sm leading-6 text-[var(--muted-text)]">
             Match letters where either correspondent contains this text.
           </p>
-          <div className="space-y-2">
-            <label className="mb-1 block font-medium">Person</label>
-            <input
-              value={draftPersonFilter}
-              onChange={(event) => setDraftPersonFilter(event.target.value)}
-              onKeyDown={handleDraftKeyDown}
-              placeholder="e.g. Colomba, Medici, Maria"
-              className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
-            />
-          </div>
+          <AutocompleteTextInput
+            id="person-filter-input"
+            label="Person"
+            value={draftPersonFilter}
+            onChange={setDraftPersonFilter}
+            onKeyDown={handleDraftKeyDown}
+            placeholder="e.g. Colomba, Medici, Maria"
+            suggestions={personSuggestions}
+            helperText="Start typing at least two characters to see matching people from the dataset. Selecting a suggestion fills the draft field but does not apply filters until Apply Filters is clicked."
+          />
         </div>
       </div>
 
@@ -874,16 +942,16 @@ function SearchFilterPanelContent({
           <p className="text-sm leading-6 text-[var(--muted-text)]">
             Match letters where either source or target place contains this text.
           </p>
-          <div className="space-y-2">
-            <label className="mb-1 block font-medium">Place</label>
-            <input
-              value={draftPlaceFilter}
-              onChange={(event) => setDraftPlaceFilter(event.target.value)}
-              onKeyDown={handleDraftKeyDown}
-              placeholder="e.g. Siena, Florence, Rome"
-              className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
-            />
-          </div>
+          <AutocompleteTextInput
+            id="place-filter-input"
+            label="Place"
+            value={draftPlaceFilter}
+            onChange={setDraftPlaceFilter}
+            onKeyDown={handleDraftKeyDown}
+            placeholder="e.g. Siena, Florence, Rome"
+            suggestions={placeSuggestions}
+            helperText="Start typing at least two characters to see matching places from the dataset. Selecting a suggestion fills the draft field but does not apply filters until Apply Filters is clicked."
+          />
         </div>
       </div>
 
@@ -1251,6 +1319,8 @@ export function LeftControlPanel({
     setPersonFilter,
     placeFilter,
     setPlaceFilter,
+    personSuggestions,
+    placeSuggestions,
     currentMinCountLabel,
     minCountOptions,
     minCount,
@@ -1460,6 +1530,8 @@ export function LeftControlPanel({
                   setPersonFilter={setPersonFilter}
                   placeFilter={placeFilter}
                   setPlaceFilter={setPlaceFilter}
+                  personSuggestions={personSuggestions}
+                  placeSuggestions={placeSuggestions}
                   currentMinCountLabel={currentMinCountLabel}
                   currentRangeLabel={currentRangeLabel}
                   graph={graph}

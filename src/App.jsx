@@ -899,6 +899,29 @@ function filterRowsBySearchAndEntity(rows, {
 }
 
 
+function buildSearchFilterSuggestions(rows) {
+  const people = new Set();
+  const places = new Set();
+
+  rows.forEach((row) => {
+    [row.sourcePerson, row.targetPerson].forEach((value) => {
+      const label = asText(value);
+      if (label) people.add(label);
+    });
+
+    [row.sourceLoc, row.targetLoc].forEach((value) => {
+      const label = asText(value);
+      if (label) places.add(label);
+    });
+  });
+
+  return {
+    people: Array.from(people).sort((a, b) => a.localeCompare(b)),
+    places: Array.from(places).sort((a, b) => a.localeCompare(b)),
+  };
+}
+
+
 function readFileText(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -1374,6 +1397,8 @@ function buildLeftControlPanelProps(args) {
       setPersonFilter: args.setPersonFilter,
       placeFilter: args.placeFilter,
       setPlaceFilter: args.setPlaceFilter,
+      personSuggestions: args.searchFilterSuggestions?.people || [],
+      placeSuggestions: args.searchFilterSuggestions?.places || [],
       currentMinCountLabel: args.currentMinCountLabel,
       minCountOptions: args.minCountOptions,
       minCount: args.minCount,
@@ -2608,6 +2633,7 @@ export default function EuropeNetworkMapApp() {
     return map;
   }, [normalizedPersonMetadata]);
   const { places, normalizedRows } = useMemo(() => normalizeGeographyRows(geographyRows), [geographyRows]);
+  const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(normalizedRows), [normalizedRows]);
 
   // ------------------------------------------------------------
   // Timeline derivations
@@ -3089,6 +3115,7 @@ export default function EuropeNetworkMapApp() {
     setPersonFilter,
     placeFilter,
     setPlaceFilter,
+    searchFilterSuggestions,
     currentMinCountLabel,
     minCountOptions,
     minCount,
