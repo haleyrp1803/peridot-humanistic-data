@@ -4,7 +4,10 @@ import { InspectorPanelContent } from './InspectorPanel.jsx'; import { Analytics
 
 function sidebarSurfaceClassName() { return 'relative overflow-visible border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] backdrop-blur-sm transition-all duration-300'; }
 function groupCardClassName() { return 'mt-5 rounded-[28px] border border-[var(--group-border)] bg-[linear-gradient(180deg,var(--group-bg-top),var(--group-bg-bottom))] p-4 shadow-[0_14px_34px_rgba(0,0,0,0.42)]'; }
-function sectionCardClassName() { return 'overflow-hidden rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] shadow-[0_10px_28px_rgba(0,0,0,0.34)]'; }
+function sectionCardClassName({ allowOverflow = false } = {}) {
+  const overflowClass = allowOverflow ? 'overflow-visible' : 'overflow-hidden';
+  return `${overflowClass} rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] shadow-[0_10px_28px_rgba(0,0,0,0.34)]`;
+}
 function panelHeadingClassName() { return 'text-[32px] font-bold leading-tight tracking-[-0.02em] text-[var(--heading-text)]'; }
 function groupHeadingClassName() { return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] mb-3 px-2 text-[14px] font-bold uppercase tracking-[0.14em] text-[var(--group-heading-text)]'; }
 function sectionTitleClassName() { return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[17px] font-bold leading-tight tracking-[0.005em] text-[var(--heading-text)]'; }
@@ -646,7 +649,7 @@ function AutocompleteTextInput({
   const matchingSuggestions = query.length >= 2
     ? suggestions
         .filter((suggestion) => String(suggestion ?? '').toLowerCase().includes(query))
-        .slice(0, 8)
+        .slice(0, 20)
     : [];
   const showSuggestions = isFocused && matchingSuggestions.length > 0;
 
@@ -673,21 +676,23 @@ function AutocompleteTextInput({
           className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
         />
         {showSuggestions ? (
-          <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-50 overflow-hidden rounded-2xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] shadow-[0_16px_34px_rgba(0,0,0,0.35)]">
+          <div className="absolute left-0 right-0 top-[calc(100%+0.35rem)] z-[120] rounded-2xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] shadow-[0_16px_34px_rgba(0,0,0,0.35)]">
             <div className="border-b border-[var(--panel-card-border)]/70 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">
               Suggestions
             </div>
-            {matchingSuggestions.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => chooseSuggestion(suggestion)}
-                className="block w-full px-3 py-2 text-left text-sm text-[var(--text-main)] transition-colors hover:bg-[var(--panel-card-hover)]"
-              >
-                {suggestion}
-              </button>
-            ))}
+            <div className="max-h-52 overflow-y-auto py-1">
+              {matchingSuggestions.map((suggestion) => (
+                <button
+                  key={suggestion}
+                  type="button"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => chooseSuggestion(suggestion)}
+                  className="block w-full px-3 py-2 text-left text-sm leading-5 text-[var(--text-main)] transition-colors hover:bg-[var(--panel-card-hover)]"
+                >
+                  {suggestion}
+                </button>
+              ))}
+            </div>
           </div>
         ) : null}
       </div>
@@ -917,7 +922,7 @@ function SearchFilterPanelContent({
         </div>
       </div>
 
-      <div className={sectionCardClassName()}>
+      <div className={sectionCardClassName({ allowOverflow: true })}>
         <div className="space-y-3 p-4">
           <h3 className={serifHeadingClassName()}>Person filter</h3>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
@@ -936,7 +941,7 @@ function SearchFilterPanelContent({
         </div>
       </div>
 
-      <div className={sectionCardClassName()}>
+      <div className={sectionCardClassName({ allowOverflow: true })}>
         <div className="space-y-3 p-4">
           <h3 className={serifHeadingClassName()}>Place filter</h3>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
