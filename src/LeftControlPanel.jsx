@@ -922,12 +922,133 @@ function SearchFilterPanelContent({
 
   return (
     <div className="space-y-4">
-      <div className={sectionCardClassName()}>
-        <div className="space-y-3 p-4">
-          <h2 className={sectionTitleClassName()}>Global search and filters</h2>
-          <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Edit filters here, then press Apply Filters to update the active dataset. Use Clear Filters to return keyword search, person filter, place filter, route filters, minimum weight, and date range to their defaults.
-          </p>
+      <div className={sectionCardClassName({ allowOverflow: true })}>
+        <div className="space-y-4 p-4">
+          <div className="space-y-2">
+            <h2 className={sectionTitleClassName()}>Advanced search criteria</h2>
+            <p className="text-sm leading-6 text-[var(--muted-text)]">
+              Edit one or more criteria, then click Apply Filters. Suggestions fill fields but do not apply automatically.
+            </p>
+          </div>
+
+          <div className="grid gap-4">
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
+                Text search
+              </h3>
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-[var(--text-main)]" htmlFor="keyword-search-input">
+                  Keyword search
+                </label>
+                <input
+                  id="keyword-search-input"
+                  value={draftSearch}
+                  onChange={(event) => setDraftSearch(event.target.value)}
+                  onKeyDown={handleDraftKeyDown}
+                  placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
+                  className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
+                People and places
+              </h3>
+              <div className="grid gap-3">
+                <AutocompleteTextInput
+                  id="person-filter-input"
+                  label="Person"
+                  value={draftPersonFilter}
+                  onChange={setDraftPersonFilter}
+                  onKeyDown={handleDraftKeyDown}
+                  placeholder="e.g. Colomba, Medici, Maria"
+                  suggestions={personSuggestions}
+                />
+                <AutocompleteTextInput
+                  id="place-filter-input"
+                  label="Place"
+                  value={draftPlaceFilter}
+                  onChange={setDraftPlaceFilter}
+                  onKeyDown={handleDraftKeyDown}
+                  placeholder="e.g. Siena, Florence, Rome"
+                  suggestions={placeSuggestions}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
+                Routes
+              </h3>
+              <div className="grid gap-3">
+                <AutocompleteTextInput
+                  id="route-place-filter-input"
+                  label="Route Filter (Place)"
+                  value={draftRoutePlaceFilter}
+                  onChange={setDraftRoutePlaceFilter}
+                  onKeyDown={handleDraftKeyDown}
+                  placeholder="e.g. Siena → Firenze/Fiorenza"
+                  suggestions={routePlaceSuggestions}
+                />
+                <AutocompleteTextInput
+                  id="route-people-filter-input"
+                  label="Route Filter (People)"
+                  value={draftRoutePeopleFilter}
+                  onChange={setDraftRoutePeopleFilter}
+                  onKeyDown={handleDraftKeyDown}
+                  placeholder="e.g. Colomba → von Habsburg, Maria Magdalena"
+                  suggestions={routePeopleSuggestions}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
+                Threshold and date
+              </h3>
+
+              <div className="grid gap-3">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-[var(--text-main)]" htmlFor="minimum-weight-input">
+                    Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
+                  </label>
+                  <input
+                    id="minimum-weight-input"
+                    type="number"
+                    inputMode="numeric"
+                    min="1"
+                    step="1"
+                    value={draftMinCount}
+                    onChange={(event) => setDraftMinCount(event.target.value)}
+                    onKeyDown={handleDraftKeyDown}
+                    className="w-28 rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-sm text-[var(--input-text)]"
+                    aria-label="Minimum weight"
+                  />
+                  <div className="text-xs text-[var(--panel-card-muted-text)]">
+                    Current applied minimum: {currentMinCountLabel}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="text-sm font-semibold text-[var(--text-main)]">Date range</div>
+                  <TimelineDateRangeControls
+                    currentRangeLabel={currentRangeLabel}
+                    timelineMonths={timelineMonths}
+                    draftStartYear={draftStartYear}
+                    setDraftStartYear={setDraftStartYear}
+                    draftEndYear={draftEndYear}
+                    setDraftEndYear={setDraftEndYear}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
+            Start typing at least two characters in person, place, or route fields to see matching suggestions from the dataset.
+          </div>
+
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -949,147 +1070,6 @@ function SearchFilterPanelContent({
               {filterStatusMessage}
             </div>
           ) : null}
-        </div>
-      </div>
-
-      <div className={sectionCardClassName()}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Keyword search</h3>
-          <p className="text-sm leading-6 text-[var(--muted-text)]">
-            This search narrows the active dataset using the existing Peridot keyword-search behavior.
-          </p>
-          <div className="space-y-2">
-            <label className="mb-1 block font-medium">Keyword search</label>
-            <input
-              value={draftSearch}
-              onChange={(event) => setDraftSearch(event.target.value)}
-              onKeyDown={handleDraftKeyDown}
-              placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
-              className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] placeholder:text-[var(--input-placeholder)]"
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className={sectionCardClassName({ allowOverflow: true })}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Person filter</h3>
-          <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Match letters where either correspondent contains this text.
-          </p>
-          <AutocompleteTextInput
-            id="person-filter-input"
-            label="Person"
-            value={draftPersonFilter}
-            onChange={setDraftPersonFilter}
-            onKeyDown={handleDraftKeyDown}
-            placeholder="e.g. Colomba, Medici, Maria"
-            suggestions={personSuggestions}
-            helperText="Start typing at least two characters to see matching people from the dataset. Selecting a suggestion fills the draft field but does not apply filters until Apply Filters is clicked."
-          />
-        </div>
-      </div>
-
-      <div className={sectionCardClassName({ allowOverflow: true })}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Place filter</h3>
-          <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Match letters where either source or target place contains this text.
-          </p>
-          <AutocompleteTextInput
-            id="place-filter-input"
-            label="Place"
-            value={draftPlaceFilter}
-            onChange={setDraftPlaceFilter}
-            onKeyDown={handleDraftKeyDown}
-            placeholder="e.g. Siena, Florence, Rome"
-            suggestions={placeSuggestions}
-            helperText="Start typing at least two characters to see matching places from the dataset. Selecting a suggestion fills the draft field but does not apply filters until Apply Filters is clicked."
-          />
-        </div>
-      </div>
-
-      <div className={sectionCardClassName({ allowOverflow: true })}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Route Filter (Place)</h3>
-          <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Match letters where the source-to-target place route contains this text.
-          </p>
-          <AutocompleteTextInput
-            id="route-place-filter-input"
-            label="Route Filter (Place)"
-            value={draftRoutePlaceFilter}
-            onChange={setDraftRoutePlaceFilter}
-            onKeyDown={handleDraftKeyDown}
-            placeholder="e.g. Siena → Firenze/Fiorenza"
-            suggestions={routePlaceSuggestions}
-            helperText="Start typing at least two characters to see matching source-to-target place routes from the dataset. Selecting a suggestion fills the draft field but does not apply filters until Apply Filters is clicked."
-          />
-        </div>
-      </div>
-
-      <div className={sectionCardClassName({ allowOverflow: true })}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Route Filter (People)</h3>
-          <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Match letters where the source-to-target people route contains this text.
-          </p>
-          <AutocompleteTextInput
-            id="route-people-filter-input"
-            label="Route Filter (People)"
-            value={draftRoutePeopleFilter}
-            onChange={setDraftRoutePeopleFilter}
-            onKeyDown={handleDraftKeyDown}
-            placeholder="e.g. Colomba → von Habsburg, Maria Magdalena"
-            suggestions={routePeopleSuggestions}
-            helperText="Start typing at least two characters to see matching source-to-target people routes from the dataset. Selecting a suggestion fills the draft field but does not apply filters until Apply Filters is clicked."
-          />
-        </div>
-      </div>
-
-      <div className={sectionCardClassName()}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Minimum correspondence weight</h3>
-          <p className="text-sm leading-6 text-[var(--muted-text)]">
-            This filter controls the minimum represented weight required for routes or connections
-            to appear in the current view.
-          </p>
-          <div className="space-y-2">
-            <label className="mb-1 block font-medium">
-              Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
-            </label>
-            <input
-              type="number"
-              inputMode="numeric"
-              min="1"
-              step="1"
-              value={draftMinCount}
-              onChange={(event) => setDraftMinCount(event.target.value)}
-              onKeyDown={handleDraftKeyDown}
-              className="w-24 rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-              aria-label="Minimum weight"
-            />
-            <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">
-              Current applied minimum: {currentMinCountLabel}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className={sectionCardClassName()}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Date range</h3>
-          <p className="text-sm leading-6 text-[var(--muted-text)]">
-            This filter defines the active date window. Timeline playback uses the same applied range.
-          </p>
-          <TimelineDateRangeControls
-            currentRangeLabel={currentRangeLabel}
-            timelineMonths={timelineMonths}
-            draftStartYear={draftStartYear}
-            setDraftStartYear={setDraftStartYear}
-            draftEndYear={draftEndYear}
-            setDraftEndYear={setDraftEndYear}
-          />
         </div>
       </div>
 
@@ -1125,33 +1105,21 @@ function SearchFilterPanelContent({
               <dt className="font-semibold text-[var(--text-main)]">Date window</dt>
               <dd className="text-right">{currentRangeLabel}</dd>
             </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Nodes in view</dt>
-              <dd className="text-right">{graph?.nodes?.length ?? 0}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Routes in view</dt>
-              <dd className="text-right">{graph?.edges?.length ?? 0}</dd>
-            </div>
-            <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Filtered rows</dt>
-              <dd className="text-right">{rowDiagnostics?.filteredRows ?? 'Unknown'}</dd>
+            <div className="grid grid-cols-3 gap-2 border-t border-[var(--panel-card-border)]/70 pt-3 text-center">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Nodes</dt>
+                <dd className="mt-1 font-semibold text-[var(--text-main)]">{graph?.nodes?.length ?? 0}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Routes</dt>
+                <dd className="mt-1 font-semibold text-[var(--text-main)]">{graph?.edges?.length ?? 0}</dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-text)]">Rows</dt>
+                <dd className="mt-1 font-semibold text-[var(--text-main)]">{rowDiagnostics?.filteredRows ?? 'Unknown'}</dd>
+              </div>
             </div>
           </dl>
-        </div>
-      </div>
-
-      <div className={sectionCardClassName()}>
-        <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Planned consolidated filters</h3>
-          <ul className="list-disc space-y-1 pl-5 text-sm leading-6 text-[var(--muted-text)]">
-            <li>Language and relationship metadata</li>
-            <li>Mappability and safe categorical metadata fields</li>
-          </ul>
-          <p className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
-            Keyword search, person, place, route-place, route-people, minimum-weight, and date-range controls now apply together through the Apply Filters button. Clear Filters returns these controls to their default unfiltered state.
-            Entity-specific and metadata filters remain planned for later bounded passes.
-          </p>
         </div>
       </div>
     </div>
