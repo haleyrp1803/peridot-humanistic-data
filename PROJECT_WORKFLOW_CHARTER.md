@@ -75,7 +75,7 @@ Current fragile zones include:
 - shared side-panel shell behavior
 - inspector-open interactions after map clicks
 - cluster grouping and cluster inspector navigation
-- Search & Filter active-dataset state, including keyword search, weight filters, date range filters, and future entity/metadata filters
+- Search & Filter active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, predictive-suggestion, apply/clear, and future metadata filters
 - Analytics expanded overlay positioning
 - Analytics dynamic variable detection
 - Analytics SVG-to-PNG export rendering
@@ -111,6 +111,14 @@ Small targeted replacement blocks are allowed only when all of the following are
 If a patch fails, begins to loop, or requires repeated corrective scripts, stop immediately. Roll back to the last clean commit/checkpoint, restate the goal, and switch to a reviewed full-file replacement or a new implementation plan.
 
 This project is grounded in real code and real data. Do not reconstruct likely code from memory, snippets, or expectations when the actual file can be read.
+
+### Most-recent-upload rule
+
+When the user uploads files after being asked for current source files, treat those most recent uploads as the authoritative source for that pass unless the user explicitly says otherwise.
+
+Do not assume that a same-name file already present in `/mnt/data`, a prior generated replacement file, or an older upload is the latest source. Same-name files from different points in the conversation are common during this project.
+
+Before making claims that a user-uploaded source file is stale, verify that the file being inspected is actually the newest uploaded file for the pass. If there is any ambiguity about file recency or identity, stop and ask rather than declaring the user’s upload stale.
 
 ---
 
@@ -247,6 +255,9 @@ Current notable decisions:
 - Controls / View should govern display, not the active filtered dataset.
 - Timeline should focus on chronological playback and consume the active date range.
 - Analytics should chart the currently filtered dataset by default.
+- Search & Filter uses draft inputs plus explicit Apply Filters rather than live filtering.
+- Predictive suggestions should support discovery without becoming full dropdown selectors.
+- Route filtering is split into Route Filter (Place) and Route Filter (People).
 
 ---
 
@@ -297,16 +308,28 @@ Future cluster changes should preserve:
 
 Search & Filter is the intended consolidation point for global filters.
 
-Committed or planned Search & Filter controls include:
+Committed Search & Filter controls include:
 
 - keyword search
+- person filter
+- place filter
+- **Route Filter (Place)**
+- **Route Filter (People)**
 - minimum correspondence weight
 - date range
-- future person/place/route filters
-- future language/relationship filters
-- future mappability and safe categorical metadata filters
+- predictive suggestions for person, place, route-place, and route-people fields
+- **Apply Filters**
+- **Clear Filters**
+- pre-update status feedback
 
-Filter controls should not trigger expensive graph/data recomputation on every keystroke or draft edit. Prefer draft values with an explicit **Apply Filters** action when the filter can affect the active dataset.
+Future Search & Filter controls may include:
+
+- language/relationship filters
+- mappability filters
+- safe categorical metadata filters
+- inspector actions such as “filter to this person/place/route”
+
+Filter controls should not trigger expensive graph/data recomputation on every keystroke or draft edit. Use draft values with an explicit **Apply Filters** action when the filter can affect the active dataset. Use **Clear Filters** to reset the global filter state. For expensive full-dataset updates, show visible feedback before committing state changes so users understand that the app is updating.
 
 When changing Search & Filter, explicitly test:
 
@@ -356,3 +379,4 @@ The new chat should be told:
 - Before any code change, fully read/review the complete current affected GitHub file(s) when local and GitHub are synced.
 - Use full-file replacements by default for code changes in affected files, especially dense or fragile files.
 - Avoid brittle snippet-based patching unless the full file has been reviewed and the edit is clearly unambiguous.
+- When the user uploads source files after being asked for current files, treat the most recent uploads as authoritative for that pass unless told otherwise.

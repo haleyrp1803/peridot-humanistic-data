@@ -20,13 +20,13 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
+- **`01de3d8` — `Show filter update status before applying changes`**
+
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter milestone. Search & Filter now owns draft/apply global filters for keyword, person, place, route-place, route-people, minimum weight, and date range, with predictive suggestions and pre-update status feedback. The earlier MapLibre preview files remain present but dormant unless `?maplibrePreview=1` is used.
+
+The preceding Analytics milestone remains:
+
 - **`3352403` — `Fix Analytics expanded overlay and variable options`**
-
-This baseline records the active legacy D3/SVG Peridot path after the Analytics feature milestone. The earlier MapLibre preview files remain present but dormant unless `?maplibrePreview=1` is used.
-
-The last fully documented pre-Analytics UI milestone remains:
-
-- **`8539c68` — `Clarify timeline rail icon`**
 
 Current GitHub repository:
 
@@ -111,7 +111,7 @@ The app includes:
 - year-based timeline filtering and playback
 - shared side-panel inspection workflow
 - persistent side-panel icon rail with dedicated Controls, Data Inputs, Export, Timeline, Analytics, and Inspector tabs
-- planned Search & Filter consolidation so global filtering can eventually define one active filtered dataset for map, Inspector, Analytics, Timeline, and Export workflows
+- implemented Search & Filter consolidation defining one active filtered dataset for map, Inspector, Analytics, Timeline, and Export workflows
 - theme presets and visual controls
 - export tools for image and tabular outputs
 - Analytics charting tools with compact previews, expanded overlay, variable controls, date-range controls, and PNG chart export
@@ -146,7 +146,9 @@ Owns the shared side-panel shell and persistent icon rail. The shell includes:
 - persistent icon rail that is available when the panel is closed and when it is open
 - open-state close button at the top of the rail
 - rail-driven panel views for **Controls**, **Data Inputs**, **Export**, **Timeline**, **Analytics**, and **Inspector**
-- future planned rail support for **Search & Filter**, which should be added in a narrow panel-shell pass before any filtering behavior is moved
+- **Search & Filter** content rendering for keyword, person, place, route-place, route-people, minimum-weight, and date-range filters
+- predictive suggestion menus for person, place, route-place, and route-people fields
+- draft/apply filter UI with Apply Filters, Clear Filters, current applied scope, and pre-update status feedback
 - Controls content rendering for visualization, display, theme, summary, and diagnostics controls
 - Data Inputs content rendering for Geography, Raw Data, and Person Metadata uploads
 - Export content rendering for SVG, PNG, nodes CSV, and edges/routes CSV controls
@@ -317,10 +319,35 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - one shared left-side panel shell
 - persistent icon rail as the panel-view switcher
 - close button at the top of the open-state rail
-- dedicated rail tabs for Controls, Data Inputs, Export, Timeline, Analytics, and Inspector
-- Data Inputs, Export, Timeline, and Analytics moved out of the general Controls panel into dedicated views
+- dedicated rail tabs for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector
+- Data Inputs, Search & Filter, Export, Timeline, and Analytics moved out of the general Controls panel into dedicated views
 - shell-level open/close behavior
 - Inspector auto-opens from node, edge, and cluster interactions
+
+### Search & Filter capabilities
+
+- dedicated Search & Filter rail tab
+- draft/apply global filtering model
+- **Apply Filters** commits all filter changes together
+- **Clear Filters** clears keyword/person/place/route fields, restores minimum weight to `1`, restores the full date range, and resets playback
+- status feedback appears before expensive filter recomputation begins
+- current applied filter scope is displayed in the panel
+- text filters include:
+  - keyword search
+  - person filter
+  - place filter
+  - **Route Filter (Place)**
+  - **Route Filter (People)**
+- non-text filters include:
+  - minimum correspondence weight
+  - date range
+- predictive suggestions are available for:
+  - person
+  - place
+  - route-place
+  - route-people
+- suggestion menus show after at least two typed characters, show about five suggestions at once, and scroll for more matches
+- selecting a suggestion fills a draft field only; the map/network updates only after **Apply Filters**
 
 ### Inspector capabilities
 
@@ -372,13 +399,13 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 ---
 
-## Planned Search & Filter panel contract
+## Search & Filter active-dataset contract
 
-The next planned panel-design direction is a dedicated **Search & Filter** tab. This is not yet implemented in the current safe baseline, but it is now the agreed design contract for the next sequence of bounded passes.
+The dedicated **Search & Filter** tab is implemented and is now the owner of global filtering behavior.
 
 ### Core model
 
-Peridot should distinguish:
+Peridot distinguishes:
 
 ```text
 data source
@@ -386,42 +413,52 @@ data source
 → visualization / inspection / analytics / export
 ```
 
-Search & Filter should become the primary owner of the **active filtered dataset**: the subset of loaded correspondence records that pass all enabled global filters.
+Search & Filter defines the **active filtered dataset**: the subset of loaded correspondence records that pass all enabled global filters.
 
-### Intended responsibilities
+### Current responsibilities
 
 - **Data Inputs** defines which data is loaded.
-- **Search & Filter** defines which records, people, places, routes, and metadata categories are in scope.
+- **Search & Filter** defines which records, people, places, routes, and time/weight scopes are in the active dataset.
 - **Controls / View** defines how the active dataset is displayed.
-- **Timeline** focuses on chronological playback and temporal navigation.
+- **Timeline** focuses on chronological playback and temporal navigation while consuming the applied date scope.
 - **Analytics** charts the current filtered dataset by default.
 - **Inspector** remains selection-driven, with possible later actions to filter to the selected person/place/route.
 - **Export** should label whether it exports loaded, filtered, visible, selected, or charted data.
 
-### Filter taxonomy
+### Current filters
 
-Search & Filter work should distinguish:
+Implemented Search & Filter controls:
 
-- **record-level filters:** date range, sender, recipient, source/target place, language, relationship, categorical metadata, mappability
-- **derived edge/route filters:** minimum correspondence weight, reciprocal/one-way routes, routes involving selected entities
-- **view/display controls:** visualization mode, labels, theme, cluster display, node sizing, map styling
-- **Analytics chart controls:** chart type, variables, grouping, top-N, orientation, chart-specific time bucketing
+- keyword search
+- person filter
+- place filter
+- **Route Filter (Place)**
+- **Route Filter (People)**
+- minimum correspondence weight
+- date range
 
-Minimum weight is user-facing filter behavior, but internally it is a derived edge/route filter rather than a raw-record filter. Treat that distinction carefully when moving it from Controls/View into Search & Filter.
+Autocomplete/predictive suggestions are implemented for:
 
-### Initial implementation sequence
+- person
+- place
+- source-place → target-place routes
+- source-person → target-person routes
 
-1. Add a Search & Filter rail tab with placeholder/read-only content only.
-2. Move the existing minimum-weight numeric input into Search & Filter.
-3. Move or mirror date filtering carefully, preserving Timeline playback.
-4. Add lightweight person/place/route search.
-5. Add an Analytics data-scope summary showing which filtered records are being charted.
+### Implementation cautions
 
-### Cautions
+Search & Filter is a fragile active-dataset state boundary. Future changes should be narrow and should explicitly test:
 
-Do not use this sequence as an opportunity for broad `App.jsx` refactoring. Do not merge Timeline, Analytics, and Inspector into one panel. Do not make Analytics or Inspector the global filter owner. Do not rename compatibility-sensitive `showLeftSidebar` / `showRightSidebar` paths during this work. Do not touch dormant MapLibre files as part of Search & Filter work.
+- typing in text fields does not recompute on every keystroke
+- predictive suggestions fill draft fields only
+- Apply Filters commits all filters together
+- Clear Filters resets all filters and playback
+- timeline playback respects the applied filter/date scope
+- inspector clicks still open after filtering
+- Analytics and Export still receive the intended filtered scope
+- pre-update status appears before expensive full-dataset recomputation begins
 
----
+Do not use Search & Filter work as an opportunity for broad `App.jsx` refactoring. Do not merge Timeline, Analytics, and Inspector into one panel. Do not make Analytics or Inspector the global filter owner. Do not rename compatibility-sensitive `showLeftSidebar` / `showRightSidebar` paths during this work. Do not touch dormant MapLibre files as part of Search & Filter work.
+
 
 ## Current theme and panel state
 
@@ -438,18 +475,18 @@ Important current side-panel state:
 - rail tabs are currently:
   1. **Controls** — Visualization Type, Display Controls, Theme, Summary and Diagnostics, and remaining general options
   2. **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
-  3. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
-  4. **Timeline** — year-range filtering and playback controls
-  5. **Analytics** — chart selection, chart configuration, expanded chart overlay, and chart PNG export
-  6. **Inspector** — selected nodes, edges, clusters, linked records, and inspector-internal navigation
-- the planned next rail-tab addition is **Search & Filter**, initially as placeholder/read-only panel content before any filtering behavior moves
+  3. **Search & Filter** — active-dataset filters, predictive suggestions, Apply Filters, Clear Filters, and filter status feedback
+  4. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
+  5. **Timeline** — year-range filtering and playback controls
+  6. **Analytics** — chart selection, chart configuration, expanded chart overlay, and chart PNG export
+  7. **Inspector** — selected nodes, edges, clusters, linked records, and inspector-internal navigation
 - the open-state rail has a mossy/peridot background, lighter green inactive buttons, lighter hover states, and cream active-state buttons
 
 Recent committed behavior includes:
 
 - direct view buttons for **People**, **Place**, and **Force-Directed**
 - **People** as the default startup view
-- committed minimum-weight numeric input with **Enter** / **Update** apply behavior
+- Search & Filter draft/apply model for keyword, person, place, route-place, route-people, minimum-weight, and date-range controls
 - removal of the old **Show all dates** shortcut
 - year-only timeline selectors
 - removal of the old horizontal Controls / Inspector top tabs
@@ -599,6 +636,57 @@ Added the **Timeline** rail tab and moved existing year-range and playback contr
 
 Settled the Timeline rail icon on a simple clock-style symbol after horizontal progression icons lost too much detail at rail-button size.
 
+
+### Search & Filter sequence
+
+#### `2eb3461` — Document Search and Filter panel contract
+
+Documented the Search & Filter design contract and active-filtered-dataset model before implementation.
+
+#### `e6b477d` — Add Search and Filter panel shell
+
+Added the Search & Filter rail-tab shell.
+
+#### `a890b13` — Move minimum weight filter into Search and Filter
+
+Moved minimum correspondence weight into Search & Filter while preserving behavior.
+
+#### `b348f12` — Move date range controls into Search and Filter
+
+Moved date-range controls into Search & Filter while preserving Timeline playback behavior.
+
+#### `d5e7667` — Apply Search and Filter changes on request
+
+Moved keyword search into Search & Filter and introduced the draft/apply model.
+
+#### `019acef` — Add clear filters and reset playback on apply
+
+Added Clear Filters and reset playback on filter apply/clear.
+
+#### `cc26530` — Add person and place filters
+
+Added free-text person and place filters.
+
+#### `9c179f7` — Add predictive suggestions for person and place filters
+
+Added predictive suggestions for person and place filters.
+
+#### `ea19fc8` — Improve predictive suggestion menu scrolling
+
+Improved predictive suggestion menu overflow and scrolling.
+
+#### `1578d10` — Add route filter
+
+Added the first route filter with source-place → target-place suggestions.
+
+#### `c98c242` — Split route filters by place and people
+
+Split route filtering into **Route Filter (Place)** and **Route Filter (People)**.
+
+#### `01de3d8` — Show filter update status before applying changes
+
+Added pre-update Search & Filter status feedback so users see feedback before expensive map updates begin.
+
 ---
 
 ## Deferred / rolled-back work
@@ -645,7 +733,7 @@ These areas still deserve narrow, explicit passes:
 - Analytics expanded overlay positioning above the map area
 - Analytics dynamic variable detection from uploaded/current row data
 - Analytics SVG-to-PNG chart export rendering
-- future Search & Filter active-dataset state, especially once it begins coordinating date, weight, person/place/route, metadata, Timeline, Analytics, Inspector, and Export behavior
+- Search & Filter active-dataset state, especially draft/apply coordination across keyword, person, place, route-place, route-people, date, weight, Timeline, Analytics, Inspector, and Export behavior
 - dormant MapLibre preview code if it is ever reactivated
 
 ---
@@ -694,7 +782,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`3352403` — `Fix Analytics expanded overlay and variable options`**
+- current documented baseline: **`01de3d8` — `Show filter update status before applying changes`**
 - last documented pre-Analytics UI milestone: **`8539c68` — `Clarify timeline rail icon`**
 
 A future chat should also be told that:
@@ -709,4 +797,4 @@ A future chat should also be told that:
 - current cluster features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
 - documentation should preserve the full commit trajectory carefully
-- the planned Search & Filter panel should consolidate global filtering and define the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it
+- the implemented Search & Filter panel consolidates global filtering and defines the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it
