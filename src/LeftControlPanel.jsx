@@ -780,6 +780,7 @@ function SearchFilterPanelContent({
   const [draftMinCount, setDraftMinCount] = useState(String(minCount ?? 1));
   const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
+  const [filterStatusMessage, setFilterStatusMessage] = useState('');
 
   useEffect(() => {
     setDraftSearch(search ?? '');
@@ -804,6 +805,16 @@ function SearchFilterPanelContent({
     timelineMonths[rangeEnd],
   ]);
 
+  useEffect(() => {
+    if (!filterStatusMessage) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setFilterStatusMessage('');
+    }, 2200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [filterStatusMessage]);
+
   const resetDraftFilters = () => {
     setDraftSearch(search ?? '');
     setDraftPersonFilter(personFilter ?? '');
@@ -818,26 +829,30 @@ function SearchFilterPanelContent({
   const clearFilters = () => {
     const defaultEndIndex = Math.max(timelineMonths.length - 1, 0);
 
-    setDraftSearch('');
-    setDraftPersonFilter('');
-    setDraftPlaceFilter('');
-    setDraftRoutePlaceFilter('');
-    setDraftRoutePeopleFilter('');
-    setDraftMinCount('1');
-    setDraftStartYear(getDefaultStartYear());
-    setDraftEndYear(getDefaultEndYear());
+    setFilterStatusMessage('Filters cleared. Updating view…');
 
-    setSearch('');
-    setPersonFilter('');
-    setPlaceFilter('');
-    setRoutePlaceFilter('');
-    setRoutePeopleFilter('');
-    setMinCount(1);
-    setTimelineMode('all');
-    setRangeStart(0);
-    setRangeEnd(defaultEndIndex);
-    setIsPlaying(false);
-    setPlaybackIndex(-1);
+    window.requestAnimationFrame(() => {
+      setDraftSearch('');
+      setDraftPersonFilter('');
+      setDraftPlaceFilter('');
+      setDraftRoutePlaceFilter('');
+      setDraftRoutePeopleFilter('');
+      setDraftMinCount('1');
+      setDraftStartYear(getDefaultStartYear());
+      setDraftEndYear(getDefaultEndYear());
+
+      setSearch('');
+      setPersonFilter('');
+      setPlaceFilter('');
+      setRoutePlaceFilter('');
+      setRoutePeopleFilter('');
+      setMinCount(1);
+      setTimelineMode('all');
+      setRangeStart(0);
+      setRangeEnd(defaultEndIndex);
+      setIsPlaying(false);
+      setPlaybackIndex(-1);
+    });
   };
 
   const resolveTimelineBoundaryIndexFromYear = (boundary, year) => {
@@ -862,31 +877,40 @@ function SearchFilterPanelContent({
       ? Math.max(1, parsedMinCount)
       : minCount;
 
-    setSearch(String(draftSearch ?? '').trim());
-    setPersonFilter(String(draftPersonFilter ?? '').trim());
-    setPlaceFilter(String(draftPlaceFilter ?? '').trim());
-    setRoutePlaceFilter(String(draftRoutePlaceFilter ?? '').trim());
-    setRoutePeopleFilter(String(draftRoutePeopleFilter ?? '').trim());
-    setMinCount(nextMinCount);
-    setDraftMinCount(String(nextMinCount));
-
+    const nextSearch = String(draftSearch ?? '').trim();
+    const nextPersonFilter = String(draftPersonFilter ?? '').trim();
+    const nextPlaceFilter = String(draftPlaceFilter ?? '').trim();
+    const nextRoutePlaceFilter = String(draftRoutePlaceFilter ?? '').trim();
+    const nextRoutePeopleFilter = String(draftRoutePeopleFilter ?? '').trim();
     const nextStartIndex = resolveTimelineBoundaryIndexFromYear('start', draftStartYear);
     const nextEndIndex = resolveTimelineBoundaryIndexFromYear('end', draftEndYear);
 
-    if (nextStartIndex >= 0 && nextEndIndex >= 0) {
-      const safeStart = Math.min(nextStartIndex, nextEndIndex);
-      const safeEnd = Math.max(nextStartIndex, nextEndIndex);
-      setTimelineMode('range');
-      setRangeStart(safeStart);
-      setRangeEnd(safeEnd);
-    } else {
-      setTimelineMode('all');
-      setRangeStart(0);
-      setRangeEnd(Math.max(timelineMonths.length - 1, 0));
-    }
+    setFilterStatusMessage('Updating view…');
 
-    setIsPlaying(false);
-    setPlaybackIndex(-1);
+    window.requestAnimationFrame(() => {
+      setSearch(nextSearch);
+      setPersonFilter(nextPersonFilter);
+      setPlaceFilter(nextPlaceFilter);
+      setRoutePlaceFilter(nextRoutePlaceFilter);
+      setRoutePeopleFilter(nextRoutePeopleFilter);
+      setMinCount(nextMinCount);
+      setDraftMinCount(String(nextMinCount));
+
+      if (nextStartIndex >= 0 && nextEndIndex >= 0) {
+        const safeStart = Math.min(nextStartIndex, nextEndIndex);
+        const safeEnd = Math.max(nextStartIndex, nextEndIndex);
+        setTimelineMode('range');
+        setRangeStart(safeStart);
+        setRangeEnd(safeEnd);
+      } else {
+        setTimelineMode('all');
+        setRangeStart(0);
+        setRangeEnd(Math.max(timelineMonths.length - 1, 0));
+      }
+
+      setIsPlaying(false);
+      setPlaybackIndex(-1);
+    });
   };
 
   const handleDraftKeyDown = (event) => {
@@ -904,7 +928,7 @@ function SearchFilterPanelContent({
           <p className="text-sm leading-6 text-[var(--muted-text)]">
             Edit filters here, then press Apply Filters to update the active dataset. Use Clear Filters to return keyword search, person filter, place filter, route filters, minimum weight, and date range to their defaults.
           </p>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={applyDraftFilters}
@@ -920,6 +944,11 @@ function SearchFilterPanelContent({
               Clear Filters
             </button>
           </div>
+          {filterStatusMessage ? (
+            <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2 text-xs font-medium text-[var(--muted-text)]">
+              {filterStatusMessage}
+            </div>
+          ) : null}
         </div>
       </div>
 
