@@ -37,16 +37,16 @@ function ChartTooltip({ tooltip }) {
 
   return (
     <div
-      className="pointer-events-none absolute z-20 max-w-[240px] rounded-xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] px-3 py-2 text-xs text-[var(--panel-card-text)] shadow-[0_12px_28px_rgba(0,0,0,0.22)]"
+      className="pointer-events-none absolute z-30 max-w-[260px] rounded-xl border border-[#4d6046] bg-[#6e8475] px-3 py-2 text-xs text-[#fbf8f1] shadow-[0_16px_34px_rgba(0,0,0,0.36)]"
       style={{
         left: tooltip.x,
         top: tooltip.y,
         transform: 'translate(-50%, calc(-100% - 10px))',
       }}
     >
-      <div className="font-semibold">{tooltip.label}</div>
-      {tooltip.secondary ? <div className="text-[var(--panel-card-muted-text)]">{tooltip.secondary}</div> : null}
-      <div>{formatNumber(tooltip.count)} {tooltip.unit || 'letters'}</div>
+      <div className="font-semibold text-[#fff9ed]">{tooltip.label}</div>
+      {tooltip.secondary ? <div className="text-[#edf2df]">{tooltip.secondary}</div> : null}
+      <div className="text-[#fbf8f1]">{formatNumber(tooltip.count)} {tooltip.unit || 'letters'}</div>
     </div>
   );
 }
