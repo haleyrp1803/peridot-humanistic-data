@@ -742,11 +742,14 @@ function SearchFilterPanelContent({
   setPersonFilter,
   placeFilter,
   setPlaceFilter,
-  routeFilter,
-  setRouteFilter,
+  routePlaceFilter,
+  setRoutePlaceFilter,
+  routePeopleFilter,
+  setRoutePeopleFilter,
   personSuggestions = [],
   placeSuggestions = [],
-  routeSuggestions = [],
+  routePlaceSuggestions = [],
+  routePeopleSuggestions = [],
   currentMinCountLabel,
   currentRangeLabel,
   graph,
@@ -772,7 +775,8 @@ function SearchFilterPanelContent({
   const [draftSearch, setDraftSearch] = useState(search ?? '');
   const [draftPersonFilter, setDraftPersonFilter] = useState(personFilter ?? '');
   const [draftPlaceFilter, setDraftPlaceFilter] = useState(placeFilter ?? '');
-  const [draftRouteFilter, setDraftRouteFilter] = useState(routeFilter ?? '');
+  const [draftRoutePlaceFilter, setDraftRoutePlaceFilter] = useState(routePlaceFilter ?? '');
+  const [draftRoutePeopleFilter, setDraftRoutePeopleFilter] = useState(routePeopleFilter ?? '');
   const [draftMinCount, setDraftMinCount] = useState(String(minCount ?? 1));
   const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
@@ -781,7 +785,8 @@ function SearchFilterPanelContent({
     setDraftSearch(search ?? '');
     setDraftPersonFilter(personFilter ?? '');
     setDraftPlaceFilter(placeFilter ?? '');
-    setDraftRouteFilter(routeFilter ?? '');
+    setDraftRoutePlaceFilter(routePlaceFilter ?? '');
+    setDraftRoutePeopleFilter(routePeopleFilter ?? '');
     setDraftMinCount(String(minCount ?? 1));
     setDraftStartYear(getAppliedStartYear());
     setDraftEndYear(getAppliedEndYear());
@@ -789,7 +794,8 @@ function SearchFilterPanelContent({
     search,
     personFilter,
     placeFilter,
-    routeFilter,
+    routePlaceFilter,
+    routePeopleFilter,
     minCount,
     rangeStart,
     rangeEnd,
@@ -802,7 +808,8 @@ function SearchFilterPanelContent({
     setDraftSearch(search ?? '');
     setDraftPersonFilter(personFilter ?? '');
     setDraftPlaceFilter(placeFilter ?? '');
-    setDraftRouteFilter(routeFilter ?? '');
+    setDraftRoutePlaceFilter(routePlaceFilter ?? '');
+    setDraftRoutePeopleFilter(routePeopleFilter ?? '');
     setDraftMinCount(String(minCount ?? 1));
     setDraftStartYear(getAppliedStartYear());
     setDraftEndYear(getAppliedEndYear());
@@ -814,7 +821,8 @@ function SearchFilterPanelContent({
     setDraftSearch('');
     setDraftPersonFilter('');
     setDraftPlaceFilter('');
-    setDraftRouteFilter('');
+    setDraftRoutePlaceFilter('');
+    setDraftRoutePeopleFilter('');
     setDraftMinCount('1');
     setDraftStartYear(getDefaultStartYear());
     setDraftEndYear(getDefaultEndYear());
@@ -822,7 +830,8 @@ function SearchFilterPanelContent({
     setSearch('');
     setPersonFilter('');
     setPlaceFilter('');
-    setRouteFilter('');
+    setRoutePlaceFilter('');
+    setRoutePeopleFilter('');
     setMinCount(1);
     setTimelineMode('all');
     setRangeStart(0);
@@ -856,7 +865,8 @@ function SearchFilterPanelContent({
     setSearch(String(draftSearch ?? '').trim());
     setPersonFilter(String(draftPersonFilter ?? '').trim());
     setPlaceFilter(String(draftPlaceFilter ?? '').trim());
-    setRouteFilter(String(draftRouteFilter ?? '').trim());
+    setRoutePlaceFilter(String(draftRoutePlaceFilter ?? '').trim());
+    setRoutePeopleFilter(String(draftRoutePeopleFilter ?? '').trim());
     setMinCount(nextMinCount);
     setDraftMinCount(String(nextMinCount));
 
@@ -892,7 +902,7 @@ function SearchFilterPanelContent({
         <div className="space-y-3 p-4">
           <h2 className={sectionTitleClassName()}>Global search and filters</h2>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Edit filters here, then press Apply Filters to update the active dataset. Use Clear Filters to return keyword search, person filter, place filter, route filter, minimum weight, and date range to their defaults.
+            Edit filters here, then press Apply Filters to update the active dataset. Use Clear Filters to return keyword search, person filter, place filter, route filters, minimum weight, and date range to their defaults.
           </p>
           <div className="flex flex-wrap gap-2">
             <button
@@ -972,19 +982,38 @@ function SearchFilterPanelContent({
 
       <div className={sectionCardClassName({ allowOverflow: true })}>
         <div className="space-y-3 p-4">
-          <h3 className={serifHeadingClassName()}>Route filter</h3>
+          <h3 className={serifHeadingClassName()}>Route Filter (Place)</h3>
           <p className="text-sm leading-6 text-[var(--muted-text)]">
-            Match letters where the source-to-target route contains this text.
+            Match letters where the source-to-target place route contains this text.
           </p>
           <AutocompleteTextInput
-            id="route-filter-input"
-            label="Route"
-            value={draftRouteFilter}
-            onChange={setDraftRouteFilter}
+            id="route-place-filter-input"
+            label="Route Filter (Place)"
+            value={draftRoutePlaceFilter}
+            onChange={setDraftRoutePlaceFilter}
             onKeyDown={handleDraftKeyDown}
             placeholder="e.g. Siena → Firenze/Fiorenza"
-            suggestions={routeSuggestions}
+            suggestions={routePlaceSuggestions}
             helperText="Start typing at least two characters to see matching source-to-target place routes from the dataset. Selecting a suggestion fills the draft field but does not apply filters until Apply Filters is clicked."
+          />
+        </div>
+      </div>
+
+      <div className={sectionCardClassName({ allowOverflow: true })}>
+        <div className="space-y-3 p-4">
+          <h3 className={serifHeadingClassName()}>Route Filter (People)</h3>
+          <p className="text-sm leading-6 text-[var(--muted-text)]">
+            Match letters where the source-to-target people route contains this text.
+          </p>
+          <AutocompleteTextInput
+            id="route-people-filter-input"
+            label="Route Filter (People)"
+            value={draftRoutePeopleFilter}
+            onChange={setDraftRoutePeopleFilter}
+            onKeyDown={handleDraftKeyDown}
+            placeholder="e.g. Colomba → von Habsburg, Maria Magdalena"
+            suggestions={routePeopleSuggestions}
+            helperText="Start typing at least two characters to see matching source-to-target people routes from the dataset. Selecting a suggestion fills the draft field but does not apply filters until Apply Filters is clicked."
           />
         </div>
       </div>
@@ -1052,8 +1081,12 @@ function SearchFilterPanelContent({
               <dd className="text-right">{placeFilter?.trim() || 'None'}</dd>
             </div>
             <div className="flex items-start justify-between gap-4">
-              <dt className="font-semibold text-[var(--text-main)]">Route filter</dt>
-              <dd className="text-right">{routeFilter?.trim() || 'None'}</dd>
+              <dt className="font-semibold text-[var(--text-main)]">Route filter (place)</dt>
+              <dd className="text-right">{routePlaceFilter?.trim() || 'None'}</dd>
+            </div>
+            <div className="flex items-start justify-between gap-4">
+              <dt className="font-semibold text-[var(--text-main)]">Route filter (people)</dt>
+              <dd className="text-right">{routePeopleFilter?.trim() || 'None'}</dd>
             </div>
             <div className="flex items-start justify-between gap-4">
               <dt className="font-semibold text-[var(--text-main)]">Minimum weight</dt>
@@ -1087,7 +1120,7 @@ function SearchFilterPanelContent({
             <li>Mappability and safe categorical metadata fields</li>
           </ul>
           <p className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-xs leading-5 text-[var(--muted-text)]">
-            Keyword search, person, place, route, minimum-weight, and date-range controls now apply together through the Apply Filters button. Clear Filters returns these controls to their default unfiltered state.
+            Keyword search, person, place, route-place, route-people, minimum-weight, and date-range controls now apply together through the Apply Filters button. Clear Filters returns these controls to their default unfiltered state.
             Entity-specific and metadata filters remain planned for later bounded passes.
           </p>
         </div>
@@ -1356,11 +1389,14 @@ export function LeftControlPanel({
     setPersonFilter,
     placeFilter,
     setPlaceFilter,
-    routeFilter,
-    setRouteFilter,
+    routePlaceFilter,
+    setRoutePlaceFilter,
+    routePeopleFilter,
+    setRoutePeopleFilter,
     personSuggestions,
     placeSuggestions,
-    routeSuggestions,
+    routePlaceSuggestions,
+    routePeopleSuggestions,
     currentMinCountLabel,
     minCountOptions,
     minCount,
@@ -1570,11 +1606,14 @@ export function LeftControlPanel({
                   setPersonFilter={setPersonFilter}
                   placeFilter={placeFilter}
                   setPlaceFilter={setPlaceFilter}
-                  routeFilter={routeFilter}
-                  setRouteFilter={setRouteFilter}
+                  routePlaceFilter={routePlaceFilter}
+                  setRoutePlaceFilter={setRoutePlaceFilter}
+                  routePeopleFilter={routePeopleFilter}
+                  setRoutePeopleFilter={setRoutePeopleFilter}
                   personSuggestions={personSuggestions}
                   placeSuggestions={placeSuggestions}
-                  routeSuggestions={routeSuggestions}
+                  routePlaceSuggestions={routePlaceSuggestions}
+                  routePeopleSuggestions={routePeopleSuggestions}
                   currentMinCountLabel={currentMinCountLabel}
                   currentRangeLabel={currentRangeLabel}
                   graph={graph}

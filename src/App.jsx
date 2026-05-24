@@ -863,27 +863,31 @@ function filterRowsBySearchAndEntity(rows, {
   searchQuery = '',
   personQuery = '',
   placeQuery = '',
-  routeQuery = '',
+  routePlaceQuery = '',
+  routePeopleQuery = '',
 } = {}) {
   const q = normalizeFilterTerm(searchQuery);
   const personQ = normalizeFilterTerm(personQuery);
   const placeQ = normalizeFilterTerm(placeQuery);
-  const routeQ = normalizeFilterTerm(routeQuery);
+  const routePlaceQ = normalizeFilterTerm(routePlaceQuery);
+  const routePeopleQ = normalizeFilterTerm(routePeopleQuery);
 
-  if (!q && !personQ && !placeQ && !routeQ) {
+  if (!q && !personQ && !placeQ && !routePlaceQ && !routePeopleQ) {
     return rows;
   }
 
   return rows.filter((row) => {
     const placeRouteLabel = [row.sourceLoc, row.targetLoc].filter(Boolean).join(' → ');
     const personRouteLabel = [row.sourcePerson, row.targetPerson].filter(Boolean).join(' → ');
-    const routeSearchText = [
+    const placeRouteSearchText = [
       placeRouteLabel,
       [row.sourceLoc, row.targetLoc].filter(Boolean).join(' to '),
-      personRouteLabel,
-      [row.sourcePerson, row.targetPerson].filter(Boolean).join(' to '),
       row.sourceLoc,
       row.targetLoc,
+    ];
+    const peopleRouteSearchText = [
+      personRouteLabel,
+      [row.sourcePerson, row.targetPerson].filter(Boolean).join(' to '),
       row.sourcePerson,
       row.targetPerson,
     ];
@@ -896,7 +900,11 @@ function filterRowsBySearchAndEntity(rows, {
       return false;
     }
 
-    if (routeQ && !matchesFilterTerm(routeSearchText, routeQ)) {
+    if (routePlaceQ && !matchesFilterTerm(placeRouteSearchText, routePlaceQ)) {
+      return false;
+    }
+
+    if (routePeopleQ && !matchesFilterTerm(peopleRouteSearchText, routePeopleQ)) {
       return false;
     }
 
@@ -923,7 +931,8 @@ function filterRowsBySearchAndEntity(rows, {
 function buildSearchFilterSuggestions(rows) {
   const people = new Set();
   const places = new Set();
-  const routes = new Set();
+  const placeRoutes = new Set();
+  const peopleRoutes = new Set();
 
   rows.forEach((row) => {
     [row.sourcePerson, row.targetPerson].forEach((value) => {
@@ -939,14 +948,21 @@ function buildSearchFilterSuggestions(rows) {
     const sourcePlace = asText(row.sourceLoc);
     const targetPlace = asText(row.targetLoc);
     if (sourcePlace && targetPlace) {
-      routes.add(`${sourcePlace} → ${targetPlace}`);
+      placeRoutes.add(`${sourcePlace} → ${targetPlace}`);
+    }
+
+    const sourcePerson = asText(row.sourcePerson);
+    const targetPerson = asText(row.targetPerson);
+    if (sourcePerson && targetPerson) {
+      peopleRoutes.add(`${sourcePerson} → ${targetPerson}`);
     }
   });
 
   return {
     people: Array.from(people).sort((a, b) => a.localeCompare(b)),
     places: Array.from(places).sort((a, b) => a.localeCompare(b)),
-    routes: Array.from(routes).sort((a, b) => a.localeCompare(b)),
+    placeRoutes: Array.from(placeRoutes).sort((a, b) => a.localeCompare(b)),
+    peopleRoutes: Array.from(peopleRoutes).sort((a, b) => a.localeCompare(b)),
   };
 }
 
@@ -1426,11 +1442,14 @@ function buildLeftControlPanelProps(args) {
       setPersonFilter: args.setPersonFilter,
       placeFilter: args.placeFilter,
       setPlaceFilter: args.setPlaceFilter,
-      routeFilter: args.routeFilter,
-      setRouteFilter: args.setRouteFilter,
+      routePlaceFilter: args.routePlaceFilter,
+      setRoutePlaceFilter: args.setRoutePlaceFilter,
+      routePeopleFilter: args.routePeopleFilter,
+      setRoutePeopleFilter: args.setRoutePeopleFilter,
       personSuggestions: args.searchFilterSuggestions?.people || [],
       placeSuggestions: args.searchFilterSuggestions?.places || [],
-      routeSuggestions: args.searchFilterSuggestions?.routes || [],
+      routePlaceSuggestions: args.searchFilterSuggestions?.placeRoutes || [],
+      routePeopleSuggestions: args.searchFilterSuggestions?.peopleRoutes || [],
       currentMinCountLabel: args.currentMinCountLabel,
       minCountOptions: args.minCountOptions,
       minCount: args.minCount,
@@ -2479,7 +2498,8 @@ export default function EuropeNetworkMapApp() {
   const [search, setSearch] = useState('');
   const [personFilter, setPersonFilter] = useState('');
   const [placeFilter, setPlaceFilter] = useState('');
-  const [routeFilter, setRouteFilter] = useState('');
+  const [routePlaceFilter, setRoutePlaceFilter] = useState('');
+  const [routePeopleFilter, setRoutePeopleFilter] = useState('');
   const [selectedSelection, setSelectedSelection] = useState(null);
   const [inspectorHistory, setInspectorHistory] = useState([]);
   const inspectorNavigationRef = useRef(false);
@@ -2694,9 +2714,10 @@ export default function EuropeNetworkMapApp() {
       searchQuery: search,
       personQuery: personFilter,
       placeQuery: placeFilter,
-      routeQuery: routeFilter,
+      routePlaceQuery: routePlaceFilter,
+      routePeopleQuery: routePeopleFilter,
     });
-  }, [timelineWindowRows, search, personFilter, placeFilter, routeFilter]);
+  }, [timelineWindowRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter]);
 
   const selectedRowsForPlayback = useMemo(() => {
     return buildPlaybackRows(filteredRowsForActiveFilters);
@@ -2855,11 +2876,12 @@ export default function EuropeNetworkMapApp() {
       `Keyword search: ${search.trim() || 'None'}`,
       `Person filter: ${personFilter.trim() || 'None'}`,
       `Place filter: ${placeFilter.trim() || 'None'}`,
-      `Route filter: ${routeFilter.trim() || 'None'}`,
+      `Route filter (place): ${routePlaceFilter.trim() || 'None'}`,
+      `Route filter (people): ${routePeopleFilter.trim() || 'None'}`,
       `Minimum weight: ${currentMinCountLabel}`,
       `Visible dates: ${exportVisibleDateLabel}`,
     ];
-  }, [viewMode, search, personFilter, placeFilter, routeFilter, currentMinCountLabel, exportVisibleDateLabel]);
+  }, [viewMode, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, currentMinCountLabel, exportVisibleDateLabel]);
 
   const exportEdgesRows = useMemo(() => buildExportEdgeRows(graph.edges), [graph.edges]);
 
@@ -3150,8 +3172,10 @@ export default function EuropeNetworkMapApp() {
     setPersonFilter,
     placeFilter,
     setPlaceFilter,
-    routeFilter,
-    setRouteFilter,
+    routePlaceFilter,
+    setRoutePlaceFilter,
+    routePeopleFilter,
+    setRoutePeopleFilter,
     searchFilterSuggestions,
     currentMinCountLabel,
     minCountOptions,
