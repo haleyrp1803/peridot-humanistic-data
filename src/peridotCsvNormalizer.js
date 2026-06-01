@@ -1,0 +1,344 @@
+/**
+ * Peridot template CSV normalizer.
+ *
+ * Pass 2 scope:
+ * - convert parsed rows from the standardized one-file Peridot CSV template
+ *   into the existing internal row shapes used by the legacy D3/SVG app;
+ * - preserve original user-entered metadata for Inspector/Export/Analytics;
+ * - keep this module pure and unmounted: no UI wiring, no upload-state changes,
+ *   no validation popup, and no legacy three-file upload removal yet.
+ *
+ * This file intentionally does not clean, standardize, merge, or reinterpret
+ * user values beyond light trimming and numeric coordinate parsing. Peridot
+ * treats names, places, topics, languages, relationships, and notes exactly as
+ * the user entered them.
+ */
+
+import {
+  getPeridotRowCapabilities,
+  hasMappableCoordinatePair,
+  isAcceptedPeridotRecord,
+} from './peridotCsvSchema.js';
+
+function asText(value) {
+  return String(value ?? '').trim();
+}
+
+function asNumber(value) {
+  const text = asText(value);
+  if (!text || text === '-' || text.toLowerCase() === 'unknown') return NaN;
+  const number = Number(text);
+  return Number.isFinite(number) ? number : NaN;
+}
+
+function isValidLatitude(value) {
+  return Number.isFinite(value) && value >= -90 && value <= 90;
+}
+
+function isValidLongitude(value) {
+  return Number.isFinite(value) && value >= -180 && value <= 180;
+}
+
+function hasValidCoordinatePair(lat, lon) {
+  return isValidLatitude(lat) && isValidLongitude(lon);
+}
+
+function makePlaceKey(label, lat, lon) {
+  return `${label}__${lat}__${lon}`;
+}
+
+function makePersonKey(source, target) {
+  return `${source}-->${target}`;
+}
+
+function normalizeDateSeparators(value) {
+  return asText(value).replace(/-/g, '/');
+}
+
+/**
+ * Conservative date parser mirroring the internal shape used by App.jsx.
+ *
+ * It accepts machine-readable year, year/month, and year/month/day values using
+ * either slash or hyphen separators. It does not attempt to interpret historical
+ * or scholarly uncertainty strings such as "c. 1620", "1620?", "before 1619",
+ * or "undated"; those values are preserved as labels but are not timeline-ready.
+ */
+export function parsePeridotTemplateDate(rawValue) {
+  const raw = asText(rawValue);
+
+  if (!raw || raw === '0' || raw === '0000' || raw === '0000/00/00' || raw.toLowerCase() === 'unknown') {
+    return {
+      raw,
+      isKnown: false,
+      isTimelineUsable: false,
+      monthKey: null,
+      sortKey: null,
+      label: 'Unknown date',
+    };
+  }
+
+  const normalized = normalizeDateSeparators(raw);
+  const match = normalized.match(/^(\d{4})(?:\/(\d{1,2}))?(?:\/(\d{1,2}))?$/);
+
+  if (!match) {
+    return {
+      raw,
+      isKnown: true,
+      isTimelineUsable: false,
+      monthKey: null,
+      sortKey: null,
+      label: raw,
+    };
+  }
+
+  const year = Number(match[1]);
+  const month = match[2] ? Number(match[2]) : null;
+  const day = match[3] ? Number(match[3]) : null;
+  const hasKnownYear = year > 0;
+  const hasKnownMonth = Number.isFinite(month) && month >= 1 && month <= 12;
+  const hasKnownDay = Number.isFinite(day) && day >= 1 && day <= 31;
+
+  if (!hasKnownYear) {
+    return {
+      raw,
+      isKnown: false,
+      isTimelineUsable: false,
+      monthKey: null,
+      sortKey: null,
+      label: raw,
+    };
+  }
+
+  return {
+    raw,
+    year,
+    month: hasKnownMonth ? month : null,
+    day: hasKnownDay ? day : null,
+    isKnown: true,
+    isTimelineUsable: true,
+    precision: hasKnownDay ? 'day' : hasKnownMonth ? 'month' : 'year',
+    monthKey: String(year),
+    sortKey: year * 10000 + (hasKnownMonth ? month : 0) * 100 + (hasKnownDay ? day : 0),
+    label: raw,
+  };
+}
+
+function buildPeridotTemplatePlaceMapEntry(placeMap, { label, lat, lon, roleHint }) {
+  if (!label || !hasValidCoordinatePair(lat, lon) || (lat === 0 && lon === 0)) {
+    return null;
+  }
+
+  const key = makePlaceKey(label, lat, lon);
+
+  if (!placeMap.has(key)) {
+    placeMap.set(key, {
+      id: key,
+      label,
+      lat,
+      lon,
+      type: 'place',
+      roleHint,
+      politicalHints: [],
+    });
+  }
+
+  return key;
+}
+
+/**
+ * Convert one public Peridot template row into the internal geographic-row
+ * shape currently consumed by map and graph derivation.
+ */
+export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap = new Map()) {
+  const sourceLat = asNumber(row?.Source_Latitude);
+  const sourceLon = asNumber(row?.Source_Longitude);
+  const targetLat = asNumber(row?.Target_Latitude);
+  const targetLon = asNumber(row?.Target_Longitude);
+  const sourceLoc = asText(row?.Source_Location);
+  const targetLoc = asText(row?.Target_Location);
+  const sourcePerson = asText(row?.Source_Name);
+  const targetPerson = asText(row?.Target_Name);
+  const sourcePlaceId = buildPeridotTemplatePlaceMapEntry(placeMap, {
+    label: sourceLoc,
+    lat: sourceLat,
+    lon: sourceLon,
+    roleHint: 'source',
+  });
+  const targetPlaceId = buildPeridotTemplatePlaceMapEntry(placeMap, {
+    label: targetLoc,
+    lat: targetLat,
+    lon: targetLon,
+    roleHint: 'target',
+  });
+
+  return {
+    id: `peridot_geo_${index + 1}`,
+    date: asText(row?.Date),
+    parsedDate: parsePeridotTemplateDate(row?.Date),
+    sourceLoc,
+    sourceLat,
+    sourceLon,
+    sourcePerson,
+    sourcePoliticalHint: '',
+    targetPerson,
+    targetLoc,
+    targetLat,
+    targetLon,
+    targetPoliticalHint: '',
+    sourcePlaceId,
+    targetPlaceId,
+    mappable: Boolean(sourcePlaceId && targetPlaceId),
+    peridotCapabilities: getPeridotRowCapabilities(row),
+    originalTemplateRow: { ...(row || {}) },
+  };
+}
+
+/**
+ * Convert one public Peridot template row into the internal letter/Inspector
+ * metadata shape currently consumed by inspector and Analytics workflows.
+ */
+export function normalizePeridotTemplateRowForLetter(row, index = 0) {
+  const source = asText(row?.Source_Name);
+  const target = asText(row?.Target_Name);
+  const archive = asText(row?.Archive);
+  const collection = asText(row?.Collection);
+  const pages = asText(row?.['Page(s)']);
+  const links = asText(row?.['Link(s)']);
+  const date = asText(row?.Date);
+
+  return {
+    id: `peridot_letter_${index + 1}`,
+    archive,
+    archivalCollection: collection,
+    archivalPage: pages,
+    pdfPage: '',
+    date,
+    parsedDate: parsePeridotTemplateDate(date),
+    sourceLoc: asText(row?.Source_Location),
+    source,
+    sourceTitle: asText(row?.Source_Title),
+    target,
+    targetTitle: asText(row?.Target_Title),
+    targetLoc: asText(row?.Target_Location),
+    relationship: asText(row?.Relationship),
+    cipher: '',
+    topic: asText(row?.Topic),
+    language: asText(row?.Language),
+    transcription: asText(row?.Transcription),
+    translation: '',
+    notes: asText(row?.Notes),
+    links,
+    personKey: makePersonKey(source, target),
+    peridotCapabilities: getPeridotRowCapabilities(row),
+    originalTemplateRow: { ...(row || {}) },
+  };
+}
+
+/**
+ * Build a lightweight person-metadata table from source/target names and titles.
+ *
+ * This does not infer identity, merge variants, or standardize names. It only
+ * preserves exact entered names and the first title encountered for that exact
+ * string. The existing external-link metadata fields are kept empty because the
+ * one-file public template does not include them.
+ */
+export function buildPersonMetadataRowsFromPeridotTemplate(rows = []) {
+  const people = new Map();
+
+  rows.forEach((row) => {
+    const pairs = [
+      [asText(row?.Source_Name), asText(row?.Source_Title)],
+      [asText(row?.Target_Name), asText(row?.Target_Title)],
+    ];
+
+    pairs.forEach(([person, title]) => {
+      if (!person || people.has(person)) return;
+      people.set(person, {
+        id: `peridot_person_meta_${people.size + 1}`,
+        person,
+        title,
+        wikiEn: '',
+        wikiIt: '',
+        treccani: '',
+        imageCreativeCommons: '',
+        originalTemplateRows: [],
+      });
+    });
+
+    pairs.forEach(([person]) => {
+      if (!person || !people.has(person)) return;
+      people.get(person).originalTemplateRows.push({ ...(row || {}) });
+    });
+  });
+
+  return Array.from(people.values());
+}
+
+/**
+ * Normalize parsed rows from the one-file Peridot CSV template.
+ *
+ * Returns:
+ * - normalizedRows: internal geography rows for map/place graph workflows;
+ * - normalizedLetters: internal letter rows for Inspector/Analytics metadata;
+ * - normalizedPersonMetadata: exact-name person metadata derived from template
+ *   names/titles only;
+ * - places: map-ready places derived only from valid coordinate pairs;
+ * - acceptedRows: accepted database records under the permissive minimum rule;
+ * - unsupportedRows: rows lacking enough source/target information to form an
+ *   accepted Peridot record.
+ */
+export function normalizePeridotTemplateRows(rows = []) {
+  const placeMap = new Map();
+
+  const preparedRows = rows.map((row, index) => {
+    const geographyRow = normalizePeridotTemplateRowForGeography(row, index, placeMap);
+    const letterRow = normalizePeridotTemplateRowForLetter(row, index);
+    const accepted = isAcceptedPeridotRecord(row);
+    const capabilities = getPeridotRowCapabilities(row);
+
+    return {
+      index,
+      rowNumber: index + 2,
+      originalRow: { ...(row || {}) },
+      accepted,
+      mappable: hasMappableCoordinatePair(row),
+      capabilities,
+      geographyRow,
+      letterRow,
+    };
+  });
+
+  const acceptedPreparedRows = preparedRows.filter((row) => row.accepted);
+  const unsupportedRows = preparedRows.filter((row) => !row.accepted);
+
+  return {
+    normalizedRows: acceptedPreparedRows.map((row) => row.geographyRow),
+    normalizedLetters: acceptedPreparedRows.map((row) => row.letterRow),
+    normalizedPersonMetadata: buildPersonMetadataRowsFromPeridotTemplate(
+      acceptedPreparedRows.map((row) => row.originalRow)
+    ),
+    places: Array.from(placeMap.values()),
+    acceptedRows: acceptedPreparedRows,
+    unsupportedRows,
+    allRows: preparedRows,
+  };
+}
+
+/**
+ * Convert normalized template output into CSV text strings that match the
+ * current three-source internal upload model. This is useful for transition
+ * testing before the one-file workflow is wired directly into React state.
+ */
+export function buildLegacyCsvTablesFromPeridotTemplateRows(rows = []) {
+  const {
+    normalizedRows,
+    normalizedLetters,
+    normalizedPersonMetadata,
+  } = normalizePeridotTemplateRows(rows);
+
+  return {
+    geographyRows: normalizedRows,
+    letterRows: normalizedLetters,
+    personMetadataRows: normalizedPersonMetadata,
+  };
+}
