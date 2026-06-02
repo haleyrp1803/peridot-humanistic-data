@@ -23,7 +23,7 @@ import {
 } from './peridotWorkbookMapping.js';
 
 const SINGLE_TABLE_STEP_KEYS = ['preview', 'core', 'inspector', 'review'];
-const WORKBOOK_STEP_KEYS = ['workbook-preview', 'workbook-setup', 'workbook-core', 'workbook-review'];
+const WORKBOOK_STEP_KEYS = ['workbook-preview', 'workbook-setup', 'workbook-core', 'workbook-inspector', 'workbook-review'];
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
@@ -206,6 +206,151 @@ function InspectorFieldsStep({ selections, coreMapping, onActionChange, onLabelC
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function makeWorkbookSelectionKey(selection = {}) {
+  const ref = selection.sourceRef || makeWorkbookColumnRef(selection.sheetName, selection.sourceColumn);
+  return `${ref.sheetName || selection.sheetName || ''}::${ref.columnName || selection.sourceColumn || selection.key || selection.label || ''}`;
+}
+
+function getWorkbookSelectionRef(selection = {}) {
+  return selection.sourceRef || makeWorkbookColumnRef(selection.sheetName, selection.sourceColumn || selection.key || selection.label);
+}
+
+function buildWorkbookSelectionLabel(selection = {}, primarySheetName = '') {
+  const sheetName = selection.sheetName || selection.sourceRef?.sheetName || '';
+  const baseLabel = selection.label || selection.sourceColumn || selection.key || selection.sourceRef?.columnName || '';
+  if (!sheetName || sheetName === primarySheetName) return baseLabel;
+  return `${sheetName} — ${baseLabel}`;
+}
+
+function refreshWorkbookCustomSelections({ workbookModel, workbookMapping, previousSelections = [] }) {
+  if (!workbookModel || !workbookMapping?.primarySheetName) return [];
+
+  const selectedSheets = [
+    workbookMapping.primarySheetName,
+    ...(workbookMapping.letterLevelJoins || []).map((join) => join?.to?.sheetName).filter(Boolean),
+  ].filter((sheetName, index, all) => sheetName && all.indexOf(sheetName) === index);
+
+  const previousByKey = new Map(
+    previousSelections.map((selection) => [makeWorkbookSelectionKey(selection), selection])
+  );
+
+  return selectedSheets.flatMap((sheetName) => {
+    const suggestedSelections = buildWorkbookCustomFieldSelectionsForSheet(
+      workbookModel,
+      sheetName,
+      workbookMapping.coreMappings || {}
+    );
+
+    return suggestedSelections.map((selection) => {
+      const key = makeWorkbookSelectionKey(selection);
+      const previous = previousByKey.get(key);
+      const nextSelection = previous
+        ? {
+            ...selection,
+            action: previous.action,
+            label: previous.label || selection.label,
+            analyticsEligible: selection.analyticsEligible,
+          }
+        : {
+            ...selection,
+            label: buildWorkbookSelectionLabel(selection, workbookMapping.primarySheetName),
+          };
+
+      return {
+        ...nextSelection,
+        sheetName,
+        sourceRef: selection.sourceRef || makeWorkbookColumnRef(sheetName, selection.sourceColumn),
+      };
+    });
+  });
+}
+
+function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChange, onLabelChange }) {
+  const mappedCoreRefs = new Set(
+    Object.values(workbookMapping.coreMappings || {})
+      .filter((ref) => ref?.sheetName && ref?.columnName)
+      .map((ref) => `${ref.sheetName}::${ref.columnName}`)
+  );
+
+  const groupedSelections = selections.reduce((groups, selection, index) => {
+    const ref = getWorkbookSelectionRef(selection);
+    const sheetName = ref.sheetName || selection.sheetName || workbookMapping.primarySheetName || 'Workbook';
+    if (!groups.has(sheetName)) groups.set(sheetName, []);
+    groups.get(sheetName).push({ selection, index, ref });
+    return groups;
+  }, new Map());
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+        Choose which columns from the primary sheet and configured joined sheets should appear as custom Inspector metadata. Selected categorical fields may also become Analytics variables when usable. Columns mapped as core Peridot variables are automatically ignored here.
+      </div>
+
+      {Array.from(groupedSelections.entries()).map(([sheetName, sheetSelections]) => (
+        <div key={sheetName} className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
+          <div className="border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-3">
+            <div className="font-semibold text-[var(--panel-card-text)]">{sheetName}</div>
+            <div className="mt-1 text-xs text-[var(--panel-card-muted-text)]">
+              {sheetName === workbookMapping.primarySheetName ? 'Primary record sheet' : 'Joined sheet'}
+            </div>
+          </div>
+          <table className="min-w-full border-collapse text-left text-sm">
+            <thead className="bg-[var(--section-bg)] text-[var(--panel-card-text)]">
+              <tr>
+                <th className="px-4 py-3">Workbook column</th>
+                <th className="px-4 py-3">Display in Inspector?</th>
+                <th className="px-4 py-3">Display label</th>
+                <th className="px-4 py-3">Analytics</th>
+              </tr>
+            </thead>
+            <tbody className="text-[var(--panel-card-muted-text)]">
+              {sheetSelections.map(({ selection, index, ref }) => {
+                const refKey = `${ref.sheetName}::${ref.columnName}`;
+                const isMappedCore = mappedCoreRefs.has(refKey);
+                const action = isMappedCore ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore : normalizeAction(selection.action);
+                return (
+                  <tr key={`${refKey}-${index}`} className="border-t border-[var(--panel-card-border)] align-top">
+                    <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
+                      {ref.columnName || selection.sourceColumn}
+                      {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Mapped as a core Peridot field.</div> : null}
+                    </td>
+                    <td className="px-4 py-3">
+                      <select
+                        value={action}
+                        disabled={isMappedCore}
+                        onChange={(event) => onActionChange(index, event.target.value)}
+                        className="rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
+                      >
+                        <option value={CUSTOM_INSPECTOR_FIELD_DEFAULTS.include}>Include</option>
+                        <option value={CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore}>Ignore</option>
+                      </select>
+                    </td>
+                    <td className="px-4 py-3">
+                      <input
+                        type="text"
+                        value={selection.label || buildWorkbookSelectionLabel(selection, workbookMapping.primarySheetName)}
+                        onChange={(event) => onLabelChange(index, event.target.value)}
+                        className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                      />
+                    </td>
+                    <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely usable' : 'Probably not categorical'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ))}
+
+      {!selections.length ? (
+        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm text-[var(--panel-card-muted-text)]">
+          No custom Inspector field candidates are available from the configured workbook sheets.
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -512,7 +657,7 @@ function WorkbookCoreMappingStep({ workbookModel, workbookMapping, onChange }) {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Map each core Peridot variable from a workbook Sheet + Column pair. Fields can be left unassigned. If a core field comes from a non-primary sheet, a Letter_ID join will be required in a later pass before import.
+        Map each core Peridot variable from a workbook Sheet + Column pair. Fields can be left unassigned. If a core field comes from a non-primary sheet, configure a matching unique-ID join on the Record sheet step.
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
@@ -575,6 +720,9 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
   const issues = validation?.issues || [];
   const errors = issues.filter((issue) => issue.severity === 'error');
   const warnings = issues.filter((issue) => issue.severity !== 'error');
+  const selectedCustomFields = (workbookMapping.customFieldSelections || []).filter(
+    (selection) => selection?.action === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include
+  );
 
   return (
     <div className="space-y-4">
@@ -598,7 +746,7 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
       </div>
 
       <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
-        This is a configuration preview. Confirm import is intentionally disabled for multi-sheet workbooks until Letter_ID assembly is wired in the next pass.
+        Review the workbook import before confirming. Peridot will assemble rows from the primary sheet and configured unique-ID joins, then include selected custom Inspector fields from the primary sheet and joined sheets.
       </div>
 
       {errors.length ? (
@@ -652,6 +800,30 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
           {summary.mappedSheets?.length ? summary.mappedSheets.join(', ') : 'No mapped sheets yet.'}
         </div>
       </div>
+
+      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="font-semibold text-[var(--panel-card-text)]">Selected custom Inspector fields</div>
+        {selectedCustomFields.length ? (
+          <div className="mt-2 grid gap-2 md:grid-cols-2">
+            {selectedCustomFields.slice(0, 12).map((selection, index) => {
+              const ref = getWorkbookSelectionRef(selection);
+              return (
+                <div key={`${ref.sheetName}-${ref.columnName}-${index}`} className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
+                  <div className="font-medium text-[var(--panel-card-text)]">{selection.label || ref.columnName}</div>
+                  <div className="mt-1 text-xs">{ref.sheetName}.{ref.columnName}</div>
+                </div>
+              );
+            })}
+            {selectedCustomFields.length > 12 ? (
+              <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
+                {selectedCustomFields.length - 12} more selected field(s).
+              </div>
+            ) : null}
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">No custom Inspector fields selected.</p>
+        )}
+      </div>
     </div>
   );
 }
@@ -686,7 +858,18 @@ export function PeridotColumnMappingModal({
     setActiveStep(nextIsWorkbookMode ? WORKBOOK_STEP_KEYS[0] : SINGLE_TABLE_STEP_KEYS[0]);
     setCoreMapping(mappingState.coreMapping || {});
     setCustomFieldSelections(mappingState.customFieldSelections || []);
-    setWorkbookMapping(mappingState || {});
+    setWorkbookMapping(
+      nextIsWorkbookMode && staging?.workbookModel
+        ? {
+            ...(mappingState || {}),
+            customFieldSelections: refreshWorkbookCustomSelections({
+              workbookModel: staging.workbookModel,
+              workbookMapping: mappingState || {},
+              previousSelections: mappingState.customFieldSelections || [],
+            }),
+          }
+        : (mappingState || {})
+    );
     setShowCancelConfirmation(false);
   }, [open, staging?.stagedAt]);
 
@@ -748,7 +931,8 @@ export function PeridotColumnMappingModal({
     'workbook-preview': 'Workbook overview',
     'workbook-setup': 'Record sheet',
     'workbook-core': 'Map Peridot variables',
-    'workbook-review': 'Review configuration',
+    'workbook-inspector': 'Choose Inspector fields',
+    'workbook-review': 'Review import',
   };
 
   const stepLabels = isWorkbookMode ? workbookStepLabels : singleStepLabels;
@@ -763,18 +947,26 @@ export function PeridotColumnMappingModal({
 
   const handleWorkbookPrimarySheetChange = (primarySheetName) => {
     const nextCoreMappings = suggestWorkbookCoreMappings(workbookModel, primarySheetName);
-    const nextCustomFieldSelections = buildWorkbookCustomFieldSelectionsForSheet(workbookModel, primarySheetName, nextCoreMappings);
     const suggestedJoins = suggestSharedLetterIdJoins(workbookModel, primarySheetName, '');
     const suggestedPrimaryId = suggestedJoins[0]?.from?.columnName || '';
-    setWorkbookMapping((current) => ({
-      ...current,
-      primarySheetName,
-      primaryLetterIdColumn: suggestedPrimaryId,
-      coreMappings: nextCoreMappings,
-      customFieldSelections: nextCustomFieldSelections,
-      letterLevelJoins: suggestedJoins,
-      letterLevelJoinSuggestions: suggestedJoins,
-    }));
+    setWorkbookMapping((current) => {
+      const nextMapping = {
+        ...current,
+        primarySheetName,
+        primaryLetterIdColumn: suggestedPrimaryId,
+        coreMappings: nextCoreMappings,
+        letterLevelJoins: suggestedJoins,
+        letterLevelJoinSuggestions: suggestedJoins,
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: refreshWorkbookCustomSelections({
+          workbookModel,
+          workbookMapping: nextMapping,
+          previousSelections: [],
+        }),
+      };
+    });
   };
 
   const handleWorkbookLetterIdChange = (primaryLetterIdColumn) => {
@@ -803,19 +995,37 @@ export function PeridotColumnMappingModal({
         current.primaryLetterIdColumn
       );
       if (!nextJoin) return current;
-      return {
+      const nextMapping = {
         ...current,
         primaryLetterIdColumn: current.primaryLetterIdColumn || nextJoin.from.columnName,
         letterLevelJoins: [...(current.letterLevelJoins || []), nextJoin],
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: refreshWorkbookCustomSelections({
+          workbookModel,
+          workbookMapping: nextMapping,
+          previousSelections: current.customFieldSelections || [],
+        }),
       };
     });
   };
 
   const handleRemoveWorkbookJoin = (index) => {
-    setWorkbookMapping((current) => ({
-      ...current,
-      letterLevelJoins: (current.letterLevelJoins || []).filter((_, currentIndex) => currentIndex !== index),
-    }));
+    setWorkbookMapping((current) => {
+      const nextMapping = {
+        ...current,
+        letterLevelJoins: (current.letterLevelJoins || []).filter((_, currentIndex) => currentIndex !== index),
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: refreshWorkbookCustomSelections({
+          workbookModel,
+          workbookMapping: nextMapping,
+          previousSelections: current.customFieldSelections || [],
+        }),
+      };
+    });
   };
 
   const handleWorkbookJoinSheetChange = (index, joinedSheetName) => {
@@ -826,12 +1036,20 @@ export function PeridotColumnMappingModal({
         joinedSheetName,
         current.primaryLetterIdColumn
       );
-      return {
+      const nextMapping = {
         ...current,
         primaryLetterIdColumn: current.primaryLetterIdColumn || nextJoin?.from?.columnName || '',
         letterLevelJoins: (current.letterLevelJoins || []).map((join, currentIndex) => (
           currentIndex === index && nextJoin ? nextJoin : join
         )),
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: refreshWorkbookCustomSelections({
+          workbookModel,
+          workbookMapping: nextMapping,
+          previousSelections: current.customFieldSelections || [],
+        }),
       };
     });
   };
@@ -870,12 +1088,44 @@ export function PeridotColumnMappingModal({
   };
 
   const handleWorkbookCoreMappingChange = (field, ref) => {
+    setWorkbookMapping((current) => {
+      const nextMapping = {
+        ...current,
+        coreMappings: {
+          ...(current.coreMappings || {}),
+          [field]: ref,
+        },
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: refreshWorkbookCustomSelections({
+          workbookModel,
+          workbookMapping: nextMapping,
+          previousSelections: current.customFieldSelections || [],
+        }),
+      };
+    });
+  };
+
+  const handleWorkbookCustomActionChange = (index, action) => {
     setWorkbookMapping((current) => ({
       ...current,
-      coreMappings: {
-        ...(current.coreMappings || {}),
-        [field]: ref,
-      },
+      customFieldSelections: (current.customFieldSelections || []).map((selection, currentIndex) => (
+        currentIndex === index
+          ? { ...selection, action: normalizeAction(action) }
+          : selection
+      )),
+    }));
+  };
+
+  const handleWorkbookCustomLabelChange = (index, label) => {
+    setWorkbookMapping((current) => ({
+      ...current,
+      customFieldSelections: (current.customFieldSelections || []).map((selection, currentIndex) => (
+        currentIndex === index
+          ? { ...selection, label }
+          : selection
+      )),
     }));
   };
 
@@ -965,7 +1215,7 @@ export function PeridotColumnMappingModal({
           </button>
         </div>
 
-        <div className="grid gap-4 border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-4 md:grid-cols-4">
+        <div className="grid gap-4 border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-4 md:grid-cols-5">
           {stepKeys.map((step, index) => (
             <StepButton
               key={step}
@@ -1058,6 +1308,15 @@ export function PeridotColumnMappingModal({
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
               onChange={handleWorkbookCoreMappingChange}
+            />
+          ) : null}
+
+          {isWorkbookMode && activeStep === 'workbook-inspector' ? (
+            <WorkbookInspectorFieldsStep
+              workbookMapping={workbookMapping}
+              selections={workbookMapping.customFieldSelections || []}
+              onActionChange={handleWorkbookCustomActionChange}
+              onLabelChange={handleWorkbookCustomLabelChange}
             />
           ) : null}
 
