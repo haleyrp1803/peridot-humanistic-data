@@ -1257,7 +1257,7 @@ function PeridotUploadSummaryPanel({ summary }) {
 }
 
 
-function ColumnMappingStagingPanel({ staging, onClear }) {
+function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
   if (!staging) return null;
 
   const mappingState = staging.mappingState || {};
@@ -1294,9 +1294,14 @@ function ColumnMappingStagingPanel({ staging, onClear }) {
             {staging.fileLabel} staged as {staging.fileType}. {staging.rowCount} rows and {staging.columnCount} columns detected.
           </p>
         </div>
-        <button type="button" onClick={onClear} className={buttonClassName({ variant: 'secondary' })}>
-          Clear
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" onClick={onOpenMapping} className={buttonClassName({ variant: 'primary' })}>
+            Open mapping workspace
+          </button>
+          <button type="button" onClick={onClear} className={buttonClassName({ variant: 'secondary' })}>
+            Clear
+          </button>
+        </div>
       </div>
 
       {coreDefinitions.length ? (
@@ -1356,7 +1361,7 @@ function ColumnMappingStagingPanel({ staging, onClear }) {
       ) : null}
 
       <p className="mt-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        This pass only stages the table and previews likely mappings. It does not import the file until the mapping modal and confirm-import step are implemented.
+        The full mapping workspace opens outside the left panel so you can review the table comfortably. This pass saves mapping choices but does not import the file until the confirm-import step is implemented.
       </p>
     </div>
   );
@@ -1384,6 +1389,7 @@ function DataInputsGroup({
     closePeridotValidationModal,
     columnMappingStaging,
     handleColumnMappingTableUpload,
+    openColumnMappingModal,
     clearColumnMappingStaging,
   } = dataInputState;
 
@@ -1422,13 +1428,13 @@ function DataInputsGroup({
             <div className="mb-3">
               <h2 className={sectionTitleClassName()}>Map your own CSV or TSV</h2>
               <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-                Upload any CSV or TSV table to preview its columns and likely Peridot mappings. Excel support will be handled in a later expansion.
+                Upload any CSV or TSV table to preview its columns and open the larger mapping workspace. Excel support will be handled in a later expansion.
               </p>
             </div>
             <FilePicker id="peridot-column-mapping-file" onChange={handleColumnMappingTableUpload} label="Upload CSV/TSV for mapping preview" />
           </div>
 
-          <ColumnMappingStagingPanel staging={columnMappingStaging} onClear={clearColumnMappingStaging} />
+          <ColumnMappingStagingPanel staging={columnMappingStaging} onClear={clearColumnMappingStaging} onOpenMapping={openColumnMappingModal} />
 
           <PeridotUploadSummaryPanel summary={peridotValidationSummary} />
 
@@ -1636,6 +1642,7 @@ export function LeftControlPanel({
     closePeridotValidationModal,
     columnMappingStaging,
     handleColumnMappingTableUpload,
+    openColumnMappingModal,
     clearColumnMappingStaging,
     rowDiagnostics,
   } = dataInputState;
@@ -1714,6 +1721,7 @@ export function LeftControlPanel({
       closePeridotValidationModal,
       columnMappingStaging,
       handleColumnMappingTableUpload,
+      openColumnMappingModal,
       clearColumnMappingStaging,
     },
   };

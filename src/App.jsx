@@ -45,6 +45,7 @@ import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
 import { normalizePeridotTemplateRows } from './peridotCsvNormalizer.js';
 import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
 import { buildInitialPeridotColumnMappingState } from './peridotColumnMapping.js';
+import { PeridotColumnMappingModal } from './PeridotColumnMappingModal.jsx';
 
 
 // ============================================================
@@ -1495,7 +1496,9 @@ function buildLeftControlPanelProps(args) {
       handleDownloadPeridotTemplate: args.handleDownloadPeridotTemplate,
       closePeridotValidationModal: args.closePeridotValidationModal,
       columnMappingStaging: args.columnMappingStaging,
+      isColumnMappingModalOpen: args.isColumnMappingModalOpen,
       handleColumnMappingTableUpload: args.handleColumnMappingTableUpload,
+      openColumnMappingModal: args.openColumnMappingModal,
       clearColumnMappingStaging: args.clearColumnMappingStaging,
       rowDiagnostics: args.rowDiagnostics,
     },
@@ -2558,6 +2561,7 @@ export default function EuropeNetworkMapApp() {
   const [isPeridotValidationModalOpen, setIsPeridotValidationModalOpen] = useState(false);
   const [peridotNormalizedData, setPeridotNormalizedData] = useState(null);
   const [columnMappingStaging, setColumnMappingStaging] = useState(null);
+  const [isColumnMappingModalOpen, setIsColumnMappingModalOpen] = useState(false);
 
   // ------------------------------------------------------------
   // User interaction and view state
@@ -3096,10 +3100,12 @@ export default function EuropeNetworkMapApp() {
         rowCount: parsedRows.length,
         columnCount: headers.length,
         headers,
+        rows: parsedRows,
         previewRows: parsedRows.slice(0, 5),
         mappingState,
         stagedAt: new Date().toLocaleTimeString(),
       });
+      setIsColumnMappingModalOpen(true);
     } catch (error) {
       setColumnMappingStaging({
         status: 'error',
@@ -3108,14 +3114,38 @@ export default function EuropeNetworkMapApp() {
         rowCount: 0,
         columnCount: 0,
         headers: [],
+        rows: [],
         previewRows: [],
         mappingState: null,
         stagedAt: new Date().toLocaleTimeString(),
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
+      setIsColumnMappingModalOpen(false);
     } finally {
       e.target.value = '';
     }
+  };
+
+  const handleSaveColumnMappingState = ({ coreMapping, customFieldSelections, validationSummary } = {}) => {
+    setColumnMappingStaging((current) => {
+      if (!current || current.status !== 'ready') return current;
+
+      return {
+        ...current,
+        mappingState: {
+          ...(current.mappingState || {}),
+          coreMapping: coreMapping || current.mappingState?.coreMapping || {},
+          customFieldSelections: customFieldSelections || current.mappingState?.customFieldSelections || [],
+        },
+        mappingValidationSummary: validationSummary || current.mappingValidationSummary || null,
+        savedMappingAt: new Date().toLocaleTimeString(),
+      };
+    });
+  };
+
+  const clearColumnMappingStaging = () => {
+    setColumnMappingStaging(null);
+    setIsColumnMappingModalOpen(false);
   };
 
   const getMapSvgElement = () => mapViewportRef.current?.querySelector('svg') || null;
@@ -3343,8 +3373,10 @@ export default function EuropeNetworkMapApp() {
     handleDownloadPeridotTemplate,
     closePeridotValidationModal: () => setIsPeridotValidationModalOpen(false),
     columnMappingStaging,
+    isColumnMappingModalOpen,
     handleColumnMappingTableUpload,
-    clearColumnMappingStaging: () => setColumnMappingStaging(null),
+    openColumnMappingModal: () => setIsColumnMappingModalOpen(true),
+    clearColumnMappingStaging,
     rowDiagnostics,
     showLabels,
     setShowLabels,
@@ -3464,6 +3496,13 @@ export default function EuropeNetworkMapApp() {
           inspectorPanelProps={inspectorPanelProps}
           inspectorShellComponents={inspectorShellComponents}
           inspectorViewComponents={inspectorViewComponents}
+        />
+
+        <PeridotColumnMappingModal
+          open={isColumnMappingModalOpen}
+          staging={columnMappingStaging}
+          onClose={() => setIsColumnMappingModalOpen(false)}
+          onSaveMapping={handleSaveColumnMappingState}
         />
 
         <AppMainWorkspace
