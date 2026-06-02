@@ -1454,16 +1454,6 @@ function buildLeftControlPanelProps(args) {
       setShowThemePanel: args.setShowThemePanel,
     },
     dataInputState: {
-      setGeographyCsv: args.setGeographyCsv,
-      setLettersCsv: args.setLettersCsv,
-      setPersonMetadataCsv: args.setPersonMetadataCsv,
-      geographyFileLabel: args.geographyFileLabel,
-      lettersFileLabel: args.lettersFileLabel,
-      personMetadataFileLabel: args.personMetadataFileLabel,
-      setGeographyFileLabel: args.setGeographyFileLabel,
-      setLettersFileLabel: args.setLettersFileLabel,
-      setPersonMetadataFileLabel: args.setPersonMetadataFileLabel,
-      uploadSetter: args.uploadSetter,
       peridotFileLabel: args.peridotFileLabel,
       peridotValidationSummary: args.peridotValidationSummary,
       isPeridotValidationModalOpen: args.isPeridotValidationModalOpen,
@@ -2524,14 +2514,8 @@ function AppMainWorkspace({
 
 export default function EuropeNetworkMapApp() {
   // ------------------------------------------------------------
-  // Raw uploaded or embedded source text
+  // Current data source
   // ------------------------------------------------------------
-  const [geographyCsv, setGeographyCsv] = useState(SAMPLE_GEOGRAPHY_CSV);
-  const [lettersCsv, setLettersCsv] = useState(SAMPLE_LETTERS_CSV);
-  const [personMetadataCsv, setPersonMetadataCsv] = useState(SAMPLE_PERSON_METADATA_CSV);
-  const [geographyFileLabel, setGeographyFileLabel] = useState('Sample Data');
-  const [lettersFileLabel, setLettersFileLabel] = useState('Sample Data');
-  const [personMetadataFileLabel, setPersonMetadataFileLabel] = useState('Sample Data');
   const [peridotFileLabel, setPeridotFileLabel] = useState('Sample Data');
   const [peridotValidationSummary, setPeridotValidationSummary] = useState(null);
   const [isPeridotValidationModalOpen, setIsPeridotValidationModalOpen] = useState(false);
@@ -2721,11 +2705,11 @@ export default function EuropeNetworkMapApp() {
   // Parsed and normalized source tables
   // ------------------------------------------------------------
   const geographyRows = useMemo(
-    () => (peridotNormalizedData ? peridotNormalizedData.normalizedRows : parseCsv(geographyCsv)),
-    [peridotNormalizedData, geographyCsv]
+    () => (peridotNormalizedData ? peridotNormalizedData.normalizedRows : parseCsv(SAMPLE_GEOGRAPHY_CSV)),
+    [peridotNormalizedData]
   );
-  const letterRows = useMemo(() => parseCsv(lettersCsv), [lettersCsv]);
-  const personMetadataRows = useMemo(() => parseCsv(personMetadataCsv), [personMetadataCsv]);
+  const letterRows = useMemo(() => parseCsv(SAMPLE_LETTERS_CSV), []);
+  const personMetadataRows = useMemo(() => parseCsv(SAMPLE_PERSON_METADATA_CSV), []);
   const normalizedLetters = useMemo(
     () => (peridotNormalizedData ? peridotNormalizedData.normalizedLetters : normalizeLettersRows(letterRows)),
     [peridotNormalizedData, letterRows]
@@ -2958,16 +2942,6 @@ export default function EuropeNetworkMapApp() {
       : new Set([activePlaybackRow.sourcePerson, activePlaybackRow.targetPerson].filter(Boolean));
   }, [activePlaybackRow, viewMode]);
 
-  const uploadSetter = (setter, setLabel) => async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const text = await readFileText(file);
-    setPeridotNormalizedData(null);
-    setter(text);
-    setLabel(file.name || 'Uploaded file');
-  };
-
-
   const clearSelection = () => {
     setSelectedSelection(null);
     setInspectorHistory([]);
@@ -3018,9 +2992,6 @@ export default function EuropeNetworkMapApp() {
       setPeridotNormalizedData(normalized);
 
       setPeridotFileLabel(fileLabel);
-      setGeographyFileLabel(fileLabel);
-      setLettersFileLabel(fileLabel);
-      setPersonMetadataFileLabel(fileLabel);
 
       setPeridotValidationSummary(validationSummary);
       setIsPeridotValidationModalOpen(true);
@@ -3278,16 +3249,6 @@ export default function EuropeNetworkMapApp() {
     setShowSummaryPanel,
     showThemePanel,
     setShowThemePanel,
-    setGeographyCsv,
-    setLettersCsv,
-    setPersonMetadataCsv,
-    geographyFileLabel,
-    lettersFileLabel,
-    personMetadataFileLabel,
-    setGeographyFileLabel,
-    setLettersFileLabel,
-    setPersonMetadataFileLabel,
-    uploadSetter,
     peridotFileLabel,
     peridotValidationSummary,
     isPeridotValidationModalOpen,

@@ -432,18 +432,6 @@ function StatCard({ label, value }) {
 // This keeps the letter summary, expandable long-text sections, and metadata
 // display consistent no matter how the user reached the inspector.
 
-function DataSourceCard({ title, fileInputId, onFileChange, currentSource }) {
-  return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
-      <div className="mb-2">
-        <h2 className={sectionTitleClassName()}>{title}</h2>
-      </div>
-      <FilePicker id={fileInputId} onChange={onFileChange} />
-      <div className="text-sm text-[var(--panel-card-muted-text)]">Current source: {currentSource}</div>
-    </div>
-  );
-}
-
 // Shared button styling helper used across the interface.
 // Shared button helper.
 // Important note: `active` means selected or toggled on, not merely hovered.
@@ -1282,16 +1270,6 @@ function DataInputsGroup({
   } = sectionState;
 
   const {
-    setGeographyCsv,
-    setLettersCsv,
-    setPersonMetadataCsv,
-    geographyFileLabel,
-    lettersFileLabel,
-    personMetadataFileLabel,
-    setGeographyFileLabel,
-    setLettersFileLabel,
-    setPersonMetadataFileLabel,
-    uploadSetter,
     peridotFileLabel,
     peridotValidationSummary,
     isPeridotValidationModalOpen,
@@ -1342,36 +1320,6 @@ function DataInputsGroup({
               <li>For cleaner networks and charts, standardize your data before upload.</li>
             </ul>
           </div>
-
-          {/*
-            Legacy three-file uploads are intentionally hidden from the ordinary UI
-            while the standardized single-CSV workflow is introduced. The state and
-            upload wiring remain available here as a recovery path during the transition.
-          */}
-          {false ? (
-            <div className="space-y-3">
-              <DataSourceCard
-                title="Geography table"
-                fileInputId="geography-file"
-                onFileChange={uploadSetter(setGeographyCsv, setGeographyFileLabel)}
-                currentSource={geographyFileLabel}
-              />
-
-              <DataSourceCard
-                title="Raw data table"
-                fileInputId="letters-file"
-                onFileChange={uploadSetter(setLettersCsv, setLettersFileLabel)}
-                currentSource={lettersFileLabel}
-              />
-
-              <DataSourceCard
-                title="Person metadata table"
-                fileInputId="person-metadata-file"
-                onFileChange={uploadSetter(setPersonMetadataCsv, setPersonMetadataFileLabel)}
-                currentSource={personMetadataFileLabel}
-              />
-            </div>
-          ) : null}
 
           {isPeridotValidationModalOpen && peridotValidationSummary ? (
             <PeridotUploadSummaryModal
@@ -1559,16 +1507,6 @@ export function LeftControlPanel({
   } = sidebarState;
 
   const {
-    setGeographyCsv,
-    setLettersCsv,
-    setPersonMetadataCsv,
-    geographyFileLabel,
-    lettersFileLabel,
-    personMetadataFileLabel,
-    setGeographyFileLabel,
-    setLettersFileLabel,
-    setPersonMetadataFileLabel,
-    uploadSetter,
     peridotFileLabel,
     peridotValidationSummary,
     isPeridotValidationModalOpen,
@@ -1644,16 +1582,6 @@ export function LeftControlPanel({
   const dataInputsGroupProps = {
     sectionState: dataInputsSectionState,
     dataInputState: {
-      setGeographyCsv,
-      setLettersCsv,
-      setPersonMetadataCsv,
-      geographyFileLabel,
-      lettersFileLabel,
-      personMetadataFileLabel,
-      setGeographyFileLabel,
-      setLettersFileLabel,
-      setPersonMetadataFileLabel,
-      uploadSetter,
       peridotFileLabel,
       peridotValidationSummary,
       isPeridotValidationModalOpen,
