@@ -2709,13 +2709,49 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
 }
 
 
+// ============================================================
+// WORKSPACE STATE MODEL
+// ============================================================
+// This first-pass workspace model is intentionally nonvisual. It gives the
+// redesign a stable internal vocabulary before Home, Data, Visualizations,
+// Search, Inspector, Timeline, Theme, and Export become full workspace views.
+// The current map-centered UI remains unchanged in this pass.
+const PERIDOT_WORKSPACE_MODES = Object.freeze({
+  HOME: 'home',
+  DATA: 'data',
+  VISUALIZATIONS: 'visualizations',
+  SEARCH: 'search',
+  INSPECTOR: 'inspector',
+  TIMELINE: 'timeline',
+  THEME: 'theme',
+  EXPORT: 'export',
+});
+
+const DEFAULT_PERIDOT_WORKSPACE_MODE = PERIDOT_WORKSPACE_MODES.VISUALIZATIONS;
+
+const PERIDOT_WORKSPACE_MODE_VALUES = Object.freeze(Object.values(PERIDOT_WORKSPACE_MODES));
+
+function isPeridotWorkspaceMode(value) {
+  return PERIDOT_WORKSPACE_MODE_VALUES.includes(value);
+}
+
+function resolvePeridotWorkspaceMode(nextMode, currentMode = DEFAULT_PERIDOT_WORKSPACE_MODE) {
+  const resolvedMode = typeof nextMode === 'function' ? nextMode(currentMode) : nextMode;
+  return isPeridotWorkspaceMode(resolvedMode) ? resolvedMode : currentMode;
+}
+
+
 function AppMainWorkspace({
   pageTitle,
   setPageTitle,
   mapStageProps,
+  workspaceMode,
 }) {
   return (
-    <main className="h-full xl:pl-16">
+    <main
+      className="h-full xl:pl-16"
+      data-peridot-workspace-mode={workspaceMode}
+    >
       <div className="flex h-full flex-col">
         <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
         <MapStage {...mapStageProps} />
@@ -2734,6 +2770,17 @@ export default function EuropeNetworkMapApp() {
   const [peridotNormalizedData, setPeridotNormalizedData] = useState(null);
   const [columnMappingStaging, setColumnMappingStaging] = useState(null);
   const [isColumnMappingModalOpen, setIsColumnMappingModalOpen] = useState(false);
+
+  // ------------------------------------------------------------
+  // Future workspace state
+  // ------------------------------------------------------------
+  // This structural state is deliberately nonvisual in Phase 1. It gives the
+  // redesign a safe internal destination model while preserving the current
+  // visible side-panel and map workspace behavior.
+  const [workspaceMode, setWorkspaceMode] = useState(DEFAULT_PERIDOT_WORKSPACE_MODE);
+  const setResolvedWorkspaceMode = (nextMode) => {
+    setWorkspaceMode((currentMode) => resolvePeridotWorkspaceMode(nextMode, currentMode));
+  };
 
   // ------------------------------------------------------------
   // User interaction and view state
@@ -2850,6 +2897,7 @@ export default function EuropeNetworkMapApp() {
       const currentlyShowingInspector = currentlyOpen && activePanelTab === 'inspector';
       const shouldOpen = resolvePanelToggleValue(nextValue, currentlyShowingInspector);
       if (shouldOpen) {
+        setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
         setActivePanelTab('inspector');
         return true;
       }
@@ -3861,6 +3909,7 @@ export default function EuropeNetworkMapApp() {
           pageTitle={pageTitle}
           setPageTitle={setPageTitle}
           mapStageProps={mapStageProps}
+          workspaceMode={workspaceMode}
         />
       </div>
     </div>
