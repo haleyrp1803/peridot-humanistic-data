@@ -1292,12 +1292,55 @@ function serifHeadingClassName() {
 // Reusable linked-letter card used in both node and edge inspector views.
 // This keeps the letter summary, expandable long-text sections, and metadata
 // display consistent no matter how the user reached the inspector.
+function normalizeLinkedLetterCustomInspectorFields(letter) {
+  const fields = Array.isArray(letter?.customInspectorFields) ? letter.customInspectorFields : [];
+
+  return fields
+    .map((field) => {
+      const label = String(field?.label || field?.sourceColumn || field?.key || '').trim();
+      const value = field?.value ?? '';
+      const displayValue = String(value ?? '').trim();
+
+      return {
+        label,
+        value: displayValue,
+      };
+    })
+    .filter((field) => field.label && field.value);
+}
+
+function CustomInspectorFieldsBlock({ fields }) {
+  if (!fields?.length) return null;
+
+  return (
+    <div className="mt-3 rounded-lg border border-[var(--section-border)]/70 bg-[var(--section-bg)]/70 p-3">
+      <div className="font-semibold uppercase tracking-[0.14em] text-[11px] text-[var(--panel-card-muted-text)]">
+        User-selected fields
+      </div>
+      <div className="mt-2 divide-y divide-[var(--section-border)]/70">
+        {fields.map((field, index) => (
+          <div key={`${field.label}:${index}`} className="py-1.5 first:pt-0 last:pb-0">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--detail-label-text)]">
+              {field.label}
+            </div>
+            <div className="mt-0.5 break-words text-sm text-[var(--panel-card-text)]">
+              {field.value}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function LinkedLetterCard({
   letter,
   showAllLinkedLetters,
   isLetterSectionExpanded,
   onToggleLetterSection,
 }) {
+  const customInspectorFields = normalizeLinkedLetterCustomInspectorFields(letter);
+
   const renderExpandableTextBlock = (sectionKey, heading, text, buttonLabel) => {
     if (!showAllLinkedLetters || !text) return null;
     const expanded = isLetterSectionExpanded(letter.id, sectionKey);
@@ -1325,6 +1368,7 @@ function LinkedLetterCard({
       <div className="mt-1 text-[var(--panel-card-muted-text)]">{letter.archivalCollection}</div>
       <div className="text-[var(--panel-card-muted-text)]">Archival page: {letter.archivalPage || 'â€”'} </div>
       <div className="text-[var(--panel-card-muted-text)]">Relationship: {letter.relationship || 'â€”'} | Language: {letter.language || 'â€”'}</div>
+      <CustomInspectorFieldsBlock fields={customInspectorFields} />
       {renderExpandableTextBlock('notes', 'Notes', letter.notes, 'notes')}
       {renderExpandableTextBlock('transcription', 'Transcription', letter.transcription, 'transcription')}
       {renderExpandableTextBlock('translation', 'Translation', letter.translation, 'translation')}
