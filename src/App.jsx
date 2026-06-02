@@ -44,7 +44,7 @@ import { InspectorNodeView as InspectorNodeViewView } from './InspectorNodeView'
 import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
 import { normalizePeridotTemplateRows } from './peridotCsvNormalizer.js';
 import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
-import { buildInitialPeridotColumnMappingState } from './peridotColumnMapping.js';
+import { applyPeridotColumnMapping, buildInitialPeridotColumnMappingState } from './peridotColumnMapping.js';
 import { PeridotColumnMappingModal } from './PeridotColumnMappingModal.jsx';
 
 
@@ -3019,6 +3019,21 @@ export default function EuropeNetworkMapApp() {
     );
   };
 
+  const resetActiveDataInteractionState = () => {
+    // A new data source should not inherit stale active filters,
+    // playback position, or map/inspector selection from the prior dataset.
+    setSearch('');
+    setPersonFilter('');
+    setPlaceFilter('');
+    setRoutePlaceFilter('');
+    setRoutePeopleFilter('');
+    setMinCount(1);
+    setTimelineMode('range');
+    setIsPlaying(false);
+    setPlaybackIndex(-1);
+    clearSelection();
+  };
+
   const handlePeridotCsvUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -3038,18 +3053,7 @@ export default function EuropeNetworkMapApp() {
       setPeridotValidationSummary(validationSummary);
       setIsPeridotValidationModalOpen(true);
 
-      // A new data source should not inherit stale active filters,
-      // playback position, or map/inspector selection from the prior dataset.
-      setSearch('');
-      setPersonFilter('');
-      setPlaceFilter('');
-      setRoutePlaceFilter('');
-      setRoutePeopleFilter('');
-      setMinCount(1);
-      setTimelineMode('range');
-      setIsPlaying(false);
-      setPlaybackIndex(-1);
-      clearSelection();
+      resetActiveDataInteractionState();
     } catch (error) {
       setIsPeridotValidationModalOpen(true);
       setPeridotValidationSummary({
@@ -3141,6 +3145,61 @@ export default function EuropeNetworkMapApp() {
         savedMappingAt: new Date().toLocaleTimeString(),
       };
     });
+  };
+
+  const handleConfirmColumnMappingImport = ({ coreMapping, customFieldSelections, validationSummary } = {}) => {
+    if (!columnMappingStaging || columnMappingStaging.status !== 'ready') return;
+
+    try {
+      const nextCoreMapping = coreMapping || columnMappingStaging.mappingState?.coreMapping || {};
+      const nextCustomFieldSelections = customFieldSelections || columnMappingStaging.mappingState?.customFieldSelections || [];
+      const mappedRows = applyPeridotColumnMapping(columnMappingStaging.rows || [], {
+        coreMapping: nextCoreMapping,
+        customFieldSelections: nextCustomFieldSelections,
+      });
+      const finalValidationSummary = validationSummary || buildPeridotCsvValidationSummary(mappedRows, PERIDOT_TEMPLATE_COLUMNS);
+      const normalized = normalizePeridotTemplateRows(mappedRows);
+      const importedAt = new Date().toLocaleTimeString();
+
+      setPeridotNormalizedData(normalized);
+      setPeridotFileLabel(`${columnMappingStaging.fileLabel || 'Mapped table'} (mapped)`);
+      setPeridotValidationSummary(finalValidationSummary);
+      setIsPeridotValidationModalOpen(true);
+      setColumnMappingStaging((current) => {
+        if (!current || current.status !== 'ready') return current;
+
+        return {
+          ...current,
+          mappingState: {
+            ...(current.mappingState || {}),
+            coreMapping: nextCoreMapping,
+            customFieldSelections: nextCustomFieldSelections,
+          },
+          mappingValidationSummary: finalValidationSummary,
+          importedAt,
+        };
+      });
+      setIsColumnMappingModalOpen(false);
+      resetActiveDataInteractionState();
+    } catch (error) {
+      setPeridotValidationSummary({
+        popup: {
+          title: 'Import failed',
+          intro: `Peridot could not import the mapped table: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          capabilityLines: [],
+          warningLines: [],
+          closingLines: ['No data was changed.'],
+        },
+        summaryLines: ['Import failed.'],
+        warnings: [],
+        hasWarnings: true,
+        totalRows: 0,
+        acceptedRecordCount: 0,
+        unsupportedRowCount: 0,
+        capabilityCounts: {},
+      });
+      setIsPeridotValidationModalOpen(true);
+    }
   };
 
   const clearColumnMappingStaging = () => {
@@ -3503,6 +3562,7 @@ export default function EuropeNetworkMapApp() {
           staging={columnMappingStaging}
           onClose={() => setIsColumnMappingModalOpen(false)}
           onSaveMapping={handleSaveColumnMappingState}
+          onConfirmImport={handleConfirmColumnMappingImport}
         />
 
         <AppMainWorkspace

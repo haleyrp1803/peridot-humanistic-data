@@ -51,6 +51,29 @@ function makePersonKey(source, target) {
   return `${source}-->${target}`;
 }
 
+function normalizeCustomInspectorFields(row) {
+  const fields = Array.isArray(row?.customInspectorFields) ? row.customInspectorFields : [];
+  return fields
+    .map((field) => ({
+      key: asText(field?.key || field?.sourceColumn || field?.label),
+      sourceColumn: asText(field?.sourceColumn || field?.key || field?.label),
+      label: asText(field?.label || field?.sourceColumn || field?.key),
+      value: field?.value ?? '',
+      analyticsEligible: Boolean(field?.analyticsEligible),
+    }))
+    .filter((field) => field.key || field.label);
+}
+
+function buildCustomInspectorFieldObject(row) {
+  const result = {};
+  normalizeCustomInspectorFields(row).forEach((field) => {
+    const label = field.label || field.key;
+    if (!label) return;
+    result[label] = field.value;
+  });
+  return result;
+}
+
 function normalizeDateSeparators(value) {
   return asText(value).replace(/-/g, '/');
 }
@@ -150,6 +173,8 @@ function buildPeridotTemplatePlaceMapEntry(placeMap, { label, lat, lon, roleHint
  * shape currently consumed by map and graph derivation.
  */
 export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap = new Map()) {
+  const customInspectorFields = normalizeCustomInspectorFields(row);
+  const customInspectorFieldValues = buildCustomInspectorFieldObject(row);
   const sourceLat = asNumber(row?.Source_Latitude);
   const sourceLon = asNumber(row?.Source_Longitude);
   const targetLat = asNumber(row?.Target_Latitude);
@@ -172,6 +197,7 @@ export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap
   });
 
   return {
+    ...customInspectorFieldValues,
     id: `peridot_geo_${index + 1}`,
     date: asText(row?.Date),
     parsedDate: parsePeridotTemplateDate(row?.Date),
@@ -189,6 +215,9 @@ export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap
     targetPlaceId,
     mappable: Boolean(sourcePlaceId && targetPlaceId),
     peridotCapabilities: getPeridotRowCapabilities(row),
+    customInspectorFields,
+    ignoredUploadedColumns: Array.isArray(row?.ignoredUploadedColumns) ? [...row.ignoredUploadedColumns] : [],
+    originalUploadedRow: row?.originalUploadedRow ? { ...row.originalUploadedRow } : null,
     originalTemplateRow: { ...(row || {}) },
   };
 }
@@ -198,6 +227,8 @@ export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap
  * metadata shape currently consumed by inspector and Analytics workflows.
  */
 export function normalizePeridotTemplateRowForLetter(row, index = 0) {
+  const customInspectorFields = normalizeCustomInspectorFields(row);
+  const customInspectorFieldValues = buildCustomInspectorFieldObject(row);
   const source = asText(row?.Source_Name);
   const target = asText(row?.Target_Name);
   const archive = asText(row?.Archive);
@@ -207,6 +238,7 @@ export function normalizePeridotTemplateRowForLetter(row, index = 0) {
   const date = asText(row?.Date);
 
   return {
+    ...customInspectorFieldValues,
     id: `peridot_letter_${index + 1}`,
     archive,
     archivalCollection: collection,
@@ -230,6 +262,9 @@ export function normalizePeridotTemplateRowForLetter(row, index = 0) {
     links,
     personKey: makePersonKey(source, target),
     peridotCapabilities: getPeridotRowCapabilities(row),
+    customInspectorFields,
+    ignoredUploadedColumns: Array.isArray(row?.ignoredUploadedColumns) ? [...row.ignoredUploadedColumns] : [],
+    originalUploadedRow: row?.originalUploadedRow ? { ...row.originalUploadedRow } : null,
     originalTemplateRow: { ...(row || {}) },
   };
 }

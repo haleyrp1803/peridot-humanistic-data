@@ -300,6 +300,7 @@ export function PeridotColumnMappingModal({
   staging,
   onClose,
   onSaveMapping,
+  onConfirmImport,
 }) {
   const mappingState = staging?.mappingState || {};
   const definitions = mappingState.coreFieldDefinitions || [];
@@ -381,13 +382,21 @@ export function PeridotColumnMappingModal({
     )));
   };
 
+  const buildCurrentMappingPayload = () => ({
+    coreMapping,
+    customFieldSelections: effectiveCustomSelections,
+    validationSummary,
+  });
+
   const handleSave = () => {
-    onSaveMapping?.({
-      coreMapping,
-      customFieldSelections: effectiveCustomSelections,
-      validationSummary,
-    });
+    onSaveMapping?.(buildCurrentMappingPayload());
     onClose?.();
+  };
+
+  const handleConfirmImport = () => {
+    const payload = buildCurrentMappingPayload();
+    onSaveMapping?.(payload);
+    onConfirmImport?.(payload);
   };
 
   const goNext = () => {
@@ -491,7 +500,7 @@ export function PeridotColumnMappingModal({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
           <p className="max-w-2xl text-sm text-[var(--panel-card-muted-text)]">
-            This pass saves mapping choices only. The final “confirm import” action will be wired in the next pass.
+            Review the mapped rows and warnings before importing. Confirming import will replace the active Peridot dataset with this mapped table.
           </p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>
@@ -502,9 +511,14 @@ export function PeridotColumnMappingModal({
                 Next
               </button>
             ) : (
-              <button type="button" onClick={handleSave} className={buttonClassName({ variant: 'primary' })}>
-                Save mapping choices
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={handleSave} className={buttonClassName({ variant: 'secondary' })}>
+                  Save choices
+                </button>
+                <button type="button" onClick={handleConfirmImport} className={buttonClassName({ variant: 'primary' })}>
+                  Confirm import
+                </button>
+              </div>
             )}
           </div>
         </div>
