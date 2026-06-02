@@ -262,6 +262,98 @@ export function suggestLetterIdColumns(workbookModel) {
   );
 }
 
+export function getLetterIdColumnCandidatesForSheet(sheet = {}) {
+  return Object.freeze(
+    (sheet.headers || [])
+      .map((header) => ({
+        sheetName: sheet.sheetName,
+        columnName: header,
+        score: scoreHeaderAgainstCandidates(header, PERIDOT_RECOMMENDED_LETTER_ID_NAMES),
+      }))
+      .filter((candidate) => candidate.score >= 55)
+      .sort((a, b) => b.score - a.score || a.columnName.localeCompare(b.columnName))
+  );
+}
+
+function findMatchingLetterIdColumn(sheet = {}, primaryLetterIdColumn = '') {
+  const candidates = getLetterIdColumnCandidatesForSheet(sheet);
+  const normalizedPrimary = normalizeLoose(primaryLetterIdColumn);
+
+  if (normalizedPrimary) {
+    const exact = candidates.find((candidate) => normalizeLoose(candidate.columnName) === normalizedPrimary);
+    if (exact) return exact;
+  }
+
+  return candidates[0] || null;
+}
+
+export function suggestSharedLetterIdJoins(workbookModel, primarySheetName = '', primaryLetterIdColumn = '') {
+  const primarySheet = getWorkbookSheet(workbookModel, primarySheetName);
+  if (!primarySheet) return Object.freeze([]);
+
+  const primaryColumn = asText(primaryLetterIdColumn)
+    || suggestLetterIdColumnForSheet(primarySheet).columnName
+    || '';
+
+  if (!primaryColumn) return Object.freeze([]);
+
+  return Object.freeze(
+    getUsableWorkbookSheets(workbookModel)
+      .filter((sheet) => sheet.sheetName !== primarySheetName)
+      .map((sheet) => {
+        const match = findMatchingLetterIdColumn(sheet, primaryColumn);
+        if (!match) return null;
+
+        return Object.freeze({
+          ...makeLetterIdJoin({
+            fromSheetName: primarySheetName,
+            fromColumnName: primaryColumn,
+            toSheetName: sheet.sheetName,
+            toColumnName: match.columnName,
+          }),
+          confidence: match.score >= 95 ? 'high' : match.score >= 70 ? 'medium' : 'low',
+          score: match.score,
+          suggested: true,
+        });
+      })
+      .filter(Boolean)
+  );
+}
+
+
+export function suggestDefaultLetterIdJoinForSheet(
+  workbookModel,
+  primarySheetName = '',
+  joinedSheetName = '',
+  primaryColumnName = ''
+) {
+  const primarySheet = getWorkbookSheet(workbookModel, primarySheetName);
+  const joinedSheet = getWorkbookSheet(workbookModel, joinedSheetName);
+  if (!primarySheet || !joinedSheet || primarySheetName === joinedSheetName) return null;
+
+  const primaryColumn = asText(primaryColumnName)
+    || suggestLetterIdColumnForSheet(primarySheet).columnName
+    || primarySheet.headers?.[0]
+    || '';
+  const joinedMatch = findMatchingLetterIdColumn(joinedSheet, primaryColumn)
+    || suggestLetterIdColumnForSheet(joinedSheet);
+  const joinedColumn = joinedMatch?.columnName || joinedSheet.headers?.[0] || '';
+
+  if (!primaryColumn || !joinedColumn) return null;
+
+  return Object.freeze({
+    ...makeLetterIdJoin({
+      fromSheetName: primarySheetName,
+      fromColumnName: primaryColumn,
+      toSheetName: joinedSheetName,
+      toColumnName: joinedColumn,
+    }),
+    confidence: joinedMatch?.confidence || (joinedMatch?.score >= 95 ? 'high' : joinedMatch?.score >= 70 ? 'medium' : joinedMatch ? 'low' : 'manual'),
+    score: joinedMatch?.score || 0,
+    suggested: Boolean(joinedMatch?.columnName),
+  });
+}
+
 function suggestCoreMappingsForSingleSheet(sheet = {}) {
   const suggestions = suggestPeridotCoreFieldMappings(sheet.headers || []);
   return Object.fromEntries(
@@ -348,6 +440,11 @@ export function buildInitialPeridotWorkbookMappingState(workbookModel) {
   const primarySheet = getWorkbookSheet(workbookModel, primarySheetName);
   const letterIdSuggestion = primarySheet ? suggestLetterIdColumnForSheet(primarySheet) : null;
   const coreMappings = suggestWorkbookCoreMappings(workbookModel, primarySheetName);
+  const suggestedLetterLevelJoins = suggestSharedLetterIdJoins(
+    workbookModel,
+    primarySheetName,
+    letterIdSuggestion?.columnName || ''
+  );
   const primaryCustomSelections = primarySheet
     ? suggestCustomInspectorFieldSelections(primarySheet.headers || [], primarySheet.rows || {}, Object.fromEntries(
         Object.entries(coreMappings)
@@ -364,7 +461,8 @@ export function buildInitialPeridotWorkbookMappingState(workbookModel) {
     letterIdColumnSuggestions: suggestLetterIdColumns(workbookModel),
     lookupSheetSuggestions: suggestLookupSheetRoles(workbookModel),
     coreMappings,
-    letterLevelJoins: Object.freeze([]),
+    letterLevelJoinSuggestions: suggestedLetterLevelJoins,
+    letterLevelJoins: suggestedLetterLevelJoins,
     lookupJoins: Object.freeze([]),
     customFieldSelections: Object.freeze(
       primaryCustomSelections.map((selection) =>
@@ -575,6 +673,62 @@ function indexRowsByColumn(rows = [], columnName = '') {
   return index;
 }
 
+
+export function getLetterIdJoinMatchSummary(workbookModel, join = {}) {
+  const from = join?.from || {};
+  const to = join?.to || {};
+  const fromRows = getSheetRows(workbookModel, from.sheetName);
+  const toRows = getSheetRows(workbookModel, to.sheetName);
+
+  if (!from.sheetName || !from.columnName || !to.sheetName || !to.columnName) {
+    return Object.freeze({
+      isConfigured: false,
+      matchingIdCount: 0,
+      matchedPrimaryRowCount: 0,
+      unmatchedPrimaryRowCount: 0,
+      primaryBlankIdCount: 0,
+      joinedOnlyIdCount: 0,
+      primaryDuplicateIdCount: 0,
+      joinedDuplicateIdCount: 0,
+      message: 'Select a primary ID column and joined-sheet ID column to check matches.',
+    });
+  }
+
+  const fromIndex = indexRowsByColumn(fromRows, from.columnName);
+  const toIndex = indexRowsByColumn(toRows, to.columnName);
+  const fromKeys = new Set(fromIndex.keys());
+  const toKeys = new Set(toIndex.keys());
+  const matchingIds = Array.from(fromKeys).filter((key) => toKeys.has(key));
+  const primaryBlankIdCount = fromRows.filter((row) => !asText(row?.[from.columnName])).length;
+  const joinedBlankIdCount = toRows.filter((row) => !asText(row?.[to.columnName])).length;
+  const primaryDuplicateIdCount = Array.from(fromIndex.values()).filter((rows) => rows.length > 1).length;
+  const joinedDuplicateIdCount = Array.from(toIndex.values()).filter((rows) => rows.length > 1).length;
+  const matchedPrimaryRowCount = fromRows.filter((row) => {
+    const key = asText(row?.[from.columnName]);
+    return Boolean(key && toKeys.has(key));
+  }).length;
+  const unmatchedPrimaryRowCount = fromRows.filter((row) => {
+    const key = asText(row?.[from.columnName]);
+    return Boolean(key && !toKeys.has(key));
+  }).length;
+  const joinedOnlyIdCount = Array.from(toKeys).filter((key) => !fromKeys.has(key)).length;
+
+  const message = `${matchingIds.length} matching unique ID${matchingIds.length === 1 ? '' : 's'}; ${unmatchedPrimaryRowCount} primary row${unmatchedPrimaryRowCount === 1 ? '' : 's'} without a match.`;
+
+  return Object.freeze({
+    isConfigured: true,
+    matchingIdCount: matchingIds.length,
+    matchedPrimaryRowCount,
+    unmatchedPrimaryRowCount,
+    primaryBlankIdCount,
+    joinedBlankIdCount,
+    joinedOnlyIdCount,
+    primaryDuplicateIdCount,
+    joinedDuplicateIdCount,
+    message,
+  });
+}
+
 export function buildLetterIdJoinIndexes(workbookModel, mappingState = {}) {
   return Object.freeze(
     (mappingState.letterLevelJoins || []).map((join) => {
@@ -646,6 +800,7 @@ export function getWorkbookMappingSummary(workbookModel, mappingState = {}) {
     mappedCoreFieldCount: mappedCoreFields.length,
     mappedSheets,
     letterLevelJoinCount: (mappingState.letterLevelJoins || []).length,
+    suggestedLetterLevelJoinCount: (mappingState.letterLevelJoinSuggestions || []).length,
     lookupJoinCount: (mappingState.lookupJoins || []).length,
     customFieldCount: (mappingState.customFieldSelections || []).filter(
       (selection) => selection.action === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include

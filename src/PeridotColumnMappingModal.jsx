@@ -9,11 +9,15 @@ import {
 } from './peridotColumnMapping.js';
 import {
   buildWorkbookCustomFieldSelectionsForSheet,
+  getLetterIdJoinMatchSummary,
   getUsableWorkbookSheets,
   getWorkbookMappingSummary,
   getWorkbookSheet,
+  makeLetterIdJoin,
   makeWorkbookColumnRef,
   previewWorkbookCoreMappedRows,
+  suggestDefaultLetterIdJoinForSheet,
+  suggestSharedLetterIdJoins,
   suggestWorkbookCoreMappings,
   validatePeridotWorkbookMapping,
 } from './peridotWorkbookMapping.js';
@@ -323,16 +327,31 @@ function WorkbookOverviewStep({ staging, workbookModel, workbookSummary }) {
   );
 }
 
-function WorkbookSetupStep({ workbookModel, workbookMapping, onPrimarySheetChange, onLetterIdChange }) {
+function WorkbookSetupStep({
+  workbookModel,
+  workbookMapping,
+  onPrimarySheetChange,
+  onLetterIdChange,
+  onAddJoin,
+  onRemoveJoin,
+  onJoinSheetChange,
+  onJoinPrimaryColumnChange,
+  onJoinTargetColumnChange,
+}) {
   const usableSheets = getUsableWorkbookSheets(workbookModel);
   const selectedSheet = getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
   const headers = selectedSheet?.headers || [];
   const suggestions = workbookMapping.primaryRecordSheetSuggestions || [];
+  const joins = workbookMapping.letterLevelJoins || [];
+  const joinedSheetNames = new Set(joins.map((join) => join?.to?.sheetName).filter(Boolean));
+  const availableJoinSheets = usableSheets.filter(
+    (sheet) => sheet.sheetName !== workbookMapping.primarySheetName && !joinedSheetNames.has(sheet.sheetName)
+  );
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose the sheet whose rows represent the Peridot records. For multi-sheet letter-level assembly, Peridot requires a true Letter_ID column on the primary sheet.
+        Choose the sheet whose rows represent the Peridot records. If letter-level data is spread across multiple sheets, add each joined sheet and tell Peridot which columns contain the shared unique ID. The ID-column names do not need to match; the values need to match.
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -352,21 +371,116 @@ function WorkbookSetupStep({ workbookModel, workbookMapping, onPrimarySheetChang
         </label>
 
         <label className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-          <div className="text-sm font-semibold text-[var(--panel-card-text)]">Primary Letter_ID column</div>
+          <div className="text-sm font-semibold text-[var(--panel-card-text)]">Primary unique ID column</div>
           <select
             value={workbookMapping.primaryLetterIdColumn || ''}
             onChange={(event) => onLetterIdChange(event.target.value)}
             className="mt-2 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
           >
-            <option value="">Select a Letter_ID column</option>
+            <option value="">Select a unique ID column</option>
             {headers.map((header) => (
               <option key={header} value={header}>{header}</option>
             ))}
           </select>
           <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-            Required for combining letter-level data from more than one sheet. Person/place lookup sheets can later use exact names or place labels as keys.
+            This can be called Letter_ID, Record Key, Accession Number, or anything else. Peridot uses your selection, not the header name.
           </p>
         </label>
+      </div>
+
+      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="font-semibold text-[var(--panel-card-text)]">Join additional sheets by unique ID</div>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+              Use this when letter-level information is spread across more than one sheet. Click Add sheet for each sheet that should be joined to the primary record sheet, then choose the matching ID columns.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onAddJoin}
+            disabled={!workbookMapping.primarySheetName || !availableJoinSheets.length}
+            className={buttonClassName({ variant: 'primary' })}
+          >
+            + Add sheet
+          </button>
+        </div>
+
+        {joins.length ? (
+          <div className="mt-4 space-y-3">
+            {joins.map((join, index) => {
+              const joinedSheet = getWorkbookSheet(workbookModel, join?.to?.sheetName);
+              const joinedHeaders = joinedSheet?.headers || [];
+              const matchSummary = getLetterIdJoinMatchSummary(workbookModel, join);
+              return (
+                <div key={`${join?.to?.sheetName || 'join'}-${index}`} className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+                  <div className="grid gap-3 lg:grid-cols-[1.1fr_1fr_1fr_auto]">
+                    <label>
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheet</div>
+                      <select
+                        value={join?.to?.sheetName || ''}
+                        onChange={(event) => onJoinSheetChange(index, event.target.value)}
+                        className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                      >
+                        <option value="">Select sheet</option>
+                        {usableSheets
+                          .filter((sheet) => sheet.sheetName !== workbookMapping.primarySheetName)
+                          .map((sheet) => (
+                            <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
+                          ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary ID column</div>
+                      <select
+                        value={join?.from?.columnName || ''}
+                        onChange={(event) => onJoinPrimaryColumnChange(index, event.target.value)}
+                        className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                      >
+                        <option value="">Select column</option>
+                        {headers.map((header) => (
+                          <option key={header} value={header}>{header}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <label>
+                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheet ID column</div>
+                      <select
+                        value={join?.to?.columnName || ''}
+                        onChange={(event) => onJoinTargetColumnChange(index, event.target.value)}
+                        disabled={!join?.to?.sheetName}
+                        className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
+                      >
+                        <option value="">Select column</option>
+                        {joinedHeaders.map((header) => (
+                          <option key={header} value={header}>{header}</option>
+                        ))}
+                      </select>
+                    </label>
+
+                    <div className="flex items-end">
+                      <button type="button" onClick={() => onRemoveJoin(index)} className={buttonClassName({ variant: 'secondary' })}>
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-3 rounded-xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+                    <span className="font-semibold text-[var(--panel-card-text)]">Match check:</span> {matchSummary.message}
+                    {matchSummary.isConfigured ? (
+                      <span> Primary blanks: {matchSummary.primaryBlankIdCount}; joined-sheet blanks: {matchSummary.joinedBlankIdCount}; primary duplicate IDs: {matchSummary.primaryDuplicateIdCount}; joined-sheet duplicate IDs: {matchSummary.joinedDuplicateIdCount}.</span>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="mt-4 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
+            No joined sheets configured yet. Add sheets here if the workbook stores letter-level record data across multiple sheets.
+          </div>
+        )}
       </div>
 
       {suggestions.length ? (
@@ -470,12 +584,12 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
           <div className="mt-1 truncate text-lg font-bold text-[var(--panel-card-text)]">{summary.primarySheetName || '—'}</div>
         </div>
         <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Letter_ID</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary ID</div>
           <div className="mt-1 truncate text-lg font-bold text-[var(--panel-card-text)]">{summary.primaryLetterIdColumn || '—'}</div>
         </div>
         <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Mapped fields</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary.mappedCoreFieldCount}</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheets</div>
+          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary.letterLevelJoinCount || 0}</div>
         </div>
         <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Issues</div>
@@ -504,6 +618,28 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
           </ul>
         </div>
       ) : null}
+
+
+      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="font-semibold text-[var(--panel-card-text)]">Configured unique-ID sheet joins</div>
+        {workbookMapping.letterLevelJoins?.length ? (
+          <div className="mt-3 space-y-2">
+            {workbookMapping.letterLevelJoins.map((join, index) => {
+              const matchSummary = getLetterIdJoinMatchSummary(workbookModel, join);
+              return (
+                <div key={`${join?.to?.sheetName || 'join'}-${index}`} className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
+                  <div className="font-medium text-[var(--panel-card-text)]">
+                    {join?.from?.sheetName || 'Primary sheet'}.{join?.from?.columnName || '—'} ↔ {join?.to?.sheetName || 'Joined sheet'}.{join?.to?.columnName || '—'}
+                  </div>
+                  <div className="mt-1 text-xs">{matchSummary.message}</div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">No joined sheets configured.</p>
+        )}
+      </div>
 
       <div>
         <div className="mb-2 text-sm font-semibold text-[var(--panel-card-text)]">Primary-sheet mapping preview</div>
@@ -628,12 +764,16 @@ export function PeridotColumnMappingModal({
   const handleWorkbookPrimarySheetChange = (primarySheetName) => {
     const nextCoreMappings = suggestWorkbookCoreMappings(workbookModel, primarySheetName);
     const nextCustomFieldSelections = buildWorkbookCustomFieldSelectionsForSheet(workbookModel, primarySheetName, nextCoreMappings);
+    const suggestedJoins = suggestSharedLetterIdJoins(workbookModel, primarySheetName, '');
+    const suggestedPrimaryId = suggestedJoins[0]?.from?.columnName || '';
     setWorkbookMapping((current) => ({
       ...current,
       primarySheetName,
-      primaryLetterIdColumn: '',
+      primaryLetterIdColumn: suggestedPrimaryId,
       coreMappings: nextCoreMappings,
       customFieldSelections: nextCustomFieldSelections,
+      letterLevelJoins: suggestedJoins,
+      letterLevelJoinSuggestions: suggestedJoins,
     }));
   };
 
@@ -641,6 +781,91 @@ export function PeridotColumnMappingModal({
     setWorkbookMapping((current) => ({
       ...current,
       primaryLetterIdColumn,
+      letterLevelJoins: (current.letterLevelJoins || []).map((join) => makeLetterIdJoin({
+        fromSheetName: current.primarySheetName,
+        fromColumnName: primaryLetterIdColumn,
+        toSheetName: join?.to?.sheetName || '',
+        toColumnName: join?.to?.columnName || '',
+      })),
+    }));
+  };
+
+  const handleAddWorkbookJoin = () => {
+    setWorkbookMapping((current) => {
+      const usableSheets = getUsableWorkbookSheets(workbookModel);
+      const alreadyJoined = new Set((current.letterLevelJoins || []).map((join) => join?.to?.sheetName).filter(Boolean));
+      const nextSheet = usableSheets.find((sheet) => sheet.sheetName !== current.primarySheetName && !alreadyJoined.has(sheet.sheetName));
+      if (!nextSheet) return current;
+      const nextJoin = suggestDefaultLetterIdJoinForSheet(
+        workbookModel,
+        current.primarySheetName,
+        nextSheet.sheetName,
+        current.primaryLetterIdColumn
+      );
+      if (!nextJoin) return current;
+      return {
+        ...current,
+        primaryLetterIdColumn: current.primaryLetterIdColumn || nextJoin.from.columnName,
+        letterLevelJoins: [...(current.letterLevelJoins || []), nextJoin],
+      };
+    });
+  };
+
+  const handleRemoveWorkbookJoin = (index) => {
+    setWorkbookMapping((current) => ({
+      ...current,
+      letterLevelJoins: (current.letterLevelJoins || []).filter((_, currentIndex) => currentIndex !== index),
+    }));
+  };
+
+  const handleWorkbookJoinSheetChange = (index, joinedSheetName) => {
+    setWorkbookMapping((current) => {
+      const nextJoin = suggestDefaultLetterIdJoinForSheet(
+        workbookModel,
+        current.primarySheetName,
+        joinedSheetName,
+        current.primaryLetterIdColumn
+      );
+      return {
+        ...current,
+        primaryLetterIdColumn: current.primaryLetterIdColumn || nextJoin?.from?.columnName || '',
+        letterLevelJoins: (current.letterLevelJoins || []).map((join, currentIndex) => (
+          currentIndex === index && nextJoin ? nextJoin : join
+        )),
+      };
+    });
+  };
+
+  const handleWorkbookJoinPrimaryColumnChange = (index, columnName) => {
+    setWorkbookMapping((current) => ({
+      ...current,
+      primaryLetterIdColumn: current.primaryLetterIdColumn || columnName,
+      letterLevelJoins: (current.letterLevelJoins || []).map((join, currentIndex) => (
+        currentIndex === index
+          ? makeLetterIdJoin({
+              fromSheetName: current.primarySheetName,
+              fromColumnName: columnName,
+              toSheetName: join?.to?.sheetName || '',
+              toColumnName: join?.to?.columnName || '',
+            })
+          : join
+      )),
+    }));
+  };
+
+  const handleWorkbookJoinTargetColumnChange = (index, columnName) => {
+    setWorkbookMapping((current) => ({
+      ...current,
+      letterLevelJoins: (current.letterLevelJoins || []).map((join, currentIndex) => (
+        currentIndex === index
+          ? makeLetterIdJoin({
+              fromSheetName: join?.from?.sheetName || current.primarySheetName,
+              fromColumnName: join?.from?.columnName || current.primaryLetterIdColumn || '',
+              toSheetName: join?.to?.sheetName || '',
+              toColumnName: columnName,
+            })
+          : join
+      )),
     }));
   };
 
@@ -820,6 +1045,11 @@ export function PeridotColumnMappingModal({
               workbookMapping={workbookMapping}
               onPrimarySheetChange={handleWorkbookPrimarySheetChange}
               onLetterIdChange={handleWorkbookLetterIdChange}
+              onAddJoin={handleAddWorkbookJoin}
+              onRemoveJoin={handleRemoveWorkbookJoin}
+              onJoinSheetChange={handleWorkbookJoinSheetChange}
+              onJoinPrimaryColumnChange={handleWorkbookJoinPrimaryColumnChange}
+              onJoinTargetColumnChange={handleWorkbookJoinTargetColumnChange}
             />
           ) : null}
 
