@@ -2727,7 +2727,7 @@ const PERIDOT_WORKSPACE_MODES = Object.freeze({
   EXPORT: 'export',
 });
 
-const DEFAULT_PERIDOT_WORKSPACE_MODE = PERIDOT_WORKSPACE_MODES.VISUALIZATIONS;
+const DEFAULT_PERIDOT_WORKSPACE_MODE = PERIDOT_WORKSPACE_MODES.HOME;
 
 const PERIDOT_WORKSPACE_MODE_VALUES = Object.freeze(Object.values(PERIDOT_WORKSPACE_MODES));
 
@@ -2741,21 +2741,236 @@ function resolvePeridotWorkspaceMode(nextMode, currentMode = DEFAULT_PERIDOT_WOR
 }
 
 
+function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
+  return (
+    <section className="flex h-full min-h-0 items-center justify-center overflow-auto bg-[radial-gradient(circle_at_top_left,rgba(245,237,216,0.22),transparent_34%),linear-gradient(135deg,var(--shell-bg),var(--panel-bg))] px-6 py-10 text-[var(--text-main)]">
+      <div className="w-full max-w-5xl rounded-[36px] border border-[var(--panel-card-border)]/80 bg-[var(--panel-card-bg)]/92 p-8 shadow-[0_28px_70px_rgba(0,0,0,0.34)] backdrop-blur-sm md:p-12">
+        <div className="max-w-3xl">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--accent)]">
+            Correspondence data exploration
+          </p>
+          <h1 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-5xl font-bold leading-tight tracking-[-0.04em] text-[var(--heading-text)] md:text-7xl">
+            Peridot
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--panel-card-muted-text)] md:text-xl">
+            Explore historical correspondence as maps, networks, timelines, charts, searchable records, and evidence dossiers. Start with your own data or open the built-in sample dataset.
+          </p>
+        </div>
+
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+          <button
+            type="button"
+            onClick={onUploadData}
+            className="group rounded-[28px] border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] p-6 text-left text-[var(--button-primary-text)] shadow-[0_18px_38px_rgba(0,0,0,0.28)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-[var(--button-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+          >
+            <span className="block text-sm font-semibold uppercase tracking-[0.18em] opacity-80">
+              Start with your corpus
+            </span>
+            <span className="mt-3 block text-2xl font-bold">Upload my data</span>
+            <span className="mt-3 block text-sm leading-6 opacity-85">
+              Open the Data workspace to download the template, upload a completed Peridot CSV, or map columns from CSV, TSV, XLSX, and XLS files.
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onUseSampleData}
+            className="group rounded-[28px] border border-[var(--section-border)] bg-[var(--section-bg)] p-6 text-left text-[var(--text-main)] shadow-[0_18px_38px_rgba(0,0,0,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-[var(--panel-card-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+          >
+            <span className="block text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+              Preview the workspace
+            </span>
+            <span className="mt-3 block text-2xl font-bold text-[var(--heading-text)]">Use sample data</span>
+            <span className="mt-3 block text-sm leading-6 text-[var(--panel-card-muted-text)]">
+              Enter the current visualization workspace with Peridot's embedded sample correspondence dataset already loaded.
+            </span>
+          </button>
+        </div>
+
+        <div className="mt-10 grid gap-4 text-sm leading-6 text-[var(--panel-card-muted-text)] md:grid-cols-3">
+          <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-4">
+            <strong className="block text-[var(--heading-text)]">Map and network views</strong>
+            Explore correspondence through places, people, and force-directed networks.
+          </div>
+          <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-4">
+            <strong className="block text-[var(--heading-text)]">Search and chart records</strong>
+            Filter, summarize, and visualize the active dataset through research-oriented controls.
+          </div>
+          <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-4">
+            <strong className="block text-[var(--heading-text)]">Inspect evidence</strong>
+            Move from visual patterns to linked people, places, routes, letters, and metadata.
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function PeridotDataWorkspace({
+  peridotFileLabel,
+  peridotValidationSummary,
+  columnMappingStaging,
+  handleDownloadPeridotTemplate,
+  handlePeridotCsvUpload,
+  handleColumnMappingTableUpload,
+  openColumnMappingModal,
+  clearColumnMappingStaging,
+  onOpenVisualizations,
+}) {
+  const popup = peridotValidationSummary?.popup || null;
+  const capabilityLines = popup?.capabilityLines || [];
+  const warningLines = popup?.warningLines || [];
+
+  return (
+    <section className="h-full overflow-auto bg-[linear-gradient(135deg,var(--shell-bg),var(--panel-bg))] px-6 py-8 text-[var(--text-main)]">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
+        <div className="rounded-[32px] border border-[var(--panel-card-border)]/80 bg-[var(--panel-card-bg)]/94 p-7 shadow-[0_22px_54px_rgba(0,0,0,0.28)]">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
+            Data workspace
+          </p>
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <h1 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-4xl font-bold tracking-[-0.03em] text-[var(--heading-text)] md:text-5xl">
+                Start with correspondence records
+              </h1>
+              <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--panel-card-muted-text)]">
+                Upload a completed Peridot CSV, or stage a CSV, TSV, XLSX, or XLS table for column mapping. Peridot accepts incomplete historical data and reports which records can support Inspector, map, timeline, Analytics, and export workflows.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onOpenVisualizations}
+              className="rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-3 text-sm font-semibold text-[var(--button-secondary-text)] transition hover:bg-[var(--button-secondary-hover)]"
+            >
+              Open visualizations
+            </button>
+          </div>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-[28px] border border-[var(--section-border)] bg-[var(--section-bg)] p-6 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+            <h2 className="text-2xl font-bold text-[var(--heading-text)]">Peridot CSV</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--panel-card-muted-text)]">
+              Use the standard Peridot template when each row represents one letter, document, or correspondence record.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleDownloadPeridotTemplate}
+                className="rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-secondary-text)] transition hover:bg-[var(--button-secondary-hover)]"
+              >
+                Download CSV template
+              </button>
+              <label className="cursor-pointer rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] transition hover:bg-[var(--button-primary-hover)]">
+                Upload completed CSV
+                <input type="file" accept=".csv,text/csv" onChange={handlePeridotCsvUpload} className="sr-only" />
+              </label>
+            </div>
+            <p className="mt-4 text-sm text-[var(--panel-card-muted-text)]">
+              Current source: <strong className="text-[var(--heading-text)]">{peridotFileLabel}</strong>
+            </p>
+          </div>
+
+          <div className="rounded-[28px] border border-[var(--section-border)] bg-[var(--section-bg)] p-6 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
+            <h2 className="text-2xl font-bold text-[var(--heading-text)]">Map your own table</h2>
+            <p className="mt-3 text-sm leading-6 text-[var(--panel-card-muted-text)]">
+              Stage an arbitrary CSV, TSV, XLSX, or XLS file, then map its columns to Peridot's core fields and optional Inspector/Analytics metadata.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <label className="cursor-pointer rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] transition hover:bg-[var(--button-primary-hover)]">
+                Upload table or workbook
+                <input type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values" onChange={handleColumnMappingTableUpload} className="sr-only" />
+              </label>
+              {columnMappingStaging ? (
+                <button
+                  type="button"
+                  onClick={clearColumnMappingStaging}
+                  className="rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-secondary-text)] transition hover:bg-[var(--button-secondary-hover)]"
+                >
+                  Clear staged table
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        {columnMappingStaging ? (
+          <div className="rounded-[28px] border border-[var(--panel-card-border)]/80 bg-[var(--panel-card-bg)] p-6 shadow-[0_16px_36px_rgba(0,0,0,0.2)]">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-[var(--heading-text)]">Table staged for mapping</h2>
+                <p className="mt-2 text-sm leading-6 text-[var(--panel-card-muted-text)]">
+                  {columnMappingStaging.fileLabel} is staged as {columnMappingStaging.fileType || 'a table'} with {columnMappingStaging.rowCount || 0} rows and {columnMappingStaging.columnCount || 0} columns.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={openColumnMappingModal}
+                disabled={columnMappingStaging.status !== 'ready'}
+                className="rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] transition hover:bg-[var(--button-primary-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Open mapping workspace
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {popup ? (
+          <div className="rounded-[28px] border border-[var(--panel-card-border)]/80 bg-[var(--panel-card-bg)] p-6 shadow-[0_16px_36px_rgba(0,0,0,0.2)]">
+            <h2 className="text-xl font-bold text-[var(--heading-text)]">{popup.title || 'Latest upload summary'}</h2>
+            {popup.intro ? (
+              <p className="mt-3 text-sm leading-6 text-[var(--panel-card-muted-text)]">{popup.intro}</p>
+            ) : null}
+            {capabilityLines.length ? (
+              <div className="mt-4">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">Visualization compatibility</h3>
+                <ul className="mt-2 space-y-1 text-sm leading-6 text-[var(--panel-card-muted-text)]">
+                  {capabilityLines.map((line) => (
+                    <li key={line}>• {line}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {warningLines.length ? (
+              <div className="mt-4 rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-4">
+                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]">Warnings</h3>
+                <ul className="mt-2 space-y-1 text-sm leading-6 text-[var(--panel-card-muted-text)]">
+                  {warningLines.map((line) => (
+                    <li key={line}>• {line}</li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function AppMainWorkspace({
   pageTitle,
   setPageTitle,
   mapStageProps,
   workspaceMode,
+  homeWorkspaceProps,
+  dataWorkspaceProps,
 }) {
   return (
     <main
       className="h-full xl:pl-16"
       data-peridot-workspace-mode={workspaceMode}
     >
-      <div className="flex h-full flex-col">
-        <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
-        <MapStage {...mapStageProps} />
-      </div>
+      {workspaceMode === PERIDOT_WORKSPACE_MODES.HOME ? (
+        <PeridotHomeWorkspace {...homeWorkspaceProps} />
+      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.DATA ? (
+        <PeridotDataWorkspace {...dataWorkspaceProps} />
+      ) : (
+        <div className="flex h-full flex-col">
+          <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
+          <MapStage {...mapStageProps} />
+        </div>
+      )}
     </main>
   );
 }
@@ -3694,7 +3909,7 @@ export default function EuropeNetworkMapApp() {
       observer.disconnect();
       window.removeEventListener('resize', updateSize);
     };
-  }, []);
+  }, [workspaceMode]);
 
   useEffect(() => {
     if (!hoverCard) return undefined;
@@ -3880,6 +4095,33 @@ export default function EuropeNetworkMapApp() {
     ),
   };
 
+  const openDataWorkspace = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.DATA);
+    setIsSidePanelOpen(false);
+  };
+
+  const openVisualizationsWorkspace = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    setIsSidePanelOpen(false);
+  };
+
+  const homeWorkspaceProps = {
+    onUploadData: openDataWorkspace,
+    onUseSampleData: openVisualizationsWorkspace,
+  };
+
+  const dataWorkspaceProps = {
+    peridotFileLabel,
+    peridotValidationSummary,
+    columnMappingStaging,
+    handleDownloadPeridotTemplate,
+    handlePeridotCsvUpload,
+    handleColumnMappingTableUpload,
+    openColumnMappingModal: () => setIsColumnMappingModalOpen(true),
+    clearColumnMappingStaging,
+    onOpenVisualizations: openVisualizationsWorkspace,
+  };
+
   return (
     <div className={museumShellClassName()} style={themeStyleVars}>
       <div className="relative h-full">
@@ -3910,6 +4152,8 @@ export default function EuropeNetworkMapApp() {
           setPageTitle={setPageTitle}
           mapStageProps={mapStageProps}
           workspaceMode={workspaceMode}
+          homeWorkspaceProps={homeWorkspaceProps}
+          dataWorkspaceProps={dataWorkspaceProps}
         />
       </div>
     </div>
