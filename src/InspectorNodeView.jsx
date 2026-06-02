@@ -412,7 +412,6 @@ export function InspectorNodeView({
         <DetailRow label="Weighted degree" value={selectedProps.degree} />
         <DetailRow label="Incident edges" value={selectedProps.incidentEdgeCount} />
         <DetailRow label="Linked letters" value={selectedProps.linkedLetterCount || profile.matchingLetters.length} />
-        <DetailRow label={entityType === 'place' ? 'Connected entities' : 'Correspondents'} value={(selectedProps.counterpartLabels || []).join('; ')} />
         <DetailRow label="Date span" value={[selectedProps.earliestDate, selectedProps.latestDate].filter(Boolean).join(' → ') || profile.dateSpan} />
         {selectedProps.anchorLabel ? <DetailRow label="Anchor location" value={selectedProps.anchorLabel} /> : null}
       </InspectorSummaryCardComponent>
