@@ -121,30 +121,59 @@ function getDateSpan(letters = []) {
   return `${dates[0]} → ${dates[dates.length - 1]}`;
 }
 
+function makeRoleSections(sourceTitle, sourceItems, targetTitle, targetItems) {
+  return [
+    { title: sourceTitle, items: sortCountMap(sourceItems).slice(0, 12) },
+    { title: targetTitle, items: sortCountMap(targetItems).slice(0, 12) },
+  ];
+}
+
+function sectionItemCount(sections = []) {
+  return sections.reduce((sum, section) => sum + (section.items?.length || 0), 0);
+}
+
 function buildEntityProfile(selectedProps, selectedLetterMetadata = [], viewMode) {
   const entityType = getSelectedEntityType(selectedProps, viewMode);
   const entityLabel = getSelectedEntityLabel(selectedProps);
+  const normalizedEntityLabel = normalizeComparable(entityLabel);
   const matchingLetters = selectedLetterMetadata.filter((letter) => letterMatchesSelectedEntity(letter, selectedProps, viewMode));
-  const relatedPeople = new Map();
-  const relatedPlaces = new Map();
   const routes = new Map();
+
+  const peopleWhenSource = new Map();
+  const peopleWhenTarget = new Map();
+  const placesWhenSource = new Map();
+  const placesWhenTarget = new Map();
 
   matchingLetters.forEach((letter) => {
     const sourcePerson = normalizeEntityText(letter.source || letter.sourcePerson);
     const targetPerson = normalizeEntityText(letter.target || letter.targetPerson);
     const sourcePlace = normalizeEntityText(letter.sourceLoc);
     const targetPlace = normalizeEntityText(letter.targetLoc);
+    const isSelectedSourcePerson = normalizeComparable(sourcePerson) === normalizedEntityLabel;
+    const isSelectedTargetPerson = normalizeComparable(targetPerson) === normalizedEntityLabel;
+    const isSelectedSourcePlace = normalizeComparable(sourcePlace) === normalizedEntityLabel;
+    const isSelectedTargetPlace = normalizeComparable(targetPlace) === normalizedEntityLabel;
 
     if (entityType === 'person') {
-      if (sourcePerson && normalizeComparable(sourcePerson) !== normalizeComparable(entityLabel)) countMapIncrement(relatedPeople, sourcePerson);
-      if (targetPerson && normalizeComparable(targetPerson) !== normalizeComparable(entityLabel)) countMapIncrement(relatedPeople, targetPerson);
-      countMapIncrement(relatedPlaces, sourcePlace);
-      countMapIncrement(relatedPlaces, targetPlace);
+      if (isSelectedSourcePerson) {
+        countMapIncrement(peopleWhenSource, targetPerson);
+        countMapIncrement(placesWhenSource, sourcePlace);
+      }
+
+      if (isSelectedTargetPerson) {
+        countMapIncrement(peopleWhenTarget, sourcePerson);
+        countMapIncrement(placesWhenTarget, targetPlace);
+      }
     } else {
-      countMapIncrement(relatedPeople, sourcePerson);
-      countMapIncrement(relatedPeople, targetPerson);
-      if (sourcePlace && normalizeComparable(sourcePlace) !== normalizeComparable(entityLabel)) countMapIncrement(relatedPlaces, sourcePlace);
-      if (targetPlace && normalizeComparable(targetPlace) !== normalizeComparable(entityLabel)) countMapIncrement(relatedPlaces, targetPlace);
+      if (isSelectedSourcePlace) {
+        countMapIncrement(peopleWhenSource, sourcePerson);
+        if (targetPlace && normalizeComparable(targetPlace) !== normalizedEntityLabel) countMapIncrement(placesWhenSource, targetPlace);
+      }
+
+      if (isSelectedTargetPlace) {
+        countMapIncrement(peopleWhenTarget, targetPerson);
+        if (sourcePlace && normalizeComparable(sourcePlace) !== normalizedEntityLabel) countMapIncrement(placesWhenTarget, sourcePlace);
+      }
     }
 
     if (sourcePlace || targetPlace) {
@@ -153,13 +182,22 @@ function buildEntityProfile(selectedProps, selectedLetterMetadata = [], viewMode
     }
   });
 
+  const relatedPeopleSections = entityType === 'person'
+    ? makeRoleSections('When this person is source', peopleWhenSource, 'When this person is target', peopleWhenTarget)
+    : makeRoleSections('When this place is source', peopleWhenSource, 'When this place is target', peopleWhenTarget);
+  const relatedPlacesSections = entityType === 'person'
+    ? makeRoleSections('Source-side places', placesWhenSource, 'Target-side places', placesWhenTarget)
+    : makeRoleSections('Routes from this place', placesWhenSource, 'Routes to this place', placesWhenTarget);
+
   return {
     entityType,
     entityLabel,
     matchingLetters,
     dateSpan: getDateSpan(matchingLetters),
-    relatedPeople: sortCountMap(relatedPeople).slice(0, 12),
-    relatedPlaces: sortCountMap(relatedPlaces).slice(0, 12),
+    relatedPeopleSections,
+    relatedPlacesSections,
+    relatedPeopleCount: sectionItemCount(relatedPeopleSections),
+    relatedPlacesCount: sectionItemCount(relatedPlacesSections),
     routes: sortCountMap(routes).slice(0, 12),
     dateCount: getUniqueDates(matchingLetters).length,
   };
@@ -208,6 +246,60 @@ function CountListCard({ title, description, items, emptyMessage, onOpenItem }) 
   );
 }
 
+function CountSectionCard({ title, description, sections, emptyMessage, onOpenItem }) {
+  const populatedSections = (sections || []).filter((section) => section.items?.length);
+
+  if (!populatedSections.length) {
+    return (
+      <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 text-sm text-[var(--panel-card-muted-text)] shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+        <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">{title}</div>
+        <div className="mt-2">{emptyMessage}</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+      <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">{title}</div>
+      {description ? <div className="mt-1 text-xs text-[var(--panel-card-muted-text)]">{description}</div> : null}
+      <div className="mt-3 space-y-4">
+        {populatedSections.map((section) => (
+          <div key={section.title}>
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--detail-label-text)]">
+              {section.title}
+            </div>
+            <div className="space-y-2">
+              {section.items.map((item) => {
+                const content = (
+                  <div className="flex items-start justify-between gap-3 rounded-xl border border-[var(--section-border)]/70 bg-[var(--section-bg)]/70 px-3 py-2 text-sm">
+                    <span className="break-words text-[var(--panel-card-text)]">{item.label}</span>
+                    <span className="shrink-0 rounded-full bg-[var(--stat-card-bg)] px-2 py-0.5 text-[11px] text-[var(--panel-card-muted-text)]">
+                      {item.count}
+                    </span>
+                  </div>
+                );
+
+                return onOpenItem ? (
+                  <button
+                    type="button"
+                    key={`${section.title}:${item.label}`}
+                    onClick={() => onOpenItem(item.label)}
+                    className="block w-full text-left transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div key={`${section.title}:${item.label}`}>{content}</div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function EntityProfileSummaryCard({ selectedProps, selectedLetterMetadata, viewMode }) {
   const profile = buildEntityProfile(selectedProps, selectedLetterMetadata, viewMode);
 
@@ -220,8 +312,8 @@ function EntityProfileSummaryCard({ selectedProps, selectedLetterMetadata, viewM
         <DetailRow label="Linked letters" value={profile.matchingLetters.length || selectedProps?.linkedLetterCount} />
         <DetailRow label="Date span" value={profile.dateSpan || [selectedProps?.earliestDate, selectedProps?.latestDate].filter(Boolean).join(' → ')} />
         <DetailRow label="Distinct dates" value={profile.dateCount} />
-        <DetailRow label="Related people" value={profile.relatedPeople.length} />
-        <DetailRow label="Related places" value={profile.relatedPlaces.length} />
+        <DetailRow label="Related people" value={profile.relatedPeopleCount} />
+        <DetailRow label="Related places" value={profile.relatedPlacesCount} />
         <DetailRow label="Routes represented" value={profile.routes.length} />
       </div>
     </div>
@@ -311,11 +403,6 @@ export function InspectorNodeView({
         <DetailRow label={entityType === 'place' ? 'Connected entities' : 'Correspondents'} value={(selectedProps.counterpartLabels || []).join('; ')} />
         <DetailRow label="Date span" value={[selectedProps.earliestDate, selectedProps.latestDate].filter(Boolean).join(' → ') || profile.dateSpan} />
         {selectedProps.anchorLabel ? <DetailRow label="Anchor location" value={selectedProps.anchorLabel} /> : null}
-        {entityType === 'person' && selectedProps.personMetadata ? (
-          <PersonMetadataCardComponent selectedProps={selectedProps} />
-        ) : entityType === 'person' ? (
-          <MissingPersonMetadataCardComponent />
-        ) : null}
       </InspectorSummaryCardComponent>
 
       <EntityProfileSummaryCard
@@ -324,18 +411,18 @@ export function InspectorNodeView({
         viewMode={viewMode}
       />
 
-      <CountListCard
+      <CountSectionCard
         title="Related people"
-        description="Exact names appearing in linked records with this profile."
-        items={profile.relatedPeople}
+        description="Exact names appearing in linked records, grouped by whether this profile appears on the source or target side."
+        sections={profile.relatedPeopleSections}
         emptyMessage="No related people were found in linked records for this profile."
         onOpenItem={onOpenPersonDetail}
       />
 
-      <CountListCard
+      <CountSectionCard
         title="Related places"
-        description="Exact place labels appearing in linked records with this profile."
-        items={profile.relatedPlaces}
+        description="Exact place labels appearing in linked records, grouped by source-side and target-side role."
+        sections={profile.relatedPlacesSections}
         emptyMessage="No related places were found in linked records for this profile."
         onOpenItem={onOpenPlaceDetail}
       />
@@ -352,21 +439,6 @@ export function InspectorNodeView({
         selectedLetterMetadata={selectedLetterMetadata}
         viewMode={viewMode}
       />
-
-      {entityType === 'person' ? (
-        <InspectorConnectedCorrespondentsComponent
-          names={selectedProps.counterpartLabels || []}
-          onOpenPerson={onOpenPersonDetail}
-        />
-      ) : null}
-
-      {entityType === 'person' ? (
-        <InspectorPersonPlacesComponent
-          sentPlaces={selectedProps.sentPlaceLabels || []}
-          receivedPlaces={selectedProps.receivedPlaceLabels || []}
-          onOpenPlace={onOpenPlaceDetail}
-        />
-      ) : null}
 
       <InspectorClearSelectionButtonComponent onClear={clearSelection} />
 
