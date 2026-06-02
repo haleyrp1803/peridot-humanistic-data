@@ -15,6 +15,7 @@ function buttonClassName({ active = false, variant = 'secondary' } = {}) {
     primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_rgba(0,0,0,0.28)]',
     secondary: 'border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]',
     ghost: 'bg-transparent text-[var(--muted-text)] hover:bg-[var(--ghost-hover)] hover:text-[var(--text-main)]',
+    danger: 'border border-red-300/50 bg-red-950/40 text-red-100 hover:bg-red-900/50',
   };
 
   if (active) {
@@ -310,12 +311,14 @@ export function PeridotColumnMappingModal({
   const [activeStep, setActiveStep] = useState('preview');
   const [coreMapping, setCoreMapping] = useState(mappingState.coreMapping || {});
   const [customFieldSelections, setCustomFieldSelections] = useState(mappingState.customFieldSelections || []);
+  const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
   useEffect(() => {
     if (!open || !staging) return;
     setActiveStep('preview');
     setCoreMapping(mappingState.coreMapping || {});
     setCustomFieldSelections(mappingState.customFieldSelections || []);
+    setShowCancelConfirmation(false);
   }, [open, staging?.stagedAt]);
 
   const effectiveCustomSelections = useMemo(() => {
@@ -388,8 +391,16 @@ export function PeridotColumnMappingModal({
     validationSummary,
   });
 
-  const handleSave = () => {
-    onSaveMapping?.(buildCurrentMappingPayload());
+  const handleRequestCancel = () => {
+    setShowCancelConfirmation(true);
+  };
+
+  const handleReturnToWorkspace = () => {
+    setShowCancelConfirmation(false);
+  };
+
+  const handleConfirmCancel = () => {
+    setShowCancelConfirmation(false);
     onClose?.();
   };
 
@@ -422,8 +433,8 @@ export function PeridotColumnMappingModal({
               {staging.fileLabel} staged as {staging.fileType}. This workspace is intentionally outside the left panel so the mapping table has room to be reviewed.
             </p>
           </div>
-          <button type="button" onClick={onClose} className={buttonClassName({ variant: 'secondary' })}>
-            Close
+          <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
+            Cancel
           </button>
         </div>
 
@@ -500,9 +511,12 @@ export function PeridotColumnMappingModal({
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
           <p className="max-w-2xl text-sm text-[var(--panel-card-muted-text)]">
-            Review the mapped rows and warnings before importing. Confirming import will replace the active Peridot dataset with this mapped table.
+            Closing keeps the staged file available in Data Inputs but does not change the active dataset. Confirm import replaces the active Peridot dataset with this mapped table.
           </p>
           <div className="flex flex-wrap gap-2">
+            <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
+              Cancel
+            </button>
             <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>
               Back
             </button>
@@ -511,18 +525,35 @@ export function PeridotColumnMappingModal({
                 Next
               </button>
             ) : (
-              <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={handleSave} className={buttonClassName({ variant: 'secondary' })}>
-                  Save choices
-                </button>
-                <button type="button" onClick={handleConfirmImport} className={buttonClassName({ variant: 'primary' })}>
-                  Confirm import
-                </button>
-              </div>
+              <button type="button" onClick={handleConfirmImport} className={buttonClassName({ variant: 'primary' })}>
+                Confirm import
+              </button>
             )}
           </div>
         </div>
       </div>
+
+      {showCancelConfirmation ? (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[24px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] p-6 text-[var(--text-main)] shadow-[0_24px_70px_rgba(0,0,0,0.55)]">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Cancel import setup</div>
+            <h3 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] mt-2 text-xl font-bold text-[var(--heading-text)]">
+              Are you sure you want to cancel?
+            </h3>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+              Your staged file will remain available in Data Inputs, but this workspace will close and the active Peridot dataset will not change.
+            </p>
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button type="button" onClick={handleReturnToWorkspace} className={buttonClassName({ variant: 'secondary' })}>
+                No, take me back.
+              </button>
+              <button type="button" onClick={handleConfirmCancel} className={buttonClassName({ variant: 'danger' })}>
+                Yes, cancel.
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
