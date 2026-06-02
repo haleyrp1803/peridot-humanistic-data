@@ -46,6 +46,7 @@ import { normalizePeridotTemplateRows } from './peridotCsvNormalizer.js';
 import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
 import { applyPeridotColumnMapping, buildInitialPeridotColumnMappingState } from './peridotColumnMapping.js';
 import { parsePeridotTableFile, summarizePeridotWorkbook } from './peridotWorkbookParsing.js';
+import { buildInitialPeridotWorkbookMappingState } from './peridotWorkbookMapping.js';
 import { PeridotColumnMappingModal } from './PeridotColumnMappingModal.jsx';
 
 
@@ -3084,8 +3085,37 @@ export default function EuropeNetworkMapApp() {
     if (!file) return;
 
     const fileLabel = file.name || 'Uploaded table';
+    const lowerName = fileLabel.toLowerCase();
+    const displayFileType = lowerName.endsWith('.tsv')
+      ? 'TSV'
+      : lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')
+        ? 'Excel workbook'
+        : 'CSV';
+
+    setIsColumnMappingModalOpen(false);
+    setColumnMappingStaging({
+      status: 'parsing',
+      fileLabel,
+      fileType: displayFileType,
+      rowCount: 0,
+      columnCount: 0,
+      sheetCount: 0,
+      sheets: [],
+      headers: [],
+      rows: [],
+      previewRows: [],
+      mappingState: null,
+      workbookModel: null,
+      workbookSummary: null,
+      stagedAt: new Date().toLocaleTimeString(),
+      statusMessage: 'Reading workbook structure. Large Excel files may take a moment.',
+    });
 
     try {
+      // Let React paint the parsing state before the synchronous workbook parser
+      // does heavier Excel work on the main thread.
+      await new Promise((resolve) => window.requestAnimationFrame(resolve));
+
       const workbookModel = await parsePeridotTableFile(file);
       const workbookSummary = summarizePeridotWorkbook(workbookModel);
 
@@ -3098,9 +3128,10 @@ export default function EuropeNetworkMapApp() {
       const isSingleSheetWorkbook = usableSheets.length === 1;
       const canUseCurrentSingleTableMapper = Boolean(primarySheet && isSingleSheetWorkbook);
 
+      const isMultiSheetWorkbook = usableSheets.length > 1;
       const mappingState = canUseCurrentSingleTableMapper
         ? buildInitialPeridotColumnMappingState(primarySheet.headers || [], primarySheet.rows || [])
-        : null;
+        : buildInitialPeridotWorkbookMappingState(workbookModel);
 
       setColumnMappingStaging({
         status: 'ready',
@@ -3122,21 +3153,20 @@ export default function EuropeNetworkMapApp() {
         rows: canUseCurrentSingleTableMapper ? primarySheet.rows || [] : [],
         previewRows: primarySheet?.previewRows || [],
         mappingState,
+        mappingMode: isMultiSheetWorkbook ? 'workbook' : 'single-table',
         stagedAt: new Date().toLocaleTimeString(),
-        multiSheetWorkbook: usableSheets.length > 1,
-        workbookMappingRequired: usableSheets.length > 1,
-        workbookMappingMessage: usableSheets.length > 1
-          ? 'This workbook has multiple usable sheets. Peridot has staged the workbook summary, but multi-sheet mapping with Letter_ID joins will be wired in the next Excel pass.'
+        multiSheetWorkbook: isMultiSheetWorkbook,
+        workbookMappingRequired: isMultiSheetWorkbook,
+        workbookMappingMessage: isMultiSheetWorkbook
+          ? 'This workbook has multiple usable sheets. You can now open the workbook mapping workspace to choose a primary record sheet, select a Letter_ID column, and preview Sheet + Column mappings. Multi-sheet import will be wired in the next pass.'
           : '',
       });
-      setIsColumnMappingModalOpen(canUseCurrentSingleTableMapper);
+      setIsColumnMappingModalOpen(Boolean(mappingState));
     } catch (error) {
-      const lowerName = fileLabel.toLowerCase();
-
       setColumnMappingStaging({
         status: 'error',
         fileLabel,
-        fileType: lowerName.endsWith('.tsv') ? 'TSV' : lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls') ? 'Excel' : 'CSV',
+        fileType: displayFileType,
         rowCount: 0,
         columnCount: 0,
         sheetCount: 0,
@@ -3156,9 +3186,19 @@ export default function EuropeNetworkMapApp() {
     }
   };
 
-  const handleSaveColumnMappingState = ({ coreMapping, customFieldSelections, validationSummary } = {}) => {
+  const handleSaveColumnMappingState = ({ coreMapping, customFieldSelections, validationSummary, workbookMappingState, workbookValidation, workbookSummary } = {}) => {
     setColumnMappingStaging((current) => {
       if (!current || current.status !== 'ready') return current;
+
+      if (workbookMappingState) {
+        return {
+          ...current,
+          mappingState: workbookMappingState,
+          workbookMappingValidation: workbookValidation || current.workbookMappingValidation || null,
+          workbookMappingSummary: workbookSummary || current.workbookMappingSummary || null,
+          savedMappingAt: new Date().toLocaleTimeString(),
+        };
+      }
 
       return {
         ...current,

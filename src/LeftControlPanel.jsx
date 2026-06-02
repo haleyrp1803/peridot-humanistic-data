@@ -1271,7 +1271,25 @@ function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
   const workbookSummary = staging.workbookSummary || null;
   const workbookWarnings = workbookSummary?.warnings || [];
   const sheetSummaries = staging.sheets || workbookSummary?.sheets || [];
-  const canOpenMapping = staging.status === 'ready' && Boolean(staging.mappingState) && !staging.workbookMappingRequired;
+  const canOpenMapping = staging.status === 'ready' && Boolean(staging.mappingState);
+
+  if (staging.status === 'parsing') {
+    return (
+      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.2)]">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="font-semibold text-[var(--panel-card-text)]">Reading workbook</div>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+              {staging.fileLabel} is being parsed. Large Excel files may take a moment. No active Peridot data has changed.
+            </p>
+          </div>
+          <span className="rounded-full border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stat-card-text)]">
+            Parsing
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   if (staging.status === 'error') {
     return (
@@ -1356,7 +1374,7 @@ function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
             {coreDefinitions.map((definition) => (
               <div key={definition.key} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2">
                 <span className="font-medium text-[var(--panel-card-text)]">{definition.key}</span>
-                <span>{coreMapping[definition.key] || 'Unassigned'}</span>
+                <span>{coreMapping[definition.key]?.sheetName && coreMapping[definition.key]?.columnName ? `${coreMapping[definition.key].sheetName} → ${coreMapping[definition.key].columnName}` : coreMapping[definition.key] || 'Unassigned'}</span>
               </div>
             ))}
           </div>
@@ -1406,7 +1424,7 @@ function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
       ) : null}
 
       <p className="mt-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Single-sheet CSV, TSV, XLSX, and XLS files can use the current mapping workspace. Multi-sheet Excel workbooks are staged here first; Letter_ID-based workbook mapping will be wired in the next Excel pass.
+        Single-sheet CSV, TSV, XLSX, and XLS files can use the current mapping workspace. Multi-sheet Excel workbooks now open in a preview-only workbook mapping workspace; final Letter_ID-based import will be wired in the next Excel pass.
       </p>
     </div>
   );
