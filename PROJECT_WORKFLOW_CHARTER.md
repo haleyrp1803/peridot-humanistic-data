@@ -79,7 +79,7 @@ Current fragile zones include:
 - Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
 - Analytics SVG-to-PNG export rendering
-- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV column mapping, workbook parsing helper behavior, validation summary behavior, and legacy upload cleanup
+- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV column mapping, workbook parsing and mapping behavior, unique-ID join configuration, validation summary behavior, and legacy upload cleanup
 
 ---
 
@@ -267,7 +267,11 @@ Current notable decisions:
 - Peridot should not clean, standardize, merge, or enforce controlled vocabularies for uploaded names, places, dates, topics, relationships, languages, titles, notes, or links. Users are responsible for standardization outside the app.
 - Arbitrary CSV/TSV imports should use an explicit user-confirmed column-mapping workflow rather than silent guessing.
 - Core mapped Peridot variables should remain limited to Date, Source_Name, Target_Name, Source_Location, Source_Latitude, Source_Longitude, Target_Location, Target_Latitude, and Target_Longitude. Other uploaded columns should be preserved as optional metadata, with user-selected fields available for Inspector and suitable Analytics visualizations.
-- Workbook parsing should be treated as a helper boundary until the current source confirms full Excel UI wiring.
+- Workbook parsing is now connected to a workbook-aware import path for CSV, TSV, XLSX, and XLS.
+- Multi-sheet workbook imports should use user-configured unique-ID joins. Header names for ID columns do not have to match, and row-order joining should not be used as the primary strategy.
+- Users may select custom Inspector/Analytics fields from primary and joined workbook sheets.
+- Person/place profile views should aggregate linked-record information and display related people, related places, directed routes, date spans, linked letters, and selected uploaded fields where available.
+- Linked letters should open as dedicated Inspector detail views rather than long inline expansions.
 - The ordinary legacy Geography / Raw Data / Person Metadata three-file workflow is superseded by the one-file template upload and mapped arbitrary-table import workflows; do not reintroduce it unless a specific recovery or compatibility need is identified.
 
 ---
@@ -328,12 +332,16 @@ Committed Data Inputs behavior includes:
 - post-upload validation popup;
 - persistent latest-upload summary in the Data Inputs panel after the popup closes;
 - capability reporting for Inspector, People view, place relationships, map readiness, timeline readiness, Analytics, and Export;
-- public legacy Geography / Raw Data / Person Metadata upload controls superseded by the one-file and mapped-import workflows.
+- public legacy Geography / Raw Data / Person Metadata upload controls superseded by the one-file and mapped-import workflows;
+- workbook parsing, mapping, unique-ID joins, and import assembly for XLSX/XLS workbooks;
+- selected workbook custom fields visible in linked-letter and entity-profile Inspector views.
 
 Future Data Inputs changes should explicitly test:
 
 - template download works;
 - uploading a valid template CSV updates the app data;
+- uploading a workbook stages sheets without freezing on reasonably sized files;
+- workbook mapping can configure primary sheet, unique-ID joins, core field mapping, and selected Inspector fields;
 - upload summary popup appears;
 - closing the popup does not erase the persistent side-panel summary;
 - rows lacking coordinates are not silently discarded if otherwise accepted;
@@ -424,5 +432,6 @@ The new chat should be told:
 - Avoid brittle snippet-based patching unless the full file has been reviewed and the edit is clearly unambiguous.
 - When the user uploads source files after being asked for current files, treat the most recent uploads as authoritative for that pass unless told otherwise.
 - Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout.
-- Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, a workbook parsing helper, validation popup, and persistent latest-upload summary.
+- Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, workbook import with unique-ID joins, validation popup, and persistent latest-upload summary.
 - Analytics expanded chart views currently use a dark translucent green backdrop with cool off-white text/borders and a white/cream chart card.
+- Inspector person/place profiles currently show profile summaries, role-grouped related people/places, directed route summaries, selected uploaded fields, and linked-letter detail navigation.

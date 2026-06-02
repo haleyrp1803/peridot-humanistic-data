@@ -22,12 +22,17 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`4d11cb3` — `Add Peridot workbook parsing helper`**
+- **`0f72182` — `Remove redundant Inspector correspondents summary row`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, standardized one-file Peridot CSV upload workflow, arbitrary CSV/TSV column-mapping import path, removal of the public legacy three-file upload workflow, and the first workbook parsing helper. Data Inputs now foregrounds one public Peridot CSV template path plus mapped arbitrary-table import.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, standardized one-file Peridot CSV upload workflow, arbitrary CSV/TSV column-mapping import path, removal of the public legacy three-file upload workflow, and the full workbook/Excel import support and Inspector person/place profile refinements. Data Inputs now foregrounds one public Peridot CSV template path plus mapped arbitrary-table import.
 
 Preceding data-input milestones include:
 
+- **`9c8971b` — `Display custom Inspector fields in linked letters`**
+- **`5f25322` — `Select custom Inspector fields from joined workbook sheets`**
+- **`964ce57` — `Import multi-sheet workbooks by unique ID joins`**
+- **`ac31c38` — `Configure workbook sheet joins by unique ID`**
+- **`77b1575` — `Preview multi-sheet workbook mapping`**
 - **`d270c9d` — `Import mapped arbitrary CSV and TSV data`**
 - **`a058730` — `Add Peridot column mapping workspace`**
 - **`cbc35d0` — `Add single Peridot CSV upload workflow`**
@@ -90,6 +95,7 @@ Extracted support modules in `src/`:
 - `src/peridotCsvNormalizer.js`
 - `src/peridotCsvValidation.js`
 - `src/peridotColumnMapping.js`
+- `src/peridotWorkbookMapping.js`
 - `src/peridotWorkbookParsing.js`
 - `src/MapLibreMapStage.jsx` — dormant gated preview path inherited from `main`
 - `src/mapStyleConfig.js` — dormant MapLibre preview style config
@@ -117,7 +123,8 @@ The app includes:
 
 - standardized one-file Peridot CSV ingestion
 - arbitrary CSV/TSV column mapping and mapped import
-- workbook parsing helper for the planned Excel path
+- workbook/Excel mapping with multi-sheet unique-ID joins
+- workbook/Excel parser and workbook-aware mapping/import path
 - database-first handling of messy/incomplete historical records
 - graph derivation
 - interactive SVG-based rendering
@@ -133,12 +140,12 @@ The main maintenance challenge remains structural concentration in `src/App.jsx`
 
 ### Data input architecture
 
-The public Data Inputs workflow now includes the Peridot template CSV path and arbitrary CSV/TSV column mapping:
+The public Data Inputs workflow now includes the Peridot template CSV path, arbitrary CSV/TSV column mapping, and workbook-aware Excel import:
 
 ```text
-Peridot template CSV or arbitrary CSV/TSV
-→ parsed/staged rows
-→ template normalization or user-confirmed column mapping
+Peridot template CSV, arbitrary CSV/TSV, or XLSX/XLS workbook
+→ parsed/staged rows or workbook sheets
+→ template normalization, user-confirmed column mapping, or workbook mapping with unique-ID joins
 → schema/capability checks
 → normalized geography rows / letter metadata / person metadata / places / selected custom metadata
 → active app data
@@ -272,15 +279,19 @@ Owns pure post-upload validation summaries. It produces:
 
 ### `src/PeridotColumnMappingModal.jsx`
 
-Owns the large column-mapping workspace for arbitrary CSV/TSV imports. It presents Peridot core fields, source-column selections, user-confirmed mappings, and optional custom metadata selection for Inspector/Analytics use.
+Owns the large column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports. It presents Peridot core fields, source-column selections, user-confirmed mappings, optional custom metadata selection for Inspector/Analytics use, workbook primary-sheet selection, multi-sheet unique-ID joins, workbook core mappings, and custom field selection from joined workbook sheets.
 
 ### `src/peridotColumnMapping.js`
 
 Owns helper logic for arbitrary table column mapping, including common-name suggestions, core-field mapping rules, and selected custom metadata handling. Core Peridot fields remain limited to Date, source/target person names, source/target place names, and source/target coordinates; other mapped columns are treated as optional metadata rather than graph-driving core fields.
 
+### `src/peridotWorkbookMapping.js`
+
+Owns workbook-aware mapping and import assembly helpers. It models primary record sheets, sheet/column references, arbitrary unique-ID joins, workbook validation, joined-row context construction, Peridot-shaped row assembly, and selected custom Inspector field handling from primary and joined sheets.
+
 ### `src/peridotWorkbookParsing.js`
 
-Owns workbook parsing helper logic for the planned Excel import path. Treat this as a helper boundary and verify current UI wiring before assuming full Excel import behavior in a future pass.
+Owns workbook parsing helper logic for CSV, TSV, XLSX, and XLS inputs. It isolates the `xlsx` dependency, parses all sheets into a shared workbook model, ignores formatting/merged-cell styling, and reads saved/displayed cell values only.
 
 ### `src/AnalyticsPanel.jsx`
 
@@ -326,7 +337,7 @@ Owns the edge inspector state boundary.
 
 ### `src/InspectorNodeView.jsx`
 
-Owns the node / person-detail / place-detail inspector boundary.
+Owns the node / person-detail / place-detail inspector boundary. It now renders richer person/place profile summaries, role-grouped related people/places, directed route summaries, selected user-uploaded fields, and linked-record navigation entry points.
 
 ### `src/mapLayoutHelpers.js`
 
@@ -412,6 +423,7 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - primary one-file Peridot CSV upload workflow
 - arbitrary CSV/TSV column-mapping workflow
+- XLSX/XLS workbook staging, mapping, unique-ID joins, and import assembly
 - downloadable CSV template
 - database-first permissive upload model
 - upload validation popup
@@ -438,7 +450,8 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - hover and click inspection
 - linked records browsing
-- internal navigation between people and places
+- dedicated linked-letter detail pages inside Inspector
+- internal navigation between people, places, and linked letters
 - Back button support for inspector-internal navigation
 - actionable cluster inspector views
 - cluster members grouped by place and ordered by visible volume
@@ -482,6 +495,39 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - higher-contrast shared chart hover tooltips
 - expanded chart overlay over the map area with dark green translucent backdrop, cool off-white text/borders, preserved blur, and white/cream chart card
 - PNG chart export
+
+---
+
+
+## Workbook import contract
+
+Peridot supports `.csv`, `.tsv`, `.xlsx`, and `.xls` imports through the Data Inputs workflow.
+
+For workbook imports:
+
+- CSV/TSV files are represented internally as one-sheet workbooks.
+- Excel workbooks expose all usable sheets.
+- Users choose a primary record sheet.
+- Users can add multiple joined sheets.
+- Users choose the primary-sheet unique-ID column and the joined-sheet unique-ID column for each join.
+- Header names for unique-ID columns do not need to match.
+- The user-confirmed join configuration is authoritative.
+- Core Peridot fields can be mapped from any sheet available in the joined row context.
+- Custom Inspector/Analytics fields can be selected from the primary and joined sheets.
+- Person and place names can act as exact-match keys, but Peridot does not normalize variants.
+
+The workbook import path should continue to avoid row-order joining as the primary strategy. If multiple sheets are assembled into letter-level records, use explicit user-confirmed unique-ID joins.
+
+Future workbook work should explicitly test:
+
+- upload does not freeze the app on reasonably sized workbooks;
+- workbook summary appears;
+- primary sheet can be changed;
+- multiple joined sheets can be added;
+- unique-ID match summaries update;
+- core mappings can use joined-sheet columns;
+- selected custom fields from joined sheets appear in linked-letter Inspector detail;
+- imported rows still validate through the existing Peridot validation summary.
 
 ---
 
@@ -716,7 +762,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`4d11cb3` — `Add Peridot workbook parsing helper`**
+- current documented baseline: **`0f72182` — `Remove redundant Inspector correspondents summary row`**
 
 A future chat should also be told that:
 
@@ -727,10 +773,10 @@ A future chat should also be told that:
 - `InspectorPanel.jsx` is content-only
 - `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Search & Filter/Export/Timeline/Analytics/Inspector panel views
 - `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, `peridotCsvValidation.js`, `peridotColumnMapping.js`, `PeridotColumnMappingModal.jsx`, and `peridotWorkbookParsing.js` own the current template upload, arbitrary table mapping, validation, and workbook-helper boundaries
-- current cluster features are committed, not deferred
+- current cluster and Inspector profile features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
 - documentation should preserve the full commit trajectory carefully in `CHANGELOG.md`
 - the implemented Search & Filter panel consolidates global filtering and defines the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it
 - Search & Filter currently uses a compact advanced-search layout with current applied scope at the top
-- Data Inputs currently uses a one-file Peridot CSV workflow with a downloadable template, validation popup, and persistent upload summary
+- Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV mapping, workbook import with unique-ID joins, downloadable template, validation popup, and persistent upload summary
 - Analytics currently uses higher-contrast tooltips and a dark green translucent expanded-view backdrop

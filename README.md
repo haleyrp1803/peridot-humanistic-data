@@ -8,7 +8,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, Analytics charting, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector, a standardized single-CSV upload workflow with a downloadable template and validation summary, an arbitrary CSV/TSV column-mapping workflow, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, compact and expanded chart views, and image/tabular export tools.
+The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, Analytics charting, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector, a standardized single-CSV upload workflow with a downloadable template and validation summary, an arbitrary CSV/TSV/Excel workbook-mapping workflow, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, compact and expanded chart views, and image/tabular export tools.
 
 ---
 
@@ -18,9 +18,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`4d11cb3` — `Add Peridot workbook parsing helper`** on branch **`main`**
+- **`0f72182` — `Remove redundant Inspector correspondents summary row`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, and the standardized one-file Peridot CSV upload workflow, arbitrary CSV/TSV column mapping/import, and workbook parsing helper. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, and the standardized one-file Peridot CSV upload workflow, arbitrary CSV/TSV column mapping/import, full workbook import support, and Inspector profile/navigation refinement. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -35,7 +35,8 @@ The current state of the active `main` project includes:
 - a standardized one-file **Peridot CSV** upload workflow in Data Inputs
 - a downloadable CSV template using the current public Peridot column names
 - an arbitrary CSV/TSV column-mapping workflow for non-template tables
-- a workbook parsing helper for the planned Excel import path
+- workbook import support for `.xlsx` and `.xls` files
+- multi-sheet workbook mapping with user-configured unique-ID joins
 - upload validation that reports which records are Inspector-ready, People-network-ready, Place-network-ready, Map-ready, Timeline-ready, Analytics-ready, and Export-ready
 - a validation popup plus a persistent latest-upload summary in the Data Inputs panel
 - legacy Geography / Raw Data / Person Metadata upload controls removed from the ordinary public workflow after the one-file and mapped-import direction became active
@@ -49,7 +50,8 @@ The current state of the active `main` project includes:
 - an Analytics side-panel tab with compact chart previews, expanded chart overlay, PNG chart export, dynamic variable controls, and multiple chart types
 - a true pre-settled **force-directed person-network layout** backed by `d3-force`
 - a **geographic-anchor person layout** that places correspondents by mappable location
-- inspector-internal navigation between people and places
+- inspector-internal navigation between people, places, and linked-letter detail pages
+- rich person/place profile summaries with related people, related places, directed routes, linked-letter counts, and selected uploaded fields
 - a working inspector **Back** button for internal navigation
 
 The codebase is functional, but it is still under active maintenance. The largest remaining structural issue is that important orchestration logic still lives in `src/App.jsx`, even though panel, inspector, map, timeline, interaction, export, Analytics, and upload-schema logic have been substantially extracted.
@@ -223,6 +225,7 @@ This project currently uses:
 - **d3-force** for pre-settled force-directed person-network layout
 - **topojson-client** for geographic feature handling
 - **world-atlas** for world basemap data
+- **xlsx / SheetJS** for client-side Excel workbook parsing
 
 The normal production map-stage rendering logic is SVG-based, with exported SVG optionally rasterized to PNG during export workflows.
 
@@ -265,6 +268,7 @@ src/
   peridotCsvSchema.js
   peridotCsvValidation.js
   peridotColumnMapping.js
+  peridotWorkbookMapping.js
   peridotWorkbookParsing.js
   personForceLayoutHelpers.js
   timelinePlaybackComponents.jsx
@@ -291,15 +295,19 @@ Owns the shared side-panel shell and persistent icon rail. It renders the rail-d
 
 #### `src/PeridotColumnMappingModal.jsx`
 
-Large column-mapping workspace for arbitrary CSV/TSV imports. It lets users map uploaded source columns to Peridot core fields and choose additional custom fields for Inspector/Analytics use.
+Large column/workbook-mapping workspace for arbitrary CSV/TSV/Excel imports. It lets users map uploaded source columns to Peridot core fields, configure multi-sheet workbook joins by unique ID, and choose additional custom fields from primary and joined sheets for Inspector/Analytics use.
 
 #### `src/peridotColumnMapping.js`
 
 Column-mapping helper module for arbitrary uploaded tables. It supports suggested mappings, core-field mapping rules, and preservation of user-selected custom metadata fields.
 
+#### `src/peridotWorkbookMapping.js`
+
+Workbook-aware mapping helper for primary record sheet selection, sheet/column references, arbitrary unique-ID joins across multiple sheets, workbook mapping validation, multi-sheet row assembly, and selected custom Inspector field handling.
+
 #### `src/peridotWorkbookParsing.js`
 
-Workbook parsing helper for the planned Excel import path. Treat this as a helper module unless current source review confirms that a given workbook UI path is fully wired.
+Workbook parsing helper for CSV, TSV, XLSX, and XLS input. It isolates the `xlsx` dependency, parses all workbook sheets, ignores formatting/merged-cell styling, reads saved/displayed values only, and produces a shared workbook model for mapping.
 
 #### `src/peridotCsvSchema.js`
 
@@ -450,13 +458,13 @@ https://github.com/haleyrp1803/correspondence-visualizer
 
 ## 10. Data inputs
 
-Peridot now treats uploaded data through a standardized one-file CSV workflow and an arbitrary CSV/TSV column-mapping workflow.
+Peridot now treats uploaded data through a standardized one-file CSV workflow, arbitrary CSV/TSV mapping, and workbook-aware Excel mapping/import.
 
 The Data Inputs tab provides:
 
 - **Download CSV template**
 - **Upload completed CSV**
-- arbitrary CSV/TSV upload staging and column mapping
+- arbitrary CSV/TSV/Excel upload staging and column/workbook mapping
 - a post-upload validation popup
 - a persistent **Latest upload summary** card
 - concise data tips
@@ -503,7 +511,24 @@ Coordinates and dates are not required for upload. Instead, the upload summary t
 
 Peridot does **not** clean or standardize person names, place names, dates, topics, relationships, languages, titles, or other user-entered values. Charts, filters, and labels use uploaded values exactly as entered. Users who want cleaner networks or less fragmented Analytics categories should standardize their data before upload.
 
-Legacy Geography / Raw Data / Person Metadata uploads have been removed from the ordinary public workflow. The active direction is one-file template upload plus mapped arbitrary-table import.
+Legacy Geography / Raw Data / Person Metadata uploads have been removed from the ordinary public workflow. The active direction is one-file template upload plus mapped arbitrary-table/workbook import.
+
+
+### Workbook / Excel import
+
+For `.xlsx` and `.xls` files, Peridot now supports a workbook-aware import path:
+
+- upload workbook;
+- review workbook/sheet summary;
+- choose a primary record sheet;
+- choose a primary unique-ID column;
+- add one or more joined sheets;
+- choose the primary-sheet ID column and joined-sheet ID column for each join;
+- map the nine core Peridot variables from any available sheet in the row context;
+- choose custom Inspector/Analytics fields from the primary and joined sheets;
+- confirm import to assemble Peridot rows from the configured unique-ID joins.
+
+Header names for unique IDs do not have to match. The user-selected join configuration is authoritative. Person and place names remain exact-match keys; variants such as `Rome` / `Roma` or `Florence` / `Firenze` are treated as distinct unless standardized before upload.
 
 ---
 
@@ -515,16 +540,17 @@ A typical workflow is:
 2. Work from the embedded baseline data or open **Data Inputs**.
 3. Download the Peridot CSV template if needed.
 4. Fill one row per letter, document, or correspondence record.
-5. Upload the completed Peridot CSV.
-6. Review the upload validation popup and the persistent **Latest upload summary** in Data Inputs.
-7. Choose **People**, **Place**, or **Force-Directed**.
-8. Use **Search & Filter** to define the active filtered dataset.
-9. Use **Timeline** for year-based filtering and playback.
-10. Hover or click nodes, edges, or clusters to inspect them.
-11. Use **Inspector** to navigate between people, places, cluster members, and linked records.
-12. Use the inspector **Back** button to return to the previous internal panel.
-13. Use **Analytics** to generate compact charts from the current filtered data, expand a chart over the map area, and export chart previews as PNG files.
-14. Use **Export** to save the current visualization state as SVG, PNG, or CSV outputs.
+5. Upload the completed Peridot CSV, or upload a CSV/TSV/XLSX/XLS file and use the mapping workspace.
+6. For workbooks, configure the primary sheet, unique-ID joins, core field mappings, and selected Inspector fields.
+7. Review the upload validation popup and the persistent **Latest upload summary** in Data Inputs.
+8. Choose **People**, **Place**, or **Force-Directed**.
+9. Use **Search & Filter** to define the active filtered dataset.
+10. Use **Timeline** for year-based filtering and playback.
+11. Hover or click nodes, edges, or clusters to inspect them.
+12. Use **Inspector** to navigate between people, places, cluster members, and linked records.
+13. Use the inspector **Back** button to return to the previous internal panel.
+14. Use **Analytics** to generate compact charts from the current filtered data, expand a chart over the map area, and export chart previews as PNG files.
+15. Use **Export** to save the current visualization state as SVG, PNG, or CSV outputs.
 
 ### Search & Filter workflow
 
@@ -580,7 +606,7 @@ The maintainer documentation identifies the following areas as especially sensit
 - shared side-panel shell behavior
 - cluster grouping and cluster inspector navigation
 - Search & Filter active-dataset state
-- Data Inputs upload state, single-CSV normalization, and validation summary behavior
+- Data Inputs upload state, single-CSV normalization, workbook mapping/import assembly, and validation summary behavior
 - Analytics expanded overlay positioning above the map area
 - Analytics dynamic variable detection from uploaded/current row data
 - Analytics SVG-to-PNG chart export rendering
@@ -599,7 +625,7 @@ This repository includes internal maintenance and workflow documents that should
 - **`PROJECT_WORKFLOW_CHARTER.md`**
 - **`CHANGELOG.md`**
 
-The full commit history, through `4d11cb3`, is preserved in one place in **`CHANGELOG.md`**.
+The full commit history, through `0f72182`, is preserved in one place in **`CHANGELOG.md`**.
 
 ---
 
@@ -609,7 +635,7 @@ Likely near-term priorities include:
 
 - continue from the legacy D3/SVG Peridot path on `main`
 - keep dormant MapLibre files untouched unless explicitly resuming that experiment
-- test the new one-file Peridot CSV workflow against larger and messier datasets
+- test the one-file Peridot CSV workflow and workbook importer against larger and messier datasets
 - refine upload validation wording if user testing shows confusion
 - treat the legacy three-file upload workflow as superseded by the one-file and mapped-import workflows
 - continue improving Analytics usability and data-scope clarity

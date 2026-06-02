@@ -2,20 +2,26 @@
 
 ## Current documented safe baseline
 
-- **`4d11cb3` — `Add Peridot workbook parsing helper`** on branch **`main`**
+- **`0f72182` — `Remove redundant Inspector correspondents summary row`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation and layout milestone, the Analytics feature and visual-polish sequence, the standardized Peridot CSV workflow, the arbitrary CSV/TSV column-mapping importer, removal of the ordinary legacy three-file upload workflow, and the first Peridot workbook parsing helper.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation and layout milestone, the Analytics feature and visual-polish sequence, the standardized Peridot CSV workflow, the arbitrary CSV/TSV column-mapping importer, full workbook/Excel import support, and the Inspector profile/navigation refinement sequence.
 
 The current Data Inputs / import workflow now provides:
 
 - one primary Peridot CSV upload control and downloadable template;
 - permissive database-first upload handling for incomplete historical correspondence records;
 - validation/capability reporting and persistent upload summaries;
-- an arbitrary CSV/TSV staging and column-mapping workflow;
-- mapped arbitrary CSV/TSV import into Peridot data;
+- arbitrary CSV/TSV staging and column mapping;
+- Excel workbook parsing for `.xlsx` and `.xls` files through the isolated workbook parser helper;
+- multi-sheet workbook staging with workbook and sheet summaries;
+- workbook-aware mapping for primary record sheet selection, core Peridot field mapping, and selected custom Inspector fields;
+- user-configured unique-ID joins across multiple workbook sheets;
+- multi-sheet workbook import assembly into Peridot rows;
+- selected custom Inspector/Analytics metadata from primary and joined workbook sheets;
 - clearer mapping cancel/import actions;
-- a workbook parsing helper for the planned Excel import path;
 - removal of the public legacy Geography / Raw Data / Person Metadata three-file upload workflow.
+
+The current Inspector workflow now provides richer person/place profile pages, linked-letter detail navigation, visible user-selected fields on linked letter records, selected-field summaries on entity profiles, directed route summaries split by source/target role, and better place-profile fallback resolution when a clicked place comes from linked-record metadata rather than the current graph node set.
 
 The current Search & Filter workflow uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filtering, predictive suggestions, route-place and route-people filters, year text inputs with suggestions, and pre-update status feedback. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
 
@@ -24,6 +30,20 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 ---
 
 ## Current milestone notes
+
+### Workbook / Excel import and Inspector profile milestone
+
+- Added workbook-aware staging and parsing for CSV, TSV, XLSX, and XLS files.
+- Added workbook mapping helpers that model primary record sheets, sheet/column references, core Peridot field mappings, and unique-ID joins.
+- Added a workbook mapping workspace for multi-sheet Excel files.
+- Let users manually add multiple joined sheets and choose arbitrary unique-ID columns on the primary and joined sheets.
+- Assembled multi-sheet workbook rows into Peridot-shaped records using configured unique-ID joins.
+- Let users choose custom Inspector/Analytics fields from primary and joined workbook sheets.
+- Displayed user-selected custom fields in linked letter cards.
+- Reworked person and place Inspector views into profile summaries with related people, related places, directed routes, date spans, linked-letter counts, and selected uploaded fields.
+- Added dedicated linked-letter detail pages inside the Inspector rather than expanding long records inline.
+- Fixed place-profile fallback behavior so places clicked from profile lists can resolve from linked-record metadata.
+- Removed redundant top-level Inspector fields once the richer profile sections covered the same information.
 
 ### Arbitrary column mapping and workbook-parsing milestone
 
@@ -72,13 +92,17 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 
 ## Current branch status
 
-- **`4d11cb3` — `Add Peridot workbook parsing helper`** is the current documented `main` baseline and current head in the provided full commit log.
-- **`212d689` — `Clarify column mapping cancel and import actions`** is the preceding mapped-import usability commit.
-- **`d270c9d` — `Import mapped arbitrary CSV and TSV data`** is the preceding mapped-import implementation commit.
-- **`a058730` — `Add Peridot column mapping workspace`** is the preceding mapping-workspace commit.
-- **`930c807` — `Persist Peridot upload summary in Data Inputs`** is the earlier single-template CSV summary baseline.
-- **`10051c0` — `Add MapLibre selected filter layers`** was the earlier legacy-continuation starting point that includes the dormant gated MapLibre preview path.
-- **`2d76839` — `Fix linked letter encoding display`** is the paused `maplibre-native-geographic-view` branch head shown in the provided log.
+- **`0f72182` — `Remove redundant Inspector correspondents summary row`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`8564e33` — `Fix place profiles and split directed route summaries`** is the preceding Inspector place-profile and route-direction fix.
+- **`b1ef30a` — `Refine Inspector profile relationship sections`** is the preceding Inspector profile cleanup commit.
+- **`d9f0090` — `Improve Inspector person place profiles and linked letter navigation`** is the preceding richer Inspector profile/navigation commit.
+- **`9c8971b` — `Display custom Inspector fields in linked letters`** is the preceding linked-letter custom-field rendering commit.
+- **`5f25322` — `Select custom Inspector fields from joined workbook sheets`** is the preceding joined-sheet custom-field selection commit.
+- **`964ce57` — `Import multi-sheet workbooks by unique ID joins`** is the preceding multi-sheet workbook import assembly commit.
+- **`ac31c38` — `Configure workbook sheet joins by unique ID`** is the preceding user-configured workbook join commit.
+- **`77b1575` — `Preview multi-sheet workbook mapping`** is the preceding workbook mapping workspace preview commit.
+- **`4d11cb3` — `Add Peridot workbook parsing helper`** is the prior documented workbook parsing baseline.
+- **`2d76839` — `Fix linked letter encoding display`** is the paused `maplibre-native-geographic-view` branch head shown in the earlier full commit log.
 
 ---
 
@@ -106,11 +130,23 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided for this documentation pass, newest first.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided for this documentation pass, newest first. The newest rows reflect the sync ritual ending at `0f72182`.
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
-| 2026-06-02 | `4d11cb3` | (HEAD -> main, origin/main, origin/HEAD) | Add Peridot workbook parsing helper |
+| 2026-06-02 | `0f72182` | (HEAD -> main, origin/main, origin/HEAD) | Remove redundant Inspector correspondents summary row |
+| 2026-06-02 | `8564e33` |  | Fix place profiles and split directed route summaries |
+| 2026-06-02 | `b1ef30a` |  | Refine Inspector profile relationship sections |
+| 2026-06-02 | `d9f0090` |  | Improve Inspector person place profiles and linked letter navigation |
+| 2026-06-02 | `9c8971b` |  | Display custom Inspector fields in linked letters |
+| 2026-06-02 | `5f25322` |  | Select custom Inspector fields from joined workbook sheets |
+| 2026-06-02 | `964ce57` |  | Import multi-sheet workbooks by unique ID joins |
+| 2026-06-02 | `ac31c38` |  | Configure workbook sheet joins by unique ID |
+| 2026-06-02 | `77b1575` |  | Preview multi-sheet workbook mapping |
+| 2026-06-02 | `2a800b3` |  | Add Peridot workbook mapping model helper |
+| 2026-06-02 | `dd22abc` |  | Stabilize multi-sheet workbook staging |
+| 2026-06-02 | `f503df6` |  | Refresh documentation with full commit history |
+| 2026-06-02 | `4d11cb3` |  | Add Peridot workbook parsing helper |
 | 2026-06-02 | `212d689` |  | Clarify column mapping cancel and import actions |
 | 2026-06-02 | `d270c9d` |  | Import mapped arbitrary CSV and TSV data |
 | 2026-06-02 | `a058730` |  | Add Peridot column mapping workspace |
