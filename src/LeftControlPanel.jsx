@@ -1206,6 +1206,68 @@ function PeridotUploadSummaryModal({ summary, onClose }) {
   );
 }
 
+
+function PeridotUploadSummaryPanel({ summary }) {
+  const popup = summary?.popup || {};
+  const capabilityLines = popup.capabilityLines || [];
+  const warningLines = popup.warningLines || [];
+  const closingLines = popup.closingLines || [];
+
+  if (!summary) return null;
+
+  return (
+    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.2)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="font-semibold text-[var(--panel-card-text)]">Latest upload summary</div>
+          {popup.intro ? (
+            <p className="mt-1 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">{popup.intro}</p>
+          ) : null}
+        </div>
+        {summary.hasWarnings ? (
+          <span className="rounded-full border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stat-card-text)]">
+            Warnings
+          </span>
+        ) : (
+          <span className="rounded-full border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--stat-card-text)]">
+            Accepted
+          </span>
+        )}
+      </div>
+
+      {capabilityLines.length ? (
+        <div className="mt-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Visualization compatibility</div>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            {capabilityLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {warningLines.length ? (
+        <div className="mt-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Warnings</div>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            {warningLines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {closingLines.length ? (
+        <div className="mt-4 space-y-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+          {closingLines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 // DATA INPUTS GROUP
 // This group is mostly presentation plus upload wiring. It is one of the safer
 // panel sections because the heavy parsing logic lives elsewhere.
@@ -1232,9 +1294,10 @@ function DataInputsGroup({
     uploadSetter,
     peridotFileLabel,
     peridotValidationSummary,
+    isPeridotValidationModalOpen,
     handlePeridotCsvUpload,
     handleDownloadPeridotTemplate,
-    clearPeridotValidationSummary,
+    closePeridotValidationModal,
   } = dataInputState;
 
   return (
@@ -1267,6 +1330,8 @@ function DataInputsGroup({
 
             <div className="mt-3 text-sm text-[var(--panel-card-muted-text)]">Current source: {peridotFileLabel}</div>
           </div>
+
+          <PeridotUploadSummaryPanel summary={peridotValidationSummary} />
 
           <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-text)]">
             <div className="font-semibold">Data tips</div>
@@ -1308,10 +1373,10 @@ function DataInputsGroup({
             </div>
           ) : null}
 
-          {peridotValidationSummary ? (
+          {isPeridotValidationModalOpen && peridotValidationSummary ? (
             <PeridotUploadSummaryModal
               summary={peridotValidationSummary}
-              onClose={clearPeridotValidationSummary}
+              onClose={closePeridotValidationModal}
             />
           ) : null}
         </div>
@@ -1506,9 +1571,10 @@ export function LeftControlPanel({
     uploadSetter,
     peridotFileLabel,
     peridotValidationSummary,
+    isPeridotValidationModalOpen,
     handlePeridotCsvUpload,
     handleDownloadPeridotTemplate,
-    clearPeridotValidationSummary,
+    closePeridotValidationModal,
     rowDiagnostics,
   } = dataInputState;
 
@@ -1590,9 +1656,10 @@ export function LeftControlPanel({
       uploadSetter,
       peridotFileLabel,
       peridotValidationSummary,
+      isPeridotValidationModalOpen,
       handlePeridotCsvUpload,
       handleDownloadPeridotTemplate,
-      clearPeridotValidationSummary,
+      closePeridotValidationModal,
     },
   };
 

@@ -1466,9 +1466,10 @@ function buildLeftControlPanelProps(args) {
       uploadSetter: args.uploadSetter,
       peridotFileLabel: args.peridotFileLabel,
       peridotValidationSummary: args.peridotValidationSummary,
+      isPeridotValidationModalOpen: args.isPeridotValidationModalOpen,
       handlePeridotCsvUpload: args.handlePeridotCsvUpload,
       handleDownloadPeridotTemplate: args.handleDownloadPeridotTemplate,
-      clearPeridotValidationSummary: args.clearPeridotValidationSummary,
+      closePeridotValidationModal: args.closePeridotValidationModal,
       rowDiagnostics: args.rowDiagnostics,
     },
     displayState: {
@@ -2533,6 +2534,7 @@ export default function EuropeNetworkMapApp() {
   const [personMetadataFileLabel, setPersonMetadataFileLabel] = useState('Sample Data');
   const [peridotFileLabel, setPeridotFileLabel] = useState('Sample Data');
   const [peridotValidationSummary, setPeridotValidationSummary] = useState(null);
+  const [isPeridotValidationModalOpen, setIsPeridotValidationModalOpen] = useState(false);
   const [peridotNormalizedData, setPeridotNormalizedData] = useState(null);
 
   // ------------------------------------------------------------
@@ -3021,6 +3023,7 @@ export default function EuropeNetworkMapApp() {
       setPersonMetadataFileLabel(fileLabel);
 
       setPeridotValidationSummary(validationSummary);
+      setIsPeridotValidationModalOpen(true);
 
       // A new data source should not inherit stale active filters,
       // playback position, or map/inspector selection from the prior dataset.
@@ -3035,6 +3038,7 @@ export default function EuropeNetworkMapApp() {
       setPlaybackIndex(-1);
       clearSelection();
     } catch (error) {
+      setIsPeridotValidationModalOpen(true);
       setPeridotValidationSummary({
         popup: {
           title: 'Upload failed',
@@ -3286,9 +3290,10 @@ export default function EuropeNetworkMapApp() {
     uploadSetter,
     peridotFileLabel,
     peridotValidationSummary,
+    isPeridotValidationModalOpen,
     handlePeridotCsvUpload,
     handleDownloadPeridotTemplate,
-    clearPeridotValidationSummary: () => setPeridotValidationSummary(null),
+    closePeridotValidationModal: () => setIsPeridotValidationModalOpen(false),
     rowDiagnostics,
     showLabels,
     setShowLabels,
