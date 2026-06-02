@@ -404,12 +404,12 @@ function StepSlider({ options, value, onChange, ariaLabelPrefix }) {
 
 // Styled file picker wrapper around the hidden native file input.
 
-function FilePicker({ id, onChange }) {
+function FilePicker({ id, onChange, label = 'Choose File' }) {
   return (
     <div className="mb-2 flex flex-wrap items-center gap-3">
       <input id={id} type="file" accept=".csv,text/csv" onChange={onChange} className="hidden" />
       <label htmlFor={id} className={`${buttonClassName({ variant: 'secondary' })} cursor-pointer`}>
-        Choose File
+        {label}
       </label>
     </div>
   );
@@ -1150,6 +1150,62 @@ function SearchFilterPanelContent({
     </div>
   );
 }
+
+function PeridotUploadSummaryModal({ summary, onClose }) {
+  const popup = summary?.popup || {};
+  const capabilityLines = popup.capabilityLines || [];
+  const warningLines = popup.warningLines || [];
+  const closingLines = popup.closingLines || [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-6">
+      <div className="max-h-[82vh] w-full max-w-2xl overflow-auto rounded-[28px] border border-[var(--section-border)] bg-[var(--sidebar-bg)] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className={`${sectionTitleClassName()} text-lg`}>{popup.title || 'Upload summary'}</h2>
+            {popup.intro ? (
+              <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">{popup.intro}</p>
+            ) : null}
+          </div>
+          <button type="button" onClick={onClose} className={buttonClassName({ variant: 'secondary' })}>
+            Close
+          </button>
+        </div>
+
+        {capabilityLines.length ? (
+          <div className="mt-5 rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+            <div className="font-semibold text-[var(--panel-card-text)]">Visualization compatibility</div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+              {capabilityLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {warningLines.length ? (
+          <div className="mt-4 rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+            <div className="font-semibold text-[var(--panel-card-text)]">Warnings</div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+              {warningLines.map((line) => (
+                <li key={line}>{line}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {closingLines.length ? (
+          <div className="mt-4 space-y-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            {closingLines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 // DATA INPUTS GROUP
 // This group is mostly presentation plus upload wiring. It is one of the safer
 // panel sections because the heavy parsing logic lives elsewhere.
@@ -1174,6 +1230,11 @@ function DataInputsGroup({
     setLettersFileLabel,
     setPersonMetadataFileLabel,
     uploadSetter,
+    peridotFileLabel,
+    peridotValidationSummary,
+    handlePeridotCsvUpload,
+    handleDownloadPeridotTemplate,
+    clearPeridotValidationSummary,
   } = dataInputState;
 
   return (
@@ -1184,27 +1245,75 @@ function DataInputsGroup({
         open={showDataInputsPanel}
         onToggle={() => setShowDataInputsPanel((v) => !v)}
       >
-        <div className="space-y-3">
-          <DataSourceCard
-            title="Geography table"
-            fileInputId="geography-file"
-            onFileChange={uploadSetter(setGeographyCsv, setGeographyFileLabel)}
-            currentSource={geographyFileLabel}
-          />
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
+            <div className="mb-3">
+              <h2 className={sectionTitleClassName()}>Peridot CSV</h2>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+                Upload one standardized Peridot CSV. Each row should represent one letter, document, or correspondence record.
+              </p>
+            </div>
 
-          <DataSourceCard
-            title="Raw data table"
-            fileInputId="letters-file"
-            onFileChange={uploadSetter(setLettersCsv, setLettersFileLabel)}
-            currentSource={lettersFileLabel}
-          />
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={handleDownloadPeridotTemplate}
+                className={buttonClassName({ variant: 'secondary' })}
+              >
+                Download CSV template
+              </button>
+              <FilePicker id="peridot-template-file" onChange={handlePeridotCsvUpload} label="Upload completed CSV" />
+            </div>
 
-          <DataSourceCard
-            title="Person metadata table"
-            fileInputId="person-metadata-file"
-            onFileChange={uploadSetter(setPersonMetadataCsv, setPersonMetadataFileLabel)}
-            currentSource={personMetadataFileLabel}
-          />
+            <div className="mt-3 text-sm text-[var(--panel-card-muted-text)]">Current source: {peridotFileLabel}</div>
+          </div>
+
+          <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-text)]">
+            <div className="font-semibold">Data tips</div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-[var(--stat-card-muted-text)]">
+              <li>Peridot accepts incomplete research data, but some rows may not appear in every visualization.</li>
+              <li>Coordinates are optional, but geographic map routes need valid source and target coordinate pairs.</li>
+              <li>Names, places, topics, relationships, and languages are used exactly as entered.</li>
+              <li>For cleaner networks and charts, standardize your data before upload.</li>
+            </ul>
+          </div>
+
+          {/*
+            Legacy three-file uploads are intentionally hidden from the ordinary UI
+            while the standardized single-CSV workflow is introduced. The state and
+            upload wiring remain available here as a recovery path during the transition.
+          */}
+          {false ? (
+            <div className="space-y-3">
+              <DataSourceCard
+                title="Geography table"
+                fileInputId="geography-file"
+                onFileChange={uploadSetter(setGeographyCsv, setGeographyFileLabel)}
+                currentSource={geographyFileLabel}
+              />
+
+              <DataSourceCard
+                title="Raw data table"
+                fileInputId="letters-file"
+                onFileChange={uploadSetter(setLettersCsv, setLettersFileLabel)}
+                currentSource={lettersFileLabel}
+              />
+
+              <DataSourceCard
+                title="Person metadata table"
+                fileInputId="person-metadata-file"
+                onFileChange={uploadSetter(setPersonMetadataCsv, setPersonMetadataFileLabel)}
+                currentSource={personMetadataFileLabel}
+              />
+            </div>
+          ) : null}
+
+          {peridotValidationSummary ? (
+            <PeridotUploadSummaryModal
+              summary={peridotValidationSummary}
+              onClose={clearPeridotValidationSummary}
+            />
+          ) : null}
         </div>
       </CollapsiblePanelSection>
     </div>
@@ -1395,6 +1504,11 @@ export function LeftControlPanel({
     setLettersFileLabel,
     setPersonMetadataFileLabel,
     uploadSetter,
+    peridotFileLabel,
+    peridotValidationSummary,
+    handlePeridotCsvUpload,
+    handleDownloadPeridotTemplate,
+    clearPeridotValidationSummary,
     rowDiagnostics,
   } = dataInputState;
 
@@ -1474,6 +1588,11 @@ export function LeftControlPanel({
       setLettersFileLabel,
       setPersonMetadataFileLabel,
       uploadSetter,
+      peridotFileLabel,
+      peridotValidationSummary,
+      handlePeridotCsvUpload,
+      handleDownloadPeridotTemplate,
+      clearPeridotValidationSummary,
     },
   };
 

@@ -41,6 +41,9 @@ import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmpty
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';
 import { InspectorNodeView as InspectorNodeViewView } from './InspectorNodeView';
+import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
+import { normalizePeridotTemplateRows } from './peridotCsvNormalizer.js';
+import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
 
 
 // ============================================================
@@ -154,6 +157,40 @@ function parseCsv(csvText) {
     return row;
   });
 }
+
+function getCsvHeaders(csvText) {
+  const text = String(csvText ?? '')
+    .replace(/^\ufeff/, '')
+    .replace(/\r\n|\r/g, '\n')
+    .trim();
+  if (!text) return [];
+
+  let headerLine = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"') {
+      headerLine += char;
+      if (inQuotes && next === '"') {
+        headerLine += next;
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === '\n' && !inQuotes) break;
+    headerLine += char;
+  }
+
+  const delimiter = headerLine.includes('\t') ? '\t' : ',';
+  return parseDelimitedLine(headerLine, delimiter).map((cell) => cell.trim());
+}
+
 
 // Basic text normalization helpers.
 function asText(value) {
@@ -1427,6 +1464,11 @@ function buildLeftControlPanelProps(args) {
       setLettersFileLabel: args.setLettersFileLabel,
       setPersonMetadataFileLabel: args.setPersonMetadataFileLabel,
       uploadSetter: args.uploadSetter,
+      peridotFileLabel: args.peridotFileLabel,
+      peridotValidationSummary: args.peridotValidationSummary,
+      handlePeridotCsvUpload: args.handlePeridotCsvUpload,
+      handleDownloadPeridotTemplate: args.handleDownloadPeridotTemplate,
+      clearPeridotValidationSummary: args.clearPeridotValidationSummary,
       rowDiagnostics: args.rowDiagnostics,
     },
     displayState: {
@@ -2489,6 +2531,9 @@ export default function EuropeNetworkMapApp() {
   const [geographyFileLabel, setGeographyFileLabel] = useState('Sample Data');
   const [lettersFileLabel, setLettersFileLabel] = useState('Sample Data');
   const [personMetadataFileLabel, setPersonMetadataFileLabel] = useState('Sample Data');
+  const [peridotFileLabel, setPeridotFileLabel] = useState('Sample Data');
+  const [peridotValidationSummary, setPeridotValidationSummary] = useState(null);
+  const [peridotNormalizedData, setPeridotNormalizedData] = useState(null);
 
   // ------------------------------------------------------------
   // User interaction and view state
@@ -2673,11 +2718,20 @@ export default function EuropeNetworkMapApp() {
   // ------------------------------------------------------------
   // Parsed and normalized source tables
   // ------------------------------------------------------------
-  const geographyRows = useMemo(() => parseCsv(geographyCsv), [geographyCsv]);
+  const geographyRows = useMemo(
+    () => (peridotNormalizedData ? peridotNormalizedData.normalizedRows : parseCsv(geographyCsv)),
+    [peridotNormalizedData, geographyCsv]
+  );
   const letterRows = useMemo(() => parseCsv(lettersCsv), [lettersCsv]);
   const personMetadataRows = useMemo(() => parseCsv(personMetadataCsv), [personMetadataCsv]);
-  const normalizedLetters = useMemo(() => normalizeLettersRows(letterRows), [letterRows]);
-  const normalizedPersonMetadata = useMemo(() => normalizePersonMetadataRows(personMetadataRows), [personMetadataRows]);
+  const normalizedLetters = useMemo(
+    () => (peridotNormalizedData ? peridotNormalizedData.normalizedLetters : normalizeLettersRows(letterRows)),
+    [peridotNormalizedData, letterRows]
+  );
+  const normalizedPersonMetadata = useMemo(
+    () => (peridotNormalizedData ? peridotNormalizedData.normalizedPersonMetadata : normalizePersonMetadataRows(personMetadataRows)),
+    [peridotNormalizedData, personMetadataRows]
+  );
   const personMetadataByName = useMemo(() => {
     const map = new Map();
     normalizedPersonMetadata.forEach((row) => {
@@ -2685,7 +2739,13 @@ export default function EuropeNetworkMapApp() {
     });
     return map;
   }, [normalizedPersonMetadata]);
-  const { places, normalizedRows } = useMemo(() => normalizeGeographyRows(geographyRows), [geographyRows]);
+  const { places, normalizedRows } = useMemo(
+    () => (peridotNormalizedData ? {
+      places: peridotNormalizedData.places,
+      normalizedRows: peridotNormalizedData.normalizedRows,
+    } : normalizeGeographyRows(geographyRows)),
+    [peridotNormalizedData, geographyRows]
+  );
   const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(normalizedRows), [normalizedRows]);
 
   // ------------------------------------------------------------
@@ -2900,6 +2960,7 @@ export default function EuropeNetworkMapApp() {
     const file = e.target.files?.[0];
     if (!file) return;
     const text = await readFileText(file);
+    setPeridotNormalizedData(null);
     setter(text);
     setLabel(file.name || 'Uploaded file');
   };
@@ -2929,6 +2990,70 @@ export default function EuropeNetworkMapApp() {
       bytes: blob.size,
       timestamp: new Date().toLocaleTimeString(),
     };
+  };
+
+  const handleDownloadPeridotTemplate = () => {
+    const emptyTemplateRow = Object.fromEntries(PERIDOT_TEMPLATE_COLUMNS.map((column) => [column, '']));
+    const templateCsv = rowsToCsv([emptyTemplateRow]);
+    triggerDownload(
+      new Blob([templateCsv], { type: 'text/csv;charset=utf-8' }),
+      'peridot_template.csv'
+    );
+  };
+
+  const handlePeridotCsvUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const text = await readFileText(file);
+      const parsedRows = parseCsv(text);
+      const headers = getCsvHeaders(text);
+      const validationSummary = buildPeridotCsvValidationSummary(parsedRows, headers);
+      const normalized = normalizePeridotTemplateRows(parsedRows);
+      const fileLabel = file.name || 'Uploaded Peridot CSV';
+
+      setPeridotNormalizedData(normalized);
+
+      setPeridotFileLabel(fileLabel);
+      setGeographyFileLabel(fileLabel);
+      setLettersFileLabel(fileLabel);
+      setPersonMetadataFileLabel(fileLabel);
+
+      setPeridotValidationSummary(validationSummary);
+
+      // A new data source should not inherit stale active filters,
+      // playback position, or map/inspector selection from the prior dataset.
+      setSearch('');
+      setPersonFilter('');
+      setPlaceFilter('');
+      setRoutePlaceFilter('');
+      setRoutePeopleFilter('');
+      setMinCount(1);
+      setTimelineMode('range');
+      setIsPlaying(false);
+      setPlaybackIndex(-1);
+      clearSelection();
+    } catch (error) {
+      setPeridotValidationSummary({
+        popup: {
+          title: 'Upload failed',
+          intro: `Peridot could not read this CSV: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          capabilityLines: [],
+          warningLines: [],
+          closingLines: ['No data was changed.'],
+        },
+        summaryLines: ['Upload failed.'],
+        warnings: [],
+        hasWarnings: true,
+        totalRows: 0,
+        acceptedRecordCount: 0,
+        unsupportedRowCount: 0,
+        capabilityCounts: {},
+      });
+    } finally {
+      e.target.value = '';
+    }
   };
 
   const getMapSvgElement = () => mapViewportRef.current?.querySelector('svg') || null;
@@ -3159,6 +3284,11 @@ export default function EuropeNetworkMapApp() {
     setLettersFileLabel,
     setPersonMetadataFileLabel,
     uploadSetter,
+    peridotFileLabel,
+    peridotValidationSummary,
+    handlePeridotCsvUpload,
+    handleDownloadPeridotTemplate,
+    clearPeridotValidationSummary: () => setPeridotValidationSummary(null),
     rowDiagnostics,
     showLabels,
     setShowLabels,
