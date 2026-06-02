@@ -22,12 +22,14 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`930c807` — `Persist Peridot upload summary in Data Inputs`**
+- **`4d11cb3` — `Add Peridot workbook parsing helper`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, and the standardized one-file Peridot CSV upload workflow. Data Inputs now foregrounds one public Peridot CSV upload path with a downloadable template, upload validation popup, and persistent latest-upload summary. Legacy Geography / Raw Data / Person Metadata upload controls are intentionally hidden from the ordinary UI but retained in code during the transition.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, standardized one-file Peridot CSV upload workflow, arbitrary CSV/TSV column-mapping import path, removal of the public legacy three-file upload workflow, and the first workbook parsing helper. Data Inputs now foregrounds one public Peridot CSV template path plus mapped arbitrary-table import.
 
-The preceding single-CSV implementation milestone remains:
+Preceding data-input milestones include:
 
+- **`d270c9d` — `Import mapped arbitrary CSV and TSV data`**
+- **`a058730` — `Add Peridot column mapping workspace`**
 - **`cbc35d0` — `Add single Peridot CSV upload workflow`**
 
 Current GitHub repository:
@@ -60,6 +62,7 @@ Current panel / inspector / Analytics boundaries in `src/`:
 
 - `src/AnalyticsPanel.jsx`
 - `src/LeftControlPanel.jsx`
+- `src/PeridotColumnMappingModal.jsx`
 - `src/InspectorPanel.jsx`
 - `src/InspectorBodyRouter.jsx`
 - `src/InspectorEmptyState.jsx`
@@ -86,6 +89,8 @@ Extracted support modules in `src/`:
 - `src/peridotCsvSchema.js`
 - `src/peridotCsvNormalizer.js`
 - `src/peridotCsvValidation.js`
+- `src/peridotColumnMapping.js`
+- `src/peridotWorkbookParsing.js`
 - `src/MapLibreMapStage.jsx` — dormant gated preview path inherited from `main`
 - `src/mapStyleConfig.js` — dormant MapLibre preview style config
 
@@ -111,6 +116,8 @@ Internally, the app still uses the geographic/person view split plus person layo
 The app includes:
 
 - standardized one-file Peridot CSV ingestion
+- arbitrary CSV/TSV column mapping and mapped import
+- workbook parsing helper for the planned Excel path
 - database-first handling of messy/incomplete historical records
 - graph derivation
 - interactive SVG-based rendering
@@ -126,13 +133,14 @@ The main maintenance challenge remains structural concentration in `src/App.jsx`
 
 ### Data input architecture
 
-The public Data Inputs workflow is now a single-CSV workflow:
+The public Data Inputs workflow now includes the Peridot template CSV path and arbitrary CSV/TSV column mapping:
 
 ```text
-Peridot template CSV
-→ parsed rows
+Peridot template CSV or arbitrary CSV/TSV
+→ parsed/staged rows
+→ template normalization or user-confirmed column mapping
 → schema/capability checks
-→ normalized geography rows / letter metadata / person metadata / places
+→ normalized geography rows / letter metadata / person metadata / places / selected custom metadata
 → active app data
 ```
 
@@ -178,7 +186,7 @@ Coordinates and parseable dates are capability-enabling fields, not upload-admis
 
 Peridot does **not** clean, standardize, merge, or enforce controlled vocabularies for person names, place names, date strings, titles, topics, relationships, languages, notes, or links. Users are responsible for standardizing values outside the app if they want cleaner networks, filters, and charts.
 
-The legacy three-file upload path remains in code as a transition/fallback path, but the ordinary UI hides those controls.
+The legacy three-file upload path is superseded by the one-file and mapped-import workflows and has been removed from the ordinary public workflow.
 
 ### MapLibre status
 
@@ -199,7 +207,7 @@ The force-directed person view renders on a clean theme-driven background rather
 
 ### `src/App.jsx`
 
-Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel contract building, Search & Filter state, timeline state, inspector navigation state, export wiring, and the live one-file Peridot CSV upload workflow. It wires template download, CSV upload parsing, validation summary state, normalization output, upload-source reset behavior, and modal visibility.
+Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel contract building, Search & Filter state, timeline state, inspector navigation state, export wiring, and the live Data Inputs workflow. It wires template download, CSV upload parsing, arbitrary CSV/TSV mapping flow, validation summary state, normalization output, upload-source reset behavior, and modal visibility.
 
 ### `src/LeftControlPanel.jsx`
 
@@ -208,8 +216,8 @@ Owns the shared side-panel shell and persistent icon rail. The shell includes:
 - persistent icon rail that is available when the panel is closed and when it is open
 - open-state close button at the top of the rail
 - rail-driven panel views for **Controls**, **Data Inputs**, **Search & Filter**, **Export**, **Timeline**, **Analytics**, and **Inspector**
-- **Data Inputs** content rendering for one public Peridot CSV upload workflow, template download, upload button, latest-upload summary, validation popup, and data tips
-- hidden legacy three-file upload controls retained in code during the single-CSV transition
+- **Data Inputs** content rendering for one public Peridot CSV upload workflow, arbitrary CSV/TSV column mapping, template download, upload button, latest-upload summary, validation popup, and data tips
+- legacy three-file upload workflow superseded by the one-file and mapped-import workflows
 - **Search & Filter** content rendering for the compact advanced-search layout
 - current applied filter scope at the top of Search & Filter
 - keyword, person, place, route-place, route-people, minimum-weight, and date-range filters
@@ -261,6 +269,18 @@ Owns pure post-upload validation summaries. It produces:
 - capability counts
 - popup-ready summary lines
 - persistent side-panel latest-upload summary text
+
+### `src/PeridotColumnMappingModal.jsx`
+
+Owns the large column-mapping workspace for arbitrary CSV/TSV imports. It presents Peridot core fields, source-column selections, user-confirmed mappings, and optional custom metadata selection for Inspector/Analytics use.
+
+### `src/peridotColumnMapping.js`
+
+Owns helper logic for arbitrary table column mapping, including common-name suggestions, core-field mapping rules, and selected custom metadata handling. Core Peridot fields remain limited to Date, source/target person names, source/target place names, and source/target coordinates; other mapped columns are treated as optional metadata rather than graph-driving core fields.
+
+### `src/peridotWorkbookParsing.js`
+
+Owns workbook parsing helper logic for the planned Excel import path. Treat this as a helper boundary and verify current UI wiring before assuming full Excel import behavior in a future pass.
 
 ### `src/AnalyticsPanel.jsx`
 
@@ -391,12 +411,13 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 ### Data Inputs capabilities
 
 - primary one-file Peridot CSV upload workflow
+- arbitrary CSV/TSV column-mapping workflow
 - downloadable CSV template
 - database-first permissive upload model
 - upload validation popup
 - persistent latest-upload summary in the side panel
 - concise data tips explaining row granularity, incomplete data, coordinates, and user responsibility for standardization
-- legacy three-file upload controls hidden from ordinary UI but retained in code
+- legacy three-file public upload workflow superseded by one-file and mapped-import workflows
 
 ### Search & Filter capabilities
 
@@ -542,7 +563,7 @@ template CSV
 - Present upload feedback in a popup immediately after upload.
 - Keep the latest upload summary visible in the Data Inputs panel after the popup closes.
 - Explain that incomplete records may still be preserved even if they are not compatible with every visualization.
-- Keep legacy three-file upload controls hidden from ordinary UI during the transition.
+- Keep the ordinary public data-entry path focused on one-file template upload plus mapped arbitrary-table import.
 
 ### Implementation cautions
 
@@ -560,7 +581,7 @@ Data Inputs is now a fragile data-ingestion boundary. Future changes should expl
 - Analytics receives the intended uploaded/filtered rows;
 - Export still labels and exports the intended data scope.
 
-Do not remove the legacy three-file path until the single-CSV workflow has been tested against larger and messier datasets.
+Do not reintroduce the legacy three-file workflow unless there is a specific recovery or compatibility reason. The active public direction is one-file template upload plus mapped arbitrary-table import.
 
 ---
 
@@ -640,7 +661,7 @@ These areas still deserve narrow, explicit passes:
 - timeline/playback state coupling
 - export rendering/state coupling
 - broad orchestration work in `src/App.jsx`
-- Data Inputs upload state, one-file CSV normalization, and validation summary behavior
+- Data Inputs upload state, one-file CSV normalization, arbitrary table mapping, workbook parsing helper, and validation summary behavior
 - shared side-panel shell and inspector-open interactions
 - cluster grouping and cluster inspector navigation
 - Analytics expanded overlay positioning and backdrop contrast above the map area
@@ -695,7 +716,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`930c807` — `Persist Peridot upload summary in Data Inputs`**
+- current documented baseline: **`4d11cb3` — `Add Peridot workbook parsing helper`**
 
 A future chat should also be told that:
 
@@ -705,7 +726,7 @@ A future chat should also be told that:
 - the current shared side panel and rail-tab structure are committed
 - `InspectorPanel.jsx` is content-only
 - `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Search & Filter/Export/Timeline/Analytics/Inspector panel views
-- `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, and `peridotCsvValidation.js` own the standardized single-CSV data input contract, normalization, and validation summary helpers
+- `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, `peridotCsvValidation.js`, `peridotColumnMapping.js`, `PeridotColumnMappingModal.jsx`, and `peridotWorkbookParsing.js` own the current template upload, arbitrary table mapping, validation, and workbook-helper boundaries
 - current cluster features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
 - documentation should preserve the full commit trajectory carefully in `CHANGELOG.md`

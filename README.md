@@ -8,7 +8,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, Analytics charting, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector, a standardized single-CSV upload workflow with a downloadable template and validation summary, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, compact and expanded chart views, and image/tabular export tools.
+The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, Analytics charting, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector, a standardized single-CSV upload workflow with a downloadable template and validation summary, an arbitrary CSV/TSV column-mapping workflow, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, compact and expanded chart views, and image/tabular export tools.
 
 ---
 
@@ -18,9 +18,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`930c807` — `Persist Peridot upload summary in Data Inputs`** on branch **`main`**
+- **`4d11cb3` — `Add Peridot workbook parsing helper`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, and the first standardized one-file Peridot CSV upload workflow. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, and the standardized one-file Peridot CSV upload workflow, arbitrary CSV/TSV column mapping/import, and workbook parsing helper. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -34,9 +34,11 @@ The current state of the active `main` project includes:
 - a shared left-side panel with a persistent rail for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector
 - a standardized one-file **Peridot CSV** upload workflow in Data Inputs
 - a downloadable CSV template using the current public Peridot column names
+- an arbitrary CSV/TSV column-mapping workflow for non-template tables
+- a workbook parsing helper for the planned Excel import path
 - upload validation that reports which records are Inspector-ready, People-network-ready, Place-network-ready, Map-ready, Timeline-ready, Analytics-ready, and Export-ready
 - a validation popup plus a persistent latest-upload summary in the Data Inputs panel
-- legacy Geography / Raw Data / Person Metadata upload controls hidden from the ordinary UI but retained in code for fallback and transition
+- legacy Geography / Raw Data / Person Metadata upload controls removed from the ordinary public workflow after the one-file and mapped-import direction became active
 - implemented Search & Filter controls for keyword, person, place, route-place, route-people, minimum weight, and date range
 - actionable cluster inspector behavior
 - cluster inspector members grouped by place
@@ -65,12 +67,13 @@ The codebase is functional, but it is still under active maintenance. The larges
 ### Data interaction
 
 - standardized one-file **Peridot CSV** upload workflow
+- arbitrary CSV/TSV column mapping for non-template uploaded tables
 - downloadable Peridot CSV template from the Data Inputs panel
 - permissive database-first ingestion model: accepted rows can remain useful even when they cannot support every visualization
 - post-upload validation popup and persistent latest-upload summary
 - embedded baseline data so the app can render before uploads
 - derived node, edge, cluster, and timeline structures based on uploaded or embedded data
-- legacy three-file upload machinery retained in code but hidden from the ordinary user interface
+- legacy three-file upload workflow removed from the ordinary public data-entry path
 
 ### Research workflow tools
 
@@ -163,7 +166,7 @@ Other current behavior:
 - the old **Show all dates** shortcut has been removed
 - the timeline now uses **year-only** start/end selectors rather than month selectors
 - the old horizontal Controls / Inspector top tab row has been removed; the persistent rail now functions as the panel-view switcher
-- legacy three-file upload controls are hidden from ordinary UI but retained in code during the single-CSV transition
+- the legacy three-file upload workflow is superseded by the one-file and mapped-import workflows
 
 ---
 
@@ -252,6 +255,7 @@ src/
   interactionHelpers.js
   LeftControlPanel.jsx
   main.jsx
+  PeridotColumnMappingModal.jsx
   mapInteractionHandlers.js
   mapLayoutHelpers.js
   MapLibreMapStage.jsx          # dormant gated preview path on this branch
@@ -260,6 +264,8 @@ src/
   peridotCsvNormalizer.js
   peridotCsvSchema.js
   peridotCsvValidation.js
+  peridotColumnMapping.js
+  peridotWorkbookParsing.js
   personForceLayoutHelpers.js
   timelinePlaybackComponents.jsx
   timelinePlaybackHelpers.js
@@ -281,7 +287,19 @@ The main orchestration layer. It handles top-level application state, data inges
 
 #### `src/LeftControlPanel.jsx`
 
-Owns the shared side-panel shell and persistent icon rail. It renders the rail-driven panel views for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector. The Data Inputs tab now presents the single-file Peridot CSV workflow and keeps the legacy three-file upload controls hidden from ordinary UI.
+Owns the shared side-panel shell and persistent icon rail. It renders the rail-driven panel views for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector. The Data Inputs tab now presents the single-file Peridot CSV workflow plus arbitrary CSV/TSV column mapping; the legacy three-file workflow is no longer the ordinary public path.
+
+#### `src/PeridotColumnMappingModal.jsx`
+
+Large column-mapping workspace for arbitrary CSV/TSV imports. It lets users map uploaded source columns to Peridot core fields and choose additional custom fields for Inspector/Analytics use.
+
+#### `src/peridotColumnMapping.js`
+
+Column-mapping helper module for arbitrary uploaded tables. It supports suggested mappings, core-field mapping rules, and preservation of user-selected custom metadata fields.
+
+#### `src/peridotWorkbookParsing.js`
+
+Workbook parsing helper for the planned Excel import path. Treat this as a helper module unless current source review confirms that a given workbook UI path is fully wired.
 
 #### `src/peridotCsvSchema.js`
 
@@ -432,12 +450,13 @@ https://github.com/haleyrp1803/correspondence-visualizer
 
 ## 10. Data inputs
 
-Peridot now treats uploaded data through a standardized one-file CSV workflow.
+Peridot now treats uploaded data through a standardized one-file CSV workflow and an arbitrary CSV/TSV column-mapping workflow.
 
 The Data Inputs tab provides:
 
 - **Download CSV template**
 - **Upload completed CSV**
+- arbitrary CSV/TSV upload staging and column mapping
 - a post-upload validation popup
 - a persistent **Latest upload summary** card
 - concise data tips
@@ -484,7 +503,7 @@ Coordinates and dates are not required for upload. Instead, the upload summary t
 
 Peridot does **not** clean or standardize person names, place names, dates, topics, relationships, languages, titles, or other user-entered values. Charts, filters, and labels use uploaded values exactly as entered. Users who want cleaner networks or less fragmented Analytics categories should standardize their data before upload.
 
-Legacy Geography / Raw Data / Person Metadata uploads are intentionally hidden from the ordinary UI during the single-CSV transition, but the code path has not been deleted.
+Legacy Geography / Raw Data / Person Metadata uploads have been removed from the ordinary public workflow. The active direction is one-file template upload plus mapped arbitrary-table import.
 
 ---
 
@@ -580,7 +599,7 @@ This repository includes internal maintenance and workflow documents that should
 - **`PROJECT_WORKFLOW_CHARTER.md`**
 - **`CHANGELOG.md`**
 
-The full commit history is preserved in one place in **`CHANGELOG.md`**.
+The full commit history, through `4d11cb3`, is preserved in one place in **`CHANGELOG.md`**.
 
 ---
 
@@ -592,7 +611,7 @@ Likely near-term priorities include:
 - keep dormant MapLibre files untouched unless explicitly resuming that experiment
 - test the new one-file Peridot CSV workflow against larger and messier datasets
 - refine upload validation wording if user testing shows confusion
-- keep legacy upload code hidden but available until the single-CSV workflow is proven stable
+- treat the legacy three-file upload workflow as superseded by the one-file and mapped-import workflows
 - continue improving Analytics usability and data-scope clarity
 - consider future safe metadata filters after the single-CSV upload model settles
 - continue safe reduction of orchestration pressure inside `src/App.jsx`

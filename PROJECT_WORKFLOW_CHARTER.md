@@ -79,7 +79,7 @@ Current fragile zones include:
 - Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
 - Analytics SVG-to-PNG export rendering
-- Data Inputs upload state, one-file CSV normalization, validation summary behavior, and legacy upload fallback
+- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV column mapping, workbook parsing helper behavior, validation summary behavior, and legacy upload cleanup
 
 ---
 
@@ -265,7 +265,10 @@ Current notable decisions:
 - Peridot should treat uploaded correspondence data as database records first and visualization inputs second.
 - Rows can be accepted when they contain either source/target names or source/target place information; coordinates and parseable dates are capability-enabling fields, not upload-admission requirements.
 - Peridot should not clean, standardize, merge, or enforce controlled vocabularies for uploaded names, places, dates, topics, relationships, languages, titles, notes, or links. Users are responsible for standardization outside the app.
-- Legacy Geography / Raw Data / Person Metadata upload controls should remain hidden rather than deleted until the single-CSV workflow has been tested against larger and messier datasets.
+- Arbitrary CSV/TSV imports should use an explicit user-confirmed column-mapping workflow rather than silent guessing.
+- Core mapped Peridot variables should remain limited to Date, Source_Name, Target_Name, Source_Location, Source_Latitude, Source_Longitude, Target_Location, Target_Latitude, and Target_Longitude. Other uploaded columns should be preserved as optional metadata, with user-selected fields available for Inspector and suitable Analytics visualizations.
+- Workbook parsing should be treated as a helper boundary until the current source confirms full Excel UI wiring.
+- The ordinary legacy Geography / Raw Data / Person Metadata three-file workflow is superseded by the one-file template upload and mapped arbitrary-table import workflows; do not reintroduce it unless a specific recovery or compatibility need is identified.
 
 ---
 
@@ -314,16 +317,18 @@ Future cluster changes should preserve:
 
 ### Data Inputs behavior
 
-Data Inputs is now the public owner of the standardized single-CSV upload workflow.
+Data Inputs is now the public owner of the standardized single-CSV upload workflow and the arbitrary table column-mapping workflow.
 
 Committed Data Inputs behavior includes:
 
 - downloadable Peridot CSV template;
 - one primary completed-CSV upload control;
+- arbitrary CSV/TSV upload staging and column mapping;
+- mapped arbitrary-table import into Peridot data;
 - post-upload validation popup;
 - persistent latest-upload summary in the Data Inputs panel after the popup closes;
 - capability reporting for Inspector, People view, place relationships, map readiness, timeline readiness, Analytics, and Export;
-- hidden legacy Geography / Raw Data / Person Metadata upload controls retained in code during transition.
+- public legacy Geography / Raw Data / Person Metadata upload controls superseded by the one-file and mapped-import workflows.
 
 Future Data Inputs changes should explicitly test:
 
@@ -339,7 +344,7 @@ Future Data Inputs changes should explicitly test:
 - Analytics receives the intended uploaded/filtered rows;
 - Export still labels and exports the intended data scope.
 
-Do not remove the hidden legacy three-file upload path until the single-CSV workflow is proven stable against larger and messier datasets.
+Do not reintroduce the legacy three-file upload workflow unless there is a specific recovery or compatibility reason; the active public direction is one-file template upload plus mapped arbitrary-table import.
 
 
 ### Search & Filter behavior
@@ -419,5 +424,5 @@ The new chat should be told:
 - Avoid brittle snippet-based patching unless the full file has been reviewed and the edit is clearly unambiguous.
 - When the user uploads source files after being asked for current files, treat the most recent uploads as authoritative for that pass unless told otherwise.
 - Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout.
-- Data Inputs currently uses a one-file Peridot CSV workflow with a downloadable template, validation popup, and persistent latest-upload summary.
+- Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, a workbook parsing helper, validation popup, and persistent latest-upload summary.
 - Analytics expanded chart views currently use a dark translucent green backdrop with cool off-white text/borders and a white/cream chart card.
