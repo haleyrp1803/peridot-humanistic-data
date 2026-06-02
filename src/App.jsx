@@ -44,6 +44,7 @@ import { InspectorNodeView as InspectorNodeViewView } from './InspectorNodeView'
 import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
 import { normalizePeridotTemplateRows } from './peridotCsvNormalizer.js';
 import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
+import { buildInitialPeridotColumnMappingState } from './peridotColumnMapping.js';
 
 
 // ============================================================
@@ -158,6 +159,39 @@ function parseCsv(csvText) {
   });
 }
 
+function detectDelimitedTableFormat(csvText) {
+  const text = String(csvText ?? '')
+    .replace(/^\ufeff/, '')
+    .replace(/\r\n|\r/g, '\n')
+    .trim();
+  if (!text) return { delimiter: ',', label: 'CSV' };
+
+  let headerLine = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"') {
+      headerLine += char;
+      if (inQuotes && next === '"') {
+        headerLine += next;
+        i += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (char === '\n' && !inQuotes) break;
+    headerLine += char;
+  }
+
+  const delimiter = headerLine.includes('\t') ? '\t' : ',';
+  return { delimiter, label: delimiter === '\t' ? 'TSV' : 'CSV' };
+}
+
 function getCsvHeaders(csvText) {
   const text = String(csvText ?? '')
     .replace(/^\ufeff/, '')
@@ -187,7 +221,7 @@ function getCsvHeaders(csvText) {
     headerLine += char;
   }
 
-  const delimiter = headerLine.includes('\t') ? '\t' : ',';
+  const { delimiter } = detectDelimitedTableFormat(text);
   return parseDelimitedLine(headerLine, delimiter).map((cell) => cell.trim());
 }
 
@@ -1460,6 +1494,9 @@ function buildLeftControlPanelProps(args) {
       handlePeridotCsvUpload: args.handlePeridotCsvUpload,
       handleDownloadPeridotTemplate: args.handleDownloadPeridotTemplate,
       closePeridotValidationModal: args.closePeridotValidationModal,
+      columnMappingStaging: args.columnMappingStaging,
+      handleColumnMappingTableUpload: args.handleColumnMappingTableUpload,
+      clearColumnMappingStaging: args.clearColumnMappingStaging,
       rowDiagnostics: args.rowDiagnostics,
     },
     displayState: {
@@ -2520,6 +2557,7 @@ export default function EuropeNetworkMapApp() {
   const [peridotValidationSummary, setPeridotValidationSummary] = useState(null);
   const [isPeridotValidationModalOpen, setIsPeridotValidationModalOpen] = useState(false);
   const [peridotNormalizedData, setPeridotNormalizedData] = useState(null);
+  const [columnMappingStaging, setColumnMappingStaging] = useState(null);
 
   // ------------------------------------------------------------
   // User interaction and view state
@@ -3031,6 +3069,55 @@ export default function EuropeNetworkMapApp() {
     }
   };
 
+
+  const handleColumnMappingTableUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const fileLabel = file.name || 'Uploaded table';
+    const lowerName = fileLabel.toLowerCase();
+
+    try {
+      if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
+        throw new Error('Excel upload support is planned for a later pass. Please use CSV or TSV for the column-mapping preview.');
+      }
+
+      const text = await readFileText(file);
+      const parsedRows = parseCsv(text);
+      const headers = getCsvHeaders(text);
+      const detectedFormat = detectDelimitedTableFormat(text);
+      const mappingState = buildInitialPeridotColumnMappingState(headers, parsedRows);
+
+      setColumnMappingStaging({
+        status: 'ready',
+        fileLabel,
+        fileType: detectedFormat.label,
+        delimiter: detectedFormat.delimiter,
+        rowCount: parsedRows.length,
+        columnCount: headers.length,
+        headers,
+        previewRows: parsedRows.slice(0, 5),
+        mappingState,
+        stagedAt: new Date().toLocaleTimeString(),
+      });
+    } catch (error) {
+      setColumnMappingStaging({
+        status: 'error',
+        fileLabel,
+        fileType: lowerName.endsWith('.tsv') ? 'TSV' : lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls') ? 'Excel' : 'CSV',
+        rowCount: 0,
+        columnCount: 0,
+        headers: [],
+        previewRows: [],
+        mappingState: null,
+        stagedAt: new Date().toLocaleTimeString(),
+        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+      });
+    } finally {
+      e.target.value = '';
+    }
+  };
+
   const getMapSvgElement = () => mapViewportRef.current?.querySelector('svg') || null;
 
   const handleExportSvg = () => {
@@ -3255,6 +3342,9 @@ export default function EuropeNetworkMapApp() {
     handlePeridotCsvUpload,
     handleDownloadPeridotTemplate,
     closePeridotValidationModal: () => setIsPeridotValidationModalOpen(false),
+    columnMappingStaging,
+    handleColumnMappingTableUpload,
+    clearColumnMappingStaging: () => setColumnMappingStaging(null),
     rowDiagnostics,
     showLabels,
     setShowLabels,

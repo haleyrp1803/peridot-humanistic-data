@@ -1256,6 +1256,112 @@ function PeridotUploadSummaryPanel({ summary }) {
   );
 }
 
+
+function ColumnMappingStagingPanel({ staging, onClear }) {
+  if (!staging) return null;
+
+  const mappingState = staging.mappingState || {};
+  const coreMapping = mappingState.coreMapping || {};
+  const coreDefinitions = mappingState.coreFieldDefinitions || [];
+  const customFieldSelections = mappingState.customFieldSelections || [];
+  const includedCustomFields = customFieldSelections.filter((field) => field.action === 'include');
+  const ignoredCustomFields = customFieldSelections.filter((field) => field.action !== 'include');
+  const previewRows = staging.previewRows || [];
+  const previewHeaders = (staging.headers || []).slice(0, 6);
+
+  if (staging.status === 'error') {
+    return (
+      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.2)]">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="font-semibold text-[var(--panel-card-text)]">Column-mapping preview failed</div>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">{staging.errorMessage || 'Peridot could not stage this table.'}</p>
+          </div>
+          <button type="button" onClick={onClear} className={buttonClassName({ variant: 'secondary' })}>
+            Clear
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.2)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="font-semibold text-[var(--panel-card-text)]">Column-mapping preview</div>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            {staging.fileLabel} staged as {staging.fileType}. {staging.rowCount} rows and {staging.columnCount} columns detected.
+          </p>
+        </div>
+        <button type="button" onClick={onClear} className={buttonClassName({ variant: 'secondary' })}>
+          Clear
+        </button>
+      </div>
+
+      {coreDefinitions.length ? (
+        <div className="mt-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Suggested core mappings</div>
+          <div className="mt-2 space-y-1 text-sm text-[var(--panel-card-muted-text)]">
+            {coreDefinitions.map((definition) => (
+              <div key={definition.key} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2">
+                <span className="font-medium text-[var(--panel-card-text)]">{definition.key}</span>
+                <span>{coreMapping[definition.key] || 'Unassigned'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {includedCustomFields.length || ignoredCustomFields.length ? (
+        <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Default Inspector fields</div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+              {includedCustomFields.length ? includedCustomFields.slice(0, 8).map((field) => (
+                <li key={field.sourceColumn}>{field.label || field.sourceColumn}</li>
+              )) : <li>None suggested yet.</li>}
+              {includedCustomFields.length > 8 ? <li>{includedCustomFields.length - 8} more</li> : null}
+            </ul>
+          </div>
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Default ignored fields</div>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+              {ignoredCustomFields.length ? ignoredCustomFields.slice(0, 8).map((field) => (
+                <li key={field.sourceColumn}>{field.label || field.sourceColumn}</li>
+              )) : <li>None suggested yet.</li>}
+              {ignoredCustomFields.length > 8 ? <li>{ignoredCustomFields.length - 8} more</li> : null}
+            </ul>
+          </div>
+        </div>
+      ) : null}
+
+      {previewRows.length && previewHeaders.length ? (
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
+          <table className="min-w-full border-collapse text-left text-xs text-[var(--panel-card-muted-text)]">
+            <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
+              <tr>
+                {previewHeaders.map((header) => <th key={header} className="px-3 py-2 font-semibold">{header}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {previewRows.slice(0, 3).map((row, rowIndex) => (
+                <tr key={`preview-row-${rowIndex}`} className="border-t border-[var(--panel-card-border)]">
+                  {previewHeaders.map((header) => <td key={`${rowIndex}-${header}`} className="max-w-[12rem] truncate px-3 py-2">{row[header]}</td>)}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      <p className="mt-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+        This pass only stages the table and previews likely mappings. It does not import the file until the mapping modal and confirm-import step are implemented.
+      </p>
+    </div>
+  );
+}
+
 // DATA INPUTS GROUP
 // This group is mostly presentation plus upload wiring. It is one of the safer
 // panel sections because the heavy parsing logic lives elsewhere.
@@ -1276,6 +1382,9 @@ function DataInputsGroup({
     handlePeridotCsvUpload,
     handleDownloadPeridotTemplate,
     closePeridotValidationModal,
+    columnMappingStaging,
+    handleColumnMappingTableUpload,
+    clearColumnMappingStaging,
   } = dataInputState;
 
   return (
@@ -1308,6 +1417,18 @@ function DataInputsGroup({
 
             <div className="mt-3 text-sm text-[var(--panel-card-muted-text)]">Current source: {peridotFileLabel}</div>
           </div>
+
+          <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
+            <div className="mb-3">
+              <h2 className={sectionTitleClassName()}>Map your own CSV or TSV</h2>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+                Upload any CSV or TSV table to preview its columns and likely Peridot mappings. Excel support will be handled in a later expansion.
+              </p>
+            </div>
+            <FilePicker id="peridot-column-mapping-file" onChange={handleColumnMappingTableUpload} label="Upload CSV/TSV for mapping preview" />
+          </div>
+
+          <ColumnMappingStagingPanel staging={columnMappingStaging} onClear={clearColumnMappingStaging} />
 
           <PeridotUploadSummaryPanel summary={peridotValidationSummary} />
 
@@ -1513,6 +1634,9 @@ export function LeftControlPanel({
     handlePeridotCsvUpload,
     handleDownloadPeridotTemplate,
     closePeridotValidationModal,
+    columnMappingStaging,
+    handleColumnMappingTableUpload,
+    clearColumnMappingStaging,
     rowDiagnostics,
   } = dataInputState;
 
@@ -1588,6 +1712,9 @@ export function LeftControlPanel({
       handlePeridotCsvUpload,
       handleDownloadPeridotTemplate,
       closePeridotValidationModal,
+      columnMappingStaging,
+      handleColumnMappingTableUpload,
+      clearColumnMappingStaging,
     },
   };
 
