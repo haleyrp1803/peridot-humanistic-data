@@ -45,6 +45,7 @@ import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
 import { normalizePeridotTemplateRows } from './peridotCsvNormalizer.js';
 import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
 import { applyPeridotColumnMapping, buildInitialPeridotColumnMappingState } from './peridotColumnMapping.js';
+import { parsePeridotTableFile, summarizePeridotWorkbook } from './peridotWorkbookParsing.js';
 import { PeridotColumnMappingModal } from './PeridotColumnMappingModal.jsx';
 
 
@@ -3083,44 +3084,69 @@ export default function EuropeNetworkMapApp() {
     if (!file) return;
 
     const fileLabel = file.name || 'Uploaded table';
-    const lowerName = fileLabel.toLowerCase();
 
     try {
-      if (lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')) {
-        throw new Error('Excel upload support is planned for a later pass. Please use CSV or TSV for the column-mapping preview.');
+      const workbookModel = await parsePeridotTableFile(file);
+      const workbookSummary = summarizePeridotWorkbook(workbookModel);
+
+      if (workbookModel.fileType === 'unsupported') {
+        throw new Error(workbookSummary.warnings?.[0]?.message || 'Unsupported file type.');
       }
 
-      const text = await readFileText(file);
-      const parsedRows = parseCsv(text);
-      const headers = getCsvHeaders(text);
-      const detectedFormat = detectDelimitedTableFormat(text);
-      const mappingState = buildInitialPeridotColumnMappingState(headers, parsedRows);
+      const usableSheets = (workbookModel.sheets || []).filter((sheet) => sheet.headers?.length && sheet.rows?.length);
+      const primarySheet = usableSheets[0] || workbookModel.sheets?.[0] || null;
+      const isSingleSheetWorkbook = usableSheets.length === 1;
+      const canUseCurrentSingleTableMapper = Boolean(primarySheet && isSingleSheetWorkbook);
+
+      const mappingState = canUseCurrentSingleTableMapper
+        ? buildInitialPeridotColumnMappingState(primarySheet.headers || [], primarySheet.rows || [])
+        : null;
 
       setColumnMappingStaging({
         status: 'ready',
         fileLabel,
-        fileType: detectedFormat.label,
-        delimiter: detectedFormat.delimiter,
-        rowCount: parsedRows.length,
-        columnCount: headers.length,
-        headers,
-        rows: parsedRows,
-        previewRows: parsedRows.slice(0, 5),
+        fileType: workbookModel.fileType === 'excel'
+          ? 'Excel workbook'
+          : workbookModel.fileType === 'tsv'
+            ? 'TSV'
+            : 'CSV',
+        delimiter: workbookModel.fileType === 'tsv' ? '\t' : ',',
+        rowCount: workbookSummary.totalRows,
+        columnCount: workbookSummary.totalColumns,
+        sheetCount: workbookSummary.sheetCount,
+        sheets: workbookSummary.sheets,
+        workbookModel,
+        workbookSummary,
+        activeSheetName: primarySheet?.sheetName || '',
+        headers: primarySheet?.headers || [],
+        rows: canUseCurrentSingleTableMapper ? primarySheet.rows || [] : [],
+        previewRows: primarySheet?.previewRows || [],
         mappingState,
         stagedAt: new Date().toLocaleTimeString(),
+        multiSheetWorkbook: usableSheets.length > 1,
+        workbookMappingRequired: usableSheets.length > 1,
+        workbookMappingMessage: usableSheets.length > 1
+          ? 'This workbook has multiple usable sheets. Peridot has staged the workbook summary, but multi-sheet mapping with Letter_ID joins will be wired in the next Excel pass.'
+          : '',
       });
-      setIsColumnMappingModalOpen(true);
+      setIsColumnMappingModalOpen(canUseCurrentSingleTableMapper);
     } catch (error) {
+      const lowerName = fileLabel.toLowerCase();
+
       setColumnMappingStaging({
         status: 'error',
         fileLabel,
         fileType: lowerName.endsWith('.tsv') ? 'TSV' : lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls') ? 'Excel' : 'CSV',
         rowCount: 0,
         columnCount: 0,
+        sheetCount: 0,
+        sheets: [],
         headers: [],
         rows: [],
         previewRows: [],
         mappingState: null,
+        workbookModel: null,
+        workbookSummary: null,
         stagedAt: new Date().toLocaleTimeString(),
         errorMessage: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -3149,6 +3175,26 @@ export default function EuropeNetworkMapApp() {
 
   const handleConfirmColumnMappingImport = ({ coreMapping, customFieldSelections, validationSummary } = {}) => {
     if (!columnMappingStaging || columnMappingStaging.status !== 'ready') return;
+    if (!columnMappingStaging.mappingState || columnMappingStaging.workbookMappingRequired) {
+      setPeridotValidationSummary({
+        popup: {
+          title: 'Import not ready',
+          intro: 'This staged workbook needs the multi-sheet Excel mapping workflow before it can be imported.',
+          capabilityLines: [],
+          warningLines: ['No data was changed.'],
+          closingLines: ['For now, single-sheet CSV, TSV, XLSX, and XLS files can use the current mapping workspace.'],
+        },
+        summaryLines: ['Import not ready.'],
+        warnings: [],
+        hasWarnings: true,
+        totalRows: 0,
+        acceptedRecordCount: 0,
+        unsupportedRowCount: 0,
+        capabilityCounts: {},
+      });
+      setIsPeridotValidationModalOpen(true);
+      return;
+    }
 
     try {
       const nextCoreMapping = coreMapping || columnMappingStaging.mappingState?.coreMapping || {};

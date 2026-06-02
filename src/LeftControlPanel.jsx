@@ -1268,13 +1268,17 @@ function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
   const ignoredCustomFields = customFieldSelections.filter((field) => field.action !== 'include');
   const previewRows = staging.previewRows || [];
   const previewHeaders = (staging.headers || []).slice(0, 6);
+  const workbookSummary = staging.workbookSummary || null;
+  const workbookWarnings = workbookSummary?.warnings || [];
+  const sheetSummaries = staging.sheets || workbookSummary?.sheets || [];
+  const canOpenMapping = staging.status === 'ready' && Boolean(staging.mappingState) && !staging.workbookMappingRequired;
 
   if (staging.status === 'error') {
     return (
       <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.2)]">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="font-semibold text-[var(--panel-card-text)]">Column-mapping preview failed</div>
+            <div className="font-semibold text-[var(--panel-card-text)]">Table staging failed</div>
             <p className="mt-1 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">{staging.errorMessage || 'Peridot could not stage this table.'}</p>
           </div>
           <button type="button" onClick={onClear} className={buttonClassName({ variant: 'secondary' })}>
@@ -1289,13 +1293,18 @@ function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
     <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.2)]">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="font-semibold text-[var(--panel-card-text)]">Column-mapping preview</div>
+          <div className="font-semibold text-[var(--panel-card-text)]">Table staged for mapping</div>
           <p className="mt-1 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            {staging.fileLabel} staged as {staging.fileType}. {staging.rowCount} rows and {staging.columnCount} columns detected.
+            {staging.fileLabel} staged as {staging.fileType}. {staging.sheetCount || 1} {staging.sheetCount === 1 ? 'sheet' : 'sheets'}, {staging.rowCount} rows, and {staging.columnCount} columns detected.
           </p>
+          {staging.workbookMappingMessage ? (
+            <p className="mt-2 rounded-xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+              {staging.workbookMappingMessage}
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={onOpenMapping} className={buttonClassName({ variant: 'primary' })}>
+          <button type="button" onClick={onOpenMapping} disabled={!canOpenMapping} className={buttonClassName({ variant: 'primary' })}>
             Open mapping workspace
           </button>
           <button type="button" onClick={onClear} className={buttonClassName({ variant: 'secondary' })}>
@@ -1303,6 +1312,42 @@ function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
           </button>
         </div>
       </div>
+
+      {sheetSummaries.length ? (
+        <div className="mt-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Workbook sheets</div>
+          <div className="mt-2 space-y-2">
+            {sheetSummaries.slice(0, 8).map((sheet) => (
+              <div key={sheet.sheetName} className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="font-medium text-[var(--panel-card-text)]">{sheet.sheetName}</span>
+                  <span className="text-[var(--panel-card-muted-text)]">{sheet.rowCount} rows · {sheet.columnCount} columns</span>
+                </div>
+                {sheet.headers?.length ? (
+                  <div className="mt-1 truncate text-xs text-[var(--panel-card-muted-text)]">
+                    Headers: {sheet.headers.slice(0, 8).join(', ')}{sheet.headers.length > 8 ? ', …' : ''}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+            {sheetSummaries.length > 8 ? (
+              <div className="text-sm text-[var(--panel-card-muted-text)]">{sheetSummaries.length - 8} more sheets detected.</div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {workbookWarnings.length ? (
+        <div className="mt-4 rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Workbook notes</div>
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            {workbookWarnings.slice(0, 5).map((warning, index) => (
+              <li key={`${warning.code || 'warning'}-${index}`}>{warning.sheetName ? `${warning.sheetName}: ` : ''}{warning.message}</li>
+            ))}
+            {workbookWarnings.length > 5 ? <li>{workbookWarnings.length - 5} more notes</li> : null}
+          </ul>
+        </div>
+      ) : null}
 
       {coreDefinitions.length ? (
         <div className="mt-4">
@@ -1361,7 +1406,7 @@ function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
       ) : null}
 
       <p className="mt-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        The full mapping workspace opens outside the left panel so you can review the table comfortably. This pass saves mapping choices but does not import the file until the confirm-import step is implemented.
+        Single-sheet CSV, TSV, XLSX, and XLS files can use the current mapping workspace. Multi-sheet Excel workbooks are staged here first; Letter_ID-based workbook mapping will be wired in the next Excel pass.
       </p>
     </div>
   );
@@ -1426,12 +1471,12 @@ function DataInputsGroup({
 
           <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4 shadow-[0_10px_28px_rgba(0,0,0,0.22)]">
             <div className="mb-3">
-              <h2 className={sectionTitleClassName()}>Map your own CSV or TSV</h2>
+              <h2 className={sectionTitleClassName()}>Map your own table</h2>
               <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-                Upload any CSV or TSV table to preview its columns and open the larger mapping workspace. Excel support will be handled in a later expansion.
+                Upload any CSV, TSV, XLSX, or XLS table to preview its columns. Single-sheet files can open the mapping workspace immediately; multi-sheet Excel workbooks will be staged for workbook-aware mapping.
               </p>
             </div>
-            <FilePicker id="peridot-column-mapping-file" onChange={handleColumnMappingTableUpload} label="Upload CSV/TSV for mapping preview" />
+            <FilePicker id="peridot-column-mapping-file" onChange={handleColumnMappingTableUpload} label="Upload table for mapping preview" />
           </div>
 
           <ColumnMappingStagingPanel staging={columnMappingStaging} onClear={clearColumnMappingStaging} onOpenMapping={openColumnMappingModal} />
