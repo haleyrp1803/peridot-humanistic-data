@@ -2811,7 +2811,6 @@ function PeridotDataWorkspace({
   peridotValidationSummary,
   columnMappingStaging,
   handleDownloadPeridotTemplate,
-  handlePeridotCsvUpload,
   handleColumnMappingTableUpload,
   openColumnMappingModal,
   clearColumnMappingStaging,
@@ -2834,7 +2833,7 @@ function PeridotDataWorkspace({
                 Start with correspondence records
               </h1>
               <p className="mt-4 max-w-3xl text-base leading-7 text-[var(--panel-card-muted-text)]">
-                Upload a completed Peridot CSV, or stage a CSV, TSV, XLSX, or XLS table for column mapping. Peridot accepts incomplete historical data and reports which records can support Inspector, map, timeline, Analytics, and export workflows.
+                Upload a CSV, TSV, XLSX, or XLS table or workbook, then map it to Peridot's core fields. Peridot accepts incomplete historical data and reports which records can support Inspector, map, timeline, Analytics, and export workflows.
               </p>
             </div>
             <button
@@ -2849,9 +2848,9 @@ function PeridotDataWorkspace({
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-[28px] border border-[var(--section-border)] bg-[var(--section-bg)] p-6 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
-            <h2 className="text-2xl font-bold text-[var(--heading-text)]">Peridot CSV</h2>
+            <h2 className="text-2xl font-bold text-[var(--heading-text)]">Peridot template</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--panel-card-muted-text)]">
-              Use the standard Peridot template when each row represents one letter, document, or correspondence record.
+              Download the standard Peridot CSV template when each row represents one letter, document, or correspondence record. Upload the completed CSV through the table/workbook uploader, where it can be reviewed and mapped before entering the main workspace.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <button
@@ -2861,10 +2860,6 @@ function PeridotDataWorkspace({
               >
                 Download CSV template
               </button>
-              <label className="cursor-pointer rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-primary-text)] transition hover:bg-[var(--button-primary-hover)]">
-                Upload completed CSV
-                <input type="file" accept=".csv,text/csv" onChange={handlePeridotCsvUpload} className="sr-only" />
-              </label>
             </div>
             <p className="mt-4 text-sm text-[var(--panel-card-muted-text)]">
               Current source: <strong className="text-[var(--heading-text)]">{peridotFileLabel}</strong>
@@ -3704,6 +3699,10 @@ export default function EuropeNetworkMapApp() {
         });
         setIsColumnMappingModalOpen(false);
         resetActiveDataInteractionState();
+        setViewMode('geographic');
+        setPersonLayoutMode('geographic');
+        setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+        setIsSidePanelOpen(false);
         return;
       }
 
@@ -3736,6 +3735,10 @@ export default function EuropeNetworkMapApp() {
       });
       setIsColumnMappingModalOpen(false);
       resetActiveDataInteractionState();
+      setViewMode('geographic');
+      setPersonLayoutMode('geographic');
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+      setIsSidePanelOpen(false);
     } catch (error) {
       setPeridotValidationSummary({
         popup: {
@@ -4101,6 +4104,8 @@ export default function EuropeNetworkMapApp() {
   };
 
   const openVisualizationsWorkspace = () => {
+    setViewMode('geographic');
+    setPersonLayoutMode('geographic');
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
     setIsSidePanelOpen(false);
   };
@@ -4115,7 +4120,6 @@ export default function EuropeNetworkMapApp() {
     peridotValidationSummary,
     columnMappingStaging,
     handleDownloadPeridotTemplate,
-    handlePeridotCsvUpload,
     handleColumnMappingTableUpload,
     openColumnMappingModal: () => setIsColumnMappingModalOpen(true),
     clearColumnMappingStaging,
