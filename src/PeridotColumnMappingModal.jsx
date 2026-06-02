@@ -294,7 +294,7 @@ function WorkbookOverviewStep({ staging, workbookModel, workbookSummary }) {
       </div>
 
       <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
-        This pass configures a multi-sheet workbook mapping preview only. It does not import workbook data yet. Multi-sheet import will be wired after the primary record sheet, Letter_ID, and Sheet + Column mappings are stable.
+        This workspace configures a multi-sheet workbook import. Peridot will use the primary sheet as the record basis and pull mapped core values from joined sheets through the unique-ID joins you configure.
       </div>
 
       <div className="grid gap-3">
@@ -925,7 +925,7 @@ export function PeridotColumnMappingModal({
   };
 
   const handleConfirmImport = () => {
-    if (isWorkbookMode) return;
+    if (isWorkbookMode && !workbookValidation?.isValid) return;
     const payload = buildCurrentMappingPayload();
     onSaveMapping?.(payload);
     onConfirmImport?.(payload);
@@ -942,7 +942,7 @@ export function PeridotColumnMappingModal({
   };
 
   const footerHelper = isWorkbookMode
-    ? 'This workspace previews multi-sheet workbook configuration only. It does not change the active dataset. Final Letter_ID-based import will be wired in the next pass.'
+    ? 'Closing keeps the staged workbook available in Data Inputs but does not change the active dataset. Confirm import assembles rows from the primary sheet and configured unique-ID joins, then replaces the active Peridot dataset.'
     : 'Closing keeps the staged file available in Data Inputs but does not change the active dataset. Confirm import replaces the active Peridot dataset with this mapped table.';
 
   return (
@@ -1083,8 +1083,13 @@ export function PeridotColumnMappingModal({
                 Next
               </button>
             ) : isWorkbookMode ? (
-              <button type="button" disabled className={buttonClassName({ variant: 'primary' })}>
-                Confirm import coming next
+              <button
+                type="button"
+                onClick={handleConfirmImport}
+                disabled={!workbookValidation?.isValid}
+                className={buttonClassName({ variant: 'primary' })}
+              >
+                Confirm import
               </button>
             ) : (
               <button type="button" onClick={handleConfirmImport} className={buttonClassName({ variant: 'primary' })}>

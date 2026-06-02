@@ -46,7 +46,7 @@ import { normalizePeridotTemplateRows } from './peridotCsvNormalizer.js';
 import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
 import { applyPeridotColumnMapping, buildInitialPeridotColumnMappingState } from './peridotColumnMapping.js';
 import { parsePeridotTableFile, summarizePeridotWorkbook } from './peridotWorkbookParsing.js';
-import { buildInitialPeridotWorkbookMappingState } from './peridotWorkbookMapping.js';
+import { buildInitialPeridotWorkbookMappingState, buildPeridotRowsFromWorkbookMapping, validatePeridotWorkbookMapping } from './peridotWorkbookMapping.js';
 import { PeridotColumnMappingModal } from './PeridotColumnMappingModal.jsx';
 
 
@@ -3213,16 +3213,16 @@ export default function EuropeNetworkMapApp() {
     });
   };
 
-  const handleConfirmColumnMappingImport = ({ coreMapping, customFieldSelections, validationSummary } = {}) => {
+  const handleConfirmColumnMappingImport = ({ coreMapping, customFieldSelections, validationSummary, workbookMappingState, workbookValidation, workbookSummary } = {}) => {
     if (!columnMappingStaging || columnMappingStaging.status !== 'ready') return;
-    if (!columnMappingStaging.mappingState || columnMappingStaging.workbookMappingRequired) {
+    if (!columnMappingStaging.mappingState) {
       setPeridotValidationSummary({
         popup: {
           title: 'Import not ready',
-          intro: 'This staged workbook needs the multi-sheet Excel mapping workflow before it can be imported.',
+          intro: 'Peridot could not find a saved mapping configuration for this staged file.',
           capabilityLines: [],
           warningLines: ['No data was changed.'],
-          closingLines: ['For now, single-sheet CSV, TSV, XLSX, and XLS files can use the current mapping workspace.'],
+          closingLines: ['Reopen the mapping workspace and review the mapping choices before importing.'],
         },
         summaryLines: ['Import not ready.'],
         warnings: [],
@@ -3237,6 +3237,43 @@ export default function EuropeNetworkMapApp() {
     }
 
     try {
+      const importedAt = new Date().toLocaleTimeString();
+      const isWorkbookImport = Boolean(columnMappingStaging.workbookMappingRequired || columnMappingStaging.mappingMode === 'workbook');
+
+      if (isWorkbookImport) {
+        const nextWorkbookMapping = workbookMappingState || columnMappingStaging.mappingState;
+        const nextWorkbookValidation = workbookValidation || validatePeridotWorkbookMapping(columnMappingStaging.workbookModel, nextWorkbookMapping);
+
+        if (!nextWorkbookValidation?.isValid) {
+          const firstError = nextWorkbookValidation?.issues?.find((issue) => issue.severity === 'error');
+          throw new Error(firstError?.message || 'Workbook mapping is not valid.');
+        }
+
+        const mappedRows = buildPeridotRowsFromWorkbookMapping(columnMappingStaging.workbookModel, nextWorkbookMapping);
+        const finalValidationSummary = buildPeridotCsvValidationSummary(mappedRows, PERIDOT_TEMPLATE_COLUMNS);
+        const normalized = normalizePeridotTemplateRows(mappedRows);
+
+        setPeridotNormalizedData(normalized);
+        setPeridotFileLabel(`${columnMappingStaging.fileLabel || 'Mapped workbook'} (mapped workbook)`);
+        setPeridotValidationSummary(finalValidationSummary);
+        setIsPeridotValidationModalOpen(true);
+        setColumnMappingStaging((current) => {
+          if (!current || current.status !== 'ready') return current;
+
+          return {
+            ...current,
+            mappingState: nextWorkbookMapping,
+            workbookMappingValidation: nextWorkbookValidation,
+            workbookMappingSummary: workbookSummary || current.workbookMappingSummary || null,
+            mappingValidationSummary: finalValidationSummary,
+            importedAt,
+          };
+        });
+        setIsColumnMappingModalOpen(false);
+        resetActiveDataInteractionState();
+        return;
+      }
+
       const nextCoreMapping = coreMapping || columnMappingStaging.mappingState?.coreMapping || {};
       const nextCustomFieldSelections = customFieldSelections || columnMappingStaging.mappingState?.customFieldSelections || [];
       const mappedRows = applyPeridotColumnMapping(columnMappingStaging.rows || [], {
@@ -3245,7 +3282,6 @@ export default function EuropeNetworkMapApp() {
       });
       const finalValidationSummary = validationSummary || buildPeridotCsvValidationSummary(mappedRows, PERIDOT_TEMPLATE_COLUMNS);
       const normalized = normalizePeridotTemplateRows(mappedRows);
-      const importedAt = new Date().toLocaleTimeString();
 
       setPeridotNormalizedData(normalized);
       setPeridotFileLabel(`${columnMappingStaging.fileLabel || 'Mapped table'} (mapped)`);

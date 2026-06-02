@@ -787,6 +787,121 @@ export function previewWorkbookCoreMappedRows(workbookModel, mappingState = {}, 
   });
 }
 
+
+
+function getPrimaryWorkbookRowContext(workbookModel, mappingState = {}, primaryRow = {}) {
+  const primarySheetName = asText(mappingState.primarySheetName);
+  const context = { [primarySheetName]: primaryRow };
+
+  (mappingState.letterLevelJoins || []).forEach((join) => {
+    const fromRef = join?.from || {};
+    const toRef = join?.to || {};
+    const fromSheetName = asText(fromRef.sheetName);
+    const toSheetName = asText(toRef.sheetName);
+    const fromColumnName = asText(fromRef.columnName);
+    const toColumnName = asText(toRef.columnName);
+
+    if (!fromSheetName || !toSheetName || !fromColumnName || !toColumnName) return;
+    if (fromSheetName !== primarySheetName) return;
+
+    const key = asText(primaryRow?.[fromColumnName]);
+    if (!key) return;
+
+    const joinedRows = getSheetRows(workbookModel, toSheetName);
+    const match = joinedRows.find((row) => asText(row?.[toColumnName]) === key);
+    if (match) context[toSheetName] = match;
+  });
+
+  return context;
+}
+
+function normalizeWorkbookCustomInspectorSelections(mappingState = {}) {
+  return (mappingState.customFieldSelections || [])
+    .filter((selection) => selection?.action === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include)
+    .map((selection) => ({
+      key: asText(selection.key || selection.sourceColumn || selection.label),
+      sourceColumn: asText(selection.sourceColumn || selection.key || selection.label),
+      label: asText(selection.label || selection.sourceColumn || selection.key),
+      sheetName: asText(selection.sheetName || selection.sourceRef?.sheetName || mappingState.primarySheetName),
+      sourceRef: selection.sourceRef || makeWorkbookColumnRef(
+        selection.sheetName || mappingState.primarySheetName,
+        selection.sourceColumn || selection.key || selection.label
+      ),
+      analyticsEligible: Boolean(selection.analyticsEligible),
+    }))
+    .filter((selection) => selection.sourceColumn || selection.sourceRef?.columnName);
+}
+
+function buildOriginalWorkbookRowContext(context = {}) {
+  return Object.fromEntries(
+    Object.entries(context).map(([sheetName, row]) => [sheetName, { ...(row || {}) }])
+  );
+}
+
+/**
+ * Assemble Peridot-shaped rows from a workbook mapping configuration.
+ *
+ * This first assembly pass supports:
+ * - primary-sheet rows as the record basis;
+ * - configured unique-ID joins from the primary sheet to one or more joined
+ *   sheets;
+ * - core Peridot variables mapped from any sheet available in the row context;
+ * - custom Inspector fields from the primary sheet mapping state.
+ *
+ * It intentionally does not yet perform person/place lookup enrichment or
+ * custom Inspector field selection from joined lookup sheets. Those can be
+ * layered on once this core letter-level assembly path is stable.
+ */
+export function buildPeridotRowsFromWorkbookMapping(workbookModel, mappingState = {}) {
+  const validation = validatePeridotWorkbookMapping(workbookModel, mappingState);
+  if (!validation.isValid) {
+    const firstError = validation.issues.find((issue) => issue.severity === 'error');
+    throw new Error(firstError?.message || 'Workbook mapping is not valid.');
+  }
+
+  const primarySheetName = asText(mappingState.primarySheetName);
+  const primaryRows = getSheetRows(workbookModel, primarySheetName);
+  const coreMappings = mappingState.coreMappings || {};
+  const customSelections = normalizeWorkbookCustomInspectorSelections(mappingState);
+
+  return primaryRows.map((primaryRow, index) => {
+    const context = getPrimaryWorkbookRowContext(workbookModel, mappingState, primaryRow);
+    const coreValues = Object.fromEntries(
+      PERIDOT_CORE_FIELDS.map((field) => [
+        field,
+        getValueFromWorkbookRef(workbookModel, context, coreMappings[field]),
+      ])
+    );
+
+    const customInspectorFields = customSelections.map((selection) => ({
+      key: selection.key || selection.sourceColumn || selection.label,
+      sourceColumn: selection.sourceColumn || selection.sourceRef?.columnName || selection.key,
+      label: selection.label || selection.sourceColumn || selection.key,
+      value: getValueFromWorkbookRef(workbookModel, context, selection.sourceRef),
+      analyticsEligible: Boolean(selection.analyticsEligible),
+    }));
+
+    const customFieldValues = Object.fromEntries(
+      customInspectorFields
+        .filter((field) => field.label)
+        .map((field) => [field.label, field.value])
+    );
+
+    return {
+      ...customFieldValues,
+      ...coreValues,
+      customInspectorFields,
+      ignoredUploadedColumns: [],
+      originalUploadedRow: {
+        workbookFileName: workbookModel?.fileName || workbookModel?.workbookName || '',
+        primarySheetName,
+        primaryRowNumber: index + 2,
+        sheetRows: buildOriginalWorkbookRowContext(context),
+      },
+    };
+  });
+}
+
 export function getWorkbookMappingSummary(workbookModel, mappingState = {}) {
   const validation = validatePeridotWorkbookMapping(workbookModel, mappingState);
   const coreMappings = mappingState.coreMappings || {};
