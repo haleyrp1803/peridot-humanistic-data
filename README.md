@@ -2,13 +2,13 @@
 
 ## 1. Project title
 
-**Peridot** is the current app identity for the repository **Correspondence Visualizer**. It is a research-oriented interactive web app for exploring historical correspondence networks as either geographic route maps or person-centered relationship graphs.
+**Peridot** is the current app identity for the repository **Correspondence Visualizer**. It is a research-oriented interactive web app for exploring historical correspondence networks as geographic route maps, person-centered relationship graphs, and force-directed person networks.
 
 ---
 
 ## 2. One-paragraph summary
 
-The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, Analytics charting, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Export, Timeline, Analytics, and Inspector, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, compact and expanded chart views, and image/tabular export tools.
+The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive visualization workspace with filtering, inspection, timeline controls, playback, theme customization, Analytics charting, and export tools. The current app includes a shared left-side panel with a persistent icon rail, dedicated panel tabs for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector, a standardized single-CSV upload workflow with a downloadable template and validation summary, actionable cluster inspection, dynamic node sizing, volume-based zoom-responsive cluster sizing, year-based timeline controls, compact and expanded chart views, and image/tabular export tools.
 
 ---
 
@@ -18,9 +18,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`3352403` — `Fix Analytics expanded overlay and variable options`** on branch **`main`**
+- **`930c807` — `Persist Peridot upload summary in Data Inputs`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Analytics feature milestone. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, and the first standardized one-file Peridot CSV upload workflow. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work has been set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -30,9 +30,14 @@ The current state of the active `main` project includes:
   - **Place**
   - **Force-Directed**
 - **People** as the default startup view
-- a committed minimum-weight numeric input with **Enter** / **Update** apply behavior
 - year-based timeline filtering and playback infrastructure
-- a shared left-side panel with a persistent rail for Controls, Data Inputs, Export, Timeline, Analytics, and Inspector
+- a shared left-side panel with a persistent rail for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector
+- a standardized one-file **Peridot CSV** upload workflow in Data Inputs
+- a downloadable CSV template using the current public Peridot column names
+- upload validation that reports which records are Inspector-ready, People-network-ready, Place-network-ready, Map-ready, Timeline-ready, Analytics-ready, and Export-ready
+- a validation popup plus a persistent latest-upload summary in the Data Inputs panel
+- legacy Geography / Raw Data / Person Metadata upload controls hidden from the ordinary UI but retained in code for fallback and transition
+- implemented Search & Filter controls for keyword, person, place, route-place, route-people, minimum weight, and date range
 - actionable cluster inspector behavior
 - cluster inspector members grouped by place
 - dynamic node radius contrast based on active data
@@ -45,9 +50,7 @@ The current state of the active `main` project includes:
 - inspector-internal navigation between people and places
 - a working inspector **Back** button for internal navigation
 
-The codebase is functional, but it is still under active maintenance. The largest remaining structural issue is that important orchestration logic still lives in `src/App.jsx`, even though panel, inspector, map, timeline, interaction, and export logic have been substantially extracted.
-
-A near-term design direction is to add a dedicated **Search & Filter** panel tab that consolidates global filtering and defines one active filtered dataset for map, Inspector, Timeline, Analytics, and Export workflows. This is planned design work rather than current implemented behavior in the documented safe baseline.
+The codebase is functional, but it is still under active maintenance. The largest remaining structural issue is that important orchestration logic still lives in `src/App.jsx`, even though panel, inspector, map, timeline, interaction, export, Analytics, and upload-schema logic have been substantially extracted.
 
 ---
 
@@ -61,16 +64,20 @@ A near-term design direction is to add a dedicated **Search & Filter** panel tab
 
 ### Data interaction
 
-- CSV-based data ingestion
+- standardized one-file **Peridot CSV** upload workflow
+- downloadable Peridot CSV template from the Data Inputs panel
+- permissive database-first ingestion model: accepted rows can remain useful even when they cannot support every visualization
+- post-upload validation popup and persistent latest-upload summary
 - embedded baseline data so the app can render before uploads
 - derived node, edge, cluster, and timeline structures based on uploaded or embedded data
+- legacy three-file upload machinery retained in code but hidden from the ordinary user interface
 
 ### Research workflow tools
 
 - hover and click inspection
 - shared side-panel Inspector tab for selected nodes, edges, clusters, and linked records
-- dedicated side-panel tabs for Data Inputs, Export, Timeline, and Analytics workflows
-- planned Search & Filter workflow to consolidate global filters that are currently distributed across Controls, Timeline, Analytics, and interaction state
+- dedicated side-panel tabs for Data Inputs, Search & Filter, Export, Timeline, and Analytics workflows
+- implemented Search & Filter workflow defining one active filtered dataset for map, Inspector, Timeline, Analytics, and Export
 - inspector-internal navigation between people and places
 - actionable cluster inspector lists
 - cluster members grouped by place and ordered by represented visible volume
@@ -142,41 +149,27 @@ The current interface includes:
 - a mossy/peridot-toned rail background with lighter green buttons, lighter hover states, and cream active-state styling
 - rail-driven panel tabs for:
   - **Controls** — general visualization, display, theme, summary, and diagnostics controls
-  - **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
+  - **Data Inputs** — standardized Peridot CSV template download, one-file CSV upload, validation popup, persistent latest-upload summary, and data tips
+  - **Search & Filter** — global active-dataset filters with draft/apply behavior
   - **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
   - **Timeline** — year-range filtering and playback controls
   - **Analytics** — compact charting, chart configuration, expanded chart overlay, and PNG chart export
   - **Inspector** — selected nodes, edges, clusters, linked records, and internal navigation
 
-A planned next panel addition is **Search & Filter**, which should eventually consolidate date, weight, person/place/route, metadata, and mappability filters into one coherent active-dataset workflow. The first implementation step should be a placeholder/read-only rail tab, not a behavioral rewrite.
-
 Other current behavior:
 
 - the app opens in **People** view by default
-- the old minimum-weight slider has been replaced by a committed numeric input
+- the old minimum-weight slider has been replaced by a committed numeric input and then moved into Search & Filter
 - the old **Show all dates** shortcut has been removed
 - the timeline now uses **year-only** start/end selectors rather than month selectors
 - the old horizontal Controls / Inspector top tab row has been removed; the persistent rail now functions as the panel-view switcher
-
-These are part of the current safe baseline and should be treated as live behavior unless changed in a later committed pass.
-
-### Recent shared-panel rail milestone
-
-The current side-panel rail milestone was completed through a sequence of bounded passes ending at **`8539c68` — `Clarify timeline rail icon`**. This milestone:
-
-- anchored the rail to the panel shell rather than to fixed viewport coordinates
-- kept the close button at the top of the rail when open
-- made the rail visually distinct from the rest of the panel
-- removed the obsolete horizontal tab row
-- corrected the Controls and Inspector icon meanings
-- added dedicated **Data Inputs**, **Export**, and **Timeline** tabs
-- preserved existing upload, export, timeline/playback, and inspector behavior
+- legacy three-file upload controls are hidden from ordinary UI but retained in code during the single-CSV transition
 
 ---
 
 ## 6. Screenshots
 
-The screenshots in `docs/images/` may need refresh because the side-panel architecture and cluster inspector behavior have changed materially since the earlier documentation baseline.
+The screenshots in `docs/images/` may need refresh because the side-panel architecture, Search & Filter layout, Analytics overlay, Data Inputs workflow, and cluster inspector behavior have changed materially since the earlier documentation baseline.
 
 Existing screenshot references:
 
@@ -264,6 +257,9 @@ src/
   MapLibreMapStage.jsx          # dormant gated preview path on this branch
   mapStageComponents.jsx
   mapStyleConfig.js             # dormant MapLibre preview style config
+  peridotCsvNormalizer.js
+  peridotCsvSchema.js
+  peridotCsvValidation.js
   personForceLayoutHelpers.js
   timelinePlaybackComponents.jsx
   timelinePlaybackHelpers.js
@@ -281,11 +277,23 @@ Contains the minimal global layer for Tailwind directives, layout rules, and bas
 
 #### `src/App.jsx`
 
-The main orchestration layer. It handles top-level application state, data ingestion and normalization, graph derivation, theme token logic, timeline state, inspector state, shared side-panel state, and workspace composition.
+The main orchestration layer. It handles top-level application state, data ingestion and normalization, graph derivation, theme token logic, timeline state, inspector state, shared side-panel state, Search & Filter state, Peridot CSV upload wiring, validation summary state, and workspace composition.
 
 #### `src/LeftControlPanel.jsx`
 
-Owns the shared side-panel shell and persistent icon rail. It renders the rail-driven panel views for Controls, Data Inputs, Export, Timeline, Analytics, and Inspector. Inspector content is rendered through `InspectorPanelContent`, while the Data Inputs, Export, Timeline, and Analytics tabs reuse existing panel content boundaries rather than changing ingestion, export, playback, or map-rendering logic.
+Owns the shared side-panel shell and persistent icon rail. It renders the rail-driven panel views for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector. The Data Inputs tab now presents the single-file Peridot CSV workflow and keeps the legacy three-file upload controls hidden from ordinary UI.
+
+#### `src/peridotCsvSchema.js`
+
+Defines the public Peridot CSV template columns, field groupings, minimum record rules, row capability labels, upload tips, and small capability helpers. It records the database-first data policy and the decision not to clean or standardize user-entered values inside Peridot.
+
+#### `src/peridotCsvNormalizer.js`
+
+Normalizes parsed rows from the public one-file Peridot CSV template into the existing internal geography, letter metadata, person metadata, and place shapes used by the legacy app pipeline.
+
+#### `src/peridotCsvValidation.js`
+
+Builds upload validation summaries and row-capability reports for the post-upload popup and the persistent Data Inputs latest-upload summary.
 
 #### `src/AnalyticsPanel.jsx`
 
@@ -333,14 +341,7 @@ Pure helper logic for viewport construction, clustering, cluster radius calculat
 
 #### `src/interactionHelpers.js`
 
-Selection and inspection logic, including:
-
-- nearby candidate generation
-- selection resolution
-- cluster selection payload derivation
-- person-detail and place-detail payload derivation
-- weighted connected-correspondent ordering
-- person-detail place-section derivation
+Selection and inspection logic, including nearby candidate generation, selection resolution, cluster selection payload derivation, person-detail/place-detail payload derivation, weighted connected-correspondent ordering, and person-detail place-section derivation.
 
 #### `src/mapInteractionHandlers.js`
 
@@ -431,19 +432,59 @@ https://github.com/haleyrp1803/correspondence-visualizer
 
 ## 10. Data inputs
 
-This is a data-driven visualization app. It is intended to work with correspondence-related tabular data that includes some combination of:
+Peridot now treats uploaded data through a standardized one-file CSV workflow.
 
-- dates
-- source person
-- target person
-- source location
-- target or inferred target location
-- source latitude / longitude
-- target latitude / longitude
-- linked letter metadata
-- person metadata
+The Data Inputs tab provides:
 
-The source code currently includes embedded baseline data so that the app can render before user uploads are provided.
+- **Download CSV template**
+- **Upload completed CSV**
+- a post-upload validation popup
+- a persistent **Latest upload summary** card
+- concise data tips
+
+Each row should represent one letter, document, or correspondence record. The public template columns are:
+
+```text
+Archive
+Collection
+Page(s)
+Date
+Source_Name
+Source_Title
+Source_Location
+Source_Latitude
+Source_Longitude
+Target_Name
+Target_Title
+Target_Location
+Target_Latitude
+Target_Longitude
+Relationship
+Topic
+Language
+Transcription
+Notes
+Link(s)
+```
+
+Peridot uses a permissive database-first model. A row can be accepted if it has either:
+
+- `Source_Name` and `Target_Name`, or
+- source-side and target-side place information, using place names, coordinate pairs, or both.
+
+Coordinates and dates are not required for upload. Instead, the upload summary tells the user which rows can support which tools:
+
+- Inspector-ready
+- People-network-ready
+- Place-network-ready
+- Map-ready
+- Timeline-ready
+- Analytics-ready
+- Export-ready
+
+Peridot does **not** clean or standardize person names, place names, dates, topics, relationships, languages, titles, or other user-entered values. Charts, filters, and labels use uploaded values exactly as entered. Users who want cleaner networks or less fragmented Analytics categories should standardize their data before upload.
+
+Legacy Geography / Raw Data / Person Metadata uploads are intentionally hidden from the ordinary UI during the single-CSV transition, but the code path has not been deleted.
 
 ---
 
@@ -452,20 +493,23 @@ The source code currently includes embedded baseline data so that the app can re
 A typical workflow is:
 
 1. Open the app.
-2. Load data or work from the embedded baseline data.
-3. Choose **People**, **Place**, or **Force-Directed**.
-4. Use **Data Inputs** to upload or replace Geography, Raw Data, and Person Metadata files as needed.
-5. Adjust display, theme, and weight filters in **Controls**.
-6. Use **Timeline** for year-based filtering and playback.
-7. Hover or click nodes, edges, or clusters to inspect them.
-8. Use **Inspector** to navigate between people, places, cluster members, and linked records.
-9. Use the inspector **Back** button to return to the previous internal panel.
-10. Use **Analytics** to generate compact charts from the current data, expand a chart over the map area, and export chart previews as PNG files.
-11. Use **Export** to save the current visualization state as SVG, PNG, or CSV outputs.
+2. Work from the embedded baseline data or open **Data Inputs**.
+3. Download the Peridot CSV template if needed.
+4. Fill one row per letter, document, or correspondence record.
+5. Upload the completed Peridot CSV.
+6. Review the upload validation popup and the persistent **Latest upload summary** in Data Inputs.
+7. Choose **People**, **Place**, or **Force-Directed**.
+8. Use **Search & Filter** to define the active filtered dataset.
+9. Use **Timeline** for year-based filtering and playback.
+10. Hover or click nodes, edges, or clusters to inspect them.
+11. Use **Inspector** to navigate between people, places, cluster members, and linked records.
+12. Use the inspector **Back** button to return to the previous internal panel.
+13. Use **Analytics** to generate compact charts from the current filtered data, expand a chart over the map area, and export chart previews as PNG files.
+14. Use **Export** to save the current visualization state as SVG, PNG, or CSV outputs.
 
-### Planned Search & Filter workflow
+### Search & Filter workflow
 
-The next major UI/UX direction is to consolidate global search and filtering into a dedicated **Search & Filter** panel tab. The intended long-term model is:
+Search & Filter defines the active filtered dataset:
 
 ```text
 data source
@@ -483,7 +527,7 @@ Under that model:
 - **Inspector** remains selection-driven.
 - **Export** labels whether it is exporting loaded, filtered, visible, selected, or charted data.
 
-The planned implementation sequence is to add a placeholder Search & Filter rail tab first, then move the minimum-weight control, then carefully mirror or move date filtering, then add lightweight person/place/route search, and finally add an Analytics data-scope summary.
+Implemented Search & Filter controls include keyword, person, place, Route Filter (Place), Route Filter (People), minimum correspondence weight, date range, predictive suggestions, Apply Filters, Clear Filters, current applied scope, and pre-update status feedback.
 
 ---
 
@@ -516,6 +560,8 @@ The maintainer documentation identifies the following areas as especially sensit
 - inspector-open interactions
 - shared side-panel shell behavior
 - cluster grouping and cluster inspector navigation
+- Search & Filter active-dataset state
+- Data Inputs upload state, single-CSV normalization, and validation summary behavior
 - Analytics expanded overlay positioning above the map area
 - Analytics dynamic variable detection from uploaded/current row data
 - Analytics SVG-to-PNG chart export rendering
@@ -534,6 +580,8 @@ This repository includes internal maintenance and workflow documents that should
 - **`PROJECT_WORKFLOW_CHARTER.md`**
 - **`CHANGELOG.md`**
 
+The full commit history is preserved in one place in **`CHANGELOG.md`**.
+
 ---
 
 ## 15. Roadmap / near-term priorities
@@ -542,17 +590,17 @@ Likely near-term priorities include:
 
 - continue from the legacy D3/SVG Peridot path on `main`
 - keep dormant MapLibre files untouched unless explicitly resuming that experiment
-- continue improving Analytics usability after the current charting milestone
-- add a dedicated Search & Filter panel tab as the next UI/UX consolidation direction
-- move filtering behavior into Search & Filter in narrow passes, beginning with placeholder content and then the minimum-weight control
-- add Analytics data-scope summaries so charts clearly state which filtered records they summarize
-
+- test the new one-file Peridot CSV workflow against larger and messier datasets
+- refine upload validation wording if user testing shows confusion
+- keep legacy upload code hidden but available until the single-CSV workflow is proven stable
+- continue improving Analytics usability and data-scope clarity
+- consider future safe metadata filters after the single-CSV upload model settles
 - continue safe reduction of orchestration pressure inside `src/App.jsx`
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
 - revisit responsive side-panel sizing only as a narrow-window-specific pass
-- refresh screenshots after the shared side-panel UI stabilizes
+- refresh screenshots after the shared side-panel, Search & Filter, Analytics, and Data Inputs UI stabilizes
 - standardize visual export dimensions later if needed
-- preserve full commit history in documentation updates
+- preserve full commit history in `CHANGELOG.md`
 
 ---
 

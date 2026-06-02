@@ -6,6 +6,8 @@ This document is the architectural reference for the Peridot correspondence visu
 
 This guide is updated on committed architectural changes and should be sufficient to hand off work into a fresh chat session without depending on older conversation context.
 
+The full commit history is intentionally preserved in one place in `CHANGELOG.md`; this guide summarizes architecture and current-state responsibilities rather than duplicating the complete commit log.
+
 ---
 
 ## Source of truth and working assumptions
@@ -20,13 +22,13 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`bdd0843` — `Refine expanded analytics backdrop contrast`**
+- **`930c807` — `Persist Peridot upload summary in Data Inputs`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter visual redesign and Analytics visual-polish sequence. Search & Filter now uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filters, predictive suggestions, year text inputs with suggestions, and pre-update status feedback. Analytics now has higher-contrast chart tooltips and an expanded chart view with a dark green translucent backdrop, cool off-white text/borders, the blurred map visible behind it, and the chart itself retained on a white/cream card.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, and the standardized one-file Peridot CSV upload workflow. Data Inputs now foregrounds one public Peridot CSV upload path with a downloadable template, upload validation popup, and persistent latest-upload summary. Legacy Geography / Raw Data / Person Metadata upload controls are intentionally hidden from the ordinary UI but retained in code during the transition.
 
-The preceding Search & Filter implementation milestone remains:
+The preceding single-CSV implementation milestone remains:
 
-- **`01de3d8` — `Show filter update status before applying changes`**
+- **`cbc35d0` — `Add single Peridot CSV upload workflow`**
 
 Current GitHub repository:
 
@@ -81,6 +83,9 @@ Extracted support modules in `src/`:
 - `src/timelinePlaybackComponents.jsx`
 - `src/exportHelpers.js`
 - `src/personForceLayoutHelpers.js`
+- `src/peridotCsvSchema.js`
+- `src/peridotCsvNormalizer.js`
+- `src/peridotCsvValidation.js`
 - `src/MapLibreMapStage.jsx` — dormant gated preview path inherited from `main`
 - `src/mapStyleConfig.js` — dormant MapLibre preview style config
 
@@ -105,18 +110,75 @@ Internally, the app still uses the geographic/person view split plus person layo
 
 The app includes:
 
-- CSV ingestion and normalization
+- standardized one-file Peridot CSV ingestion
+- database-first handling of messy/incomplete historical records
 - graph derivation
 - interactive SVG-based rendering
 - year-based timeline filtering and playback
 - shared side-panel inspection workflow
-- persistent side-panel icon rail with dedicated Controls, Data Inputs, Export, Timeline, Analytics, and Inspector tabs
+- persistent side-panel icon rail with dedicated Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector tabs
 - implemented Search & Filter consolidation defining one active filtered dataset for map, Inspector, Analytics, Timeline, and Export workflows
 - theme presets and visual controls
 - export tools for image and tabular outputs
 - Analytics charting tools with compact previews, expanded overlay, variable controls, date-range controls, and PNG chart export
 
 The main maintenance challenge remains structural concentration in `src/App.jsx`, but that concentration has been reduced through bounded extraction passes.
+
+### Data input architecture
+
+The public Data Inputs workflow is now a single-CSV workflow:
+
+```text
+Peridot template CSV
+→ parsed rows
+→ schema/capability checks
+→ normalized geography rows / letter metadata / person metadata / places
+→ active app data
+```
+
+The current public template columns are:
+
+```text
+Archive
+Collection
+Page(s)
+Date
+Source_Name
+Source_Title
+Source_Location
+Source_Latitude
+Source_Longitude
+Target_Name
+Target_Title
+Target_Location
+Target_Latitude
+Target_Longitude
+Relationship
+Topic
+Language
+Transcription
+Notes
+Link(s)
+```
+
+Peridot treats uploaded data as database records first. A row can be accepted if it has either:
+
+- `Source_Name` and `Target_Name`; or
+- source-side and target-side place information, using place names, coordinate pairs, or both.
+
+Coordinates and parseable dates are capability-enabling fields, not upload-admission requirements. The validation summary reports which accepted records can support specific tools:
+
+- Inspector-ready
+- People-network-ready
+- Place-network-ready
+- Map-ready
+- Timeline-ready
+- Analytics-ready
+- Export-ready
+
+Peridot does **not** clean, standardize, merge, or enforce controlled vocabularies for person names, place names, date strings, titles, topics, relationships, languages, notes, or links. Users are responsible for standardizing values outside the app if they want cleaner networks, filters, and charts.
+
+The legacy three-file upload path remains in code as a transition/fallback path, but the ordinary UI hides those controls.
 
 ### MapLibre status
 
@@ -137,7 +199,7 @@ The force-directed person view renders on a clean theme-driven background rather
 
 ### `src/App.jsx`
 
-Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel contract building, timeline state, inspector navigation state, and export wiring.
+Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel contract building, Search & Filter state, timeline state, inspector navigation state, export wiring, and the live one-file Peridot CSV upload workflow. It wires template download, CSV upload parsing, validation summary state, normalization output, upload-source reset behavior, and modal visibility.
 
 ### `src/LeftControlPanel.jsx`
 
@@ -145,14 +207,15 @@ Owns the shared side-panel shell and persistent icon rail. The shell includes:
 
 - persistent icon rail that is available when the panel is closed and when it is open
 - open-state close button at the top of the rail
-- rail-driven panel views for **Controls**, **Data Inputs**, **Export**, **Timeline**, **Analytics**, and **Inspector**
+- rail-driven panel views for **Controls**, **Data Inputs**, **Search & Filter**, **Export**, **Timeline**, **Analytics**, and **Inspector**
+- **Data Inputs** content rendering for one public Peridot CSV upload workflow, template download, upload button, latest-upload summary, validation popup, and data tips
+- hidden legacy three-file upload controls retained in code during the single-CSV transition
 - **Search & Filter** content rendering for the compact advanced-search layout
 - current applied filter scope at the top of Search & Filter
 - keyword, person, place, route-place, route-people, minimum-weight, and date-range filters
 - predictive suggestion menus for person, place, route-place, route-people, start-year, and end-year fields
 - draft/apply filter UI with Apply Filters, Clear Filters, current applied scope, and pre-update status feedback above the action buttons
 - Controls content rendering for visualization, display, theme, summary, and diagnostics controls
-- Data Inputs content rendering for Geography, Raw Data, and Person Metadata uploads
 - Export content rendering for SVG, PNG, nodes CSV, and edges/routes CSV controls
 - Timeline content rendering for year-range and playback controls
 - Analytics content rendering through `AnalyticsPanelContent`
@@ -160,66 +223,70 @@ Owns the shared side-panel shell and persistent icon rail. The shell includes:
 
 This file currently remains named `LeftControlPanel.jsx`, but it is now conceptually the shared side-panel shell and rail-tab host. Compatibility-sensitive `showLeftSidebar` / `showRightSidebar` state names still exist and should not be casually renamed because they are tied to inspector auto-open behavior.
 
+### `src/peridotCsvSchema.js`
+
+Owns the public Peridot CSV schema contract. It defines:
+
+- exact template column names
+- field groupings
+- minimum record rules
+- capability labels
+- upload tips
+- validation summary copy
+- small pure helpers for values, coordinates, person-pair/place-pair checks, mappability, machine-readable dates, accepted-record status, and missing-column checks
+
+This file records the product rule that Peridot is database-first and that missing coordinates/dates should be flagged rather than silently rejecting otherwise useful records.
+
+### `src/peridotCsvNormalizer.js`
+
+Owns pure conversion from public one-file template rows into the existing internal row shapes. It creates:
+
+- internal geography rows
+- internal letter/Inspector metadata rows
+- lightweight exact-name person metadata rows
+- map-ready places
+- accepted/unsupported row groupings
+
+It does not clean or standardize user-entered values.
+
+### `src/peridotCsvValidation.js`
+
+Owns pure post-upload validation summaries. It produces:
+
+- row-level capability reports
+- total uploaded rows
+- accepted record counts
+- unsupported row counts
+- missing-column warnings
+- capability counts
+- popup-ready summary lines
+- persistent side-panel latest-upload summary text
+
 ### `src/AnalyticsPanel.jsx`
 
-Owns the Analytics panel UI. It renders:
-
-- chart selection grid
-- chart descriptions and example questions
-- variable controls
-- Analytics-local date-range controls
-- compact chart preview
-- expanded chart overlay trigger
-- chart PNG export action
+Owns the Analytics panel UI. It renders chart selection, chart descriptions/example questions, variable controls, Analytics-local date-range controls, compact chart preview, expanded chart overlay trigger, and chart PNG export action.
 
 The expanded chart view is rendered through a React portal and overlays the map area without changing map state. Its current visual treatment uses a dark green translucent backdrop (`#182c25` at 70% opacity), cool off-white text/borders, the existing blurred-map effect behind the overlay, and a white/cream chart card.
 
 ### `src/analyticsConfig.js`
 
-Owns Analytics chart configuration, including:
-
-- chart labels and descriptions
-- example research questions
-- default Analytics state
-- top-N display options
-- curated variable definitions
-- **Route (Place)** and **Route (Person)** definitions
+Owns Analytics chart configuration, including chart labels/descriptions, example research questions, default Analytics state, top-N display options, curated variable definitions, and **Route (Place)** / **Route (Person)** definitions.
 
 ### `src/analyticsDerivationHelpers.js`
 
-Owns Analytics data derivation, including:
-
-- available variable detection
-- conservative filtering of dynamic metadata fields
-- time-period bucketing for date-range charts
-- chart data construction
-- semantic alias handling for curated fields such as Language and Relationship
+Owns Analytics data derivation, including available variable detection, conservative filtering of dynamic metadata fields, time-period bucketing for date-range charts, chart data construction, and semantic alias handling for curated fields such as Language and Relationship.
 
 Dynamic variable detection should exclude technical or non-categorical fields such as IDs, latitude/longitude fields, date fields, mappability flags, object/array values, purely numeric values, long note-like fields, and near-unique row identifiers.
 
 ### `src/analyticsChartComponents.jsx`
 
-Owns SVG chart rendering and shared chart hover tooltip styling for:
-
-- Bar Chart
-- Grouped Bar Chart
-- Stacked Bar Chart
-- Line Chart
-- Multi-Line Chart
-- Histogram
-- Pie Chart
-- Sunburst Chart
-- Heatmap
+Owns SVG chart rendering and shared chart hover tooltip styling for Bar Chart, Grouped Bar Chart, Stacked Bar Chart, Line Chart, Multi-Line Chart, Histogram, Pie Chart, Sunburst Chart, and Heatmap.
 
 The shared chart tooltip uses a mossy/title-green background with light text for legibility over dense charts such as heatmaps.
 
 ### `src/InspectorPanel.jsx`
 
-Owns inspector content only. It no longer owns the outer panel shell. It renders:
-
-- inspector header
-- inspector-internal Back button
-- `InspectorBodyRouter`
+Owns inspector content only. It no longer owns the outer panel shell. It renders the inspector header, inspector-internal Back button, and `InspectorBodyRouter`.
 
 ### `src/InspectorBodyRouter.jsx`
 
@@ -251,14 +318,7 @@ Map-stage-adjacent UI/chrome components.
 
 ### `src/interactionHelpers.js`
 
-Pure interaction-resolution and selection-building helpers. This file owns helper logic for:
-
-- nearby candidate generation
-- selection resolution
-- cluster selection payload building
-- connected-correspondent ordering
-- `person-detail` and `place-detail` payload derivation
-- person-detail sent/received place-section derivation
+Pure interaction-resolution and selection-building helpers. This file owns helper logic for nearby candidate generation, selection resolution, cluster selection payload building, connected-correspondent ordering, `person-detail` / `place-detail` payload derivation, and person-detail sent/received place-section derivation.
 
 ### `src/mapInteractionHandlers.js`
 
@@ -328,6 +388,16 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - shell-level open/close behavior
 - Inspector auto-opens from node, edge, and cluster interactions
 
+### Data Inputs capabilities
+
+- primary one-file Peridot CSV upload workflow
+- downloadable CSV template
+- database-first permissive upload model
+- upload validation popup
+- persistent latest-upload summary in the side panel
+- concise data tips explaining row granularity, incomplete data, coordinates, and user responsibility for standardization
+- legacy three-file upload controls hidden from ordinary UI but retained in code
+
 ### Search & Filter capabilities
 
 - dedicated Search & Filter rail tab
@@ -337,22 +407,9 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - status feedback appears before expensive filter recomputation begins
 - current applied filter scope is displayed at the top of the panel
 - compact advanced-search criteria form modeled on database/library advanced-search interfaces
-- text filters include:
-  - keyword search
-  - person filter
-  - place filter
-  - **Route Filter (Place)**
-  - **Route Filter (People)**
-- non-text filters include:
-  - minimum correspondence weight
-  - date range
-- predictive suggestions are available for:
-  - person
-  - place
-  - route-place
-  - route-people
-  - start year
-  - end year
+- text filters include keyword search, person filter, place filter, **Route Filter (Place)**, and **Route Filter (People)**
+- non-text filters include minimum correspondence weight and date range
+- predictive suggestions are available for person, place, route-place, route-people, start year, and end year
 - suggestion menus show after at least two typed characters, show about five suggestions at once, and scroll for more matches
 - selecting a suggestion fills a draft field only; the map/network updates only after **Apply Filters**
 
@@ -445,12 +502,7 @@ Implemented Search & Filter controls:
 - minimum correspondence weight
 - date range
 
-Autocomplete/predictive suggestions are implemented for:
-
-- person
-- place
-- source-place → target-place routes
-- source-person → target-person routes
+Autocomplete/predictive suggestions are implemented for person, place, source-place → target-place routes, and source-person → target-person routes.
 
 ### Implementation cautions
 
@@ -467,6 +519,50 @@ Search & Filter is a fragile active-dataset state boundary. Future changes shoul
 
 Do not use Search & Filter work as an opportunity for broad `App.jsx` refactoring. Do not merge Timeline, Analytics, and Inspector into one panel. Do not make Analytics or Inspector the global filter owner. Do not rename compatibility-sensitive `showLeftSidebar` / `showRightSidebar` paths during this work. Do not touch dormant MapLibre files as part of Search & Filter work.
 
+---
+
+## Data Inputs contract
+
+The dedicated **Data Inputs** tab is now the public owner of the standardized Peridot CSV workflow.
+
+### Core model
+
+```text
+template CSV
+→ parsed uploaded rows
+→ validation/capability summary
+→ normalized app data
+→ active data source
+```
+
+### Current responsibilities
+
+- Provide a downloadable Peridot CSV template.
+- Provide one primary completed-CSV upload control.
+- Present upload feedback in a popup immediately after upload.
+- Keep the latest upload summary visible in the Data Inputs panel after the popup closes.
+- Explain that incomplete records may still be preserved even if they are not compatible with every visualization.
+- Keep legacy three-file upload controls hidden from ordinary UI during the transition.
+
+### Implementation cautions
+
+Data Inputs is now a fragile data-ingestion boundary. Future changes should explicitly test:
+
+- template download works;
+- uploading a valid template CSV updates the app data;
+- upload summary popup appears;
+- closing the popup does not erase the persistent side-panel summary;
+- rows lacking coordinates are not silently discarded if otherwise accepted;
+- rows lacking parseable dates are not silently discarded if otherwise accepted;
+- Inspector still opens after upload;
+- Search & Filter resets or remains coherent after upload;
+- Timeline playback does not use stale date scope after upload;
+- Analytics receives the intended uploaded/filtered rows;
+- Export still labels and exports the intended data scope.
+
+Do not remove the legacy three-file path until the single-CSV workflow has been tested against larger and messier datasets.
+
+---
 
 ## Current theme and panel state
 
@@ -482,7 +578,7 @@ Important current side-panel state:
 - the persistent rail, not a horizontal top-tab row, is now the panel-view switcher
 - rail tabs are currently:
   1. **Controls** — Visualization Type, Display Controls, Theme, Summary and Diagnostics, and remaining general options
-  2. **Data Inputs** — Geography, Raw Data, and Person Metadata upload controls
+  2. **Data Inputs** — Peridot CSV template download, one-file upload, validation popup, persistent latest-upload summary, and data tips
   3. **Search & Filter** — compact advanced-search form, current applied scope, active-dataset filters, predictive suggestions, Apply Filters, Clear Filters, and filter status feedback
   4. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
   5. **Timeline** — year-range filtering and playback controls
@@ -497,229 +593,12 @@ Recent committed behavior includes:
 - compact Search & Filter advanced-search layout with current applied scope at the top and predictive year inputs
 - Search & Filter draft/apply model for keyword, person, place, route-place, route-people, minimum-weight, and date-range controls
 - higher-contrast Analytics tooltips and expanded chart backdrop styling
+- standardized single-CSV Data Inputs workflow
+- persistent upload summary card after popup close
 - removal of the old **Show all dates** shortcut
 - year-only timeline selectors
 - removal of the old horizontal Controls / Inspector top tabs
-- dedicated rail tabs for Data Inputs, Export, Timeline, and Analytics
-
----
-
-## Recent development trajectory
-
-### Analytics sequence
-
-#### `04d95a7` — Add Analytics side panel charts
-
-Added the Analytics side-panel tab, initial Bar Chart and Line Chart support, chart descriptions/example questions, variable availability, compact preview, and PNG export.
-
-#### `caddd3c` — Refine Analytics chart panel interactions
-
-Replaced the chart selector with square chart-icon buttons, moved descriptive chart text into the Configure area, added hover tooltips, and improved chart PNG export behavior.
-
-#### `4b90e4e` — Add additional Analytics chart types
-
-Added Pie Chart, Heatmap, Stacked Bar Chart, and Multi-Line Chart support.
-
-#### `961bf45` — Clarify Analytics chart variable controls
-
-Clarified chart variable counts, variable roles, and default best-use cases.
-
-#### `2320bfe` — Expand Analytics chart controls
-
-Added Grouped Bar Chart, Sunburst Chart, Histogram, bar-chart orientation control, Analytics-local date-range controls, and automatic period granularity.
-
-#### `416dced` — Refine Analytics chart icons and expanded view
-
-Reordered chart icons, capitalized labels, fixed grouped/stacked bar icon baselines, and added the first expanded chart view.
-
-#### `4b631be` — Refine Analytics variables and expanded chart overlay
-
-Expanded top-N options, added dynamic categorical metadata field detection, and moved the expanded chart view toward the map area.
-
-#### `3352403` — Fix Analytics expanded overlay and variable options
-
-Fixed the expanded chart overlay so it renders through a React portal over the map area, strengthened dynamic variable filtering, added semantic aliases for curated variables, and split route variables into **Route (Place)** and **Route (Person)**.
-
-### Cluster and sizing sequence
-
-#### `ed39e55` — Make cluster nodes open actionable inspector views
-
-Made cluster nodes clickable and made contained cluster members navigable through the inspector.
-
-#### `3187d05` — Increase dynamic node radius contrast
-
-Introduced stronger dynamic node radius contrast based on active data while preserving caps.
-
-#### `fed4b5b` — Use volume-based zoom-responsive cluster sizing
-
-Made cluster sizing reflect represented letter volume and made clustering respond more appropriately to zoom/proximity.
-
-#### `63003c1` — Group cluster inspector members by place
-
-Grouped cluster inspector members by place and ordered groups/members by volume.
-
-### Shared side-panel sequence
-
-#### `0063145` — Use menu icon for inspector toggle
-
-Changed the collapsed Inspector toggle icon from magnifying glass to menu/hamburger.
-
-#### `17cf020` — Enforce single active side panel
-
-Ensured only one side panel could be open at a time.
-
-#### `df4075a` — Move side panel toggles to left rail
-
-Moved both panel opener icons to the left rail.
-
-#### `f98b3e5` — Add panel mode switcher tabs
-
-Added Controls / Inspector tabs inside the open panel.
-
-#### `2126c9b` — Open inspector in left panel dock
-
-Moved the inspector to the left-side panel area.
-
-#### `88b0c19` — Rename inspector panel shell for left dock
-
-Renamed `RightInspectorPanel.jsx` to `InspectorPanel.jsx`.
-
-#### `e41d8bc` — Split side panel open state from active tab
-
-Separated side-panel open/closed state from active tab state.
-
-#### `b62c74b` — Use shared side panel shell
-
-Created one shared side-panel shell for both Controls and Inspector.
-
-#### `4a17d1c` — Make inspector panel content-only
-
-Removed obsolete shell/tab code from `InspectorPanel.jsx`.
-
-### Shared side-panel rail-tab sequence
-
-#### `f7407eb` — Refresh documentation for shared panel baseline
-
-Refreshed documentation after the shared side-panel baseline and recorded the then-current shared panel architecture before later rail-tab expansion.
-
-#### `06c1843` — Clean shared side panel source comments
-
-Cleaned obsolete shared-panel source comments and avoided renaming compatibility-sensitive side-panel state paths.
-
-#### `8882b69` — Remove obsolete audit documentation references
-
-Removed obsolete root-level audit documentation files that no longer served as active maintainer references.
-
-#### `4653f20` — Remove obsolete audit documentation listings
-
-Removed stale references to the obsolete audit documents from active documentation.
-
-#### `6142817` — Anchor shared panel icon rail to panel shell
-
-Anchored the icon rail to the shared panel shell rather than hard-coded viewport coordinates. The rail remains available when the panel is open and closed, and the close button appears at the top of the rail when open.
-
-#### `2acdb91` — Remove obsolete side panel top tabs
-
-Removed the horizontal Controls / Inspector tab row and made the persistent rail the active panel-view switcher.
-
-#### `dcce703` — Style shared panel icon rail
-
-Styled the rail as a distinct mossy/peridot visual zone with lighter green inactive buttons, lighter hover states, and cream active-state buttons.
-
-#### `5b38c4e` — Update shared panel rail icons
-
-Updated Controls to use the three-line stack icon and Inspector to use a magnifying-glass icon.
-
-#### `f1394c6` — Add data inputs side panel tab
-
-Added the **Data Inputs** rail tab and moved Geography, Raw Data, and Person Metadata upload controls into that dedicated panel view.
-
-#### `6a672d9` — Add export side panel tab
-
-Added the **Export** rail tab, moved existing export controls into that dedicated panel view, and kept export options visible when the tab opens.
-
-#### `def4265` — Add timeline side panel tab
-
-Added the **Timeline** rail tab and moved existing year-range and playback controls into that dedicated panel view while preserving active year adjustment and playback behavior.
-
-#### `8539c68` — Clarify timeline rail icon
-
-Settled the Timeline rail icon on a simple clock-style symbol after horizontal progression icons lost too much detail at rail-button size.
-
-
-### Search & Filter sequence
-
-#### `2eb3461` — Document Search and Filter panel contract
-
-Documented the Search & Filter design contract and active-filtered-dataset model before implementation.
-
-#### `e6b477d` — Add Search and Filter panel shell
-
-Added the Search & Filter rail-tab shell.
-
-#### `a890b13` — Move minimum weight filter into Search and Filter
-
-Moved minimum correspondence weight into Search & Filter while preserving behavior.
-
-#### `b348f12` — Move date range controls into Search and Filter
-
-Moved date-range controls into Search & Filter while preserving Timeline playback behavior.
-
-#### `d5e7667` — Apply Search and Filter changes on request
-
-Moved keyword search into Search & Filter and introduced the draft/apply model.
-
-#### `019acef` — Add clear filters and reset playback on apply
-
-Added Clear Filters and reset playback on filter apply/clear.
-
-#### `cc26530` — Add person and place filters
-
-Added free-text person and place filters.
-
-#### `9c179f7` — Add predictive suggestions for person and place filters
-
-Added predictive suggestions for person and place filters.
-
-#### `ea19fc8` — Improve predictive suggestion menu scrolling
-
-Improved predictive suggestion menu overflow and scrolling.
-
-#### `1578d10` — Add route filter
-
-Added the first route filter with source-place → target-place suggestions.
-
-#### `c98c242` — Split route filters by place and people
-
-Split route filtering into **Route Filter (Place)** and **Route Filter (People)**.
-
-#### `01de3d8` — Show filter update status before applying changes
-
-Added pre-update Search & Filter status feedback so users see feedback before expensive map updates begin.
-
-#### `b2147bb` — Consolidate Search and Filter layout
-
-Converted Search & Filter into a compact database-style advanced-search form and removed repeated explanatory cards.
-
-#### `8bfd422` — Refine compact Search and Filter layout
-
-Moved current applied scope to the top, simplified explanatory copy, and changed start/end year controls to predictive text inputs.
-
-#### `e02c1de` — Move filter status above action buttons
-
-Moved update status feedback above the action buttons to avoid clipping near the bottom of the visible panel.
-
----
-
-### Analytics visual-polish sequence
-
-#### `64d44f2` — Improve analytics tooltip contrast
-
-Changed shared chart tooltips to a mossy/title-green background with light text for better readability over heatmaps and dense labels.
-
-#### `bdd0843` — Refine expanded analytics backdrop contrast
-
-Set the expanded Analytics overlay backdrop to `#182c25` at 70% opacity, switched expanded-view text and borders to cool off-white, preserved the blurred-map layer, and kept the chart on a white/cream card.
+- dedicated rail tabs for Data Inputs, Search & Filter, Export, Timeline, and Analytics
 
 ---
 
@@ -730,7 +609,6 @@ Set the expanded Analytics overlay backdrop to `#182c25` at 70% opacity, switche
 The later `maplibre-native-geographic-view` branch explored a fuller MapLibre migrated overlay. It produced substantial experimental progress but also accumulated fragility around structural extraction and Force-Directed fallback behavior. The project has set this work aside and returned to a legacy continuation branch.
 
 Current practice: keep the MapLibre files dormant; do not remove them casually, and do not use `?maplibrePreview=1` for ordinary legacy testing. If MapLibre work resumes, begin with a fresh source-of-truth audit.
-
 
 ### Shared-panel semantic prop rename
 
@@ -762,6 +640,7 @@ These areas still deserve narrow, explicit passes:
 - timeline/playback state coupling
 - export rendering/state coupling
 - broad orchestration work in `src/App.jsx`
+- Data Inputs upload state, one-file CSV normalization, and validation summary behavior
 - shared side-panel shell and inspector-open interactions
 - cluster grouping and cluster inspector navigation
 - Analytics expanded overlay positioning and backdrop contrast above the map area
@@ -816,8 +695,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`bdd0843` — `Refine expanded analytics backdrop contrast`**
-- last documented pre-Analytics UI milestone: **`8539c68` — `Clarify timeline rail icon`**
+- current documented baseline: **`930c807` — `Persist Peridot upload summary in Data Inputs`**
 
 A future chat should also be told that:
 
@@ -826,11 +704,12 @@ A future chat should also be told that:
 - itch.io packaging support is already committed
 - the current shared side panel and rail-tab structure are committed
 - `InspectorPanel.jsx` is content-only
-- `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Export/Timeline/Analytics/Inspector panel views
-- `AnalyticsPanel.jsx`, `analyticsConfig.js`, `analyticsDerivationHelpers.js`, and `analyticsChartComponents.jsx` own the Analytics subsystem
+- `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Search & Filter/Export/Timeline/Analytics/Inspector panel views
+- `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, and `peridotCsvValidation.js` own the standardized single-CSV data input contract, normalization, and validation summary helpers
 - current cluster features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
-- documentation should preserve the full commit trajectory carefully
+- documentation should preserve the full commit trajectory carefully in `CHANGELOG.md`
 - the implemented Search & Filter panel consolidates global filtering and defines the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it
 - Search & Filter currently uses a compact advanced-search layout with current applied scope at the top
+- Data Inputs currently uses a one-file Peridot CSV workflow with a downloadable template, validation popup, and persistent upload summary
 - Analytics currently uses higher-contrast tooltips and a dark green translucent expanded-view backdrop

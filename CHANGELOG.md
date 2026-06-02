@@ -2,115 +2,156 @@
 
 ## Current documented safe baseline
 
-- **`bdd0843` — `Refine expanded analytics backdrop contrast`** on branch **`main`**
+- **`930c807` — `Persist Peridot upload summary in Data Inputs`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter visual redesign and Analytics visual-polish sequence. Search & Filter now uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filtering, predictive suggestions, year text inputs with suggestions, and pre-update status feedback. Analytics now has higher-contrast chart tooltips and an expanded chart view with a dark green translucent backdrop, cool off-white text/borders, a preserved blurred-map layer, and the chart itself retained on a white/cream card.
+This baseline records the active legacy D3/SVG Peridot path after the Search & Filter visual redesign, Analytics visual-polish sequence, and the standardized single-CSV Data Inputs workflow.
+
+The current Data Inputs workflow now provides:
+
+- one primary Peridot CSV upload control;
+- a downloadable template using the public Peridot column names;
+- permissive database-first upload handling;
+- validation/capability reporting;
+- an upload summary popup;
+- a persistent latest-upload summary in the Data Inputs panel;
+- hidden legacy Geography / Raw Data / Person Metadata upload controls retained in code during transition.
+
+The current Search & Filter workflow uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filtering, predictive suggestions, year text inputs with suggestions, and pre-update status feedback. Analytics has higher-contrast chart tooltips and an expanded chart view with a dark green translucent backdrop, cool off-white text/borders, a preserved blurred-map layer, and the chart itself retained on a white/cream card.
 
 The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment remains set aside rather than merged into the active implementation path.
 
-The preceding Search & Filter implementation milestone remains:
-
-- **`01de3d8` — `Show filter update status before applying changes`**
-
-That milestone records the first full draft/apply Search & Filter implementation before later visual layout refinements.
-
 ---
 
-## Current milestone note
+## Current milestone notes
+
+### Standardized single-CSV Data Inputs milestone
+
+- Added `src/peridotCsvSchema.js` to define the public template columns, field groupings, minimum record rule, capability labels, and upload tips.
+- Added `src/peridotCsvNormalizer.js` to convert the public one-file template into existing internal geography, letter metadata, person metadata, and place row shapes.
+- Added `src/peridotCsvValidation.js` to build validation summaries and row-capability reports.
+- Simplified the ordinary Data Inputs panel to foreground:
+  - **Download CSV template**
+  - **Upload completed CSV**
+  - latest upload summary
+  - concise data tips
+- Added an upload validation popup and kept the same information accessible after close through a persistent side-panel summary.
+- Hid the legacy three-file Geography / Raw Data / Person Metadata upload controls from ordinary UI, while retaining the code path during transition.
+- Established the database-first upload policy:
+  - rows can be accepted with either source/target names or source/target place information;
+  - coordinates are not required for upload;
+  - parseable dates are not required for upload;
+  - incomplete accepted rows should remain available where possible rather than being silently discarded;
+  - Peridot does not clean, standardize, merge, or enforce controlled vocabularies for uploaded user data.
 
 ### Search & Filter implementation and layout milestone
 
 - Implemented the dedicated **Search & Filter** rail tab and promoted it from planning contract to active global-filtering UI.
-- Search & Filter now owns draft/apply controls for:
-  - keyword search
-  - person filter
-  - place filter
-  - **Route Filter (Place)**
-  - **Route Filter (People)**
-  - minimum correspondence weight
-  - date range
-- Added predictive suggestions for:
-  - person names
-  - place names
-  - source-place → target-place routes
-  - source-person → target-person routes
-- Predictive suggestion menus:
-  - appear after at least two typed characters
-  - are capped visually to about five visible suggestions
-  - allow scrolling for more matches
-  - fill draft fields only and do not update the map until **Apply Filters** is pressed
-- Search & Filter uses a draft/apply model:
-  - draft edits do not recompute the graph on every keystroke
-  - **Apply Filters** commits all active filter controls together
-  - **Clear Filters** clears keyword/person/place/route filters, restores minimum weight to `1`, restores the full available date range, and resets playback
-- Added pre-update status feedback so **Updating view…** / **Filters cleared. Updating view…** appears before expensive full-dataset recomputation begins.
-- The active data-scope model remains:
-
-```text
-data source
-→ active filtered dataset
-→ visualization / inspection / analytics / export
-```
-
-- Controls/View remains responsible for display and presentation, not dataset filtering.
-- Timeline remains responsible for chronological playback/navigation while consuming the applied date scope.
-- Analytics and Export should continue to label or consume filtered data scope clearly in future passes.
-- Later visual refinements converted the Search & Filter tab from stacked explanatory cards into a compact advanced-search form:
-  - current applied filter scope appears at the top
-  - advanced search criteria are consolidated into one form
-  - instructional text was reduced
-  - start/end year controls became text inputs with predictive suggestions
-  - the update status message appears above the action buttons so it is not clipped
+- Search & Filter now owns draft/apply controls for keyword search, person filter, place filter, **Route Filter (Place)**, **Route Filter (People)**, minimum correspondence weight, and date range.
+- Predictive suggestion menus appear after at least two typed characters, are capped visually to about five visible suggestions, allow scrolling for more matches, and fill draft fields only.
+- **Apply Filters** commits all active filter controls together.
+- **Clear Filters** clears keyword/person/place/route filters, restores minimum weight to `1`, restores the full available date range, and resets playback.
+- Pre-update status feedback appears before expensive full-dataset recomputation begins.
+- Later visual refinements converted Search & Filter from stacked explanatory cards into a compact advanced-search form.
 
 ### Analytics visual-polish milestone
 
 - Improved Analytics chart hover tooltip contrast by giving shared chart tooltips an opaque mossy/title-green background with light text.
 - Refined the expanded Analytics view:
-  - outer layer uses `#182c25` at 70% opacity
-  - border and expanded-view text use cool off-white tones
-  - the existing blurred-map effect remains visible behind the overlay
-  - the chart itself remains on its white/cream card
+  - outer layer uses `#182c25` at 70% opacity;
+  - border and expanded-view text use cool off-white tones;
+  - the existing blurred-map effect remains visible behind the overlay;
+  - the chart itself remains on its white/cream card.
 - These changes are visual only; chart data derivation, chart controls, and export behavior were not changed.
 
 ---
 
+## Current branch status
 
-## Current branch transition
+- **`930c807` — `Persist Peridot upload summary in Data Inputs`** is the current documented `main` baseline.
+- **`cbc35d0` — `Add single Peridot CSV upload workflow`** is the preceding live single-CSV workflow implementation milestone.
+- **`bdd0843` — `Refine expanded analytics backdrop contrast`** is the preceding Analytics visual-polish baseline.
+- **`01de3d8` — `Show filter update status before applying changes`** is the preceding full Search & Filter implementation milestone.
+- **`3352403` — `Fix Analytics expanded overlay and variable options`** is the preceding Analytics feature milestone.
+- **`10051c0` — `Add MapLibre selected filter layers`** was the earlier legacy-continuation starting point that includes the dormant gated MapLibre preview path.
 
-### `bdd0843` — Refine expanded analytics backdrop contrast
+---
 
-- This commit is the current documented `main` baseline.
-- It keeps the active app on the D3/SVG Peridot production renderer.
-- It records the Search & Filter visual redesign and Analytics visual-polish sequence.
-- The default app path remains the legacy Peridot path; MapLibre work remains dormant unless explicitly resumed.
+## Deferred / rolled-back work
 
-### `01de3d8` — Show filter update status before applying changes
+### MapLibre migrated-overlay work paused
 
-- This commit was the preceding Search & Filter implementation milestone.
-- It recorded the full draft/apply filter workflow, predictive suggestions, split route filters, and pre-update status feedback before later visual layout refinements.
-- It remains an important prior baseline but is no longer the current documented safe baseline.
+The later MapLibre migrated-overlay branch is paused. It should be retained as an archived experiment, not deleted. The current continuation branch keeps early gated MapLibre preview files dormant while returning active development to the legacy D3/SVG app. If MapLibre is revisited later, start from a fresh audit and do not assume the experimental branch can be merged wholesale.
 
-### `3352403` — Fix Analytics expanded overlay and variable options
+### Force-Directed fallback issue on MapLibre experiment
 
-- This commit was the preceding Analytics feature milestone.
-- It fixed the expanded chart overlay and variable-menu filtering.
-- It remains an important prior baseline but is no longer the current documented safe baseline.
+During the later MapLibre experiment, Force-Directed was intended to bypass MapLibre and use the legacy D3/SVG force-directed view. That routing was partly established, but the force view still blanked after briefly rendering. Several speculative sizing fixes were rolled back, and the branch was set aside. Future work should diagnose the legacy force-render path directly before attempting new fixes.
 
-### `10051c0` — Add MapLibre selected filter layers
+### Shared-panel prop rename attempt, after `4a17d1c`
 
-- This commit was the earlier `main` / `legacy-peridot-continuation` starting point for returning to the legacy path.
-- It includes an early, development-only MapLibre preview path gated behind `?maplibrePreview=1`.
-- The default app path remains the D3/SVG Peridot production renderer.
-- Active work has continued on `main` rather than on the temporary `legacy-peridot-continuation` branch.
+A cleanup attempt was made to rename the old `showLeftSidebar` / `showRightSidebar` compatibility prop path to newer shared-panel naming. This was rolled back because it broke Inspector auto-open behavior when clicking nodes, edges, or clusters.
 
-### MapLibre migrated-overlay branch paused
+Future work should treat this path as fragile. If the old names are renamed later, the pass must explicitly test:
 
-- The branch `maplibre-native-geographic-view` explored a fuller MapLibre migrated overlay after `10051c0`.
-- That work reached a later stopping point that included dynamic MapLibre clusters, cluster labels, hidden cluster-member nodes, curved aggregated routes, aggregated route Inspector details, selected feedback, hover feedback, and a People-view coordinate fix.
-- A Force-Directed fallback issue remained unresolved, and the project has chosen to set that work aside for now.
-- Do not treat the MapLibre migrated-overlay branch as the active implementation baseline unless the user explicitly resumes it.
+- node click opens Inspector
+- edge click opens Inspector
+- cluster click opens Inspector
+- contained cluster-member click opens detail
+- Back behavior remains intact
 
-## Recent committed work
+### Panel responsive sizing attempt, after `b62c74b`
+
+A responsive panel-sizing experiment attempted to make the shared side panel absolutely positioned at all viewport sizes. It was rolled back because it disrupted the full-size landscape layout and forced scrolling before the map.
+
+Future responsive-panel work should be designed as a narrow-window override rather than a universal positioning replacement.
+
+### Superseded cluster drill-down note
+
+Earlier documentation described cluster drill-down as attempted but uncommitted. That note is now superseded by committed cluster work:
+
+- `ed39e55` made cluster nodes actionable in the inspector.
+- `63003c1` grouped cluster inspector members by place.
+
+---
+
+# Full development history
+
+This is the single authoritative place in the documentation for the cumulative commit trajectory. Keep new commit entries here, newest first. Avoid maintaining a second split list of recent commits elsewhere in the documentation.
+
+### `930c807` — Persist Peridot upload summary in Data Inputs
+
+- Kept the latest Peridot CSV upload summary visible in the Data Inputs panel after the upload popup closes.
+- Separated validation-summary data from modal-open state so closing the popup does not erase the summary.
+- Placed the persistent summary between the upload controls and data tips.
+
+### `cbc35d0` — Add single Peridot CSV upload workflow
+
+- Added the primary one-file Peridot CSV upload workflow to Data Inputs.
+- Added template download and wired uploaded template rows through the new schema, normalizer, and validation helpers.
+- Fed normalized geography rows, letter metadata rows, person metadata rows, and places into the existing app pipeline.
+- Hid the legacy Geography / Raw Data / Person Metadata upload controls from ordinary UI while retaining the code path during transition.
+
+### `61f3c4b` — Add Peridot CSV validation summary helper
+
+- Added `src/peridotCsvValidation.js`.
+- Added pure validation-summary helpers for uploaded template rows.
+- Reports accepted records, unsupported rows, missing columns, row capabilities, and warning groups for missing coordinates, invalid coordinates, missing names/places, missing dates, and unparseable dates.
+
+### `3d5fb79` — Add Peridot CSV template normalizer
+
+- Added `src/peridotCsvNormalizer.js`.
+- Added pure conversion from public Peridot template rows into internal geography rows, letter metadata rows, person metadata rows, and place rows.
+- Preserved original template rows and avoided cleaning, merging, or standardizing user-entered values.
+
+### `8e7a8a4` — Add Peridot CSV schema contract
+
+- Added `src/peridotCsvSchema.js`.
+- Recorded public template columns, field categories, minimum record rules, capability labels, upload tips, and schema helper functions.
+- Established the database-first upload policy for incomplete historical data.
+
+### `9453232` — Document Search and Filter layout and Analytics polish
+
+- Refreshed documentation after the Search & Filter layout refinements and Analytics visual-polish sequence.
+- Recorded the then-current baseline after documentation had lagged one push behind the code.
 
 ### `bdd0843` — Refine expanded analytics backdrop contrast
 
@@ -155,9 +196,7 @@ data source
 
 ### `c98c242` — Split route filters by place and people
 
-- Split the earlier route filter into:
-  - **Route Filter (Place)**
-  - **Route Filter (People)**
+- Split the earlier route filter into **Route Filter (Place)** and **Route Filter (People)**.
 - Added predictive suggestions for source-person → target-person routes.
 - Preserved source-place → target-place route suggestions.
 - Updated Apply Filters, Clear Filters, applied-scope summaries, and export subtitles to include both route-filter types.
@@ -231,9 +270,7 @@ data source
 - Fixed the expanded chart view so it renders through a React portal and overlays the map area rather than being constrained by the Analytics panel.
 - Strengthened dynamic variable filtering so technical fields such as mappability flags, IDs, coordinates, dates, numeric-only fields, and near-unique row identifiers are excluded from ordinary chart-variable menus.
 - Added semantic alias handling for curated variables such as Language and Relationship.
-- Split the ambiguous Route variable into:
-  - **Route (Place)**
-  - **Route (Person)**
+- Split the ambiguous Route variable into **Route (Place)** and **Route (Person)**.
 
 ### `4b631be` — Refine Analytics variables and expanded chart overlay
 
@@ -253,11 +290,7 @@ data source
 - Added Grouped Bar Chart, Sunburst Chart, and Histogram.
 - Made the Bar Chart default to vertical orientation, with a horizontal-orientation option.
 - Added Analytics-local date-range controls.
-- Added automatic period granularity for time-based charts:
-  - more than 5 years = year
-  - 5 years or less = half-year
-  - 3 years or less = quarter
-  - 1 year or less = month
+- Added automatic period granularity for time-based charts: more than 5 years = year; 5 years or less = half-year; 3 years or less = quarter; 1 year or less = month.
 
 ### `961bf45` — Clarify Analytics chart variable controls
 
@@ -374,9 +407,7 @@ data source
 
 ### `e41d8bc` — Split side panel open state from active tab
 
-- Split the side-panel model into two concepts:
-  - whether the side panel is open
-  - which tab is active: Controls or Inspector
+- Split the side-panel model into whether the side panel is open and which tab is active.
 - Prepared the app for a single shared side-panel shell where tab switching does not imply open/close animation.
 
 ### `88b0c19` — Rename inspector panel shell for left dock
@@ -443,7 +474,7 @@ data source
 ### `04eb8b5` — Refresh documentation for safe year-based baseline
 
 - Refreshed documentation around the then-current year-based timeline baseline.
-- This documentation has now been superseded by the current `4a17d1c` baseline.
+- This documentation has now been superseded by later baselines.
 
 ### `57b946e` — Make timeline year-based
 
@@ -463,163 +494,116 @@ data source
 
 ### `96064e2` — Set people as default view and simplify view buttons
 
-- Replaced the old two-step view-selection UI with three direct buttons:
-  - People
-  - Place
-  - Force-Directed
+- Replaced the old two-step view-selection UI with three direct buttons: People, Place, Force-Directed.
 - Made **People** the default startup view.
 
----
-
-## Deferred / rolled-back work
-
-### MapLibre migrated-overlay work paused
-
-The later MapLibre migrated-overlay branch is paused. It should be retained as an archived experiment, not deleted. The current continuation branch keeps early gated MapLibre preview files dormant while returning active development to the legacy D3/SVG app. If MapLibre is revisited later, start from a fresh audit and do not assume the experimental branch can be merged wholesale.
-
-### Force-Directed fallback issue on MapLibre experiment
-
-During the later MapLibre experiment, Force-Directed was intended to bypass MapLibre and use the legacy D3/SVG force-directed view. That routing was partly established, but the force view still blanked after briefly rendering. Several speculative sizing fixes were rolled back, and the branch was set aside. Future work should diagnose the legacy force-render path directly before attempting new fixes.
-
-
-### Shared-panel prop rename attempt, after `4a17d1c`
-
-A cleanup attempt was made to rename the old `showLeftSidebar` / `showRightSidebar` compatibility prop path to newer shared-panel naming. This was rolled back because it broke Inspector auto-open behavior when clicking nodes, edges, or clusters.
-
-Future work should treat this path as fragile. If the old names are renamed later, the pass must explicitly test:
-
-- node click opens Inspector
-- edge click opens Inspector
-- cluster click opens Inspector
-- contained cluster-member click opens detail
-- Back behavior remains intact
-
-### Panel responsive sizing attempt, after `b62c74b`
-
-A responsive panel-sizing experiment attempted to make the shared side panel absolutely positioned at all viewport sizes. It was rolled back because it disrupted the full-size landscape layout and forced scrolling before the map.
-
-Future responsive-panel work should be designed as a narrow-window override rather than a universal positioning replacement.
-
-### Superseded cluster drill-down note
-
-Earlier documentation described cluster drill-down as attempted but uncommitted. That note is now superseded by committed cluster work:
-
-- `ed39e55` made cluster nodes actionable in the inspector.
-- `63003c1` grouped cluster inspector members by place.
-
----
-
-# Full development history
-
-This section preserves the cumulative development trajectory for future reference. Older documented entries should remain below this point unless they are clearly obsolete or duplicated by a more accurate retained entry.
-
-## `391174a` — Refresh Peridot documentation for publication baseline
+### `391174a` — Refresh Peridot documentation for publication baseline
 
 - Updated `README.md`, `MAINTAINERS_GUIDE.md`, and `CHANGELOG.md`.
 - Renamed the documented project identity to **Peridot**.
 - Aligned the documentation with the publishable browser baseline.
 
-## `951b450` — Replace embedded sample data with current publication dataset
+### `951b450` — Replace embedded sample data with current publication dataset
 
 - Replaced the embedded sample/fallback data in `src/App.jsx`.
 - Set the built-in browser/demo state to use the intended publication dataset.
 - Established the publication dataset baseline used for browser release.
 
-## `f859595` — Add itch.io HTML5 build packaging support
+### `f859595` — Add itch.io HTML5 build packaging support
 
 - Updated `vite.config.js` to use a relative base path for safer subdirectory hosting.
 - Added `Build_Itch_Zip.py`.
 - Established a repeatable HTML5 packaging workflow for itch.io publication.
 - Kept generated ZIP artifacts out of normal source commits.
 
-## `f959fac` — Use countries50m as the fixed basemap
+### `f959fac` — Use countries50m as the fixed basemap
 
 - Replaced the earlier fixed `countries110m` basemap with `countries50m`.
 - Simplified the committed map baseline after experimental multi-scale atlas work was abandoned.
 
-## `b1fdbd5` — Update maintainer handoff documentation
+### `b1fdbd5` — Update maintainer handoff documentation
 
 - Refreshed maintainer handoff documentation used for later bounded passes.
 
-## `dd12281` — Normalize summary panel spacing
+### `dd12281` — Normalize summary panel spacing
 
 - Added matching top spacing above **Summary and Diagnostics**.
 - Restored more consistent vertical rhythm inside the **OPTIONS** stack.
 
-## `4fdaf73` — Rename timeline panel heading
+### `4fdaf73` — Rename timeline panel heading
 
 - Renamed **Timeline and playback** to **Timeline**.
 - Kept timeline behavior unchanged.
 
-## `db5bb1f` — Tighten left panel organization
+### `db5bb1f` — Tighten left panel organization
 
 - Reorganized the left control panel.
 - Added a **Visualization Type** section.
 - Moved visualization-mode controls into that section.
 
-## `ba746b1` — Simplify theme panel text
+### `ba746b1` — Simplify theme panel text
 
 - Renamed **Map appearance** to **Theme**.
 - Removed explanatory theme copy that no longer matched the preferred presentation.
 
-## `c0fc600` — Retune active country fills for peridot and modern maps
+### `c0fc600` — Retune active country fills for peridot and modern maps
 
 - Retuned Peridot active-country fill.
 - Retuned Modern active-country fill.
 - Left Early Modern active-country coloring unchanged.
 
-## `56f0080` — Highlight countries containing visible nodes
+### `56f0080` — Highlight countries containing visible nodes
 
 - Added active-country highlighting for countries containing currently visible nodes.
 - Used hint matching and coordinate fallback to determine country membership.
 
-## `5cbe9c3` — Refine early modern node hover and selected colors
+### `5cbe9c3` — Refine early modern node hover and selected colors
 
 - Tuned Early Modern hover state.
 - Tuned Early Modern selected state.
 
-## `850176f` — Refine hovered and selected node states
+### `850176f` — Refine hovered and selected node states
 
 - Strengthened hover/selected node differentiation.
 - Continued theme-aware node-state polish.
 
-## `3e43dc9` — Add hovered node color feedback
+### `3e43dc9` — Add hovered node color feedback
 
 - Added stronger hovered-node color feedback to improve interaction clarity.
 
-## `919ea5f` — Increase green layering in peridot map theme
+### `919ea5f` — Increase green layering in peridot map theme
 
 - Increased Peridot map-theme green layering and depth.
 
-## `c666d29` — Add peridot default app theme
+### `c666d29` — Add peridot default app theme
 
 - Added the Peridot-inspired full-app default theme.
 
-## `9be5f4a` — Tighten maintainer docs audit fixes
+### `9be5f4a` — Tighten maintainer docs audit fixes
 
 - Applied follow-up corrections to maintainer-facing documentation after audit review.
 
-## `43403c3` — Restore detail to maintainer documentation
+### `43403c3` — Restore detail to maintainer documentation
 
 - Restored architectural and workflow detail that had been thinned too aggressively.
 
-## `02ecb11` — Document inspector navigation feature set
+### `02ecb11` — Document inspector navigation feature set
 
 - Updated documentation to reflect the inspector-navigation feature set more explicitly.
 
-## `5af819b` — Add inspector back navigation
+### `5af819b` — Add inspector back navigation
 
 - Added inspector-internal Back navigation support.
 
-## `b3e6fe8` — Add place navigation sections to person inspector
+### `b3e6fe8` — Add place navigation sections to person inspector
 
 - Added explicit place-navigation sections to person detail views.
 
-## `6772c1d` — Clarify connected correspondents count label
+### `6772c1d` — Clarify connected correspondents count label
 
 - Clarified relationship-count labeling in connected-correspondent UI.
 
-## `ab0e1fe` — Show relationship counts in connected correspondents buttons
+### `ab0e1fe` — Show relationship counts in connected correspondents buttons
 
 - Added relationship counts to connected-correspondent navigation buttons.
 
