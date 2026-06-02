@@ -137,7 +137,8 @@ function buildEntityProfile(selectedProps, selectedLetterMetadata = [], viewMode
   const entityLabel = getSelectedEntityLabel(selectedProps);
   const normalizedEntityLabel = normalizeComparable(entityLabel);
   const matchingLetters = selectedLetterMetadata.filter((letter) => letterMatchesSelectedEntity(letter, selectedProps, viewMode));
-  const routes = new Map();
+  const routesWhenSource = new Map();
+  const routesWhenTarget = new Map();
 
   const peopleWhenSource = new Map();
   const peopleWhenTarget = new Map();
@@ -178,7 +179,14 @@ function buildEntityProfile(selectedProps, selectedLetterMetadata = [], viewMode
 
     if (sourcePlace || targetPlace) {
       const routeLabel = `${sourcePlace || 'Unknown'} → ${targetPlace || 'Unknown'}`;
-      countMapIncrement(routes, routeLabel);
+
+      if (entityType === 'person') {
+        if (isSelectedSourcePerson) countMapIncrement(routesWhenSource, routeLabel);
+        if (isSelectedTargetPerson) countMapIncrement(routesWhenTarget, routeLabel);
+      } else {
+        if (isSelectedSourcePlace) countMapIncrement(routesWhenSource, routeLabel);
+        if (isSelectedTargetPlace) countMapIncrement(routesWhenTarget, routeLabel);
+      }
     }
   });
 
@@ -188,6 +196,9 @@ function buildEntityProfile(selectedProps, selectedLetterMetadata = [], viewMode
   const relatedPlacesSections = entityType === 'person'
     ? makeRoleSections('Source-side places', placesWhenSource, 'Target-side places', placesWhenTarget)
     : makeRoleSections('Routes from this place', placesWhenSource, 'Routes to this place', placesWhenTarget);
+  const routeSections = entityType === 'person'
+    ? makeRoleSections('When this person is source', routesWhenSource, 'When this person is target', routesWhenTarget)
+    : makeRoleSections('Routes from this place', routesWhenSource, 'Routes to this place', routesWhenTarget);
 
   return {
     entityType,
@@ -196,9 +207,10 @@ function buildEntityProfile(selectedProps, selectedLetterMetadata = [], viewMode
     dateSpan: getDateSpan(matchingLetters),
     relatedPeopleSections,
     relatedPlacesSections,
+    routeSections,
     relatedPeopleCount: sectionItemCount(relatedPeopleSections),
     relatedPlacesCount: sectionItemCount(relatedPlacesSections),
-    routes: sortCountMap(routes).slice(0, 12),
+    routeCount: sectionItemCount(routeSections),
     dateCount: getUniqueDates(matchingLetters).length,
   };
 }
@@ -314,7 +326,7 @@ function EntityProfileSummaryCard({ selectedProps, selectedLetterMetadata, viewM
         <DetailRow label="Distinct dates" value={profile.dateCount} />
         <DetailRow label="Related people" value={profile.relatedPeopleCount} />
         <DetailRow label="Related places" value={profile.relatedPlacesCount} />
-        <DetailRow label="Routes represented" value={profile.routes.length} />
+        <DetailRow label="Directed routes" value={profile.routeCount} />
       </div>
     </div>
   );
@@ -427,11 +439,11 @@ export function InspectorNodeView({
         onOpenItem={onOpenPlaceDetail}
       />
 
-      <CountListCard
-        title="Routes represented"
-        description="Source and target place pairs represented by linked records."
-        items={profile.routes}
-        emptyMessage="No route pairs were found in linked records for this profile."
+      <CountSectionCard
+        title="Directed routes represented"
+        description="Source → target place pairs from linked records, grouped by this profile’s source-side or target-side role."
+        sections={profile.routeSections}
+        emptyMessage="No directed route pairs were found in linked records for this profile."
       />
 
       <EntityCustomFieldsCard

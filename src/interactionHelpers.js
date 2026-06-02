@@ -179,6 +179,58 @@ function buildTopPeopleFromLetters(linkedLetters) {
   ).slice(0, 12);
 }
 
+function buildLinkedLettersFromGraphEdges(graph) {
+  return Array.from(
+    new Map(
+      (graph.edges || [])
+        .flatMap((edge) => edge.letterMetadata || [])
+        .map((letter) => [letter.id, letter]),
+    ).values(),
+  ).sort((a, b) => {
+    const aDate = a.parsedDate?.sortKey ?? Number.MAX_SAFE_INTEGER;
+    const bDate = b.parsedDate?.sortKey ?? Number.MAX_SAFE_INTEGER;
+    if (aDate !== bDate) return aDate - bDate;
+    return (a.sourcePerson || '').localeCompare(b.sourcePerson || '');
+  });
+}
+
+function buildDateBoundsFromLetters(linkedLetters = []) {
+  const dates = linkedLetters
+    .map((letter) => letter.date || letter.Date)
+    .filter(Boolean)
+    .sort();
+
+  return {
+    earliestDate: dates[0] || '',
+    latestDate: dates[dates.length - 1] || '',
+  };
+}
+
+function buildCounterpartPlaceDetailsFromLetters(placeLabel, linkedLetters = []) {
+  const counterpartMap = new Map();
+
+  linkedLetters.forEach((letter) => {
+    const sourceLoc = letter.sourceLoc || '';
+    const targetLoc = letter.targetLoc || '';
+    const counterpartLabel = sourceLoc === placeLabel ? targetLoc : targetLoc === placeLabel ? sourceLoc : '';
+
+    if (!counterpartLabel) return;
+
+    const existing = counterpartMap.get(counterpartLabel) || {
+      label: counterpartLabel,
+      count: 0,
+    };
+    existing.count += 1;
+    counterpartMap.set(counterpartLabel, existing);
+  });
+
+  return Array.from(counterpartMap.values()).sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.label.localeCompare(b.label);
+  });
+}
+
+
 export function buildNodeSelection(node, graph, personMetadataByName) {
   const incidentEdges = graph.edges.filter(
     (edge) => edge.sourceLabel === node.label || edge.targetLabel === node.label,
@@ -264,6 +316,7 @@ export function buildPlaceDetailSelection(placeLabel, graph, personMetadataByNam
       ...nodeSelection,
       __kind: 'place-detail',
       detailLabel: placeLabel,
+      entityType: 'place',
       topPeople: buildTopPeopleFromLetters(nodeSelection.linkedLetters || []),
     };
   }
@@ -271,19 +324,34 @@ export function buildPlaceDetailSelection(placeLabel, graph, personMetadataByNam
   const incidentEdges = graph.edges.filter(
     (edge) => edge.sourceLabel === placeLabel || edge.targetLabel === placeLabel,
   );
-  if (!incidentEdges.length) return null;
 
-  const linkedLetters = buildLinkedLettersFromIncidentEdges(incidentEdges);
-  const { earliestDate, latestDate } = buildDateBounds(incidentEdges);
-  const counterpartDetails = buildCounterpartDetailsFromEdges(placeLabel, incidentEdges);
+  let linkedLetters = buildLinkedLettersFromIncidentEdges(incidentEdges);
+
+  if (!linkedLetters.length) {
+    linkedLetters = buildLinkedLettersFromGraphEdges(graph).filter(
+      (letter) => letter.sourceLoc === placeLabel || letter.targetLoc === placeLabel,
+    );
+  }
+
+  if (!linkedLetters.length) return null;
+
+  const { earliestDate, latestDate } = incidentEdges.length
+    ? buildDateBounds(incidentEdges)
+    : buildDateBoundsFromLetters(linkedLetters);
+  const counterpartDetails = incidentEdges.length
+    ? buildCounterpartDetailsFromEdges(placeLabel, incidentEdges)
+    : buildCounterpartPlaceDetailsFromLetters(placeLabel, linkedLetters);
 
   return {
     id: `place-detail:${placeLabel}`,
     label: placeLabel,
-    degree: incidentEdges.reduce((sum, edge) => sum + (edge.count || 0), 0),
+    degree: incidentEdges.length
+      ? incidentEdges.reduce((sum, edge) => sum + (edge.count || 0), 0)
+      : linkedLetters.length,
     radius: 6,
     __kind: 'place-detail',
-    incidentEdgeCount: incidentEdges.length,
+    entityType: 'place',
+    incidentEdgeCount: incidentEdges.length || counterpartDetails.length,
     linkedLetterCount: linkedLetters.length,
     linkedLetters,
     counterpartLabels: counterpartDetails.map((item) => `${item.label} (${item.count})`),
