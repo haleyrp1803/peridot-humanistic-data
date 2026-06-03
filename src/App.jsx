@@ -2776,8 +2776,8 @@ export default function EuropeNetworkMapApp() {
   // ------------------------------------------------------------
   // Workspace routing state
   // ------------------------------------------------------------
-  // Home, Data, Theme, and Visualizations render as full workspaces. Search,
-  // Timeline, Export, and Inspector currently use this state as a routing
+  // Home, Data, Theme, Visualizations, Search, and Export now render as
+  // full workspaces. Timeline and Inspector still use this state as a routing
   // bridge into the legacy side-panel views until those workflows are promoted.
   const [workspaceMode, setWorkspaceMode] = useState(DEFAULT_PERIDOT_WORKSPACE_MODE);
   const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('place-map');
@@ -4042,27 +4042,27 @@ export default function EuropeNetworkMapApp() {
     setIsSidePanelOpen(false);
   };
 
-  const openPanelTabFromMenu = (panelTab) => {
+  const openLegacyPanelTabFromMenu = (panelTab) => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
     setActivePanelTab(panelTab);
     setIsSidePanelOpen(true);
   };
 
-  const openSearchPanelFromMenu = () => {
+  const openSearchWorkspaceFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
     setIsSidePanelOpen(false);
   };
-  const openTimelinePanelFromMenu = () => openPanelTabFromMenu('timeline');
+  const openTimelinePanelFromMenu = () => openLegacyPanelTabFromMenu('timeline');
   const openInspectorPanelFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
     setActivePanelTab('inspector');
     setIsSidePanelOpen(true);
   };
-  const openExportPanelFromMenu = () => {
+  const openExportWorkspaceFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.EXPORT);
     setIsSidePanelOpen(false);
   };
-  const openThemePanelFromMenu = () => {
+  const openThemeWorkspaceFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.THEME);
     setIsSidePanelOpen(false);
   };
@@ -4141,12 +4141,12 @@ export default function EuropeNetworkMapApp() {
           onGoHome={openHomeWorkspace}
           onOpenData={openDataWorkspace}
           onOpenVisualizations={openVisualizationsWorkspace}
-          onOpenSearch={openSearchPanelFromMenu}
+          onOpenSearch={openSearchWorkspaceFromMenu}
           onOpenTimeline={openTimelinePanelFromMenu}
           onOpenAnalytics={openAnalyticsWorkspace}
           onOpenInspector={openInspectorPanelFromMenu}
-          onOpenTheme={openThemePanelFromMenu}
-          onOpenExport={openExportPanelFromMenu}
+          onOpenTheme={openThemeWorkspaceFromMenu}
+          onOpenExport={openExportWorkspaceFromMenu}
           onCloseSidePanel={closeCurrentSidePanel}
         />
         {/*

@@ -1,6 +1,6 @@
 # Peridot Routing Contract Audit
 
-**Draft status:** Routing and workspace transition audit after commit `8384dee` — `Fit Analytics workspace preview`.
+**Draft status:** Routing and workspace transition audit updated after commit `82178c5` — `Promote Search to full workspace`.
 
 **Purpose:** Document how Peridot’s current navigation and workspace routing works, how it should ideally work after the interface redesign, and how to transition safely from the current hybrid state to the intended workspace-first architecture.
 
@@ -12,7 +12,7 @@
 
 ## 1. Executive summary
 
-Peridot is currently in a successful but transitional interface state. The app has moved away from the persistent icon rail and toward a hamburger-triggered menu plus full-window workspaces. However, it still depends on the older shared side-panel system for several workflows.
+Peridot is currently in a successful but transitional interface state. The app has moved away from the persistent icon rail and toward a hamburger-triggered menu plus full-window workspaces. However, it still depends on the older shared side-panel system for only a small number of workflows.
 
 The current architecture has two overlapping navigation systems:
 
@@ -24,7 +24,7 @@ Legacy routing system:
 LeftControlPanel.jsx → shared side panel → active side-panel view → panel content
 ```
 
-This overlap is acceptable during migration. It has allowed Home, Data, Theme, and Visualizations to become full workspaces without breaking Search & Filter, Timeline, Export, or Inspector. The cost is that some routing paths are now hybrid, and several old Controls/rail concepts remain in the code even though they are no longer part of the intended user-facing interface.
+This overlap is acceptable during migration. It has allowed Home, Data, Theme, Visualizations, Export, and Search & Filter to become full workspaces without breaking Timeline or Inspector. The cost is that some routing paths are now hybrid, and several old Controls/rail concepts remain in the code even though they are no longer part of the intended user-facing interface.
 
 The next stage should not be a broad deletion pass. It should be a staged transition that preserves current functionality while gradually moving remaining side-panel workflows into full workspaces or explicitly retained lightweight panels.
 
@@ -35,20 +35,24 @@ The next stage should not be a broad deletion pass. It should be a staged transi
 Current verified baseline:
 
 ```text
-8384dee — Fit Analytics workspace preview
+82178c5 — Promote Search to full workspace
 ```
 
 Recent redesign sequence:
 
 ```text
+82178c5 Promote Search to full workspace
+2c53796 Promote Export to full workspace
+8fc96b3 Extract Peridot workspace config
+9cd3f3f Clean workspace routing comments
+9240745 Fix Visualizations workspace export
+25fc046 Extract Peridot visualizations workspace
+fcf6bb6 Extract Peridot data workspace
+9428766 Extract Peridot theme workspace
+18c2912 Extract Peridot home workspace
+6c16403 Extract Peridot hamburger menu
+30b114b Add Peridot routing contract audit
 8384dee Fit Analytics workspace preview
-7a8ed7d Compact Visualizations workspace controls
-9b67d28 Move Theme to full workspace
-bb0c0ed Refine hamburger menu visual layout
-2336915 Route mapped imports to visualization workspace
-576bb72 Fix visualization workspace viewport initialization
-56f2a49 Add internal workspace state model
-b42f6fd Add Peridot interface redesign plan
 ```
 
 Current source-of-truth branch:
@@ -84,7 +88,7 @@ export
 
 The default workspace mode is currently `home`.
 
-These workspace modes are future-facing. Some already correspond to full-window workspaces. Others currently act as labels or intermediate state while the visible UI is still rendered through legacy side-panel content.
+These workspace modes are future-facing and now mostly correspond to full-window workspaces. Timeline and Inspector remain transitional: their workspace labels exist, but their visible UI still routes through legacy side-panel content.
 
 ### 3.2 Current full-window workspaces
 
@@ -96,6 +100,8 @@ The following are already implemented as full-window workspaces in `App.jsx`:
 | Data | Full workspace | Unified table/workbook upload path for CSV / TSV / XLSX / XLS. |
 | Visualizations | Full workspace | Hosts Place Map, People Network, Force-Directed, and Analytics. |
 | Theme | Full workspace | Appearance presets and return-to-visualizations path. |
+| Search & Filter | Full workspace | Advanced-search/filter scope controls moved out of the side panel. |
+| Export | Full workspace | Export controls moved out of the side panel, with a live visualization preview preserved for SVG/PNG export. |
 
 ### 3.3 Current side-panel-dependent workflows
 
@@ -103,9 +109,7 @@ The following are still routed through the existing `LeftControlPanel.jsx` share
 
 | Workflow | Current route | Notes |
 |---|---|---|
-| Search & Filter | Hamburger → side-panel tab | Still depends on legacy panel shell. |
-| Timeline | Hamburger → side-panel tab | Still panel-based and date/playback-coupled. |
-| Export | Hamburger → side-panel tab | Still panel-based and scope-sensitive. |
+| Timeline | Hamburger → side-panel tab | Still panel-based and date/playback-coupled. The intended direction is now a bottom visualizations timeline/scrubber, not a standalone full workspace. |
 | Inspector | Selection click or hamburger → side-panel tab | Most fragile remaining side-panel workflow. |
 
 Analytics is now conceptually part of the Visualizations workspace. It should no longer be treated as primarily side-panel-based, even though old side-panel Analytics code remains in `LeftControlPanel.jsx`.
@@ -124,7 +128,7 @@ Analytics is now conceptually part of the Visualizations workspace. It should no
 - Analytics panel path;
 - Inspector content routing.
 
-Some of this code is now obsolete from the user’s visible hamburger workflow, but it remains structurally relevant because the app still uses the legacy shell for Search, Timeline, Export, and Inspector.
+Some of this code is now obsolete from the user’s visible hamburger workflow, but it remains structurally relevant because the app still uses the legacy shell for Timeline and Inspector.
 
 ---
 
@@ -139,22 +143,22 @@ The hamburger menu should be treated as the current primary user-facing navigati
 | Home | Home workspace | `workspaceMode = home`; side panel closed | Stable |
 | Data | Data workspace | `workspaceMode = data`; side panel closed | Stable |
 | Visualizations | Visualizations workspace | `workspaceMode = visualizations`; visualization panel defaults to Place Map | Stable after viewport fixes |
-| Search & Filter | Legacy side panel | `workspaceMode = visualizations`; `activePanelTab = search`; side panel open | Transitional |
+| Search & Filter | Search workspace | `workspaceMode = search`; side panel closed | Stable after promotion |
 | Timeline | Legacy side panel | `workspaceMode = visualizations`; `activePanelTab = timeline`; side panel open | Transitional |
 | Analytics | Visualizations workspace | `workspaceMode = visualizations`; `visualizationsWorkspacePanel = analytics`; side panel closed | Stable after sizing fixes |
 | Inspector | Legacy side panel | `workspaceMode = inspector`; `activePanelTab = inspector`; side panel open | Transitional and fragile |
 | Theme | Theme workspace | `workspaceMode = theme`; side panel closed | Stable |
-| Export | Legacy side panel | `workspaceMode = visualizations`; `activePanelTab = export`; side panel open | Transitional |
+| Export | Export workspace | `workspaceMode = export`; side panel closed | Stable after promotion |
 
 ### 4.2 Important current inconsistency
 
-Search, Timeline, and Export currently set the workspace mode to `visualizations` while opening a side panel. That is acceptable temporarily because these workflows still operate over the active visualization/data scope. However, this should not be treated as the ideal final model.
+Timeline currently sets the workspace mode to `visualizations` while opening a side panel. This is acceptable temporarily because Timeline still operates over the active visualization/data scope. Search and Export have already been promoted to full workspaces.
 
-The more accurate future model is:
+The more accurate future model is now:
 
 ```text
 Search & Filter → Search workspace
-Timeline → Timeline workspace or global timeline controller
+Timeline → bottom visualizations timeline / global scrubber controller
 Export → Export workspace
 Inspector → Inspector workspace / evidence dossier
 ```
@@ -297,7 +301,7 @@ Future additions may include:
 ### 8.1 Current route
 
 ```text
-Hamburger → Search & Filter → legacy side panel Search & Filter view
+Hamburger → Search & Filter → full Search workspace
 ```
 
 ### 8.2 Current role
@@ -312,7 +316,7 @@ Search & Filter defines the active filtered dataset consumed by:
 
 ### 8.3 Current risk
 
-Search & Filter is still side-panel-based, but it is conceptually large enough to become a full workspace. It has database-style advanced-search behavior and should not remain trapped in a narrow panel indefinitely.
+Search & Filter has been promoted to a full workspace. It remains behaviorally sensitive because it defines the active filtered dataset consumed by the rest of the app.
 
 ### 8.4 Ideal route
 
@@ -320,7 +324,7 @@ Search & Filter is still side-panel-based, but it is conceptually large enough t
 Hamburger → Search → full Search workspace
 ```
 
-Possible future behavior:
+Current behavior now matches this route. Possible future enhancements:
 
 - Search results table/list in main workspace;
 - advanced filters in a spacious layout;
@@ -330,7 +334,7 @@ Possible future behavior:
 
 ### 8.5 Transition recommendation
 
-Search should probably be promoted before Inspector only if we want to stabilize the global data-scope model first. Otherwise, Inspector promotion may come first because it is the highest-value user-facing improvement.
+Search has already been promoted. Future Search work should be treated as refinement rather than routing migration. Do not combine Search refinement with Inspector promotion or Timeline redesign.
 
 ---
 
@@ -348,29 +352,20 @@ Timeline currently controls date range and playback for the active correspondenc
 
 ### 9.3 Ideal route
 
-There are two viable long-term options:
-
-#### Option A: Timeline as full workspace
+The preferred long-term direction is no longer a separate full Timeline workspace. The intended model is a timeline controller integrated into the active visualization context:
 
 ```text
-Hamburger → Timeline → full Timeline workspace
+Visualizations workspace
+  → bottom timeline strip / scrubber
+  → toggled on or off by the user
+  → animates the currently active visualization
 ```
 
-This would be useful if Timeline becomes a substantial temporal-analysis tool.
-
-#### Option B: Timeline as global controller
-
-```text
-Any visualization workspace
-  → persistent temporal control strip / drawer
-  → animates the active visualization
-```
-
-This better matches the user’s stated goal: Timeline should animate whatever visualization the user is currently viewing, including maps, networks, bar charts, histograms, and other charts.
+The timeline should eventually be a long horizontal control at the bottom of the Visualizations workspace, letting users scrub or animate while still seeing the active map, network, chart, histogram, or other visualization.
 
 ### 9.4 Transition recommendation
 
-Do not generalize Timeline yet. First finish stabilizing workspace routing and decide whether Timeline is a full workspace, a global controller, or both.
+Do not generalize Timeline yet. Keep the current side-panel Timeline bridge until the Visualizations workspace is ready to host a bottom timeline/scrubber. Treat future Timeline work as part of the visualization-stage interaction design, not as an ordinary workspace promotion.
 
 ---
 
@@ -379,12 +374,12 @@ Do not generalize Timeline yet. First finish stabilizing workspace routing and d
 ### 10.1 Current route
 
 ```text
-Hamburger → Export → legacy side panel Export view
+Hamburger → Export → full Export workspace
 ```
 
 ### 10.2 Current role
 
-Export saves visualization and derived data outputs. It is scope-sensitive and must clearly indicate whether it is exporting:
+Export now saves visualization and derived data outputs from a full workspace. It is scope-sensitive and must clearly indicate whether it is exporting:
 
 - loaded data;
 - filtered data;
@@ -398,11 +393,11 @@ Export saves visualization and derived data outputs. It is scope-sensitive and m
 Hamburger → Export → full Export workspace
 ```
 
-The full Export workspace should eventually show format cards and scope labels clearly.
+The full Export workspace now exists and should continue to show format controls, scope labels, and a live visualization preview for SVG/PNG export.
 
 ### 10.4 Transition recommendation
 
-Export can remain side-panel-based for now. It is less urgent than Inspector or Search, but it should eventually move out of the legacy panel to reduce side-panel dependency.
+Export has already moved out of the legacy panel. Future Export work should be refinement only, not routing migration.
 
 ---
 
@@ -667,15 +662,13 @@ Recommended order:
 
 **Acceptance test:** Each extracted component behaves exactly as before extraction.
 
-### Phase R5 — Decide Search promotion timing
+### Phase R5 — Search promotion
 
-**Type:** design + behavior
+**Type:** structural + behavior
 
-**Goal:** Determine whether Search should become a full workspace before Inspector.
+**Goal:** Promote Search & Filter to a full workspace.
 
-**Reason to do Search first:** It defines global data scope and would benefit from full-window layout.
-
-**Reason to defer Search:** Inspector is more visibly cramped and user-facing.
+**Status:** Complete as of `82178c5` — `Promote Search to full workspace`.
 
 ### Phase R6 — Promote Inspector to full workspace
 
@@ -695,19 +688,21 @@ Back behavior works.
 Returning to visualization preserves map/network state.
 ```
 
-### Phase R7 — Generalize Timeline
+### Phase R7 — Generalize Timeline as bottom visualizations controller
 
-**Type:** behavior
+**Type:** behavior + visual
 
-**Goal:** Make Timeline animate whichever visualization is active.
+**Goal:** Add a long bottom timeline/scrubber to the Visualizations workspace so users can animate or scrub the active visualization while still seeing the map, network, or chart.
 
 **Do not start until:** Visualizations and routing model are stable.
 
-### Phase R8 — Promote Export to full workspace
+### Phase R8 — Export promotion
 
 **Type:** behavior + visual
 
 **Goal:** Move export controls into a full workspace with clearer format/scope cards.
+
+**Status:** Complete as of `2c53796` — `Promote Export to full workspace`.
 
 ---
 
@@ -725,9 +720,9 @@ People Network renders.
 Force-Directed renders.
 Analytics renders in Visualizations workspace.
 Switching from Analytics back to map/network views still renders.
-Search & Filter opens and applies/clears filters.
-Timeline opens and playback still works.
-Export opens and exports current scope.
+Search & Filter opens as a full workspace and applies/clears filters.
+Timeline opens through the current bridge and playback still works.
+Export opens as a full workspace and exports current scope.
 Theme opens full workspace and applies presets.
 Node clicks open Inspector.
 Edge clicks open Inspector.
@@ -740,94 +735,76 @@ Inspector Back works.
 
 ## 16. Open design questions
 
-### 16.1 Should Search become a full workspace before Inspector?
+### 16.1 What should happen to the remaining Timeline bridge?
 
-Search is conceptually ready for promotion because it is an advanced database-style interface. Inspector is more urgent visually because it is the evidence-reading surface. Either order can be justified.
+Timeline should eventually become a bottom visualizations timeline/scrubber rather than a standalone full workspace. The remaining design question is how it should behave across maps, networks, and charts.
 
-Recommended default: clean routing / extract hamburger first, then promote Inspector unless Search becomes a blocker.
+Recommended default: defer this until after the Visualizations and Inspector workspaces stabilize.
 
-### 16.2 Should Timeline be a workspace, a persistent controller, or both?
+### 16.2 How should Inspector promotion work?
 
-The user’s stated goal suggests Timeline should eventually be a global controller that animates the active visualization. A full Timeline workspace may still be useful for deeper temporal analysis.
+Inspector remains the highest-risk and highest-value remaining migration. It should be planned as a full evidence-dossier workspace before code promotion begins.
 
-Recommended default: defer this decision until after the Visualizations and Inspector workspaces stabilize.
-
-### 16.3 Should Export remain a side panel until late?
-
-Yes. Export is important but less central to current UI pain than Inspector and Search. It can remain side-panel-based until the main exploration workflows are stabilized.
-
-### 16.4 Should the old side panel be deleted?
+### 16.3 Should the old side panel be deleted?
 
 Not yet. It still carries Search, Timeline, Export, and Inspector. The correct approach is gradual functional migration, then code removal after no critical path depends on it.
 
 ---
 
-## 17. Recommended immediate next implementation pass
+## 17. Current recommended next implementation pass
 
-The next implementation pass should be:
+The next implementation pass should not be another easy workspace promotion. The remaining major side-panel workflow is Inspector, and that needs a design contract before code changes. Timeline should also be deferred because the preferred design is a bottom Visualizations timeline/scrubber, not a direct workspace promotion.
+
+Recommended next pass:
 
 ```text
-Extract PeridotHamburgerMenu from App.jsx
+Draft Inspector Workspace Design Contract
 ```
 
 ### Classification
 
 ```text
-Structural
+Planning / design contract
 ```
 
 ### Why this next
 
-- It reduces `App.jsx` bloat.
-- It has a clean prop surface.
-- It does not touch fragile side-panel internals.
-- It does not change routing behavior.
-- It gives the project a cleaner foundation before more ambitious workspace promotions.
-
-### In scope
-
-```text
-src/App.jsx
-src/PeridotHamburgerMenu.jsx
-```
+- Inspector is the most fragile remaining routing path.
+- It opens both from the hamburger menu and automatically from visualization interactions.
+- It contains multiple view types: person, place, route, cluster, linked letter, and empty state.
+- It has internal navigation and Back behavior that must be preserved.
+- It should become a full evidence-dossier workspace, not merely a wider copy of the current side-panel view.
 
 ### Out of scope
 
 ```text
-LeftControlPanel.jsx
-Inspector behavior
-Search behavior
-Timeline behavior
-Export behavior
-Analytics behavior
-Data import behavior
-Theme behavior
+Timeline bottom-scrubber implementation
+LeftControlPanel.jsx deletion
+Search refinement
+Export refinement
+Analytics refactor
+Aesthetic overhaul
 ```
 
-### Acceptance test
+### Acceptance test for the planning pass
 
 ```text
-Hamburger opens/closes.
-All menu items route as before.
-Home, Data, Visualizations, and Theme open full workspaces.
-Search, Timeline, Export, and Inspector still open current side-panel views.
-Analytics remains inside Visualizations workspace.
-Place Map, People Network, Force-Directed, and Analytics switching still works.
-Node/edge/cluster clicks still open Inspector.
-Inspector Back still works.
+The team can describe how each Inspector selection type should render in a full workspace, how map/network clicks should open it, how Back/breadcrumb behavior should work, and which current side-panel behaviors must be preserved during migration.
 ```
 
 ---
 
 ## 18. Summary recommendation
 
-Peridot’s current routing is stable enough to continue, but not clean enough to support large additional redesigns without some structural cleanup. The correct immediate path is conservative:
+Peridot’s routing is now substantially cleaner than when this audit was first drafted. Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces. The old side panel should now be treated primarily as a compatibility layer for Timeline and Inspector.
+
+The correct immediate path is conservative:
 
 ```text
-Document routing contract
-→ extract low-risk navigation component
-→ avoid broad side-panel cleanup
-→ promote major remaining workflows one at a time
+Keep Timeline deferred until the bottom visualizations timeline/scrubber design is ready
+→ plan Inspector workspace carefully
+→ promote Inspector only after its evidence-dossier contract is approved
+→ remove legacy side-panel code only after no critical workflow depends on it
 ```
 
-The old side panel should be treated as a compatibility layer, not as the final architecture. It should remain in place until Search, Timeline, Export, and especially Inspector have safe replacement routes.
+The old side panel should not be broadly deleted yet. It still carries Timeline and Inspector, and Inspector remains a fragile auto-open interaction path.
