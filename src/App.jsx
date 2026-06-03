@@ -42,6 +42,7 @@ import { PeridotHomeWorkspace } from './PeridotHomeWorkspace';
 import { PeridotDataWorkspace } from './PeridotDataWorkspace';
 import { PeridotThemeWorkspace } from './PeridotThemeWorkspace';
 import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace';
+import { PeridotExportWorkspace } from './PeridotExportWorkspace';
 import {
   DEFAULT_PERIDOT_WORKSPACE_MODE,
   PERIDOT_WORKSPACE_MODES,
@@ -2728,6 +2729,7 @@ function AppMainWorkspace({
   dataWorkspaceProps,
   themeWorkspaceProps,
   visualizationWorkspaceProps,
+  exportWorkspaceProps,
 }) {
   return (
     <main
@@ -2742,6 +2744,8 @@ function AppMainWorkspace({
         <PeridotThemeWorkspace {...themeWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS ? (
         <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
+      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPORT ? (
+        <PeridotExportWorkspace {...exportWorkspaceProps} />
       ) : (
         <div className="flex h-full flex-col">
           <div className="shrink-0 bg-[var(--title-bar-bg)] py-3 pl-[76px] pr-4 sm:pl-[80px]">
@@ -3979,6 +3983,23 @@ export default function EuropeNetworkMapApp() {
     onOpenAnalytics: openAnalyticsWorkspace,
   };
 
+  const exportWorkspaceProps = {
+    pageTitle,
+    mapStageProps,
+    MapStageComponent: MapStage,
+    viewMode,
+    search,
+    currentMinCountLabel,
+    currentRangeLabel,
+    graph,
+    exportStatus,
+    handleExportSvg,
+    handleExportPng,
+    handleExportEdgesCsv,
+    handleExportNodesCsv,
+    onOpenVisualizations: openVisualizationsWorkspace,
+  };
+
   const openHomeWorkspace = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.HOME);
     setIsSidePanelOpen(false);
@@ -3997,7 +4018,10 @@ export default function EuropeNetworkMapApp() {
     setActivePanelTab('inspector');
     setIsSidePanelOpen(true);
   };
-  const openExportPanelFromMenu = () => openPanelTabFromMenu('export');
+  const openExportPanelFromMenu = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.EXPORT);
+    setIsSidePanelOpen(false);
+  };
   const openThemePanelFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.THEME);
     setIsSidePanelOpen(false);
@@ -4116,6 +4140,7 @@ export default function EuropeNetworkMapApp() {
           dataWorkspaceProps={dataWorkspaceProps}
           themeWorkspaceProps={themeWorkspaceProps}
           visualizationWorkspaceProps={visualizationWorkspaceProps}
+          exportWorkspaceProps={exportWorkspaceProps}
         />
       </div>
     </div>
