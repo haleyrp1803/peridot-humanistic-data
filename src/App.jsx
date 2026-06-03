@@ -2807,6 +2807,101 @@ function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
 }
 
 
+function PeridotVisualizationsWorkspace({
+  pageTitle,
+  setPageTitle,
+  mapStageProps,
+  viewMode,
+  personLayoutMode,
+  onSelectPlaceMap,
+  onSelectPeopleNetwork,
+  onSelectForceDirected,
+  onOpenAnalytics,
+}) {
+  const activeVisualizationLabel =
+    viewMode === 'geographic'
+      ? 'Place Map'
+      : personLayoutMode === 'force'
+        ? 'Force-Directed'
+        : 'People Network';
+
+  const viewOptions = [
+    {
+      key: 'place-map',
+      label: 'Place Map',
+      active: viewMode === 'geographic',
+      action: onSelectPlaceMap,
+    },
+    {
+      key: 'people-network',
+      label: 'People Network',
+      active: viewMode === 'person' && personLayoutMode === 'geographic',
+      action: onSelectPeopleNetwork,
+    },
+    {
+      key: 'force-directed',
+      label: 'Force-Directed',
+      active: viewMode === 'person' && personLayoutMode === 'force',
+      action: onSelectForceDirected,
+    },
+  ];
+
+  return (
+    <section className="flex h-full min-h-0 flex-col bg-[var(--title-bar-bg)] text-[var(--text-main)]">
+      <div className="shrink-0 px-4 pb-3 pt-3 pl-[76px] sm:pl-[80px]">
+        <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
+        <div className="shrink-0 rounded-[18px] border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)]/92 px-4 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.14)] backdrop-blur-sm">
+          <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
+                Visualization workspace
+              </p>
+              <h1 className="mt-0.5 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-xl font-bold text-[var(--heading-text)] md:text-2xl">
+                {activeVisualizationLabel}
+              </h1>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {viewOptions.map((option) => (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={option.action}
+                  className={[
+                    'rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45',
+                    option.active
+                      ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_8px_16px_rgba(0,0,0,0.16)]'
+                      : 'border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]',
+                  ].join(' ')}
+                  aria-pressed={option.active}
+                >
+                  {option.label}
+                </button>
+              ))}
+
+              <button
+                type="button"
+                onClick={onOpenAnalytics}
+                className="rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-secondary-text)] transition-colors hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
+              >
+                Analytics
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-[var(--panel-border)] bg-[var(--map-water)] shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
+          <MapStage {...mapStageProps} />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+
 function PeridotThemeWorkspace({ themePresetKey, applyThemePreset, resetTheme, onOpenVisualizations }) {
   const themeOptions = [
     {
@@ -3057,7 +3152,7 @@ function PeridotHamburgerMenu({
     {
       key: 'visualizations',
       title: 'Visualizations',
-      description: 'Open the current map and network visualization workspace.',
+      description: 'Open maps, networks, and chart options for the current data.',
       action: onOpenVisualizations,
       active: workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS,
     },
@@ -3196,6 +3291,7 @@ function AppMainWorkspace({
   homeWorkspaceProps,
   dataWorkspaceProps,
   themeWorkspaceProps,
+  visualizationWorkspaceProps,
 }) {
   return (
     <main
@@ -3208,6 +3304,8 @@ function AppMainWorkspace({
         <PeridotDataWorkspace {...dataWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.THEME ? (
         <PeridotThemeWorkspace {...themeWorkspaceProps} />
+      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS ? (
+        <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
       ) : (
         <div className="flex h-full flex-col">
           <div className="shrink-0 bg-[var(--title-bar-bg)] py-3 pl-[76px] pr-4 sm:pl-[80px]">
@@ -4361,6 +4459,27 @@ export default function EuropeNetworkMapApp() {
     setIsSidePanelOpen(false);
   };
 
+  const selectPlaceMapVisualization = () => {
+    setViewMode('geographic');
+    setPersonLayoutMode('geographic');
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    setIsSidePanelOpen(false);
+  };
+
+  const selectPeopleNetworkVisualization = () => {
+    setViewMode('person');
+    setPersonLayoutMode('geographic');
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    setIsSidePanelOpen(false);
+  };
+
+  const selectForceDirectedVisualization = () => {
+    setViewMode('person');
+    setPersonLayoutMode('force');
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    setIsSidePanelOpen(false);
+  };
+
   const homeWorkspaceProps = {
     onUploadData: openDataWorkspace,
     onUseSampleData: openVisualizationsWorkspace,
@@ -4382,6 +4501,18 @@ export default function EuropeNetworkMapApp() {
     applyThemePreset,
     resetTheme,
     onOpenVisualizations: openVisualizationsWorkspace,
+  };
+
+  const visualizationWorkspaceProps = {
+    pageTitle,
+    setPageTitle,
+    mapStageProps,
+    viewMode,
+    personLayoutMode,
+    onSelectPlaceMap: selectPlaceMapVisualization,
+    onSelectPeopleNetwork: selectPeopleNetworkVisualization,
+    onSelectForceDirected: selectForceDirectedVisualization,
+    onOpenAnalytics: () => openAnalyticsPanelFromMenu(),
   };
 
   const openHomeWorkspace = () => {
@@ -4478,6 +4609,7 @@ export default function EuropeNetworkMapApp() {
           homeWorkspaceProps={homeWorkspaceProps}
           dataWorkspaceProps={dataWorkspaceProps}
           themeWorkspaceProps={themeWorkspaceProps}
+          visualizationWorkspaceProps={visualizationWorkspaceProps}
         />
       </div>
     </div>
