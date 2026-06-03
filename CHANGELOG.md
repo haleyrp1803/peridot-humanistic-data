@@ -2,13 +2,13 @@
 
 ## Current documented safe baseline
 
-- **`0f72182` — `Remove redundant Inspector correspondents summary row`** on branch **`main`**
+- **`55fae50` — `Update routing contract after workspace promotions`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation and layout milestone, the Analytics feature and visual-polish sequence, the standardized Peridot CSV workflow, the arbitrary CSV/TSV column-mapping importer, full workbook/Excel import support, and the Inspector profile/navigation refinement sequence.
+This baseline records the active legacy D3/SVG Peridot path after the interface redesign planning pass, workspace-state introduction, Home/Data startup workspaces, hamburger-menu replacement, full-workspace promotions for Theme, Visualizations, Export, and Search & Filter, and the routing-contract update that records the current hybrid state. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, and Inspector profile/navigation refinement.
 
 The current Data Inputs / import workflow now provides:
 
-- one primary Peridot CSV upload control and downloadable template;
+- downloadable Peridot CSV template plus one unified CSV/TSV/XLSX/XLS table-workbook upload path;
 - permissive database-first upload handling for incomplete historical correspondence records;
 - validation/capability reporting and persistent upload summaries;
 - arbitrary CSV/TSV staging and column mapping;
@@ -25,11 +25,41 @@ The current Inspector workflow now provides richer person/place profile pages, l
 
 The current Search & Filter workflow uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filtering, predictive suggestions, route-place and route-people filters, year text inputs with suggestions, and pre-update status feedback. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
 
+
+The current interface/workspace workflow now provides:
+
+- Home / welcome workspace with Upload my data and Use sample data start paths;
+- hamburger-triggered labeled menu replacing the persistent icon rail as the primary visible navigation surface;
+- full-window workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export;
+- Visualizations workspace containing Place Map, People Network, Force-Directed, and Analytics;
+- Search & Filter promoted to a full workspace while preserving draft/apply filtering behavior;
+- Export promoted to a full workspace with a live visualization preview preserved for SVG/PNG export;
+- Theme promoted to a full workspace;
+- Data workspace using the unified CSV/TSV/XLSX/XLS uploader;
+- Timeline retained as a transitional side-panel bridge pending a later bottom Visualizations timeline/scrubber design;
+- Inspector retained as the main transitional side-panel bridge pending a later full evidence-dossier design contract.
+
 The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment remains set aside rather than merged into the active implementation path.
 
 ---
 
 ## Current milestone notes
+
+### Interface redesign and workspace-routing milestone
+
+- Added `PERIDOT_INTERFACE_REDESIGN_PLAN.md` to define the shift from a map-first side-panel app toward a multimodal correspondence data exploration workspace.
+- Added internal workspace state and extracted workspace configuration into `src/peridotWorkspaceConfig.js`.
+- Added Home / welcome startup behavior and routed users into Data or Visualizations from the landing page.
+- Replaced the visible persistent icon rail with a hamburger-triggered labeled menu.
+- Promoted Theme to a full workspace.
+- Created and extracted full workspace components for Home, Data, Theme, Visualizations, Export, and Search & Filter.
+- Added `src/PeridotHamburgerMenu.jsx`, `src/PeridotHomeWorkspace.jsx`, `src/PeridotDataWorkspace.jsx`, `src/PeridotThemeWorkspace.jsx`, `src/PeridotVisualizationsWorkspace.jsx`, `src/PeridotExportWorkspace.jsx`, `src/PeridotSearchWorkspace.jsx`, and `src/peridotWorkspaceConfig.js`.
+- Moved Analytics into the Visualizations workspace while preserving compact preview sizing and expanded chart behavior.
+- Promoted Export to a full workspace with a live visualization preview preserved for SVG/PNG export.
+- Promoted Search & Filter to a full workspace while preserving existing keyword/person/place/route/date/weight controls and predictive suggestions.
+- Updated `PERIDOT_ROUTING_CONTRACT_AUDIT.md` after Search and Export were promoted.
+- Deferred Timeline promotion; the preferred future design is now a bottom timeline/scrubber integrated with Visualizations.
+- Deferred Inspector promotion pending a careful full evidence-dossier design contract.
 
 ### Workbook / Excel import and Inspector profile milestone
 
@@ -92,19 +122,29 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 
 ## Current branch status
 
-- **`0f72182` — `Remove redundant Inspector correspondents summary row`** is the current documented `main` baseline and current head in the provided sync ritual.
-- **`8564e33` — `Fix place profiles and split directed route summaries`** is the preceding Inspector place-profile and route-direction fix.
-- **`b1ef30a` — `Refine Inspector profile relationship sections`** is the preceding Inspector profile cleanup commit.
-- **`d9f0090` — `Improve Inspector person place profiles and linked letter navigation`** is the preceding richer Inspector profile/navigation commit.
-- **`9c8971b` — `Display custom Inspector fields in linked letters`** is the preceding linked-letter custom-field rendering commit.
-- **`5f25322` — `Select custom Inspector fields from joined workbook sheets`** is the preceding joined-sheet custom-field selection commit.
-- **`964ce57` — `Import multi-sheet workbooks by unique ID joins`** is the preceding multi-sheet workbook import assembly commit.
-- **`ac31c38` — `Configure workbook sheet joins by unique ID`** is the preceding user-configured workbook join commit.
-- **`77b1575` — `Preview multi-sheet workbook mapping`** is the preceding workbook mapping workspace preview commit.
-- **`4d11cb3` — `Add Peridot workbook parsing helper`** is the prior documented workbook parsing baseline.
+- **`55fae50` — `Update routing contract after workspace promotions`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`82178c5` — `Promote Search to full workspace`** promoted Search & Filter out of the legacy side-panel bridge.
+- **`2c53796` — `Promote Export to full workspace`** promoted Export into a full workspace with a live export preview.
+- **`8fc96b3` — `Extract Peridot workspace config`** moved workspace constants/helpers out of `App.jsx`.
+- **`9cd3f3f` — `Clean workspace routing comments`** updated routing comments and removed an obsolete Analytics side-panel handler.
+- **`9240745` — `Fix Visualizations workspace export`** fixed the named export for `PeridotVisualizationsWorkspace`.
+- **`25fc046` — `Extract Peridot visualizations workspace`** extracted the Visualizations workspace component.
+- **`fcf6bb6` — `Extract Peridot data workspace`** extracted the Data workspace component.
+- **`9428766` — `Extract Peridot theme workspace`** extracted the Theme workspace component.
+- **`18c2912` — `Extract Peridot home workspace`** extracted the Home workspace component.
+- **`6c16403` — `Extract Peridot hamburger menu`** extracted the hamburger menu component.
+- **`30b114b` — `Add Peridot routing contract audit`** added the routing transition audit.
+- **`8384dee` — `Fit Analytics workspace preview`** stabilized Analytics preview sizing in Visualizations.
+- **`7a8ed7d` — `Compact Visualizations workspace controls`** compacted Visualizations controls.
+- **`9b67d28` — `Move Theme to full workspace`** moved Theme to a full workspace.
+- **`bb0c0ed` — `Refine hamburger menu visual layout`** refined hamburger menu styling.
+- **`2336915` — `Route mapped imports to visualization workspace`** routed completed mapped imports to Visualizations.
+- **`576bb72` — `Fix visualization workspace viewport initialization`** fixed map viewport measurement after Home/Data startup.
+- **`56f2a49` — `Add internal workspace state model`** introduced internal workspace state.
+- **`b42f6fd` — `Add Peridot interface redesign plan`** added the interface redesign plan.
+- **`10017ec` — `Document workbook import and Inspector profile milestone`** documented the preceding workbook/import/Inspector milestone.
+- **`0f72182` — `Remove redundant Inspector correspondents summary row`** is the preceding safe baseline from before the interface-redesign sequence.
 - **`2d76839` — `Fix linked letter encoding display`** is the paused `maplibre-native-geographic-view` branch head shown in the earlier full commit log.
-
----
 
 ## Deferred / rolled-back work
 
@@ -134,7 +174,28 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
-| 2026-06-02 | `0f72182` | (HEAD -> main, origin/main, origin/HEAD) | Remove redundant Inspector correspondents summary row |
+| 2026-06-02 | `55fae50` | (HEAD -> main, origin/main, origin/HEAD) | Update routing contract after workspace promotions |
+| 2026-06-02 | `82178c5` |  | Promote Search to full workspace |
+| 2026-06-02 | `2c53796` |  | Promote Export to full workspace |
+| 2026-06-02 | `8fc96b3` |  | Extract Peridot workspace config |
+| 2026-06-02 | `9cd3f3f` |  | Clean workspace routing comments |
+| 2026-06-02 | `9240745` |  | Fix Visualizations workspace export |
+| 2026-06-02 | `25fc046` |  | Extract Peridot visualizations workspace |
+| 2026-06-02 | `fcf6bb6` |  | Extract Peridot data workspace |
+| 2026-06-02 | `9428766` |  | Extract Peridot theme workspace |
+| 2026-06-02 | `18c2912` |  | Extract Peridot home workspace |
+| 2026-06-02 | `6c16403` |  | Extract Peridot hamburger menu |
+| 2026-06-02 | `30b114b` |  | Add Peridot routing contract audit |
+| 2026-06-02 | `8384dee` |  | Fit Analytics workspace preview |
+| 2026-06-02 | `7a8ed7d` |  | Compact Visualizations workspace controls |
+| 2026-06-02 | `9b67d28` |  | Move Theme to full workspace |
+| 2026-06-02 | `bb0c0ed` |  | Refine hamburger menu visual layout |
+| 2026-06-02 | `2336915` |  | Route mapped imports to visualization workspace |
+| 2026-06-02 | `576bb72` |  | Fix visualization workspace viewport initialization |
+| 2026-06-02 | `56f2a49` |  | Add internal workspace state model |
+| 2026-06-02 | `b42f6fd` |  | Add Peridot interface redesign plan |
+| 2026-06-02 | `10017ec` |  | Document workbook import and Inspector profile milestone |
+| 2026-06-02 | `0f72182` |  | Remove redundant Inspector correspondents summary row |
 | 2026-06-02 | `8564e33` |  | Fix place profiles and split directed route summaries |
 | 2026-06-02 | `b1ef30a` |  | Refine Inspector profile relationship sections |
 | 2026-06-02 | `d9f0090` |  | Improve Inspector person place profiles and linked letter navigation |

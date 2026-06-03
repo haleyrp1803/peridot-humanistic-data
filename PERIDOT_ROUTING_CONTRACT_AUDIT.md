@@ -1,6 +1,6 @@
 # Peridot Routing Contract Audit
 
-**Draft status:** Routing and workspace transition audit updated after commit `82178c5` — `Promote Search to full workspace`.
+**Draft status:** Routing and workspace transition audit updated after commit `55fae50` — `Update routing contract after workspace promotions`.
 
 **Purpose:** Document how Peridot’s current navigation and workspace routing works, how it should ideally work after the interface redesign, and how to transition safely from the current hybrid state to the intended workspace-first architecture.
 
@@ -35,12 +35,13 @@ The next stage should not be a broad deletion pass. It should be a staged transi
 Current verified baseline:
 
 ```text
-82178c5 — Promote Search to full workspace
+55fae50 — Update routing contract after workspace promotions
 ```
 
 Recent redesign sequence:
 
 ```text
+55fae50 Update routing contract after workspace promotions
 82178c5 Promote Search to full workspace
 2c53796 Promote Export to full workspace
 8fc96b3 Extract Peridot workspace config
@@ -577,7 +578,7 @@ The design goal is not “no panels ever.” The goal is to stop placing major a
 
 **Type:** documentation / audit
 
-**Goal:** Treat `8384dee` as the current routing baseline and document current/ideal paths.
+**Goal:** Treat `55fae50` as the current routing baseline and document current/ideal paths.
 
 **Status:** This document fulfills that phase.
 
@@ -751,11 +752,11 @@ Not yet. It still carries Search, Timeline, Export, and Inspector. The correct a
 
 ---
 
-## 17. Current recommended next implementation pass
+## 17. Current recommended next planning pass
 
 The next implementation pass should not be another easy workspace promotion. The remaining major side-panel workflow is Inspector, and that needs a design contract before code changes. Timeline should also be deferred because the preferred design is a bottom Visualizations timeline/scrubber, not a direct workspace promotion.
 
-Recommended next pass:
+Recommended next planning pass:
 
 ```text
 Draft Inspector Workspace Design Contract
@@ -775,10 +776,17 @@ Planning / design contract
 - It has internal navigation and Back behavior that must be preserved.
 - It should become a full evidence-dossier workspace, not merely a wider copy of the current side-panel view.
 
+### Alternative deferred planning pass
+
+```text
+Draft Timeline Bottom-Scrubber Design Contract
+```
+
+This should define how Timeline lives at the bottom of Visualizations, how users toggle and scrub it, and how it interacts with maps, networks, and charts.
+
 ### Out of scope
 
 ```text
-Timeline bottom-scrubber implementation
 LeftControlPanel.jsx deletion
 Search refinement
 Export refinement
@@ -786,13 +794,11 @@ Analytics refactor
 Aesthetic overhaul
 ```
 
-### Acceptance test for the planning pass
+### Acceptance test for the Inspector planning pass
 
 ```text
 The team can describe how each Inspector selection type should render in a full workspace, how map/network clicks should open it, how Back/breadcrumb behavior should work, and which current side-panel behaviors must be preserved during migration.
 ```
-
----
 
 ## 18. Summary recommendation
 

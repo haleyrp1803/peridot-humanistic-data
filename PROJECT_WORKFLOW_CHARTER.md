@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 Current clean baseline:
 
 ```text
-See `CHANGELOG.md` for the most recent documented safe baseline.
+55fae50 — Update routing contract after workspace promotions
 ```
 
 Current branch note:
@@ -72,6 +72,8 @@ Current fragile zones include:
 - playback/timeline state coupling
 - export rendering/state coupling
 - broad orchestration work inside `src/App.jsx`
+- workspace routing and hamburger-menu behavior
+- map/network viewport measurement after switching between Analytics and map/network visualizations
 - shared side-panel shell behavior
 - inspector-open interactions after map clicks
 - cluster grouping and cluster inspector navigation
@@ -272,6 +274,12 @@ Current notable decisions:
 - Users may select custom Inspector/Analytics fields from primary and joined workbook sheets.
 - Person/place profile views should aggregate linked-record information and display related people, related places, directed routes, date spans, linked letters, and selected uploaded fields where available.
 - Linked letters should open as dedicated Inspector detail views rather than long inline expansions.
+- Peridot’s primary interface direction is now workspace-first rather than side-panel-first.
+- The hamburger-triggered labeled menu is the intended primary navigation surface; the old persistent icon rail is legacy/compatibility code unless explicitly revived.
+- Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces.
+- Timeline should not be promoted to a standalone full workspace; the preferred future direction is a bottom timeline/scrubber integrated with Visualizations.
+- Inspector remains the main transitional side-panel bridge and should be promoted only after a careful full evidence-dossier design contract.
+- Analytics is conceptually part of Visualizations, not an independent side-panel-first workflow.
 - The ordinary legacy Geography / Raw Data / Person Metadata three-file workflow is superseded by the one-file template upload and mapped arbitrary-table import workflows; do not reintroduce it unless a specific recovery or compatibility need is identified.
 
 ---
@@ -326,7 +334,7 @@ Data Inputs is now the public owner of the standardized single-CSV upload workfl
 Committed Data Inputs behavior includes:
 
 - downloadable Peridot CSV template;
-- one primary completed-CSV upload control;
+- one unified CSV / TSV / XLSX / XLS table-workbook upload control;
 - arbitrary CSV/TSV upload staging and column mapping;
 - mapped arbitrary-table import into Peridot data;
 - post-upload validation popup;
@@ -420,8 +428,10 @@ The new chat should be told:
 
 - Peridot is the current app identity.
 - The current fixed basemap is `countries50m`.
-- The app uses a shared left-side panel with Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector tabs.
-- `LeftControlPanel.jsx` owns the shared side-panel shell.
+- The app uses a hamburger-triggered labeled menu and full workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export.
+- Timeline remains a transitional side-panel bridge and is later intended to become a bottom Visualizations timeline/scrubber.
+- Inspector remains a transitional side-panel bridge and should eventually become a full evidence-dossier workspace after a dedicated design contract.
+- `LeftControlPanel.jsx` owns the legacy shared side-panel shell and transitional Timeline/Inspector bridge.
 - `InspectorPanel.jsx` is content-only.
 - Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed features.
 - The compatibility path for inspector auto-open is fragile; do not rename it casually.

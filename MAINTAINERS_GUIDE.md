@@ -22,9 +22,9 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`0f72182` — `Remove redundant Inspector correspondents summary row`**
+- **`55fae50` — `Update routing contract after workspace promotions`**
 
-This baseline records the active legacy D3/SVG Peridot path after the Search & Filter implementation/layout milestone, Analytics visual-polish sequence, standardized one-file Peridot CSV upload workflow, arbitrary CSV/TSV column-mapping import path, removal of the public legacy three-file upload workflow, and the full workbook/Excel import support and Inspector person/place profile refinements. Data Inputs now foregrounds one public Peridot CSV template path plus mapped arbitrary-table import.
+This baseline records the active legacy D3/SVG Peridot path after the interface redesign planning pass, workspace-state introduction, Home/Data startup workspaces, hamburger-menu replacement, full-workspace promotions for Theme, Visualizations, Export, and Search & Filter, and the routing-contract update that records the current hybrid state. Earlier milestones include standardized one-file Peridot CSV upload, arbitrary CSV/TSV mapping, workbook/Excel import support, and Inspector person/place profile refinements.
 
 Preceding data-input milestones include:
 
@@ -36,6 +36,20 @@ Preceding data-input milestones include:
 - **`d270c9d` — `Import mapped arbitrary CSV and TSV data`**
 - **`a058730` — `Add Peridot column mapping workspace`**
 - **`cbc35d0` — `Add single Peridot CSV upload workflow`**
+
+Recent interface-routing milestones include:
+
+- **`55fae50` — `Update routing contract after workspace promotions`**
+- **`82178c5` — `Promote Search to full workspace`**
+- **`2c53796` — `Promote Export to full workspace`**
+- **`8fc96b3` — `Extract Peridot workspace config`**
+- **`25fc046` — `Extract Peridot visualizations workspace`**
+- **`fcf6bb6` — `Extract Peridot data workspace`**
+- **`9428766` — `Extract Peridot theme workspace`**
+- **`18c2912` — `Extract Peridot home workspace`**
+- **`6c16403` — `Extract Peridot hamburger menu`**
+- **`30b114b` — `Add Peridot routing contract audit`**
+- **`b42f6fd` — `Add Peridot interface redesign plan`**
 
 Current GitHub repository:
 
@@ -62,6 +76,17 @@ Current live app surface includes:
 - `src/App.jsx`
 - `src/index.css`
 - `src/main.jsx`
+
+Current workspace / routing boundaries in `src/`:
+
+- `src/peridotWorkspaceConfig.js`
+- `src/PeridotHamburgerMenu.jsx`
+- `src/PeridotHomeWorkspace.jsx`
+- `src/PeridotDataWorkspace.jsx`
+- `src/PeridotVisualizationsWorkspace.jsx`
+- `src/PeridotSearchWorkspace.jsx`
+- `src/PeridotThemeWorkspace.jsx`
+- `src/PeridotExportWorkspace.jsx`
 
 Current panel / inspector / Analytics boundaries in `src/`:
 
@@ -106,137 +131,100 @@ Maintainer/workflow documents at repo root:
 - `MAINTAINERS_GUIDE.md`
 - `PROJECT_WORKFLOW_CHARTER.md`
 - `CHANGELOG.md`
-
----
+- `PERIDOT_INTERFACE_REDESIGN_PLAN.md`
+- `PERIDOT_ROUTING_CONTRACT_AUDIT.md`
 
 ## Architectural summary
 
-Peridot is a Vite/React/Tailwind correspondence visualizer with three user-facing visualization choices:
+Peridot is a Vite/React/Tailwind correspondence visualizer that has moved from a map-first side-panel interface toward a workspace-first multimodal exploration environment.
 
-- **People**
-- **Place**
+The current top-level interface includes:
+
+- Home / welcome workspace
+- Data workspace
+- Visualizations workspace
+- Search & Filter workspace
+- Theme workspace
+- Export workspace
+- Timeline transitional side-panel bridge
+- Inspector transitional side-panel bridge
+
+The current Visualizations workspace includes:
+
+- **Place Map**
+- **People Network**
 - **Force-Directed**
+- **Analytics**
 
-Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing control model uses direct view buttons.
+Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing model now groups map, network, force-directed, and chart tools together inside Visualizations.
 
 The app includes:
 
-- standardized one-file Peridot CSV ingestion
+- standardized one-file Peridot CSV template workflow
 - arbitrary CSV/TSV column mapping and mapped import
 - workbook/Excel mapping with multi-sheet unique-ID joins
 - workbook/Excel parser and workbook-aware mapping/import path
 - database-first handling of messy/incomplete historical records
 - graph derivation
 - interactive SVG-based rendering
-- year-based timeline filtering and playback
-- shared side-panel inspection workflow
-- persistent side-panel icon rail with dedicated Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector tabs
+- year-based timeline filtering and playback through the current bridge
+- transitional side-panel inspection workflow
 - implemented Search & Filter consolidation defining one active filtered dataset for map, Inspector, Analytics, Timeline, and Export workflows
-- theme presets and visual controls
-- export tools for image and tabular outputs
-- Analytics charting tools with compact previews, expanded overlay, variable controls, date-range controls, and PNG chart export
+- theme presets and visual controls in a full workspace
+- export tools for image and tabular outputs in a full workspace
+- Analytics charting tools embedded in Visualizations
 
 The main maintenance challenge remains structural concentration in `src/App.jsx`, but that concentration has been reduced through bounded extraction passes.
-
-### Data input architecture
-
-The public Data Inputs workflow now includes the Peridot template CSV path, arbitrary CSV/TSV column mapping, and workbook-aware Excel import:
-
-```text
-Peridot template CSV, arbitrary CSV/TSV, or XLSX/XLS workbook
-→ parsed/staged rows or workbook sheets
-→ template normalization, user-confirmed column mapping, or workbook mapping with unique-ID joins
-→ schema/capability checks
-→ normalized geography rows / letter metadata / person metadata / places / selected custom metadata
-→ active app data
-```
-
-The current public template columns are:
-
-```text
-Archive
-Collection
-Page(s)
-Date
-Source_Name
-Source_Title
-Source_Location
-Source_Latitude
-Source_Longitude
-Target_Name
-Target_Title
-Target_Location
-Target_Latitude
-Target_Longitude
-Relationship
-Topic
-Language
-Transcription
-Notes
-Link(s)
-```
-
-Peridot treats uploaded data as database records first. A row can be accepted if it has either:
-
-- `Source_Name` and `Target_Name`; or
-- source-side and target-side place information, using place names, coordinate pairs, or both.
-
-Coordinates and parseable dates are capability-enabling fields, not upload-admission requirements. The validation summary reports which accepted records can support specific tools:
-
-- Inspector-ready
-- People-network-ready
-- Place-network-ready
-- Map-ready
-- Timeline-ready
-- Analytics-ready
-- Export-ready
-
-Peridot does **not** clean, standardize, merge, or enforce controlled vocabularies for person names, place names, date strings, titles, topics, relationships, languages, notes, or links. Users are responsible for standardizing values outside the app if they want cleaner networks, filters, and charts.
-
-The legacy three-file upload path is superseded by the one-file and mapped-import workflows and has been removed from the ordinary public workflow.
-
-### MapLibre status
-
-MapLibre work is currently paused. The active continuation branch should be treated as a legacy D3/SVG Peridot branch. Early MapLibre preview files remain in the repository because `main` includes the gated preview prototype at `10051c0`, but those files are dormant in ordinary use.
-
-A later branch, `maplibre-native-geographic-view`, explored a much larger MapLibre migrated overlay. That branch is not the active source of truth. It should be preserved as an experiment and revisited only after an explicit fresh audit.
-
-The current person-network layouts are:
-
-- **geographic-anchor**
-- **force-directed** using pre-settled `d3-force`
-
-The force-directed person view renders on a clean theme-driven background rather than on top of the geographic map backdrop.
-
----
 
 ## Current module responsibilities
 
 ### `src/App.jsx`
 
-Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel contract building, Search & Filter state, timeline state, inspector navigation state, export wiring, and the live Data Inputs workflow. It wires template download, CSV upload parsing, arbitrary CSV/TSV mapping flow, validation summary state, normalization output, upload-source reset behavior, and modal visibility.
+Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel compatibility contract building, Search & Filter state, timeline state, inspector navigation state, export wiring, and the live Data workflow. It wires template download, upload parsing, arbitrary CSV/TSV/workbook mapping flow, validation summary state, normalization output, upload-source reset behavior, and modal visibility.
+
+`App.jsx` no longer contains the inline Home, Data, Theme, Visualizations, Search, Export, or hamburger-menu UI components. Those have been extracted into dedicated `Peridot*Workspace` / menu files. It still remains the main state/orchestration boundary.
 
 ### `src/LeftControlPanel.jsx`
 
-Owns the shared side-panel shell and persistent icon rail. The shell includes:
+Legacy shared side-panel shell and compatibility host. It still contains the old rail/panel structure and legacy panel content. In the current hamburger workflow, most major workflows have moved to full workspaces; the side-panel shell remains structurally important primarily for:
 
-- persistent icon rail that is available when the panel is closed and when it is open
-- open-state close button at the top of the rail
-- rail-driven panel views for **Controls**, **Data Inputs**, **Search & Filter**, **Export**, **Timeline**, **Analytics**, and **Inspector**
-- **Data Inputs** content rendering for one public Peridot CSV upload workflow, arbitrary CSV/TSV column mapping, template download, upload button, latest-upload summary, validation popup, and data tips
-- legacy three-file upload workflow superseded by the one-file and mapped-import workflows
-- **Search & Filter** content rendering for the compact advanced-search layout
-- current applied filter scope at the top of Search & Filter
-- keyword, person, place, route-place, route-people, minimum-weight, and date-range filters
-- predictive suggestion menus for person, place, route-place, route-people, start-year, and end-year fields
-- draft/apply filter UI with Apply Filters, Clear Filters, current applied scope, and pre-update status feedback above the action buttons
-- Controls content rendering for visualization, display, theme, summary, and diagnostics controls
-- Export content rendering for SVG, PNG, nodes CSV, and edges/routes CSV controls
-- Timeline content rendering for year-range and playback controls
-- Analytics content rendering through `AnalyticsPanelContent`
-- Inspector content rendering through `InspectorPanelContent`
+- **Timeline** bridge behavior
+- **Inspector** bridge behavior and auto-open interactions from map/network clicks
 
-This file currently remains named `LeftControlPanel.jsx`, but it is now conceptually the shared side-panel shell and rail-tab host. Compatibility-sensitive `showLeftSidebar` / `showRightSidebar` state names still exist and should not be casually renamed because they are tied to inspector auto-open behavior.
+Do not broadly delete or rename this file’s compatibility-sensitive paths until Timeline and Inspector routing are resolved. In particular, old `showLeftSidebar` / `showRightSidebar` naming may still preserve Inspector auto-open behavior even though the names are semantically stale.
+
+
+### `src/peridotWorkspaceConfig.js`
+
+Workspace-mode vocabulary and helper functions used by `App.jsx` for Home, Data, Visualizations, Search, Inspector, Timeline, Theme, and Export routing.
+
+### `src/PeridotHamburgerMenu.jsx`
+
+Primary visible navigation component. It renders the hamburger button and labeled menu options. It replaces the earlier persistent icon rail as the intended user-facing navigation model.
+
+### `src/PeridotHomeWorkspace.jsx`
+
+Full Home / welcome workspace with introductory copy, **Upload my data**, **Use sample data**, and feature summary cards.
+
+### `src/PeridotDataWorkspace.jsx`
+
+Full Data workspace for CSV template download, unified CSV/TSV/XLSX/XLS upload, staged table/workbook summary, mapping launch, latest-upload summary, and navigation to Visualizations.
+
+### `src/PeridotVisualizationsWorkspace.jsx`
+
+Full Visualizations workspace. It contains the compact Place Map / People Network / Force-Directed / Analytics selector, renders Analytics in-workspace, and wraps the live map/network stage.
+
+### `src/PeridotSearchWorkspace.jsx`
+
+Full Search & Filter workspace. It renders active-scope summary, keyword/person/place/route/date/weight controls, predictive suggestions, Apply Filters, Clear Filters, and navigation back to Visualizations.
+
+### `src/PeridotThemeWorkspace.jsx`
+
+Full Theme workspace for Peridot default, Early modern map, and Modern map presets.
+
+### `src/PeridotExportWorkspace.jsx`
+
+Full Export workspace for SVG, PNG, nodes CSV, and edges/routes CSV export actions. It keeps a live visualization preview mounted so SVG/PNG export can operate on the current stage.
 
 ### `src/peridotCsvSchema.js`
 
@@ -398,11 +386,22 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 ## Current functional state
 
+### Workspace routing
+
+- app opens to the Home workspace
+- hamburger menu is the primary visible navigation surface
+- full workspaces exist for Home, Data, Visualizations, Search & Filter, Theme, and Export
+- Timeline remains on a transitional side-panel bridge
+- Inspector remains on a transitional side-panel bridge and auto-opens from node/edge/cluster interactions
+- Timeline should eventually become a bottom timeline/scrubber integrated with Visualizations, not a standalone full workspace
+- Inspector should eventually become a full evidence-dossier workspace after a dedicated design contract
+
 ### Visualization modes
 
-- Place view
-- People view
+- Place Map view
+- People Network view
 - Force-Directed view
+- Analytics inside Visualizations
 
 ### Person-network layouts
 
@@ -411,34 +410,31 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 ### Side-panel capabilities
 
-- one shared left-side panel shell
-- persistent icon rail as the panel-view switcher
-- close button at the top of the open-state rail
-- dedicated rail tabs for Controls, Data Inputs, Search & Filter, Export, Timeline, Analytics, and Inspector
-- Data Inputs, Search & Filter, Export, Timeline, and Analytics moved out of the general Controls panel into dedicated views
-- shell-level open/close behavior
+- legacy shared side-panel shell remains available for Timeline and Inspector bridge behavior
 - Inspector auto-opens from node, edge, and cluster interactions
+- legacy rail/Controls/Data/Search/Export/Analytics code may still exist in `LeftControlPanel.jsx`, but it is no longer the intended primary user-facing navigation path for workflows already promoted to full workspaces
 
-### Data Inputs capabilities
+### Data capabilities
 
-- primary one-file Peridot CSV upload workflow
+- full Data workspace
+- unified CSV / TSV / XLSX / XLS upload path
+- downloadable Peridot CSV template
 - arbitrary CSV/TSV column-mapping workflow
 - XLSX/XLS workbook staging, mapping, unique-ID joins, and import assembly
-- downloadable CSV template
 - database-first permissive upload model
 - upload validation popup
-- persistent latest-upload summary in the side panel
+- persistent latest-upload summary
 - concise data tips explaining row granularity, incomplete data, coordinates, and user responsibility for standardization
 - legacy three-file public upload workflow superseded by one-file and mapped-import workflows
 
 ### Search & Filter capabilities
 
-- dedicated Search & Filter rail tab
+- full Search & Filter workspace
 - draft/apply global filtering model
 - **Apply Filters** commits all filter changes together
 - **Clear Filters** clears keyword/person/place/route fields, restores minimum weight to `1`, restores the full date range, and resets playback
 - status feedback appears before expensive filter recomputation begins
-- current applied filter scope is displayed at the top of the panel
+- current applied filter scope is displayed at the top of the workspace
 - compact advanced-search criteria form modeled on database/library advanced-search interfaces
 - text filters include keyword search, person filter, place filter, **Route Filter (Place)**, and **Route Filter (People)**
 - non-text filters include minimum correspondence weight and date range
@@ -460,30 +456,30 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - year-based date filtering
 - playback controls
-- timeline controls now appear in a dedicated side-panel Timeline tab
-- timeline panel UI extracted into supporting components/helpers
+- timeline currently opens through a transitional side-panel bridge
 - month selectors removed in favor of start-year / end-year controls
-- active start/end year controls and playback behavior were preserved during the Timeline-tab move
+- future target: bottom Visualizations timeline/scrubber that can toggle/scrub while users view maps, networks, or charts
 
 ### Map and sizing capabilities
 
 - dynamic node radius contrast based on visible active data
 - volume-based zoom-responsive cluster sizing
 - zoom-responsive proximity clustering for nearby nodes/places
-- edge sizing unchanged by the recent node/cluster sizing work
+- edge sizing unchanged by recent node/cluster sizing work
 
 ### Export capabilities
 
+- full Export workspace
 - SVG export
 - PNG export
 - nodes CSV export
 - edges/routes CSV export
 - Analytics chart PNG export
-- export controls now appear in a dedicated side-panel Export tab
+- live visualization preview preserved for SVG/PNG export
 
 ### Analytics capabilities
 
-- dedicated side-panel Analytics tab
+- Analytics is now shown inside the Visualizations workspace
 - chart picker with Bar, Grouped Bar, Stacked Bar, Line, Multi-Line, Histogram, Pie, Sunburst, and Heatmap chart types
 - chart descriptions and example questions
 - chart-specific variable controls
@@ -491,13 +487,10 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - explicit **Route (Place)** and **Route (Person)** variables
 - Analytics-local date-range controls for time-based charts
 - automatic time-period granularity based on selected date range
-- compact side-panel chart preview
+- constrained compact preview sizing inside Visualizations
 - higher-contrast shared chart hover tooltips
-- expanded chart overlay over the map area with dark green translucent backdrop, cool off-white text/borders, preserved blur, and white/cream chart card
+- expanded chart overlay with dark green translucent backdrop, cool off-white text/borders, preserved blur, and white/cream chart card
 - PNG chart export
-
----
-
 
 ## Workbook import contract
 
@@ -605,7 +598,7 @@ template CSV
 ### Current responsibilities
 
 - Provide a downloadable Peridot CSV template.
-- Provide one primary completed-CSV upload control.
+- Provide one unified CSV / TSV / XLSX / XLS table-workbook upload control.
 - Present upload feedback in a popup immediately after upload.
 - Keep the latest upload summary visible in the Data Inputs panel after the popup closes.
 - Explain that incomplete records may still be preserved even if they are not compatible with every visualization.
@@ -631,7 +624,7 @@ Do not reintroduce the legacy three-file workflow unless there is a specific rec
 
 ---
 
-## Current theme and panel state
+## Current theme and routing state
 
 The default full-app theme remains **Peridot-inspired**.
 
@@ -640,34 +633,26 @@ Other retained presets still function as map-focused alternatives:
 - Early modern map
 - Modern map
 
-Important current side-panel state:
+Current routing state:
 
-- the persistent rail, not a horizontal top-tab row, is now the panel-view switcher
-- rail tabs are currently:
-  1. **Controls** — Visualization Type, Display Controls, Theme, Summary and Diagnostics, and remaining general options
-  2. **Data Inputs** — Peridot CSV template download, one-file upload, validation popup, persistent latest-upload summary, and data tips
-  3. **Search & Filter** — compact advanced-search form, current applied scope, active-dataset filters, predictive suggestions, Apply Filters, Clear Filters, and filter status feedback
-  4. **Export** — SVG, PNG, nodes CSV, and edges/routes CSV export controls
-  5. **Timeline** — year-range filtering and playback controls
-  6. **Analytics** — chart selection, chart configuration, expanded chart overlay, and chart PNG export
-  7. **Inspector** — selected nodes, edges, clusters, linked records, and inspector-internal navigation
-- the open-state rail has a mossy/peridot background, lighter green inactive buttons, lighter hover states, and cream active-state buttons
+- Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces
+- hamburger-triggered labeled menu is the intended navigation model
+- the persistent rail is no longer the intended primary visible navigation surface
+- Timeline remains transitional and side-panel-based for now
+- Inspector remains transitional and side-panel-based for now
+- the legacy shared side-panel shell should be treated as a compatibility layer until Timeline and Inspector are redesigned
 
 Recent committed behavior includes:
 
-- direct view buttons for **People**, **Place**, and **Force-Directed**
-- **People** as the default startup view
-- compact Search & Filter advanced-search layout with current applied scope at the top and predictive year inputs
-- Search & Filter draft/apply model for keyword, person, place, route-place, route-people, minimum-weight, and date-range controls
-- higher-contrast Analytics tooltips and expanded chart backdrop styling
-- standardized single-CSV Data Inputs workflow
-- persistent upload summary card after popup close
-- removal of the old **Show all dates** shortcut
-- year-only timeline selectors
-- removal of the old horizontal Controls / Inspector top tabs
-- dedicated rail tabs for Data Inputs, Search & Filter, Export, Timeline, and Analytics
-
----
+- Home / welcome startup workspace
+- unified Data workspace upload path for CSV / TSV / XLSX / XLS
+- compact Visualizations workspace with Place Map, People Network, Force-Directed, and Analytics
+- Search & Filter promoted to full workspace
+- Export promoted to full workspace with live visualization preview
+- Theme promoted to full workspace
+- routing contract updated after workspace promotions
+- Timeline deliberately deferred as a future bottom Visualizations timeline/scrubber
+- Inspector deliberately deferred pending a full evidence-dossier design contract
 
 ## Deferred / rolled-back work
 
@@ -701,13 +686,15 @@ Future responsive work should be a narrow-window-specific override, not a univer
 
 These areas still deserve narrow, explicit passes:
 
+- workspace routing and hamburger-menu behavior
 - map viewport centering/reset behavior
+- map/network viewport measurement after switching between Analytics and map/network modes
 - dense map hover/click interaction
 - selection persistence across filters
 - timeline/playback state coupling
 - export rendering/state coupling
 - broad orchestration work in `src/App.jsx`
-- Data Inputs upload state, one-file CSV normalization, arbitrary table mapping, workbook parsing helper, and validation summary behavior
+- Data upload state, one-file CSV normalization, arbitrary table mapping, workbook parsing helper, and validation summary behavior
 - shared side-panel shell and inspector-open interactions
 - cluster grouping and cluster inspector navigation
 - Analytics expanded overlay positioning and backdrop contrast above the map area
@@ -715,8 +702,6 @@ These areas still deserve narrow, explicit passes:
 - Analytics SVG-to-PNG chart export rendering
 - Search & Filter active-dataset state, especially draft/apply coordination across keyword, person, place, route-place, route-people, date, weight, Timeline, Analytics, Inspector, and Export behavior
 - dormant MapLibre preview code if it is ever reactivated
-
----
 
 ## Additional caution
 
@@ -762,16 +747,16 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`0f72182` — `Remove redundant Inspector correspondents summary row`**
+- current documented baseline: **`55fae50` — `Update routing contract after workspace promotions`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
-- the current shared side panel and rail-tab structure are committed
+- the current hamburger/workspace structure is committed; the shared side panel remains as a transitional bridge for Timeline and Inspector
 - `InspectorPanel.jsx` is content-only
-- `LeftControlPanel.jsx` owns the shared panel shell, persistent rail, and Controls/Data Inputs/Search & Filter/Export/Timeline/Analytics/Inspector panel views
+- `LeftControlPanel.jsx` owns the legacy shared panel shell and transitional Timeline/Inspector bridge; Home/Data/Visualizations/Search/Theme/Export are full workspaces
 - `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, `peridotCsvValidation.js`, `peridotColumnMapping.js`, `PeridotColumnMappingModal.jsx`, and `peridotWorkbookParsing.js` own the current template upload, arbitrary table mapping, validation, and workbook-helper boundaries
 - current cluster and Inspector profile features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction

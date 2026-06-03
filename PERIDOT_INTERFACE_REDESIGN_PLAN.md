@@ -1,9 +1,9 @@
 # Peridot Interface Redesign Plan
 
-**Draft status:** Planning document for the next major interface redesign.  
+**Draft status:** Planning document with implementation-status notes through `55fae50` — `Update routing contract after workspace promotions`.  
 **Prepared after:** Baseline `0f72182` — `Remove redundant Inspector correspondents summary row`.  
 **Scope:** Interface architecture, information architecture, workspace model, side-panel reduction, visualization reorganization, Inspector redesign, timeline generalization, and phased implementation plan.  
-**Not yet implemented:** This document is a design plan only. It should guide future bounded implementation passes. The existing README, Maintainer's Guide, Changelog, and Workflow Charter should be updated after implementation milestones, not before.
+**Implementation note:** Major early phases have now been implemented: Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces; the hamburger menu replaced the visible persistent rail; Timeline and Inspector remain deferred redesign targets.
 
 ---
 
@@ -16,6 +16,32 @@ The current Peridot interface is functional and has accumulated major capabiliti
 That concentration is no longer the right product model. Peridot should no longer present itself primarily as a map with supporting tools. It should present itself as a multimodal research environment for exploring correspondence records through maps, networks, charts, timelines, search, and evidence dossiers.
 
 This plan defines the intended interface direction before implementation begins, so the redesign can be executed through bounded, testable passes rather than broad speculative refactors.
+
+
+---
+
+## Implementation status after `55fae50`
+
+Implemented from this plan:
+
+- internal workspace state and extracted workspace configuration;
+- Home / welcome workspace;
+- hamburger-triggered labeled menu;
+- full Data workspace;
+- full Theme workspace;
+- full Visualizations workspace with Place Map, People Network, Force-Directed, and Analytics;
+- full Export workspace;
+- full Search & Filter workspace;
+- routing contract updated after workspace promotions.
+
+Still deferred:
+
+- Inspector full evidence-dossier workspace;
+- Timeline redesign as a bottom Visualizations timeline/scrubber;
+- deeper visual-differentiation pass;
+- eventual cleanup/removal of legacy side-panel code after Timeline and Inspector no longer depend on it.
+
+The original plan below remains useful as the product-design reference, but some “future” phases are now completed and should be read in light of this status note.
 
 ---
 
@@ -912,7 +938,7 @@ This redesign should not be implemented in one large pass. It touches fragile zo
 
 Implementation should proceed through narrow, tested phases.
 
-### Phase 0 — Preserve current baseline and document intent
+### Phase 0 — Preserve current baseline and document intent — Complete
 
 **Change type:** documentation  
 **Goal:** Add this redesign plan as a planning document without changing app behavior.  
@@ -920,7 +946,7 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** README, Maintainer's Guide, Changelog, app code.  
 **Acceptance test:** The new redesign plan exists in the repository and does not alter app behavior.
 
-### Phase 1 — Add workspace state without changing visible UI substantially
+### Phase 1 — Add workspace state without changing visible UI substantially — Complete
 
 **Change type:** structural  
 **Goal:** Introduce a safe internal workspace model that can later support Home, Data, Visualizations, Search, Inspector, Timeline, Theme, and Export.  
@@ -928,7 +954,7 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** visual redesign, Inspector restructuring, timeline generalization.  
 **Acceptance test:** Current UI still works exactly as before, but workspace state exists and can switch between placeholder workspace modes if needed.
 
-### Phase 2 — Create Home / welcome workspace
+### Phase 2 — Create Home / welcome workspace — Complete
 
 **Change type:** behavior + visual  
 **Goal:** Make Peridot open to a welcome page with Upload my data and Use sample data choices.  
@@ -936,7 +962,7 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** hamburger redesign, Inspector redesign, Timeline generalization.  
 **Acceptance test:** App opens to Home. Upload button opens Data workflow. Sample-data button opens Visualizations with sample data.
 
-### Phase 3 — Replace persistent icon rail with hamburger menu
+### Phase 3 — Replace persistent icon rail with hamburger menu — Complete
 
 **Change type:** structural + visual  
 **Goal:** Remove ever-present rail and replace it with a hamburger-triggered labeled menu.  
@@ -944,7 +970,7 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** moving all workflows to full-window workspaces.  
 **Acceptance test:** Hamburger opens menu. Menu contains labeled options. User can navigate to existing functional areas. Inspector still auto-opens from node, edge, and cluster clicks.
 
-### Phase 4 — Remove obsolete Controls sections and isolate Theme
+### Phase 4 — Remove obsolete Controls sections and isolate Theme — Mostly complete
 
 **Change type:** visual/content cleanup  
 **Goal:** Remove Display Controls and Summary/Diagnostics from ordinary UI; move Theme to its own menu destination.  
@@ -952,7 +978,7 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** theme redesign beyond relocation; data/filter/timeline behavior.  
 **Acceptance test:** Obsolete sections are gone from user-facing UI. Theme remains accessible and functional.
 
-### Phase 5 — Build unified Visualizations workspace
+### Phase 5 — Build unified Visualizations workspace — Complete for first implementation
 
 **Change type:** structural + behavior + visual  
 **Goal:** Put People, Place, Force-Directed, and chart visualizations under one Visualizations workspace.  
@@ -960,7 +986,7 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** global timeline animation across all charts unless specifically included in a later subpass.  
 **Acceptance test:** User can select network/map views and chart views from one Visualizations workspace. Existing map/network behavior and chart rendering remain functional.
 
-### Phase 6 — Promote Inspector to full evidence dossier workspace
+### Phase 6 — Promote Inspector to full evidence dossier workspace — Deferred
 
 **Change type:** structural + visual  
 **Goal:** Add full-window Inspector workspace while preserving selection-driven Inspector behavior.  
@@ -968,10 +994,10 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** broad map interaction rewrites; filter-to-selection actions unless explicitly included.  
 **Acceptance test:** Node, edge, cluster, and linked-letter selections can be inspected in full workspace. Internal navigation and Back still work.
 
-### Phase 7 — Generalize Timeline to active visualization
+### Phase 7 — Integrate Timeline as bottom Visualizations scrubber — Deferred
 
 **Change type:** behavior  
-**Goal:** Make Timeline control the active visualization, including charts where appropriate.  
+**Goal:** Replace the current side-panel Timeline bridge with a long bottom timeline/scrubber integrated into Visualizations, so users can toggle, scrub, or animate while still seeing the active map, network, or chart.  
 **In scope:** timeline state model, active visualization adapter behavior, chart update semantics.  
 **Out of scope:** major chart redesign unless necessary for animation semantics.  
 **Acceptance test:** Timeline changes affect the currently active visualization. Existing map/network timeline behavior remains stable.
@@ -1142,31 +1168,16 @@ Recommendation: not in the first pass. Internal state is safer. URL routing can 
 
 ---
 
-## 12. Near-term recommended first implementation pass
+## 12. Current next design priorities after initial implementation
 
-The first implementation should not attempt the whole redesign.
+The first implementation sequence has already been completed through the current routing milestone. Peridot now has full workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export.
 
-Recommended next code pass after this document is committed:
+Recommended next planning/design priorities:
 
-```text
-Phase 2 candidate: Create Home / welcome workspace
-```
-
-Alternative first code pass:
-
-```text
-Phase 3 candidate: Replace persistent rail with hamburger menu while preserving existing tab content
-```
-
-The safer order is probably:
-
-1. Add Home workspace.
-2. Add hamburger menu.
-3. Begin moving content out of the old side-panel model.
-
-This order gives the app a new conceptual entry point before disrupting the established panel access system.
-
----
+1. **Inspector Workspace Design Contract** — define the full evidence-dossier model before code promotion.
+2. **Timeline bottom-scrubber design contract** — define how Timeline should live at the bottom of Visualizations and interact with maps, networks, and charts.
+3. **Visual differentiation pass** — after the remaining routing/design contracts are stable, refine each workspace’s visual character.
+4. **Legacy side-panel cleanup** — only after Timeline and Inspector no longer depend on the legacy bridge.
 
 ## 13. Proposed acceptance-test suite for the redesign sequence
 
