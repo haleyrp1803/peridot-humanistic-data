@@ -43,6 +43,7 @@ import { PeridotDataWorkspace } from './PeridotDataWorkspace';
 import { PeridotThemeWorkspace } from './PeridotThemeWorkspace';
 import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace';
 import { PeridotExportWorkspace } from './PeridotExportWorkspace';
+import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
 import {
   DEFAULT_PERIDOT_WORKSPACE_MODE,
   PERIDOT_WORKSPACE_MODES,
@@ -2729,6 +2730,7 @@ function AppMainWorkspace({
   dataWorkspaceProps,
   themeWorkspaceProps,
   visualizationWorkspaceProps,
+  searchWorkspaceProps,
   exportWorkspaceProps,
 }) {
   return (
@@ -2744,6 +2746,8 @@ function AppMainWorkspace({
         <PeridotThemeWorkspace {...themeWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS ? (
         <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
+      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH ? (
+        <PeridotSearchWorkspace {...searchWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPORT ? (
         <PeridotExportWorkspace {...exportWorkspaceProps} />
       ) : (
@@ -3983,6 +3987,39 @@ export default function EuropeNetworkMapApp() {
     onOpenAnalytics: openAnalyticsWorkspace,
   };
 
+  const searchWorkspaceProps = {
+    search,
+    setSearch,
+    personFilter,
+    setPersonFilter,
+    placeFilter,
+    setPlaceFilter,
+    routePlaceFilter,
+    setRoutePlaceFilter,
+    routePeopleFilter,
+    setRoutePeopleFilter,
+    personSuggestions: searchFilterSuggestions?.people || [],
+    placeSuggestions: searchFilterSuggestions?.places || [],
+    routePlaceSuggestions: searchFilterSuggestions?.placeRoutes || [],
+    routePeopleSuggestions: searchFilterSuggestions?.peopleRoutes || [],
+    currentMinCountLabel,
+    currentRangeLabel,
+    graph,
+    rowDiagnostics,
+    viewMode,
+    minCount,
+    setMinCount,
+    timelineMonths,
+    rangeStart,
+    setRangeStart,
+    rangeEnd,
+    setRangeEnd,
+    setTimelineMode,
+    setIsPlaying,
+    setPlaybackIndex,
+    onOpenVisualizations: openVisualizationsWorkspace,
+  };
+
   const exportWorkspaceProps = {
     pageTitle,
     mapStageProps,
@@ -4011,7 +4048,10 @@ export default function EuropeNetworkMapApp() {
     setIsSidePanelOpen(true);
   };
 
-  const openSearchPanelFromMenu = () => openPanelTabFromMenu('search');
+  const openSearchPanelFromMenu = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
+    setIsSidePanelOpen(false);
+  };
   const openTimelinePanelFromMenu = () => openPanelTabFromMenu('timeline');
   const openInspectorPanelFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
@@ -4140,6 +4180,7 @@ export default function EuropeNetworkMapApp() {
           dataWorkspaceProps={dataWorkspaceProps}
           themeWorkspaceProps={themeWorkspaceProps}
           visualizationWorkspaceProps={visualizationWorkspaceProps}
+          searchWorkspaceProps={searchWorkspaceProps}
           exportWorkspaceProps={exportWorkspaceProps}
         />
       </div>
