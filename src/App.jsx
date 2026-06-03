@@ -36,7 +36,7 @@ import { buildForcePersonPositions } from './personForceLayoutHelpers';
 import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespondents';
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
-import { LeftControlPanel } from './LeftControlPanel'; import { DEFAULT_ANALYTICS_STATE } from './analyticsConfig'; import { buildAnalyticsChartData, getAvailableAnalyticsFields } from './analyticsDerivationHelpers'; import { MapLibreMapStage } from './MapLibreMapStage';
+import { LeftControlPanel } from './LeftControlPanel'; import { AnalyticsPanelContent } from './AnalyticsPanel.jsx'; import { DEFAULT_ANALYTICS_STATE } from './analyticsConfig'; import { buildAnalyticsChartData, getAvailableAnalyticsFields } from './analyticsDerivationHelpers'; import { MapLibreMapStage } from './MapLibreMapStage';
 import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmptyState';
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';
@@ -2813,13 +2813,17 @@ function PeridotVisualizationsWorkspace({
   mapStageProps,
   viewMode,
   personLayoutMode,
+  visualizationsWorkspacePanel,
+  analyticsWorkspaceProps,
   onSelectPlaceMap,
   onSelectPeopleNetwork,
   onSelectForceDirected,
   onOpenAnalytics,
 }) {
-  const activeVisualizationLabel =
-    viewMode === 'geographic'
+  const showingAnalytics = visualizationsWorkspacePanel === 'analytics';
+  const activeVisualizationLabel = showingAnalytics
+    ? 'Analytics'
+    : viewMode === 'geographic'
       ? 'Place Map'
       : personLayoutMode === 'force'
         ? 'Force-Directed'
@@ -2848,18 +2852,14 @@ function PeridotVisualizationsWorkspace({
 
   return (
     <section className="flex h-full min-h-0 flex-col bg-[var(--title-bar-bg)] text-[var(--text-main)]">
-      <div className="shrink-0 px-4 pb-3 pt-3 pl-[76px] sm:pl-[80px]">
-        <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
-      </div>
-
-      <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4">
-        <div className="shrink-0 rounded-[18px] border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)]/92 px-4 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.14)] backdrop-blur-sm">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
+        <div className="shrink-0 rounded-[18px] border border-[var(--title-input-border)]/70 bg-[var(--title-input-bg)] px-4 py-3 pl-[76px] shadow-[0_10px_24px_rgba(0,0,0,0.14)] backdrop-blur-sm sm:pl-[80px]">
           <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--title-display-text)]/75">
                 Visualization workspace
               </p>
-              <h1 className="mt-0.5 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-xl font-bold text-[var(--heading-text)] md:text-2xl">
+              <h1 className="mt-0.5 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-xl font-bold text-[var(--title-display-text)] md:text-2xl">
                 {activeVisualizationLabel}
               </h1>
             </div>
@@ -2885,7 +2885,13 @@ function PeridotVisualizationsWorkspace({
               <button
                 type="button"
                 onClick={onOpenAnalytics}
-                className="rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-sm font-semibold text-[var(--button-secondary-text)] transition-colors hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
+                className={[
+                  'rounded-full border px-4 py-2 text-sm font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45',
+                  showingAnalytics
+                    ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_8px_16px_rgba(0,0,0,0.16)]'
+                    : 'border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]',
+                ].join(' ')}
+                aria-pressed={showingAnalytics}
               >
                 Analytics
               </button>
@@ -2893,9 +2899,15 @@ function PeridotVisualizationsWorkspace({
           </div>
         </div>
 
-        <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-[var(--panel-border)] bg-[var(--map-water)] shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
-          <MapStage {...mapStageProps} />
-        </div>
+        {showingAnalytics ? (
+          <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-auto rounded-2xl border border-[var(--panel-border)] bg-[var(--sidebar-bg)] p-3 shadow-[0_18px_50px_rgba(0,0,0,0.22)] md:p-4">
+            <AnalyticsPanelContent analyticsState={analyticsWorkspaceProps.analyticsState} />
+          </div>
+        ) : (
+          <div className="flex min-h-0 flex-1 overflow-hidden rounded-2xl border border-[var(--panel-border)] bg-[var(--map-water)] shadow-[0_18px_50px_rgba(0,0,0,0.22)]">
+            <MapStage {...mapStageProps} />
+          </div>
+        )}
       </div>
     </section>
   );
@@ -3336,6 +3348,7 @@ export default function EuropeNetworkMapApp() {
   // redesign a safe internal destination model while preserving the current
   // visible side-panel and map workspace behavior.
   const [workspaceMode, setWorkspaceMode] = useState(DEFAULT_PERIDOT_WORKSPACE_MODE);
+  const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('place-map');
   const setResolvedWorkspaceMode = (nextMode) => {
     setWorkspaceMode((currentMode) => resolvePeridotWorkspaceMode(nextMode, currentMode));
   };
@@ -4261,7 +4274,7 @@ export default function EuropeNetworkMapApp() {
       observer.disconnect();
       window.removeEventListener('resize', updateSize);
     };
-  }, [workspaceMode]);
+  }, [workspaceMode, visualizationsWorkspacePanel, viewMode, personLayoutMode]);
 
   useEffect(() => {
     if (!hoverCard) return undefined;
@@ -4453,6 +4466,7 @@ export default function EuropeNetworkMapApp() {
   };
 
   const openVisualizationsWorkspace = () => {
+    setVisualizationsWorkspacePanel('place-map');
     setViewMode('geographic');
     setPersonLayoutMode('geographic');
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
@@ -4460,6 +4474,7 @@ export default function EuropeNetworkMapApp() {
   };
 
   const selectPlaceMapVisualization = () => {
+    setVisualizationsWorkspacePanel('place-map');
     setViewMode('geographic');
     setPersonLayoutMode('geographic');
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
@@ -4467,6 +4482,7 @@ export default function EuropeNetworkMapApp() {
   };
 
   const selectPeopleNetworkVisualization = () => {
+    setVisualizationsWorkspacePanel('people-network');
     setViewMode('person');
     setPersonLayoutMode('geographic');
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
@@ -4474,8 +4490,15 @@ export default function EuropeNetworkMapApp() {
   };
 
   const selectForceDirectedVisualization = () => {
+    setVisualizationsWorkspacePanel('force-directed');
     setViewMode('person');
     setPersonLayoutMode('force');
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    setIsSidePanelOpen(false);
+  };
+
+  const openAnalyticsWorkspace = () => {
+    setVisualizationsWorkspacePanel('analytics');
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
     setIsSidePanelOpen(false);
   };
@@ -4503,16 +4526,32 @@ export default function EuropeNetworkMapApp() {
     onOpenVisualizations: openVisualizationsWorkspace,
   };
 
+  const analyticsWorkspaceProps = {
+    analyticsState: {
+      chartType: analyticsChartType,
+      setChartType: setAnalyticsChartType,
+      barGroupBy: analyticsBarGroupBy,
+      setBarGroupBy: setAnalyticsBarGroupBy,
+      topN: analyticsTopN,
+      setTopN: setAnalyticsTopN,
+      availableFields: analyticsFields,
+      chartData: analyticsChartData,
+      rows: filteredRowsByTime,
+    },
+  };
+
   const visualizationWorkspaceProps = {
     pageTitle,
     setPageTitle,
     mapStageProps,
     viewMode,
     personLayoutMode,
+    visualizationsWorkspacePanel,
+    analyticsWorkspaceProps,
     onSelectPlaceMap: selectPlaceMapVisualization,
     onSelectPeopleNetwork: selectPeopleNetworkVisualization,
     onSelectForceDirected: selectForceDirectedVisualization,
-    onOpenAnalytics: () => openAnalyticsPanelFromMenu(),
+    onOpenAnalytics: openAnalyticsWorkspace,
   };
 
   const openHomeWorkspace = () => {
@@ -4559,6 +4598,49 @@ export default function EuropeNetworkMapApp() {
           .peridot-redesign-root main > .flex.h-full.flex-col > .shrink-0 {
             background: var(--title-bar-bg) !important;
           }
+          .peridot-analytics-workspace button[aria-pressed] {
+            min-height: 3.25rem !important;
+            height: 3.5rem !important;
+            max-height: 3.75rem !important;
+            aspect-ratio: auto !important;
+            padding: 0.45rem 0.75rem !important;
+          }
+          .peridot-analytics-workspace button[aria-pressed] svg {
+            width: 1.35rem !important;
+            height: 1.35rem !important;
+            max-height: 1.35rem !important;
+          }
+          .peridot-analytics-workspace button[aria-pressed] [class*="text-"] {
+            margin-top: 0.15rem !important;
+            font-size: 0.78rem !important;
+            line-height: 1.1 !important;
+          }
+          .peridot-analytics-workspace section {
+            margin-top: 0.75rem !important;
+          }
+          .peridot-analytics-workspace [class*="grid"] {
+            gap: 0.6rem !important;
+          }
+          .peridot-analytics-workspace select,
+          .peridot-analytics-workspace input {
+            min-height: 2.35rem !important;
+          }
+          .peridot-analytics-workspace svg {
+            max-height: 340px !important;
+          }
+          .peridot-analytics-workspace [class*="rounded"][class*="border"]:has(svg) {
+            max-height: 430px !important;
+            overflow: auto !important;
+          }
+          .peridot-analytics-workspace button[aria-pressed]:has(svg) {
+            overflow: hidden !important;
+          }
+          @media (min-width: 1024px) {
+            .peridot-analytics-workspace button[aria-pressed] {
+              min-height: 3.25rem !important;
+              height: 3.5rem !important;
+            }
+          }
         `}</style>
       <div className="relative h-full">
         <PeridotHamburgerMenu
@@ -4573,7 +4655,7 @@ export default function EuropeNetworkMapApp() {
           onOpenVisualizations={openVisualizationsWorkspace}
           onOpenSearch={openSearchPanelFromMenu}
           onOpenTimeline={openTimelinePanelFromMenu}
-          onOpenAnalytics={openAnalyticsPanelFromMenu}
+          onOpenAnalytics={openAnalyticsWorkspace}
           onOpenInspector={openInspectorPanelFromMenu}
           onOpenTheme={openThemePanelFromMenu}
           onOpenExport={openExportPanelFromMenu}
