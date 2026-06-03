@@ -2718,10 +2718,10 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
 // ============================================================
 // WORKSPACE STATE MODEL
 // ============================================================
-// This first-pass workspace model is intentionally nonvisual. It gives the
-// redesign a stable internal vocabulary before Home, Data, Visualizations,
-// Search, Inspector, Timeline, Theme, and Export become full workspace views.
-// The current map-centered UI remains unchanged in this pass.
+// This workspace model is the routing vocabulary for Peridot's redesigned
+// interface. Home, Data, Theme, and Visualizations are now full-window
+// workspaces; Search, Timeline, Export, and Inspector remain bridged through
+// the legacy side-panel compatibility layer until they are promoted safely.
 const PERIDOT_WORKSPACE_MODES = Object.freeze({
   HOME: 'home',
   DATA: 'data',
@@ -2794,11 +2794,11 @@ export default function EuropeNetworkMapApp() {
   const [isColumnMappingModalOpen, setIsColumnMappingModalOpen] = useState(false);
 
   // ------------------------------------------------------------
-  // Future workspace state
+  // Workspace routing state
   // ------------------------------------------------------------
-  // This structural state is deliberately nonvisual in Phase 1. It gives the
-  // redesign a safe internal destination model while preserving the current
-  // visible side-panel and map workspace behavior.
+  // Home, Data, Theme, and Visualizations render as full workspaces. Search,
+  // Timeline, Export, and Inspector currently use this state as a routing
+  // bridge into the legacy side-panel views until those workflows are promoted.
   const [workspaceMode, setWorkspaceMode] = useState(DEFAULT_PERIDOT_WORKSPACE_MODE);
   const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('place-map');
   const setResolvedWorkspaceMode = (nextMode) => {
@@ -4020,7 +4020,6 @@ export default function EuropeNetworkMapApp() {
 
   const openSearchPanelFromMenu = () => openPanelTabFromMenu('search');
   const openTimelinePanelFromMenu = () => openPanelTabFromMenu('timeline');
-  const openAnalyticsPanelFromMenu = () => openPanelTabFromMenu('analytics');
   const openInspectorPanelFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
     setActivePanelTab('inspector');
