@@ -2,7 +2,7 @@ import React from 'react';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 
-function PeridotVisualizationsWorkspace({
+export function PeridotVisualizationsWorkspace({
   pageTitle,
   setPageTitle,
   mapStageProps,
