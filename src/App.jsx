@@ -42,6 +42,11 @@ import { PeridotHomeWorkspace } from './PeridotHomeWorkspace';
 import { PeridotDataWorkspace } from './PeridotDataWorkspace';
 import { PeridotThemeWorkspace } from './PeridotThemeWorkspace';
 import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace';
+import {
+  DEFAULT_PERIDOT_WORKSPACE_MODE,
+  PERIDOT_WORKSPACE_MODES,
+  resolvePeridotWorkspaceMode,
+} from './peridotWorkspaceConfig';
 import { DEFAULT_ANALYTICS_STATE } from './analyticsConfig'; import { buildAnalyticsChartData, getAvailableAnalyticsFields } from './analyticsDerivationHelpers'; import { MapLibreMapStage } from './MapLibreMapStage';
 import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmptyState';
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
@@ -2713,39 +2718,6 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
     </div>
   );
 }
-
-
-// ============================================================
-// WORKSPACE STATE MODEL
-// ============================================================
-// This workspace model is the routing vocabulary for Peridot's redesigned
-// interface. Home, Data, Theme, and Visualizations are now full-window
-// workspaces; Search, Timeline, Export, and Inspector remain bridged through
-// the legacy side-panel compatibility layer until they are promoted safely.
-const PERIDOT_WORKSPACE_MODES = Object.freeze({
-  HOME: 'home',
-  DATA: 'data',
-  VISUALIZATIONS: 'visualizations',
-  SEARCH: 'search',
-  INSPECTOR: 'inspector',
-  TIMELINE: 'timeline',
-  THEME: 'theme',
-  EXPORT: 'export',
-});
-
-const DEFAULT_PERIDOT_WORKSPACE_MODE = PERIDOT_WORKSPACE_MODES.HOME;
-
-const PERIDOT_WORKSPACE_MODE_VALUES = Object.freeze(Object.values(PERIDOT_WORKSPACE_MODES));
-
-function isPeridotWorkspaceMode(value) {
-  return PERIDOT_WORKSPACE_MODE_VALUES.includes(value);
-}
-
-function resolvePeridotWorkspaceMode(nextMode, currentMode = DEFAULT_PERIDOT_WORKSPACE_MODE) {
-  const resolvedMode = typeof nextMode === 'function' ? nextMode(currentMode) : nextMode;
-  return isPeridotWorkspaceMode(resolvedMode) ? resolvedMode : currentMode;
-}
-
 
 function AppMainWorkspace({
   pageTitle,
