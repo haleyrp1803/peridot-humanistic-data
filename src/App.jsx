@@ -2766,7 +2766,7 @@ function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
             <span className="block text-sm font-semibold uppercase tracking-[0.18em] opacity-80">
               Start with your corpus
             </span>
-            <span className="mt-3 block text-2xl font-bold">Upload my data</span>
+            <span className="mt-3 block text-xl font-bold">Upload my data</span>
             <span className="mt-3 block text-sm leading-6 opacity-85">
               Open the Data workspace to download the template, upload a completed Peridot CSV, or map columns from CSV, TSV, XLSX, and XLS files.
             </span>
@@ -2780,7 +2780,7 @@ function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
             <span className="block text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
               Preview the workspace
             </span>
-            <span className="mt-3 block text-2xl font-bold text-[var(--heading-text)]">Use sample data</span>
+            <span className="mt-3 block text-xl font-bold text-[var(--heading-text)]">Use sample data</span>
             <span className="mt-3 block text-sm leading-6 text-[var(--panel-card-muted-text)]">
               Enter the current visualization workspace with Peridot's embedded sample correspondence dataset already loaded.
             </span>
@@ -2848,7 +2848,7 @@ function PeridotDataWorkspace({
 
         <div className="grid gap-6 lg:grid-cols-2">
           <div className="rounded-[28px] border border-[var(--section-border)] bg-[var(--section-bg)] p-6 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
-            <h2 className="text-2xl font-bold text-[var(--heading-text)]">Peridot template</h2>
+            <h2 className="text-xl font-bold text-[var(--heading-text)]">Peridot template</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--panel-card-muted-text)]">
               Download the standard Peridot CSV template when each row represents one letter, document, or correspondence record. Upload the completed CSV through the table/workbook uploader, where it can be reviewed and mapped before entering the main workspace.
             </p>
@@ -2867,7 +2867,7 @@ function PeridotDataWorkspace({
           </div>
 
           <div className="rounded-[28px] border border-[var(--section-border)] bg-[var(--section-bg)] p-6 shadow-[0_16px_36px_rgba(0,0,0,0.22)]">
-            <h2 className="text-2xl font-bold text-[var(--heading-text)]">Map your own table</h2>
+            <h2 className="text-xl font-bold text-[var(--heading-text)]">Map your own table</h2>
             <p className="mt-3 text-sm leading-6 text-[var(--panel-card-muted-text)]">
               Stage an arbitrary CSV, TSV, XLSX, or XLS file, then map its columns to Peridot's core fields and optional Inspector/Analytics metadata.
             </p>
@@ -2943,6 +2943,173 @@ function PeridotDataWorkspace({
   );
 }
 
+function PeridotHamburgerMenu({
+  open,
+  onToggle,
+  onClose,
+  activePanelTab,
+  workspaceMode,
+  isSidePanelOpen,
+  onGoHome,
+  onOpenData,
+  onOpenVisualizations,
+  onOpenSearch,
+  onOpenTimeline,
+  onOpenAnalytics,
+  onOpenInspector,
+  onOpenTheme,
+  onOpenExport,
+  onCloseSidePanel,
+}) {
+  const menuItems = [
+    {
+      key: 'home',
+      title: 'Home',
+      description: 'Return to the Peridot welcome screen.',
+      action: onGoHome,
+      active: workspaceMode === PERIDOT_WORKSPACE_MODES.HOME,
+    },
+    {
+      key: 'data',
+      title: 'Data',
+      description: 'Upload, stage, map, and validate correspondence records.',
+      action: onOpenData,
+      active: workspaceMode === PERIDOT_WORKSPACE_MODES.DATA,
+    },
+    {
+      key: 'visualizations',
+      title: 'Visualizations',
+      description: 'Open the current map and network visualization workspace.',
+      action: onOpenVisualizations,
+      active: workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS,
+    },
+    {
+      key: 'search',
+      title: 'Search & Filter',
+      description: 'Define the active dataset used by views, charts, timeline, and export.',
+      action: onOpenSearch,
+      active: isSidePanelOpen && activePanelTab === 'search',
+    },
+    {
+      key: 'timeline',
+      title: 'Timeline',
+      description: 'Control date scope and playback for the active correspondence data.',
+      action: onOpenTimeline,
+      active: isSidePanelOpen && activePanelTab === 'timeline',
+    },
+    {
+      key: 'analytics',
+      title: 'Analytics',
+      description: 'Configure and preview charts from the current filtered records.',
+      action: onOpenAnalytics,
+      active: isSidePanelOpen && activePanelTab === 'analytics',
+    },
+    {
+      key: 'inspector',
+      title: 'Inspector',
+      description: 'Review selected people, places, routes, clusters, and linked records.',
+      action: onOpenInspector,
+      active: isSidePanelOpen && activePanelTab === 'inspector',
+    },
+    {
+      key: 'theme',
+      title: 'Theme',
+      description: 'Open appearance presets and reset controls.',
+      action: onOpenTheme,
+      active: isSidePanelOpen && activePanelTab === 'controls',
+    },
+    {
+      key: 'export',
+      title: 'Export',
+      description: 'Export the current visualization and derived node or route tables.',
+      action: onOpenExport,
+      active: isSidePanelOpen && activePanelTab === 'export',
+    },
+  ];
+
+  const runAction = (action) => {
+    action?.();
+    onClose?.();
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="fixed left-3 top-3 z-[90] flex h-11 w-11 items-center justify-center rounded-full border border-[var(--toggle-border)] bg-[var(--toggle-bg-open)] text-[var(--toggle-text)] shadow-[0_12px_28px_rgba(0,0,0,0.26)] transition hover:bg-[var(--utility-panel-bg)] hover:text-[var(--toggle-text-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+        aria-label={open ? 'Close Peridot menu' : 'Open Peridot menu'}
+        title={open ? 'Close menu' : 'Open menu'}
+        aria-expanded={open}
+      >
+        <span className="sr-only">{open ? 'Close Peridot menu' : 'Open Peridot menu'}</span>
+        {open ? (
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4.5 7h15" />
+            <path d="M4.5 12h15" />
+            <path d="M4.5 17h15" />
+          </svg>
+        )}
+      </button>
+
+      {open ? (
+        <div className="fixed inset-0 z-[80]" role="presentation">
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default bg-[rgba(8,13,10,0.24)] backdrop-blur-[2px]"
+            aria-label="Close Peridot menu"
+            onClick={onClose}
+          />
+          <nav
+            className="absolute left-3 top-16 max-h-[calc(100vh-5rem)] w-[min(92vw,420px)] overflow-y-auto rounded-[24px] border border-[var(--panel-card-border)]/85 bg-[var(--panel-card-bg)]/96 p-3 text-[var(--text-main)] shadow-[0_24px_64px_rgba(0,0,0,0.38)] backdrop-blur-md"
+            aria-label="Peridot main menu"
+          >
+            <div className="px-2 pb-2">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">Peridot</p>
+              <h2 className="mt-1 [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-xl font-bold text-[var(--heading-text)]">
+                Main menu
+              </h2>
+            </div>
+            <div className="space-y-2">
+              {menuItems.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => runAction(item.action)}
+                  className={[
+                    'group block w-full rounded-xl border px-4 py-3 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45',
+                    item.active
+                      ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.22)]'
+                      : 'border-[var(--section-border)] bg-[var(--section-bg)] text-[var(--text-main)] hover:bg-[var(--panel-card-hover)]',
+                  ].join(' ')}
+                >
+                  <span className="block text-lg font-bold leading-6">{item.title}</span>
+                  <span className="mx-auto mt-0 block max-h-0 max-w-[19rem] overflow-hidden text-sm leading-5 opacity-0 transition-all duration-200 group-hover:mt-1 group-hover:max-h-16 group-hover:opacity-85 group-focus-visible:mt-1 group-focus-visible:max-h-16 group-focus-visible:opacity-85">
+                    {item.description}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {isSidePanelOpen ? (
+              <button
+                type="button"
+                onClick={() => runAction(onCloseSidePanel)}
+                className="mt-2 w-full rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--button-secondary-text)] transition hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
+              >
+                Close current panel
+              </button>
+            ) : null}
+          </nav>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function AppMainWorkspace({
   pageTitle,
   setPageTitle,
@@ -2953,7 +3120,7 @@ function AppMainWorkspace({
 }) {
   return (
     <main
-      className="h-full xl:pl-16"
+      className="h-full"
       data-peridot-workspace-mode={workspaceMode}
     >
       {workspaceMode === PERIDOT_WORKSPACE_MODES.HOME ? (
@@ -2962,7 +3129,9 @@ function AppMainWorkspace({
         <PeridotDataWorkspace {...dataWorkspaceProps} />
       ) : (
         <div className="flex h-full flex-col">
-          <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
+          <div className="shrink-0 bg-[var(--title-bar-bg)] py-3 pl-[76px] pr-4 sm:pl-[80px]">
+            <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
+          </div>
           <MapStage {...mapStageProps} />
         </div>
       )}
@@ -3083,6 +3252,7 @@ export default function EuropeNetworkMapApp() {
   // but those setters now route through this split model.
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [activePanelTab, setActivePanelTab] = useState('controls');
+  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
   const showLeftSidebar = isSidePanelOpen && activePanelTab === 'controls';
   const showRightSidebar = isSidePanelOpen && activePanelTab === 'inspector';
 
@@ -4126,9 +4296,75 @@ export default function EuropeNetworkMapApp() {
     onOpenVisualizations: openVisualizationsWorkspace,
   };
 
+  const openHomeWorkspace = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.HOME);
+    setIsSidePanelOpen(false);
+  };
+
+  const openPanelTabFromMenu = (panelTab) => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    setActivePanelTab(panelTab);
+    setIsSidePanelOpen(true);
+  };
+
+  const openSearchPanelFromMenu = () => openPanelTabFromMenu('search');
+  const openTimelinePanelFromMenu = () => openPanelTabFromMenu('timeline');
+  const openAnalyticsPanelFromMenu = () => openPanelTabFromMenu('analytics');
+  const openInspectorPanelFromMenu = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+    setActivePanelTab('inspector');
+    setIsSidePanelOpen(true);
+  };
+  const openExportPanelFromMenu = () => openPanelTabFromMenu('export');
+  const openThemePanelFromMenu = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.THEME);
+    setShowThemePanel(true);
+    setShowVisualizationTypePanel(false);
+    setShowDisplayControlsPanel(false);
+    setShowSummaryPanel(false);
+    setActivePanelTab('controls');
+    setIsSidePanelOpen(true);
+  };
+
+  const closeCurrentSidePanel = () => {
+    setIsSidePanelOpen(false);
+  };
+
   return (
-    <div className={museumShellClassName()} style={themeStyleVars}>
+    <div className={`${museumShellClassName()} peridot-redesign-root`} style={themeStyleVars} data-peridot-menu-redesign="true">
+      <style>{`
+          .peridot-redesign-root .absolute.top-3.z-50.flex.flex-col.items-center.gap-3.transition-all.duration-150 { display: none !important; }
+          .peridot-redesign-root [class*="left-0"][class*="top-0"][class*="h-full"][class*="w-16"],
+          .peridot-redesign-root [class*="left-0"][class*="top-0"][class*="min-h"][class*="w-16"],
+          .peridot-redesign-root [class*="left-0"][class*="inset-y-0"][class*="w-16"],
+          .peridot-redesign-root [class*="bg-[var(--sidebar-bg)]"][class*="w-16"] {
+            display: none !important;
+            width: 0 !important;
+            min-width: 0 !important;
+          }
+          .peridot-redesign-root main > .flex.h-full.flex-col > .shrink-0 {
+            background: var(--title-bar-bg) !important;
+          }
+        `}</style>
       <div className="relative h-full">
+        <PeridotHamburgerMenu
+          open={isMainMenuOpen}
+          onToggle={() => setIsMainMenuOpen((value) => !value)}
+          onClose={() => setIsMainMenuOpen(false)}
+          activePanelTab={activePanelTab}
+          workspaceMode={workspaceMode}
+          isSidePanelOpen={isSidePanelOpen}
+          onGoHome={openHomeWorkspace}
+          onOpenData={openDataWorkspace}
+          onOpenVisualizations={openVisualizationsWorkspace}
+          onOpenSearch={openSearchPanelFromMenu}
+          onOpenTimeline={openTimelinePanelFromMenu}
+          onOpenAnalytics={openAnalyticsPanelFromMenu}
+          onOpenInspector={openInspectorPanelFromMenu}
+          onOpenTheme={openThemePanelFromMenu}
+          onOpenExport={openExportPanelFromMenu}
+          onCloseSidePanel={closeCurrentSidePanel}
+        />
         {/*
           CONTROL PANEL MOUNT POINT
           This is where the entire left control-panel subtree enters the app.
