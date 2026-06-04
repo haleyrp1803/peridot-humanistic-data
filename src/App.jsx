@@ -1374,16 +1374,30 @@ function DetailFieldList({ rows }) {
 
   return (
     <div className="divide-y divide-[var(--section-border)]/70 rounded-xl border border-[var(--section-border)]/70 bg-[var(--section-bg)]/70 px-3">
-      {visibleRows.map((row) => (
-        <div key={row.label} className="py-2 first:pt-2 last:pb-2">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--detail-label-text)]">
-            {row.label}
+      {visibleRows.map((row) => {
+        const isLinkedValue = typeof row.onClick === 'function';
+
+        return (
+          <div key={row.label} className="py-2 first:pt-2 last:pb-2">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[var(--detail-label-text)]">
+              {row.label}
+            </div>
+            {isLinkedValue ? (
+              <button
+                type="button"
+                onClick={row.onClick}
+                className="mt-1 inline-flex max-w-full rounded-lg border border-[var(--button-border)] bg-[var(--button-bg)] px-2.5 py-1.5 text-left text-sm font-medium text-[var(--button-text)] transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
+              >
+                <span className="break-words">{row.value}</span>
+              </button>
+            ) : (
+              <div className="mt-0.5 break-words text-sm text-[var(--panel-card-text)]">
+                {row.value}
+              </div>
+            )}
           </div>
-          <div className="mt-0.5 break-words text-sm text-[var(--panel-card-text)]">
-            {row.value}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
@@ -1440,7 +1454,7 @@ function LinkedLetterListItem({ letter, index, onOpenLetter }) {
   );
 }
 
-function LinkedLetterDetailPage({ letter, index, onBack }) {
+function LinkedLetterDetailPage({ letter, index, onBack, onOpenPersonDetail, onOpenPlaceDetail }) {
   const customInspectorFields = normalizeLinkedLetterCustomInspectorFields(letter);
   const uniqueId = getLinkedLetterUniqueId(letter, index);
 
@@ -1460,11 +1474,27 @@ function LinkedLetterDetailPage({ letter, index, onBack }) {
 
       <DetailFieldList
         rows={[
-          { label: 'Source', value: letter.source || letter.sourcePerson },
-          { label: 'Target', value: letter.target || letter.targetPerson },
+          {
+            label: 'Source',
+            value: letter.source || letter.sourcePerson,
+            onClick: onOpenPersonDetail ? () => onOpenPersonDetail(letter.source || letter.sourcePerson) : undefined,
+          },
+          {
+            label: 'Target',
+            value: letter.target || letter.targetPerson,
+            onClick: onOpenPersonDetail ? () => onOpenPersonDetail(letter.target || letter.targetPerson) : undefined,
+          },
           { label: 'Date', value: letter.date || letter.Date },
-          { label: 'Source place', value: letter.sourceLoc },
-          { label: 'Target place', value: letter.targetLoc },
+          {
+            label: 'Source place',
+            value: letter.sourceLoc,
+            onClick: onOpenPlaceDetail ? () => onOpenPlaceDetail(letter.sourceLoc) : undefined,
+          },
+          {
+            label: 'Target place',
+            value: letter.targetLoc,
+            onClick: onOpenPlaceDetail ? () => onOpenPlaceDetail(letter.targetLoc) : undefined,
+          },
           { label: 'Archival collection', value: letter.archivalCollection || letter.collection },
           { label: 'Archival page', value: letter.archivalPage || letter.pdfPage },
           { label: 'Relationship', value: letter.relationship },
