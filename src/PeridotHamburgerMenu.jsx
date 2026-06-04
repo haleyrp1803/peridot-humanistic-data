@@ -18,6 +18,10 @@ export function PeridotHamburgerMenu({
   onOpenExport,
   onCloseSidePanel,
 }) {
+  if (workspaceMode === 'home') {
+    return null;
+  }
+
   const menuItems = [
     {
       key: 'data',
