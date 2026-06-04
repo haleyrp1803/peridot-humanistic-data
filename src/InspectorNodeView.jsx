@@ -482,6 +482,7 @@ export function InspectorNodeView({
   onOpenPersonDetail,
   onOpenPlaceDetail,
   onOpenLetterDetail,
+  onOpenRouteDetail,
   onExpandInspector,
   isCompact = false,
 }) {
@@ -553,6 +554,7 @@ export function InspectorNodeView({
         description="Source → target place pairs from linked records, grouped by this profile’s source-side or target-side role."
         sections={profile.routeSections}
         emptyMessage="No directed route pairs were found in linked records for this profile."
+        onOpenItem={onOpenRouteDetail}
       />
 
       <EntityCustomFieldsCard

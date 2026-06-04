@@ -1776,6 +1776,7 @@ function buildInspectorPanelProps(args) {
       onOpenPersonDetail: args.onOpenPersonDetail,
       onOpenPlaceDetail: args.onOpenPlaceDetail,
       onOpenLetterDetail: args.onOpenLetterDetail,
+      onOpenRouteDetail: args.onOpenRouteDetail,
       inspectorHistoryLength: args.inspectorHistoryLength,
       canGoBack: args.inspectorHistoryLength > 0,
       onBackInspector: args.onBackInspector,
@@ -3207,6 +3208,15 @@ export default function EuropeNetworkMapApp() {
       };
     }
 
+    if (selectedSelection?.kind === 'route-detail') {
+      return {
+        ...(selectedSelection.route || {}),
+        __kind: 'edge',
+        id: selectedSelection.id || `route-detail:${selectedSelection.label || 'route'}`,
+        label: selectedSelection.label || selectedSelection.route?.label || '',
+      };
+    }
+
     const inspectorGraph = selectedSelection?.kind === 'person-detail'
       ? personGraph
       : selectedSelection?.kind === 'place-detail'
@@ -3222,6 +3232,58 @@ export default function EuropeNetworkMapApp() {
   }, [selectedProps, personMetadataByName]);
 
   const linkedLettersToShow = showAllLinkedLetters ? selectedLetterMetadata : selectedLetterMetadata.slice(0, 10);
+
+  const openInspectorRouteDetail = (routeLabel) => {
+    const normalizedRouteLabel = String(routeLabel || '').trim();
+    if (!normalizedRouteLabel) return;
+
+    const [sourceLabel = '', targetLabel = ''] = normalizedRouteLabel.split(' → ').map((part) => part.trim());
+    const routeLetters = (selectedLetterMetadata || []).filter((letter) => {
+      const letterSourcePlace = String(letter?.sourceLoc || '').trim();
+      const letterTargetPlace = String(letter?.targetLoc || '').trim();
+      return letterSourcePlace === sourceLabel && letterTargetPlace === targetLabel;
+    });
+
+    const uniqueValues = (values) => Array.from(new Set(values.map((value) => String(value || '').trim()).filter(Boolean)));
+    const routeDates = uniqueValues(routeLetters.map((letter) => letter.date || letter.Date)).sort();
+    const routeSources = uniqueValues(routeLetters.map((letter) => letter.sourcePerson || letter.source));
+    const routeTargets = uniqueValues(routeLetters.map((letter) => letter.targetPerson || letter.target));
+    const samplePairs = uniqueValues(
+      routeLetters.map((letter) => {
+        const sourcePerson = String(letter?.sourcePerson || letter?.source || '').trim();
+        const targetPerson = String(letter?.targetPerson || letter?.target || '').trim();
+        return sourcePerson || targetPerson ? `${sourcePerson || 'Unknown'} → ${targetPerson || 'Unknown'}` : '';
+      }),
+    ).slice(0, 8);
+
+    if (selectedSelection) {
+      setInspectorHistory((prev) => [...prev, selectedSelection]);
+    }
+
+    inspectorNavigationRef.current = true;
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+    setIsSidePanelOpen(false);
+    setActivePanelTab('inspector');
+    setSelectedSelection({
+      kind: 'route-detail',
+      id: `route-detail:${normalizedRouteLabel}`,
+      label: normalizedRouteLabel,
+      route: {
+        id: `route-detail:${normalizedRouteLabel}`,
+        sourceLabel: sourceLabel || 'Unknown',
+        targetLabel: targetLabel || 'Unknown',
+        count: routeLetters.length,
+        dates: routeDates,
+        sources: routeSources,
+        targets: routeTargets,
+        samplePairs,
+        letterMetadata: routeLetters,
+      },
+    });
+    setShowAllLinkedLetters(false);
+  };
+
 
   const toggleLetterSection = (letterId, section) => {
     setExpandedLetterSections((prev) => {
@@ -4013,6 +4075,7 @@ export default function EuropeNetworkMapApp() {
     onOpenPersonDetail: openInspectorPersonDetail,
     onOpenPlaceDetail: openInspectorPlaceDetail,
     onOpenLetterDetail: openInspectorLetterDetail,
+    onOpenRouteDetail: openInspectorRouteDetail,
     inspectorHistoryLength: inspectorHistory.length,
     onBackInspector: goBackInspector,
     onCloseInspector: closeCompactInspector,
