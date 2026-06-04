@@ -2913,11 +2913,16 @@ export default function EuropeNetworkMapApp() {
       const currentlyShowingInspector = currentlyOpen && activePanelTab === 'inspector';
       const shouldOpen = resolvePanelToggleValue(nextValue, currentlyShowingInspector);
       if (shouldOpen) {
+        setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.COMPACT);
         setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
         setActivePanelTab('inspector');
         return true;
       }
-      return currentlyShowingInspector ? false : currentlyOpen;
+      if (currentlyShowingInspector) {
+        setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.CLOSED);
+        return false;
+      }
+      return currentlyOpen;
     });
   };
 
