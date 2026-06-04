@@ -4072,8 +4072,12 @@ export default function EuropeNetworkMapApp() {
   const openTimelinePanelFromMenu = () => openLegacyPanelTabFromMenu('timeline');
   const openInspectorPanelFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
-    setActivePanelTab('inspector');
-    setIsSidePanelOpen(true);
+    setInspectorPresentationMode(
+      selectedSelection
+        ? INSPECTOR_PRESENTATION_MODES.WORKSPACE
+        : INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE,
+    );
+    setIsSidePanelOpen(false);
   };
   const openExportWorkspaceFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.EXPORT);
