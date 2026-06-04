@@ -23,3 +23,228 @@ select,
 textarea {
   font: inherit;
 }
+
+.peridot-workspace-field {
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  color: #f7f2df;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(82, 119, 75, 0.28), transparent 34rem),
+    radial-gradient(circle at 12% 78%, rgba(119, 154, 92, 0.12), transparent 30rem),
+    linear-gradient(135deg, #03160f 0%, #082417 46%, #04160f 100%);
+  background-attachment: fixed;
+}
+
+.peridot-workspace-field::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(135deg, rgba(244, 239, 213, 0.035) 0 1px, transparent 1px 14px);
+  opacity: 0.48;
+}
+
+.peridot-workspace-frame {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1160px);
+  margin: 0 auto;
+  padding: clamp(2rem, 4vw, 4rem) clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.peridot-workspace-frame-wide {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1480px);
+  margin: 0 auto;
+  padding: clamp(1rem, 2.4vw, 2rem);
+}
+
+.peridot-hero-card {
+  border: 1px solid rgba(196, 224, 239, 0.82);
+  border-radius: 34px;
+  background: linear-gradient(135deg, rgba(8, 39, 25, 0.95), rgba(5, 29, 19, 0.96));
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  padding: clamp(1.6rem, 3vw, 2.8rem);
+}
+
+.peridot-kicker {
+  margin: 0 0 0.65rem;
+  color: #c4d79a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+}
+
+.peridot-display-title {
+  margin: 0;
+  color: #f5ecd2;
+  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  font-size: clamp(2.35rem, 5vw, 4.6rem);
+  line-height: 0.95;
+  letter-spacing: -0.045em;
+  text-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+}
+
+.peridot-title-medium {
+  margin: 0;
+  color: #f5ecd2;
+  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  font-size: clamp(2rem, 3.2vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.peridot-lede {
+  max-width: 760px;
+  margin-top: 1.2rem;
+  color: rgba(247, 242, 223, 0.88);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.peridot-card-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.peridot-card-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.peridot-card-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .peridot-card-grid-2,
+  .peridot-card-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.peridot-action-card,
+.peridot-surface-card {
+  border: 1px solid rgba(223, 233, 200, 0.32);
+  border-radius: 26px;
+  background: rgba(97, 132, 77, 0.88);
+  color: #fbf7ea;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+}
+
+.peridot-surface-card {
+  background: rgba(11, 45, 29, 0.88);
+}
+
+.peridot-cream-card {
+  border: 1px solid rgba(223, 233, 200, 0.58);
+  border-radius: 26px;
+  background: rgba(248, 243, 225, 0.94);
+  color: #26352b;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+}
+
+.peridot-card-inner {
+  padding: clamp(1.25rem, 2.2vw, 1.8rem);
+}
+
+.peridot-section-label {
+  color: rgba(223, 233, 200, 0.78);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.peridot-cream-card .peridot-section-label {
+  color: #5c724d;
+}
+
+.peridot-button-primary,
+.peridot-button-secondary,
+.peridot-button-cream {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 0.72rem 1.1rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.peridot-button-primary {
+  border: 1px solid rgba(223, 233, 200, 0.55);
+  background: #6d8b53;
+  color: #fbf7ea;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+.peridot-button-primary:hover { background: #7c9a60; transform: translateY(-1px); }
+
+.peridot-button-secondary {
+  border: 1px solid rgba(223, 233, 200, 0.48);
+  background: rgba(223, 233, 200, 0.10);
+  color: #fbf7ea;
+}
+
+.peridot-button-secondary:hover { background: rgba(223, 233, 200, 0.18); transform: translateY(-1px); }
+
+.peridot-button-cream {
+  border: 1px solid rgba(96, 122, 78, 0.38);
+  background: #f4eedb;
+  color: #26352b;
+}
+
+.peridot-button-cream:hover { background: #fff7e6; transform: translateY(-1px); }
+
+.peridot-workspace-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.peridot-form-input,
+.peridot-form-select {
+  width: 100%;
+  border: 1px solid rgba(223, 233, 200, 0.54);
+  border-radius: 14px;
+  background: rgba(4, 24, 16, 0.62);
+  color: #fbf7ea;
+  padding: 0.65rem 0.78rem;
+  outline: none;
+}
+
+.peridot-form-input::placeholder { color: rgba(251, 247, 234, 0.58); }
+.peridot-form-input:focus,
+.peridot-form-select:focus {
+  border-color: rgba(245, 236, 210, 0.84);
+  box-shadow: 0 0 0 3px rgba(223, 233, 200, 0.16);
+}
+
+.peridot-cream-card .peridot-form-input,
+.peridot-cream-card .peridot-form-select,
+.peridot-mapping-modal .peridot-form-input,
+.peridot-mapping-modal .peridot-form-select {
+  background: rgba(255, 252, 241, 0.88);
+  color: #26352b;
+  border-color: rgba(95, 113, 74, 0.28);
+}
+
+.peridot-table-wrap {
+  overflow-x: auto;
+  border: 1px solid rgba(95, 113, 74, 0.25);
+  border-radius: 20px;
+  background: rgba(255, 252, 241, 0.72);
+}
+
+.peridot-table-wrap table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}

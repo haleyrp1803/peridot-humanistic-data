@@ -26,18 +26,17 @@ const SINGLE_TABLE_STEP_KEYS = ['preview', 'core', 'inspector', 'review'];
 const WORKBOOK_STEP_KEYS = ['workbook-preview', 'workbook-setup', 'workbook-core', 'workbook-inspector', 'workbook-review'];
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
-  const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
-  const variants = {
-    primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_rgba(0,0,0,0.28)] disabled:cursor-not-allowed disabled:opacity-50',
-    secondary: 'border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)] disabled:cursor-not-allowed disabled:opacity-50',
-    ghost: 'bg-transparent text-[var(--muted-text)] hover:bg-[var(--ghost-hover)] hover:text-[var(--text-main)]',
-    danger: 'border border-red-400/60 bg-red-950/50 text-red-100 hover:bg-red-900/60',
-  };
-
-  if (active) {
-    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.3)] hover:bg-[var(--button-primary-active-hover)]`;
+  const base = 'rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#dfe9c8]/55 disabled:cursor-not-allowed disabled:opacity-55';
+  if (variant === 'primary') {
+    return `${base} border border-[#dfe9c8]/55 bg-[#6d8b53] text-[#fbf7ea] shadow-[0_8px_18px_rgba(0,0,0,0.22)] hover:bg-[#7c9a60]`;
   }
-  return `${base} ${variants[variant] || variants.secondary}`;
+  if (variant === 'danger') {
+    return `${base} border border-[#d6a36a]/70 bg-[#8a4f34] text-[#fff5e6] hover:bg-[#9b5c3f]`;
+  }
+  if (active) {
+    return `${base} border border-[#f5ecd2]/70 bg-[#6d8b53] text-[#fbf7ea] shadow-[0_8px_18px_rgba(0,0,0,0.22)]`;
+  }
+  return `${base} border border-[#607a4e]/38 bg-[#f4eedb] text-[#26352b] hover:bg-[#fff7e6]`;
 }
 
 function normalizeAction(value) {
@@ -1196,17 +1195,17 @@ export function PeridotColumnMappingModal({
     : 'Closing keeps the staged file available in Data Inputs but does not change the active dataset. Confirm import replaces the active Peridot dataset with this mapped table.';
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_rgba(0,0,0,0.55)]">
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-5">
+    <div className="peridot-workspace-field fixed inset-0 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
+      <div className="peridot-mapping-modal relative z-[1] flex max-h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-[32px] border border-[#c4e0ef]/70 bg-[#f8f3e1] text-[#26352b] shadow-[0_28px_80px_rgba(0,0,0,0.58)]">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#dfe9c8]/18 bg-[linear-gradient(135deg,rgba(8,39,25,0.96),rgba(5,29,19,0.97))] px-6 py-5 text-[#fbf7ea]">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c4d79a]">
               {isWorkbookMode ? 'Workbook mapping workspace' : 'Column mapping workspace'}
             </div>
-            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] mt-1 text-2xl font-bold text-[var(--heading-text)]">
+            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] mt-1 text-3xl font-bold tracking-[-0.035em] text-[#f5ecd2]">
               {isWorkbookMode ? 'Configure workbook sheets for Peridot' : 'Map uploaded columns to Peridot'}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#f7f2df]/78">
               {staging.fileLabel} staged as {staging.fileType}. This workspace is intentionally outside the left panel so the mapping table has room to be reviewed.
             </p>
           </div>
@@ -1215,7 +1214,7 @@ export function PeridotColumnMappingModal({
           </button>
         </div>
 
-        <div className="grid gap-4 border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-4 md:grid-cols-5">
+        <div className="grid gap-4 border-b border-[#607a4e]/24 bg-[#eee8d6] px-6 py-4 md:grid-cols-5">
           {stepKeys.map((step, index) => (
             <StepButton
               key={step}
@@ -1227,7 +1226,7 @@ export function PeridotColumnMappingModal({
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-[#fbf7ea] px-6 py-5">
           {!isWorkbookMode && activeStep === 'preview' ? (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-4">
@@ -1331,7 +1330,7 @@ export function PeridotColumnMappingModal({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#607a4e]/24 bg-[#eee8d6] px-6 py-4">
           <p className="max-w-2xl text-sm text-[var(--panel-card-muted-text)]">{footerHelper}</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>
@@ -1363,8 +1362,8 @@ export function PeridotColumnMappingModal({
       </div>
 
       {showCancelConfirmation ? (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-3xl border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-3xl border border-[#c4e0ef]/60 bg-[#f8f3e1] p-5 text-[#26352b] shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
             <h3 className="text-lg font-bold text-[var(--heading-text)]">Are you sure you want to cancel?</h3>
             <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
               The staged file will remain available in Data Inputs, but closing this workspace will not change the active dataset.
