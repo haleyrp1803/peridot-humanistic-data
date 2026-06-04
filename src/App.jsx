@@ -36,6 +36,7 @@ import { buildForcePersonPositions } from './personForceLayoutHelpers';
 import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespondents';
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
+import { InspectorContent } from './InspectorPanel.jsx';
 import { LeftControlPanel } from './LeftControlPanel';
 import { PeridotHamburgerMenu } from './PeridotHamburgerMenu';
 import { PeridotHomeWorkspace } from './PeridotHomeWorkspace';
@@ -1752,6 +1753,8 @@ function buildInspectorPanelProps(args) {
       inspectorHistoryLength: args.inspectorHistoryLength,
       canGoBack: args.inspectorHistoryLength > 0,
       onBackInspector: args.onBackInspector,
+      onCloseInspector: args.onCloseInspector,
+      onExpandInspector: args.onExpandInspector,
     },
     letterState: {
       linkedLettersToShow: args.linkedLettersToShow,
@@ -2741,6 +2744,7 @@ function AppMainWorkspace({
   visualizationWorkspaceProps,
   searchWorkspaceProps,
   exportWorkspaceProps,
+  inspectorWorkspaceProps,
 }) {
   return (
     <main
@@ -2759,6 +2763,44 @@ function AppMainWorkspace({
         <PeridotSearchWorkspace {...searchWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPORT ? (
         <PeridotExportWorkspace {...exportWorkspaceProps} />
+      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR ? (
+        <div className="relative h-full overflow-hidden" data-peridot-inspector-workspace="true">
+          <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
+          <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[#08150f]/82 p-4 backdrop-blur-md sm:p-6">
+            <section
+              className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-[#d8e0c8]/35 bg-[#14251d]/96 text-[#f8f3e8] shadow-2xl shadow-black/45"
+              aria-label="Inspector workspace"
+            >
+              <div className="flex shrink-0 items-start justify-between gap-4 border-b border-[#d8e0c8]/25 bg-[#0f2018]/92 px-5 py-4">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#d8e0c8]/80">Inspector workspace</p>
+                  <h2 className={`${serifHeadingClassName()} mt-1 text-2xl font-semibold text-[#f8f3e8]`}>Evidence dossier</h2>
+                  <p className="mt-1 max-w-2xl text-sm text-[#d8e0c8]">
+                    Review the active Inspector selection. The visualization remains loaded underneath so closing this workspace returns to the prior visual context.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={inspectorWorkspaceProps.onCloseInspectorWorkspace}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#f8f3e8]/55 bg-[#f8f3e8] text-lg font-semibold text-[#14251d] shadow transition hover:bg-[#e7edd7]"
+                  aria-label="Close Inspector workspace"
+                  title="Close Inspector"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-auto bg-[#1b3026]/90 px-5 py-5">
+                <InspectorContent
+                  {...inspectorWorkspaceProps.inspectorPanelProps}
+                  shellComponents={inspectorWorkspaceProps.inspectorShellComponents}
+                  viewComponents={inspectorWorkspaceProps.inspectorViewComponents}
+                  showInlineCloseButton={false}
+                  showExpandButton={false}
+                />
+              </div>
+            </section>
+          </div>
+        </div>
       ) : (
         <div className="flex h-full flex-col">
           <div className="shrink-0 bg-[var(--title-bar-bg)] py-3 pl-[76px] pr-4 sm:pl-[80px]">
@@ -2820,7 +2862,13 @@ export default function EuropeNetworkMapApp() {
       setInspectorHistory((prev) => [...prev, selectedSelection]);
     }
     inspectorNavigationRef.current = true;
-    setShowRightSidebar(true);
+    if (inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE || inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE) {
+      setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+      setIsSidePanelOpen(false);
+    } else {
+      setShowRightSidebar(true);
+    }
     setSelectedSelection({ kind: 'person-detail', name });
     setShowAllLinkedLetters(false);
   };
@@ -2831,7 +2879,13 @@ export default function EuropeNetworkMapApp() {
       setInspectorHistory((prev) => [...prev, selectedSelection]);
     }
     inspectorNavigationRef.current = true;
-    setShowRightSidebar(true);
+    if (inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE || inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE) {
+      setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+      setIsSidePanelOpen(false);
+    } else {
+      setShowRightSidebar(true);
+    }
     setSelectedSelection({ kind: 'place-detail', label });
     setShowAllLinkedLetters(false);
   };
@@ -2841,7 +2895,13 @@ export default function EuropeNetworkMapApp() {
       if (!prev.length) return prev;
       const previous = prev[prev.length - 1];
       inspectorNavigationRef.current = true;
-      setShowRightSidebar(true);
+      if (inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE || inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE) {
+        setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
+        setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+        setIsSidePanelOpen(false);
+      } else {
+        setShowRightSidebar(true);
+      }
       setSelectedSelection(previous);
       setShowAllLinkedLetters(false);
       return prev.slice(0, -1);
@@ -2914,7 +2974,7 @@ export default function EuropeNetworkMapApp() {
       const shouldOpen = resolvePanelToggleValue(nextValue, currentlyShowingInspector);
       if (shouldOpen) {
         setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.COMPACT);
-        setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+        setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
         setActivePanelTab('inspector');
         return true;
       }
@@ -3232,6 +3292,49 @@ export default function EuropeNetworkMapApp() {
     setShowAllLinkedLetters(false);
     setExpandedLetterSections({});
   };
+
+  const closeCompactInspector = () => {
+    setShowRightSidebar(false);
+  };
+
+  const closeInspectorWorkspace = () => {
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.CLOSED);
+    setIsSidePanelOpen(false);
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+  };
+
+  const expandInspectorToWorkspace = () => {
+    setInspectorPresentationMode(
+      selectedSelection
+        ? INSPECTOR_PRESENTATION_MODES.WORKSPACE
+        : INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE,
+    );
+    setIsSidePanelOpen(false);
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+  };
+
+  useEffect(() => {
+    const handleInspectorEscape = (event) => {
+      if (event.key !== 'Escape') return;
+
+      if (
+        inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE
+        || inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE
+      ) {
+        event.preventDefault();
+        closeInspectorWorkspace();
+        return;
+      }
+
+      if (inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.COMPACT || showRightSidebar) {
+        event.preventDefault();
+        closeCompactInspector();
+      }
+    };
+
+    window.addEventListener('keydown', handleInspectorEscape);
+    return () => window.removeEventListener('keydown', handleInspectorEscape);
+  }, [inspectorPresentationMode, showRightSidebar]);
 
   const triggerDownload = (blob, filename) => {
     const url = makeDownloadUrl(blob);
@@ -3673,7 +3776,7 @@ export default function EuropeNetworkMapApp() {
 
 
   const {
-    handleBlankMapClick,
+    handleBlankMapClick: handleBlankMapClickBase,
     handleEdgeClick,
     handleNodeHover,
     handleNodeClick,
@@ -3688,6 +3791,13 @@ export default function EuropeNetworkMapApp() {
     buildNodeHoverSummary,
     viewMode,
   });
+
+  const handleBlankMapClick = (...args) => {
+    handleBlankMapClickBase(...args);
+    if (showRightSidebar || inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.COMPACT) {
+      closeCompactInspector();
+    }
+  };
 
   const handleNodeHoverWithHighlight = (node, point) => {
     setHoveredNodeId(node?.id || '');
@@ -3864,6 +3974,8 @@ export default function EuropeNetworkMapApp() {
     onOpenPlaceDetail: openInspectorPlaceDetail,
     inspectorHistoryLength: inspectorHistory.length,
     onBackInspector: goBackInspector,
+    onCloseInspector: closeCompactInspector,
+    onExpandInspector: expandInspectorToWorkspace,
     linkedLettersToShow,
     selectedLetterMetadata,
     showAllLinkedLetters,
@@ -4092,6 +4204,14 @@ export default function EuropeNetworkMapApp() {
     setIsSidePanelOpen(false);
   };
 
+  const inspectorWorkspaceProps = {
+    inspectorPanelProps,
+    inspectorShellComponents,
+    inspectorViewComponents,
+    inspectorPresentationMode,
+    onCloseInspectorWorkspace: closeInspectorWorkspace,
+  };
+
   return (
     <div className={`${museumShellClassName()} peridot-redesign-root`} style={themeStyleVars} data-peridot-menu-redesign="true">
       <style>{`
@@ -4203,6 +4323,7 @@ export default function EuropeNetworkMapApp() {
           visualizationWorkspaceProps={visualizationWorkspaceProps}
           searchWorkspaceProps={searchWorkspaceProps}
           exportWorkspaceProps={exportWorkspaceProps}
+          inspectorWorkspaceProps={inspectorWorkspaceProps}
         />
       </div>
     </div>
