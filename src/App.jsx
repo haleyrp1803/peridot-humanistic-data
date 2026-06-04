@@ -2856,13 +2856,10 @@ export default function EuropeNetworkMapApp() {
       setInspectorHistory((prev) => [...prev, selectedSelection]);
     }
     inspectorNavigationRef.current = true;
-    if (inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE || inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE) {
-      setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
-      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
-      setIsSidePanelOpen(false);
-    } else {
-      setShowRightSidebar(true);
-    }
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+    setIsSidePanelOpen(false);
+    setActivePanelTab('inspector');
     setSelectedSelection({ kind: 'person-detail', name });
     setShowAllLinkedLetters(false);
   };
@@ -2873,13 +2870,10 @@ export default function EuropeNetworkMapApp() {
       setInspectorHistory((prev) => [...prev, selectedSelection]);
     }
     inspectorNavigationRef.current = true;
-    if (inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE || inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE) {
-      setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
-      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
-      setIsSidePanelOpen(false);
-    } else {
-      setShowRightSidebar(true);
-    }
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+    setIsSidePanelOpen(false);
+    setActivePanelTab('inspector');
     setSelectedSelection({ kind: 'place-detail', label });
     setShowAllLinkedLetters(false);
   };
