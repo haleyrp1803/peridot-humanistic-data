@@ -1460,29 +1460,24 @@ function LinkedLetterDetailPage({ letter, index, onBack, onOpenPersonDetail, onO
 
   return (
     <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
-            Linked letter detail
-          </div>
-          <div className="mt-1 text-lg font-semibold text-[var(--panel-card-text)]">{uniqueId}</div>
+      <div className="mb-4">
+        <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
+          Linked letter detail
         </div>
-        <button type="button" onClick={onBack} className={buttonClassName()}>
-          Back to linked letters
-        </button>
+        <div className="mt-1 text-lg font-semibold text-[var(--panel-card-text)]">{uniqueId}</div>
       </div>
 
       <DetailFieldList
         rows={[
           {
             label: 'Source',
-            value: letter.source || letter.sourcePerson,
-            onClick: onOpenPersonDetail ? () => onOpenPersonDetail(letter.source || letter.sourcePerson) : undefined,
+            value: letter.sourcePerson || letter.source,
+            onClick: onOpenPersonDetail ? () => onOpenPersonDetail(letter.sourcePerson || letter.source) : undefined,
           },
           {
             label: 'Target',
-            value: letter.target || letter.targetPerson,
-            onClick: onOpenPersonDetail ? () => onOpenPersonDetail(letter.target || letter.targetPerson) : undefined,
+            value: letter.targetPerson || letter.target,
+            onClick: onOpenPersonDetail ? () => onOpenPersonDetail(letter.targetPerson || letter.target) : undefined,
           },
           { label: 'Date', value: letter.date || letter.Date },
           {
@@ -3212,8 +3207,14 @@ export default function EuropeNetworkMapApp() {
       };
     }
 
-    return resolveSelection(selectedSelection, graph, personMetadataByName);
-  }, [selectedSelection, graph, personMetadataByName]);
+    const inspectorGraph = selectedSelection?.kind === 'person-detail'
+      ? personGraph
+      : selectedSelection?.kind === 'place-detail'
+        ? geographicGraph
+        : graph;
+
+    return resolveSelection(selectedSelection, inspectorGraph, personMetadataByName);
+  }, [selectedSelection, graph, personGraph, geographicGraph, personMetadataByName]);
 
   const selectedLetterMetadata = useMemo(() => {
     if (selectedProps?.__kind === 'letter-detail') return [];

@@ -36,7 +36,6 @@ export function InspectorContent({
 
   const {
     InspectorHeaderComponent,
-    InspectorBackButtonComponent,
   } = shellComponents;
 
   const isWorkspace = presentation === 'workspace';
@@ -120,6 +119,7 @@ export function InspectorContent({
       {showHeader ? (
         <>
           {(showExpandButton && typeof onExpandInspector === 'function')
+          || (showBackButton && canGoBack && typeof onBackInspector === 'function')
           || (showInlineCloseButton && typeof onCloseInspector === 'function') ? (
             <div className={controlsClassName} aria-label="Inspector controls">
               {showExpandButton && typeof onExpandInspector === 'function' ? (
@@ -131,6 +131,17 @@ export function InspectorContent({
                   title="Expand Inspector"
                 >
                   Expand
+                </button>
+              ) : null}
+              {showBackButton && canGoBack && typeof onBackInspector === 'function' ? (
+                <button
+                  type="button"
+                  onClick={onBackInspector}
+                  className={actionButtonClassName}
+                  aria-label="Go back in Inspector history"
+                  title="Back"
+                >
+                  Back
                 </button>
               ) : null}
               {showInlineCloseButton && typeof onCloseInspector === 'function' ? (
@@ -165,13 +176,6 @@ export function InspectorContent({
       ) : null}
 
       <div className={bodyClassName}>
-        {showBackButton ? (
-          <InspectorBackButtonComponent
-            canGoBack={canGoBack}
-            onBack={onBackInspector}
-          />
-        ) : null}
-
         <InspectorBodyRouter
           inspectorState={inspectorState}
           letterState={letterState}
