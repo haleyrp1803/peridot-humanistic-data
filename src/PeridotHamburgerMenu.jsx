@@ -20,13 +20,6 @@ export function PeridotHamburgerMenu({
 }) {
   const menuItems = [
     {
-      key: 'home',
-      title: 'Home',
-      description: 'Return to the Peridot welcome screen.',
-      action: onGoHome,
-      active: workspaceMode === 'home',
-    },
-    {
       key: 'data',
       title: 'Data',
       description: 'Upload, stage, map, and validate correspondence records.',
