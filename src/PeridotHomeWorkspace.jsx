@@ -20,7 +20,7 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
           <button
             type="button"
             onClick={onUploadData}
-            className="group rounded-[28px] border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] p-6 text-left text-[var(--button-primary-text)] shadow-[0_18px_38px_rgba(0,0,0,0.28)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-[var(--button-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+            className="group rounded-[28px] border border-[#97b27a]/70 bg-[#5f844d] p-6 text-left text-[#fff7d8] shadow-[0_18px_38px_rgba(0,0,0,0.28)] transition-all duration-150 hover:-translate-y-0.5 hover:border-[#e2cf9a] hover:bg-[#b59a6b] hover:text-[#10251b] focus:outline-none focus:ring-2 focus:ring-[#e2cf9a]/55"
           >
             <span className="block text-sm font-semibold uppercase tracking-[0.18em] opacity-80">
               Start with your corpus
@@ -34,29 +34,29 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
           <button
             type="button"
             onClick={onUseSampleData}
-            className="group rounded-[28px] border border-[var(--section-border)] bg-[var(--section-bg)] p-6 text-left text-[var(--text-main)] shadow-[0_18px_38px_rgba(0,0,0,0.22)] transition-all duration-150 hover:-translate-y-0.5 hover:bg-[var(--panel-card-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+            className="group rounded-[28px] border border-[#97b27a]/70 bg-[#5f844d] p-6 text-left text-[#fff7d8] shadow-[0_18px_38px_rgba(0,0,0,0.28)] transition-all duration-150 hover:-translate-y-0.5 hover:border-[#e2cf9a] hover:bg-[#b59a6b] hover:text-[#10251b] focus:outline-none focus:ring-2 focus:ring-[#e2cf9a]/55"
           >
-            <span className="block text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">
+            <span className="block text-sm font-semibold uppercase tracking-[0.18em] opacity-80">
               Preview the workspace
             </span>
-            <span className="mt-3 block text-xl font-bold text-[var(--heading-text)]">Use sample data</span>
-            <span className="mt-3 block text-sm leading-6 text-[var(--panel-card-muted-text)]">
+            <span className="mt-3 block text-xl font-bold ">Use sample data</span>
+            <span className="mt-3 block text-sm leading-6 opacity-85">
               Enter the current visualization workspace with Peridot's embedded sample correspondence dataset already loaded.
             </span>
           </button>
         </div>
 
-        <div className="mt-10 grid gap-4 text-sm leading-6 text-[var(--panel-card-muted-text)] md:grid-cols-3">
-          <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-4">
-            <strong className="block text-[var(--heading-text)]">Map and network views</strong>
+        <div className="mt-10 grid gap-8 text-sm leading-6 text-[#e8f0d6]/85 md:grid-cols-3">
+          <div className="p-4">
+            <strong className="block text-[#fff7d8]">Map and network views</strong>
             Explore correspondence through places, people, and force-directed networks.
           </div>
-          <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-4">
-            <strong className="block text-[var(--heading-text)]">Search and chart records</strong>
+          <div className="p-4">
+            <strong className="block text-[#fff7d8]">Search and chart records</strong>
             Filter, summarize, and visualize the active dataset through research-oriented controls.
           </div>
-          <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-4">
-            <strong className="block text-[var(--heading-text)]">Inspect evidence</strong>
+          <div className="p-4">
+            <strong className="block text-[#fff7d8]">Inspect evidence</strong>
             Move from visual patterns to linked people, places, routes, letters, and metadata.
           </div>
         </div>
