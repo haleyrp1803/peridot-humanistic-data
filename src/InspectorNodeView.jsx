@@ -446,6 +446,7 @@ export function InspectorNodeView({
   toggleLetterSection,
   onOpenPersonDetail,
   onOpenPlaceDetail,
+  onOpenLetterDetail,
   isCompact = false,
 }) {
   const entityType = getSelectedEntityType(selectedProps, viewMode);
@@ -532,6 +533,7 @@ export function InspectorNodeView({
         setShowAllLinkedLetters={setShowAllLinkedLetters}
         isLetterSectionExpanded={isLetterSectionExpanded}
         toggleLetterSection={toggleLetterSection}
+        onOpenLetterDetail={onOpenLetterDetail}
       />
     </div>
   );

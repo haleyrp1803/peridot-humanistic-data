@@ -48,6 +48,7 @@ export function InspectorEdgeView({
   setShowAllLinkedLetters,
   isLetterSectionExpanded,
   toggleLetterSection,
+  onOpenLetterDetail,
   isCompact = false,
 }) {
   const linkedLetterCount = (selectedProps.letterMetadata || []).length;
@@ -90,6 +91,7 @@ export function InspectorEdgeView({
         setShowAllLinkedLetters={setShowAllLinkedLetters}
         isLetterSectionExpanded={isLetterSectionExpanded}
         toggleLetterSection={toggleLetterSection}
+        onOpenLetterDetail={onOpenLetterDetail}
       />
     </div>
   );

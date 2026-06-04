@@ -13,6 +13,8 @@ export function InspectorBodyRouter({
     viewMode,
     onOpenPersonDetail,
     onOpenPlaceDetail,
+    onOpenLetterDetail,
+    onBackInspector,
   } = inspectorState;
 
   const {
@@ -29,6 +31,7 @@ export function InspectorBodyRouter({
     InspectorClusterView,
     InspectorNodeView,
     InspectorEdgeView,
+    InspectorLetterView,
   } = viewComponents;
 
   const isCompact = presentation === 'compact';
@@ -39,6 +42,7 @@ export function InspectorBodyRouter({
     viewMode,
     onOpenPersonDetail,
     onOpenPlaceDetail,
+    onOpenLetterDetail,
     isCompact,
   };
 
@@ -54,6 +58,7 @@ export function InspectorBodyRouter({
     toggleLetterSection,
     onOpenPersonDetail,
     onOpenPlaceDetail,
+    onOpenLetterDetail,
     isCompact,
   };
 
@@ -66,6 +71,7 @@ export function InspectorBodyRouter({
     setShowAllLinkedLetters,
     isLetterSectionExpanded,
     toggleLetterSection,
+    onOpenLetterDetail,
     isCompact,
   };
 
@@ -75,5 +81,17 @@ export function InspectorBodyRouter({
     return <InspectorNodeView {...nodeViewProps} />;
   }
   if (selectedKind === 'edge') return <InspectorEdgeView {...edgeViewProps} />;
+  if (selectedKind === 'letter-detail') {
+    return (
+      <InspectorLetterView
+        selectedProps={selectedProps}
+        letter={selectedProps?.letter}
+        index={selectedProps?.index || 0}
+        onBack={onBackInspector}
+        onOpenPersonDetail={onOpenPersonDetail}
+        onOpenPlaceDetail={onOpenPlaceDetail}
+      />
+    );
+  }
   return null;
 }

@@ -1750,6 +1750,7 @@ function buildInspectorPanelProps(args) {
       viewMode: args.viewMode,
       onOpenPersonDetail: args.onOpenPersonDetail,
       onOpenPlaceDetail: args.onOpenPlaceDetail,
+      onOpenLetterDetail: args.onOpenLetterDetail,
       inspectorHistoryLength: args.inspectorHistoryLength,
       canGoBack: args.inspectorHistoryLength > 0,
       onBackInspector: args.onBackInspector,
@@ -2565,23 +2566,8 @@ function LinkedLettersPanel({
   selectedLetterMetadata,
   showAllLinkedLetters,
   setShowAllLinkedLetters,
+  onOpenLetterDetail,
 }) {
-  const [selectedLinkedLetter, setSelectedLinkedLetter] = useState(null);
-
-  useEffect(() => {
-    setSelectedLinkedLetter(null);
-  }, [selectedLetterMetadata]);
-
-  if (selectedLinkedLetter?.letter) {
-    return (
-      <LinkedLetterDetailPage
-        letter={selectedLinkedLetter.letter}
-        index={selectedLinkedLetter.index}
-        onBack={() => setSelectedLinkedLetter(null)}
-      />
-    );
-  }
-
   return (
     <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
       <div className="mb-3 flex items-center justify-between gap-3 text-sm">
@@ -2601,7 +2587,7 @@ function LinkedLettersPanel({
             key={letter.id || `${getLinkedLetterUniqueId(letter, index)}-${index}`}
             letter={letter}
             index={index}
-            onOpenLetter={(nextLetter, nextIndex) => setSelectedLinkedLetter({ letter: nextLetter, index: nextIndex })}
+            onOpenLetter={(nextLetter, nextIndex) => onOpenLetterDetail?.(nextLetter, nextIndex)}
           />
         )) : <div className="text-sm text-[var(--panel-card-muted-text)]">No linked letter-table rows were found for this selection in the current matching logic.</div>}
         {!showAllLinkedLetters && selectedLetterMetadata.length > 10 ? <div className="text-sm text-[var(--panel-card-muted-text)]">Showing 10 of {selectedLetterMetadata.length} linked records.</div> : null}
@@ -2875,6 +2861,28 @@ export default function EuropeNetworkMapApp() {
     setIsSidePanelOpen(false);
     setActivePanelTab('inspector');
     setSelectedSelection({ kind: 'place-detail', label });
+    setShowAllLinkedLetters(false);
+  };
+
+  const openInspectorLetterDetail = (letter, index = 0) => {
+    if (!letter) return;
+    if (selectedSelection) {
+      setInspectorHistory((prev) => [...prev, selectedSelection]);
+    }
+    const uniqueId = getLinkedLetterUniqueId(letter, index);
+    inspectorNavigationRef.current = true;
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
+    setIsSidePanelOpen(false);
+    setActivePanelTab('inspector');
+    setSelectedSelection({
+      kind: 'letter-detail',
+      id: `letter-detail:${uniqueId}:${index}`,
+      label: uniqueId,
+      detailLabel: uniqueId,
+      letter,
+      index,
+    });
     setShowAllLinkedLetters(false);
   };
 
@@ -3162,10 +3170,23 @@ export default function EuropeNetworkMapApp() {
   // Selection and inspector derivations
   // ------------------------------------------------------------
   const selectedProps = useMemo(() => {
+    if (selectedSelection?.kind === 'letter-detail') {
+      const uniqueId = selectedSelection.label || getLinkedLetterUniqueId(selectedSelection.letter, selectedSelection.index || 0);
+      return {
+        __kind: 'letter-detail',
+        id: selectedSelection.id || `letter-detail:${uniqueId}:${selectedSelection.index || 0}`,
+        label: uniqueId,
+        detailLabel: uniqueId,
+        letter: selectedSelection.letter,
+        index: selectedSelection.index || 0,
+      };
+    }
+
     return resolveSelection(selectedSelection, graph, personMetadataByName);
   }, [selectedSelection, graph, personMetadataByName]);
 
   const selectedLetterMetadata = useMemo(() => {
+    if (selectedProps?.__kind === 'letter-detail') return [];
     return enrichSelectedLetters(selectedProps, personMetadataByName);
   }, [selectedProps, personMetadataByName]);
 
@@ -3960,6 +3981,7 @@ export default function EuropeNetworkMapApp() {
     viewMode,
     onOpenPersonDetail: openInspectorPersonDetail,
     onOpenPlaceDetail: openInspectorPlaceDetail,
+    onOpenLetterDetail: openInspectorLetterDetail,
     inspectorHistoryLength: inspectorHistory.length,
     onBackInspector: goBackInspector,
     onCloseInspector: closeCompactInspector,
@@ -4005,6 +4027,12 @@ export default function EuropeNetworkMapApp() {
         InspectorSummaryCardComponent={InspectorSummaryCard}
         LinkedLettersPanelComponent={LinkedLettersPanel}
         InspectorClearSelectionButtonComponent={InspectorClearSelectionButton}
+      />
+    ),
+    InspectorLetterView: (props) => (
+      <LinkedLetterDetailPage
+        {...props}
+        onBack={goBackInspector}
       />
     ),
   };
