@@ -232,9 +232,15 @@ function CountListCard({ title, description, items, emptyMessage, onOpenItem }) 
       <div className="mt-3 space-y-2">
         {items.map((item) => {
           const content = (
-            <div className="flex items-start justify-between gap-3 rounded-xl border border-[var(--section-border)]/70 bg-[var(--section-bg)]/70 px-3 py-2 text-sm">
-              <span className="break-words text-[var(--panel-card-text)]">{item.label}</span>
-              <span className="shrink-0 rounded-full bg-[var(--stat-card-bg)] px-2 py-0.5 text-[11px] text-[var(--panel-card-muted-text)]">
+            <div
+              className={`flex items-start justify-between gap-3 rounded-xl border px-3 py-2 text-sm transition-colors ${
+                onOpenItem
+                  ? 'border-[var(--inspector-clickable-border)] bg-[var(--inspector-clickable-bg)] text-[var(--inspector-clickable-text)] group-hover:border-[var(--inspector-clickable-hover-border)] group-hover:bg-[var(--inspector-clickable-hover-bg)] group-hover:text-[var(--inspector-clickable-hover-text)]'
+                  : 'border-[var(--section-border)]/70 bg-[var(--section-bg)]/70 text-[var(--panel-card-text)]'
+              }`}
+            >
+              <span className="break-words text-inherit">{item.label}</span>
+              <span className="shrink-0 rounded-full bg-[var(--inspector-clickable-badge-bg)] px-2 py-0.5 text-[11px] text-[var(--inspector-clickable-badge-text)]">
                 {item.count}
               </span>
             </div>
@@ -245,7 +251,7 @@ function CountListCard({ title, description, items, emptyMessage, onOpenItem }) 
               type="button"
               key={item.label}
               onClick={() => onOpenItem(item.label)}
-              className="block w-full text-left transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
+              className="group block w-full text-left transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
             >
               {content}
             </button>
@@ -283,9 +289,15 @@ function CountSectionCard({ title, description, sections, emptyMessage, onOpenIt
             <div className="space-y-2">
               {section.items.map((item) => {
                 const content = (
-                  <div className="flex items-start justify-between gap-3 rounded-xl border border-[var(--section-border)]/70 bg-[var(--section-bg)]/70 px-3 py-2 text-sm">
-                    <span className="break-words text-[var(--panel-card-text)]">{item.label}</span>
-                    <span className="shrink-0 rounded-full bg-[var(--stat-card-bg)] px-2 py-0.5 text-[11px] text-[var(--panel-card-muted-text)]">
+                  <div
+                    className={`flex items-start justify-between gap-3 rounded-xl border px-3 py-2 text-sm transition-colors ${
+                      onOpenItem
+                        ? 'border-[var(--inspector-clickable-border)] bg-[var(--inspector-clickable-bg)] text-[var(--inspector-clickable-text)] group-hover:border-[var(--inspector-clickable-hover-border)] group-hover:bg-[var(--inspector-clickable-hover-bg)] group-hover:text-[var(--inspector-clickable-hover-text)]'
+                        : 'border-[var(--section-border)]/70 bg-[var(--section-bg)]/70 text-[var(--panel-card-text)]'
+                    }`}
+                  >
+                    <span className="break-words text-inherit">{item.label}</span>
+                    <span className="shrink-0 rounded-full bg-[var(--inspector-clickable-badge-bg)] px-2 py-0.5 text-[11px] text-[var(--inspector-clickable-badge-text)]">
                       {item.count}
                     </span>
                   </div>
@@ -296,7 +308,7 @@ function CountSectionCard({ title, description, sections, emptyMessage, onOpenIt
                     type="button"
                     key={`${section.title}:${item.label}`}
                     onClick={() => onOpenItem(item.label)}
-                    className="block w-full text-left transition hover:brightness-95 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
+                    className="group block w-full text-left transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
                   >
                     {content}
                   </button>

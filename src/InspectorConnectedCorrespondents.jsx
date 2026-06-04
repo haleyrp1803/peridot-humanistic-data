@@ -16,7 +16,7 @@ export function InspectorConnectedCorrespondents({ names, onOpenPerson }) {
             key={name}
             type="button"
             onClick={() => onOpenPerson(extractName(name))}
-            className="rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-3 py-1.5 text-xs font-medium text-[var(--button-secondary-text)] transition-colors hover:bg-[var(--button-secondary-hover)]"
+            className="rounded-full border border-[var(--inspector-clickable-border)] bg-[var(--inspector-clickable-bg)] px-3 py-1.5 text-xs font-medium text-[var(--inspector-clickable-text)] transition-colors hover:border-[var(--inspector-clickable-hover-border)] hover:bg-[var(--inspector-clickable-hover-bg)] hover:text-[var(--inspector-clickable-hover-text)]"
           >
             {name}
           </button>
