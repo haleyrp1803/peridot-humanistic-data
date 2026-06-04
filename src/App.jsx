@@ -1424,7 +1424,7 @@ function LinkedLetterListItem({ letter, index, onOpenLetter }) {
     <button
       type="button"
       onClick={() => onOpenLetter(letter, index)}
-      className="w-full rounded-xl border border-[var(--section-border)]/70 bg-[var(--stat-card-bg)] p-3 text-left text-sm transition hover:border-[var(--accent)]/60 hover:bg-[var(--section-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
+      className="w-full rounded-xl border border-[var(--button-border)] bg-[var(--button-bg)] p-3 text-left text-sm text-[var(--button-text)] transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -1432,7 +1432,7 @@ function LinkedLetterListItem({ letter, index, onOpenLetter }) {
           <div className="mt-1 text-[var(--panel-card-muted-text)]">{routeLabel || 'No source/target names recorded'}</div>
           {placeLabel ? <div className="text-[var(--panel-card-muted-text)]">{placeLabel}</div> : null}
         </div>
-        <div className="shrink-0 rounded-full bg-[var(--section-bg)] px-2 py-1 text-xs text-[var(--panel-card-muted-text)]">
+        <div className="shrink-0 rounded-full bg-[var(--badge-bg)] px-2 py-1 text-xs font-medium text-[var(--badge-text)]">
           {dateLabel}
         </div>
       </div>
@@ -1445,7 +1445,7 @@ function LinkedLetterDetailPage({ letter, index, onBack }) {
   const uniqueId = getLinkedLetterUniqueId(letter, index);
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
@@ -2508,7 +2508,7 @@ function SvgMap({
 
 function InspectorSummaryCard({ children }) {
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+    <div className="rounded-2xl border border-[var(--summary-card-border)] bg-[var(--summary-card-bg)] p-4 text-[var(--summary-card-text)] shadow-[0_10px_28px_rgba(56,38,26,0.16)]">
       {children}
     </div>
   );
@@ -2583,7 +2583,7 @@ function LinkedLettersPanel({
   }
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
       <div className="mb-3 flex items-center justify-between gap-3 text-sm">
         <div>
           <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Linked letter records</div>
@@ -2711,13 +2711,15 @@ function MapStage(props) {
 
 function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
   return (
-    <div className="mb-4">
-      <div className="flex items-center gap-2">
-        <h2 className={`${panelHeadingClassName()} ${serifHeadingClassName()} text-[24px]`}>Inspector</h2>
+    <div className="mb-0 w-full">
+      <div className="flex min-w-0 items-center gap-2">
+        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[26px] font-bold leading-tight tracking-[-0.01em] text-[#f4f7e8] drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]">
+          Inspector
+        </h2>
         <button
           type="button"
           onClick={() => setShowInspectorInfo((v) => !v)}
-          className="flex h-6 w-6 items-center justify-center rounded-full border border-[var(--icon-button-border)]/80 bg-[var(--icon-button-bg)] text-xs font-semibold text-[var(--icon-button-text)] transition-colors hover:bg-[var(--icon-button-hover-bg)] hover:text-[var(--icon-button-hover-text)]"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#edf5dd]/70 bg-[#e7efd6] text-[13px] font-bold leading-none text-[#11251b] shadow-sm transition-colors hover:bg-[#f4f8e8] hover:text-[#07120d] focus:outline-none focus:ring-2 focus:ring-[#e7efd6]/80"
           aria-label="Toggle inspector information"
           title="Inspector information"
         >
@@ -2725,7 +2727,7 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
         </button>
       </div>
       {showInspectorInfo ? (
-        <div className="mt-3 rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--panel-card-bg)] p-3 text-sm text-[var(--panel-card-muted-text)]">
+        <div className="mt-3 w-full rounded-2xl border border-[#d9e8bd]/70 bg-[#edf4df] p-3 text-sm leading-relaxed text-[#21372c] shadow-inner shadow-[#718763]/10">
           Summary details in this panel reflect the currently selected view, date window, search filter, and minimum-weight threshold, not the full dataset.
         </div>
       ) : null}
@@ -2746,6 +2748,16 @@ function AppMainWorkspace({
   exportWorkspaceProps,
   inspectorWorkspaceProps,
 }) {
+  const workspaceInspectorPanelProps = inspectorWorkspaceProps?.inspectorPanelProps
+    ? {
+        ...inspectorWorkspaceProps.inspectorPanelProps,
+        inspectorState: {
+          ...inspectorWorkspaceProps.inspectorPanelProps.inspectorState,
+          onCloseInspector: inspectorWorkspaceProps.onCloseInspectorWorkspace,
+        },
+      }
+    : null;
+
   return (
     <main
       className="h-full"
@@ -2764,20 +2776,22 @@ function AppMainWorkspace({
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPORT ? (
         <PeridotExportWorkspace {...exportWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR ? (
-        <div className="relative h-full overflow-hidden bg-[#07120d]" data-peridot-inspector-workspace="true">
+        <div className="relative h-full overflow-hidden bg-[#04100b]" data-peridot-inspector-workspace="true">
           <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
-          <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[#06110c]/88 p-4 backdrop-blur-[3px] sm:p-6">
+          <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[#03100a]/84 p-4 backdrop-blur-[4px] sm:p-6">
             <section
-              className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2.25rem] border border-[#d8e0c8]/30 bg-[#07120d]/95 p-3 text-[#f8f3e8] shadow-[0_28px_90px_rgba(0,0,0,0.62)] sm:p-4"
+              className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2.5rem] border border-[#b9d37d]/38 bg-[linear-gradient(145deg,rgba(2,14,9,0.98),rgba(8,31,22,0.96)_44%,rgba(25,55,43,0.92))] p-3 text-[#f7fbe9] shadow-[0_30px_100px_rgba(0,0,0,0.72)] ring-1 ring-[#d7e77f]/14 sm:p-4"
               aria-label="Inspector workspace"
             >
-              <InspectorContent
-                {...inspectorWorkspaceProps.inspectorPanelProps}
-                shellComponents={inspectorWorkspaceProps.inspectorShellComponents}
-                viewComponents={inspectorWorkspaceProps.inspectorViewComponents}
-                showExpandButton={false}
-                presentation="workspace"
-              />
+              {workspaceInspectorPanelProps ? (
+                <InspectorContent
+                  {...workspaceInspectorPanelProps}
+                  shellComponents={inspectorWorkspaceProps.inspectorShellComponents}
+                  viewComponents={inspectorWorkspaceProps.inspectorViewComponents}
+                  showExpandButton={false}
+                  presentation="workspace"
+                />
+              ) : null}
             </section>
           </div>
         </div>
@@ -4203,6 +4217,14 @@ export default function EuropeNetworkMapApp() {
             display: none !important;
             width: 0 !important;
             min-width: 0 !important;
+          }
+          .peridot-redesign-root aside[class*="w-[420px]"] {
+            background: rgba(3, 16, 10, 0.72) !important;
+            backdrop-filter: blur(10px) saturate(0.92) !important;
+            border-right-color: rgba(216, 232, 189, 0.25) !important;
+          }
+          .peridot-redesign-root aside[class*="w-[420px]"] > div[class*="overflow-auto"] {
+            padding-right: 1.25rem !important;
           }
           .peridot-redesign-root main > .flex.h-full.flex-col > .shrink-0 {
             background: var(--title-bar-bg) !important;
