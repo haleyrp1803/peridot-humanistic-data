@@ -15,6 +15,7 @@ export function InspectorBodyRouter({
     onOpenPlaceDetail,
     onOpenLetterDetail,
     onBackInspector,
+    onExpandInspector,
   } = inspectorState;
 
   const {
@@ -43,6 +44,7 @@ export function InspectorBodyRouter({
     onOpenPersonDetail,
     onOpenPlaceDetail,
     onOpenLetterDetail,
+    onExpandInspector,
     isCompact,
   };
 
@@ -59,6 +61,7 @@ export function InspectorBodyRouter({
     onOpenPersonDetail,
     onOpenPlaceDetail,
     onOpenLetterDetail,
+    onExpandInspector,
     isCompact,
   };
 
@@ -72,6 +75,7 @@ export function InspectorBodyRouter({
     isLetterSectionExpanded,
     toggleLetterSection,
     onOpenLetterDetail,
+    onExpandInspector,
     isCompact,
   };
 

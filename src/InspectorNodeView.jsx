@@ -392,7 +392,34 @@ function EntityCustomFieldsCard({ selectedProps, selectedLetterMetadata, viewMod
 }
 
 
-function CompactDossierPrompt({ entityType, linkedLetterCount, relatedPeopleCount, relatedPlacesCount, routeCount }) {
+function CompactSummaryTile({ count, label, actionLabel, onOpenFullInspector }) {
+  return (
+    <button
+      type="button"
+      onClick={onOpenFullInspector}
+      className="group rounded-xl border border-[var(--inspector-clickable-border)] bg-[var(--inspector-clickable-bg)] px-3 py-2 text-left text-xs text-[var(--inspector-clickable-text)] transition hover:border-[var(--inspector-clickable-hover-border)] hover:bg-[var(--inspector-clickable-hover-bg)] hover:text-[var(--inspector-clickable-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary-bg)]/70"
+    >
+      <div className="font-semibold text-[var(--inspector-clickable-text)] group-hover:text-[var(--inspector-clickable-hover-text)]">
+        {count || 0}
+      </div>
+      <div className="text-[var(--inspector-clickable-muted-text)] group-hover:text-[var(--inspector-clickable-hover-text)]">
+        {label}
+      </div>
+      <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--inspector-clickable-muted-text)] opacity-85 group-hover:text-[var(--inspector-clickable-hover-text)]">
+        {actionLabel}
+      </div>
+    </button>
+  );
+}
+
+function CompactDossierPrompt({
+  entityType,
+  linkedLetterCount,
+  relatedPeopleCount,
+  relatedPlacesCount,
+  routeCount,
+  onOpenFullInspector,
+}) {
   const entityLabel = entityType === 'place' ? 'place' : 'person';
 
   return (
@@ -401,26 +428,34 @@ function CompactDossierPrompt({ entityType, linkedLetterCount, relatedPeopleCoun
         At-a-glance summary
       </div>
       <p className="mt-2 leading-relaxed text-[var(--text-muted)]">
-        This compact Inspector shows the key profile facts for the selected {entityLabel}. Expand the Inspector for related people,
-        related places, directed routes, user-selected metadata, and linked-letter evidence.
+        This compact Inspector shows the key profile facts for the selected {entityLabel}. Use these buttons to open the full
+        Inspector dossier for linked letters, related people, related places, and routes.
       </p>
-      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-        <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2">
-          <div className="font-semibold text-[var(--text-strong)]">{linkedLetterCount || 0}</div>
-          <div className="text-[var(--text-muted)]">linked letters</div>
-        </div>
-        <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2">
-          <div className="font-semibold text-[var(--text-strong)]">{relatedPeopleCount || 0}</div>
-          <div className="text-[var(--text-muted)]">related people</div>
-        </div>
-        <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2">
-          <div className="font-semibold text-[var(--text-strong)]">{relatedPlacesCount || 0}</div>
-          <div className="text-[var(--text-muted)]">related places</div>
-        </div>
-        <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2">
-          <div className="font-semibold text-[var(--text-strong)]">{routeCount || 0}</div>
-          <div className="text-[var(--text-muted)]">routes</div>
-        </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <CompactSummaryTile
+          count={linkedLetterCount}
+          label="linked letters"
+          actionLabel="View evidence"
+          onOpenFullInspector={onOpenFullInspector}
+        />
+        <CompactSummaryTile
+          count={relatedPeopleCount}
+          label="related people"
+          actionLabel="View people"
+          onOpenFullInspector={onOpenFullInspector}
+        />
+        <CompactSummaryTile
+          count={relatedPlacesCount}
+          label="related places"
+          actionLabel="View places"
+          onOpenFullInspector={onOpenFullInspector}
+        />
+        <CompactSummaryTile
+          count={routeCount}
+          label="routes"
+          actionLabel="View routes"
+          onOpenFullInspector={onOpenFullInspector}
+        />
       </div>
     </div>
   );
@@ -447,6 +482,7 @@ export function InspectorNodeView({
   onOpenPersonDetail,
   onOpenPlaceDetail,
   onOpenLetterDetail,
+  onExpandInspector,
   isCompact = false,
 }) {
   const entityType = getSelectedEntityType(selectedProps, viewMode);
@@ -469,6 +505,7 @@ export function InspectorNodeView({
           relatedPeopleCount={profile.relatedPeopleCount}
           relatedPlacesCount={profile.relatedPlacesCount}
           routeCount={profile.routeCount}
+          onOpenFullInspector={onExpandInspector}
         />
 
         <InspectorClearSelectionButtonComponent onClear={clearSelection} />
