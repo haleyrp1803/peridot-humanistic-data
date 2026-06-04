@@ -176,6 +176,7 @@ export function InspectorContent({
           inspectorState={inspectorState}
           letterState={letterState}
           viewComponents={viewComponents}
+          presentation={presentation}
         />
       </div>
     </div>

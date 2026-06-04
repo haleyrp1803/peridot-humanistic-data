@@ -4,6 +4,7 @@ export function InspectorBodyRouter({
   inspectorState,
   letterState,
   viewComponents,
+  presentation = 'compact',
 }) {
   const {
     selectedProps,
@@ -30,12 +31,15 @@ export function InspectorBodyRouter({
     InspectorEdgeView,
   } = viewComponents;
 
+  const isCompact = presentation === 'compact';
+
   const clusterViewProps = {
     selectedProps,
     clearSelection,
     viewMode,
     onOpenPersonDetail,
     onOpenPlaceDetail,
+    isCompact,
   };
 
   const nodeViewProps = {
@@ -50,6 +54,7 @@ export function InspectorBodyRouter({
     toggleLetterSection,
     onOpenPersonDetail,
     onOpenPlaceDetail,
+    isCompact,
   };
 
   const edgeViewProps = {
@@ -61,6 +66,7 @@ export function InspectorBodyRouter({
     setShowAllLinkedLetters,
     isLetterSectionExpanded,
     toggleLetterSection,
+    isCompact,
   };
 
   if (!selectedProps) return <InspectorEmptyState />;

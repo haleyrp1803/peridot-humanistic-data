@@ -58,13 +58,14 @@ function buildMemberGroups(members, isGeographic) {
     });
 }
 
-function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlaceDetail }) {
+function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlaceDetail, isCompact = false }) {
   const isGeographic = viewMode === 'geographic';
   const memberKindLabel = isGeographic ? 'places' : 'people';
   const memberKindSingular = isGeographic ? 'place' : 'person';
   const actionLabel = isGeographic ? 'Open place detail' : 'Open person detail';
   const openDetail = isGeographic ? onOpenPlaceDetail : onOpenPersonDetail;
   const groups = buildMemberGroups(members, isGeographic);
+  const visibleGroups = isCompact ? groups.slice(0, 2) : groups;
 
   if (!members.length) {
     return (
@@ -78,7 +79,7 @@ function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlac
     <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-4">
       <div className={detailLabelClassName()}>Contained {memberKindLabel} by place</div>
       <div className="mt-3 space-y-4">
-        {groups.map((group) => (
+        {visibleGroups.map((group) => (
           <section key={group.label} className="rounded-xl border border-[var(--section-border)]/85 bg-[var(--panel-bg)]/65 p-3">
             <div className="flex items-start justify-between gap-3">
               <div>
@@ -90,7 +91,7 @@ function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlac
             </div>
 
             <div className="mt-3 space-y-2">
-              {group.members.map((member) => (
+              {(isCompact ? group.members.slice(0, 3) : group.members).map((member) => (
                 <button
                   key={member.id || `${group.label}:${member.label}`}
                   type="button"
@@ -107,6 +108,11 @@ function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlac
             </div>
           </section>
         ))}
+        {isCompact && groups.length > visibleGroups.length ? (
+          <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2 text-xs text-[var(--text-muted)]">
+            Expand the Inspector to view all cluster groups and members.
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -120,6 +126,7 @@ export function InspectorClusterView({
   viewMode,
   onOpenPersonDetail,
   onOpenPlaceDetail,
+  isCompact = false,
 }) {
   const memberDetails = (selectedProps?.memberDetails || [])
     .filter((member) => member?.label)
@@ -159,6 +166,7 @@ export function InspectorClusterView({
         viewMode={viewMode}
         onOpenPersonDetail={onOpenPersonDetail}
         onOpenPlaceDetail={onOpenPlaceDetail}
+        isCompact={isCompact}
       />
 
       <InspectorClearSelectionButtonComponent onClear={clearSelection} />

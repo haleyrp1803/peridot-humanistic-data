@@ -391,6 +391,41 @@ function EntityCustomFieldsCard({ selectedProps, selectedLetterMetadata, viewMod
   );
 }
 
+
+function CompactDossierPrompt({ entityType, linkedLetterCount, relatedPeopleCount, relatedPlacesCount, routeCount }) {
+  const entityLabel = entityType === 'place' ? 'place' : 'person';
+
+  return (
+    <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-4 text-sm text-[var(--text-main)] shadow-sm">
+      <div className="font-semibold uppercase tracking-[0.14em] text-[var(--detail-label-text)]">
+        At-a-glance summary
+      </div>
+      <p className="mt-2 leading-relaxed text-[var(--text-muted)]">
+        This compact Inspector shows the key profile facts for the selected {entityLabel}. Expand the Inspector for related people,
+        related places, directed routes, user-selected metadata, and linked-letter evidence.
+      </p>
+      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2">
+          <div className="font-semibold text-[var(--text-strong)]">{linkedLetterCount || 0}</div>
+          <div className="text-[var(--text-muted)]">linked letters</div>
+        </div>
+        <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2">
+          <div className="font-semibold text-[var(--text-strong)]">{relatedPeopleCount || 0}</div>
+          <div className="text-[var(--text-muted)]">related people</div>
+        </div>
+        <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2">
+          <div className="font-semibold text-[var(--text-strong)]">{relatedPlacesCount || 0}</div>
+          <div className="text-[var(--text-muted)]">related places</div>
+        </div>
+        <div className="rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2">
+          <div className="font-semibold text-[var(--text-strong)]">{routeCount || 0}</div>
+          <div className="text-[var(--text-muted)]">routes</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function InspectorNodeView({
   InspectorSummaryCardComponent,
   PersonMetadataCardComponent,
@@ -411,9 +446,34 @@ export function InspectorNodeView({
   toggleLetterSection,
   onOpenPersonDetail,
   onOpenPlaceDetail,
+  isCompact = false,
 }) {
   const entityType = getSelectedEntityType(selectedProps, viewMode);
   const profile = buildEntityProfile(selectedProps, selectedLetterMetadata, viewMode);
+
+  if (isCompact) {
+    return (
+      <div className="space-y-4">
+        <InspectorSummaryCardComponent>
+          <DetailRow label={entityType === 'place' ? 'Place' : 'Person'} value={getSelectedEntityLabel(selectedProps)} />
+          <DetailRow label="Linked letters" value={selectedProps.linkedLetterCount || profile.matchingLetters.length} />
+          <DetailRow label="Date span" value={[selectedProps.earliestDate, selectedProps.latestDate].filter(Boolean).join(' → ') || profile.dateSpan} />
+          {selectedProps.anchorLabel ? <DetailRow label="Anchor location" value={selectedProps.anchorLabel} /> : null}
+          <DetailRow label="Weighted degree" value={selectedProps.degree} />
+        </InspectorSummaryCardComponent>
+
+        <CompactDossierPrompt
+          entityType={entityType}
+          linkedLetterCount={selectedProps.linkedLetterCount || profile.matchingLetters.length}
+          relatedPeopleCount={profile.relatedPeopleCount}
+          relatedPlacesCount={profile.relatedPlacesCount}
+          routeCount={profile.routeCount}
+        />
+
+        <InspectorClearSelectionButtonComponent onClear={clearSelection} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

@@ -17,6 +17,24 @@ function DetailRow({ label, value }) {
   );
 }
 
+
+function CompactRoutePrompt({ linkedLetterCount }) {
+  return (
+    <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-4 text-sm text-[var(--text-main)] shadow-sm">
+      <div className="font-semibold uppercase tracking-[0.14em] text-[var(--detail-label-text)]">
+        At-a-glance route summary
+      </div>
+      <p className="mt-2 leading-relaxed text-[var(--text-muted)]">
+        This compact Inspector shows the route direction, represented weight, and top-level evidence count. Expand the Inspector for linked-letter records and fuller route evidence.
+      </p>
+      <div className="mt-3 rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2 text-xs">
+        <div className="font-semibold text-[var(--text-strong)]">{linkedLetterCount || 0}</div>
+        <div className="text-[var(--text-muted)]">linked letters</div>
+      </div>
+    </div>
+  );
+}
+
 export function InspectorEdgeView({
   InspectorSummaryCardComponent,
   LinkedLettersPanelComponent,
@@ -30,7 +48,27 @@ export function InspectorEdgeView({
   setShowAllLinkedLetters,
   isLetterSectionExpanded,
   toggleLetterSection,
+  isCompact = false,
 }) {
+  const linkedLetterCount = (selectedProps.letterMetadata || []).length;
+
+  if (isCompact) {
+    return (
+      <div className="space-y-4">
+        <InspectorSummaryCardComponent>
+          <DetailRow label="Route" value={`${selectedProps.sourceLabel} → ${selectedProps.targetLabel}`} />
+          <DetailRow label="Weight" value={selectedProps.count} />
+          <DetailRow label="Dates represented" value={(selectedProps.dates || []).join('; ')} />
+          <DetailRow label="Linked letters" value={linkedLetterCount} />
+        </InspectorSummaryCardComponent>
+
+        <CompactRoutePrompt linkedLetterCount={linkedLetterCount} />
+
+        <InspectorClearSelectionButtonComponent onClear={clearSelection} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <InspectorSummaryCardComponent>
@@ -40,7 +78,7 @@ export function InspectorEdgeView({
         <DetailRow label="Senders" value={(selectedProps.sources || []).join('; ')} />
         <DetailRow label="Recipients" value={(selectedProps.targets || []).join('; ')} />
         <DetailRow label="Sample pairs" value={(selectedProps.samplePairs || []).join('; ')} />
-        <DetailRow label="Linked letters" value={(selectedProps.letterMetadata || []).length} />
+        <DetailRow label="Linked letters" value={linkedLetterCount} />
       </InspectorSummaryCardComponent>
 
       <InspectorClearSelectionButtonComponent onClear={clearSelection} />
