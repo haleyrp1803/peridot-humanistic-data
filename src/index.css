@@ -183,7 +183,13 @@ textarea {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
 }
 
-.peridot-button-primary:hover { background: #7c9a60; transform: translateY(-1px); }
+.peridot-button-primary:hover {
+  background: #b58b42;
+  border-color: rgba(245, 236, 210, 0.88);
+  color: #fff8e8;
+  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.34);
+  transform: translateY(-1px);
+}
 
 .peridot-button-secondary {
   border: 1px solid rgba(223, 233, 200, 0.48);
@@ -191,7 +197,13 @@ textarea {
   color: #fbf7ea;
 }
 
-.peridot-button-secondary:hover { background: rgba(223, 233, 200, 0.18); transform: translateY(-1px); }
+.peridot-button-secondary:hover {
+  background: rgba(181, 139, 66, 0.88);
+  border-color: rgba(245, 236, 210, 0.82);
+  color: #fff8e8;
+  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.30);
+  transform: translateY(-1px);
+}
 
 .peridot-button-cream {
   border: 1px solid rgba(96, 122, 78, 0.38);
@@ -199,7 +211,13 @@ textarea {
   color: #26352b;
 }
 
-.peridot-button-cream:hover { background: #fff7e6; transform: translateY(-1px); }
+.peridot-button-cream:hover {
+  background: #b58b42;
+  border-color: rgba(99, 68, 28, 0.46);
+  color: #fff8e8;
+  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.24);
+  transform: translateY(-1px);
+}
 
 .peridot-workspace-header-row {
   display: flex;
@@ -223,8 +241,8 @@ textarea {
 .peridot-form-input::placeholder { color: rgba(251, 247, 234, 0.58); }
 .peridot-form-input:focus,
 .peridot-form-select:focus {
-  border-color: rgba(245, 236, 210, 0.84);
-  box-shadow: 0 0 0 3px rgba(223, 233, 200, 0.16);
+  border-color: rgba(214, 163, 106, 0.92);
+  box-shadow: 0 0 0 3px rgba(181, 139, 66, 0.22);
 }
 
 .peridot-cream-card .peridot-form-input,
@@ -247,4 +265,22 @@ textarea {
   position: sticky;
   top: 0;
   z-index: 2;
+}
+
+.peridot-gold-hover {
+  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.peridot-gold-hover:hover {
+  background: #b58b42 !important;
+  border-color: rgba(245, 236, 210, 0.82) !important;
+  color: #fff8e8 !important;
+  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.30);
+}
+
+.peridot-gold-active {
+  background: #b58b42 !important;
+  border-color: rgba(245, 236, 210, 0.86) !important;
+  color: #fff8e8 !important;
+  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.32);
 }

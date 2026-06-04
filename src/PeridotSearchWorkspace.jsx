@@ -49,7 +49,7 @@ function AutocompleteTextInput({
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => chooseSuggestion(suggestion)}
-              className="block w-full px-3 py-2 text-left text-sm leading-5 text-[#fbf7ea] transition-colors hover:bg-[#dfe9c8]/12"
+              className="block w-full px-3 py-2 text-left text-sm leading-5 text-[#fbf7ea] transition-colors hover:bg-[#b58b42] hover:text-[#fff8e8]"
             >
               {suggestion}
             </button>

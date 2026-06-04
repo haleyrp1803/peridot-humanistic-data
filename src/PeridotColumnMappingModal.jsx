@@ -26,17 +26,17 @@ const SINGLE_TABLE_STEP_KEYS = ['preview', 'core', 'inspector', 'review'];
 const WORKBOOK_STEP_KEYS = ['workbook-preview', 'workbook-setup', 'workbook-core', 'workbook-inspector', 'workbook-review'];
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
-  const base = 'rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#dfe9c8]/55 disabled:cursor-not-allowed disabled:opacity-55';
+  const base = 'rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60 disabled:cursor-not-allowed disabled:opacity-55';
   if (variant === 'primary') {
-    return `${base} border border-[#dfe9c8]/55 bg-[#6d8b53] text-[#fbf7ea] shadow-[0_8px_18px_rgba(0,0,0,0.22)] hover:bg-[#7c9a60]`;
+    return `${base} border border-[#dfe9c8]/55 bg-[#6d8b53] text-[#fbf7ea] shadow-[0_8px_18px_rgba(0,0,0,0.22)] hover:border-[#f5ecd2]/85 hover:bg-[#b58b42] hover:text-[#fff8e8] hover:shadow-[0_12px_28px_rgba(86,52,22,0.32)]`;
   }
   if (variant === 'danger') {
-    return `${base} border border-[#d6a36a]/70 bg-[#8a4f34] text-[#fff5e6] hover:bg-[#9b5c3f]`;
+    return `${base} border border-[#d6a36a]/70 bg-[#8a4f34] text-[#fff5e6] hover:border-[#f5ecd2]/80 hover:bg-[#b58b42] hover:text-[#fff8e8]`;
   }
   if (active) {
-    return `${base} border border-[#f5ecd2]/70 bg-[#6d8b53] text-[#fbf7ea] shadow-[0_8px_18px_rgba(0,0,0,0.22)]`;
+    return `${base} border border-[#f5ecd2]/80 bg-[#b58b42] text-[#fff8e8] shadow-[0_10px_24px_rgba(86,52,22,0.30)]`;
   }
-  return `${base} border border-[#607a4e]/38 bg-[#f4eedb] text-[#26352b] hover:bg-[#fff7e6]`;
+  return `${base} border border-[#607a4e]/38 bg-[#f4eedb] text-[#26352b] hover:border-[#f5ecd2]/80 hover:bg-[#b58b42] hover:text-[#fff8e8]`;
 }
 
 function normalizeAction(value) {
@@ -53,8 +53,8 @@ function StepButton({ active, label, index, onClick }) {
       className={[
         'rounded-2xl border px-4 py-3 text-left transition-all duration-150',
         active
-          ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.26)]'
-          : 'border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] text-[var(--panel-card-muted-text)] hover:bg-[var(--button-secondary-hover)] hover:text-[var(--panel-card-text)]',
+          ? 'border-[#f5ecd2]/80 bg-[#b58b42] text-[#fff8e8] shadow-[0_10px_24px_rgba(86,52,22,0.30)]'
+          : 'border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] text-[var(--panel-card-muted-text)] hover:bg-[#b58b42] hover:text-[#fff8e8] hover:border-[#f5ecd2]/80',
       ].join(' ')}
     >
       <div className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">Step {index + 1}</div>
@@ -636,7 +636,7 @@ function WorkbookSetupStep({
                 key={suggestion.sheetName}
                 type="button"
                 onClick={() => onPrimarySheetChange(suggestion.sheetName)}
-                className="flex items-center justify-between rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-left text-sm hover:bg-[var(--button-secondary-hover)]"
+                className="flex items-center justify-between rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-left text-sm hover:bg-[#b58b42] hover:text-[#fff8e8] hover:border-[#f5ecd2]/80"
               >
                 <span className="font-medium text-[var(--panel-card-text)]">{suggestion.sheetName}</span>
                 <span className="text-[var(--panel-card-muted-text)]">score {suggestion.score} · {suggestion.rowCount} rows</span>

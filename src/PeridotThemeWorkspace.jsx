@@ -34,8 +34,8 @@ export function PeridotThemeWorkspace({ themePresetKey, applyThemePreset, resetT
                 type="button"
                 onClick={option.action}
                 className={[
-                  'peridot-card-inner text-left transition-all duration-150 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#dfe9c8]/50',
-                  active ? 'peridot-action-card ring-2 ring-[#f5ecd2]/55' : 'peridot-surface-card hover:bg-[#143b27]',
+                  'peridot-card-inner text-left transition-all duration-150 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+                  active ? 'peridot-gold-active ring-2 ring-[#f5ecd2]/65' : 'peridot-surface-card peridot-gold-hover',
                 ].join(' ')}
               >
                 <span className="peridot-section-label block">{active ? 'Active theme' : 'Theme preset'}</span>

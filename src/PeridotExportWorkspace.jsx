@@ -1,11 +1,11 @@
 import React from 'react';
 
 function exportButtonClassName(variant = 'secondary') {
-  const base = 'rounded-[22px] px-5 py-4 text-left text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#dfe9c8]/60';
+  const base = 'rounded-[22px] px-5 py-4 text-left text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60';
   if (variant === 'primary') {
-    return `${base} border border-[#f2ead5]/70 bg-[#f2ead5] text-[#243222] shadow-[0_12px_24px_rgba(10,18,12,0.22)] hover:bg-[#fff8e8] hover:-translate-y-0.5`;
+    return `${base} border border-[#f2ead5]/70 bg-[#f2ead5] text-[#243222] shadow-[0_12px_24px_rgba(10,18,12,0.22)] hover:border-[#f2ead5] hover:bg-[#b58b42] hover:text-[#fff8e8] hover:shadow-[0_14px_30px_rgba(86,52,22,0.32)] hover:-translate-y-0.5`;
   }
-  return `${base} border border-[#dfe9c8]/35 bg-[#dfe9c8]/10 text-[#f7f2df] hover:border-[#f2ead5]/70 hover:bg-[#dfe9c8]/18 hover:-translate-y-0.5`;
+  return `${base} border border-[#dfe9c8]/35 bg-[#dfe9c8]/10 text-[#f7f2df] hover:border-[#f2ead5]/80 hover:bg-[#b58b42] hover:text-[#fff8e8] hover:shadow-[0_14px_30px_rgba(86,52,22,0.30)] hover:-translate-y-0.5`;
 }
 
 function scopeRow(label, value) {

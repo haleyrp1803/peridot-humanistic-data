@@ -32,10 +32,10 @@ export function PeridotVisualizationsWorkspace({
   ];
 
   const optionClass = (active) => [
-    'rounded-full border px-4 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#dfe9c8]/45',
+    'rounded-full border px-4 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
     active
-      ? 'border-[#f5ecd2]/70 bg-[#6d8b53] text-[#fbf7ea] shadow-[0_8px_18px_rgba(0,0,0,0.24)]'
-      : 'border-[#dfe9c8]/40 bg-[#dfe9c8]/10 text-[#fbf7ea] hover:bg-[#dfe9c8]/18',
+      ? 'border-[#f5ecd2]/80 bg-[#b58b42] text-[#fff8e8] shadow-[0_10px_24px_rgba(86,52,22,0.30)]'
+      : 'border-[#dfe9c8]/40 bg-[#dfe9c8]/10 text-[#fbf7ea] hover:border-[#f5ecd2]/80 hover:bg-[#b58b42] hover:text-[#fff8e8]',
   ].join(' ');
 
   return (
