@@ -16,9 +16,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`55fae50` — `Update routing contract after workspace promotions`** on branch **`main`**
+- **`b24e19a` — `Link Inspector directed route rows`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the interface-redesign planning pass, internal workspace-state work, Home/Data startup workspaces, hamburger-menu replacement, Theme / Visualizations / Export / Search full-workspace promotions, and the routing-contract update that reflects the current hybrid workspace state. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone and the completed dual-mode Inspector implementation cluster. The Inspector now uses compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for hamburger/Expand/linked-data navigation, sharing selection and multi-step Back history. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -33,7 +33,9 @@ The current state of the active `main` project includes:
   - **Export**
 - transitional legacy side-panel bridge behavior for:
   - **Timeline**
-  - **Inspector**
+- dual-mode Inspector behavior:
+  - compact side-panel summaries from visualization clicks
+  - full Inspector workspace from hamburger/Expand/linked-data navigation
 - working geographic and person-network visualization modes
 - compact Visualizations workspace selector for:
   - **Place Map**
@@ -59,9 +61,12 @@ The current state of the active `main` project includes:
 - export tooling for both images and tabular data
 - a true pre-settled **force-directed person-network layout** backed by `d3-force`
 - a **geographic-anchor person layout** that places correspondents by mappable location
-- inspector-internal navigation between people, places, and linked-letter detail pages
+- inspector-internal navigation between people, places, routes, clusters, and linked-letter detail pages
 - rich person/place profile summaries with related people, related places, directed routes, linked-letter counts, and selected uploaded fields
-- a working inspector **Back** button for internal navigation
+- compact Inspector summary tiles that open the full workspace
+- linked-letter source/target people and places that open full dossiers
+- directed route rows that open route/edge dossiers
+- a working Inspector **Back** button for multi-step internal navigation
 
 The codebase is functional, but it is still under active maintenance. The largest remaining structural risks are the transitional Timeline/Inspector bridge through `LeftControlPanel.jsx` and the remaining top-level orchestration responsibilities in `src/App.jsx`.
 
@@ -97,7 +102,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 
 - full-window Search & Filter workspace defining one active filtered dataset for map, Inspector, Timeline, Analytics, and Export
 - hover and click inspection
-- transitional side-panel Inspector for selected nodes, edges, clusters, and linked records
+- compact side-panel Inspector for selected nodes, edges, clusters, and linked records, plus a full Inspector evidence-dossier workspace
 - inspector-internal navigation between people and places
 - dedicated linked-letter detail pages inside Inspector
 - actionable cluster inspector lists
@@ -172,9 +177,11 @@ Current top-level navigation:
   - **Search & Filter** — global advanced-search/filter scope controls
   - **Theme** — appearance presets
   - **Export** — image and tabular export tools with live visualization preview
-- transitional bridge workflows for:
+- transitional bridge workflow for:
   - **Timeline** — currently still opens through the legacy side-panel bridge
-  - **Inspector** — still opens through the legacy side-panel bridge and automatically from node/edge/cluster clicks
+- dual-mode Inspector workflow:
+  - visualization node/edge/cluster clicks open compact Inspector
+  - hamburger **Inspector**, **Expand**, compact summary buttons, and linked-data clicks open the full Inspector workspace
 
 Important current behavior:
 
@@ -185,7 +192,7 @@ Important current behavior:
 - Analytics lives inside Visualizations rather than as a primary side-panel workflow
 - Search & Filter and Export are full workspaces, not side-panel tabs in the current hamburger workflow
 - Timeline is intentionally **not** being promoted to a full workspace; the preferred future design is a bottom timeline/scrubber integrated with Visualizations
-- Inspector remains the most important remaining side-panel bridge and should be planned carefully before promotion to a full evidence-dossier workspace
+- Inspector now uses the planned dual-mode model: compact side-panel summaries preserve click-and-glance context, while the full workspace supports evidence-dossier navigation
 - the old persistent rail and Controls path may still exist in `LeftControlPanel.jsx` as compatibility/dead code, but they are no longer the intended primary user-facing navigation model
 
 Screenshots in the repository likely need refresh because the interface has changed materially since the earlier rail/side-panel documentation baseline.
@@ -649,7 +656,7 @@ A later experimental branch, `maplibre-native-geographic-view`, explored a fulle
 Most major workflows are now full workspaces, but two transitional paths remain:
 
 - **Timeline** still uses the legacy side-panel bridge. It should eventually become a bottom timeline/scrubber integrated with Visualizations rather than a standalone full workspace.
-- **Inspector** still uses the legacy side-panel bridge and auto-opens from map/network selections. It should eventually become a full evidence-dossier workspace after a dedicated design contract.
+- **Inspector** now uses a dual-mode system: compact side-panel summaries auto-open from map/network selections, and a full evidence-dossier workspace opens from hamburger/Expand/linked-data navigation.
 
 ### Known fragile zones
 
@@ -680,11 +687,12 @@ If you are making changes, avoid broad mixed-purpose edits. Prefer bounded passe
 
 This repository includes internal maintenance and workflow documents that should be consulted before major edits:
 
-- **`MAINTAINERS_GUIDE.md`**
-- **`PROJECT_WORKFLOW_CHARTER.md`**
-- **`CHANGELOG.md`**
-- **`PERIDOT_INTERFACE_REDESIGN_PLAN.md`**
-- **`PERIDOT_ROUTING_CONTRACT_AUDIT.md`**
+- **`core_documentation/MAINTAINERS_GUIDE.md`**
+- **`core_documentation/PROJECT_WORKFLOW_CHARTER.md`**
+- **`core_documentation/CHANGELOG.md`**
+- **`planning_documents/PERIDOT_INTERFACE_REDESIGN_PLAN.md`**
+- **`planning_documents/PERIDOT_ROUTING_CONTRACT_AUDIT.md`**
+- **`planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md`**
 
 The full commit history, through the current documented baseline, is preserved in one place in **`CHANGELOG.md`**.
 
@@ -696,7 +704,7 @@ Likely near-term priorities include:
 - keep dormant MapLibre files untouched unless explicitly resuming that experiment
 - preserve the current workspace-first routing model
 - keep Timeline deferred until the bottom Visualizations timeline/scrubber design is ready
-- plan the Inspector full evidence-dossier workspace carefully before code changes
+- refine the implemented dual-mode Inspector workspace, including section anchors, breadcrumbs, and future selected-entity/filter actions
 - test the one-file Peridot CSV workflow and workbook importer against larger and messier datasets
 - refine upload validation wording if user testing shows confusion
 - treat the legacy three-file upload workflow as superseded by the one-file and mapped-import workflows
@@ -704,7 +712,7 @@ Likely near-term priorities include:
 - consider future safe metadata filters after the upload/mapping model settles
 - continue safe reduction of orchestration pressure inside `src/App.jsx`
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
-- refresh screenshots after the new workspace/hamburger interface stabilizes
+- refresh screenshots after the dual-mode Inspector and current workspace/hamburger interface stabilize
 - standardize visual export dimensions later if needed
 - preserve full commit history in `CHANGELOG.md`
 

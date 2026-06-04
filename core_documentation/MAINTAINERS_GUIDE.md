@@ -22,9 +22,9 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`55fae50` — `Update routing contract after workspace promotions`**
+- **`b24e19a` — `Link Inspector directed route rows`**
 
-This baseline records the active legacy D3/SVG Peridot path after the interface redesign planning pass, workspace-state introduction, Home/Data startup workspaces, hamburger-menu replacement, full-workspace promotions for Theme, Visualizations, Export, and Search & Filter, and the routing-contract update that records the current hybrid state. Earlier milestones include standardized one-file Peridot CSV upload, arbitrary CSV/TSV mapping, workbook/Excel import support, and Inspector person/place profile refinements.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone and the completed dual-mode Inspector implementation cluster. The Inspector now has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from hamburger/Expand, shared selection/history, linked-letter detail state, clickable linked people/places/letters/routes, and directed route row dossier navigation.
 
 Preceding data-input milestones include:
 
@@ -39,7 +39,7 @@ Preceding data-input milestones include:
 
 Recent interface-routing milestones include:
 
-- **`55fae50` — `Update routing contract after workspace promotions`**
+- **`b24e19a` — `Link Inspector directed route rows`**
 - **`82178c5` — `Promote Search to full workspace`**
 - **`2c53796` — `Promote Export to full workspace`**
 - **`8fc96b3` — `Extract Peridot workspace config`**
@@ -125,14 +125,15 @@ Extracted support modules in `src/`:
 - `src/MapLibreMapStage.jsx` — dormant gated preview path inherited from `main`
 - `src/mapStyleConfig.js` — dormant MapLibre preview style config
 
-Maintainer/workflow documents at repo root:
+Maintainer/workflow documents are currently organized under `core_documentation/` and `planning_documents/`:
 
-- `README.md`
-- `MAINTAINERS_GUIDE.md`
-- `PROJECT_WORKFLOW_CHARTER.md`
-- `CHANGELOG.md`
-- `PERIDOT_INTERFACE_REDESIGN_PLAN.md`
-- `PERIDOT_ROUTING_CONTRACT_AUDIT.md`
+- `core_documentation/README.md`
+- `core_documentation/MAINTAINERS_GUIDE.md`
+- `core_documentation/PROJECT_WORKFLOW_CHARTER.md`
+- `core_documentation/CHANGELOG.md`
+- `planning_documents/PERIDOT_INTERFACE_REDESIGN_PLAN.md`
+- `planning_documents/PERIDOT_ROUTING_CONTRACT_AUDIT.md`
+- `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md`
 
 ## Architectural summary
 
@@ -147,7 +148,7 @@ The current top-level interface includes:
 - Theme workspace
 - Export workspace
 - Timeline transitional side-panel bridge
-- Inspector transitional side-panel bridge
+- Inspector dual-mode compact/full evidence system
 
 The current Visualizations workspace includes:
 
@@ -168,7 +169,7 @@ The app includes:
 - graph derivation
 - interactive SVG-based rendering
 - year-based timeline filtering and playback through the current bridge
-- transitional side-panel inspection workflow
+- dual-mode Inspector workflow with compact side-panel summaries and a full evidence-dossier workspace
 - implemented Search & Filter consolidation defining one active filtered dataset for map, Inspector, Analytics, Timeline, and Export workflows
 - theme presets and visual controls in a full workspace
 - export tools for image and tabular outputs in a full workspace
@@ -367,6 +368,27 @@ Dormant development-only MapLibre preview stage inherited from `main` at `10051c
 
 Dormant MapLibre preview style configuration.
 
+### Current dual-mode Inspector architecture
+
+The Inspector now uses a dual-mode model:
+
+- visualization clicks open a compact side-panel Inspector for at-a-glance summaries;
+- hamburger **Inspector** and compact **Expand** open the full Inspector workspace;
+- compact and full modes share the same selected Inspector state and multi-step Back history;
+- `[x]`, Escape, and blank-map click close the appropriate Inspector surface and return to Visualizations;
+- person/place links, linked-letter detail pages, linked-letter source/target people and places, compact summary tiles, and directed route rows all route through the full Inspector workspace where appropriate.
+
+Important implementation boundaries:
+
+- `App.jsx` owns Inspector presentation mode, selected selection, history, and linked-person/place/letter/route navigation helpers.
+- `InspectorPanel.jsx` owns the shared compact/full Inspector content shell and top control row.
+- `InspectorBodyRouter.jsx` routes resolved Inspector state, including `letter-detail` and synthetic route/edge detail selections.
+- `InspectorNodeView.jsx` renders person/place profile summaries, compact summary buttons, related people/places, directed route rows, and linked-letter entry points.
+- `InspectorEdgeView.jsx` renders edge/route dossiers and linked-letter entry points.
+- `InspectorClusterView.jsx` renders compact/full cluster evidence and member navigation.
+
+Future Inspector work should preserve compact/full shared state, Back history, and the current visualization mounted underneath. Do not re-split compact and full Inspector into separate state systems.
+
 ### `src/InspectorConnectedCorrespondents.jsx`
 
 Inspector navigation component for person-to-person movement.
@@ -444,11 +466,15 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 ### Inspector capabilities
 
-- hover and click inspection
-- linked records browsing
-- dedicated linked-letter detail pages inside Inspector
-- internal navigation between people, places, and linked letters
-- Back button support for inspector-internal navigation
+- compact side-panel Inspector auto-opens from visualization node, edge, and cluster clicks
+- full Inspector workspace opens from hamburger **Inspector**, compact **Expand**, compact summary buttons, and Inspector-internal linked-data clicks
+- shared Inspector selection and multi-step Back history across compact and full modes
+- `[x]`, Escape, blank-map close, and Expand behavior
+- person/place profile summaries with role-grouped related people/places, directed routes, linked-letter counts, selected uploaded fields, and custom metadata where available
+- dedicated linked-letter detail pages inside shared Inspector state/history
+- linked-letter source/target people and places open full person/place dossiers
+- directed route rows open route/edge dossiers with linked letters
+- compact summary tiles open the full workspace for linked letters, related people, related places, and routes
 - actionable cluster inspector views
 - cluster members grouped by place and ordered by visible volume
 
@@ -639,7 +665,7 @@ Current routing state:
 - hamburger-triggered labeled menu is the intended navigation model
 - the persistent rail is no longer the intended primary visible navigation surface
 - Timeline remains transitional and side-panel-based for now
-- Inspector remains transitional and side-panel-based for now
+- Inspector is now dual-mode: compact side panel from visualization clicks plus full workspace from hamburger/Expand/linked-data navigation
 - the legacy shared side-panel shell should be treated as a compatibility layer until Timeline and Inspector are redesigned
 
 Recent committed behavior includes:
@@ -652,7 +678,7 @@ Recent committed behavior includes:
 - Theme promoted to full workspace
 - routing contract updated after workspace promotions
 - Timeline deliberately deferred as a future bottom Visualizations timeline/scrubber
-- Inspector deliberately deferred pending a full evidence-dossier design contract
+- Inspector full evidence-dossier workspace implemented in dual-mode form; future work should refine content density, breadcrumbs, section anchors, and visual polish
 
 ## Deferred / rolled-back work
 
@@ -747,18 +773,18 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`55fae50` — `Update routing contract after workspace promotions`**
+- current documented baseline: **`b24e19a` — `Link Inspector directed route rows`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
-- the current hamburger/workspace structure is committed; the shared side panel remains as a transitional bridge for Timeline and Inspector
+- the current hamburger/workspace structure is committed; the shared side panel remains as a transitional bridge for Timeline and as the compact Inspector surface
 - `InspectorPanel.jsx` is content-only
 - `LeftControlPanel.jsx` owns the legacy shared panel shell and transitional Timeline/Inspector bridge; Home/Data/Visualizations/Search/Theme/Export are full workspaces
 - `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, `peridotCsvValidation.js`, `peridotColumnMapping.js`, `PeridotColumnMappingModal.jsx`, and `peridotWorkbookParsing.js` own the current template upload, arbitrary table mapping, validation, and workbook-helper boundaries
-- current cluster and Inspector profile features are committed, not deferred
+- current cluster, Inspector profile, dual-mode Inspector, linked-letter history, clickable linked people/places, compact summary tile, and route-row features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
 - documentation should preserve the full commit trajectory carefully in `CHANGELOG.md`
 - the implemented Search & Filter panel consolidates global filtering and defines the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it

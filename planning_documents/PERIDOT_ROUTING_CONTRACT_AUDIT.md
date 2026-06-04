@@ -1,6 +1,6 @@
 # Peridot Routing Contract Audit
 
-**Draft status:** Routing and workspace transition audit updated after commit `55fae50` — `Update routing contract after workspace promotions`.
+**Draft status:** Routing and workspace transition audit updated after commit `b24e19a` — `Link Inspector directed route rows`.
 
 **Purpose:** Document how Peridot’s current navigation and workspace routing works, how it should ideally work after the interface redesign, and how to transition safely from the current hybrid state to the intended workspace-first architecture.
 
@@ -35,25 +35,34 @@ The next stage should not be a broad deletion pass. It should be a staged transi
 Current verified baseline:
 
 ```text
-55fae50 — Update routing contract after workspace promotions
+b24e19a — Link Inspector directed route rows
 ```
 
-Recent redesign sequence:
+Recent redesign and Inspector sequence:
 
 ```text
+b24e19a Link Inspector directed route rows
+ed0f2c7 Make compact Inspector summary tiles open workspace
+ace7f52 Fix linked letter person and place navigation
+0a1b57a Link letter detail people and places
+6f67ac7 Move linked letters into Inspector history
+6c38fac Open Inspector person and place links in workspace
+6994b35 Reduce compact Inspector content
+f2336f8 Apply Inspector shell palette refinements
+45d1c8b Adjust Inspector clickable object palette
+e02a4a3 Refine dual-mode Inspector visual treatment
+224bf5d Refine dual-mode Inspector close and expand behavior
+7a9e310 Route menu Inspector away from compact panel
+99c0b99 Track compact Inspector presentation mode
+c2808ce Add inert Inspector presentation mode state
+aa90665 Organize project documentation
+3377274 Prepare shared Inspector content boundary
+b7e3edd Add Inspector workspace design contract
+b47fda2 Refresh documentation for workspace routing milestone
 55fae50 Update routing contract after workspace promotions
 82178c5 Promote Search to full workspace
 2c53796 Promote Export to full workspace
 8fc96b3 Extract Peridot workspace config
-9cd3f3f Clean workspace routing comments
-9240745 Fix Visualizations workspace export
-25fc046 Extract Peridot visualizations workspace
-fcf6bb6 Extract Peridot data workspace
-9428766 Extract Peridot theme workspace
-18c2912 Extract Peridot home workspace
-6c16403 Extract Peridot hamburger menu
-30b114b Add Peridot routing contract audit
-8384dee Fit Analytics workspace preview
 ```
 
 Current source-of-truth branch:
@@ -111,7 +120,7 @@ The following are still routed through the existing `LeftControlPanel.jsx` share
 | Workflow | Current route | Notes |
 |---|---|---|
 | Timeline | Hamburger → side-panel tab | Still panel-based and date/playback-coupled. The intended direction is now a bottom visualizations timeline/scrubber, not a standalone full workspace. |
-| Inspector | Selection click or hamburger → side-panel tab | Most fragile remaining side-panel workflow. |
+| Inspector | Visualization click → compact side panel; hamburger/Expand/linked data → full workspace | Implemented dual-mode evidence workflow. |
 
 Analytics is now conceptually part of the Visualizations workspace. It should no longer be treated as primarily side-panel-based, even though old side-panel Analytics code remains in `LeftControlPanel.jsx`.
 
@@ -147,7 +156,7 @@ The hamburger menu should be treated as the current primary user-facing navigati
 | Search & Filter | Search workspace | `workspaceMode = search`; side panel closed | Stable after promotion |
 | Timeline | Legacy side panel | `workspaceMode = visualizations`; `activePanelTab = timeline`; side panel open | Transitional |
 | Analytics | Visualizations workspace | `workspaceMode = visualizations`; `visualizationsWorkspacePanel = analytics`; side panel closed | Stable after sizing fixes |
-| Inspector | Legacy side panel | `workspaceMode = inspector`; `activePanelTab = inspector`; side panel open | Transitional and fragile |
+| Inspector | Full Inspector workspace from menu; compact side panel from visualization clicks | `inspectorPresentationMode = workspace` for menu/Expand/linked data; `compact` for visualization clicks | Implemented dual-mode; still fragile because it preserves compact side-panel auto-open |
 | Theme | Theme workspace | `workspaceMode = theme`; side panel closed | Stable |
 | Export | Export workspace | `workspaceMode = export`; side panel closed | Stable after promotion |
 
@@ -166,7 +175,7 @@ Inspector → Inspector workspace / evidence dossier
 
 ### 4.3 Inspector special case
 
-Inspector is different from other menu items. It can be opened intentionally from the hamburger menu, but it is also opened automatically by interactions in the visualization layer:
+Inspector is different from other menu items. It now opens as a full workspace from the hamburger menu, but it is also opened automatically as a compact side panel by interactions in the visualization layer:
 
 - node click;
 - edge/route click;
@@ -406,14 +415,17 @@ Export has already moved out of the legacy panel. Future Export work should be r
 
 ### 11.1 Current route
 
-Inspector currently opens in two ways:
+Inspector currently opens in two modes:
 
 ```text
 User-driven:
-Hamburger → Inspector → legacy side panel Inspector view
+Hamburger → Inspector → full Inspector workspace
 
 Interaction-driven:
-Node / edge / cluster click → Inspector side panel auto-opens
+Node / edge / cluster click → compact side-panel Inspector auto-opens
+
+Inspector-internal:
+Expand / compact summary tile / linked person-place-letter-route click → full Inspector workspace
 ```
 
 ### 11.2 Current role
@@ -426,19 +438,23 @@ Inspector is now the evidence-reading system for:
 - clusters;
 - linked letters;
 - person/place navigation;
-- internal Back navigation.
+- directed route row navigation;
+- compact at-a-glance summaries;
+- full evidence-dossier reading;
+- internal multi-step Back navigation.
 
 ### 11.3 Current risk
 
 Inspector is the most fragile remaining workflow because it depends on old shared-panel compatibility paths. A previous attempt to rename or clean up old left/right sidebar naming broke Inspector auto-open behavior. Therefore, Inspector routing must be treated as high-risk.
 
-### 11.4 Ideal route
+### 11.4 Implemented dual-mode route
 
-The long-term model should be:
+The implemented model is now:
 
 ```text
 Selection in visualization
-  → compact selection affordance, if needed
+  → compact side-panel Inspector
+  → Expand / linked data / summary tiles
   → full Inspector workspace / evidence dossier
 ```
 
@@ -448,7 +464,7 @@ and:
 Hamburger → Inspector → full Inspector workspace
 ```
 
-The full Inspector workspace should support:
+The full Inspector workspace now supports:
 
 - profile header;
 - entity-type badge;
@@ -464,7 +480,17 @@ The full Inspector workspace should support:
 
 ### 11.5 Transition recommendation
 
-Do not promote Inspector until after one or more low-risk routing/component extractions. The recommended sequence is:
+The first dual-mode Inspector implementation is complete through `b24e19a`. Future work should be refinement and hardening rather than a wholesale promotion pass.
+
+Recommended future refinements include:
+
+1. add optional section anchors so compact summary tiles can open a specific full-workspace section;
+2. add breadcrumbs or a visible navigation trail;
+3. refine route-detail dossier content;
+4. add selected-entity filter actions through Search & Filter;
+5. only then consider deleting obsolete legacy side-panel paths.
+
+Historical recommended sequence before implementation was:
 
 1. document routing contract;
 2. extract hamburger menu from `App.jsx`;
@@ -675,14 +701,16 @@ Recommended order:
 
 **Type:** behavior + visual
 
-**Goal:** Move the Inspector from side panel into a full evidence-dossier workspace while preserving auto-open from map/network clicks.
+**Status:** Implemented as a dual-mode Inspector through `b24e19a`.
+
+**Goal:** Move the Inspector from side panel into a full evidence-dossier workspace while preserving compact auto-open from map/network clicks.
 
 **Highest-risk acceptance tests:**
 
 ```text
-Node click opens Inspector workspace.
-Edge click opens Inspector workspace.
-Cluster click opens Inspector workspace.
+Node click opens compact Inspector.
+Edge click opens compact Inspector.
+Cluster click opens compact Inspector.
 Contained cluster member opens detail.
 Linked person/place/letter navigation works.
 Back behavior works.
@@ -742,9 +770,9 @@ Timeline should eventually become a bottom visualizations timeline/scrubber rath
 
 Recommended default: defer this until after the Visualizations and Inspector workspaces stabilize.
 
-### 16.2 How should Inspector promotion work?
+### 16.2 How should Inspector refinement work?
 
-Inspector remains the highest-risk and highest-value remaining migration. It should be planned as a full evidence-dossier workspace before code promotion begins.
+Inspector's initial dual-mode migration is implemented. It remains a high-risk and high-value area, so future refinement should be narrow: section anchors, breadcrumbs, route dossier improvements, and selected-entity actions should be separate passes.
 
 ### 16.3 Should the old side panel be deleted?
 
@@ -756,10 +784,10 @@ Not yet. It still carries Search, Timeline, Export, and Inspector. The correct a
 
 The next implementation pass should not be another easy workspace promotion. The remaining major side-panel workflow is Inspector, and that needs a design contract before code changes. Timeline should also be deferred because the preferred design is a bottom Visualizations timeline/scrubber, not a direct workspace promotion.
 
-Recommended next planning pass:
+Recent completed planning/implementation pass:
 
 ```text
-Draft Inspector Workspace Design Contract
+Draft and implement Inspector Workspace Design Contract
 ```
 
 ### Classification
@@ -794,10 +822,10 @@ Analytics refactor
 Aesthetic overhaul
 ```
 
-### Acceptance test for the Inspector planning pass
+### Acceptance test for future Inspector refinement passes
 
 ```text
-The team can describe how each Inspector selection type should render in a full workspace, how map/network clicks should open it, how Back/breadcrumb behavior should work, and which current side-panel behaviors must be preserved during migration.
+The team can describe exactly what one Inspector behavior or visual refinement should change, how compact/full modes should preserve shared state/history, and how map/network click auto-open should be verified afterward.
 ```
 
 ## 18. Summary recommendation
@@ -808,9 +836,9 @@ The correct immediate path is conservative:
 
 ```text
 Keep Timeline deferred until the bottom visualizations timeline/scrubber design is ready
-→ plan Inspector workspace carefully
-→ promote Inspector only after its evidence-dossier contract is approved
-→ remove legacy side-panel code only after no critical workflow depends on it
+→ preserve the implemented dual-mode Inspector
+→ refine full Inspector workspace behavior in narrow passes
+→ remove legacy side-panel code only after Timeline and compact Inspector no longer depend on it
 ```
 
 The old side panel should not be broadly deleted yet. It still carries Timeline and Inspector, and Inspector remains a fragile auto-open interaction path.

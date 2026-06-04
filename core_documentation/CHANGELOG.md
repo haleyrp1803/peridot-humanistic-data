@@ -2,9 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`55fae50` — `Update routing contract after workspace promotions`** on branch **`main`**
+- **`b24e19a` — `Link Inspector directed route rows`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the interface redesign planning pass, workspace-state introduction, Home/Data startup workspaces, hamburger-menu replacement, full-workspace promotions for Theme, Visualizations, Export, and Search & Filter, and the routing-contract update that records the current hybrid state. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, and Inspector profile/navigation refinement.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone and the completed dual-mode Inspector implementation cluster. The current app is workspace-first for Home, Data, Visualizations, Search & Filter, Theme, Export, and the full Inspector workspace, while retaining compact side-panel Inspector summaries for visualization clicks and retaining Timeline as a transitional side-panel bridge. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, and Inspector profile/navigation refinement.
 
 The current Data Inputs / import workflow now provides:
 
@@ -21,7 +21,18 @@ The current Data Inputs / import workflow now provides:
 - clearer mapping cancel/import actions;
 - removal of the public legacy Geography / Raw Data / Person Metadata three-file upload workflow.
 
-The current Inspector workflow now provides richer person/place profile pages, linked-letter detail navigation, visible user-selected fields on linked letter records, selected-field summaries on entity profiles, directed route summaries split by source/target role, and better place-profile fallback resolution when a clicked place comes from linked-record metadata rather than the current graph node set.
+The current Inspector workflow now provides a dual-mode evidence system:
+
+- visualization clicks open a compact side-panel Inspector for at-a-glance evidence;
+- hamburger **Inspector** and compact **Expand** open the full evidence-dossier workspace;
+- compact and full modes share the same selected Inspector state and multi-step Back history;
+- `[x]`, Escape, and blank-map click close the appropriate Inspector surface and return to Visualizations;
+- compact summary tiles open the full workspace for the selected person/place;
+- linked person/place navigation opens the full workspace and resolves against the correct people/place graph;
+- linked-letter detail pages participate in the shared Inspector history;
+- linked-letter source/target people and places are clickable and return through Back;
+- directed route rows open route/edge dossier views with linked letters;
+- person/place profile pages show summary metrics, related people, related places, directed routes, linked-letter counts, selected uploaded fields, and dedicated linked-letter detail pages.
 
 The current Search & Filter workflow uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filtering, predictive suggestions, route-place and route-people filters, year text inputs with suggestions, and pre-update status feedback. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
 
@@ -37,13 +48,30 @@ The current interface/workspace workflow now provides:
 - Theme promoted to a full workspace;
 - Data workspace using the unified CSV/TSV/XLSX/XLS uploader;
 - Timeline retained as a transitional side-panel bridge pending a later bottom Visualizations timeline/scrubber design;
-- Inspector retained as the main transitional side-panel bridge pending a later full evidence-dossier design contract.
+- Inspector now implemented as a dual-mode system: compact side-panel summaries for visualization clicks plus a full evidence-dossier workspace from hamburger/Expand, sharing selection and history.
 
 The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment remains set aside rather than merged into the active implementation path.
 
 ---
 
 ## Current milestone notes
+
+### Dual-mode Inspector workspace milestone
+
+- Added `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md` to define the compact/full Inspector model.
+- Prepared `InspectorPanel.jsx` as a reusable Inspector content boundary.
+- Added Inspector presentation modes for `closed`, `compact`, `workspace`, and `empty-workspace`.
+- Changed visualization clicks so nodes, edges, and clusters open the compact side-panel Inspector.
+- Changed hamburger **Inspector** so it opens the full Inspector workspace rather than the compact side panel.
+- Added compact **Expand Inspector** behavior and `[x]`/Escape close behavior for compact and full modes.
+- Kept the most recently used Visualizations state mounted underneath the full Inspector workspace.
+- Refined the dual-mode Inspector visual treatment with a Peridot/moss/cream palette.
+- Reduced compact Inspector content so it functions as an at-a-glance summary rather than a full dossier.
+- Moved linked-letter detail into shared Inspector state/history.
+- Made linked-letter source/target people and places clickable.
+- Made compact summary tiles open the full Inspector workspace for the same selected entity.
+- Made directed route rows open route/edge Inspector dossiers with linked letters.
+- Current implemented Inspector baseline: **`b24e19a` — `Link Inspector directed route rows`**.
 
 ### Interface redesign and workspace-routing milestone
 
@@ -122,7 +150,22 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 
 ## Current branch status
 
-- **`55fae50` — `Update routing contract after workspace promotions`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`b24e19a` — `Link Inspector directed route rows`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`ed0f2c7` — `Make compact Inspector summary tiles open workspace`** makes compact person/place summary tiles visibly open the full Inspector workspace.
+- **`ace7f52` — `Fix linked letter person and place navigation`** fixes linked-letter source/target person/place navigation and Back placement.
+- **`0a1b57a` — `Link letter detail people and places`** makes linked-letter source/target people and places clickable.
+- **`6f67ac7` — `Move linked letters into Inspector history`** moves linked-letter detail into shared Inspector state/history.
+- **`6c38fac` — `Open Inspector person and place links in workspace`** makes Inspector-internal person/place links open the full workspace.
+- **`6994b35` — `Reduce compact Inspector content`** makes the compact side-panel Inspector summary-oriented.
+- **`f2336f8` — `Apply Inspector shell palette refinements`** applies Inspector shell palette refinements.
+- **`45d1c8b` — `Adjust Inspector clickable object palette`** adjusts the nested Inspector clickable-object palette.
+- **`e02a4a3` — `Refine dual-mode Inspector visual treatment`** refines compact/full Inspector visual treatment.
+- **`224bf5d` — `Refine dual-mode Inspector close and expand behavior`** refines Inspector close, Escape, blank-map, and Expand behavior.
+- **`7a9e310` — `Route menu Inspector away from compact panel`** changes hamburger Inspector routing away from the compact side panel.
+- **`99c0b99` — `Track compact Inspector presentation mode`** tracks compact Inspector presentation state.
+- **`c2808ce` — `Add inert Inspector presentation mode state`** adds Inspector presentation-mode state.
+- **`3377274` — `Prepare shared Inspector content boundary`** prepares the reusable Inspector content boundary.
+- **`b7e3edd` — `Add Inspector workspace design contract`** adds the Inspector workspace contract.
 - **`82178c5` — `Promote Search to full workspace`** promoted Search & Filter out of the legacy side-panel bridge.
 - **`2c53796` — `Promote Export to full workspace`** promoted Export into a full workspace with a live export preview.
 - **`8fc96b3` — `Extract Peridot workspace config`** moved workspace constants/helpers out of `App.jsx`.
@@ -170,11 +213,29 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided for this documentation pass, newest first. The newest rows reflect the sync ritual ending at `0f72182`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided for this documentation pass, newest first. The newest rows reflect the sync ritual ending at `b24e19a`.
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
-| 2026-06-02 | `55fae50` | (HEAD -> main, origin/main, origin/HEAD) | Update routing contract after workspace promotions |
+| 2026-06-04 | `b24e19a` | (HEAD -> main, origin/main, origin/HEAD) | Link Inspector directed route rows |
+| 2026-06-04 | `ed0f2c7` |  | Make compact Inspector summary tiles open workspace |
+| 2026-06-04 | `ace7f52` |  | Fix linked letter person and place navigation |
+| 2026-06-04 | `0a1b57a` |  | Link letter detail people and places |
+| 2026-06-04 | `6f67ac7` |  | Move linked letters into Inspector history |
+| 2026-06-04 | `6c38fac` |  | Open Inspector person and place links in workspace |
+| 2026-06-04 | `6994b35` |  | Reduce compact Inspector content |
+| 2026-06-04 | `f2336f8` |  | Apply Inspector shell palette refinements |
+| 2026-06-04 | `45d1c8b` |  | Adjust Inspector clickable object palette |
+| 2026-06-04 | `e02a4a3` |  | Refine dual-mode Inspector visual treatment |
+| 2026-06-04 | `224bf5d` |  | Refine dual-mode Inspector close and expand behavior |
+| 2026-06-04 | `7a9e310` |  | Route menu Inspector away from compact panel |
+| 2026-06-04 | `99c0b99` |  | Track compact Inspector presentation mode |
+| 2026-06-04 | `c2808ce` |  | Add inert Inspector presentation mode state |
+| 2026-06-04 | `aa90665` |  | Organize project documentation |
+| 2026-06-04 | `3377274` |  | Prepare shared Inspector content boundary |
+| 2026-06-04 | `b7e3edd` |  | Add Inspector workspace design contract |
+| 2026-06-04 | `b47fda2` |  | Refresh documentation for workspace routing milestone |
+| 2026-06-02 | `55fae50` |  | Update routing contract after workspace promotions |
 | 2026-06-02 | `82178c5` |  | Promote Search to full workspace |
 | 2026-06-02 | `2c53796` |  | Promote Export to full workspace |
 | 2026-06-02 | `8fc96b3` |  | Extract Peridot workspace config |

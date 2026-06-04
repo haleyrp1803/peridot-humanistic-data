@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 Current clean baseline:
 
 ```text
-55fae50 — Update routing contract after workspace promotions
+b24e19a — Link Inspector directed route rows
 ```
 
 Current branch note:
@@ -278,7 +278,11 @@ Current notable decisions:
 - The hamburger-triggered labeled menu is the intended primary navigation surface; the old persistent icon rail is legacy/compatibility code unless explicitly revived.
 - Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces.
 - Timeline should not be promoted to a standalone full workspace; the preferred future direction is a bottom timeline/scrubber integrated with Visualizations.
-- Inspector remains the main transitional side-panel bridge and should be promoted only after a careful full evidence-dossier design contract.
+- Inspector is now dual-mode: visualization clicks open compact side-panel summaries, while hamburger **Inspector**, compact **Expand**, compact summary buttons, and linked-data clicks open the full Inspector workspace.
+- Compact and full Inspector modes must share one selection state and multi-step Back history.
+- Linked-letter detail pages are part of shared Inspector state/history, not a local-only subview.
+- Compact summary tiles should remain at-a-glance affordances that open the full workspace for deeper reading.
+- Directed route rows should open route/edge Inspector dossiers and participate in Back history.
 - Analytics is conceptually part of Visualizations, not an independent side-panel-first workflow.
 - The ordinary legacy Geography / Raw Data / Person Metadata three-file workflow is superseded by the one-file template upload and mapped arbitrary-table import workflows; do not reintroduce it unless a specific recovery or compatibility need is identified.
 
@@ -430,9 +434,9 @@ The new chat should be told:
 - The current fixed basemap is `countries50m`.
 - The app uses a hamburger-triggered labeled menu and full workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export.
 - Timeline remains a transitional side-panel bridge and is later intended to become a bottom Visualizations timeline/scrubber.
-- Inspector remains a transitional side-panel bridge and should eventually become a full evidence-dossier workspace after a dedicated design contract.
-- `LeftControlPanel.jsx` owns the legacy shared side-panel shell and transitional Timeline/Inspector bridge.
-- `InspectorPanel.jsx` is content-only.
+- Inspector is dual-mode: compact side-panel summaries are still used for visualization clicks, and the full evidence-dossier workspace is implemented for hamburger/Expand/linked-data navigation.
+- `LeftControlPanel.jsx` owns the legacy shared side-panel shell, the transitional Timeline bridge, and compact Inspector presentation.
+- `InspectorPanel.jsx` is the shared compact/full Inspector content shell.
 - Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed features.
 - The compatibility path for inspector auto-open is fragile; do not rename it casually.
 - Documentation updates are batched, not performed after every small code commit.
@@ -444,4 +448,4 @@ The new chat should be told:
 - Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout.
 - Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, workbook import with unique-ID joins, validation popup, and persistent latest-upload summary.
 - Analytics expanded chart views currently use a dark translucent green backdrop with cool off-white text/borders and a white/cream chart card.
-- Inspector person/place profiles currently show profile summaries, role-grouped related people/places, directed route summaries, selected uploaded fields, and linked-letter detail navigation.
+- Inspector person/place profiles currently show profile summaries, compact summary buttons, role-grouped related people/places, directed route summaries, selected uploaded fields, shared linked-letter detail navigation, clickable linked people/places, and route-row dossier navigation.

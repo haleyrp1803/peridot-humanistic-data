@@ -1,9 +1,30 @@
 # Peridot Inspector Workspace Design Contract
 
-**Document status:** Planning / design contract for the Inspector workspace migration.  
-**Prepared after:** `55fae50` — `Update routing contract after workspace promotions`.  
-**Change type:** Documentation / planning.  
+**Document status:** Implemented design contract baseline, with future refinements deferred.  
+**Prepared after:** `55fae50` — `Update routing contract after workspace promotions`; updated after `b24e19a` — `Link Inspector directed route rows`.  
+**Change type:** Documentation / planning; implementation status update.  
 **Purpose:** Define how the current side-panel Inspector should evolve into a dual-mode Inspector system with both compact side-panel summaries and a full evidence-dossier workspace.
+
+---
+
+## 0. Implementation status as of `b24e19a`
+
+The initial dual-mode Inspector design is implemented.
+
+Committed behavior now includes:
+
+- visualization clicks open the compact side-panel Inspector;
+- hamburger **Inspector** opens the full Inspector workspace;
+- compact **Expand Inspector** opens the full workspace with the same selection;
+- compact summary tiles open the full workspace for the same selected person/place;
+- compact and full modes share selected Inspector state and multi-step Back history;
+- linked-letter detail pages are part of shared Inspector state/history;
+- linked-letter source/target people and places open full person/place dossiers;
+- directed route rows open route/edge dossiers with linked letters;
+- `[x]`, Escape, and blank-map click close the appropriate Inspector surface and return to Visualizations;
+- full Inspector opens over the most recently used Visualizations state rather than destructively rebuilding it.
+
+Future refinements should be narrow and may include section anchors for compact summary tiles, breadcrumbs/navigation trails, richer synthetic route dossiers, and selected-entity filter actions through Search & Filter.
 
 ---
 
@@ -20,10 +41,12 @@ Add the full workspace as an expansion of the same Inspector selection state.
 
 The current compact side-panel Inspector remains the default response to user interaction with a visualization. Users should be able to click a node, edge, cluster, or linked-data item and immediately see an at-a-glance Inspector in the side panel, exactly as the current workflow already supports.
 
-The new full Inspector workspace should be opened either:
+The full Inspector workspace is opened either:
 
-- by choosing **Inspector** from the hamburger menu; or
-- by clicking an **Expand Inspector** action from the compact side panel.
+- by choosing **Inspector** from the hamburger menu;
+- by clicking an **Expand Inspector** action from the compact side panel;
+- by clicking compact summary tiles; or
+- by following linked people, places, letters, or route rows inside the Inspector.
 
 Both modes should inspect the same selected item and should share the same internal navigation/back history.
 
@@ -222,13 +245,13 @@ Recommended first implementation detail:
 
 ### Core navigation rule
 
-Following linked data should navigate within the current Inspector presentation mode.
+Following linked data now opens the full Inspector workspace while preserving shared Back history.
 
 Examples:
 
 ```text
 Compact person view → linked letter
-→ linked letter opens in compact Inspector
+→ linked letter opens in full Inspector workspace
 → Back returns to person
 ```
 
@@ -664,6 +687,8 @@ Do not touch dormant MapLibre files as part of Inspector work.
 
 ### Pass 1 — Document Inspector workspace contract
 
+**Status:** Complete.
+
 **Type:** Documentation / planning  
 **Goal:** Add this contract to the repository before code changes.  
 **Files likely in scope:** `PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md`; optional later references in `README.md`, `MAINTAINERS_GUIDE.md`, `CHANGELOG.md`, and `PERIDOT_ROUTING_CONTRACT_AUDIT.md`.  
@@ -671,11 +696,15 @@ Do not touch dormant MapLibre files as part of Inspector work.
 
 ### Pass 2 — Audit current Inspector code
 
+**Status:** Complete.
+
 **Type:** Structural audit only  
 **Goal:** Read current `App.jsx`, `LeftControlPanel.jsx`, `InspectorPanel.jsx`, `InspectorBodyRouter.jsx`, and Inspector view components in full to identify exact state ownership and prop flow.  
 **Acceptance test:** The team can identify the exact state variables/functions responsible for selection, side-panel opening, Inspector history, Back behavior, and visualization preservation.
 
 ### Pass 3 — Extract reusable Inspector presentation boundary
+
+**Status:** Complete.
 
 **Type:** Structural  
 **Goal:** Make current Inspector content reusable by both compact and full modes without changing behavior.  
@@ -684,17 +713,23 @@ Do not touch dormant MapLibre files as part of Inspector work.
 
 ### Pass 4 — Add compact/full presentation mode
 
+**Status:** Complete.
+
 **Type:** Behavior  
 **Goal:** Add `compact` vs `workspace` Inspector presentation while preserving current selection semantics.  
 **Acceptance test:** Node/edge/cluster clicks open compact Inspector; hamburger Inspector opens full workspace; Expand opens full workspace with the same item; `[x]` returns to Visualizations.
 
 ### Pass 5 — Add full Inspector workspace layout
 
+**Status:** Complete as an initial minimal workspace shell plus later visual treatment.
+
 **Type:** Visual / behavior, split if needed  
 **Goal:** Build full dossier layout using existing Inspector body components first, then progressively improve entity-specific layouts.  
 **Acceptance test:** Person, place, route, cluster, and linked-letter selections render in full workspace; Back works; close returns to Visualizations.
 
 ### Pass 6 — Refine compact side-panel content
+
+**Status:** Complete as an at-a-glance compact summary. Future section-anchor refinement remains optional.
 
 **Type:** Visual  
 **Goal:** Reduce compact side-panel content to at-a-glance summaries while linking to full workspace for deep reading.  
@@ -762,3 +797,16 @@ For future work, explain the Inspector redesign as follows:
 ```text
 The Peridot Inspector should be dual-mode. Visualization clicks open the compact side-panel Inspector. Hamburger → Inspector opens the full evidence-dossier workspace. The compact side panel can expand into the full workspace. Both modes share the same Inspector selection state and multi-step navigation history. Both modes include an [x] close button that returns to the most recently used Visualizations state underneath. The full workspace should reuse existing Inspector content components where possible rather than duplicating Inspector logic.
 ```
+
+
+---
+
+## 17. Post-implementation refinement backlog
+
+The following items are intentionally deferred and should be handled as separate bounded passes:
+
+1. **Section anchors from compact summary tiles.** Summary buttons currently open the full dossier; a later pass may scroll/focus the relevant section.
+2. **Breadcrumb trail.** Back works through the shared history stack, but a visible breadcrumb trail can improve orientation in the full workspace.
+3. **Richer route dossiers.** Directed route rows now open route/edge dossiers; later work can improve route-specific people/place summaries.
+4. **Inspector-to-Search actions.** Future actions such as “filter to this person/place/route” should route through Search & Filter state intentionally.
+5. **Timeline independence.** Inspector refinements should not disturb the current Timeline bridge or future bottom-scrubber plan.
