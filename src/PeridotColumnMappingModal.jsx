@@ -8,6 +8,7 @@ import {
   validatePeridotColumnMapping,
 } from './peridotColumnMapping.js';
 import {
+  buildPeridotRowsFromWorkbookMapping,
   buildWorkbookCustomFieldSelectionsForSheet,
   getLetterIdJoinMatchSummary,
   getUsableWorkbookSheets,
@@ -21,22 +22,24 @@ import {
   suggestWorkbookCoreMappings,
   validatePeridotWorkbookMapping,
 } from './peridotWorkbookMapping.js';
+import { auditPeridotDataCapabilities } from './peridotDataCapabilityAudit.js';
 
 const SINGLE_TABLE_STEP_KEYS = ['preview', 'core', 'inspector', 'review'];
 const WORKBOOK_STEP_KEYS = ['workbook-preview', 'workbook-setup', 'workbook-core', 'workbook-inspector', 'workbook-review'];
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
-  const base = 'rounded-full px-4 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60 disabled:cursor-not-allowed disabled:opacity-55';
-  if (variant === 'primary') {
-    return `${base} border border-[#dfe9c8]/55 bg-[#6d8b53] text-[#fbf7ea] shadow-[0_8px_18px_rgba(0,0,0,0.22)] hover:border-[#f5ecd2]/85 hover:bg-[#b58b42] hover:text-[#fff8e8] hover:shadow-[0_12px_28px_rgba(86,52,22,0.32)]`;
-  }
-  if (variant === 'danger') {
-    return `${base} border border-[#d6a36a]/70 bg-[#8a4f34] text-[#fff5e6] hover:border-[#f5ecd2]/80 hover:bg-[#b58b42] hover:text-[#fff8e8]`;
-  }
+  const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
+  const variants = {
+    primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_rgba(0,0,0,0.28)] disabled:cursor-not-allowed disabled:opacity-50',
+    secondary: 'border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)] disabled:cursor-not-allowed disabled:opacity-50',
+    ghost: 'bg-transparent text-[var(--muted-text)] hover:bg-[var(--ghost-hover)] hover:text-[var(--text-main)]',
+    danger: 'border border-red-400/60 bg-red-950/50 text-red-100 hover:bg-red-900/60',
+  };
+
   if (active) {
-    return `${base} border border-[#f5ecd2]/80 bg-[#b58b42] text-[#fff8e8] shadow-[0_10px_24px_rgba(86,52,22,0.30)]`;
+    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.3)] hover:bg-[var(--button-primary-active-hover)]`;
   }
-  return `${base} border border-[#607a4e]/38 bg-[#f4eedb] text-[#26352b] hover:border-[#f5ecd2]/80 hover:bg-[#b58b42] hover:text-[#fff8e8]`;
+  return `${base} ${variants[variant] || variants.secondary}`;
 }
 
 function normalizeAction(value) {
@@ -53,8 +56,8 @@ function StepButton({ active, label, index, onClick }) {
       className={[
         'rounded-2xl border px-4 py-3 text-left transition-all duration-150',
         active
-          ? 'border-[#f5ecd2]/80 bg-[#b58b42] text-[#fff8e8] shadow-[0_10px_24px_rgba(86,52,22,0.30)]'
-          : 'border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] text-[var(--panel-card-muted-text)] hover:bg-[#b58b42] hover:text-[#fff8e8] hover:border-[#f5ecd2]/80',
+          ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.26)]'
+          : 'border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] text-[var(--panel-card-muted-text)] hover:bg-[var(--button-secondary-hover)] hover:text-[var(--panel-card-text)]',
       ].join(' ')}
     >
       <div className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">Step {index + 1}</div>
@@ -100,6 +103,111 @@ function PreviewTable({ rows = [], headers = [], maxRows = 5 }) {
           Showing {displayHeaders.length} of {headers.length} columns.
         </div>
       ) : null}
+    </div>
+  );
+}
+
+
+function formatRecordShapeName(shape) {
+  const labels = {
+    directedRelationship: 'Directed relationship',
+    pointSite: 'Point / site',
+    timeSeriesMeasurement: 'Time-series measurement',
+    genericEvidence: 'Generic evidence',
+  };
+  return labels[shape] || shape;
+}
+
+function formatCapabilityName(capability) {
+  const labels = {
+    inspectorReady: 'Inspector-ready',
+    searchReady: 'Search-ready',
+    pointMapReady: 'Point-map-ready',
+    routeMapReady: 'Route-map-ready',
+    networkReady: 'Network-ready',
+    timelineReady: 'Timeline-ready',
+    chartReady: 'Chart-ready',
+    exportReady: 'Export-ready',
+  };
+  return labels[capability] || capability;
+}
+
+function CapabilityAuditCard({ audit, note }) {
+  const dataset = audit?.dataset;
+  if (!dataset) return null;
+
+  const totalRows = dataset.totalRows || 0;
+  const counts = dataset.capabilityCounts || {};
+  const shapes = Object.entries(dataset.recordShapes || {})
+    .filter(([, enabled]) => enabled)
+    .map(([shape]) => formatRecordShapeName(shape));
+  const capabilityKeys = [
+    'inspectorReady',
+    'searchReady',
+    'pointMapReady',
+    'routeMapReady',
+    'networkReady',
+    'timelineReady',
+    'chartReady',
+    'exportReady',
+  ];
+  const numericFields = dataset.analytics?.numericMeasureFields || [];
+  const categoricalFields = dataset.analytics?.categoricalFields || [];
+  const temporalFields = dataset.analytics?.temporalFields || [];
+
+  return (
+    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Data capability audit</div>
+          <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">
+            Read-only summary of what this mapped data appears able to support.
+          </div>
+        </div>
+        <div className="rounded-full border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-1 text-xs font-semibold text-[var(--panel-card-muted-text)]">
+          {totalRows} row{totalRows === 1 ? '' : 's'} audited
+        </div>
+      </div>
+
+      {note ? <p className="mt-3 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">{note}</p> : null}
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
+        <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Detected shape(s)</div>
+          <div className="mt-2 text-sm font-semibold text-[var(--panel-card-text)]">
+            {shapes.length ? shapes.join(', ') : 'No clear shape detected'}
+          </div>
+        </div>
+        <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Detected fields</div>
+          <div className="mt-2 space-y-1 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+            <div><span className="font-semibold text-[var(--panel-card-text)]">Numeric:</span> {numericFields.length ? numericFields.slice(0, 5).join(', ') : 'none detected'}</div>
+            <div><span className="font-semibold text-[var(--panel-card-text)]">Categorical:</span> {categoricalFields.length ? categoricalFields.slice(0, 5).join(', ') : 'none detected'}</div>
+            <div><span className="font-semibold text-[var(--panel-card-text)]">Temporal:</span> {temporalFields.length ? temporalFields.slice(0, 5).join(', ') : 'none detected'}</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        {capabilityKeys.map((capability) => {
+          const count = counts[capability] ?? 0;
+          const enabled = count > 0;
+          return (
+            <div
+              key={capability}
+              className={[
+                'rounded-xl border px-3 py-2 text-sm',
+                enabled
+                  ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)]'
+                  : 'border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] text-[var(--panel-card-muted-text)]',
+              ].join(' ')}
+            >
+              <div className="font-semibold">{formatCapabilityName(capability)}</div>
+              <div className="mt-1 text-xs opacity-85">{count} of {totalRows}</div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -354,7 +462,7 @@ function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChan
   );
 }
 
-function ReviewStep({ validation, summary, mappedPreviewRows, headers }) {
+function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilityAudit }) {
   const warnings = summary?.warnings || [];
 
   return (
@@ -377,6 +485,11 @@ function ReviewStep({ validation, summary, mappedPreviewRows, headers }) {
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{warnings.length}</div>
         </div>
       </div>
+
+      <CapabilityAuditCard
+        audit={capabilityAudit}
+        note="This audit is based on the mapped rows Peridot will import if you confirm this table. It does not change import rules."
+      />
 
       {!validation?.isValid ? (
         <div className="rounded-2xl border border-amber-500/50 bg-amber-950/30 p-4 text-sm text-amber-100">
@@ -636,7 +749,7 @@ function WorkbookSetupStep({
                 key={suggestion.sheetName}
                 type="button"
                 onClick={() => onPrimarySheetChange(suggestion.sheetName)}
-                className="flex items-center justify-between rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-left text-sm hover:bg-[#b58b42] hover:text-[#fff8e8] hover:border-[#f5ecd2]/80"
+                className="flex items-center justify-between rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-left text-sm hover:bg-[var(--button-secondary-hover)]"
               >
                 <span className="font-medium text-[var(--panel-card-text)]">{suggestion.sheetName}</span>
                 <span className="text-[var(--panel-card-muted-text)]">score {suggestion.score} · {suggestion.rowCount} rows</span>
@@ -715,7 +828,7 @@ function WorkbookCoreMappingStep({ workbookModel, workbookMapping, onChange }) {
   );
 }
 
-function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summary, previewRows }) {
+function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summary, previewRows, capabilityAudit }) {
   const issues = validation?.issues || [];
   const errors = issues.filter((issue) => issue.severity === 'error');
   const warnings = issues.filter((issue) => issue.severity !== 'error');
@@ -747,6 +860,11 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
       <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
         Review the workbook import before confirming. Peridot will assemble rows from the primary sheet and configured unique-ID joins, then include selected custom Inspector fields from the primary sheet and joined sheets.
       </div>
+
+      <CapabilityAuditCard
+        audit={capabilityAudit}
+        note="This audit is based on the assembled workbook rows Peridot will import if you confirm this mapping. It is descriptive only and does not block import."
+      />
 
       {errors.length ? (
         <div className="rounded-2xl border border-red-500/50 bg-red-950/25 p-4 text-sm text-red-100">
@@ -916,6 +1034,33 @@ export function PeridotColumnMappingModal({
     () => (isWorkbookMode && workbookModel ? previewWorkbookCoreMappedRows(workbookModel, workbookMapping, 5) : []),
     [isWorkbookMode, workbookModel, workbookMapping]
   );
+
+  const workbookMappedRowsForAudit = useMemo(() => {
+    if (!isWorkbookMode || !workbookModel || activeStep !== 'workbook-review') return [];
+    try {
+      return buildPeridotRowsFromWorkbookMapping(workbookModel, workbookMapping);
+    } catch (error) {
+      return [];
+    }
+  }, [activeStep, isWorkbookMode, workbookModel, workbookMapping]);
+
+  const mappedRowsCapabilityAudit = useMemo(() => {
+    if (isWorkbookMode || activeStep !== 'review') return null;
+    try {
+      return auditPeridotDataCapabilities(mappedRows, { headers: PERIDOT_TEMPLATE_COLUMNS });
+    } catch (error) {
+      return null;
+    }
+  }, [activeStep, isWorkbookMode, mappedRows]);
+
+  const workbookCapabilityAudit = useMemo(() => {
+    if (!isWorkbookMode || activeStep !== 'workbook-review') return null;
+    try {
+      return auditPeridotDataCapabilities(workbookMappedRowsForAudit, { headers: PERIDOT_TEMPLATE_COLUMNS });
+    } catch (error) {
+      return null;
+    }
+  }, [activeStep, isWorkbookMode, workbookMappedRowsForAudit]);
 
   if (!open || !staging || staging.status !== 'ready') return null;
 
@@ -1195,17 +1340,17 @@ export function PeridotColumnMappingModal({
     : 'Closing keeps the staged file available in Data Inputs but does not change the active dataset. Confirm import replaces the active Peridot dataset with this mapped table.';
 
   return (
-    <div className="peridot-workspace-field fixed inset-0 z-[80] flex items-center justify-center p-4 backdrop-blur-sm">
-      <div className="peridot-mapping-modal relative z-[1] flex max-h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-[32px] border border-[#c4e0ef]/70 bg-[#f8f3e1] text-[#26352b] shadow-[0_28px_80px_rgba(0,0,0,0.58)]">
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[#dfe9c8]/18 bg-[linear-gradient(135deg,rgba(8,39,25,0.96),rgba(5,29,19,0.97))] px-6 py-5 text-[#fbf7ea]">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
+      <div className="flex max-h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_rgba(0,0,0,0.55)]">
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-5">
           <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c4d79a]">
+            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
               {isWorkbookMode ? 'Workbook mapping workspace' : 'Column mapping workspace'}
             </div>
-            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] mt-1 text-3xl font-bold tracking-[-0.035em] text-[#f5ecd2]">
+            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] mt-1 text-2xl font-bold text-[var(--heading-text)]">
               {isWorkbookMode ? 'Configure workbook sheets for Peridot' : 'Map uploaded columns to Peridot'}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#f7f2df]/78">
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
               {staging.fileLabel} staged as {staging.fileType}. This workspace is intentionally outside the left panel so the mapping table has room to be reviewed.
             </p>
           </div>
@@ -1214,7 +1359,7 @@ export function PeridotColumnMappingModal({
           </button>
         </div>
 
-        <div className="grid gap-4 border-b border-[#607a4e]/24 bg-[#eee8d6] px-6 py-4 md:grid-cols-5">
+        <div className="grid gap-4 border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-4 md:grid-cols-5">
           {stepKeys.map((step, index) => (
             <StepButton
               key={step}
@@ -1226,7 +1371,7 @@ export function PeridotColumnMappingModal({
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto bg-[#fbf7ea] px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {!isWorkbookMode && activeStep === 'preview' ? (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-4">
@@ -1281,6 +1426,7 @@ export function PeridotColumnMappingModal({
               summary={validationSummary}
               mappedPreviewRows={mappedRows.slice(0, 5)}
               headers={PERIDOT_TEMPLATE_COLUMNS}
+              capabilityAudit={mappedRowsCapabilityAudit}
             />
           ) : null}
 
@@ -1326,11 +1472,12 @@ export function PeridotColumnMappingModal({
               validation={workbookValidation}
               summary={workbookMappingSummary}
               previewRows={workbookMappedPreviewRows}
+              capabilityAudit={workbookCapabilityAudit}
             />
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#607a4e]/24 bg-[#eee8d6] px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
           <p className="max-w-2xl text-sm text-[var(--panel-card-muted-text)]">{footerHelper}</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>
@@ -1362,8 +1509,8 @@ export function PeridotColumnMappingModal({
       </div>
 
       {showCancelConfirmation ? (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-[#c4e0ef]/60 bg-[#f8f3e1] p-5 text-[#26352b] shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-3xl border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
             <h3 className="text-lg font-bold text-[var(--heading-text)]">Are you sure you want to cancel?</h3>
             <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
               The staged file will remain available in Data Inputs, but closing this workspace will not change the active dataset.

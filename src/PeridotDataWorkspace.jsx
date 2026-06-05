@@ -13,9 +13,6 @@ export function PeridotDataWorkspace({
   const popup = peridotValidationSummary?.popup || null;
   const capabilityLines = popup?.capabilityLines || [];
   const warningLines = popup?.warningLines || [];
-  const stagedCapabilitySummary = columnMappingStaging?.dataCapabilitySummary || null;
-  const stagedCapabilityLines = stagedCapabilitySummary?.summaryLines || [];
-  const stagedCapabilityWarnings = stagedCapabilitySummary?.warningLines || [];
 
   return (
     <section className="peridot-workspace-field text-[#fbf7ea]">
@@ -109,22 +106,6 @@ export function PeridotDataWorkspace({
                 Open mapping workspace
               </button>
             </div>
-            {stagedCapabilityLines.length ? (
-              <div className="mt-5 rounded-2xl border border-[#5f714a]/25 bg-[#eef3dd] p-4">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[#5c724d]">Read-only data capability audit</h3>
-                <ul className="mt-2 space-y-1 text-sm leading-6 text-[#42533f]">
-                  {stagedCapabilityLines.map((line) => <li key={line}>• {line}</li>)}
-                </ul>
-                {stagedCapabilityWarnings.length ? (
-                  <div className="mt-3 rounded-xl border border-[#b58b42]/35 bg-[#fff4d8] p-3">
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#735726]">Audit notes</p>
-                    <ul className="mt-2 space-y-1 text-sm leading-6 text-[#51422a]">
-                      {stagedCapabilityWarnings.map((line) => <li key={line}>• {line}</li>)}
-                    </ul>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
           </div>
         ) : null}
 
