@@ -61,6 +61,7 @@ import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
 import { applyPeridotColumnMapping, buildInitialPeridotColumnMappingState } from './peridotColumnMapping.js';
 import { parsePeridotTableFile, summarizePeridotWorkbook } from './peridotWorkbookParsing.js';
 import { buildInitialPeridotWorkbookMappingState, buildPeridotRowsFromWorkbookMapping, validatePeridotWorkbookMapping } from './peridotWorkbookMapping.js';
+import { auditPeridotDataCapabilities, createPeridotCapabilitySummary } from './peridotDataCapabilityAudit.js';
 import { PeridotColumnMappingModal } from './PeridotColumnMappingModal.jsx';
 
 
@@ -3417,6 +3418,60 @@ export default function EuropeNetworkMapApp() {
     clearSelection();
   };
 
+  const buildReadOnlyDataCapabilitySummary = (rows, headers = []) => {
+    const audit = auditPeridotDataCapabilities(rows, { headers });
+    const summaryLines = createPeridotCapabilitySummary(audit);
+    const recordShapeLabels = {
+      directedRelationship: 'directed relationship',
+      pointSite: 'point/site',
+      timeSeriesMeasurement: 'time-series measurement',
+      genericEvidence: 'generic evidence',
+    };
+    const shapeLabels = Object.entries(audit.dataset?.recordShapes || {})
+      .filter(([, enabled]) => enabled)
+      .map(([shape]) => recordShapeLabels[shape] || shape);
+
+    return {
+      audit,
+      shapeLabels,
+      summaryLines: shapeLabels.length
+        ? [`Detected record shape(s): ${shapeLabels.join(', ')}`, ...summaryLines]
+        : summaryLines,
+      warningLines: audit.dataset?.warnings || [],
+    };
+  };
+
+  const attachReadOnlyDataCapabilitySummary = (validationSummary, rows, headers = []) => {
+    const capabilitySummary = buildReadOnlyDataCapabilitySummary(rows, headers);
+    const popup = validationSummary?.popup || {};
+
+    return {
+      ...validationSummary,
+      dataCapabilityAudit: capabilitySummary.audit,
+      dataCapabilitySummary: capabilitySummary,
+      popup: {
+        ...popup,
+        capabilityLines: [
+          ...(popup.capabilityLines || []),
+          ...capabilitySummary.summaryLines,
+        ],
+        warningLines: [
+          ...(popup.warningLines || []),
+          ...capabilitySummary.warningLines,
+        ],
+      },
+      summaryLines: [
+        ...(validationSummary?.summaryLines || []),
+        ...capabilitySummary.summaryLines,
+      ],
+      warnings: [
+        ...(validationSummary?.warnings || []),
+        ...capabilitySummary.warningLines,
+      ],
+      hasWarnings: Boolean(validationSummary?.hasWarnings || capabilitySummary.warningLines.length),
+    };
+  };
+
   const handlePeridotCsvUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -3425,7 +3480,11 @@ export default function EuropeNetworkMapApp() {
       const text = await readFileText(file);
       const parsedRows = parseCsv(text);
       const headers = getCsvHeaders(text);
-      const validationSummary = buildPeridotCsvValidationSummary(parsedRows, headers);
+      const validationSummary = attachReadOnlyDataCapabilitySummary(
+        buildPeridotCsvValidationSummary(parsedRows, headers),
+        parsedRows,
+        headers,
+      );
       const normalized = normalizePeridotTemplateRows(parsedRows);
       const fileLabel = file.name || 'Uploaded Peridot CSV';
 
@@ -3513,6 +3572,9 @@ export default function EuropeNetworkMapApp() {
       const mappingState = canUseCurrentSingleTableMapper
         ? buildInitialPeridotColumnMappingState(primarySheet.headers || [], primarySheet.rows || [])
         : buildInitialPeridotWorkbookMappingState(workbookModel);
+      const stagedCapabilitySummary = primarySheet
+        ? buildReadOnlyDataCapabilitySummary(primarySheet.rows || [], primarySheet.headers || [])
+        : null;
 
       setColumnMappingStaging({
         status: 'ready',
@@ -3541,6 +3603,8 @@ export default function EuropeNetworkMapApp() {
         workbookMappingMessage: isMultiSheetWorkbook
           ? 'This workbook has multiple usable sheets. You can now open the workbook mapping workspace to choose a primary record sheet, select a Letter_ID column, and preview Sheet + Column mappings. Multi-sheet import will be wired in the next pass.'
           : '',
+        dataCapabilitySummary: stagedCapabilitySummary,
+        dataCapabilityAudit: stagedCapabilitySummary?.audit || null,
       });
       setIsColumnMappingModalOpen(Boolean(mappingState));
     } catch (error) {
@@ -3631,7 +3695,11 @@ export default function EuropeNetworkMapApp() {
         }
 
         const mappedRows = buildPeridotRowsFromWorkbookMapping(columnMappingStaging.workbookModel, nextWorkbookMapping);
-        const finalValidationSummary = buildPeridotCsvValidationSummary(mappedRows, PERIDOT_TEMPLATE_COLUMNS);
+        const finalValidationSummary = attachReadOnlyDataCapabilitySummary(
+          buildPeridotCsvValidationSummary(mappedRows, PERIDOT_TEMPLATE_COLUMNS),
+          mappedRows,
+          PERIDOT_TEMPLATE_COLUMNS,
+        );
         const normalized = normalizePeridotTemplateRows(mappedRows);
 
         setPeridotNormalizedData(normalized);
@@ -3665,7 +3733,11 @@ export default function EuropeNetworkMapApp() {
         coreMapping: nextCoreMapping,
         customFieldSelections: nextCustomFieldSelections,
       });
-      const finalValidationSummary = validationSummary || buildPeridotCsvValidationSummary(mappedRows, PERIDOT_TEMPLATE_COLUMNS);
+      const finalValidationSummary = attachReadOnlyDataCapabilitySummary(
+        validationSummary || buildPeridotCsvValidationSummary(mappedRows, PERIDOT_TEMPLATE_COLUMNS),
+        mappedRows,
+        PERIDOT_TEMPLATE_COLUMNS,
+      );
       const normalized = normalizePeridotTemplateRows(mappedRows);
 
       setPeridotNormalizedData(normalized);
