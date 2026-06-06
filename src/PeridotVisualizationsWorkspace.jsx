@@ -1,6 +1,162 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
+
+const VISUALIZATION_TOOLS = Object.freeze({
+  POINT_MAP: 'point-map',
+  ROUTE_MAP: 'route-map',
+  ENTITY_NETWORK: 'entity-network',
+  FORCE_NETWORK: 'force-network',
+  ANALYTICS: 'analytics',
+  CAPABILITY_SUMMARY: 'capability-summary',
+});
+
+function numberLabel(value) {
+  return Number.isFinite(value) ? String(value) : '0';
+}
+
+function CompatibilityStatusPill({ available, light = false }) {
+  return (
+    <span
+      className={[
+        'shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em]',
+        light
+          ? available
+            ? 'border-[#5f7f4f] bg-[#dfe9c8] text-[#173120]'
+            : 'border-[#9b6f2f] bg-[#f0d9a8] text-[#4c3216]'
+          : available
+            ? 'border-[#dfe9c8]/80 bg-[#dfe9c8]/30 text-[#fff8e8]'
+            : 'border-[#e7c27d] bg-[#b58b42]/35 text-[#fff2cf]',
+      ].join(' ')}
+    >
+      {available ? 'Available' : 'Not available'}
+    </span>
+  );
+}
+
+function UnavailableVisualizationState({
+  title,
+  why,
+  availableInstead = [],
+  counts = [],
+}) {
+  return (
+    <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-[28px] border border-[#c4e0ef]/50 bg-[#071f16] p-5 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
+      <div className="w-full max-w-4xl rounded-[28px] border border-[#dfe9c8]/50 bg-[#f8f4e6] p-6 text-[#24382d] shadow-[0_18px_46px_rgba(0,0,0,0.22)]">
+        <p className="peridot-kicker text-[11px] text-[#66815b]">Visualization compatibility</p>
+        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[#132a20]">
+          {title}
+        </h2>
+        <div className="mt-4 rounded-2xl border border-[#d5c7a8] bg-[#f3ecd9] p-4">
+          <h3 className="text-sm font-bold text-[#25382d]">Why</h3>
+          <p className="mt-2 text-sm leading-relaxed text-[#4b5c50]">{why}</p>
+        </div>
+        {availableInstead.length ? (
+          <div className="mt-4 rounded-2xl border border-[#cbdab2] bg-[#edf4df] p-4">
+            <h3 className="text-sm font-bold text-[#25382d]">Available instead</h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {availableInstead.map((item) => (
+                <span key={item} className="rounded-full border border-[#8aa36d]/50 bg-[#dfe9c8] px-3 py-1 text-sm font-semibold text-[#26382b]">
+                  {item}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        {counts.length ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {counts.map((item) => (
+              <div key={item.label} className="rounded-2xl border border-[#d5c7a8] bg-[#fffdf6] p-3">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6a7b65]">{item.label}</div>
+                <div className="mt-1 text-xl font-bold text-[#172b20]">{item.value}</div>
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
+  const rows = [
+    {
+      label: 'Point map',
+      value: availability.hasPointMap ? `${numberLabel(availability.pointCount)} mapped places` : 'Not available',
+      ready: availability.hasPointMap,
+      note: availability.hasPointMap
+        ? 'One-location records can be explored through the map.'
+        : 'No point-place or point-coordinate records are available.',
+    },
+    {
+      label: 'Route map',
+      value: availability.hasRouteMap ? `${numberLabel(availability.routeCount)} routes` : 'Not available',
+      ready: availability.hasRouteMap,
+      note: availability.hasRouteMap
+        ? 'Source-target place records can be explored as routes.'
+        : 'No mapped source-target place routes are available.',
+    },
+    {
+      label: 'Network views',
+      value: availability.hasNetwork ? `${numberLabel(availability.networkEdgeCount)} relationships` : 'Not available',
+      ready: availability.hasNetwork,
+      note: availability.hasNetwork
+        ? 'Source-target entity records can be explored as networks.'
+        : 'No mapped source-target entity relationships are available.',
+    },
+    {
+      label: 'Charts',
+      value: availability.hasCharts ? `${numberLabel(availability.rowCount)} records` : 'Not available',
+      ready: availability.hasCharts,
+      note: availability.hasCharts
+        ? 'The active dataset can be sent to Chart Visualizations. Measure-aware charting is the next implementation pass.'
+        : 'No active records are available for charting.',
+    },
+  ];
+
+  return (
+    <div className="min-h-0 flex-1 overflow-auto rounded-[28px] border border-[#c4e0ef]/50 bg-[#071f16] p-4 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
+      <div className="rounded-[28px] border border-[#dfe9c8]/50 bg-[#f8f4e6] p-5 text-[#24382d]">
+        <p className="peridot-kicker text-[11px] text-[#66815b]">Explore your data</p>
+        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[#132a20]">
+          Dataset capability summary
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#52675a]">
+          Peridot now treats datasets as records with mapped roles. Some datasets support maps, some support networks, some support charts, and some are best explored as evidence records.
+        </p>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {rows.map((row) => (
+            <div
+              key={row.label}
+              className={[
+                'rounded-2xl border p-4',
+                row.ready
+                  ? 'border-[#8aa36d]/60 bg-[#dfe9c8]'
+                  : 'border-[#d5c7a8] bg-[#f3ecd9]',
+              ].join(' ')}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h3 className="font-bold text-[#172b20]">{row.label}</h3>
+                <CompatibilityStatusPill available={row.ready} />
+              </div>
+              <div className="mt-3 text-xl font-bold text-[#172b20]">{row.value}</div>
+              <p className="mt-2 text-sm leading-relaxed text-[#4e6255]">{row.note}</p>
+            </div>
+          ))}
+        </div>
+        {onOpenSearch ? (
+          <button
+            type="button"
+            onClick={onOpenSearch}
+            className="mt-5 rounded-full border border-[#8aa36d]/60 bg-[#edf4df] px-4 py-2 text-sm font-bold text-[#203429] transition hover:border-[#f5ecd2]/90 hover:bg-[#b58b42] hover:text-[#fff8e8] focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60"
+          >
+            Open Search & Filter
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export function PeridotVisualizationsWorkspace({
   pageTitle,
@@ -11,68 +167,323 @@ export function PeridotVisualizationsWorkspace({
   personLayoutMode,
   visualizationsWorkspacePanel,
   analyticsWorkspaceProps,
+  visualizationAvailability,
   onSelectPlaceMap,
   onSelectPeopleNetwork,
   onSelectForceDirected,
   onOpenAnalytics,
+  onOpenSearch,
 }) {
-  const showingAnalytics = visualizationsWorkspacePanel === 'analytics';
-  const activeVisualizationLabel = showingAnalytics
-    ? 'Analytics'
-    : viewMode === 'geographic'
-      ? 'Place Map'
-      : personLayoutMode === 'force'
-        ? 'Force-Directed'
-        : 'People Network';
+  const availability = {
+    rowCount: 0,
+    pointCount: 0,
+    routeCount: 0,
+    networkNodeCount: 0,
+    networkEdgeCount: 0,
+    chartFieldCount: 0,
+    hasPointMap: false,
+    hasRouteMap: false,
+    hasNetwork: false,
+    hasCharts: false,
+    hasExploreData: false,
+    ...(visualizationAvailability || {}),
+  };
 
-  const viewOptions = [
-    { key: 'place-map', label: 'Place Map', active: viewMode === 'geographic', action: onSelectPlaceMap },
-    { key: 'people-network', label: 'People Network', active: viewMode === 'person' && personLayoutMode === 'geographic', action: onSelectPeopleNetwork },
-    { key: 'force-directed', label: 'Force-Directed', active: viewMode === 'person' && personLayoutMode === 'force', action: onSelectForceDirected },
+  const initialTool = visualizationsWorkspacePanel === 'analytics'
+    ? VISUALIZATION_TOOLS.ANALYTICS
+    : viewMode === 'geographic'
+      ? availability.hasRouteMap
+        ? VISUALIZATION_TOOLS.ROUTE_MAP
+        : VISUALIZATION_TOOLS.POINT_MAP
+      : personLayoutMode === 'force'
+        ? VISUALIZATION_TOOLS.FORCE_NETWORK
+        : VISUALIZATION_TOOLS.ENTITY_NETWORK;
+
+  const [selectedTool, setSelectedTool] = useState(initialTool);
+  const [openMenuCategory, setOpenMenuCategory] = useState(null);
+  const menuCloseTimerRef = useRef(null);
+
+  useEffect(() => {
+    if (visualizationsWorkspacePanel === 'analytics') {
+      setSelectedTool(VISUALIZATION_TOOLS.ANALYTICS);
+    }
+  }, [visualizationsWorkspacePanel]);
+
+  useEffect(() => () => {
+    if (menuCloseTimerRef.current) {
+      window.clearTimeout(menuCloseTimerRef.current);
+    }
+  }, []);
+
+  const cancelMenuClose = () => {
+    if (menuCloseTimerRef.current) {
+      window.clearTimeout(menuCloseTimerRef.current);
+      menuCloseTimerRef.current = null;
+    }
+  };
+
+  const openMenu = (categoryLabel) => {
+    cancelMenuClose();
+    setOpenMenuCategory(categoryLabel);
+  };
+
+  const closeMenu = () => {
+    cancelMenuClose();
+    setOpenMenuCategory(null);
+  };
+
+  const scheduleMenuClose = () => {
+    cancelMenuClose();
+    menuCloseTimerRef.current = window.setTimeout(() => {
+      setOpenMenuCategory(null);
+      menuCloseTimerRef.current = null;
+    }, 260);
+  };
+
+  const toolDefinitions = useMemo(() => ({
+    [VISUALIZATION_TOOLS.POINT_MAP]: {
+      label: 'Point Map',
+      category: 'Mapping Visualizations',
+      available: availability.hasPointMap,
+      action: onSelectPlaceMap,
+      unavailableTitle: 'Point Map is not available for this dataset.',
+      why: 'This dataset does not contain mapped point-place or point-coordinate roles.',
+      availableInstead: [
+        availability.hasRouteMap ? 'Route Map' : null,
+        availability.hasCharts ? 'Chart Visualizations' : null,
+        availability.hasExploreData ? 'Explore Your Data' : null,
+      ].filter(Boolean),
+    },
+    [VISUALIZATION_TOOLS.ROUTE_MAP]: {
+      label: 'Route Map',
+      category: 'Mapping Visualizations',
+      available: availability.hasRouteMap,
+      action: onSelectPlaceMap,
+      unavailableTitle: 'Route Map is not available for this dataset.',
+      why: 'This dataset does not contain mapped source and target place roles or source-target coordinate pairs.',
+      availableInstead: [
+        availability.hasPointMap ? 'Point Map' : null,
+        availability.hasCharts ? 'Chart Visualizations' : null,
+        availability.hasExploreData ? 'Explore Your Data' : null,
+      ].filter(Boolean),
+    },
+    [VISUALIZATION_TOOLS.ENTITY_NETWORK]: {
+      label: 'Entity / People Network',
+      category: 'Network Visualizations',
+      available: availability.hasNetwork,
+      action: onSelectPeopleNetwork,
+      unavailableTitle: 'Network visualizations are not available for this dataset.',
+      why: 'This dataset does not contain mapped source-target entity relationship fields. That is expected for point/site, catalogue, and time-series datasets.',
+      availableInstead: [
+        availability.hasPointMap ? 'Point Map' : null,
+        availability.hasRouteMap ? 'Route Map' : null,
+        availability.hasCharts ? 'Chart Visualizations' : null,
+        availability.hasExploreData ? 'Explore Your Data' : null,
+      ].filter(Boolean),
+    },
+    [VISUALIZATION_TOOLS.FORCE_NETWORK]: {
+      label: 'Force-Directed Network',
+      category: 'Network Visualizations',
+      available: availability.hasNetwork,
+      action: onSelectForceDirected,
+      unavailableTitle: 'Force-Directed Network is not available for this dataset.',
+      why: 'Force-directed layouts require mapped source-target entity relationships. This dataset can still be valid even when it does not contain network data.',
+      availableInstead: [
+        availability.hasPointMap ? 'Point Map' : null,
+        availability.hasRouteMap ? 'Route Map' : null,
+        availability.hasCharts ? 'Chart Visualizations' : null,
+        availability.hasExploreData ? 'Explore Your Data' : null,
+      ].filter(Boolean),
+    },
+    [VISUALIZATION_TOOLS.ANALYTICS]: {
+      label: 'Analytics',
+      category: 'Chart Visualizations',
+      available: availability.hasCharts,
+      action: onOpenAnalytics,
+      unavailableTitle: 'Chart Visualizations are not available for this dataset.',
+      why: 'No active records are available for charting.',
+      availableInstead: [
+        availability.hasPointMap ? 'Point Map' : null,
+        availability.hasRouteMap ? 'Route Map' : null,
+        availability.hasNetwork ? 'Network Visualizations' : null,
+        availability.hasExploreData ? 'Explore Your Data' : null,
+      ].filter(Boolean),
+    },
+    [VISUALIZATION_TOOLS.CAPABILITY_SUMMARY]: {
+      label: 'Capability Summary',
+      category: 'Explore Your Data',
+      available: true,
+      action: null,
+      unavailableTitle: '',
+      why: '',
+      availableInstead: [],
+    },
+  }), [availability.hasCharts, availability.hasExploreData, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onSelectForceDirected, onSelectPeopleNetwork, onSelectPlaceMap]);
+
+  const selectedDefinition = toolDefinitions[selectedTool] || toolDefinitions[VISUALIZATION_TOOLS.CAPABILITY_SUMMARY];
+  const activeVisualizationLabel = selectedDefinition.label;
+
+  const categories = [
+    {
+      label: 'Mapping Visualizations',
+      description: 'Point and route maps',
+      tools: [VISUALIZATION_TOOLS.POINT_MAP, VISUALIZATION_TOOLS.ROUTE_MAP],
+    },
+    {
+      label: 'Network Visualizations',
+      description: 'Entity relationship views',
+      tools: [VISUALIZATION_TOOLS.ENTITY_NETWORK, VISUALIZATION_TOOLS.FORCE_NETWORK],
+    },
+    {
+      label: 'Chart Visualizations',
+      description: 'Analytics and charts',
+      tools: [VISUALIZATION_TOOLS.ANALYTICS],
+    },
+    {
+      label: 'Explore Your Data',
+      description: 'Capability and search tools',
+      tools: [VISUALIZATION_TOOLS.CAPABILITY_SUMMARY],
+    },
   ];
 
-  const optionClass = (active) => [
-    'rounded-full border px-4 py-2 text-sm font-semibold transition-all focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+  const selectTool = (toolKey) => {
+    const tool = toolDefinitions[toolKey];
+    setSelectedTool(toolKey);
+    closeMenu();
+    if (tool?.available && typeof tool.action === 'function') {
+      tool.action();
+    }
+  };
+
+  const categoryClass = (active) => [
+    'relative rounded-2xl border text-[#fbf7ea] transition focus-within:ring-2 focus-within:ring-[#d6a36a]/60',
     active
-      ? 'border-[#f5ecd2]/80 bg-[#b58b42] text-[#fff8e8] shadow-[0_10px_24px_rgba(86,52,22,0.30)]'
-      : 'border-[#dfe9c8]/40 bg-[#dfe9c8]/10 text-[#fbf7ea] hover:border-[#f5ecd2]/80 hover:bg-[#b58b42] hover:text-[#fff8e8]',
+      ? 'border-[#f5ecd2]/90 bg-[#b58b42]/75 shadow-[0_12px_28px_rgba(0,0,0,0.26)]'
+      : 'border-[#dfe9c8]/40 bg-[#dfe9c8]/10 hover:border-[#f5ecd2]/80 hover:bg-[#b58b42]/70',
   ].join(' ');
+  const menuItemClass = (active, available) => [
+    'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+    active
+      ? 'bg-[#b58b42] font-bold text-[#fff8e8] shadow-inner'
+      : available
+        ? 'text-[#1d3326] hover:bg-[#dfe9c8]'
+        : 'text-[#4f4330] hover:bg-[#f3e4bf]',
+  ].join(' ');
+
+  const counts = [
+    { label: 'Point places', value: numberLabel(availability.pointCount) },
+    { label: 'Routes', value: numberLabel(availability.routeCount) },
+    { label: 'Network edges', value: numberLabel(availability.networkEdgeCount) },
+    { label: 'Rows', value: numberLabel(availability.rowCount) },
+  ];
+
+  const renderWorkspaceBody = () => {
+    if (selectedTool === VISUALIZATION_TOOLS.CAPABILITY_SUMMARY) {
+      return <CapabilitySummaryWorkspace availability={availability} onOpenSearch={onOpenSearch} />;
+    }
+
+    if (!selectedDefinition.available) {
+      return (
+        <UnavailableVisualizationState
+          title={selectedDefinition.unavailableTitle}
+          why={selectedDefinition.why}
+          availableInstead={selectedDefinition.availableInstead}
+          counts={counts}
+        />
+      );
+    }
+
+    if (selectedTool === VISUALIZATION_TOOLS.ANALYTICS) {
+      return (
+        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-auto rounded-[28px] border border-[#c4e0ef]/50 bg-[rgba(8,39,25,0.9)] p-3 shadow-[0_20px_54px_rgba(0,0,0,0.34)] backdrop-blur-sm md:p-4">
+          <AnalyticsPanelContent analyticsState={analyticsWorkspaceProps.analyticsState} />
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[#c4e0ef]/50 bg-[var(--map-water)] shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
+        <MapStageComponent {...mapStageProps} />
+      </div>
+    );
+  };
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[#04160f] text-[#fbf7ea]">
       <div className="peridot-workspace-field flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="relative z-[1] flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
-          <div className="shrink-0 rounded-[28px] border border-[#c4e0ef]/70 bg-[linear-gradient(135deg,rgba(8,39,25,0.95),rgba(5,29,19,0.96))] px-4 py-3 pl-[76px] shadow-[0_18px_46px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:pl-[80px]">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
+          <div className="relative z-50 shrink-0 rounded-[28px] border border-[#c4e0ef]/70 bg-[linear-gradient(135deg,rgba(8,39,25,0.95),rgba(5,29,19,0.96))] px-4 py-3 pl-[76px] shadow-[0_18px_46px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:pl-[80px]">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <p className="peridot-kicker !mb-0 text-[11px]">Visualization workspace</p>
                 <h1 className="mt-1 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#f5ecd2] md:text-3xl">
                   {activeVisualizationLabel}
                 </h1>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#dfe9c8]">
+                  Choose a visualization category. If the active dataset cannot support a view, Peridot explains why instead of showing an empty workspace.
+                </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                {viewOptions.map((option) => (
-                  <button key={option.key} type="button" onClick={option.action} className={optionClass(option.active)} aria-pressed={option.active}>
-                    {option.label}
-                  </button>
-                ))}
-                <button type="button" onClick={onOpenAnalytics} className={optionClass(showingAnalytics)} aria-pressed={showingAnalytics}>
-                  Analytics
-                </button>
+              <div className="relative z-[70] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
+                {categories.map((category) => {
+                  const isOpen = openMenuCategory === category.label;
+                  return (
+                    <div
+                      key={category.label}
+                      className={categoryClass(isOpen)}
+                      onMouseEnter={() => openMenu(category.label)}
+                      onMouseLeave={scheduleMenuClose}
+                      onFocus={() => openMenu(category.label)}
+                    >
+                      <button
+                        type="button"
+                        className="w-full px-3 py-2 text-left focus:outline-none"
+                        onClick={() => (isOpen ? closeMenu() : openMenu(category.label))}
+                        aria-expanded={isOpen}
+                      >
+                        <span className="block text-sm font-bold">{category.label}</span>
+                        <span className="mt-1 block text-[11px] leading-snug text-[#dfe9c8]">{category.description}</span>
+                      </button>
+                      {isOpen ? (
+                        <>
+                          <div
+                            aria-hidden="true"
+                            className="absolute left-0 right-0 top-full z-[95] h-4"
+                            onMouseEnter={() => openMenu(category.label)}
+                          />
+                          <div
+                            className="absolute right-0 top-[calc(100%+10px)] z-[100] min-w-[280px] rounded-2xl border border-[#bfa46d] bg-[#fffaf0] p-2 text-[#203429] shadow-[0_18px_38px_rgba(0,0,0,0.36)]"
+                            onMouseEnter={() => openMenu(category.label)}
+                            onMouseLeave={scheduleMenuClose}
+                            onFocus={() => openMenu(category.label)}
+                          >
+                            {category.tools.map((toolKey) => {
+                              const tool = toolDefinitions[toolKey];
+                              return (
+                                <button
+                                  key={toolKey}
+                                  type="button"
+                                  onClick={() => selectTool(toolKey)}
+                                  className={menuItemClass(selectedTool === toolKey, tool.available)}
+                                >
+                                  <span className="pr-2 leading-snug">{tool.label}</span>
+                                  <CompatibilityStatusPill available={tool.available} light />
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          {showingAnalytics ? (
-            <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-auto rounded-[28px] border border-[#c4e0ef]/50 bg-[rgba(8,39,25,0.9)] p-3 shadow-[0_20px_54px_rgba(0,0,0,0.34)] backdrop-blur-sm md:p-4">
-              <AnalyticsPanelContent analyticsState={analyticsWorkspaceProps.analyticsState} />
-            </div>
-          ) : (
-            <div className="flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[#c4e0ef]/50 bg-[var(--map-water)] shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
-              <MapStageComponent {...mapStageProps} />
-            </div>
-          )}
+          <div className="relative z-0 min-h-0 flex flex-1" onMouseEnter={scheduleMenuClose}>
+            {renderWorkspaceBody()}
+          </div>
         </div>
       </div>
     </section>
