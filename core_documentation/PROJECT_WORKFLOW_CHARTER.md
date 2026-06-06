@@ -29,13 +29,13 @@ C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 Current clean baseline:
 
 ```text
-43fa09d — Remove obsolete export workspace route
+fcd2e1f — Document timeline scope and clamp chart date range
 ```
 
 Current branch note:
 
 ```text
-The current active continuation branch may intentionally differ from experimental branches. As of the legacy-continuation handoff, MapLibre migrated-overlay work is set aside and should not be treated as the active source of truth unless explicitly resumed.
+The current active continuation branch may intentionally differ from experimental branches. MapLibre preview code has been removed from active `main`; the later MapLibre migrated-overlay branch remains archived and should not be treated as the active source of truth unless explicitly resumed.
 ```
 
 ---
@@ -340,13 +340,11 @@ A prior attempt to make the shared side panel absolutely positioned at all viewp
 
 Future responsive panel work should be a narrow-window-specific override, not a universal positioning replacement.
 
-### Dormant MapLibre work
+### Archived MapLibre work
 
-The repository may contain dormant MapLibre preview files from `main`.
+Active `main` no longer contains dormant MapLibre preview files or the `maplibre-gl` dependency.
 
-These should not be treated as active production code during legacy Peridot work. Do not remove, revive, or refactor MapLibre code unless the pass is explicitly about MapLibre.
-
-If MapLibre work resumes, first establish the correct branch/source-of-truth and perform a fresh audit.
+The later `maplibre-native-geographic-view` branch remains an archived experiment and should not be treated as active production code. Do not reintroduce MapLibre files, dependencies, or preview flags unless the pass is explicitly about resuming MapLibre after a fresh source-of-truth audit.
 
 ### Cluster behavior
 
@@ -457,7 +455,7 @@ For a new chat, start with:
 
 ```text
 Source of truth folder: C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
-Current documented clean baseline: See `CHANGELOG.md` for the most recent documented safe baseline.
+Current documented clean baseline: `fcd2e1f` — Document timeline scope and clamp chart date range. See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 The new chat should be told:
@@ -467,12 +465,12 @@ The new chat should be told:
 - The app uses a hamburger-triggered labeled menu with Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
 - Timeline is implemented as a bottom Visualizations scrubber with collapse/expand behavior and dual range handles.
 - Inspector is dual-mode: compact side-panel summaries are still used for visualization clicks, and the full evidence-dossier workspace is implemented for hamburger/Expand/linked-data navigation.
-- `LeftControlPanel.jsx` owns the legacy shared side-panel shell, the transitional Timeline bridge, and compact Inspector presentation.
+- `LeftControlPanel.jsx` owns the compact Inspector side-panel shell for visualization-click Inspector presentation.
 - `InspectorPanel.jsx` is the shared compact/full Inspector content shell.
 - Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed features.
 - The compatibility path for inspector auto-open is fragile; do not rename it casually.
 - Documentation updates are batched, not performed after every small code commit.
-- MapLibre migrated-overlay work is paused while legacy Peridot continuation proceeds.
+- MapLibre preview code has been removed from active `main`; the migrated-overlay branch remains archived while legacy Peridot continuation proceeds.
 - Before any code change, fully read/review the complete current affected GitHub file(s) when local and GitHub are synced.
 - Code comments should be maintained so a new human developer can understand each major section, cross-file relationship, fragile path, and non-obvious decision.
 - Use full-file replacements by default for code changes in affected files, especially dense or fragile files.

@@ -2,9 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`43fa09d` — `Remove obsolete export workspace route`** on branch **`main`**
+- **`fcd2e1f` — `Document timeline scope and clamp chart date range`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, and the June 2026 visualization-workspace compression and navigation/export consolidation pass. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. The standalone Export workspace route has been removed from the active app path, while Search and Inspector remain internally available through Explore/workflow actions and compatibility routes. Recent milestones include capability-aware visualization menus, flexible chart-variable controls, record-count support across aggregate charts, generalized user-facing language, generic chart/evidence row admission, and include/ignore checkbox handling for evidence fields. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, and the June 2026 structural cleanup/commenting pass. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. The standalone Export workspace route has been removed from the active app path, while Search and Inspector remain internally available through Explore/workflow actions and compatibility routes. Recent milestones include capability-aware visualization menus, flexible chart-variable controls, record-count support across aggregate charts, generalized user-facing language, generic chart/evidence row admission, and include/ignore checkbox handling for evidence fields. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 
 The current Data Inputs / import workflow now provides:
 
@@ -70,11 +70,25 @@ The current interface/workspace workflow now provides:
 - generic chart/evidence records accepted into the active dataset even when they have no map or network roles;
 - evidence/analysis field inclusion controls using explicit Include and Ignore checkboxes, defaulting to Include.
 
-The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment remains set aside rather than merged into the active implementation path.
+Early MapLibre preview code has been removed from active `main`; the later `maplibre-native-geographic-view` experiment remains an archived branch experiment rather than part of the active implementation path.
 
 ---
 
 ## Current milestone notes
+
+### Structural cleanup, commenting, and scope-contract milestone
+
+- Added developer-orientation comments across the source tree so a new human developer can understand major sections, cross-file responsibilities, fragile compatibility paths, and non-obvious state coupling.
+- Added `planning_documents/PERIDOT_CODE_STRUCTURE_AUDIT.md` as the standing structural audit and cleanup roadmap.
+- Extracted embedded sample data from `App.jsx` into `src/peridotSampleData.js`.
+- Reduced `src/LeftControlPanel.jsx` to the compact Inspector side-panel shell, removing obsolete rail/workflow content while preserving visualization-click Inspector behavior.
+- Extracted column-mapping modal static UI configuration into `src/peridotColumnMappingUiConfig.js`.
+- Extracted repeated column-mapping field controls into `src/PeridotMappingFieldControls.jsx`.
+- Extracted evidence/analysis Include/Ignore controls into `src/PeridotEvidenceFieldControls.jsx`.
+- Documented the Analytics chart-extension contract across config, derivation, rendering, panel, and visualization-header files.
+- Removed dormant MapLibre preview files and dependency from active `main`.
+- Documented the loaded/filter/timeline/playback/export scope pipeline and clamped chart-local date ranges so chart animation does not get stuck on stale time selections.
+- Current implemented structural-cleanup baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**.
 
 ### Visualization workspace compression, menu simplification, timeline, and export consolidation milestone
 
@@ -90,7 +104,7 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 - Moved map/network export actions into the Visualizations header Export menu.
 - Moved chart PNG export out of the chart controls rail and into the same Visualizations header Export menu.
 - Removed the obsolete standalone Export workspace route and deleted `src/PeridotExportWorkspace.jsx` from the active source tree.
-- Current implemented visualization-workspace/export baseline: **`43fa09d` — `Remove obsolete export workspace route`**.
+- Current implemented visualization-workspace/export baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**.
 
 ### Visualization capability and flexible Analytics milestone
 
@@ -224,7 +238,19 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 
 ## Current branch status
 
-- **`43fa09d` — `Remove obsolete export workspace route`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`fcd2e1f` — `Document timeline scope and clamp chart date range`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`84e6a4f` — `Add code structure audit planning document`** tracks the structural audit as a planning artifact.
+- **`55a368c` — `Remove dormant MapLibre preview code`** removes the old MapLibre preview files and dependency from active `main`.
+- **`876eb1d` — `Document Analytics chart extension contract`** records the coordinated chart-extension contract across Analytics files.
+- **`0f712b5` — `Add extracted evidence field controls`** adds the extracted evidence/analysis Include/Ignore control component.
+- **`338f204` — `Restore evidence action normalization helper`** fixes the evidence Include/Ignore action normalization after extraction.
+- **`1fe9f82` — `Extract column mapping field controls`** extracts repeated mapping-table field controls from the large modal.
+- **`ce7c092` — `Extract column mapping modal UI config`** extracts static mapping-modal step/group/label config.
+- **`5e8e022` — `Reduce left control panel to compact Inspector shell`** removes obsolete side-panel content while preserving compact Inspector behavior.
+- **`e8ec660` — `Extract embedded sample data from App`** moves bundled sample data out of `App.jsx`.
+- **`133fd91` — `Add developer orientation comments across source`** adds the broad source-commenting pass.
+- **`cfe8207` — `Refresh documentation for visualization workspace consolidation`** documents the visualization workspace consolidation baseline.
+- **`43fa09d` — `Remove obsolete export workspace route`** removed the standalone Export workspace route.
 - **`aca8f1f` — `Update visualization export wiring`** completes the App-level wiring for header-based visualization export.
 - **`b6eb7c0` — `Move chart export into visualization header`** consolidates chart PNG export into the shared Visualizations header Export menu.
 - **`0b0cacd` — `Simplify hamburger menu and add Explore workspace`** adds the simplified product navigation, Explore workspace, Learn More workspace, and Themes and Accessibility framing.
@@ -233,69 +259,15 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 - **`b10a68b` — `Compact visualization header and timeline controls`** adds collapsible header/timeline controls and the compact dual-handle timeline layout.
 - **`b0d83fb` — `Simplify chart workspace and add bottom timeline scrubber`** introduces the large chart workspace and bottom Visualizations timeline scrubber.
 - **`7fcb348` — `Document flexible data and chart capability milestone`** documented the preceding flexible data/chart capability milestone.
-- **`08b628b` — `Use include and ignore checkboxes for evidence fields`** is the preceding documented baseline for the flexible data capability milestone.
-- **`231ccde` — `Accept generic chart records`** accepts chart/evidence rows into the active dataset without requiring map or network roles.
-- **`b19019e` — `Generalize user-facing language beyond correspondence`** updates visible language toward humanistic records, entities, and data roles.
-- **`ab7affa` — `Clean up flexible Analytics chart controls`** stabilizes flexible chart variables and multi-line chart modes.
-- **`ec6a70e` — `Support record-count sunburst charts`** adds explicit record-count support to sunburst charts.
-- **`596b958` — `Support record-count histograms`** adds record-count distribution support to histograms.
-- **`b2dcde5` — `Add flexible Analytics chart variables`** introduces flexible chart axis, metric, aggregation, and series controls.
-- **`6d0b37c` — `Wire visualization availability state`** wires dataset capability state into the Visualizations workspace.
-- **`b273a27` — `Make visualization menu hover more forgiving`** improves the visualization menu hover boundary.
-- **`aae209a` — `Document data capability mapping milestone`** documents the implemented data-capability mapping milestone.
-- **`85f3d46` — `Move data capability audit to mapping review`** places capability reporting at the import decision point.
-- **`eef9cfe` — `Show read-only data capability summaries`** first surfaced data-capability summaries in the UI.
-- **`1889b95` — `Add data capability audit helper`** adds the pure capability-audit helper.
-- **`bfc8872` — `Add Peridot data capability model plan`** adds the capability-model planning document.
-- **`4f280a0` — `Use gold accent for workspace button hover states`** completes the gold-accent hover-state pass.
-- **`737a970` — `Apply Home-style visual system to full workspaces`** applies the Home-style visual system to the full workspaces.
-- **`c0ea2ab` — `Refine Home workspace layout and menu access`** refines Home and menu access.
-- **`a9a25f1` — `Remove Home navigation from active workspaces`** removes redundant Home navigation inside active workspaces.
-- **`88ab302` — `Refine Home workspace card styling`** refines Home card styling.
-- **`b24e19a` — `Link Inspector directed route rows`** is the preceding documented Inspector baseline.
-- **`ed0f2c7` — `Make compact Inspector summary tiles open workspace`** makes compact person/place summary tiles visibly open the full Inspector workspace.
-- **`ace7f52` — `Fix linked letter person and place navigation`** fixes linked-letter source/target person/place navigation and Back placement.
-- **`0a1b57a` — `Link letter detail people and places`** makes linked-letter source/target people and places clickable.
-- **`6f67ac7` — `Move linked letters into Inspector history`** moves linked-letter detail into shared Inspector state/history.
-- **`6c38fac` — `Open Inspector person and place links in workspace`** makes Inspector-internal person/place links open the full workspace.
-- **`6994b35` — `Reduce compact Inspector content`** makes the compact side-panel Inspector summary-oriented.
-- **`f2336f8` — `Apply Inspector shell palette refinements`** applies Inspector shell palette refinements.
-- **`45d1c8b` — `Adjust Inspector clickable object palette`** adjusts the nested Inspector clickable-object palette.
-- **`e02a4a3` — `Refine dual-mode Inspector visual treatment`** refines compact/full Inspector visual treatment.
-- **`224bf5d` — `Refine dual-mode Inspector close and expand behavior`** refines Inspector close, Escape, blank-map, and Expand behavior.
-- **`7a9e310` — `Route menu Inspector away from compact panel`** changes hamburger Inspector routing away from the compact side panel.
-- **`99c0b99` — `Track compact Inspector presentation mode`** tracks compact Inspector presentation state.
-- **`c2808ce` — `Add inert Inspector presentation mode state`** adds Inspector presentation-mode state.
-- **`3377274` — `Prepare shared Inspector content boundary`** prepares the reusable Inspector content boundary.
-- **`b7e3edd` — `Add Inspector workspace design contract`** adds the Inspector workspace contract.
-- **`82178c5` — `Promote Search to full workspace`** promoted Search & Filter out of the legacy side-panel bridge.
-- **`2c53796` — `Promote Export to full workspace`** promoted Export into a full workspace with a live export preview.
-- **`8fc96b3` — `Extract Peridot workspace config`** moved workspace constants/helpers out of `App.jsx`.
-- **`9cd3f3f` — `Clean workspace routing comments`** updated routing comments and removed an obsolete Analytics side-panel handler.
-- **`9240745` — `Fix Visualizations workspace export`** fixed the named export for `PeridotVisualizationsWorkspace`.
-- **`25fc046` — `Extract Peridot visualizations workspace`** extracted the Visualizations workspace component.
-- **`fcf6bb6` — `Extract Peridot data workspace`** extracted the Data workspace component.
-- **`9428766` — `Extract Peridot theme workspace`** extracted the Theme workspace component.
-- **`18c2912` — `Extract Peridot home workspace`** extracted the Home workspace component.
-- **`6c16403` — `Extract Peridot hamburger menu`** extracted the hamburger menu component.
-- **`30b114b` — `Add Peridot routing contract audit`** added the routing transition audit.
-- **`8384dee` — `Fit Analytics workspace preview`** stabilized Analytics preview sizing in Visualizations.
-- **`7a8ed7d` — `Compact Visualizations workspace controls`** compacted Visualizations controls.
-- **`9b67d28` — `Move Theme to full workspace`** moved Theme to a full workspace.
-- **`bb0c0ed` — `Refine hamburger menu visual layout`** refined hamburger menu styling.
-- **`2336915` — `Route mapped imports to visualization workspace`** routed completed mapped imports to Visualizations.
-- **`576bb72` — `Fix visualization workspace viewport initialization`** fixed map viewport measurement after Home/Data startup.
-- **`56f2a49` — `Add internal workspace state model`** introduced internal workspace state.
-- **`b42f6fd` — `Add Peridot interface redesign plan`** added the interface redesign plan.
-- **`10017ec` — `Document workbook import and Inspector profile milestone`** documented the preceding workbook/import/Inspector milestone.
-- **`0f72182` — `Remove redundant Inspector correspondents summary row`** is the preceding safe baseline from before the interface-redesign sequence.
-- **`2d76839` — `Fix linked letter encoding display`** is the paused `maplibre-native-geographic-view` branch head shown in the earlier full commit log.
+- Earlier commit history remains preserved in the full development history table below.
 
 ## Deferred / rolled-back work
 
-### MapLibre migrated-overlay work paused
+### MapLibre migrated-overlay work paused / active preview removed
 
-The later MapLibre migrated-overlay branch is paused. It should be retained as an archived experiment, not deleted. The current continuation branch keeps early gated MapLibre preview files dormant while active development proceeds on the legacy D3/SVG app. If MapLibre is revisited later, start from a fresh audit and do not assume the experimental branch can be merged wholesale.
+The later MapLibre migrated-overlay branch is paused and should be retained as an archived experiment, not treated as active `main` code. The old dormant MapLibre preview files and dependency have now been removed from active `main` in `55a368c`.
+
+If MapLibre is revisited later, start from a fresh branch/source-of-truth audit and reintroduce any needed dependencies intentionally. Do not assume the experimental branch can be merged wholesale.
 
 ### Force-Directed fallback issue on MapLibre experiment
 
@@ -315,10 +287,22 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `43fa09d`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `fcd2e1f`.
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
+| 2026-06-06 | `fcd2e1f` | (HEAD -> main, origin/main, origin/HEAD) | Document timeline scope and clamp chart date range |
+| 2026-06-06 | `84e6a4f` |  | Add code structure audit planning document |
+| 2026-06-06 | `55a368c` |  | Remove dormant MapLibre preview code |
+| 2026-06-06 | `876eb1d` |  | Document Analytics chart extension contract |
+| 2026-06-06 | `0f712b5` |  | Add extracted evidence field controls |
+| 2026-06-06 | `338f204` |  | Restore evidence action normalization helper |
+| 2026-06-06 | `1fe9f82` |  | Extract column mapping field controls |
+| 2026-06-06 | `ce7c092` |  | Extract column mapping modal UI config |
+| 2026-06-06 | `5e8e022` |  | Reduce left control panel to compact Inspector shell |
+| 2026-06-06 | `e8ec660` |  | Extract embedded sample data from App |
+| 2026-06-06 | `133fd91` |  | Add developer orientation comments across source |
+| 2026-06-06 | `cfe8207` |  | Refresh documentation for visualization workspace consolidation |
 | 2026-06-06 | `43fa09d` | (HEAD -> main, origin/main, origin/HEAD) | Remove obsolete export workspace route |
 | 2026-06-06 | `aca8f1f` |  | Update visualization export wiring |
 | 2026-06-06 | `b6eb7c0` |  | Move chart export into visualization header |

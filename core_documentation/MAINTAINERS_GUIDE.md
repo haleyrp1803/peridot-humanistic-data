@@ -22,13 +22,26 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`43fa09d` — `Remove obsolete export workspace route`**
+- **`fcd2e1f` — `Document timeline scope and clamp chart date range`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, and the June 2026 visualization workspace/menu/export consolidation pass. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large chart workspace; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, and the June 2026 structural cleanup/commenting pass. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large chart workspace; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
 
-Recent data, visualization, and language milestones include:
+Recent structural, data, visualization, and language milestones include:
 
-- **`43fa09d` — `Remove obsolete export workspace route`**
+- **`fcd2e1f` — `Document timeline scope and clamp chart date range`**
+- **`84e6a4f` — `Add code structure audit planning document`**
+- **`55a368c` — `Remove dormant MapLibre preview code`**
+- **`876eb1d` — `Document Analytics chart extension contract`**
+- **`0f712b5` — `Add extracted evidence field controls`**
+- **`338f204` — `Restore evidence action normalization helper`**
+- **`1fe9f82` — `Extract column mapping field controls`**
+- **`ce7c092` — `Extract column mapping modal UI config`**
+- **`5e8e022` — `Reduce left control panel to compact Inspector shell`**
+- **`e8ec660` — `Extract embedded sample data from App`**
+- **`133fd91` — `Add developer orientation comments across source`**
+- **`cfe8207` — `Refresh documentation for visualization workspace consolidation`**
+
+- **`fcd2e1f` — `Document timeline scope and clamp chart date range`**
 - **`aca8f1f` — `Update visualization export wiring`**
 - **`b6eb7c0` — `Move chart export into visualization header`**
 - **`0b0cacd` — `Simplify hamburger menu and add Explore workspace`**
@@ -112,7 +125,6 @@ Current workspace / routing boundaries in `src/`:
 - `src/PeridotVisualizationsWorkspace.jsx`
 - `src/PeridotSearchWorkspace.jsx`
 - `src/PeridotThemeWorkspace.jsx`
-- `src/PeridotExportWorkspace.jsx`
 
 Current panel / inspector / Analytics boundaries in `src/`:
 
@@ -147,10 +159,12 @@ Extracted support modules in `src/`:
 - `src/peridotCsvValidation.js`
 - `src/peridotDataCapabilityAudit.js`
 - `src/peridotColumnMapping.js`
+- `src/peridotColumnMappingUiConfig.js`
+- `src/PeridotMappingFieldControls.jsx`
+- `src/PeridotEvidenceFieldControls.jsx`
 - `src/peridotWorkbookMapping.js`
 - `src/peridotWorkbookParsing.js`
-- `src/MapLibreMapStage.jsx` — dormant gated preview path inherited from `main`
-- `src/mapStyleConfig.js` — dormant MapLibre preview style config
+- `src/peridotSampleData.js`
 
 Maintainer/workflow documents are currently organized under `core_documentation/` and `planning_documents/`:
 
@@ -161,6 +175,7 @@ Maintainer/workflow documents are currently organized under `core_documentation/
 - `planning_documents/PERIDOT_INTERFACE_REDESIGN_PLAN.md`
 - `planning_documents/PERIDOT_ROUTING_CONTRACT_AUDIT.md`
 - `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md`
+- `planning_documents/PERIDOT_CODE_STRUCTURE_AUDIT.md`
 
 ## Architectural summary
 
@@ -216,12 +231,9 @@ Main orchestration file. It owns top-level state, derived data wiring, workspace
 
 ### `src/LeftControlPanel.jsx`
 
-Legacy shared side-panel shell and compatibility host. It still contains the old rail/panel structure and legacy panel content. In the current hamburger workflow, most major workflows have moved to full workspaces; the side-panel shell remains structurally important primarily for:
+Compact Inspector side-panel shell. Earlier rail/workflow content has been removed. This file now exists primarily to preserve visualization-click Inspector behavior: node, edge, and cluster clicks still open the compact Inspector while deeper evidence navigation routes into the full Inspector workspace.
 
-- **Inspector** bridge behavior and auto-open interactions from map/network clicks
-
-Do not broadly delete or rename this file’s compatibility-sensitive paths until Timeline and Inspector routing are resolved. In particular, old `showLeftSidebar` / `showRightSidebar` naming may still preserve Inspector auto-open behavior even though the names are semantically stale.
-
+The old `showRightSidebar` naming remains semantically stale but compatibility-sensitive. Do not rename this path casually; explicitly test node click, edge click, cluster click, contained member navigation, compact close, Expand, and Back behavior before changing it.
 
 ### `src/peridotWorkspaceConfig.js`
 
@@ -301,6 +313,20 @@ Owns pure post-upload validation summaries. It produces:
 ### `src/PeridotColumnMappingModal.jsx`
 
 Owns the large column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports. The current UI is role-based rather than correspondence-template-first: users move through record identification, time, places, relationships, evidence/analysis, and capability review. It still produces Peridot-compatible rows for the existing visualization pipeline, but it now exposes explicit temporal roles, point-location roles, route coordinate-pair roles, workbook primary-sheet selection, multi-sheet unique-ID joins, and selected evidence/Analytics metadata from primary and joined sheets.
+
+This file has been partially decomposed. Static UI labels/step groupings live in `peridotColumnMappingUiConfig.js`; repeated mapping table controls live in `PeridotMappingFieldControls.jsx`; evidence/analysis Include/Ignore controls live in `PeridotEvidenceFieldControls.jsx`. The modal should continue to own state transitions, workbook state, import/cancel behavior, and final mapping assembly.
+
+### `src/peridotColumnMappingUiConfig.js`
+
+Static UI configuration for the mapping modal: single-table/workbook step sequences, display labels, field groupings, capability labels, and formatting helpers. It intentionally contains no React state and no import/application logic.
+
+### `src/PeridotMappingFieldControls.jsx`
+
+Presentational mapping-table controls used by the mapping modal for temporal fields, core relationship/place roles, and workbook-aware field-role rows. It should remain stateless and receive current values plus callbacks from `PeridotColumnMappingModal.jsx`.
+
+### `src/PeridotEvidenceFieldControls.jsx`
+
+Presentational evidence/analysis Include/Ignore controls for single-table and workbook imports. The modal owns the state and update handlers; this file owns the repeated row rendering, display labels, and checkbox layout.
 
 ### `src/peridotColumnMapping.js`
 
@@ -390,17 +416,14 @@ Timeline/playback panel UI boundary. The timeline is now **year-based**, not mon
 
 Pure export utilities and export row-builder helpers.
 
+### `src/peridotSampleData.js`
+
+Bundled sample CSV constants used by the Home **Use sample data** path. Keeping sample data out of `App.jsx` reduces top-level orchestration noise and makes future sample replacement safer.
+
 ### `src/personForceLayoutHelpers.js`
 
 Pure helper logic for the pre-settled force-directed person-network layout.
 
-### `src/MapLibreMapStage.jsx`
-
-Dormant development-only MapLibre preview stage inherited from `main` at `10051c0`. It is not the active production renderer on `main`. Avoid changing it unless the user explicitly resumes MapLibre work.
-
-### `src/mapStyleConfig.js`
-
-Dormant MapLibre preview style configuration.
 
 ### Current dual-mode Inspector architecture
 
@@ -715,7 +738,7 @@ Current routing state:
 - the persistent rail is no longer the intended primary visible navigation surface
 - Timeline is integrated into Visualizations as a bottom scrubber
 - Inspector is now dual-mode: compact side panel from visualization clicks plus full workspace from hamburger/Expand/linked-data navigation
-- the legacy shared side-panel shell should be treated as a compatibility layer until Timeline and Inspector are redesigned
+- the compact Inspector side-panel shell should be treated as a compatibility layer for visualization-click Inspector behavior
 
 Recent committed behavior includes:
 
@@ -731,11 +754,11 @@ Recent committed behavior includes:
 
 ## Deferred / rolled-back work
 
-### MapLibre migrated-overlay branch paused
+### MapLibre migrated-overlay branch paused / active preview removed
 
-The later `maplibre-native-geographic-view` branch explored a fuller MapLibre migrated overlay. It produced substantial experimental progress but also accumulated fragility around structural extraction and Force-Directed fallback behavior. The project has set this work aside and returned to a legacy continuation branch.
+The later `maplibre-native-geographic-view` branch remains an archived experiment. Active `main` no longer contains the dormant MapLibre preview files or dependency after `55a368c`.
 
-Current practice: keep the MapLibre files dormant; do not remove them casually, and do not use `?maplibrePreview=1` for ordinary legacy testing. If MapLibre work resumes, begin with a fresh source-of-truth audit.
+If MapLibre work resumes, begin with a fresh source-of-truth audit and intentionally reintroduce any required package dependencies and stage files. Do not assume the old experiment can be merged directly.
 
 ### Shared-panel semantic prop rename
 
@@ -776,7 +799,7 @@ These areas still deserve narrow, explicit passes:
 - Analytics dynamic variable detection from uploaded/current row data
 - Analytics SVG-to-PNG chart export rendering
 - Search & Filter active-dataset state, especially draft/apply coordination across keyword, person, place, route-place, route-people, date, weight, Timeline, Analytics, Inspector, and Export behavior
-- dormant MapLibre preview code if it is ever reactivated
+- archived MapLibre branch work if it is ever explicitly resumed
 
 ## Additional caution
 
@@ -823,7 +846,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`43fa09d` — `Remove obsolete export workspace route`**
+- current documented baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**
 
 A future chat should also be told that:
 
@@ -832,10 +855,10 @@ A future chat should also be told that:
 - itch.io packaging support is already committed
 - the simplified hamburger/workspace structure is committed; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge
 - `InspectorPanel.jsx` is content-only
-- `LeftControlPanel.jsx` owns the legacy shared panel shell and compact Inspector bridge; Data/Visualizations/Explore/Learn More/Search/Themes and Accessibility are full workspace paths, while Export and Timeline are Visualizations-integrated
+- `LeftControlPanel.jsx` owns the compact Inspector side-panel shell; Data/Visualizations/Explore/Learn More/Search/Themes and Accessibility are full workspace paths, while Export and Timeline are Visualizations-integrated
 - `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, `peridotCsvValidation.js`, `peridotColumnMapping.js`, `PeridotColumnMappingModal.jsx`, and `peridotWorkbookParsing.js` own the current template upload, arbitrary table mapping, validation, and workbook-helper boundaries
 - current cluster, Inspector profile, dual-mode Inspector, linked-letter history, clickable linked people/places, compact summary tile, and route-row features are committed, not deferred
-- MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
+- MapLibre preview code has been removed from active `main`; the migrated-overlay branch remains archived and should not be treated as active implementation direction
 - documentation should preserve the full commit trajectory carefully in `CHANGELOG.md`
 - the implemented Search & Filter panel consolidates global filtering and defines the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it
 - Search & Filter currently uses a compact advanced-search layout with current applied scope at the top

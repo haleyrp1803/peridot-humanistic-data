@@ -8,7 +8,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests humanistic tabular data, derives the structures the mapped fields can safely support, and renders an interactive workspace for exploring records through point maps, route maps, person-centered networks, force-directed graphs, chart-based Analytics, full-window Search & Filter, theme controls, export tools, timeline playback, and evidence inspection. The current interface has moved away from the earlier map-first, persistent-rail model: Peridot now opens to a Home / welcome workspace, uses a hamburger-triggered menu, and provides full-window workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export. Timeline remains a transitional side-panel bridge for now, while Inspector now uses a dual-mode model: compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for deeper navigation.
+The application ingests humanistic tabular data, derives the structures the mapped fields can safely support, and renders an interactive workspace for exploring records through point maps, route maps, person-centered networks, force-directed graphs, chart-based Analytics, full-window Search & Filter, theme controls, export tools, timeline playback, and evidence inspection. The current interface has moved away from the earlier map-first, persistent-rail model: Peridot now opens to a Home / welcome workspace, uses a hamburger-triggered menu, and provides full-window workspaces for Home, Data, Visualizations, Explore, Learn More, Search & Filter, and Themes and Accessibility. Timeline is now a bottom Visualizations scrubber, while Inspector uses a dual-mode model: compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for deeper navigation.
 
 ## 3. Current status
 
@@ -16,9 +16,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`43fa09d` — `Remove obsolete export workspace route`** on branch **`main`**
+- **`fcd2e1f` — `Document timeline scope and clamp chart date range`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, and the June 2026 visualization-workspace compression and navigation/export consolidation pass. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, and the June 2026 structural cleanup/commenting pass. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -66,6 +66,8 @@ The current state of the active `main` project includes:
 - volume-based zoom-responsive cluster sizing
 - theme preset support in a **Themes and Accessibility** workspace
 - in-place Visualizations header Export menu for SVG, PNG, nodes CSV, routes/edges CSV, and chart PNG export
+- extracted sample data, mapping UI config, mapping field controls, and evidence field controls that reduce pressure on `App.jsx` and `PeridotColumnMappingModal.jsx`
+- source-wide developer-orientation comments and a tracked code-structure audit planning document
 - export tooling for both images and tabular data
 - a true pre-settled **force-directed person-network layout** backed by `d3-force`
 - a **geographic-anchor person layout** that places correspondents by mappable location
@@ -76,7 +78,7 @@ The current state of the active `main` project includes:
 - directed route rows that open route/edge dossiers
 - a working Inspector **Back** button for multi-step internal navigation
 
-The codebase is functional, but it is still under active maintenance. The largest remaining structural risks are the transitional Timeline/Inspector bridge through `LeftControlPanel.jsx` and the remaining top-level orchestration responsibilities in `src/App.jsx`.
+The codebase is functional, but it is still under active maintenance. The largest remaining structural risk is the continued top-level orchestration concentration in `src/App.jsx`, though recent cleanup has reduced it.
 
 ## 4. Key features
 
@@ -208,7 +210,7 @@ Important current behavior:
 - Search & Filter is reached through Explore/workflow actions, and Export is an in-place Visualizations header menu rather than a separate hamburger workspace
 - Timeline is implemented as a compact bottom scrubber integrated with Visualizations
 - Inspector now uses the planned dual-mode model: compact side-panel summaries preserve click-and-glance context, while the full workspace supports evidence-dossier navigation
-- the old persistent rail and Controls path may still exist in `LeftControlPanel.jsx` as compatibility/dead code, but they are no longer the intended primary user-facing navigation model
+- `LeftControlPanel.jsx` is now reduced to the compact Inspector side-panel shell; the old persistent rail and workflow panels are no longer part of the active source
 
 Screenshots in the repository likely need refresh because the interface has changed materially since the earlier rail/side-panel documentation baseline.
 
@@ -269,7 +271,7 @@ This project currently uses:
 
 The normal production map-stage rendering logic is SVG-based, with exported SVG optionally rasterized to PNG during export workflows.
 
-Early MapLibre preview code may still exist in the repository because `main` includes the gated preview prototype at `10051c0`. That code is dormant in ordinary use and is not the current production map direction.
+MapLibre is no longer a dependency of active `main`; any future MapLibre work should begin from a fresh branch/source-of-truth audit.
 
 ---
 
@@ -298,26 +300,28 @@ src/
   interactionHelpers.js
   LeftControlPanel.jsx
   main.jsx
-  MapLibreMapStage.jsx          # dormant gated preview path on this branch
   mapInteractionHandlers.js
   mapLayoutHelpers.js
   mapStageComponents.jsx
-  mapStyleConfig.js             # dormant MapLibre preview style config
   PeridotColumnMappingModal.jsx
+  PeridotEvidenceFieldControls.jsx
   PeridotDataWorkspace.jsx
   PeridotExploreWorkspace.jsx
   PeridotHamburgerMenu.jsx
   PeridotLearnMoreWorkspace.jsx
+  PeridotMappingFieldControls.jsx
   PeridotHomeWorkspace.jsx
   PeridotSearchWorkspace.jsx
   PeridotThemeWorkspace.jsx
   PeridotVisualizationsWorkspace.jsx
   peridotColumnMapping.js
+  peridotColumnMappingUiConfig.js
   peridotCsvNormalizer.js
   peridotCsvSchema.js
   peridotCsvValidation.js
   peridotWorkbookMapping.js
   peridotWorkbookParsing.js
+  peridotSampleData.js
   peridotWorkspaceConfig.js
   personForceLayoutHelpers.js
   timelinePlaybackComponents.jsx
@@ -376,11 +380,23 @@ Placeholder workspace for future Peridot project information, credits, tutorials
 
 #### `src/LeftControlPanel.jsx`
 
-Legacy shared side-panel shell. It still supports the transitional Timeline and Inspector bridge and contains older panel/rail content for compatibility. It should not be broadly cleaned up until Timeline and Inspector routing are resolved.
+Compact Inspector side-panel shell. Earlier persistent rail/workflow panel content has been removed. This file now preserves visualization-click Inspector behavior for nodes, edges, and clusters while deeper evidence navigation routes to the full Inspector workspace.
 
 #### `src/PeridotColumnMappingModal.jsx`
 
 Large column/workbook-mapping workspace for arbitrary CSV/TSV/Excel imports. It lets users map uploaded source columns to Peridot core fields, configure multi-sheet workbook joins by unique ID, and choose additional custom fields from primary and joined sheets for Inspector/Analytics use.
+
+#### `src/peridotColumnMappingUiConfig.js`
+
+Static UI configuration for the role-based mapping modal, including step order, display labels, field groupings, and formatting helpers.
+
+#### `src/PeridotMappingFieldControls.jsx`
+
+Presentational mapping table controls extracted from the column/workbook mapping modal.
+
+#### `src/PeridotEvidenceFieldControls.jsx`
+
+Presentational Include/Ignore controls for evidence and analysis fields in single-table and workbook mapping.
 
 #### `src/peridotColumnMapping.js`
 
@@ -470,17 +486,13 @@ Timeline/playback UI boundary. The current Timeline bridge is year-based; the fu
 
 Map-stage-adjacent UI/chrome components.
 
-#### `src/MapLibreMapStage.jsx`
-
-Dormant development-only MapLibre preview stage inherited from `main` at `10051c0`. It should not be used as the active production map path unless work explicitly resumes on MapLibre.
-
-#### `src/mapStyleConfig.js`
-
-Dormant MapLibre preview style configuration used only by the gated MapLibre prototype path.
-
 #### `src/exportHelpers.js`
 
 Export subsystem utilities for CSV, SVG, and PNG output.
+
+#### `src/peridotSampleData.js`
+
+Bundled sample CSV constants used by the **Use sample data** path.
 
 #### `src/personForceLayoutHelpers.js`
 
@@ -664,11 +676,11 @@ Implemented Search & Filter controls include keyword, person, place, Route Filte
 
 ## 12. MapLibre status
 
-MapLibre work is currently paused. The active branch for continued work is **`main`**, which keeps the normal D3/SVG Peridot behavior as the working app direction.
+MapLibre work is currently paused and no longer ships as dormant preview code on active `main`.
 
-The branch still contains early gated MapLibre preview files from `main` at `10051c0`, including `src/MapLibreMapStage.jsx` and `src/mapStyleConfig.js`. These files are dormant unless a developer explicitly opens the development URL with `?maplibrePreview=1`. Do not use the MapLibre preview flag for ordinary legacy Peridot testing.
+The old `src/MapLibreMapStage.jsx`, `src/mapStyleConfig.js`, and `maplibre-gl` dependency were removed from active `main` in `55a368c`. The active app direction remains the D3/SVG Peridot path.
 
-A later experimental branch, `maplibre-native-geographic-view`, explored a fuller MapLibre migrated overlay with clusters, aggregated routes, hover feedback, and partial view-mode support. That work is intentionally set aside for now and should be treated as archived research rather than the active implementation baseline.
+A later experimental branch, `maplibre-native-geographic-view`, explored a fuller MapLibre migrated overlay with clusters, aggregated routes, hover feedback, and partial view-mode support. That work is intentionally set aside and should be treated as archived research rather than the active implementation baseline. If MapLibre is revisited, start with a fresh branch/source-of-truth audit.
 
 ---
 
@@ -720,6 +732,7 @@ This repository includes internal maintenance and workflow documents that should
 - **`planning_documents/PERIDOT_INTERFACE_REDESIGN_PLAN.md`**
 - **`planning_documents/PERIDOT_ROUTING_CONTRACT_AUDIT.md`**
 - **`planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md`**
+- **`planning_documents/PERIDOT_CODE_STRUCTURE_AUDIT.md`**
 
 The full commit history, through the current documented baseline, is preserved in one place in **`CHANGELOG.md`**.
 
@@ -728,7 +741,7 @@ The full commit history, through the current documented baseline, is preserved i
 Likely near-term priorities include:
 
 - continue from the legacy D3/SVG Peridot path on `main`
-- keep dormant MapLibre files untouched unless explicitly resuming that experiment
+- keep active `main` on the D3/SVG path unless explicitly resuming MapLibre on a fresh branch/audit
 - preserve the current workspace-first routing model
 - refine the implemented bottom Visualizations timeline/scrubber after larger-dataset testing
 - refine the implemented dual-mode Inspector workspace, including section anchors, breadcrumbs, and future selected-entity/filter actions
@@ -737,7 +750,7 @@ Likely near-term priorities include:
 - treat the legacy three-file upload workflow as superseded by the one-file and mapped-import workflows
 - continue improving Chart Visualizations usability and data-scope clarity inside Visualizations
 - consider future safe metadata filters after the upload/mapping model settles
-- continue safe reduction of orchestration pressure inside `src/App.jsx`
+- continue safe reduction of orchestration pressure inside `src/App.jsx`, using the code-structure audit as the planning reference
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
 - refresh screenshots after the dual-mode Inspector and current workspace/hamburger interface stabilize
 - standardize visual export dimensions later if needed
