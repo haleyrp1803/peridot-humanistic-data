@@ -57,7 +57,19 @@ import {
   WorkbookCoreRoleMappingTable,
   WorkbookTemporalMappingTable,
 } from './PeridotMappingFieldControls.jsx';
+import {
+  buildWorkbookSelectionLabel,
+  getWorkbookSelectionRef,
+  InspectorFieldsStep,
+  makeWorkbookSelectionKey,
+  WorkbookInspectorFieldsStep,
+} from './PeridotEvidenceFieldControls.jsx';
 
+function normalizeAction(action) {
+  return action === CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
+    ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
+    : CUSTOM_INSPECTOR_FIELD_DEFAULTS.include;
+}
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
@@ -72,49 +84,6 @@ function buttonClassName({ active = false, variant = 'secondary' } = {}) {
     return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.3)] hover:bg-[var(--button-primary-active-hover)]`;
   }
   return `${base} ${variants[variant] || variants.secondary}`;
-}
-
-function normalizeAction(value) {
-  return value === CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
-    ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
-    : CUSTOM_INSPECTOR_FIELD_DEFAULTS.include;
-}
-
-function IncludeIgnoreCheckboxPair({ action, disabled = false, onChange }) {
-  const resolvedAction = disabled ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore : normalizeAction(action);
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60">
-        <input
-          type="checkbox"
-          checked={resolvedAction === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include}
-          disabled={disabled}
-          onChange={(event) => onChange(
-            event.target.checked
-              ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.include
-              : CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore,
-          )}
-          className="h-4 w-4 accent-[var(--accent-color)] disabled:opacity-60"
-        />
-        <span>Include</span>
-      </label>
-      <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60">
-        <input
-          type="checkbox"
-          checked={resolvedAction === CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore}
-          disabled={disabled}
-          onChange={(event) => onChange(
-            event.target.checked
-              ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
-              : CUSTOM_INSPECTOR_FIELD_DEFAULTS.include,
-          )}
-          className="h-4 w-4 accent-[var(--accent-color)] disabled:opacity-60"
-        />
-        <span>Ignore</span>
-      </label>
-    </div>
-  );
 }
 
 function StepButton({ active, label, index, onClick }) {
@@ -399,76 +368,8 @@ function RelationshipsMappingStep({ definitions, headers, coreMapping, onChange 
     </div>
   );
 }
-function InspectorFieldsStep({ selections, coreMapping, onActionChange, onLabelChange }) {
-  const mappedCoreColumns = new Set(Object.values(coreMapping || {}).filter(Boolean));
 
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose which remaining uploaded columns should be preserved for record dossiers, search, charts, export, and close reading. These fields can support record dossiers, Search & Filter, charts, and export without needing to become route or network fields.
-      </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
-            <tr>
-              <th className="px-4 py-3">Uploaded column</th>
-              <th className="px-4 py-3">Use as evidence?</th>
-              <th className="px-4 py-3">Display label</th>
-              <th className="px-4 py-3">Chart/filter readiness</th>
-            </tr>
-          </thead>
-          <tbody className="text-[var(--panel-card-muted-text)]">
-            {selections.map((selection, index) => {
-              const isMappedCore = mappedCoreColumns.has(selection.sourceColumn);
-              const action = isMappedCore ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore : normalizeAction(selection.action);
-              return (
-                <tr key={`${selection.sourceColumn}-${index}`} className="border-t border-[var(--panel-card-border)] align-top">
-                  <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
-                    {selection.sourceColumn}
-                    {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Already mapped to a visualization role.</div> : null}
-                  </td>
-                  <td className="px-4 py-3">
-                    <IncludeIgnoreCheckboxPair
-                      action={action}
-                      disabled={isMappedCore}
-                      onChange={(nextAction) => onActionChange(index, nextAction)}
-                    />
-                  </td>
-                  <td className="px-4 py-3">
-                    <input
-                      type="text"
-                      value={selection.label || selection.sourceColumn}
-                      onChange={(event) => onLabelChange(index, event.target.value)}
-                      className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                    />
-                  </td>
-                  <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function makeWorkbookSelectionKey(selection = {}) {
-  const ref = selection.sourceRef || makeWorkbookColumnRef(selection.sheetName, selection.sourceColumn);
-  return `${ref.sheetName || selection.sheetName || ''}::${ref.columnName || selection.sourceColumn || selection.key || selection.label || ''}`;
-}
-
-function getWorkbookSelectionRef(selection = {}) {
-  return selection.sourceRef || makeWorkbookColumnRef(selection.sheetName, selection.sourceColumn || selection.key || selection.label);
-}
-
-function buildWorkbookSelectionLabel(selection = {}, primarySheetName = '') {
-  const sheetName = selection.sheetName || selection.sourceRef?.sheetName || '';
-  const baseLabel = selection.label || selection.sourceColumn || selection.key || selection.sourceRef?.columnName || '';
-  if (!sheetName || sheetName === primarySheetName) return baseLabel;
-  return `${sheetName} — ${baseLabel}`;
-}
 
 function refreshWorkbookCustomSelections({ workbookModel, workbookMapping, previousSelections = [] }) {
   if (!workbookModel || !workbookMapping?.primarySheetName) return [];
@@ -516,87 +417,6 @@ function refreshWorkbookCustomSelections({ workbookModel, workbookMapping, previ
   });
 }
 
-function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChange, onLabelChange }) {
-  const mappedCoreRefs = new Set(
-    [...Object.values(workbookMapping.coreMappings || {}), ...Object.values(workbookMapping.temporalMappings || {})]
-      .filter((ref) => ref?.sheetName && ref?.columnName)
-      .map((ref) => `${ref.sheetName}::${ref.columnName}`)
-  );
-
-  const groupedSelections = selections.reduce((groups, selection, index) => {
-    const ref = getWorkbookSelectionRef(selection);
-    const sheetName = ref.sheetName || selection.sheetName || workbookMapping.primarySheetName || 'Workbook';
-    if (!groups.has(sheetName)) groups.set(sheetName, []);
-    groups.get(sheetName).push({ selection, index, ref });
-    return groups;
-  }, new Map());
-
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose which columns from the primary sheet and configured joined sheets should be preserved for record dossiers, search, charts, export, and close reading. Columns already mapped to visualization roles are automatically ignored here.
-      </div>
-
-      {Array.from(groupedSelections.entries()).map(([sheetName, sheetSelections]) => (
-        <div key={sheetName} className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
-          <div className="border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-3">
-            <div className="font-semibold text-[var(--panel-card-text)]">{sheetName}</div>
-            <div className="mt-1 text-xs text-[var(--panel-card-muted-text)]">
-              {sheetName === workbookMapping.primarySheetName ? 'Primary record sheet' : 'Joined sheet'}
-            </div>
-          </div>
-          <table className="min-w-full border-collapse text-left text-sm">
-            <thead className="bg-[var(--section-bg)] text-[var(--panel-card-text)]">
-              <tr>
-                <th className="px-4 py-3">Workbook column</th>
-                <th className="px-4 py-3">Use as evidence?</th>
-                <th className="px-4 py-3">Display label</th>
-                <th className="px-4 py-3">Chart/filter readiness</th>
-              </tr>
-            </thead>
-            <tbody className="text-[var(--panel-card-muted-text)]">
-              {sheetSelections.map(({ selection, index, ref }) => {
-                const refKey = `${ref.sheetName}::${ref.columnName}`;
-                const isMappedCore = mappedCoreRefs.has(refKey);
-                const action = isMappedCore ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore : normalizeAction(selection.action);
-                return (
-                  <tr key={`${refKey}-${index}`} className="border-t border-[var(--panel-card-border)] align-top">
-                    <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
-                      {ref.columnName || selection.sourceColumn}
-                      {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Already mapped to a visualization role.</div> : null}
-                    </td>
-                    <td className="px-4 py-3">
-                      <IncludeIgnoreCheckboxPair
-                        action={action}
-                        disabled={isMappedCore}
-                        onChange={(nextAction) => onActionChange(index, nextAction)}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <input
-                        type="text"
-                        value={selection.label || buildWorkbookSelectionLabel(selection, workbookMapping.primarySheetName)}
-                        onChange={(event) => onLabelChange(index, event.target.value)}
-                        className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                      />
-                    </td>
-                    <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      ))}
-
-      {!selections.length ? (
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm text-[var(--panel-card-muted-text)]">
-          No evidence or analysis field candidates are available from the configured workbook sheets.
-        </div>
-      ) : null}
-    </div>
-  );
-}
 
 function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilityAudit }) {
   const warnings = summary?.warnings || [];
