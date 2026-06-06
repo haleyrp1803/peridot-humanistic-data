@@ -66,9 +66,46 @@ function buttonClassName({ active = false, variant = 'secondary' } = {}) {
 }
 
 function normalizeAction(value) {
-  return value === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include
-    ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.include
-    : CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore;
+  return value === CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
+    ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
+    : CUSTOM_INSPECTOR_FIELD_DEFAULTS.include;
+}
+
+function IncludeIgnoreCheckboxPair({ action, disabled = false, onChange }) {
+  const resolvedAction = disabled ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore : normalizeAction(action);
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60">
+        <input
+          type="checkbox"
+          checked={resolvedAction === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include}
+          disabled={disabled}
+          onChange={(event) => onChange(
+            event.target.checked
+              ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.include
+              : CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore,
+          )}
+          className="h-4 w-4 accent-[var(--accent-color)] disabled:opacity-60"
+        />
+        <span>Include</span>
+      </label>
+      <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60">
+        <input
+          type="checkbox"
+          checked={resolvedAction === CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore}
+          disabled={disabled}
+          onChange={(event) => onChange(
+            event.target.checked
+              ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
+              : CUSTOM_INSPECTOR_FIELD_DEFAULTS.include,
+          )}
+          className="h-4 w-4 accent-[var(--accent-color)] disabled:opacity-60"
+        />
+        <span>Ignore</span>
+      </label>
+    </div>
+  );
 }
 
 function StepButton({ active, label, index, onClick }) {
@@ -507,15 +544,11 @@ function InspectorFieldsStep({ selections, coreMapping, onActionChange, onLabelC
                     {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Already mapped to a visualization role.</div> : null}
                   </td>
                   <td className="px-4 py-3">
-                    <select
-                      value={action}
+                    <IncludeIgnoreCheckboxPair
+                      action={action}
                       disabled={isMappedCore}
-                      onChange={(event) => onActionChange(index, event.target.value)}
-                      className="rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
-                    >
-                      <option value={CUSTOM_INSPECTOR_FIELD_DEFAULTS.include}>Include</option>
-                      <option value={CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore}>Ignore</option>
-                    </select>
+                      onChange={(nextAction) => onActionChange(index, nextAction)}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     <input
@@ -648,15 +681,11 @@ function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChan
                       {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Already mapped to a visualization role.</div> : null}
                     </td>
                     <td className="px-4 py-3">
-                      <select
-                        value={action}
+                      <IncludeIgnoreCheckboxPair
+                        action={action}
                         disabled={isMappedCore}
-                        onChange={(event) => onActionChange(index, event.target.value)}
-                        className="rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
-                      >
-                        <option value={CUSTOM_INSPECTOR_FIELD_DEFAULTS.include}>Include</option>
-                        <option value={CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore}>Ignore</option>
-                      </select>
+                        onChange={(nextAction) => onActionChange(index, nextAction)}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <input
