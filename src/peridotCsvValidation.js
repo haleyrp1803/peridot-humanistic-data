@@ -205,9 +205,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'unsupported_rows',
-        'Rows lacking minimum source/target information',
+        'Rows lacking minimum record-role information',
         unsupportedRows,
-        `${describeRows(unsupportedRows)} do not have Source_Name + Target_Name or enough source/target place information to be accepted as Peridot records.`
+        `${describeRows(unsupportedRows)} do not have Source_Name + Target_Name, enough source/target place information, or point-place information to be accepted as Peridot records.`
       )
     );
   }
@@ -218,7 +218,7 @@ function buildWarnings(rowReports) {
         'missing_person_pairs',
         'Rows missing source/target names',
         missingPersonPairRows,
-        `${describeRows(missingPersonPairRows)} are missing Source_Name and/or Target_Name and will not contribute to People view person-to-person relationships.`
+        `${describeRows(missingPersonPairRows)} are missing Source_Name and/or Target_Name and will not contribute to People/Entity Network relationships.`
       )
     );
   }
@@ -229,7 +229,7 @@ function buildWarnings(rowReports) {
         'missing_place_pairs',
         'Rows missing source/target place information',
         missingPlacePairRows,
-        `${describeRows(missingPlacePairRows)} are missing source-side and/or target-side place information and will not contribute to place-based relationships.`
+        `${describeRows(missingPlacePairRows)} are missing source-side and/or target-side place information and will not contribute to route or place-relationship visualizations.`
       )
     );
   }
@@ -240,7 +240,7 @@ function buildWarnings(rowReports) {
         'not_map_ready',
         'Rows not mappable',
         notMapReadyRows,
-        `${describeRows(notMapReadyRows)} do not have valid source and target coordinate pairs and will not appear as geographic map routes.`
+        `${describeRows(notMapReadyRows)} do not have valid point coordinates or valid source and target coordinate pairs and will not appear in map visualizations.`
       )
     );
   }
@@ -314,7 +314,7 @@ function buildSummaryLines({ totalRows, acceptedRecordCount, unsupportedRowCount
     `${capabilityCounts.timelineReady} ${capabilityCounts.timelineReady === 1 ? 'record is' : 'records are'} timeline-ready as sortable dates or intervals${temporalCounts?.intervalReady ? `; ${temporalCounts.intervalReady} ${temporalCounts.intervalReady === 1 ? 'includes' : 'include'} temporal interval information` : ''}.`,
     `${capabilityCounts.analyticsReady} ${capabilityCounts.analyticsReady === 1 ? 'record is' : 'records are'} available to Analytics where fields are usable.`,
     unsupportedRowCount
-      ? `${unsupportedRowCount} ${unsupportedRowCount === 1 ? 'row was' : 'rows were'} not accepted because minimum source/target information was missing.`
+      ? `${unsupportedRowCount} ${unsupportedRowCount === 1 ? 'row was' : 'rows were'} not accepted because minimum record-role information was missing.`
       : 'No rows were rejected by the minimum Peridot record rule.',
     PERIDOT_VALIDATION_SUMMARY_COPY.preservedRecordsNotice,
     PERIDOT_VALIDATION_SUMMARY_COPY.noCleaningNotice,

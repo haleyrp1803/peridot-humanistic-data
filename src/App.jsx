@@ -450,7 +450,11 @@ function normalizeGeographyRows(rows) {
   return { normalizedRows, places: Array.from(placeMap.values()) };
 }
 
-// Raw-letters-table normalization: maps uploaded headers into the inspector schema.
+// Raw linked-record normalization: maps uploaded headers into the inspector schema.
+// Terminology note: many internal helpers below still use legacy `letter` names
+// because the Inspector began as a correspondence dossier. User-facing copy should
+// say linked records where possible; internal identifiers should wait for a
+// deliberate Inspector/data-model refactor.
 function normalizeLettersRows(rows) {
   return rows.map((row, idx) => {
     const source = asText(getFieldValue(row, LETTER_HEADER_ALIASES.source));
@@ -1312,8 +1316,10 @@ function serifHeadingClassName() {
 // Use this whenever a section needs the same small card pattern:
 // muted label on top, large value below.
 
-// Reusable linked-letter card used in both node and edge inspector views.
-// This keeps the letter summary, expandable long-text sections, and metadata
+// Reusable linked-record card used in both node and edge inspector views.
+// Internal component names still use linked-letter terminology for compatibility
+// with the current Inspector path; user-facing labels should say linked records.
+// This keeps the record summary, expandable long-text sections, and metadata
 // display consistent no matter how the user reached the inspector.
 function normalizeLinkedLetterCustomInspectorFields(letter) {
   const fields = Array.isArray(letter?.customInspectorFields) ? letter.customInspectorFields : [];
@@ -1361,7 +1367,7 @@ function getLinkedLetterUniqueId(letter, fallbackIndex = 0) {
   ];
 
   const found = candidates.map((value) => String(value ?? '').trim()).find(Boolean);
-  return found || `Letter ${fallbackIndex + 1}`;
+  return found || `Record ${fallbackIndex + 1}`;
 }
 
 function DetailFieldList({ rows }) {
@@ -1463,12 +1469,12 @@ function LinkedLetterDetailPage({ letter, index, onBack, onOpenPersonDetail, onO
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
-            Linked letter detail
+            Linked record detail
           </div>
           <div className="mt-1 text-lg font-semibold text-[var(--panel-card-text)]">{uniqueId}</div>
         </div>
         <button type="button" onClick={onBack} className={buttonClassName()}>
-          Back to linked letters
+          Back to linked records
         </button>
       </div>
 
@@ -2602,9 +2608,9 @@ function LinkedLettersPanel({
     <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
       <div className="mb-3 flex items-center justify-between gap-3 text-sm">
         <div>
-          <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Linked letter records</div>
+          <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Linked records</div>
           <div className="mt-1 text-xs text-[var(--panel-card-muted-text)]">
-            Select a letter ID to open a full record page in the Inspector.
+            Select a record ID to open a full record page in the Inspector.
           </div>
         </div>
         <button type="button" onClick={() => setShowAllLinkedLetters((v) => !v)} className={buttonClassName()}>
@@ -2619,7 +2625,7 @@ function LinkedLettersPanel({
             index={index}
             onOpenLetter={(nextLetter, nextIndex) => onOpenLetterDetail?.(nextLetter, nextIndex)}
           />
-        )) : <div className="text-sm text-[var(--panel-card-muted-text)]">No linked letter-table rows were found for this selection in the current matching logic.</div>}
+        )) : <div className="text-sm text-[var(--panel-card-muted-text)]">No linked record-table rows were found for this selection in the current matching logic.</div>}
         {!showAllLinkedLetters && selectedLetterMetadata.length > 10 ? <div className="text-sm text-[var(--panel-card-muted-text)]">Showing 10 of {selectedLetterMetadata.length} linked records.</div> : null}
       </div>
     </div>
@@ -3587,7 +3593,7 @@ export default function EuropeNetworkMapApp() {
         multiSheetWorkbook: isMultiSheetWorkbook,
         workbookMappingRequired: isMultiSheetWorkbook,
         workbookMappingMessage: isMultiSheetWorkbook
-          ? 'This workbook has multiple usable sheets. You can now open the workbook mapping workspace to choose a primary record sheet, select a Letter_ID column, and preview Sheet + Column mappings. Multi-sheet import will be wired in the next pass.'
+          ? 'This workbook has multiple usable sheets. You can now open the workbook mapping workspace to choose a primary record sheet, select a primary unique ID column, and preview Sheet + Column mappings. Multi-sheet import will be wired in the next pass.'
           : '',
       });
       setIsColumnMappingModalOpen(Boolean(mappingState));

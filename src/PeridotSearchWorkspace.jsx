@@ -265,7 +265,7 @@ export function PeridotSearchWorkspace({
               <AppliedScopeCard label="Person" value={personFilter?.trim() || 'None'} />
               <AppliedScopeCard label="Place" value={placeFilter?.trim() || 'None'} />
               <AppliedScopeCard label="Route place" value={routePlaceFilter?.trim() || 'None'} />
-              <AppliedScopeCard label="Route people" value={routePeopleFilter?.trim() || 'None'} />
+              <AppliedScopeCard label="Route entities" value={routePeopleFilter?.trim() || 'None'} />
               <AppliedScopeCard label="Minimum weight" value={currentMinCountLabel} />
               <AppliedScopeCard label="Date window" value={currentRangeLabel} />
               <AppliedScopeCard label="Rows" value={rowDiagnostics?.filteredRows ?? 'Unknown'} />
@@ -302,7 +302,7 @@ export function PeridotSearchWorkspace({
 
               <CriteriaCard title="People and places">
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <AutocompleteTextInput id="workspace-person-filter" label="Person filter" value={draftPersonFilter} onChange={setDraftPersonFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a correspondent" suggestions={personSuggestions} helperText="Matches source or target names." />
+                  <AutocompleteTextInput id="workspace-person-filter" label="Person filter" value={draftPersonFilter} onChange={setDraftPersonFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a person or entity" suggestions={personSuggestions} helperText="Matches source or target entity names." />
                   <AutocompleteTextInput id="workspace-place-filter" label="Place filter" value={draftPlaceFilter} onChange={setDraftPlaceFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a place" suggestions={placeSuggestions} helperText="Matches source or target places." />
                 </div>
               </CriteriaCard>
@@ -310,7 +310,7 @@ export function PeridotSearchWorkspace({
               <CriteriaCard title="Routes">
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <AutocompleteTextInput id="workspace-route-place-filter" label="Route filter (place)" value={draftRoutePlaceFilter} onChange={setDraftRoutePlaceFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Florence → Siena" suggestions={routePlaceSuggestions} helperText="Matches directed source-place to target-place routes." />
-                  <AutocompleteTextInput id="workspace-route-people-filter" label="Route filter (people)" value={draftRoutePeopleFilter} onChange={setDraftRoutePeopleFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Sender → Recipient" suggestions={routePeopleSuggestions} helperText="Matches directed source-person to target-person routes." />
+                  <AutocompleteTextInput id="workspace-route-people-filter" label="Route filter (entities)" value={draftRoutePeopleFilter} onChange={setDraftRoutePeopleFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Source entity → Target entity" suggestions={routePeopleSuggestions} helperText="Matches directed source-entity to target-entity routes." />
                 </div>
               </CriteriaCard>
 

@@ -8,7 +8,9 @@ import { InspectorBodyRouter } from './InspectorBodyRouter.jsx';
  * not decide whether the Inspector is shown in the compact side panel or the full
  * workspace. Both presentation modes render from the same inspectorState,
  * letterState, and viewComponents objects so the selected item and Back history
- * do not diverge.
+ * do not diverge. `letterState` remains a compatibility name from the
+ * correspondence-first Inspector; user-facing language should continue moving
+ * toward linked records until the Inspector data model is renamed deliberately.
  */
 export function InspectorContent({
   sidebar,

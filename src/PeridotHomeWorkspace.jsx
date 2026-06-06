@@ -27,13 +27,13 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
       <div className="relative z-10 w-full max-w-5xl rounded-[36px] border border-[#d8e4d7]/68 bg-[#082016]/74 p-8 text-[#f4f6df] shadow-[0_34px_90px_rgba(0,0,0,0.58)] ring-1 ring-[#d8e8b2]/18 backdrop-blur-[7px] md:p-12">
         <div className="max-w-3xl">
           <p className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-[#c8dc8d]">
-            Correspondence data exploration
+            Humanistic data exploration
           </p>
           <h1 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-5xl font-bold leading-tight tracking-[-0.04em] text-[#f7f2d8] drop-shadow-[0_2px_12px_rgba(0,0,0,0.45)] md:text-7xl">
             Peridot
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-[#e8edcf] drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)] md:text-xl">
-            Explore historical correspondence as maps, networks, timelines, charts, searchable records, and evidence dossiers. Start with your own data or open the built-in sample dataset.
+            Explore historical and humanistic records as maps, networks, timelines, charts, searchable data, and evidence dossiers. Start with your own dataset or open the built-in sample correspondence dataset.
           </p>
         </div>
 
@@ -44,7 +44,7 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
             className={primaryActionCardClass}
           >
             <span className="block text-sm font-semibold uppercase tracking-[0.18em] text-[#dfeec2] transition-colors group-hover:text-[#fff1bd]">
-              Start with your corpus
+              Start with your dataset
             </span>
             <span className="mt-3 block text-xl font-bold">Upload my data</span>
             <span className="mt-3 block text-sm leading-6 text-[#f4f4df] transition-colors group-hover:text-[#fff8df]">
@@ -62,7 +62,7 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
             </span>
             <span className="mt-3 block text-xl font-bold">Use sample data</span>
             <span className="mt-3 block text-sm leading-6 text-[#f4f4df] transition-colors group-hover:text-[#fff8df]">
-              Enter the current visualization workspace with Peridot&apos;s embedded sample correspondence dataset already loaded.
+              Enter the visualization workspace with Peridot&apos;s embedded sample dataset already loaded.
             </span>
           </button>
         </div>
@@ -71,7 +71,7 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
           <div className="p-1 md:pr-4">
             <strong className="block text-base font-semibold text-[#fbf6d9]">Map and network views</strong>
             <p className="mt-2 text-sm leading-7 text-[#d7e3c0]">
-              Explore correspondence through places, people, and force-directed networks.
+              Explore point maps, route maps, entity networks, and force-directed relationship views when your data supports them.
             </p>
           </div>
           <div className="p-1 md:border-l md:border-[#d7e3c0]/20 md:pl-6">
@@ -83,7 +83,7 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
           <div className="p-1 md:border-l md:border-[#d7e3c0]/20 md:pl-6">
             <strong className="block text-base font-semibold text-[#fbf6d9]">Inspect evidence</strong>
             <p className="mt-2 text-sm leading-7 text-[#d7e3c0]">
-              Move from visual patterns to linked people, places, routes, letters, and metadata.
+              Move from visual patterns to linked entities, places, routes, records, and metadata.
             </p>
           </div>
         </div>

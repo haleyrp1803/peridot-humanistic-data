@@ -2,7 +2,9 @@
  * Peridot single-CSV data contract.
  *
  * This module records the agreed schema and capability model for the
- * standardized Peridot CSV upload workflow.
+ * standardized Peridot CSV upload workflow. The public template remains
+ * correspondence-oriented for backward compatibility, while flexible imports
+ * now support broader record, point/site, route, relationship, and time-series data.
  *
  * Pass 1 scope:
  * - define the template column names;
@@ -63,7 +65,7 @@ export const PERIDOT_FIELD_GROUPS = Object.freeze({
     label: "Network logic",
     fields: Object.freeze(["Date", "Source_Name", "Target_Name"]),
     note:
-      "These fields help Peridot build people, relationships, timelines, and correspondence edges when available.",
+      "These fields help Peridot build entity relationships, timelines, and network edges when available.",
   }),
 
   mapping: Object.freeze({
@@ -197,15 +199,15 @@ export const PERIDOT_ROW_CAPABILITIES = Object.freeze({
  * importer passes should normalize toward.
  */
 export const PERIDOT_TEMPLATE_TO_INTERNAL_MEANING = Object.freeze({
-  Source_Name: "source correspondent",
-  Target_Name: "target correspondent",
+  Source_Name: "source entity / correspondent",
+  Target_Name: "target entity / correspondent",
   Source_Location: "source place",
   Target_Location: "target/inferred target place",
   Source_Latitude: "source latitude",
   Source_Longitude: "source longitude",
   Target_Latitude: "target latitude",
   Target_Longitude: "target longitude",
-  Date: "sortable/displayable correspondence date when parseable",
+  Date: "sortable/displayable record date when parseable",
   Relationship: "relationship metadata",
   Topic: "topic metadata",
   Language: "language metadata",
@@ -224,11 +226,11 @@ export const PERIDOT_TEMPLATE_TO_INTERNAL_MEANING = Object.freeze({
  * panel, with longer guidance deferred to documentation if needed.
  */
 export const PERIDOT_UPLOAD_TIPS = Object.freeze([
-  "Each row should represent one letter, document, or correspondence record.",
+  "Each row should represent one record, document, site, event, observation, relationship, or correspondence item.",
   "Peridot accepts incomplete research data, but some rows may not appear in every visualization.",
-  "Coordinates are not required, but rows need valid source and target coordinates to appear on the geographic map.",
+  "Coordinates are not required, but rows need valid point coordinates or valid source/target coordinates to appear on the geographic map.",
   "Peridot treats names, places, topics, relationships, and languages exactly as entered.",
-  "For cleaner networks and charts, standardize names and categories before upload.",
+  "For cleaner networks, maps, filters, and charts, standardize names and categories before upload.",
   "Rows with unparseable or missing dates can still be preserved, but they may not participate in timeline playback; simple year ranges are recognized as temporal intervals.",
 ]);
 

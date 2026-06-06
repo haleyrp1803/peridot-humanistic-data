@@ -33,7 +33,7 @@ export function PeridotExportWorkspace({
   handleExportNodesCsv,
   onOpenVisualizations,
 }) {
-  const viewLabel = viewMode === 'geographic' ? 'Place map / geographic routes' : 'People network';
+  const viewLabel = viewMode === 'geographic' ? 'Place map / geographic records' : 'People network';
   const nodeCount = graph?.nodes?.length ?? 0;
   const routeCount = graph?.edges?.length ?? 0;
 
@@ -75,11 +75,11 @@ export function PeridotExportWorkspace({
               </button>
               <button type="button" onClick={handleExportEdgesCsv} className={exportButtonClassName()}>
                 <span className="block text-base">Routes CSV</span>
-                <span className="mt-1 block text-xs font-medium leading-5 text-[#f7f2df]/70">Download the current derived correspondence routes.</span>
+                <span className="mt-1 block text-xs font-medium leading-5 text-[#f7f2df]/70">Download the current derived route records.</span>
               </button>
               <button type="button" onClick={handleExportNodesCsv} className={exportButtonClassName()}>
                 <span className="block text-base">Nodes CSV</span>
-                <span className="mt-1 block text-xs font-medium leading-5 text-[#f7f2df]/70">Download the current derived people/place nodes.</span>
+                <span className="mt-1 block text-xs font-medium leading-5 text-[#f7f2df]/70">Download the current derived entity/place nodes.</span>
               </button>
             </div>
 

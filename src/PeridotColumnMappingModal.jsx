@@ -261,7 +261,7 @@ function TemporalMappingTable({ headers, temporalMapping = {}, onChange, compact
         </div>
       </div>
       <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-        The single-date role preserves the existing correspondence workflow. Date Start and Date End preserve intervals such as sent/received dates, inception/dissolution dates, or active date ranges.
+        The single-date role preserves simple record workflows. Date Start and Date End preserve intervals such as sent/received dates, inception/dissolution dates, activity spans, or active date ranges.
       </p>
 
       <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
@@ -371,8 +371,8 @@ function IdentifyRecordsStep({ staging, previewRows, headers }) {
           IDs, citations, and links are preserved through the Evidence and analysis step while durable record-role mappings are added next.
         </p>
         <p className="mt-2">
-          Use this step to confirm the table shape before assigning temporal, place, and relationship roles. A row may represent a letter,
-          site, event, object, publication, observation, or generic evidence record.
+          Use this step to confirm the table shape before assigning temporal, place, and relationship roles. A row may represent a correspondence item,
+          site, event, object, publication, observation, relationship, or generic evidence record.
         </p>
       </MappingIntroCard>
 
@@ -423,7 +423,7 @@ function PlacesMappingStep({ definitions, headers, coreMapping, pointMapping, ro
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Places" title="Map locations according to how this dataset uses space.">
         <p>
-          Map one-location records as point places. Map correspondence, travel, exchange, or movement data as source/target route geography.
+          Map one-location records as point places. Map relationship, correspondence, travel, exchange, or movement data as source/target route geography.
         </p>
         <p className="mt-2">
           Coordinate-pair fields are latitude first, longitude second. Examples: 64.2008, -149.4937 or POINT(64.2008 -149.4937).
@@ -463,7 +463,7 @@ function RelationshipsMappingStep({ definitions, headers, coreMapping, onChange 
   return (
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Relationships" title="Map source/target entities only when the dataset contains relationships.">
-        These fields are optional. Correspondence datasets usually map sender and recipient here. Point/site datasets, stock data,
+        These fields are optional. Relationship datasets may map source and target entities here; correspondence datasets often use sender and recipient columns. Point/site datasets, stock data,
         catalogues, and many evidence tables may leave these roles unassigned.
       </MappingIntroCard>
       <CoreRoleMappingTable
@@ -830,7 +830,7 @@ function WorkbookSetupStep({
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose the sheet whose rows represent the Peridot records. If letter-level data is spread across multiple sheets, add each joined sheet and tell Peridot which columns contain the shared unique ID. The ID-column names do not need to match; the values need to match.
+        Choose the sheet whose rows represent the Peridot records. If record-level data is spread across multiple sheets, add each joined sheet and tell Peridot which columns contain the shared unique ID. The ID-column names do not need to match; the values need to match.
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
@@ -872,7 +872,7 @@ function WorkbookSetupStep({
           <div>
             <div className="font-semibold text-[var(--panel-card-text)]">Join additional sheets by unique ID</div>
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-              Use this when letter-level information is spread across more than one sheet. Click Add sheet for each sheet that should be joined to the primary record sheet, then choose the matching ID columns.
+              Use this when record-level information is spread across more than one sheet. Click Add sheet for each sheet that should be joined to the primary record sheet, then choose the matching ID columns.
             </p>
           </div>
           <button
@@ -957,7 +957,7 @@ function WorkbookSetupStep({
           </div>
         ) : (
           <div className="mt-4 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
-            No joined sheets configured yet. Add sheets here if the workbook stores letter-level record data across multiple sheets.
+            No joined sheets configured yet. Add sheets here if the workbook stores record-level data across multiple sheets.
           </div>
         )}
       </div>
@@ -1187,7 +1187,7 @@ function WorkbookPlacesMappingStep({ workbookModel, workbookMapping, onRouteChan
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Places" title="Map locations according to how this workbook uses space.">
         <p>
-          Map one-location records as point places. Map correspondence, travel, exchange, or movement data as source/target route geography.
+          Map one-location records as point places. Map relationship, correspondence, travel, exchange, or movement data as source/target route geography.
         </p>
         <p className="mt-2">
           Coordinate-pair fields are latitude first, longitude second. Examples: 64.2008, -149.4937 or POINT(64.2008 -149.4937).
@@ -1227,7 +1227,7 @@ function WorkbookRelationshipsMappingStep({ workbookModel, workbookMapping, onCh
   return (
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Relationships" title="Map source/target entities only when the workbook contains relationships.">
-        These fields are optional. Correspondence datasets usually map sender and recipient here. Point/site datasets, stock data,
+        These fields are optional. Relationship datasets may map source and target entities here; correspondence datasets often use sender and recipient columns. Point/site datasets, stock data,
         catalogues, and many evidence tables may leave these roles unassigned.
       </MappingIntroCard>
       <WorkbookCoreRoleMappingTable

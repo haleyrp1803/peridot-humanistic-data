@@ -428,8 +428,11 @@ function StatCard({ label, value }) {
   );
 }
 
-// Reusable linked-letter card used in both node and edge inspector views.
-// This keeps the letter summary, expandable long-text sections, and metadata
+// Reusable linked-record card used in both node and edge inspector views.
+// Terminology note: the underlying data structures still use legacy linked-letter
+// names from the correspondence-first Inspector path. Keep internal names stable
+// until the Inspector is deliberately generalized to record dossiers.
+// This keeps the record summary, expandable long-text sections, and metadata
 // display consistent no matter how the user reached the inspector.
 
 // Shared button styling helper used across the interface.
@@ -464,8 +467,8 @@ function SummaryPanelContent({
             <div>Rows usable for timeline playback: {rowDiagnostics.timelineUsableRows}</div>
             <div>Timeline month buckets detected: {rowDiagnostics.timelineMonths}</div>
             <div>Rows currently inside the active time filter: {rowDiagnostics.filteredRows}</div>
-            <div>Letter metadata rows loaded: {rowDiagnostics.letterRows}</div>
-            <div>Linked-letter matches on visible routes: {rowDiagnostics.linkedLetterMatches}</div>
+            <div>Record metadata rows loaded: {rowDiagnostics.letterRows}</div>
+            <div>Linked-record matches on visible routes: {rowDiagnostics.linkedLetterMatches}</div>
             <div>Person metadata rows loaded: {rowDiagnostics.personMetadataRows}</div>
             <div>Exact person-metadata matches in current filtered set: {rowDiagnostics.exactPersonMetadataMatches}</div>
           </div>
@@ -593,7 +596,7 @@ function VisualizationTypePanelContent({
     {
       key: 'force-directed',
       label: 'Force-Directed',
-      description: 'People network in force layout',
+      description: 'Entity network in force layout',
     },
   ];
 
@@ -1424,7 +1427,7 @@ function ColumnMappingStagingPanel({ staging, onClear, onOpenMapping }) {
       ) : null}
 
       <p className="mt-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Single-sheet CSV, TSV, XLSX, and XLS files can use the current mapping workspace. Multi-sheet Excel workbooks now open in a preview-only workbook mapping workspace; final Letter_ID-based import will be wired in the next Excel pass.
+        Single-sheet CSV, TSV, XLSX, and XLS files can use the current mapping workspace. Multi-sheet Excel workbooks now open in a preview-only workbook mapping workspace; final unique-ID-based import will be wired in the next Excel pass.
       </p>
     </div>
   );
@@ -1469,7 +1472,7 @@ function DataInputsGroup({
             <div className="mb-3">
               <h2 className={sectionTitleClassName()}>Peridot CSV</h2>
               <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-                Upload one standardized Peridot CSV. Each row should represent one letter, document, or correspondence record.
+                Upload one standardized Peridot CSV. Each row should represent one record, document, site, event, observation, relationship, or correspondence item.
               </p>
             </div>
 

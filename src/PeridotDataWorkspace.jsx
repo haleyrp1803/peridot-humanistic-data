@@ -21,9 +21,9 @@ export function PeridotDataWorkspace({
           <div className="peridot-workspace-header-row">
             <div>
               <p className="peridot-kicker">Data workspace</p>
-              <h1 className="peridot-title-medium">Start with correspondence records</h1>
+              <h1 className="peridot-title-medium">Start with your records</h1>
               <p className="peridot-lede">
-                Upload a CSV, TSV, XLSX, or XLS table or workbook, then map it to Peridot&apos;s core fields. Peridot accepts incomplete historical data and reports which records can support Inspector, map, timeline, Analytics, and export workflows.
+                Upload a CSV, TSV, XLSX, or XLS table or workbook, then map your columns by data role. Peridot accepts incomplete historical data and reports which records can support Inspector, mapping, timeline, Analytics, and export workflows.
               </p>
             </div>
             <button type="button" onClick={onOpenVisualizations} className="peridot-button-secondary shrink-0">
@@ -37,7 +37,7 @@ export function PeridotDataWorkspace({
             <p className="peridot-section-label">Template workflow</p>
             <h2 className="mt-3 text-2xl font-bold text-[#fbf7ea]">Peridot template</h2>
             <p className="mt-3 text-sm leading-7 text-[#f7f2df]/82">
-              Download the standard Peridot CSV template when each row represents one letter, document, or correspondence record. Upload the completed CSV through the table/workbook uploader, where it can be reviewed and mapped before entering the main workspace.
+              Download the standard Peridot CSV template when each row represents a correspondence-style record. For other humanistic datasets, upload your existing table or workbook and map its columns by role before entering the main workspace.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <button type="button" onClick={handleDownloadPeridotTemplate} className="peridot-button-cream">
@@ -53,7 +53,7 @@ export function PeridotDataWorkspace({
             <p className="peridot-section-label">Flexible import</p>
             <h2 className="mt-3 text-2xl font-bold text-[#fbf7ea]">Map your own table</h2>
             <p className="mt-3 text-sm leading-7 text-[#f7f2df]/82">
-              Stage an arbitrary CSV, TSV, XLSX, or XLS file, then map its columns to Peridot&apos;s core fields and optional Inspector/Analytics metadata.
+              Stage an arbitrary CSV, TSV, XLSX, or XLS file, then map its columns to record, time, place, relationship, evidence, and analysis roles.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <label className="peridot-button-primary cursor-pointer">
@@ -78,7 +78,7 @@ export function PeridotDataWorkspace({
           <div className="peridot-surface-card peridot-card-inner">
             <p className="peridot-section-label">Step 2</p>
             <h3 className="mt-2 text-lg font-bold text-[#fbf7ea]">Map columns</h3>
-            <p className="mt-2 text-sm leading-6 text-[#f7f2df]/78">Match your columns to Peridot&apos;s core fields and optional metadata.</p>
+            <p className="mt-2 text-sm leading-6 text-[#f7f2df]/78">Match your columns to the roles Peridot uses for records, time, places, relationships, evidence, and analysis.</p>
           </div>
           <div className="peridot-surface-card peridot-card-inner">
             <p className="peridot-section-label">Step 3</p>
