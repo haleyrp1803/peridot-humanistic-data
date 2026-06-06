@@ -220,14 +220,20 @@ export function VisualizationTimelineScrubber({
   const playbackProgress = selectedRowsForPlayback?.length
     ? Math.round(((visiblePlaybackIndex + 1) / selectedRowsForPlayback.length) * 100)
     : 0;
+  const startPercent = lastTimelineIndex ? (normalizedStart / lastTimelineIndex) * 100 : 0;
+  const endPercent = lastTimelineIndex ? (normalizedEnd / lastTimelineIndex) * 100 : 100;
+
+  const stopPlayback = () => {
+    setIsPlaying(false);
+    setPlaybackIndex(-1);
+  };
 
   const updateStart = (value) => {
     const nextStart = Number(value);
     setRangeStart(nextStart);
     if (nextStart > rangeEnd) setRangeEnd(nextStart);
     setTimelineMode('range');
-    setIsPlaying(false);
-    setPlaybackIndex(-1);
+    stopPlayback();
   };
 
   const updateEnd = (value) => {
@@ -235,22 +241,19 @@ export function VisualizationTimelineScrubber({
     setRangeEnd(nextEnd);
     if (nextEnd < rangeStart) setRangeStart(nextEnd);
     setTimelineMode('range');
-    setIsPlaying(false);
-    setPlaybackIndex(-1);
+    stopPlayback();
   };
 
   const resetTimeline = () => {
     setTimelineMode('range');
     setRangeStart(0);
     setRangeEnd(lastTimelineIndex);
-    setIsPlaying(false);
-    setPlaybackIndex(-1);
+    stopPlayback();
   };
 
   const showAllDates = () => {
     setTimelineMode('all');
-    setIsPlaying(false);
-    setPlaybackIndex(-1);
+    stopPlayback();
   };
 
   const playTimeline = () => {
@@ -259,111 +262,146 @@ export function VisualizationTimelineScrubber({
     setIsPlaying(true);
   };
 
+  const statusLabel = isPlaying ? 'Playing' : playbackIndex >= 0 ? 'Paused' : 'Ready';
+
   return (
-    <div className="shrink-0 rounded-[28px] border border-[#c4e0ef]/50 bg-[linear-gradient(135deg,rgba(8,39,25,0.96),rgba(5,29,19,0.98))] px-4 py-3 text-[#fbf7ea] shadow-[0_16px_40px_rgba(0,0,0,0.3)]">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(280px,360px)] xl:items-center">
+    <div className="shrink-0 rounded-[24px] border border-[#c4e0ef]/50 bg-[linear-gradient(135deg,rgba(8,39,25,0.96),rgba(5,29,19,0.98))] px-4 py-3 text-[#fbf7ea] shadow-[0_14px_34px_rgba(0,0,0,0.28)]">
+      <style>{`
+        .peridot-dual-range input[type='range'] {
+          -webkit-appearance: none;
+          appearance: none;
+          background: transparent;
+          height: 34px;
+          pointer-events: none;
+          position: absolute;
+          inset: 0;
+          width: 100%;
+        }
+        .peridot-dual-range input[type='range']::-webkit-slider-runnable-track {
+          background: transparent;
+          height: 4px;
+        }
+        .peridot-dual-range input[type='range']::-moz-range-track {
+          background: transparent;
+          height: 4px;
+        }
+        .peridot-dual-range input[type='range']::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          background: #d6a36a;
+          border: 2px solid #fff8e8;
+          border-radius: 9999px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+          cursor: grab;
+          height: 18px;
+          margin-top: -7px;
+          pointer-events: auto;
+          width: 18px;
+        }
+        .peridot-dual-range input[type='range']::-moz-range-thumb {
+          background: #d6a36a;
+          border: 2px solid #fff8e8;
+          border-radius: 9999px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+          cursor: grab;
+          height: 18px;
+          pointer-events: auto;
+          width: 18px;
+        }
+      `}</style>
+      <div className="grid gap-3 xl:grid-cols-[170px_minmax(260px,1fr)_minmax(410px,520px)] xl:items-center">
         <div className="min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="peridot-kicker !mb-0 text-[10px] text-[#dfe9c8]">Timeline</p>
-              <div className="mt-1 text-sm font-semibold text-[#f5ecd2]">
-                {timelineMode === 'all' ? 'All available dates' : `${startLabel} to ${endLabel}`}
-              </div>
-            </div>
-            <div className="rounded-full border border-[#dfe9c8]/35 bg-[#dfe9c8]/10 px-3 py-1 text-xs text-[#dfe9c8]">
-              Applied window: {currentRangeLabel}
-            </div>
+          <p className="peridot-kicker !mb-0 text-[10px] text-[#dfe9c8]">Timeline</p>
+          <div className="mt-1 text-sm font-semibold text-[#f5ecd2]">
+            {timelineMode === 'all' ? 'All dates' : `${startLabel}–${endLabel}`}
           </div>
-
-          {hasTimeline ? (
-            <div className="mt-3 grid gap-3 lg:grid-cols-2">
-              <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#dfe9c8]">
-                Start year
-                <input
-                  type="range"
-                  min="0"
-                  max={lastTimelineIndex}
-                  value={normalizedStart}
-                  onChange={(event) => updateStart(event.target.value)}
-                  className="mt-2 w-full accent-[#d6a36a]"
-                />
-                <span className="mt-1 block text-sm normal-case tracking-normal text-[#f5ecd2]">{startLabel}</span>
-              </label>
-
-              <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#dfe9c8]">
-                End year
-                <input
-                  type="range"
-                  min="0"
-                  max={lastTimelineIndex}
-                  value={normalizedEnd}
-                  onChange={(event) => updateEnd(event.target.value)}
-                  className="mt-2 w-full accent-[#d6a36a]"
-                />
-                <span className="mt-1 block text-sm normal-case tracking-normal text-[#f5ecd2]">{endLabel}</span>
-              </label>
-            </div>
-          ) : (
-            <div className="mt-3 rounded-2xl border border-[#dfe9c8]/25 bg-[#dfe9c8]/10 p-3 text-sm text-[#dfe9c8]">
-              No usable dates are available for timeline playback.
-            </div>
-          )}
+          <div className="mt-1 text-[11px] text-[#c8d7bd]">Applied: {currentRangeLabel}</div>
         </div>
 
-        <div className="rounded-2xl border border-[#dfe9c8]/25 bg-[#dfe9c8]/10 p-3">
-          <div className="flex flex-wrap gap-2">
+        {hasTimeline ? (
+          <div className="min-w-0">
+            <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-[#dfe9c8]">
+              <span>{startLabel}</span>
+              <span>{endLabel}</span>
+            </div>
+            <div className="peridot-dual-range relative h-9">
+              <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[#dfe9c8]/25" />
+              <div
+                className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-[#d6a36a]"
+                style={{ left: `${startPercent}%`, right: `${100 - endPercent}%` }}
+              />
+              <input
+                type="range"
+                min="0"
+                max={lastTimelineIndex}
+                value={normalizedStart}
+                onChange={(event) => updateStart(event.target.value)}
+                aria-label="Timeline start year"
+              />
+              <input
+                type="range"
+                min="0"
+                max={lastTimelineIndex}
+                value={normalizedEnd}
+                onChange={(event) => updateEnd(event.target.value)}
+                aria-label="Timeline end year"
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-[#dfe9c8]/25 bg-[#dfe9c8]/10 px-3 py-2 text-sm text-[#dfe9c8]">
+            No usable dates are available for timeline playback.
+          </div>
+        )}
+
+        <div className="grid gap-2 lg:grid-cols-[auto_150px_minmax(120px,1fr)] lg:items-center xl:justify-end">
+          <div className="flex flex-wrap gap-1.5">
             <button
               type="button"
               onClick={playTimeline}
               disabled={!selectedRowsForPlayback?.length}
-              className="rounded-full border border-[#dfe9c8]/40 bg-[#edf4df] px-3 py-1.5 text-sm font-bold text-[#203429] transition hover:bg-[#d6a36a] disabled:cursor-not-allowed disabled:opacity-55"
+              className="rounded-full border border-[#dfe9c8]/40 bg-[#edf4df] px-3 py-1.5 text-xs font-bold text-[#203429] transition hover:bg-[#d6a36a] disabled:cursor-not-allowed disabled:opacity-55"
             >
               Play
             </button>
             <button
               type="button"
               onClick={() => setIsPlaying(false)}
-              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-sm font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
+              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-xs font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
             >
               Pause
             </button>
             <button
               type="button"
               onClick={resetTimeline}
-              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-sm font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
+              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-xs font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
             >
               Reset
             </button>
             <button
               type="button"
               onClick={showAllDates}
-              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-sm font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
+              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-xs font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
             >
               All dates
             </button>
           </div>
 
-          <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
-            <label className="block text-xs font-semibold uppercase tracking-[0.14em] text-[#dfe9c8]">
-              Playback speed
-              <select
-                value={playbackSpeed}
-                onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
-                className="mt-1 w-full rounded-xl border border-[#dfe9c8]/35 bg-[#fbf8f1] px-3 py-2 text-sm text-[#203429]"
-              >
-                {playbackSpeedOptions.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
-            <div className="text-right text-xs text-[#dfe9c8]">
-              <div>{currentPlaybackSpeedLabel}</div>
-              <div>{isPlaying ? 'Playing' : playbackIndex >= 0 ? 'Paused' : 'Ready'}</div>
-            </div>
-          </div>
+          <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#dfe9c8]">
+            Speed
+            <select
+              value={playbackSpeed}
+              onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
+              className="mt-1 w-full rounded-xl border border-[#dfe9c8]/35 bg-[#fbf8f1] px-2 py-1.5 text-xs text-[#203429]"
+            >
+              {playbackSpeedOptions.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
 
-          <label className="mt-3 block text-xs font-semibold uppercase tracking-[0.14em] text-[#dfe9c8]">
-            Playback position
+          <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#dfe9c8]">
+            Playback
             <input
               type="range"
               min="0"
@@ -374,10 +412,10 @@ export function VisualizationTimelineScrubber({
                 setIsPlaying(false);
                 setPlaybackIndex(Number(event.target.value));
               }}
-              className="mt-2 w-full accent-[#d6a36a] disabled:opacity-50"
+              className="mt-1 w-full accent-[#d6a36a] disabled:opacity-50"
             />
-            <span className="mt-1 block normal-case tracking-normal text-[#f5ecd2]">
-              {currentPlaybackLabel} {selectedRowsForPlayback?.length ? `• ${playbackProgress}%` : ''}
+            <span className="mt-0.5 block normal-case tracking-normal text-[#f5ecd2]">
+              {statusLabel} • {currentPlaybackSpeedLabel} • {playbackProgress}%
             </span>
           </label>
         </div>

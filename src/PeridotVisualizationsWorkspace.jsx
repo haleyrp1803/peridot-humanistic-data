@@ -213,6 +213,8 @@ export function PeridotVisualizationsWorkspace({
 
   const [selectedTool, setSelectedTool] = useState(initialTool);
   const [openMenuCategory, setOpenMenuCategory] = useState(null);
+  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(true);
   const menuCloseTimerRef = useRef(null);
 
   useEffect(() => {
@@ -424,80 +426,124 @@ export function PeridotVisualizationsWorkspace({
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[#04160f] text-[#fbf7ea]">
       <div className="peridot-workspace-field flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
-          <div className="relative z-50 shrink-0 rounded-[28px] border border-[#c4e0ef]/70 bg-[linear-gradient(135deg,rgba(8,39,25,0.95),rgba(5,29,19,0.96))] px-4 py-3 pl-[76px] shadow-[0_18px_46px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:pl-[80px]">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="min-w-0">
-                <p className="peridot-kicker !mb-0 text-[11px]">Visualization workspace</p>
-                <h1 className="mt-1 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#f5ecd2] md:text-3xl">
-                  {activeVisualizationLabel}
-                </h1>
-                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[#dfe9c8]">
-                  Choose a visualization category. If the active dataset cannot support a view, Peridot explains why instead of showing an empty workspace.
-                </p>
-              </div>
+          <div
+            className={[
+              'relative z-50 shrink-0 rounded-[28px] border border-[#c4e0ef]/70 bg-[linear-gradient(135deg,rgba(8,39,25,0.95),rgba(5,29,19,0.96))] pl-[76px] shadow-[0_18px_46px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:pl-[80px]',
+              isHeaderExpanded ? 'px-4 pb-4 pt-3' : 'px-4 py-2',
+            ].join(' ')}
+          >
+            {isHeaderExpanded ? (
+              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+                <div className="min-w-0">
+                  <p className="peridot-kicker !mb-0 text-[10px]">Visualization workspace</p>
+                  <h1 className="mt-1 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#f5ecd2] md:text-3xl">
+                    {activeVisualizationLabel}
+                  </h1>
+                </div>
 
-              <div className="relative z-[70] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
-                {categories.map((category) => {
-                  const isOpen = openMenuCategory === category.label;
-                  return (
-                    <div
-                      key={category.label}
-                      className={categoryClass(isOpen)}
-                      onMouseEnter={() => openMenu(category.label)}
-                      onMouseLeave={scheduleMenuClose}
-                      onFocus={() => openMenu(category.label)}
-                    >
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 text-left focus:outline-none"
-                        onClick={() => (isOpen ? closeMenu() : openMenu(category.label))}
-                        aria-expanded={isOpen}
+                <div className="relative z-[70] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
+                  {categories.map((category) => {
+                    const isOpen = openMenuCategory === category.label;
+                    return (
+                      <div
+                        key={category.label}
+                        className={categoryClass(isOpen)}
+                        onMouseEnter={() => openMenu(category.label)}
+                        onMouseLeave={scheduleMenuClose}
+                        onFocus={() => openMenu(category.label)}
                       >
-                        <span className="block text-sm font-bold">{category.label}</span>
-                        <span className="mt-1 block text-[11px] leading-snug text-[#dfe9c8]">{category.description}</span>
-                      </button>
-                      {isOpen ? (
-                        <>
-                          <div
-                            aria-hidden="true"
-                            className="absolute left-0 right-0 top-full z-[95] h-4"
-                            onMouseEnter={() => openMenu(category.label)}
-                          />
-                          <div
-                            className="absolute right-0 top-[calc(100%+10px)] z-[100] min-w-[280px] rounded-2xl border border-[#bfa46d] bg-[#fffaf0] p-2 text-[#203429] shadow-[0_18px_38px_rgba(0,0,0,0.36)]"
-                            onMouseEnter={() => openMenu(category.label)}
-                            onMouseLeave={scheduleMenuClose}
-                            onFocus={() => openMenu(category.label)}
-                          >
-                            {category.tools.map((toolKey) => {
-                              const tool = toolDefinitions[toolKey];
-                              return (
-                                <button
-                                  key={toolKey}
-                                  type="button"
-                                  onClick={() => selectTool(toolKey)}
-                                  className={menuItemClass(selectedTool === toolKey, tool.available)}
-                                >
-                                  <span className="pr-2 leading-snug">{tool.label}</span>
-                                  <CompatibilityStatusPill available={tool.available} light />
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-                  );
-                })}
+                        <button
+                          type="button"
+                          className="w-full px-3 py-2 text-left focus:outline-none"
+                          onClick={() => (isOpen ? closeMenu() : openMenu(category.label))}
+                          aria-expanded={isOpen}
+                        >
+                          <span className="block text-sm font-bold">{category.label}</span>
+                          <span className="mt-1 block text-[11px] leading-snug text-[#dfe9c8]">{category.description}</span>
+                        </button>
+                        {isOpen ? (
+                          <>
+                            <div
+                              aria-hidden="true"
+                              className="absolute left-0 right-0 top-full z-[95] h-4"
+                              onMouseEnter={() => openMenu(category.label)}
+                            />
+                            <div
+                              className="absolute right-0 top-[calc(100%+10px)] z-[100] min-w-[280px] rounded-2xl border border-[#bfa46d] bg-[#fffaf0] p-2 text-[#203429] shadow-[0_18px_38px_rgba(0,0,0,0.36)]"
+                              onMouseEnter={() => openMenu(category.label)}
+                              onMouseLeave={scheduleMenuClose}
+                              onFocus={() => openMenu(category.label)}
+                            >
+                              {category.tools.map((toolKey) => {
+                                const tool = toolDefinitions[toolKey];
+                                return (
+                                  <button
+                                    key={toolKey}
+                                    type="button"
+                                    onClick={() => selectTool(toolKey)}
+                                    className={menuItemClass(selectedTool === toolKey, tool.available)}
+                                  >
+                                    <span className="pr-2 leading-snug">{tool.label}</span>
+                                    <CompatibilityStatusPill available={tool.available} light />
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex h-8 items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <span className="peridot-kicker !mb-0 mr-3 inline text-[9px] text-[#dfe9c8]">Visualization workspace</span>
+                  <span className="truncate text-sm font-bold text-[#f5ecd2]">{activeVisualizationLabel}</span>
+                </div>
+                <span className="rounded-full border border-[#dfe9c8]/35 bg-[#dfe9c8]/10 px-3 py-1 text-[11px] font-semibold text-[#dfe9c8]">
+                  Navigation minimized
+                </span>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setIsHeaderExpanded((value) => !value)}
+              className="absolute bottom-0 left-1/2 z-[120] flex h-8 w-14 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full border border-[#dfe9c8]/70 bg-[#f5ecd2] text-lg font-bold leading-none text-[#173120] shadow-[0_8px_20px_rgba(0,0,0,0.28)] transition hover:bg-[#d6a36a] focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/70"
+              aria-label={isHeaderExpanded ? 'Collapse visualization header' : 'Expand visualization header'}
+              title={isHeaderExpanded ? 'Collapse visualization header' : 'Expand visualization header'}
+            >
+              {isHeaderExpanded ? '⌃' : '⌄'}
+            </button>
           </div>
 
           <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3" onMouseEnter={scheduleMenuClose}>
             <div className="min-h-0 flex flex-1">
               {renderWorkspaceBody()}
             </div>
-            {timelineControlsProps ? <VisualizationTimelineScrubber {...timelineControlsProps} /> : null}
+            {timelineControlsProps ? (
+              <div className="relative shrink-0 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsTimelineExpanded((value) => !value)}
+                  className="absolute left-1/2 top-2 z-30 flex h-8 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#dfe9c8]/70 bg-[#f5ecd2] text-lg font-bold leading-none text-[#173120] shadow-[0_8px_20px_rgba(0,0,0,0.28)] transition hover:bg-[#d6a36a] focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/70"
+                  aria-label={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
+                  title={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
+                >
+                  {isTimelineExpanded ? '⌄' : '⌃'}
+                </button>
+                {isTimelineExpanded ? (
+                  <VisualizationTimelineScrubber {...timelineControlsProps} />
+                ) : (
+                  <div className="flex h-10 items-center justify-between rounded-[24px] border border-[#c4e0ef]/50 bg-[linear-gradient(135deg,rgba(8,39,25,0.96),rgba(5,29,19,0.98))] px-5 text-[#fbf7ea] shadow-[0_12px_32px_rgba(0,0,0,0.26)]">
+                    <span className="peridot-kicker !mb-0 text-[10px] text-[#dfe9c8]">Timeline</span>
+                    <span className="text-sm font-semibold text-[#f5ecd2]">{timelineControlsProps.currentRangeLabel}</span>
+                  </div>
+                )}
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
