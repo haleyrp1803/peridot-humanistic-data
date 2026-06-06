@@ -28,6 +28,14 @@ const VISUALIZATION_TOOLS = Object.freeze({
   CAPABILITY_SUMMARY: 'capability-summary',
 });
 
+/*
+ * Chart menu bridge
+ * -----------------
+ * Visualizations exposes each Analytics chart as a top-header menu item, while
+ * `AnalyticsPanel.jsx` owns the actual chart controls and render stage. The
+ * `chart:<type>` tool key keeps the workspace menu decoupled from Analytics
+ * internals but still lets a selected menu item open the correct chart type.
+ */
 function chartToolKey(chartType) {
   return `chart:${chartType}`;
 }
@@ -489,6 +497,15 @@ export function PeridotVisualizationsWorkspace({
     }, 260);
   };
 
+  /*
+   * Build the active visualization-menu registry.
+   *
+   * Map/network entries are handwritten because they switch App-owned view modes.
+   * Chart entries are derived from `ANALYTICS_CHART_DEFINITIONS` so adding a
+   * chart in the Analytics registry automatically surfaces it in the
+   * Visualizations header, provided the derivation and renderer branches also
+   * exist.
+   */
   const toolDefinitions = useMemo(() => ({
     [VISUALIZATION_TOOLS.POINT_MAP]: {
       label: 'Point Map',

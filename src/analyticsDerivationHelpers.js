@@ -679,6 +679,18 @@ export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childB
   return { total: parents.reduce((sum, parent) => sum + parent.count, 0), parents };
 }
 
+/**
+ * Build the chart-ready payload consumed by `AnalyticsChartPreview`.
+ *
+ * Extension contract:
+ * - Every chartType returned here must have a corresponding renderer branch in
+ *   `analyticsChartComponents.jsx`.
+ * - Every chartType that needs user choices should have matching controls in
+ *   `AnalyticsPanel.jsx`.
+ * - Keep this function focused on shaping already-filtered rows into chart data;
+ *   global Search/Filter scope, timeline playback scope, and export behavior are
+ *   owned by higher-level workspaces.
+ */
 export function buildAnalyticsChartData({
   rows = [],
   chartType = 'bar',

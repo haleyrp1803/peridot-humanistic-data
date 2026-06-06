@@ -481,6 +481,15 @@ export function AnalyticsPanelContent({
     </>
   );
 
+  /*
+   * Render the control surface for the active chart type.
+   *
+   * This is deliberately kept as UI state/control logic rather than data
+   * derivation. When adding a chart, make sure its chartType is represented in
+   * `analyticsConfig.js`, its data payload is built in
+   * `analyticsDerivationHelpers.js`, and its SVG renderer exists in
+   * `analyticsChartComponents.jsx` before adding controls here.
+   */
   const renderChartControls = () => {
     if (chartType === 'bar') {
       return (

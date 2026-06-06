@@ -552,6 +552,14 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
   );
 }
 
+/**
+ * Dispatch chart-ready Analytics payloads to SVG renderers.
+ *
+ * This is the renderer side of the chart extension contract. When a new
+ * chartType is added in `analyticsConfig.js` and shaped in
+ * `analyticsDerivationHelpers.js`, add its render branch here so compact chart
+ * display and header PNG export both continue to use the same SVG source.
+ */
 export function AnalyticsChartPreview({ chartData, svgRef }) {
   if (chartData?.chartType === 'line') {
     return <AnalyticsLineChart data={chartData.data} title={chartData.title} subtitle={chartData.subtitle} svgRef={svgRef} />;

@@ -13,6 +13,25 @@
  * - Keep aliases conservative; over-broad aliases can map user columns incorrectly.
  */
 
+
+/*
+ * Chart extension contract
+ * ------------------------
+ * `ANALYTICS_CHART_DEFINITIONS` is the user-facing registry, but it is not the
+ * only place that must know about a chart type. A new chart key should be added
+ * only after checking every file listed in `ANALYTICS_CHART_EXTENSION_CHECKLIST`.
+ * This explicit checklist exists because Analytics is intentionally split across
+ * configuration, data derivation, rendering, controls, and Visualizations menu
+ * routing rather than hidden in one very large component.
+ */
+export const ANALYTICS_CHART_EXTENSION_CHECKLIST = Object.freeze([
+  'analyticsConfig.js: add the chart definition, label, examples, and default copy.',
+  'analyticsDerivationHelpers.js: return the chart-ready data shape for the new chartType.',
+  'analyticsChartComponents.jsx: render that data shape and preserve SVG/PNG export compatibility.',
+  'AnalyticsPanel.jsx: expose only the controls that the chart needs.',
+  'PeridotVisualizationsWorkspace.jsx: confirm the chart appears in the Chart Visualizations menu.',
+]);
+
 export const ANALYTICS_CHART_DEFINITIONS = {
   bar: {
     key: 'bar',
