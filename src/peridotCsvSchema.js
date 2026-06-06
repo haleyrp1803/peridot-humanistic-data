@@ -25,6 +25,8 @@
  * responsible for cleaning and standardizing their data outside the app.
  */
 
+import { parsePeridotCoordinatePair, parsePeridotTemporalRange, parsePeridotTemporalValue } from './peridotDataCapabilityAudit.js';
+
 /**
  * The public template column names are intentionally preserved exactly as
  * supplied in the current Peridot CSV template.
@@ -153,16 +155,28 @@ export const PERIDOT_ROW_CAPABILITIES = Object.freeze({
       "The row has source-side and target-side place information and can contribute to place-based relationship views.",
   }),
 
+  pointMapReady: Object.freeze({
+    label: "Point-map-ready",
+    note:
+      "The row has one valid point coordinate pair and can render as a point-location record.",
+  }),
+
+  routeMapReady: Object.freeze({
+    label: "Route-map-ready",
+    note:
+      "The row has valid source and target coordinate pairs and can render as a geographic route.",
+  }),
+
   mapReady: Object.freeze({
     label: "Map-ready",
     note:
-      "The row has valid source and target coordinate pairs and can render as a geographic route.",
+      "The row has valid point coordinates or valid source and target coordinates for map rendering.",
   }),
 
   timelineReady: Object.freeze({
     label: "Timeline-ready",
     note:
-      "The row has a date value Peridot can parse for sorting, filtering, or playback.",
+      "The row has a date value or date range Peridot can parse for sorting, filtering, or playback.",
   }),
 
   analyticsReady: Object.freeze({
@@ -215,7 +229,7 @@ export const PERIDOT_UPLOAD_TIPS = Object.freeze([
   "Coordinates are not required, but rows need valid source and target coordinates to appear on the geographic map.",
   "Peridot treats names, places, topics, relationships, and languages exactly as entered.",
   "For cleaner networks and charts, standardize names and categories before upload.",
-  "Rows with unparseable or missing dates can still be preserved, but they may not participate in timeline playback.",
+  "Rows with unparseable or missing dates can still be preserved, but they may not participate in timeline playback; simple year ranges are recognized as temporal intervals.",
 ]);
 
 export const PERIDOT_VALIDATION_SUMMARY_COPY = Object.freeze({
@@ -277,6 +291,25 @@ export function hasEndpointPlaceInformation(row, locationField, latitudeField, l
 }
 
 /**
+ * Return true when a row has a valid combined coordinate-pair field.
+ * Peridot coordinate-pair uploads are latitude-first, longitude-second.
+ */
+export function hasCoordinatePairField(row, coordinateField) {
+  return Boolean(parsePeridotCoordinatePair(row?.[coordinateField]));
+}
+
+/**
+ * Return true when a row has any usable place information for a point/site record.
+ */
+export function hasPointPlaceInformation(row) {
+  return (
+    hasValue(row?.Point_Place) ||
+    hasCoordinatePair(row, "Point_Latitude", "Point_Longitude") ||
+    hasCoordinatePairField(row, "Point_Coordinates")
+  );
+}
+
+/**
  * Return true when a row has source-side and target-side place information.
  */
 export function hasPlacePair(row) {
@@ -286,50 +319,83 @@ export function hasPlacePair(row) {
       "Source_Location",
       "Source_Latitude",
       "Source_Longitude"
-    ) &&
+    ) || hasCoordinatePairField(row, "Source_Coordinates")
+  ) && (
     hasEndpointPlaceInformation(
       row,
       "Target_Location",
       "Target_Latitude",
       "Target_Longitude"
-    )
+    ) || hasCoordinatePairField(row, "Target_Coordinates")
+  );
+}
+
+/**
+ * Return true when a row has valid point coordinates.
+ */
+export function hasMappablePointCoordinate(row) {
+  return (
+    hasCoordinatePair(row, "Point_Latitude", "Point_Longitude") ||
+    hasCoordinatePairField(row, "Point_Coordinates")
   );
 }
 
 /**
  * Return true when a row has valid source and target coordinate pairs.
- * This is the stricter map-rendering capability, not the upload-admission rule.
+ * This is the stricter route-rendering capability, not the upload-admission rule.
+ */
+export function hasMappableRouteCoordinatePair(row) {
+  return (
+    (hasCoordinatePair(row, "Source_Latitude", "Source_Longitude") || hasCoordinatePairField(row, "Source_Coordinates")) &&
+    (hasCoordinatePair(row, "Target_Latitude", "Target_Longitude") || hasCoordinatePairField(row, "Target_Coordinates"))
+  );
+}
+
+/**
+ * Return true when a row has valid point or route coordinates.
  */
 export function hasMappableCoordinatePair(row) {
-  return (
-    hasCoordinatePair(row, "Source_Latitude", "Source_Longitude") &&
-    hasCoordinatePair(row, "Target_Latitude", "Target_Longitude")
-  );
+  return hasMappablePointCoordinate(row) || hasMappableRouteCoordinatePair(row);
 }
 
 /**
  * Return true when a row satisfies the minimum Peridot record rule.
  */
 export function isAcceptedPeridotRecord(row) {
-  return hasPersonPair(row) || hasPlacePair(row);
+  return hasPersonPair(row) || hasPlacePair(row) || hasPointPlaceInformation(row);
 }
 
 /**
- * Initial conservative date capability test.
+ * Return normalized temporal information for the public Peridot Date field.
  *
- * This intentionally avoids interpreting historically ambiguous dates. Later
- * passes can replace or extend this when wired into existing Peridot date
- * parsing. For now, it accepts common machine-readable forms:
- *
- * - YYYY
- * - YYYY/MM
- * - YYYY-MM
- * - YYYY/MM/DD
- * - YYYY-MM-DD
+ * This accepts exact dates, year/month precision, year-only values, circa years,
+ * and simple year ranges. Unparseable values are preserved as display evidence
+ * but are not timeline-ready.
+ */
+export function getPeridotDateCapability(row) {
+  const hasStartOrEnd = hasValue(row?.Date_Start) || hasValue(row?.Date_End);
+
+  const temporal = hasStartOrEnd
+    ? parsePeridotTemporalRange({
+        startValue: row?.Date_Start,
+        endValue: row?.Date_End,
+        displayValue: row?.Date_Display || row?.Date,
+      })
+    : parsePeridotTemporalValue(row?.Date || row?.Date_Display);
+
+  return Object.freeze({
+    timelineReady: temporal.isSortable,
+    hasInterval: temporal.isInterval,
+    hasClosedRange: temporal.rangeKind === 'closedRange',
+    temporal,
+  });
+}
+
+/**
+ * Return true when a row has a Date value Peridot can sort/filter.
  */
 export function hasMachineReadableDate(row) {
-  const value = String(row?.Date ?? "").trim();
-  return /^\d{4}([/-]\d{1,2})?([/-]\d{1,2})?$/.test(value);
+  return getPeridotDateCapability(row).timelineReady;
 }
 
 /**
@@ -342,6 +408,8 @@ export function getPeridotRowCapabilities(row) {
     inspectorReady: accepted,
     peopleNetworkReady: hasPersonPair(row),
     placeNetworkReady: hasPlacePair(row),
+    pointMapReady: hasMappablePointCoordinate(row),
+    routeMapReady: hasMappableRouteCoordinatePair(row),
     mapReady: hasMappableCoordinatePair(row),
     timelineReady: hasMachineReadableDate(row),
     analyticsReady: accepted,

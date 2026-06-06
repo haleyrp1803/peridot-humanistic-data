@@ -34,6 +34,8 @@ export const PERIDOT_FIELD_ROLES = Object.freeze({
   TARGET_PLACE: 'target_place',
   TARGET_LATITUDE: 'target_latitude',
   TARGET_LONGITUDE: 'target_longitude',
+  SOURCE_COORDINATES: 'source_coordinates',
+  TARGET_COORDINATES: 'target_coordinates',
   RELATIONSHIP_TYPE: 'relationship_type',
   PERSON: 'person',
   INSTITUTION: 'institution',
@@ -79,9 +81,11 @@ const ROLE_PATTERNS = [
   { role: ROLE.SOURCE_LONGITUDE, patterns: [/^source.*lon/i, /^source.*long/i, /^sender.*lon/i, /^origin.*lon/i, /^from.*lon/i] },
   { role: ROLE.TARGET_LATITUDE, patterns: [/^target.*lat/i, /^recipient.*lat/i, /^destination.*lat/i, /^to.*lat/i] },
   { role: ROLE.TARGET_LONGITUDE, patterns: [/^target.*lon/i, /^target.*long/i, /^recipient.*lon/i, /^destination.*lon/i, /^to.*lon/i] },
-  { role: ROLE.POINT_LATITUDE, patterns: [/^lat$/i, /^latitude$/i, /\blatitude\b/i] },
-  { role: ROLE.POINT_LONGITUDE, patterns: [/^lon$/i, /^lng$/i, /^long$/i, /^longitude$/i, /\blongitude\b/i] },
-  { role: ROLE.POINT_COORDINATES, patterns: [/^coordinates?$/i, /^coord/i, /lat.*lon/i, /lon.*lat/i, /coordinate pair/i] },
+  { role: ROLE.SOURCE_COORDINATES, patterns: [/^source.*coordinates?/i, /^origin.*coordinates?/i, /^from.*coordinates?/i, /^sender.*coordinates?/i] },
+  { role: ROLE.TARGET_COORDINATES, patterns: [/^target.*coordinates?/i, /^destination.*coordinates?/i, /^to.*coordinates?/i, /^recipient.*coordinates?/i] },
+  { role: ROLE.POINT_LATITUDE, patterns: [/^point.*lat/i, /^site.*lat/i, /^location.*lat/i, /^lat$/i, /^latitude$/i, /\blatitude\b/i] },
+  { role: ROLE.POINT_LONGITUDE, patterns: [/^point.*lon/i, /^point.*long/i, /^site.*lon/i, /^site.*long/i, /^location.*lon/i, /^location.*long/i, /^lon$/i, /^lng$/i, /^long$/i, /^longitude$/i, /\blongitude\b/i] },
+  { role: ROLE.POINT_COORDINATES, patterns: [/^point.*coordinates?/i, /^site.*coordinates?/i, /^location.*coordinates?/i, /^coordinates?$/i, /^coord/i, /coordinate location/i, /lat.*lon/i, /lon.*lat/i, /coordinate pair/i] },
   { role: ROLE.SOURCE_ENTITY, patterns: [/^source(_|\s|-)?name$/i, /^source$/i, /^sender$/i, /^author$/i, /^from person$/i, /^source entity$/i] },
   { role: ROLE.TARGET_ENTITY, patterns: [/^target(_|\s|-)?name$/i, /^target$/i, /^recipient$/i, /^addressee$/i, /^to person$/i, /^target entity$/i] },
   { role: ROLE.SOURCE_PLACE, patterns: [/^source(_|\s|-)?location$/i, /^source.*place$/i, /^origin$/i, /^from place$/i, /^sender.*place$/i] },
@@ -160,18 +164,113 @@ function isReasonableYear(year) {
   return Number.isInteger(year) && year >= EARLIEST_REASONABLE_YEAR && year <= LATEST_REASONABLE_YEAR;
 }
 
-function makeTemporalResult({ display, startSort = null, endSort = null, startYear = null, endYear = null, precision = 'unknown', warnings = [] }) {
+function makeTemporalResult({
+  display,
+  startSort = null,
+  endSort = null,
+  startYear = null,
+  endYear = null,
+  precision = 'unknown',
+  rangeKind = 'unknown',
+  startOpen = false,
+  endOpen = false,
+  warnings = [],
+}) {
+  const resolvedEndSort = endSort ?? startSort;
+  const resolvedEndYear = endYear ?? startYear;
+  const isSortable = startSort !== null || resolvedEndSort !== null;
+  const hasRange = startSort !== null && resolvedEndSort !== null && resolvedEndSort !== startSort;
+
   return {
     display: normalizeTextValue(display),
-    startSort,
-    endSort: endSort ?? startSort,
-    startYear,
-    endYear: endYear ?? startYear,
+    startSort: startSort ?? resolvedEndSort,
+    endSort: resolvedEndSort ?? startSort,
+    startYear: startYear ?? resolvedEndYear,
+    endYear: resolvedEndYear ?? startYear,
     precision,
-    hasRange: startSort !== null && endSort !== null && endSort !== startSort,
-    isSortable: startSort !== null,
+    rangeKind,
+    hasRange,
+    isInterval: rangeKind === 'closedRange' || rangeKind === 'openStart' || rangeKind === 'openEnd',
+    startOpen,
+    endOpen,
+    isSortable,
     warnings,
   };
+}
+
+function mergeTemporalWarnings(...temporalValues) {
+  return temporalValues.flatMap((temporal) => temporal?.warnings || []);
+}
+
+export function parsePeridotTemporalRange({ startValue, endValue, displayValue } = {}) {
+  const hasStartValue = !isBlankValue(startValue);
+  const hasEndValue = !isBlankValue(endValue);
+  const start = hasStartValue ? parsePeridotTemporalValue(startValue) : null;
+  const end = hasEndValue ? parsePeridotTemporalValue(endValue) : null;
+  const display = normalizeTextValue(
+    displayValue
+    || [startValue, endValue].filter((value) => !isBlankValue(value)).join(' – '),
+  );
+
+  if (start?.isSortable && end?.isSortable) {
+    const startSort = start.startSort;
+    const endSort = end.endSort ?? end.startSort;
+    const startYear = start.startYear;
+    const endYear = end.endYear ?? end.startYear;
+    const warnings = mergeTemporalWarnings(start, end);
+
+    if (endSort !== null && startSort !== null && endSort < startSort) {
+      warnings.push('End date sorts before start date; temporal interval is preserved but should be reviewed.');
+    }
+
+    return makeTemporalResult({
+      display,
+      startSort,
+      endSort,
+      startYear,
+      endYear,
+      precision: startSort !== endSort ? 'range' : start.precision,
+      rangeKind: startSort !== endSort ? 'closedRange' : 'single',
+      warnings,
+    });
+  }
+
+  if (start?.isSortable) {
+    return makeTemporalResult({
+      display,
+      startSort: start.startSort,
+      endSort: start.endSort ?? start.startSort,
+      startYear: start.startYear,
+      endYear: start.endYear ?? start.startYear,
+      precision: start.precision,
+      rangeKind: 'openStart',
+      endOpen: true,
+      warnings: mergeTemporalWarnings(start, end),
+    });
+  }
+
+  if (end?.isSortable) {
+    return makeTemporalResult({
+      display,
+      startSort: end.startSort,
+      endSort: end.endSort ?? end.startSort,
+      startYear: end.startYear,
+      endYear: end.endYear ?? end.startYear,
+      precision: end.precision,
+      rangeKind: 'openEnd',
+      startOpen: true,
+      warnings: mergeTemporalWarnings(start, end),
+    });
+  }
+
+  return makeTemporalResult({
+    display,
+    precision: start?.precision || end?.precision || 'unknown',
+    rangeKind: hasStartValue ? 'openStart' : hasEndValue ? 'openEnd' : 'unknown',
+    startOpen: !hasStartValue && hasEndValue,
+    endOpen: hasStartValue && !hasEndValue,
+    warnings: mergeTemporalWarnings(start, end),
+  });
 }
 
 export function parsePeridotTemporalValue(value, options = {}) {
@@ -183,6 +282,7 @@ export function parsePeridotTemporalValue(value, options = {}) {
       startSort: Date.UTC(year, value.getUTCMonth(), value.getUTCDate()),
       startYear: year,
       precision: 'exact',
+      rangeKind: 'single',
     });
   }
 
@@ -194,6 +294,7 @@ export function parsePeridotTemporalValue(value, options = {}) {
       startSort,
       startYear: year,
       precision: 'exact',
+      rangeKind: 'single',
     });
   }
 
@@ -223,6 +324,7 @@ export function parsePeridotTemporalValue(value, options = {}) {
         startYear: year,
         endYear: year,
         precision: 'circa',
+        rangeKind: 'single',
       });
     }
   }
@@ -239,6 +341,7 @@ export function parsePeridotTemporalValue(value, options = {}) {
         startYear,
         endYear,
         precision: 'range',
+        rangeKind: 'closedRange',
       });
     }
   }
@@ -254,6 +357,7 @@ export function parsePeridotTemporalValue(value, options = {}) {
         startSort: makeUtcDateMs(year, month, day),
         startYear: year,
         precision: 'exact',
+        rangeKind: 'single',
       });
     }
   }
@@ -269,6 +373,7 @@ export function parsePeridotTemporalValue(value, options = {}) {
         startSort: makeUtcDateMs(year, month, day),
         startYear: year,
         precision: 'exact',
+        rangeKind: 'single',
       });
     }
   }
@@ -286,6 +391,7 @@ export function parsePeridotTemporalValue(value, options = {}) {
         startYear: year,
         endYear: year,
         precision: 'month',
+        rangeKind: 'single',
       });
     }
   }
@@ -301,6 +407,7 @@ export function parsePeridotTemporalValue(value, options = {}) {
         startYear: year,
         endYear: year,
         precision: 'year',
+        rangeKind: 'single',
       });
     }
   }
@@ -318,9 +425,9 @@ export function parsePeridotCoordinatePair(value) {
 
   const pointMatch = raw.match(/^point\s*\(\s*([-+]?\d*\.?\d+)\s+([-+]?\d*\.?\d+)\s*\)$/i);
   if (pointMatch) {
-    const longitude = Number(pointMatch[1]);
-    const latitude = Number(pointMatch[2]);
-    return isValidCoordinate(latitude, longitude) ? { latitude, longitude, format: 'wktPoint' } : null;
+    const latitude = Number(pointMatch[1]);
+    const longitude = Number(pointMatch[2]);
+    return isValidCoordinate(latitude, longitude) ? { latitude, longitude, format: 'pointLatLong' } : null;
   }
 
   const numericParts = raw.match(/[-+]?\d*\.?\d+/g);
@@ -497,21 +604,7 @@ function temporalFromRow(row, roleHeaders) {
   const displayValue = firstValueForRoles(row, roleHeaders.dateDisplayHeaders);
 
   if (!isBlankValue(startValue) || !isBlankValue(endValue)) {
-    const start = parsePeridotTemporalValue(startValue ?? displayValue);
-    const end = parsePeridotTemporalValue(endValue ?? startValue ?? displayValue);
-    const display = normalizeTextValue(displayValue || [startValue, endValue].filter((value) => !isBlankValue(value)).join(' – '));
-    const isSortable = start.isSortable || end.isSortable;
-    return {
-      display,
-      startSort: start.startSort ?? end.startSort,
-      endSort: end.endSort ?? start.endSort ?? start.startSort,
-      startYear: start.startYear ?? end.startYear,
-      endYear: end.endYear ?? start.endYear ?? start.startYear,
-      precision: start.isSortable && end.isSortable && (start.startSort !== end.endSort) ? 'range' : (start.precision || end.precision),
-      hasRange: Boolean(start.isSortable && end.isSortable && (start.startSort !== end.endSort)),
-      isSortable,
-      warnings: [...(start.warnings || []), ...(end.warnings || [])],
-    };
+    return parsePeridotTemporalRange({ startValue, endValue, displayValue });
   }
 
   if (!isBlankValue(singleValue)) {
@@ -522,7 +615,7 @@ function temporalFromRow(row, roleHeaders) {
     return parsePeridotTemporalValue(displayValue);
   }
 
-  return makeTemporalResult({ display: '', precision: 'unknown' });
+  return makeTemporalResult({ display: '', precision: 'unknown', rangeKind: 'unknown' });
 }
 
 function auditRow(row, index, roleHeaders, fieldSummaries) {
@@ -537,8 +630,10 @@ function auditRow(row, index, roleHeaders, fieldSummaries) {
 
   const pointCoordinate = coordinateFromSeparateFields(row, roleHeaders.pointLatitudeHeaders, roleHeaders.pointLongitudeHeaders)
     || coordinateFromCombinedField(row, roleHeaders.pointCoordinateHeaders);
-  const sourceCoordinate = coordinateFromSeparateFields(row, roleHeaders.sourceLatitudeHeaders, roleHeaders.sourceLongitudeHeaders);
-  const targetCoordinate = coordinateFromSeparateFields(row, roleHeaders.targetLatitudeHeaders, roleHeaders.targetLongitudeHeaders);
+  const sourceCoordinate = coordinateFromSeparateFields(row, roleHeaders.sourceLatitudeHeaders, roleHeaders.sourceLongitudeHeaders)
+    || coordinateFromCombinedField(row, roleHeaders.sourceCoordinateHeaders);
+  const targetCoordinate = coordinateFromSeparateFields(row, roleHeaders.targetLatitudeHeaders, roleHeaders.targetLongitudeHeaders)
+    || coordinateFromCombinedField(row, roleHeaders.targetCoordinateHeaders);
   const temporal = temporalFromRow(row, roleHeaders);
 
   const filledHeaders = fieldSummaries
@@ -609,6 +704,8 @@ function isCoordinateOrDateRole(roles) {
     ROLE.SOURCE_LONGITUDE,
     ROLE.TARGET_LATITUDE,
     ROLE.TARGET_LONGITUDE,
+    ROLE.SOURCE_COORDINATES,
+    ROLE.TARGET_COORDINATES,
   ].includes(role));
 }
 
@@ -660,6 +757,35 @@ function buildRoleHeaders(fieldSummaries) {
     targetPlaceHeaders: headersForRole(fieldSummaries, ROLE.TARGET_PLACE),
     targetLatitudeHeaders: headersForRole(fieldSummaries, ROLE.TARGET_LATITUDE),
     targetLongitudeHeaders: headersForRole(fieldSummaries, ROLE.TARGET_LONGITUDE),
+    sourceCoordinateHeaders: headersForRole(fieldSummaries, ROLE.SOURCE_COORDINATES),
+    targetCoordinateHeaders: headersForRole(fieldSummaries, ROLE.TARGET_COORDINATES),
+  };
+}
+
+function summarizeTemporalCapabilities(rowAudits, fieldSummaries) {
+  const precisionCounts = rowAudits.reduce((acc, row) => {
+    const precision = row.temporal?.precision || 'unknown';
+    acc[precision] = (acc[precision] || 0) + 1;
+    return acc;
+  }, {});
+  const rangeKindCounts = rowAudits.reduce((acc, row) => {
+    const rangeKind = row.temporal?.rangeKind || 'unknown';
+    acc[rangeKind] = (acc[rangeKind] || 0) + 1;
+    return acc;
+  }, {});
+  const temporalRoleFields = fieldSummaries
+    .filter((field) => field.roles.some((role) => [ROLE.DATE, ROLE.DATE_START, ROLE.DATE_END, ROLE.DATE_SORT, ROLE.DATE_DISPLAY].includes(role)))
+    .map((field) => field.header);
+
+  return {
+    sortableRows: rowAudits.filter((row) => row.temporal?.isSortable).length,
+    intervalRows: rowAudits.filter((row) => row.temporal?.isInterval).length,
+    closedRangeRows: rowAudits.filter((row) => row.temporal?.rangeKind === 'closedRange').length,
+    openStartRows: rowAudits.filter((row) => row.temporal?.rangeKind === 'openStart').length,
+    openEndRows: rowAudits.filter((row) => row.temporal?.rangeKind === 'openEnd').length,
+    temporalRoleFields,
+    precisionCounts,
+    rangeKindCounts,
   };
 }
 
@@ -701,6 +827,7 @@ function summarizeDataset(rows, fieldSummaries, rowAudits) {
       coordinateFields,
       wideNumericSeriesLikely: temporalFields.length > 0 && numericMeasureFields.length >= 2,
     },
+    temporal: summarizeTemporalCapabilities(rowAudits, fieldSummaries),
     warnings: buildDatasetWarnings(totalRows, capabilityCounts, fieldSummaries),
   };
 }
@@ -763,6 +890,7 @@ export function createPeridotCapabilitySummary(audit) {
     `Route-map-ready: ${counts.routeMapReady ?? 0} of ${total}`,
     `Network-ready: ${counts.networkReady ?? 0} of ${total}`,
     `Timeline-ready: ${counts.timelineReady ?? 0} of ${total}`,
+    `Temporal intervals: ${dataset.temporal?.intervalRows ?? 0} of ${total} (${dataset.temporal?.closedRangeRows ?? 0} closed ranges, ${dataset.temporal?.openStartRows ?? 0} start-only, ${dataset.temporal?.openEndRows ?? 0} end-only)`,
     `Chart-ready: ${counts.chartReady ?? 0} of ${total}`,
     `Numeric measure fields: ${dataset.analytics?.numericMeasureFields?.join(', ') || 'none detected'}`,
     `Categorical fields: ${dataset.analytics?.categoricalFields?.join(', ') || 'none detected'}`,

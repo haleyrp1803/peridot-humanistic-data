@@ -5,6 +5,9 @@ import {
   applyPeridotColumnMapping,
   CUSTOM_INSPECTOR_FIELD_DEFAULTS,
   PERIDOT_CORE_FIELD_DEFINITIONS,
+  PERIDOT_POINT_FIELD_DEFINITIONS,
+  PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS,
+  PERIDOT_TEMPORAL_FIELD_DEFINITIONS,
   validatePeridotColumnMapping,
 } from './peridotColumnMapping.js';
 import {
@@ -20,12 +23,32 @@ import {
   suggestDefaultLetterIdJoinForSheet,
   suggestSharedLetterIdJoins,
   suggestWorkbookCoreMappings,
+  suggestWorkbookPointMappings,
+  suggestWorkbookRouteCoordinatePairMappings,
+  suggestWorkbookTemporalMappings,
   validatePeridotWorkbookMapping,
 } from './peridotWorkbookMapping.js';
 import { auditPeridotDataCapabilities } from './peridotDataCapabilityAudit.js';
 
-const SINGLE_TABLE_STEP_KEYS = ['preview', 'core', 'inspector', 'review'];
-const WORKBOOK_STEP_KEYS = ['workbook-preview', 'workbook-setup', 'workbook-core', 'workbook-inspector', 'workbook-review'];
+const SINGLE_TABLE_STEP_KEYS = ['preview', 'identify', 'time', 'places', 'relationships', 'evidence', 'review'];
+const WORKBOOK_STEP_KEYS = ['workbook-preview', 'workbook-setup', 'workbook-identify', 'workbook-time', 'workbook-places', 'workbook-relationships', 'workbook-evidence', 'workbook-review'];
+
+const CORE_FIELD_GROUPS = Object.freeze({
+  relationship: Object.freeze(['Source_Name', 'Target_Name']),
+  routePlaces: Object.freeze([
+    'Source_Location',
+    'Source_Latitude',
+    'Source_Longitude',
+    'Target_Location',
+    'Target_Latitude',
+    'Target_Longitude',
+  ]),
+});
+
+function definitionsForFields(definitions = [], fields = []) {
+  const fieldSet = new Set(fields);
+  return definitions.filter((definition) => fieldSet.has(definition.key));
+}
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
@@ -154,6 +177,12 @@ function CapabilityAuditCard({ audit, note }) {
   const numericFields = dataset.analytics?.numericMeasureFields || [];
   const categoricalFields = dataset.analytics?.categoricalFields || [];
   const temporalFields = dataset.analytics?.temporalFields || [];
+  const temporalSummary = dataset.temporal || {};
+  const temporalRoleFields = temporalSummary.temporalRoleFields || temporalFields;
+  const intervalRows = temporalSummary.intervalRows ?? 0;
+  const closedRangeRows = temporalSummary.closedRangeRows ?? 0;
+  const openStartRows = temporalSummary.openStartRows ?? 0;
+  const openEndRows = temporalSummary.openEndRows ?? 0;
 
   return (
     <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
@@ -171,7 +200,7 @@ function CapabilityAuditCard({ audit, note }) {
 
       {note ? <p className="mt-3 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">{note}</p> : null}
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2">
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Detected shape(s)</div>
           <div className="mt-2 text-sm font-semibold text-[var(--panel-card-text)]">
@@ -184,6 +213,15 @@ function CapabilityAuditCard({ audit, note }) {
             <div><span className="font-semibold text-[var(--panel-card-text)]">Numeric:</span> {numericFields.length ? numericFields.slice(0, 5).join(', ') : 'none detected'}</div>
             <div><span className="font-semibold text-[var(--panel-card-text)]">Categorical:</span> {categoricalFields.length ? categoricalFields.slice(0, 5).join(', ') : 'none detected'}</div>
             <div><span className="font-semibold text-[var(--panel-card-text)]">Temporal:</span> {temporalFields.length ? temporalFields.slice(0, 5).join(', ') : 'none detected'}</div>
+          </div>
+        </div>
+        <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Temporal intervals</div>
+          <div className="mt-2 space-y-1 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+            <div><span className="font-semibold text-[var(--panel-card-text)]">Fields:</span> {temporalRoleFields.length ? temporalRoleFields.slice(0, 5).join(', ') : 'none detected'}</div>
+            <div><span className="font-semibold text-[var(--panel-card-text)]">Timeline-ready:</span> {counts.timelineReady ?? 0} of {totalRows}</div>
+            <div><span className="font-semibold text-[var(--panel-card-text)]">Intervals:</span> {intervalRows} of {totalRows}</div>
+            <div className="text-[11px]">{closedRangeRows} closed range{closedRangeRows === 1 ? '' : 's'} · {openStartRows} start-only · {openEndRows} end-only</div>
           </div>
         </div>
       </div>
@@ -212,31 +250,97 @@ function CapabilityAuditCard({ audit, note }) {
   );
 }
 
-function CoreMappingStep({ definitions, headers, coreMapping, onChange }) {
-  return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Map each core Peridot variable to one uploaded column. Fields may be left unassigned if the data is not available.
-      </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
+function TemporalMappingTable({ headers, temporalMapping = {}, onChange, compact = false }) {
+  return (
+    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Temporal roles</div>
+          <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">Map one date, a start/end interval, or multiple recorded dates.</div>
+        </div>
+      </div>
+      <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+        The single-date role preserves the existing correspondence workflow. Date Start and Date End preserve intervals such as sent/received dates, inception/dissolution dates, or active date ranges.
+      </p>
+
+      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
-              <th className="px-4 py-3">Peridot variable</th>
-              <th className="px-4 py-3">Description</th>
+              <th className="px-4 py-3">Temporal role</th>
+              {!compact ? <th className="px-4 py-3">Description</th> : null}
+              <th className="px-4 py-3">Your column</th>
+            </tr>
+          </thead>
+          <tbody className="text-[var(--panel-card-muted-text)]">
+            {PERIDOT_TEMPORAL_FIELD_DEFINITIONS.map((definition) => (
+              <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
+                <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
+                  {definition.label}
+                  <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
+                </td>
+                {!compact ? <td className="max-w-[26rem] px-4 py-3 leading-relaxed">{definition.description}</td> : null}
+                <td className="px-4 py-3">
+                  <select
+                    value={temporalMapping[definition.key] || ''}
+                    onChange={(event) => onChange(definition.key, event.target.value)}
+                    className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                  >
+                    <option value="">Unassigned</option>
+                    {headers.map((header) => (
+                      <option key={header} value={header}>{header}</option>
+                    ))}
+                  </select>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function MappingIntroCard({ eyebrow, title, children }) {
+  return (
+    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{eyebrow}</div>
+      <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{title}</div>
+      <div className="mt-2">{children}</div>
+    </div>
+  );
+}
+
+function CoreRoleMappingTable({ title, description, definitions, headers, coreMapping, onChange }) {
+  return (
+    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{title}</div>
+          <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{description}</div>
+        </div>
+      </div>
+
+      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
+        <table className="min-w-full border-collapse text-left text-sm">
+          <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
+            <tr>
+              <th className="px-4 py-3">Field role</th>
+              <th className="px-4 py-3">What it does</th>
               <th className="px-4 py-3">Used for</th>
-              <th className="px-4 py-3">Common names</th>
               <th className="px-4 py-3">Your column</th>
             </tr>
           </thead>
           <tbody className="text-[var(--panel-card-muted-text)]">
             {definitions.map((definition) => (
               <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
-                <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">{definition.key}</td>
-                <td className="max-w-[18rem] px-4 py-3 leading-relaxed">{definition.description}</td>
+                <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
+                  {definition.label || definition.key}
+                  <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
+                </td>
+                <td className="max-w-[24rem] px-4 py-3 leading-relaxed">{definition.description}</td>
                 <td className="max-w-[14rem] px-4 py-3">{(definition.usedFor || []).join(', ')}</td>
-                <td className="max-w-[16rem] px-4 py-3">{(definition.commonNames || []).slice(0, 6).join(', ')}</td>
                 <td className="px-4 py-3">
                   <select
                     value={coreMapping[definition.key] || ''}
@@ -258,13 +362,128 @@ function CoreMappingStep({ definitions, headers, coreMapping, onChange }) {
   );
 }
 
+function IdentifyRecordsStep({ staging, previewRows, headers }) {
+  return (
+    <div className="space-y-4">
+      <MappingIntroCard eyebrow="Identify records" title="Describe what each row represents.">
+        <p>
+          This phase reorients mapping around data roles rather than a correspondence-only schema. In this prototype, record labels,
+          IDs, citations, and links are preserved through the Evidence and analysis step while durable record-role mappings are added next.
+        </p>
+        <p className="mt-2">
+          Use this step to confirm the table shape before assigning temporal, place, and relationship roles. A row may represent a letter,
+          site, event, object, publication, observation, or generic evidence record.
+        </p>
+      </MappingIntroCard>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Current file</div>
+          <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{staging?.fileLabel || 'Staged data'}</div>
+          <div className="mt-1 text-sm text-[var(--panel-card-muted-text)]">{staging?.rowCount || 0} rows · {staging?.columnCount || headers.length || 0} columns</div>
+        </div>
+        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Good candidates</div>
+          <div className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            Record labels, IDs, source/citation fields, links, titles, notes, and descriptions.
+          </div>
+        </div>
+        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Not required</div>
+          <div className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            Records do not have to contain networks, routes, coordinates, or exact dates to remain useful as evidence.
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="mb-2 text-sm font-semibold text-[var(--panel-card-text)]">Record preview</div>
+        <PreviewTable rows={previewRows} headers={headers} maxRows={3} />
+      </div>
+    </div>
+  );
+}
+
+function TimeMappingStep({ headers, temporalMapping, onTemporalChange }) {
+  return (
+    <div className="space-y-4">
+      <MappingIntroCard eyebrow="Time" title="Map one date, multiple recorded dates, or an interval.">
+        Use a single date when one column best represents the record. Use Date Start and Date End for intervals such as sent/received dates,
+        inception/dissolution dates, active periods, or site lifespans.
+      </MappingIntroCard>
+      <TemporalMappingTable headers={headers} temporalMapping={temporalMapping} onChange={onTemporalChange} />
+    </div>
+  );
+}
+
+function PlacesMappingStep({ definitions, headers, coreMapping, pointMapping, routeCoordinatePairMapping, onRouteChange, onPointChange, onRoutePairChange }) {
+  const placeDefinitions = definitionsForFields(definitions, CORE_FIELD_GROUPS.routePlaces);
+
+  return (
+    <div className="space-y-4">
+      <MappingIntroCard eyebrow="Places" title="Map locations according to how this dataset uses space.">
+        <p>
+          Map one-location records as point places. Map correspondence, travel, exchange, or movement data as source/target route geography.
+        </p>
+        <p className="mt-2">
+          Coordinate-pair fields are latitude first, longitude second. Examples: 64.2008, -149.4937 or POINT(64.2008 -149.4937).
+        </p>
+      </MappingIntroCard>
+      <CoreRoleMappingTable
+        title="One location per record"
+        description="Use these fields for sites, events, buildings, institutions, objects, or observations with one primary location."
+        definitions={PERIDOT_POINT_FIELD_DEFINITIONS}
+        headers={headers}
+        coreMapping={pointMapping}
+        onChange={onPointChange}
+      />
+      <CoreRoleMappingTable
+        title="Route coordinate-pair roles"
+        description="Use these optional latitude-first coordinate pairs when source or target coordinates are stored in one column."
+        definitions={PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS}
+        headers={headers}
+        coreMapping={routeCoordinatePairMapping}
+        onChange={onRoutePairChange}
+      />
+      <CoreRoleMappingTable
+        title="Route / directed-place roles"
+        description="Use these fields when a record has a source place and a target place."
+        definitions={placeDefinitions}
+        headers={headers}
+        coreMapping={coreMapping}
+        onChange={onRouteChange}
+      />
+    </div>
+  );
+}
+
+function RelationshipsMappingStep({ definitions, headers, coreMapping, onChange }) {
+  const relationshipDefinitions = definitionsForFields(definitions, CORE_FIELD_GROUPS.relationship);
+
+  return (
+    <div className="space-y-4">
+      <MappingIntroCard eyebrow="Relationships" title="Map source/target entities only when the dataset contains relationships.">
+        These fields are optional. Correspondence datasets usually map sender and recipient here. Point/site datasets, stock data,
+        catalogues, and many evidence tables may leave these roles unassigned.
+      </MappingIntroCard>
+      <CoreRoleMappingTable
+        title="Directed relationship roles"
+        description="Use these fields for people, institutions, objects, works, or other entities connected by a record."
+        definitions={relationshipDefinitions}
+        headers={headers}
+        coreMapping={coreMapping}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
 function InspectorFieldsStep({ selections, coreMapping, onActionChange, onLabelChange }) {
   const mappedCoreColumns = new Set(Object.values(coreMapping || {}).filter(Boolean));
 
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose which remaining uploaded columns should appear as custom Inspector metadata. Selected categorical fields may also become Analytics variables when usable.
+        Choose which remaining uploaded columns should be preserved for record dossiers, search, charts, export, and close reading. These fields can support record dossiers, Search & Filter, charts, and export without needing to become route or network fields.
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
@@ -272,9 +491,9 @@ function InspectorFieldsStep({ selections, coreMapping, onActionChange, onLabelC
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
               <th className="px-4 py-3">Uploaded column</th>
-              <th className="px-4 py-3">Display in Inspector?</th>
+              <th className="px-4 py-3">Use as evidence?</th>
               <th className="px-4 py-3">Display label</th>
-              <th className="px-4 py-3">Analytics</th>
+              <th className="px-4 py-3">Chart/filter readiness</th>
             </tr>
           </thead>
           <tbody className="text-[var(--panel-card-muted-text)]">
@@ -285,7 +504,7 @@ function InspectorFieldsStep({ selections, coreMapping, onActionChange, onLabelC
                 <tr key={`${selection.sourceColumn}-${index}`} className="border-t border-[var(--panel-card-border)] align-top">
                   <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
                     {selection.sourceColumn}
-                    {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Mapped as a core Peridot field.</div> : null}
+                    {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Already mapped to a visualization role.</div> : null}
                   </td>
                   <td className="px-4 py-3">
                     <select
@@ -306,7 +525,7 @@ function InspectorFieldsStep({ selections, coreMapping, onActionChange, onLabelC
                       className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
                     />
                   </td>
-                  <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely usable' : 'Probably not categorical'}</td>
+                  <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</td>
                 </tr>
               );
             })}
@@ -349,7 +568,10 @@ function refreshWorkbookCustomSelections({ workbookModel, workbookMapping, previ
     const suggestedSelections = buildWorkbookCustomFieldSelectionsForSheet(
       workbookModel,
       sheetName,
-      workbookMapping.coreMappings || {}
+      workbookMapping.coreMappings || {},
+      workbookMapping.temporalMappings || {},
+      workbookMapping.pointMappings || {},
+      workbookMapping.routeCoordinatePairMappings || {}
     );
 
     return suggestedSelections.map((selection) => {
@@ -378,7 +600,7 @@ function refreshWorkbookCustomSelections({ workbookModel, workbookMapping, previ
 
 function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChange, onLabelChange }) {
   const mappedCoreRefs = new Set(
-    Object.values(workbookMapping.coreMappings || {})
+    [...Object.values(workbookMapping.coreMappings || {}), ...Object.values(workbookMapping.temporalMappings || {})]
       .filter((ref) => ref?.sheetName && ref?.columnName)
       .map((ref) => `${ref.sheetName}::${ref.columnName}`)
   );
@@ -394,7 +616,7 @@ function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChan
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose which columns from the primary sheet and configured joined sheets should appear as custom Inspector metadata. Selected categorical fields may also become Analytics variables when usable. Columns mapped as core Peridot variables are automatically ignored here.
+        Choose which columns from the primary sheet and configured joined sheets should be preserved for record dossiers, search, charts, export, and close reading. Columns already mapped to visualization roles are automatically ignored here.
       </div>
 
       {Array.from(groupedSelections.entries()).map(([sheetName, sheetSelections]) => (
@@ -409,9 +631,9 @@ function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChan
             <thead className="bg-[var(--section-bg)] text-[var(--panel-card-text)]">
               <tr>
                 <th className="px-4 py-3">Workbook column</th>
-                <th className="px-4 py-3">Display in Inspector?</th>
+                <th className="px-4 py-3">Use as evidence?</th>
                 <th className="px-4 py-3">Display label</th>
-                <th className="px-4 py-3">Analytics</th>
+                <th className="px-4 py-3">Chart/filter readiness</th>
               </tr>
             </thead>
             <tbody className="text-[var(--panel-card-muted-text)]">
@@ -423,7 +645,7 @@ function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChan
                   <tr key={`${refKey}-${index}`} className="border-t border-[var(--panel-card-border)] align-top">
                     <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
                       {ref.columnName || selection.sourceColumn}
-                      {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Mapped as a core Peridot field.</div> : null}
+                      {isMappedCore ? <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">Already mapped to a visualization role.</div> : null}
                     </td>
                     <td className="px-4 py-3">
                       <select
@@ -444,7 +666,7 @@ function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChan
                         className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
                       />
                     </td>
-                    <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely usable' : 'Probably not categorical'}</td>
+                    <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</td>
                   </tr>
                 );
               })}
@@ -455,7 +677,7 @@ function WorkbookInspectorFieldsStep({ workbookMapping, selections, onActionChan
 
       {!selections.length ? (
         <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm text-[var(--panel-card-muted-text)]">
-          No custom Inspector field candidates are available from the configured workbook sheets.
+          No evidence or analysis field candidates are available from the configured workbook sheets.
         </div>
       ) : null}
     </div>
@@ -762,36 +984,108 @@ function WorkbookSetupStep({
   );
 }
 
-function WorkbookCoreMappingStep({ workbookModel, workbookMapping, onChange }) {
+
+function WorkbookTemporalMappingTable({ workbookModel, workbookMapping, onChange }) {
+  const usableSheets = getUsableWorkbookSheets(workbookModel);
+  const temporalMappings = workbookMapping.temporalMappings || {};
+
+  return (
+    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Temporal roles</div>
+      <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">Map one date, a start/end interval, or multiple recorded dates from workbook sheets.</div>
+      <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+        Use Date Start and Date End for ranges such as sent/received dates, inception/dissolution dates, active periods, or site lifespans. These roles are preserved separately from the single Date field.
+      </p>
+
+      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
+        <table className="min-w-full border-collapse text-left text-sm">
+          <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
+            <tr>
+              <th className="px-4 py-3">Temporal role</th>
+              <th className="px-4 py-3">Description</th>
+              <th className="px-4 py-3">Sheet</th>
+              <th className="px-4 py-3">Column</th>
+            </tr>
+          </thead>
+          <tbody className="text-[var(--panel-card-muted-text)]">
+            {PERIDOT_TEMPORAL_FIELD_DEFINITIONS.map((definition) => {
+              const currentRef = temporalMappings[definition.key] || {};
+              const selectedSheet = getWorkbookSheet(workbookModel, currentRef.sheetName) || getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
+              const headers = selectedSheet?.headers || [];
+              return (
+                <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
+                  <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
+                    {definition.label}
+                    <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
+                  </td>
+                  <td className="max-w-[24rem] px-4 py-3 leading-relaxed">{definition.description}</td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={currentRef.sheetName || ''}
+                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(event.target.value, ''))}
+                      className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                    >
+                      <option value="">Unassigned</option>
+                      {usableSheets.map((sheet) => (
+                        <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
+                      ))}
+                    </select>
+                  </td>
+                  <td className="px-4 py-3">
+                    <select
+                      value={currentRef.columnName || ''}
+                      disabled={!currentRef.sheetName}
+                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(currentRef.sheetName, event.target.value))}
+                      className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
+                    >
+                      <option value="">Unassigned</option>
+                      {headers.map((header) => (
+                        <option key={header} value={header}>{header}</option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function WorkbookCoreRoleMappingTable({ title, description, definitions, workbookModel, workbookMapping, onChange }) {
   const usableSheets = getUsableWorkbookSheets(workbookModel);
   const coreMappings = workbookMapping.coreMappings || {};
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Map each core Peridot variable from a workbook Sheet + Column pair. Fields can be left unassigned. If a core field comes from a non-primary sheet, configure a matching unique-ID join on the Record sheet step.
-      </div>
+    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{title}</div>
+      <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{description}</div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
+      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
-              <th className="px-4 py-3">Peridot variable</th>
-              <th className="px-4 py-3">Description</th>
+              <th className="px-4 py-3">Field role</th>
+              <th className="px-4 py-3">What it does</th>
               <th className="px-4 py-3">Used for</th>
               <th className="px-4 py-3">Sheet</th>
               <th className="px-4 py-3">Column</th>
             </tr>
           </thead>
           <tbody className="text-[var(--panel-card-muted-text)]">
-            {PERIDOT_CORE_FIELD_DEFINITIONS.map((definition) => {
+            {definitions.map((definition) => {
               const currentRef = coreMappings[definition.key] || {};
               const selectedSheet = getWorkbookSheet(workbookModel, currentRef.sheetName) || getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
               const headers = selectedSheet?.headers || [];
               return (
                 <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
-                  <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">{definition.key}</td>
-                  <td className="max-w-[18rem] px-4 py-3 leading-relaxed">{definition.description}</td>
+                  <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
+                    {definition.label || definition.key}
+                    <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
+                  </td>
+                  <td className="max-w-[24rem] px-4 py-3 leading-relaxed">{definition.description}</td>
                   <td className="max-w-[14rem] px-4 py-3">{(definition.usedFor || []).join(', ')}</td>
                   <td className="px-4 py-3">
                     <select
@@ -828,6 +1122,125 @@ function WorkbookCoreMappingStep({ workbookModel, workbookMapping, onChange }) {
   );
 }
 
+function WorkbookIdentifyRecordsStep({ workbookModel, workbookMapping }) {
+  const selectedSheet = getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
+
+  return (
+    <div className="space-y-4">
+      <MappingIntroCard eyebrow="Identify records" title="Confirm the sheet whose rows become records.">
+        <p>
+          Each row on the primary sheet is treated as one record. Joined sheets may supply additional role fields through configured unique-ID matches.
+        </p>
+        <p className="mt-2">
+          Durable record-label, record-ID, citation, and link roles are planned for the next role-model expansion. For this prototype, keep those columns through Evidence and analysis.
+        </p>
+      </MappingIntroCard>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary record sheet</div>
+          <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{workbookMapping.primarySheetName || '—'}</div>
+          <div className="mt-1 text-sm text-[var(--panel-card-muted-text)]">{selectedSheet?.rowCount || 0} rows · {selectedSheet?.columnCount || 0} columns</div>
+        </div>
+        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joins</div>
+          <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{(workbookMapping.letterLevelJoins || []).length}</div>
+          <div className="mt-1 text-sm text-[var(--panel-card-muted-text)]">Configured joined sheet(s)</div>
+        </div>
+        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Evidence fields</div>
+          <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{(workbookMapping.customFieldSelections || []).length}</div>
+          <div className="mt-1 text-sm text-[var(--panel-card-muted-text)]">Candidates preserved in the Evidence step</div>
+        </div>
+      </div>
+
+      {selectedSheet ? (
+        <div>
+          <div className="mb-2 text-sm font-semibold text-[var(--panel-card-text)]">Primary-sheet preview</div>
+          <PreviewTable rows={selectedSheet.rows || []} headers={selectedSheet.headers || []} maxRows={3} />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function WorkbookTimeMappingStep({ workbookModel, workbookMapping, onTemporalChange }) {
+  return (
+    <div className="space-y-4">
+      <MappingIntroCard eyebrow="Time" title="Map one date, multiple recorded dates, or an interval from workbook sheets.">
+        Use a single date when one date best represents the record. Use Date Start and Date End for intervals such as sent/received dates,
+        inception/dissolution dates, active periods, or site lifespans.
+      </MappingIntroCard>
+      <WorkbookTemporalMappingTable
+        workbookModel={workbookModel}
+        workbookMapping={workbookMapping}
+        onChange={onTemporalChange}
+      />
+    </div>
+  );
+}
+
+function WorkbookPlacesMappingStep({ workbookModel, workbookMapping, onRouteChange, onPointChange, onRoutePairChange }) {
+  const placeDefinitions = definitionsForFields(PERIDOT_CORE_FIELD_DEFINITIONS, CORE_FIELD_GROUPS.routePlaces);
+
+  return (
+    <div className="space-y-4">
+      <MappingIntroCard eyebrow="Places" title="Map locations according to how this workbook uses space.">
+        <p>
+          Map one-location records as point places. Map correspondence, travel, exchange, or movement data as source/target route geography.
+        </p>
+        <p className="mt-2">
+          Coordinate-pair fields are latitude first, longitude second. Examples: 64.2008, -149.4937 or POINT(64.2008 -149.4937).
+        </p>
+      </MappingIntroCard>
+      <WorkbookCoreRoleMappingTable
+        title="One location per record"
+        description="Use these fields for sites, events, buildings, institutions, objects, or observations with one primary location."
+        definitions={PERIDOT_POINT_FIELD_DEFINITIONS}
+        workbookModel={workbookModel}
+        workbookMapping={{ ...workbookMapping, coreMappings: workbookMapping.pointMappings || {} }}
+        onChange={onPointChange}
+      />
+      <WorkbookCoreRoleMappingTable
+        title="Route coordinate-pair roles"
+        description="Use these optional latitude-first coordinate pairs when source or target coordinates are stored in one column."
+        definitions={PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS}
+        workbookModel={workbookModel}
+        workbookMapping={{ ...workbookMapping, coreMappings: workbookMapping.routeCoordinatePairMappings || {} }}
+        onChange={onRoutePairChange}
+      />
+      <WorkbookCoreRoleMappingTable
+        title="Route / directed-place roles"
+        description="Use these fields when a record has a source place and a target place."
+        definitions={placeDefinitions}
+        workbookModel={workbookModel}
+        workbookMapping={workbookMapping}
+        onChange={onRouteChange}
+      />
+    </div>
+  );
+}
+
+function WorkbookRelationshipsMappingStep({ workbookModel, workbookMapping, onChange }) {
+  const relationshipDefinitions = definitionsForFields(PERIDOT_CORE_FIELD_DEFINITIONS, CORE_FIELD_GROUPS.relationship);
+
+  return (
+    <div className="space-y-4">
+      <MappingIntroCard eyebrow="Relationships" title="Map source/target entities only when the workbook contains relationships.">
+        These fields are optional. Correspondence datasets usually map sender and recipient here. Point/site datasets, stock data,
+        catalogues, and many evidence tables may leave these roles unassigned.
+      </MappingIntroCard>
+      <WorkbookCoreRoleMappingTable
+        title="Directed relationship roles"
+        description="Use these fields for people, institutions, objects, works, or other entities connected by a record."
+        definitions={relationshipDefinitions}
+        workbookModel={workbookModel}
+        workbookMapping={workbookMapping}
+        onChange={onChange}
+      />
+    </div>
+  );
+}
 function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summary, previewRows, capabilityAudit }) {
   const issues = validation?.issues || [];
   const errors = issues.filter((issue) => issue.severity === 'error');
@@ -858,7 +1271,7 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
       </div>
 
       <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
-        Review the workbook import before confirming. Peridot will assemble rows from the primary sheet and configured unique-ID joins, then include selected custom Inspector fields from the primary sheet and joined sheets.
+        Review the workbook import before confirming. Peridot will assemble rows from the primary sheet and configured unique-ID joins, then include selected evidence and analysis fields from the primary sheet and joined sheets.
       </div>
 
       <CapabilityAuditCard
@@ -919,7 +1332,7 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
       </div>
 
       <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-        <div className="font-semibold text-[var(--panel-card-text)]">Selected custom Inspector fields</div>
+        <div className="font-semibold text-[var(--panel-card-text)]">Selected evidence and analysis fields</div>
         {selectedCustomFields.length ? (
           <div className="mt-2 grid gap-2 md:grid-cols-2">
             {selectedCustomFields.slice(0, 12).map((selection, index) => {
@@ -938,7 +1351,7 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
             ) : null}
           </div>
         ) : (
-          <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">No custom Inspector fields selected.</p>
+          <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">No evidence or analysis fields selected.</p>
         )}
       </div>
     </div>
@@ -965,6 +1378,9 @@ export function PeridotColumnMappingModal({
 
   const [activeStep, setActiveStep] = useState(stepKeys[0]);
   const [coreMapping, setCoreMapping] = useState(mappingState.coreMapping || {});
+  const [temporalMapping, setTemporalMapping] = useState(mappingState.temporalMapping || {});
+  const [pointMapping, setPointMapping] = useState(mappingState.pointMapping || {});
+  const [routeCoordinatePairMapping, setRouteCoordinatePairMapping] = useState(mappingState.routeCoordinatePairMapping || {});
   const [customFieldSelections, setCustomFieldSelections] = useState(mappingState.customFieldSelections || []);
   const [workbookMapping, setWorkbookMapping] = useState(mappingState);
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
@@ -974,6 +1390,7 @@ export function PeridotColumnMappingModal({
     const nextIsWorkbookMode = staging?.mappingMode === 'workbook' || Boolean(staging?.workbookMappingRequired);
     setActiveStep(nextIsWorkbookMode ? WORKBOOK_STEP_KEYS[0] : SINGLE_TABLE_STEP_KEYS[0]);
     setCoreMapping(mappingState.coreMapping || {});
+    setTemporalMapping(mappingState.temporalMapping || {});
     setCustomFieldSelections(mappingState.customFieldSelections || []);
     setWorkbookMapping(
       nextIsWorkbookMode && staging?.workbookModel
@@ -991,32 +1408,43 @@ export function PeridotColumnMappingModal({
   }, [open, staging?.stagedAt]);
 
   const effectiveCustomSelections = useMemo(() => {
-    const mappedCoreColumns = new Set(Object.values(coreMapping || {}).filter(Boolean));
+    const mappedCoreColumns = new Set([
+      ...Object.values(coreMapping || {}),
+      ...Object.values(temporalMapping || {}),
+      ...Object.values(pointMapping || {}),
+      ...Object.values(routeCoordinatePairMapping || {}),
+    ].filter(Boolean));
     return customFieldSelections.map((selection) => (
       mappedCoreColumns.has(selection.sourceColumn)
         ? { ...selection, action: CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore }
         : selection
     ));
-  }, [coreMapping, customFieldSelections]);
+  }, [coreMapping, temporalMapping, pointMapping, routeCoordinatePairMapping, customFieldSelections]);
 
   const validation = useMemo(
     () => validatePeridotColumnMapping(headers, {
       coreMapping,
+      temporalMapping,
+      pointMapping,
+      routeCoordinatePairMapping,
       customFieldSelections: effectiveCustomSelections,
     }),
-    [headers, coreMapping, effectiveCustomSelections]
+    [headers, coreMapping, temporalMapping, pointMapping, routeCoordinatePairMapping, effectiveCustomSelections]
   );
 
   const mappedRows = useMemo(
     () => applyPeridotColumnMapping(rows, {
       coreMapping,
+      temporalMapping,
+      pointMapping,
+      routeCoordinatePairMapping,
       customFieldSelections: effectiveCustomSelections,
     }),
-    [rows, coreMapping, effectiveCustomSelections]
+    [rows, coreMapping, temporalMapping, pointMapping, routeCoordinatePairMapping, effectiveCustomSelections]
   );
 
   const validationSummary = useMemo(
-    () => buildPeridotCsvValidationSummary(mappedRows, PERIDOT_TEMPLATE_COLUMNS),
+    () => buildPeridotCsvValidationSummary(mappedRows, Object.keys(mappedRows[0] || Object.fromEntries(PERIDOT_TEMPLATE_COLUMNS.map((column) => [column, ''])))),
     [mappedRows]
   );
 
@@ -1047,7 +1475,7 @@ export function PeridotColumnMappingModal({
   const mappedRowsCapabilityAudit = useMemo(() => {
     if (isWorkbookMode || activeStep !== 'review') return null;
     try {
-      return auditPeridotDataCapabilities(mappedRows, { headers: PERIDOT_TEMPLATE_COLUMNS });
+      return auditPeridotDataCapabilities(mappedRows, { headers: Object.keys(mappedRows[0] || {}) });
     } catch (error) {
       return null;
     }
@@ -1056,7 +1484,7 @@ export function PeridotColumnMappingModal({
   const workbookCapabilityAudit = useMemo(() => {
     if (!isWorkbookMode || activeStep !== 'workbook-review') return null;
     try {
-      return auditPeridotDataCapabilities(workbookMappedRowsForAudit, { headers: PERIDOT_TEMPLATE_COLUMNS });
+      return auditPeridotDataCapabilities(workbookMappedRowsForAudit, { headers: Object.keys(workbookMappedRowsForAudit[0] || {}) });
     } catch (error) {
       return null;
     }
@@ -1066,17 +1494,23 @@ export function PeridotColumnMappingModal({
 
   const singleStepLabels = {
     preview: 'Upload preview',
-    core: 'Map Peridot variables',
-    inspector: 'Choose Inspector fields',
-    review: 'Review import',
+    identify: 'Identify records',
+    time: 'Time',
+    places: 'Places',
+    relationships: 'Relationships',
+    evidence: 'Evidence and analysis',
+    review: 'Review capabilities',
   };
 
   const workbookStepLabels = {
     'workbook-preview': 'Workbook overview',
     'workbook-setup': 'Record sheet',
-    'workbook-core': 'Map Peridot variables',
-    'workbook-inspector': 'Choose Inspector fields',
-    'workbook-review': 'Review import',
+    'workbook-identify': 'Identify records',
+    'workbook-time': 'Time',
+    'workbook-places': 'Places',
+    'workbook-relationships': 'Relationships',
+    'workbook-evidence': 'Evidence and analysis',
+    'workbook-review': 'Review capabilities',
   };
 
   const stepLabels = isWorkbookMode ? workbookStepLabels : singleStepLabels;
@@ -1087,10 +1521,40 @@ export function PeridotColumnMappingModal({
       ...current,
       [field]: sourceColumn,
     }));
+    if (field === 'Date') {
+      setTemporalMapping((current) => ({
+        ...current,
+        Date: current.Date || sourceColumn,
+      }));
+    }
+  };
+
+  const handleTemporalMappingChange = (field, sourceColumn) => {
+    setTemporalMapping((current) => ({
+      ...current,
+      [field]: sourceColumn,
+    }));
+  };
+
+  const handlePointMappingChange = (field, sourceColumn) => {
+    setPointMapping((current) => ({
+      ...current,
+      [field]: sourceColumn,
+    }));
+  };
+
+  const handleRouteCoordinatePairMappingChange = (field, sourceColumn) => {
+    setRouteCoordinatePairMapping((current) => ({
+      ...current,
+      [field]: sourceColumn,
+    }));
   };
 
   const handleWorkbookPrimarySheetChange = (primarySheetName) => {
     const nextCoreMappings = suggestWorkbookCoreMappings(workbookModel, primarySheetName);
+    const nextTemporalMappings = suggestWorkbookTemporalMappings(workbookModel, primarySheetName, nextCoreMappings);
+    const nextPointMappings = suggestWorkbookPointMappings(workbookModel, primarySheetName, nextCoreMappings, nextTemporalMappings);
+    const nextRouteCoordinatePairMappings = suggestWorkbookRouteCoordinatePairMappings(workbookModel, primarySheetName, nextCoreMappings, nextTemporalMappings, nextPointMappings);
     const suggestedJoins = suggestSharedLetterIdJoins(workbookModel, primarySheetName, '');
     const suggestedPrimaryId = suggestedJoins[0]?.from?.columnName || '';
     setWorkbookMapping((current) => {
@@ -1099,6 +1563,9 @@ export function PeridotColumnMappingModal({
         primarySheetName,
         primaryLetterIdColumn: suggestedPrimaryId,
         coreMappings: nextCoreMappings,
+        temporalMappings: nextTemporalMappings,
+        pointMappings: nextPointMappings,
+        routeCoordinatePairMappings: nextRouteCoordinatePairMappings,
         letterLevelJoins: suggestedJoins,
         letterLevelJoinSuggestions: suggestedJoins,
       };
@@ -1251,6 +1718,66 @@ export function PeridotColumnMappingModal({
     });
   };
 
+  const handleWorkbookTemporalMappingChange = (field, ref) => {
+    setWorkbookMapping((current) => {
+      const nextMapping = {
+        ...current,
+        temporalMappings: {
+          ...(current.temporalMappings || {}),
+          [field]: ref,
+        },
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: refreshWorkbookCustomSelections({
+          workbookModel,
+          workbookMapping: nextMapping,
+          previousSelections: current.customFieldSelections || [],
+        }),
+      };
+    });
+  };
+
+  const handleWorkbookPointMappingChange = (field, ref) => {
+    setWorkbookMapping((current) => {
+      const nextMapping = {
+        ...current,
+        pointMappings: {
+          ...(current.pointMappings || {}),
+          [field]: ref,
+        },
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: refreshWorkbookCustomSelections({
+          workbookModel,
+          workbookMapping: nextMapping,
+          previousSelections: current.customFieldSelections || [],
+        }),
+      };
+    });
+  };
+
+  const handleWorkbookRouteCoordinatePairMappingChange = (field, ref) => {
+    setWorkbookMapping((current) => {
+      const nextMapping = {
+        ...current,
+        routeCoordinatePairMappings: {
+          ...(current.routeCoordinatePairMappings || {}),
+          [field]: ref,
+        },
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: refreshWorkbookCustomSelections({
+          workbookModel,
+          workbookMapping: nextMapping,
+          previousSelections: current.customFieldSelections || [],
+        }),
+      };
+    });
+  };
+
   const handleWorkbookCustomActionChange = (index, action) => {
     setWorkbookMapping((current) => ({
       ...current,
@@ -1300,6 +1827,9 @@ export function PeridotColumnMappingModal({
 
     return {
       coreMapping,
+      temporalMapping,
+      pointMapping,
+      routeCoordinatePairMapping,
       customFieldSelections: effectiveCustomSelections,
       validationSummary,
     };
@@ -1348,10 +1878,10 @@ export function PeridotColumnMappingModal({
               {isWorkbookMode ? 'Workbook mapping workspace' : 'Column mapping workspace'}
             </div>
             <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] mt-1 text-2xl font-bold text-[var(--heading-text)]">
-              {isWorkbookMode ? 'Configure workbook sheets for Peridot' : 'Map uploaded columns to Peridot'}
+              {isWorkbookMode ? 'Assign workbook data roles for Peridot' : 'Assign data roles for Peridot'}
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-              {staging.fileLabel} staged as {staging.fileType}. This workspace is intentionally outside the left panel so the mapping table has room to be reviewed.
+              {staging.fileLabel} staged as {staging.fileType}. This workspace lets you describe what your fields do: records, time, places, relationships, evidence, and analysis.
             </p>
           </div>
           <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
@@ -1359,7 +1889,7 @@ export function PeridotColumnMappingModal({
           </button>
         </div>
 
-        <div className="grid gap-4 border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-4 md:grid-cols-5">
+        <div className="grid gap-3 border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
           {stepKeys.map((step, index) => (
             <StepButton
               key={step}
@@ -1402,8 +1932,37 @@ export function PeridotColumnMappingModal({
             </div>
           ) : null}
 
-          {!isWorkbookMode && activeStep === 'core' ? (
-            <CoreMappingStep
+          {!isWorkbookMode && activeStep === 'identify' ? (
+            <IdentifyRecordsStep
+              staging={staging}
+              previewRows={previewRows}
+              headers={headers}
+            />
+          ) : null}
+
+          {!isWorkbookMode && activeStep === 'time' ? (
+            <TimeMappingStep
+              headers={headers}
+              temporalMapping={temporalMapping}
+              onTemporalChange={handleTemporalMappingChange}
+            />
+          ) : null}
+
+          {!isWorkbookMode && activeStep === 'places' ? (
+            <PlacesMappingStep
+              definitions={definitions}
+              headers={headers}
+              coreMapping={coreMapping}
+              pointMapping={pointMapping}
+              routeCoordinatePairMapping={routeCoordinatePairMapping}
+              onRouteChange={handleCoreMappingChange}
+              onPointChange={handlePointMappingChange}
+              onRoutePairChange={handleRouteCoordinatePairMappingChange}
+            />
+          ) : null}
+
+          {!isWorkbookMode && activeStep === 'relationships' ? (
+            <RelationshipsMappingStep
               definitions={definitions}
               headers={headers}
               coreMapping={coreMapping}
@@ -1411,10 +1970,10 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {!isWorkbookMode && activeStep === 'inspector' ? (
+          {!isWorkbookMode && activeStep === 'evidence' ? (
             <InspectorFieldsStep
-              selections={customFieldSelections}
-              coreMapping={coreMapping}
+              selections={effectiveCustomSelections}
+              coreMapping={{ ...coreMapping, ...temporalMapping, ...pointMapping, ...routeCoordinatePairMapping }}
               onActionChange={handleCustomActionChange}
               onLabelChange={handleCustomLabelChange}
             />
@@ -1448,15 +2007,40 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-core' ? (
-            <WorkbookCoreMappingStep
+          {isWorkbookMode && activeStep === 'workbook-identify' ? (
+            <WorkbookIdentifyRecordsStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+            />
+          ) : null}
+
+          {isWorkbookMode && activeStep === 'workbook-time' ? (
+            <WorkbookTimeMappingStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+              onTemporalChange={handleWorkbookTemporalMappingChange}
+            />
+          ) : null}
+
+          {isWorkbookMode && activeStep === 'workbook-places' ? (
+            <WorkbookPlacesMappingStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+              onRouteChange={handleWorkbookCoreMappingChange}
+              onPointChange={handleWorkbookPointMappingChange}
+              onRoutePairChange={handleWorkbookRouteCoordinatePairMappingChange}
+            />
+          ) : null}
+
+          {isWorkbookMode && activeStep === 'workbook-relationships' ? (
+            <WorkbookRelationshipsMappingStep
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
               onChange={handleWorkbookCoreMappingChange}
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-inspector' ? (
+          {isWorkbookMode && activeStep === 'workbook-evidence' ? (
             <WorkbookInspectorFieldsStep
               workbookMapping={workbookMapping}
               selections={workbookMapping.customFieldSelections || []}

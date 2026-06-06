@@ -19,6 +19,7 @@ import {
   hasMappableCoordinatePair,
   isAcceptedPeridotRecord,
 } from './peridotCsvSchema.js';
+import { parsePeridotCoordinatePair } from './peridotDataCapabilityAudit.js';
 
 function asText(value) {
   return String(value ?? '').trim();
@@ -41,6 +42,25 @@ function isValidLongitude(value) {
 
 function hasValidCoordinatePair(lat, lon) {
   return isValidLatitude(lat) && isValidLongitude(lon);
+}
+
+
+function coordinateFromPairValue(value) {
+  const parsed = parsePeridotCoordinatePair(value);
+  if (!parsed) return null;
+  return { lat: parsed.latitude, lon: parsed.longitude };
+}
+
+function coordinateFromFields(row, latitudeField, longitudeField, coordinatePairField) {
+  const pair = coordinateFromPairValue(row?.[coordinatePairField]);
+  if (pair) return pair;
+  const lat = asNumber(row?.[latitudeField]);
+  const lon = asNumber(row?.[longitudeField]);
+  return hasValidCoordinatePair(lat, lon) ? { lat, lon } : null;
+}
+
+function getPointPlaceLabel(row) {
+  return asText(row?.Point_Place) || asText(row?.Source_Location) || asText(row?.Target_Location) || asText(row?.Source_Name) || asText(row?.Target_Name) || 'Mapped point';
 }
 
 function makePlaceKey(label, lat, lon) {
@@ -76,6 +96,20 @@ function buildCustomInspectorFieldObject(row) {
 
 function normalizeDateSeparators(value) {
   return asText(value).replace(/-/g, '/');
+}
+
+function getDisplayDateValue(row) {
+  return asText(row?.Date_Display)
+    || asText(row?.Date)
+    || asText(row?.Date_Start)
+    || asText(row?.Date_End);
+}
+
+function getSortableDateValue(row) {
+  return asText(row?.Date_Start)
+    || asText(row?.Date)
+    || asText(row?.Date_End)
+    || asText(row?.Date_Display);
 }
 
 /**
@@ -175,39 +209,64 @@ function buildPeridotTemplatePlaceMapEntry(placeMap, { label, lat, lon, roleHint
 export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap = new Map()) {
   const customInspectorFields = normalizeCustomInspectorFields(row);
   const customInspectorFieldValues = buildCustomInspectorFieldObject(row);
-  const sourceLat = asNumber(row?.Source_Latitude);
-  const sourceLon = asNumber(row?.Source_Longitude);
-  const targetLat = asNumber(row?.Target_Latitude);
-  const targetLon = asNumber(row?.Target_Longitude);
-  const sourceLoc = asText(row?.Source_Location);
-  const targetLoc = asText(row?.Target_Location);
+  const pointCoordinate = coordinateFromFields(row, 'Point_Latitude', 'Point_Longitude', 'Point_Coordinates');
+  const sourceCoordinate = coordinateFromFields(row, 'Source_Latitude', 'Source_Longitude', 'Source_Coordinates');
+  const targetCoordinate = coordinateFromFields(row, 'Target_Latitude', 'Target_Longitude', 'Target_Coordinates');
+  const pointLoc = asText(row?.Point_Place);
+  const sourceLoc = asText(row?.Source_Location) || (sourceCoordinate ? '' : pointLoc);
+  const targetLoc = asText(row?.Target_Location) || '';
   const sourcePerson = asText(row?.Source_Name);
   const targetPerson = asText(row?.Target_Name);
-  const sourcePlaceId = buildPeridotTemplatePlaceMapEntry(placeMap, {
-    label: sourceLoc,
+  const pointLabel = getPointPlaceLabel(row);
+  const pointPlaceId = pointCoordinate
+    ? buildPeridotTemplatePlaceMapEntry(placeMap, {
+        label: pointLabel,
+        lat: pointCoordinate.lat,
+        lon: pointCoordinate.lon,
+        roleHint: 'point',
+      })
+    : null;
+  const sourceLat = sourceCoordinate?.lat ?? (pointCoordinate ? pointCoordinate.lat : asNumber(row?.Source_Latitude));
+  const sourceLon = sourceCoordinate?.lon ?? (pointCoordinate ? pointCoordinate.lon : asNumber(row?.Source_Longitude));
+  const targetLat = targetCoordinate?.lat ?? (pointCoordinate ? pointCoordinate.lat : asNumber(row?.Target_Latitude));
+  const targetLon = targetCoordinate?.lon ?? (pointCoordinate ? pointCoordinate.lon : asNumber(row?.Target_Longitude));
+  const resolvedSourceLoc = sourceCoordinate ? asText(row?.Source_Location) : (pointCoordinate ? pointLabel : sourceLoc);
+  const resolvedTargetLoc = targetCoordinate ? asText(row?.Target_Location) : (pointCoordinate ? pointLabel : targetLoc);
+  const sourcePlaceId = sourceCoordinate || pointCoordinate ? buildPeridotTemplatePlaceMapEntry(placeMap, {
+    label: resolvedSourceLoc,
     lat: sourceLat,
     lon: sourceLon,
-    roleHint: 'source',
-  });
-  const targetPlaceId = buildPeridotTemplatePlaceMapEntry(placeMap, {
-    label: targetLoc,
+    roleHint: pointCoordinate && !sourceCoordinate ? 'point' : 'source',
+  }) : null;
+  const targetPlaceId = targetCoordinate || pointCoordinate ? buildPeridotTemplatePlaceMapEntry(placeMap, {
+    label: resolvedTargetLoc,
     lat: targetLat,
     lon: targetLon,
-    roleHint: 'target',
-  });
+    roleHint: pointCoordinate && !targetCoordinate ? 'point' : 'target',
+  }) : null;
 
   return {
     ...customInspectorFieldValues,
     id: `peridot_geo_${index + 1}`,
-    date: asText(row?.Date),
-    parsedDate: parsePeridotTemplateDate(row?.Date),
-    sourceLoc,
+    date: getDisplayDateValue(row),
+    dateStart: asText(row?.Date_Start),
+    dateEnd: asText(row?.Date_End),
+    dateDisplay: asText(row?.Date_Display),
+    pointLoc: asText(row?.Point_Place),
+    pointCoordinates: asText(row?.Point_Coordinates),
+    parsedDate: parsePeridotTemplateDate(getSortableDateValue(row)),
+    pointLoc,
+    pointLat: pointCoordinate?.lat ?? NaN,
+    pointLon: pointCoordinate?.lon ?? NaN,
+    pointPlaceId,
+    pointRecord: Boolean(pointCoordinate && !sourceCoordinate && !targetCoordinate),
+    sourceLoc: resolvedSourceLoc,
     sourceLat,
     sourceLon,
     sourcePerson,
     sourcePoliticalHint: '',
     targetPerson,
-    targetLoc,
+    targetLoc: resolvedTargetLoc,
     targetLat,
     targetLon,
     targetPoliticalHint: '',
@@ -235,7 +294,8 @@ export function normalizePeridotTemplateRowForLetter(row, index = 0) {
   const collection = asText(row?.Collection);
   const pages = asText(row?.['Page(s)']);
   const links = asText(row?.['Link(s)']);
-  const date = asText(row?.Date);
+  const date = getDisplayDateValue(row);
+  const sortableDate = getSortableDateValue(row);
 
   return {
     ...customInspectorFieldValues,
@@ -245,7 +305,12 @@ export function normalizePeridotTemplateRowForLetter(row, index = 0) {
     archivalPage: pages,
     pdfPage: '',
     date,
-    parsedDate: parsePeridotTemplateDate(date),
+    dateStart: asText(row?.Date_Start),
+    dateEnd: asText(row?.Date_End),
+    dateDisplay: asText(row?.Date_Display),
+    pointLoc: asText(row?.Point_Place),
+    pointCoordinates: asText(row?.Point_Coordinates),
+    parsedDate: parsePeridotTemplateDate(sortableDate),
     sourceLoc: asText(row?.Source_Location),
     source,
     sourceTitle: asText(row?.Source_Title),

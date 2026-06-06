@@ -12,9 +12,11 @@
  *   no active data import, and no workbook parsing.
  *
  * Product rules encoded here:
- * - Peridot core variables remain exactly nine fields:
+ * - Peridot route/network core variables remain exactly nine fields:
  *   Date, Source_Name, Target_Name, Source_Location, Source_Latitude,
  *   Source_Longitude, Target_Location, Target_Latitude, Target_Longitude.
+ * - Peridot also supports optional temporal roles for Date_Start, Date_End,
+ *   and Date_Display so datasets can preserve intervals or multiple dates.
  * - Single-sheet imports do not require Letter_ID.
  * - If users assemble letter-level record information from multiple Excel
  *   sheets, a true Letter_ID join is required.
@@ -24,9 +26,18 @@
  */
 
 import {
+  buildInitialPeridotPointMapping,
+  buildInitialPeridotRouteCoordinatePairMapping,
+  buildInitialPeridotTemporalMapping,
   CUSTOM_INSPECTOR_FIELD_DEFAULTS,
   PERIDOT_CORE_FIELD_DEFINITIONS,
   PERIDOT_CORE_FIELDS,
+  PERIDOT_POINT_FIELDS,
+  PERIDOT_POINT_FIELD_DEFINITIONS,
+  PERIDOT_ROUTE_COORDINATE_PAIR_FIELDS,
+  PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS,
+  PERIDOT_TEMPORAL_FIELDS,
+  PERIDOT_TEMPORAL_FIELD_DEFINITIONS,
   suggestCustomInspectorFieldSelections,
   suggestPeridotCoreFieldMappings,
 } from './peridotColumnMapping.js';
@@ -393,6 +404,91 @@ export function suggestWorkbookCoreMappings(workbookModel, primarySheetName = ''
   );
 }
 
+function suggestTemporalMappingsForSingleSheet(sheet = {}, coreMappings = {}) {
+  const temporalMapping = buildInitialPeridotTemporalMapping(sheet.headers || [], Object.fromEntries(
+    Object.entries(coreMappings || {})
+      .filter(([, ref]) => ref?.sheetName === sheet.sheetName)
+      .map(([field, ref]) => [field, ref.columnName])
+  ));
+
+  return Object.freeze(
+    Object.fromEntries(
+      PERIDOT_TEMPORAL_FIELDS.map((field) => [
+        field,
+        temporalMapping[field]
+          ? makeWorkbookColumnRef(sheet.sheetName, temporalMapping[field])
+          : makeWorkbookColumnRef('', ''),
+      ])
+    )
+  );
+}
+
+function getBestTemporalMappingForWorkbookField(workbookModel, field) {
+  const definition = PERIDOT_TEMPORAL_FIELD_DEFINITIONS.find((item) => item.key === field);
+  const candidates = [definition?.key, definition?.label, ...(definition?.commonNames || [])].filter(Boolean);
+
+  const scored = getWorkbookColumnRefs(workbookModel)
+    .map((ref) => ({
+      ref,
+      score: scoreHeaderAgainstCandidates(ref.columnName, candidates),
+    }))
+    .filter((item) => item.score >= 55)
+    .sort((a, b) => b.score - a.score || a.ref.sheetName.localeCompare(b.ref.sheetName));
+
+  return scored[0]?.ref || makeWorkbookColumnRef('', '');
+}
+
+export function suggestWorkbookTemporalMappings(workbookModel, primarySheetName = '', coreMappings = {}) {
+  const primarySheet = getWorkbookSheet(workbookModel, primarySheetName);
+
+  if (primarySheet) {
+    return suggestTemporalMappingsForSingleSheet(primarySheet, coreMappings);
+  }
+
+  return Object.freeze(
+    Object.fromEntries(PERIDOT_TEMPORAL_FIELDS.map((field) => [field, getBestTemporalMappingForWorkbookField(workbookModel, field)]))
+  );
+}
+
+
+function suggestWorkbookFieldMappingsFromDefinitions(workbookModel, primarySheetName = '', definitions = [], occupiedRefs = []) {
+  const primarySheet = getWorkbookSheet(workbookModel, primarySheetName);
+  const occupiedKeys = new Set((occupiedRefs || []).filter(isWorkbookColumnRefPresent).map(makeWorkbookColumnRefKey));
+  const refs = primarySheet
+    ? (primarySheet.headers || []).map((header) => makeWorkbookColumnRef(primarySheet.sheetName, header))
+    : getWorkbookColumnRefs(workbookModel);
+
+  return Object.freeze(Object.fromEntries(definitions.map((definition) => {
+    const candidates = [definition?.key, definition?.label, ...(definition?.commonNames || [])].filter(Boolean);
+    const scored = refs
+      .filter((ref) => !occupiedKeys.has(makeWorkbookColumnRefKey(ref)))
+      .map((ref) => ({ ref, score: scoreHeaderAgainstCandidates(ref.columnName, candidates) }))
+      .filter((item) => item.score >= 55)
+      .sort((a, b) => b.score - a.score || a.ref.sheetName.localeCompare(b.ref.sheetName));
+    const best = scored[0]?.ref || makeWorkbookColumnRef('', '');
+    if (isWorkbookColumnRefPresent(best)) occupiedKeys.add(makeWorkbookColumnRefKey(best));
+    return [definition.key, best];
+  })));
+}
+
+export function suggestWorkbookPointMappings(workbookModel, primarySheetName = '', coreMappings = {}, temporalMappings = {}) {
+  return suggestWorkbookFieldMappingsFromDefinitions(
+    workbookModel,
+    primarySheetName,
+    PERIDOT_POINT_FIELD_DEFINITIONS,
+    [...Object.values(temporalMappings || {})]
+  );
+}
+
+export function suggestWorkbookRouteCoordinatePairMappings(workbookModel, primarySheetName = '', coreMappings = {}, temporalMappings = {}, pointMappings = {}) {
+  return suggestWorkbookFieldMappingsFromDefinitions(
+    workbookModel,
+    primarySheetName,
+    PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS,
+    [...Object.values(coreMappings || {}), ...Object.values(temporalMappings || {}), ...Object.values(pointMappings || {})]
+  );
+}
+
 function isLikelyLookupSheet(sheet = {}) {
   const name = normalizeName(sheet.sheetName);
   if (/geodata|place|places|location|locations/.test(name)) return 'place';
@@ -423,10 +519,10 @@ export function suggestLookupSheetRoles(workbookModel) {
   );
 }
 
-function getMappedCoreSheets(coreMappings = {}) {
+function getMappedCoreSheets(coreMappings = {}, temporalMappings = {}, pointMappings = {}, routeCoordinatePairMappings = {}) {
   return Array.from(
     new Set(
-      Object.values(coreMappings)
+      [...Object.values(coreMappings || {}), ...Object.values(temporalMappings || {}), ...Object.values(pointMappings || {}), ...Object.values(routeCoordinatePairMappings || {})]
         .filter(isWorkbookColumnRefPresent)
         .map((ref) => ref.sheetName)
     )
@@ -440,6 +536,9 @@ export function buildInitialPeridotWorkbookMappingState(workbookModel) {
   const primarySheet = getWorkbookSheet(workbookModel, primarySheetName);
   const letterIdSuggestion = primarySheet ? suggestLetterIdColumnForSheet(primarySheet) : null;
   const coreMappings = suggestWorkbookCoreMappings(workbookModel, primarySheetName);
+  const temporalMappings = suggestWorkbookTemporalMappings(workbookModel, primarySheetName, coreMappings);
+  const pointMappings = suggestWorkbookPointMappings(workbookModel, primarySheetName, coreMappings, temporalMappings);
+  const routeCoordinatePairMappings = suggestWorkbookRouteCoordinatePairMappings(workbookModel, primarySheetName, coreMappings, temporalMappings, pointMappings);
   const suggestedLetterLevelJoins = suggestSharedLetterIdJoins(
     workbookModel,
     primarySheetName,
@@ -448,6 +547,21 @@ export function buildInitialPeridotWorkbookMappingState(workbookModel) {
   const primaryCustomSelections = primarySheet
     ? suggestCustomInspectorFieldSelections(primarySheet.headers || [], primarySheet.rows || {}, Object.fromEntries(
         Object.entries(coreMappings)
+          .filter(([, ref]) => ref.sheetName === primarySheetName)
+          .map(([field, ref]) => [field, ref.columnName])
+      ),
+      Object.fromEntries(
+        Object.entries(temporalMappings)
+          .filter(([, ref]) => ref.sheetName === primarySheetName)
+          .map(([field, ref]) => [field, ref.columnName])
+      ),
+      Object.fromEntries(
+        Object.entries(pointMappings)
+          .filter(([, ref]) => ref.sheetName === primarySheetName)
+          .map(([field, ref]) => [field, ref.columnName])
+      ),
+      Object.fromEntries(
+        Object.entries(routeCoordinatePairMappings)
           .filter(([, ref]) => ref.sheetName === primarySheetName)
           .map(([field, ref]) => [field, ref.columnName])
       ))
@@ -461,6 +575,9 @@ export function buildInitialPeridotWorkbookMappingState(workbookModel) {
     letterIdColumnSuggestions: suggestLetterIdColumns(workbookModel),
     lookupSheetSuggestions: suggestLookupSheetRoles(workbookModel),
     coreMappings,
+    temporalMappings,
+    pointMappings,
+    routeCoordinatePairMappings,
     letterLevelJoinSuggestions: suggestedLetterLevelJoins,
     letterLevelJoins: suggestedLetterLevelJoins,
     lookupJoins: Object.freeze([]),
@@ -538,6 +655,9 @@ export function validatePeridotWorkbookMapping(workbookModel, mappingState = {})
   const primarySheet = getWorkbookSheet(workbookModel, primarySheetName);
   const mode = mappingState.mode || (usableSheets.length <= 1 ? PERIDOT_WORKBOOK_MAPPING_MODES.singleSheet : PERIDOT_WORKBOOK_MAPPING_MODES.multiSheetLetterId);
   const coreMappings = mappingState.coreMappings || {};
+  const temporalMappings = mappingState.temporalMappings || {};
+  const pointMappings = mappingState.pointMappings || {};
+  const routeCoordinatePairMappings = mappingState.routeCoordinatePairMappings || {};
 
   if (!primarySheetName) {
     issues.push({
@@ -569,7 +689,43 @@ export function validatePeridotWorkbookMapping(workbookModel, mappingState = {})
     if (issue) issues.push({ ...issue, severity: 'error' });
   });
 
-  const mappedSheets = getMappedCoreSheets(coreMappings);
+  Object.entries(temporalMappings).forEach(([field, ref]) => {
+    if (!PERIDOT_TEMPORAL_FIELDS.includes(field)) {
+      issues.push({
+        code: 'unknown_temporal_field',
+        severity: 'error',
+        message: `${field} is not one of the supported Peridot temporal roles.`,
+      });
+      return;
+    }
+
+    if (!isWorkbookColumnRefPresent(ref)) return;
+
+    const issue = getReferenceValidationIssue(workbookModel, ref, `temporal_${field}`, `Temporal field ${field}`);
+    if (issue) issues.push({ ...issue, severity: 'error' });
+  });
+
+  Object.entries(pointMappings).forEach(([field, ref]) => {
+    if (!PERIDOT_POINT_FIELDS.includes(field)) {
+      issues.push({ code: 'unknown_point_field', severity: 'error', message: `${field} is not one of the supported Peridot point-location roles.` });
+      return;
+    }
+    if (!isWorkbookColumnRefPresent(ref)) return;
+    const issue = getReferenceValidationIssue(workbookModel, ref, `point_${field}`, `Point-location field ${field}`);
+    if (issue) issues.push({ ...issue, severity: 'error' });
+  });
+
+  Object.entries(routeCoordinatePairMappings).forEach(([field, ref]) => {
+    if (!PERIDOT_ROUTE_COORDINATE_PAIR_FIELDS.includes(field)) {
+      issues.push({ code: 'unknown_route_coordinate_pair_field', severity: 'error', message: `${field} is not one of the supported Peridot route coordinate-pair roles.` });
+      return;
+    }
+    if (!isWorkbookColumnRefPresent(ref)) return;
+    const issue = getReferenceValidationIssue(workbookModel, ref, `route_pair_${field}`, `Route coordinate-pair field ${field}`);
+    if (issue) issues.push({ ...issue, severity: 'error' });
+  });
+
+  const mappedSheets = getMappedCoreSheets(coreMappings, temporalMappings, pointMappings, routeCoordinatePairMappings);
   const nonPrimaryMappedSheets = mappedSheets.filter((sheetName) => sheetName !== primarySheetName);
 
   if (usableSheets.length > 1 && nonPrimaryMappedSheets.length > 0 && mode !== PERIDOT_WORKBOOK_MAPPING_MODES.multiSheetLetterId) {
@@ -862,6 +1018,9 @@ export function buildPeridotRowsFromWorkbookMapping(workbookModel, mappingState 
   const primarySheetName = asText(mappingState.primarySheetName);
   const primaryRows = getSheetRows(workbookModel, primarySheetName);
   const coreMappings = mappingState.coreMappings || {};
+  const temporalMappings = mappingState.temporalMappings || {};
+  const pointMappings = mappingState.pointMappings || {};
+  const routeCoordinatePairMappings = mappingState.routeCoordinatePairMappings || {};
   const customSelections = normalizeWorkbookCustomInspectorSelections(mappingState);
 
   return primaryRows.map((primaryRow, index) => {
@@ -872,6 +1031,20 @@ export function buildPeridotRowsFromWorkbookMapping(workbookModel, mappingState 
         getValueFromWorkbookRef(workbookModel, context, coreMappings[field]),
       ])
     );
+    const temporalValues = Object.fromEntries(
+      PERIDOT_TEMPORAL_FIELDS.map((field) => [field, getValueFromWorkbookRef(workbookModel, context, temporalMappings[field])])
+    );
+    const pointValues = Object.fromEntries(
+      PERIDOT_POINT_FIELDS.map((field) => [field, getValueFromWorkbookRef(workbookModel, context, pointMappings[field])])
+    );
+    const routeCoordinatePairValues = Object.fromEntries(
+      PERIDOT_ROUTE_COORDINATE_PAIR_FIELDS.map((field) => [field, getValueFromWorkbookRef(workbookModel, context, routeCoordinatePairMappings[field])])
+    );
+
+    if (temporalValues.Date) coreValues.Date = temporalValues.Date;
+    if (!coreValues.Date && temporalValues.Date_Start) coreValues.Date = temporalValues.Date_Start;
+    if (!coreValues.Date && temporalValues.Date_Display) coreValues.Date = temporalValues.Date_Display;
+    if (!coreValues.Date && temporalValues.Date_End) coreValues.Date = temporalValues.Date_End;
 
     const customInspectorFields = customSelections.map((selection) => ({
       key: selection.key || selection.sourceColumn || selection.label,
@@ -890,6 +1063,11 @@ export function buildPeridotRowsFromWorkbookMapping(workbookModel, mappingState 
     return {
       ...customFieldValues,
       ...coreValues,
+      Date_Start: temporalValues.Date_Start || '',
+      Date_End: temporalValues.Date_End || '',
+      Date_Display: temporalValues.Date_Display || '',
+      ...pointValues,
+      ...routeCoordinatePairValues,
       customInspectorFields,
       ignoredUploadedColumns: [],
       originalUploadedRow: {
@@ -905,14 +1083,20 @@ export function buildPeridotRowsFromWorkbookMapping(workbookModel, mappingState 
 export function getWorkbookMappingSummary(workbookModel, mappingState = {}) {
   const validation = validatePeridotWorkbookMapping(workbookModel, mappingState);
   const coreMappings = mappingState.coreMappings || {};
+  const temporalMappings = mappingState.temporalMappings || {};
+  const pointMappings = mappingState.pointMappings || {};
+  const routeCoordinatePairMappings = mappingState.routeCoordinatePairMappings || {};
   const mappedCoreFields = Object.entries(coreMappings).filter(([, ref]) => isWorkbookColumnRefPresent(ref));
-  const mappedSheets = getMappedCoreSheets(coreMappings);
+  const mappedSheets = getMappedCoreSheets(coreMappings, temporalMappings, pointMappings, routeCoordinatePairMappings);
 
   return Object.freeze({
     primarySheetName: mappingState.primarySheetName || '',
     mode: mappingState.mode || '',
     primaryLetterIdColumn: mappingState.primaryLetterIdColumn || '',
     mappedCoreFieldCount: mappedCoreFields.length,
+    mappedTemporalFieldCount: Object.values(temporalMappings).filter(isWorkbookColumnRefPresent).length,
+    mappedPointFieldCount: Object.values(pointMappings).filter(isWorkbookColumnRefPresent).length,
+    mappedRouteCoordinatePairFieldCount: Object.values(routeCoordinatePairMappings).filter(isWorkbookColumnRefPresent).length,
     mappedSheets,
     letterLevelJoinCount: (mappingState.letterLevelJoins || []).length,
     suggestedLetterLevelJoinCount: (mappingState.letterLevelJoinSuggestions || []).length,
@@ -929,7 +1113,7 @@ export function getWorkbookMappingSummary(workbookModel, mappingState = {}) {
 
 export function listUnmappedWorkbookColumns(workbookModel, mappingState = {}) {
   const mappedRefs = new Set(
-    Object.values(mappingState.coreMappings || {})
+    [...Object.values(mappingState.coreMappings || {}), ...Object.values(mappingState.temporalMappings || {}), ...Object.values(mappingState.pointMappings || {}), ...Object.values(mappingState.routeCoordinatePairMappings || {})]
       .filter(isWorkbookColumnRefPresent)
       .map(makeWorkbookColumnRefKey)
   );
@@ -944,7 +1128,7 @@ export function listUnmappedWorkbookColumns(workbookModel, mappingState = {}) {
   );
 }
 
-export function buildWorkbookCustomFieldSelectionsForSheet(workbookModel, sheetName, coreMappings = {}) {
+export function buildWorkbookCustomFieldSelectionsForSheet(workbookModel, sheetName, coreMappings = {}, temporalMappings = {}, pointMappings = {}, routeCoordinatePairMappings = {}) {
   const sheet = getWorkbookSheet(workbookModel, sheetName);
   if (!sheet) return Object.freeze([]);
 
@@ -953,9 +1137,25 @@ export function buildWorkbookCustomFieldSelectionsForSheet(workbookModel, sheetN
       .filter(([, ref]) => ref?.sheetName === sheetName)
       .map(([field, ref]) => [field, ref.columnName])
   );
+  const flatTemporalMappingForSheet = Object.fromEntries(
+    Object.entries(temporalMappings || {})
+      .filter(([, ref]) => ref?.sheetName === sheetName)
+      .map(([field, ref]) => [field, ref.columnName])
+  );
+
+  const flatPointMappingForSheet = Object.fromEntries(
+    Object.entries(pointMappings || {})
+      .filter(([, ref]) => ref?.sheetName === sheetName)
+      .map(([field, ref]) => [field, ref.columnName])
+  );
+  const flatRouteCoordinatePairMappingForSheet = Object.fromEntries(
+    Object.entries(routeCoordinatePairMappings || {})
+      .filter(([, ref]) => ref?.sheetName === sheetName)
+      .map(([field, ref]) => [field, ref.columnName])
+  );
 
   return Object.freeze(
-    suggestCustomInspectorFieldSelections(sheet.headers || [], sheet.rows || [], flatCoreMappingForSheet).map((selection) =>
+    suggestCustomInspectorFieldSelections(sheet.headers || [], sheet.rows || [], flatCoreMappingForSheet, flatTemporalMappingForSheet, flatPointMappingForSheet, flatRouteCoordinatePairMappingForSheet).map((selection) =>
       Object.freeze({
         ...selection,
         sheetName,

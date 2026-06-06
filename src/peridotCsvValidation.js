@@ -20,6 +20,7 @@ import {
   PERIDOT_ROW_CAPABILITIES,
   PERIDOT_VALIDATION_SUMMARY_COPY,
   getMissingPeridotTemplateColumns,
+  getPeridotDateCapability,
   getPeridotRowCapabilities,
   hasCoordinatePair,
   hasEndpointPlaceInformation,
@@ -58,8 +59,16 @@ function hasTargetCoordinateValue(row) {
   return hasValue(row?.Target_Latitude) || hasValue(row?.Target_Longitude);
 }
 
+function hasPointCoordinateValue(row) {
+  return hasValue(row?.Point_Latitude) || hasValue(row?.Point_Longitude) || hasValue(row?.Point_Coordinates);
+}
+
+function hasRouteCoordinatePairValue(row) {
+  return hasValue(row?.Source_Coordinates) || hasValue(row?.Target_Coordinates);
+}
+
 function hasAnyCoordinateValue(row) {
-  return hasSourceCoordinateValue(row) || hasTargetCoordinateValue(row);
+  return hasSourceCoordinateValue(row) || hasTargetCoordinateValue(row) || hasPointCoordinateValue(row) || hasRouteCoordinatePairValue(row);
 }
 
 function hasCompleteSourceCoordinates(row) {
@@ -86,9 +95,12 @@ function hasInvalidTargetCoordinates(row) {
   return !isValidLatitude(row?.Target_Latitude) || !isValidLongitude(row?.Target_Longitude);
 }
 
+function getRowTemporalCapability(row) {
+  return getPeridotDateCapability(row);
+}
+
 function hasMachineReadableDateValue(row) {
-  const value = asText(row?.Date);
-  return /^\d{4}([/-]\d{1,2})?([/-]\d{1,2})?$/.test(value);
+  return getRowTemporalCapability(row).timelineReady;
 }
 
 function describeRows(rowNumbers, maxShown = 8) {
@@ -118,6 +130,25 @@ function buildCapabilityCounts(rowReports) {
       countCapability(rowReports, key),
     ])
   );
+}
+
+function buildTemporalCounts(rowReports) {
+  const accepted = rowReports.filter((report) => report.accepted);
+  const rangeReadyRows = accepted.filter((report) => report.temporal?.hasInterval);
+  const closedRangeRows = accepted.filter((report) => report.temporal?.temporal?.rangeKind === 'closedRange');
+
+  return Object.freeze({
+    timelineReady: accepted.filter((report) => report.temporal?.timelineReady).length,
+    intervalReady: rangeReadyRows.length,
+    closedRangeReady: closedRangeRows.length,
+    precisionCounts: Object.freeze(
+      accepted.reduce((acc, report) => {
+        const precision = report.temporal?.temporal?.precision || 'unknown';
+        acc[precision] = (acc[precision] || 0) + 1;
+        return acc;
+      }, {})
+    ),
+  });
 }
 
 function buildWarnings(rowReports) {
@@ -272,7 +303,7 @@ function buildWarnings(rowReports) {
   return Object.freeze(warnings);
 }
 
-function buildSummaryLines({ totalRows, acceptedRecordCount, unsupportedRowCount, capabilityCounts }) {
+function buildSummaryLines({ totalRows, acceptedRecordCount, unsupportedRowCount, capabilityCounts, temporalCounts }) {
   return Object.freeze([
     `${PERIDOT_VALIDATION_SUMMARY_COPY.uploadAcceptedHeading}`,
     `Peridot reviewed ${totalRows} uploaded ${totalRows === 1 ? 'row' : 'rows'} and accepted ${acceptedRecordCount} ${acceptedRecordCount === 1 ? 'record' : 'records'}.`,
@@ -280,7 +311,7 @@ function buildSummaryLines({ totalRows, acceptedRecordCount, unsupportedRowCount
     `${capabilityCounts.peopleNetworkReady} ${capabilityCounts.peopleNetworkReady === 1 ? 'record can' : 'records can'} contribute to People view.`,
     `${capabilityCounts.placeNetworkReady} ${capabilityCounts.placeNetworkReady === 1 ? 'record can' : 'records can'} contribute to place-based relationships.`,
     `${capabilityCounts.mapReady} ${capabilityCounts.mapReady === 1 ? 'record is' : 'records are'} mappable with valid source and target coordinates.`,
-    `${capabilityCounts.timelineReady} ${capabilityCounts.timelineReady === 1 ? 'record is' : 'records are'} timeline-ready.`,
+    `${capabilityCounts.timelineReady} ${capabilityCounts.timelineReady === 1 ? 'record is' : 'records are'} timeline-ready as sortable dates or intervals${temporalCounts?.intervalReady ? `; ${temporalCounts.intervalReady} ${temporalCounts.intervalReady === 1 ? 'includes' : 'include'} temporal interval information` : ''}.`,
     `${capabilityCounts.analyticsReady} ${capabilityCounts.analyticsReady === 1 ? 'record is' : 'records are'} available to Analytics where fields are usable.`,
     unsupportedRowCount
       ? `${unsupportedRowCount} ${unsupportedRowCount === 1 ? 'row was' : 'rows were'} not accepted because minimum source/target information was missing.`
@@ -310,6 +341,7 @@ export function buildPeridotRowValidationReports(rows = []) {
   return rows.map((row, index) => {
     const capabilities = getPeridotRowCapabilities(row);
     const accepted = isAcceptedPeridotRecord(row);
+    const temporal = getRowTemporalCapability(row);
 
     return Object.freeze({
       index,
@@ -317,6 +349,7 @@ export function buildPeridotRowValidationReports(rows = []) {
       row,
       accepted,
       capabilities,
+      temporal,
       issues: Object.freeze({
         missingPersonPair: !hasPersonPair(row),
         missingPlacePair: !hasPlacePair(row),
@@ -355,6 +388,7 @@ export function buildPeridotCsvValidationSummary(rows = [], headers = null) {
   const acceptedRecordCount = rowReports.filter((report) => report.accepted).length;
   const unsupportedRowCount = rowReports.length - acceptedRecordCount;
   const capabilityCounts = buildCapabilityCounts(rowReports);
+  const temporalCounts = buildTemporalCounts(rowReports);
   const rowWarnings = buildWarnings(rowReports);
   const columnWarnings = buildColumnWarnings(missingColumns);
   const warnings = Object.freeze([...columnWarnings, ...rowWarnings]);
@@ -363,6 +397,7 @@ export function buildPeridotCsvValidationSummary(rows = [], headers = null) {
     acceptedRecordCount,
     unsupportedRowCount,
     capabilityCounts,
+    temporalCounts,
   });
 
   return Object.freeze({
@@ -373,6 +408,7 @@ export function buildPeridotCsvValidationSummary(rows = [], headers = null) {
     acceptedRecordCount,
     unsupportedRowCount,
     capabilityCounts: Object.freeze(capabilityCounts),
+    temporalCounts,
     rowReports: Object.freeze(rowReports),
     warnings,
     summaryLines,
