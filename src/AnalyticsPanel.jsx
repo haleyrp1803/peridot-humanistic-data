@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ANALYTICS_AGGREGATION_OPTIONS, ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
 import { buildAnalyticsChartData, getAnalyticsYearRange } from './analyticsDerivationHelpers';
@@ -263,6 +263,7 @@ function VariableControlsShell({ children }) {
 
 export function AnalyticsPanelContent({
   analyticsState,
+  onChartExportControlsChange,
 }) {
   const chartSvgRef = useRef(null);
   const [exportStatus, setExportStatus] = useState(null);
@@ -412,7 +413,7 @@ export function AnalyticsPanelContent({
     [aggregation, barGroupBy, barOrientation, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, resolvedMultiLineMetricField, resolvedMultiLineAggregation, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
   );
 
-  const handleExportPng = async () => {
+  const handleExportPng = useCallback(async () => {
     setExportStatus(null);
     try {
       const filename = `${slugifyFilenamePart(chartData?.title, 'peridot-analytics-chart')}.png`;
@@ -421,7 +422,27 @@ export function AnalyticsPanelContent({
     } catch (error) {
       setExportStatus({ type: 'error', message: error.message || 'Unable to export chart PNG.' });
     }
-  };
+  }, [chartData?.title]);
+
+  useEffect(() => {
+    if (typeof onChartExportControlsChange !== 'function') return undefined;
+
+    onChartExportControlsChange({
+      exportStatus: exportStatus
+        ? {
+          kind: exportStatus.type === 'error' ? 'error' : 'success',
+          message: exportStatus.message,
+        }
+        : null,
+      handleExportChartPng: handleExportPng,
+      chartTitle: chartData?.title || 'Chart',
+      chartRowCount: Number.isFinite(chartData?.rowCount) ? chartData.rowCount : null,
+    });
+
+    return () => {
+      onChartExportControlsChange(null);
+    };
+  }, [chartData?.rowCount, chartData?.title, exportStatus, handleExportPng, onChartExportControlsChange]);
 
   const renderDateRangeControls = () => {
     if (!yearRange.years.length) return null;
@@ -636,17 +657,6 @@ export function AnalyticsPanelContent({
             {renderChartControls()}
           </section>
 
-          <section className="rounded-2xl border border-[#d7c8a6] bg-[#fffaf0] p-4 shadow-sm">
-            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6c765e]">Export</div>
-            <button type="button" onClick={handleExportPng} className={`${buttonClassName()} mt-3 w-full justify-center`} disabled={!chartData}>
-              Export chart PNG
-            </button>
-            {exportStatus ? (
-              <div className={['mt-3 rounded-xl border p-3 text-sm', exportStatus.type === 'error' ? 'border-red-300 bg-red-50 text-red-800' : 'border-[#cbdab2] bg-[#edf4df] text-[#26382b]'].join(' ')}>
-                {exportStatus.message}
-              </div>
-            ) : null}
-          </section>
         </div>
       </aside>
 

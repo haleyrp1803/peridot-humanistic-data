@@ -168,6 +168,223 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
   );
 }
 
+function VisualizationExportMenu({ exportControls, activeVisualizationLabel, compact = false }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const closeTimerRef = useRef(null);
+
+  useEffect(() => () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+    }
+  }, []);
+
+  if (!exportControls) return null;
+
+  const {
+    exportStatus,
+    handleExportSvg,
+    handleExportPng,
+    handleExportNodesCsv,
+    handleExportEdgesCsv,
+    handleExportChartPng,
+    graph,
+    chartRowCount,
+  } = exportControls;
+
+  const nodeCount = Number.isFinite(graph?.nodes?.length) ? graph.nodes.length : 0;
+  const edgeCount = Number.isFinite(graph?.edges?.length) ? graph.edges.length : 0;
+  const chartCount = Number.isFinite(chartRowCount) ? chartRowCount : null;
+  const canExportSvg = typeof handleExportSvg === 'function';
+  const canExportPng = typeof handleExportPng === 'function';
+  const canExportNodes = typeof handleExportNodesCsv === 'function' && nodeCount > 0;
+  const canExportEdges = typeof handleExportEdgesCsv === 'function' && edgeCount > 0;
+  const canExportChartPng = typeof handleExportChartPng === 'function';
+  const isChartExportMenu = canExportChartPng && !canExportSvg && !canExportPng && !handleExportNodesCsv && !handleExportEdgesCsv;
+
+  const clearCloseTimer = () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+  };
+
+  const openMenu = () => {
+    clearCloseTimer();
+    setIsOpen(true);
+  };
+
+  const closeMenu = () => {
+    clearCloseTimer();
+    setIsOpen(false);
+  };
+
+  const scheduleClose = () => {
+    clearCloseTimer();
+    closeTimerRef.current = window.setTimeout(() => {
+      setIsOpen(false);
+      closeTimerRef.current = null;
+    }, 260);
+  };
+
+  const buttonClass = compact
+    ? [
+      'rounded-full border px-3 py-1 text-[11px] font-bold transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+      isOpen
+        ? 'border-[#f5ecd2]/90 bg-[#b58b42] text-[#fff8e8]'
+        : 'border-[#dfe9c8]/45 bg-[#dfe9c8]/10 text-[#f5ecd2] hover:border-[#f5ecd2]/90 hover:bg-[#b58b42]',
+    ].join(' ')
+    : [
+      'w-full rounded-2xl border px-3 py-2 text-left text-[#fbf7ea] transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+      isOpen
+        ? 'border-[#f5ecd2]/90 bg-[#b58b42]/75 shadow-[0_12px_28px_rgba(0,0,0,0.26)]'
+        : 'border-[#dfe9c8]/40 bg-[#dfe9c8]/10 hover:border-[#f5ecd2]/80 hover:bg-[#b58b42]/70',
+    ].join(' ');
+
+  const actionButtonClass = (enabled = true) => [
+    'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+    enabled
+      ? 'text-[#1d3326] hover:bg-[#dfe9c8]'
+      : 'cursor-not-allowed text-[#6f6554] hover:bg-[#f3e4bf]',
+  ].join(' ');
+
+  const runAction = (handler) => {
+    closeMenu();
+    if (typeof handler === 'function') {
+      handler();
+    }
+  };
+
+  return (
+    <div
+      className={compact ? 'relative z-[90]' : 'relative z-[70] min-w-[160px]'}
+      onMouseEnter={openMenu}
+      onMouseLeave={scheduleClose}
+      onFocus={openMenu}
+    >
+      <button
+        type="button"
+        onClick={() => (isOpen ? closeMenu() : openMenu())}
+        className={buttonClass}
+        aria-expanded={isOpen}
+        aria-label={`Export ${activeVisualizationLabel}`}
+        title={`Export ${activeVisualizationLabel}`}
+      >
+        {compact ? (
+          'Export'
+        ) : (
+          <>
+            <span className="block text-sm font-bold">Export</span>
+            <span className="mt-1 block text-[11px] leading-snug text-[#dfe9c8]">
+              {isChartExportMenu ? 'PNG export' : 'SVG, PNG, and CSV'}
+            </span>
+          </>
+        )}
+      </button>
+
+      {isOpen ? (
+        <>
+          <div
+            aria-hidden="true"
+            className="absolute left-0 right-0 top-full z-[95] h-4"
+            onMouseEnter={openMenu}
+          />
+          <div
+            className="absolute right-0 top-[calc(100%+10px)] z-[120] w-[300px] rounded-2xl border border-[#bfa46d] bg-[#fffaf0] p-2 text-[#203429] shadow-[0_18px_38px_rgba(0,0,0,0.36)]"
+            onMouseEnter={openMenu}
+            onMouseLeave={scheduleClose}
+            onFocus={openMenu}
+          >
+            <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-[#6f6554]">
+              Export {activeVisualizationLabel}
+            </div>
+
+            <div className="grid gap-1">
+              {canExportChartPng ? (
+                <button
+                  type="button"
+                  onClick={() => runAction(handleExportChartPng)}
+                  className={actionButtonClass(canExportChartPng)}
+                  disabled={!canExportChartPng}
+                >
+                  <span>Export chart PNG</span>
+                  {chartCount !== null ? (
+                    <span className="shrink-0 rounded-full border border-[#d8c79a] bg-[#f5ecd2] px-2 py-0.5 text-[10px] font-bold text-[#6f6554]">
+                      {chartCount}
+                    </span>
+                  ) : null}
+                </button>
+              ) : null}
+
+              {canExportSvg ? (
+                <button
+                  type="button"
+                  onClick={() => runAction(handleExportSvg)}
+                  className={actionButtonClass(canExportSvg)}
+                  disabled={!canExportSvg}
+                >
+                  <span>Export visualization SVG</span>
+                </button>
+              ) : null}
+              {canExportPng ? (
+                <button
+                  type="button"
+                  onClick={() => runAction(handleExportPng)}
+                  className={actionButtonClass(canExportPng)}
+                  disabled={!canExportPng}
+                >
+                  <span>Export visualization PNG</span>
+                </button>
+              ) : null}
+              {typeof handleExportNodesCsv === 'function' ? (
+                <button
+                  type="button"
+                  onClick={() => runAction(handleExportNodesCsv)}
+                  className={actionButtonClass(canExportNodes)}
+                  disabled={!canExportNodes}
+                >
+                  <span>Export nodes CSV</span>
+                  <span className="shrink-0 rounded-full border border-[#d8c79a] bg-[#f5ecd2] px-2 py-0.5 text-[10px] font-bold text-[#6f6554]">
+                    {nodeCount}
+                  </span>
+                </button>
+              ) : null}
+              {typeof handleExportEdgesCsv === 'function' ? (
+                <button
+                  type="button"
+                  onClick={() => runAction(handleExportEdgesCsv)}
+                  className={actionButtonClass(canExportEdges)}
+                  disabled={!canExportEdges}
+                >
+                  <span>Export routes / edges CSV</span>
+                  <span className="shrink-0 rounded-full border border-[#d8c79a] bg-[#f5ecd2] px-2 py-0.5 text-[10px] font-bold text-[#6f6554]">
+                    {edgeCount}
+                  </span>
+                </button>
+              ) : null}
+            </div>
+
+            {exportStatus?.message ? (
+              <div
+                className={[
+                  'mx-1 mt-3 rounded-xl border p-3 text-xs leading-relaxed',
+                  exportStatus.kind === 'error'
+                    ? 'border-red-300 bg-red-50 text-red-800'
+                    : 'border-[#cbdab2] bg-[#edf4df] text-[#26382b]',
+                ].join(' ')}
+              >
+                {exportStatus.message}
+                {exportStatus.filename ? (
+                  <div className="mt-1 font-semibold">{exportStatus.filename}</div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 export function PeridotVisualizationsWorkspace({
   pageTitle,
   setPageTitle,
@@ -186,6 +403,7 @@ export function PeridotVisualizationsWorkspace({
   onOpenSearch,
   onOpenExplore,
   timelineControlsProps,
+  exportControls,
 }) {
   const availability = {
     rowCount: 0,
@@ -216,6 +434,7 @@ export function PeridotVisualizationsWorkspace({
   const [openMenuCategory, setOpenMenuCategory] = useState(null);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(true);
+  const [chartExportControls, setChartExportControls] = useState(null);
   const menuCloseTimerRef = useRef(null);
 
   useEffect(() => {
@@ -392,6 +611,9 @@ export function PeridotVisualizationsWorkspace({
     { label: 'Rows', value: numberLabel(availability.rowCount) },
   ];
 
+  const isChartWorkspaceActive = selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || Boolean(chartTypeFromToolKey(selectedTool));
+  const activeExportControls = isChartWorkspaceActive ? chartExportControls : exportControls;
+
   const renderWorkspaceBody = () => {
     if (selectedTool === VISUALIZATION_TOOLS.CAPABILITY_SUMMARY) {
       return <CapabilitySummaryWorkspace availability={availability} onOpenSearch={onOpenSearch} />;
@@ -411,7 +633,10 @@ export function PeridotVisualizationsWorkspace({
     if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
       return (
         <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[#c4e0ef]/50 bg-[rgba(8,39,25,0.9)] p-2 shadow-[0_20px_54px_rgba(0,0,0,0.34)] backdrop-blur-sm md:p-3">
-          <AnalyticsPanelContent analyticsState={analyticsWorkspaceProps.analyticsState} />
+          <AnalyticsPanelContent
+            analyticsState={analyticsWorkspaceProps.analyticsState}
+            onChartExportControlsChange={setChartExportControls}
+          />
         </div>
       );
     }
@@ -442,59 +667,65 @@ export function PeridotVisualizationsWorkspace({
                   </h1>
                 </div>
 
-                <div className="relative z-[70] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
-                  {categories.map((category) => {
-                    const isOpen = openMenuCategory === category.label;
-                    return (
-                      <div
-                        key={category.label}
-                        className={categoryClass(isOpen)}
-                        onMouseEnter={() => openMenu(category.label)}
-                        onMouseLeave={scheduleMenuClose}
-                        onFocus={() => openMenu(category.label)}
-                      >
-                        <button
-                          type="button"
-                          className="w-full px-3 py-2 text-left focus:outline-none"
-                          onClick={() => (isOpen ? closeMenu() : openMenu(category.label))}
-                          aria-expanded={isOpen}
+                <div className="flex flex-col gap-2 xl:flex-row xl:items-stretch">
+                  <div className="relative z-[70] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
+                    {categories.map((category) => {
+                      const isOpen = openMenuCategory === category.label;
+                      return (
+                        <div
+                          key={category.label}
+                          className={categoryClass(isOpen)}
+                          onMouseEnter={() => openMenu(category.label)}
+                          onMouseLeave={scheduleMenuClose}
+                          onFocus={() => openMenu(category.label)}
                         >
-                          <span className="block text-sm font-bold">{category.label}</span>
-                          <span className="mt-1 block text-[11px] leading-snug text-[#dfe9c8]">{category.description}</span>
-                        </button>
-                        {isOpen ? (
-                          <>
-                            <div
-                              aria-hidden="true"
-                              className="absolute left-0 right-0 top-full z-[95] h-4"
-                              onMouseEnter={() => openMenu(category.label)}
-                            />
-                            <div
-                              className="absolute right-0 top-[calc(100%+10px)] z-[100] min-w-[280px] rounded-2xl border border-[#bfa46d] bg-[#fffaf0] p-2 text-[#203429] shadow-[0_18px_38px_rgba(0,0,0,0.36)]"
-                              onMouseEnter={() => openMenu(category.label)}
-                              onMouseLeave={scheduleMenuClose}
-                              onFocus={() => openMenu(category.label)}
-                            >
-                              {category.tools.map((toolKey) => {
-                                const tool = toolDefinitions[toolKey];
-                                return (
-                                  <button
-                                    key={toolKey}
-                                    type="button"
-                                    onClick={() => selectTool(toolKey)}
-                                    className={menuItemClass(selectedTool === toolKey, tool.available)}
-                                  >
-                                    <span className="pr-2 leading-snug">{tool.label}</span>
-                                    <CompatibilityStatusPill available={tool.available} light />
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </>
-                        ) : null}
-                      </div>
-                    );
-                  })}
+                          <button
+                            type="button"
+                            className="w-full px-3 py-2 text-left focus:outline-none"
+                            onClick={() => (isOpen ? closeMenu() : openMenu(category.label))}
+                            aria-expanded={isOpen}
+                          >
+                            <span className="block text-sm font-bold">{category.label}</span>
+                            <span className="mt-1 block text-[11px] leading-snug text-[#dfe9c8]">{category.description}</span>
+                          </button>
+                          {isOpen ? (
+                            <>
+                              <div
+                                aria-hidden="true"
+                                className="absolute left-0 right-0 top-full z-[95] h-4"
+                                onMouseEnter={() => openMenu(category.label)}
+                              />
+                              <div
+                                className="absolute right-0 top-[calc(100%+10px)] z-[100] min-w-[280px] rounded-2xl border border-[#bfa46d] bg-[#fffaf0] p-2 text-[#203429] shadow-[0_18px_38px_rgba(0,0,0,0.36)]"
+                                onMouseEnter={() => openMenu(category.label)}
+                                onMouseLeave={scheduleMenuClose}
+                                onFocus={() => openMenu(category.label)}
+                              >
+                                {category.tools.map((toolKey) => {
+                                  const tool = toolDefinitions[toolKey];
+                                  return (
+                                    <button
+                                      key={toolKey}
+                                      type="button"
+                                      onClick={() => selectTool(toolKey)}
+                                      className={menuItemClass(selectedTool === toolKey, tool.available)}
+                                    >
+                                      <span className="pr-2 leading-snug">{tool.label}</span>
+                                      <CompatibilityStatusPill available={tool.available} light />
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <VisualizationExportMenu
+                    exportControls={activeExportControls}
+                    activeVisualizationLabel={activeVisualizationLabel}
+                  />
                 </div>
               </div>
             ) : (
@@ -503,9 +734,16 @@ export function PeridotVisualizationsWorkspace({
                   <span className="peridot-kicker !mb-0 mr-3 inline text-[9px] text-[#dfe9c8]">Visualization workspace</span>
                   <span className="truncate text-sm font-bold text-[#f5ecd2]">{activeVisualizationLabel}</span>
                 </div>
-                <span className="rounded-full border border-[#dfe9c8]/35 bg-[#dfe9c8]/10 px-3 py-1 text-[11px] font-semibold text-[#dfe9c8]">
-                  Navigation minimized
-                </span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <VisualizationExportMenu
+                    exportControls={activeExportControls}
+                    activeVisualizationLabel={activeVisualizationLabel}
+                    compact
+                  />
+                  <span className="rounded-full border border-[#dfe9c8]/35 bg-[#dfe9c8]/10 px-3 py-1 text-[11px] font-semibold text-[#dfe9c8]">
+                    Navigation minimized
+                  </span>
+                </div>
               </div>
             )}
 
