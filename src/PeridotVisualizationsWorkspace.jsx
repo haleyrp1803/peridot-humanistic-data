@@ -11,6 +11,17 @@
  * Maintenance cautions:
  * - This is now a key workspace-coordination file. Keep behavior changes narrow and test maps, networks, charts, timeline, and export after edits.
  * - Header Export should be the single export surface for visualization contexts.
+ *
+ * Scope contract:
+ * - This component does not derive the visible dataset. It receives already-
+ *   scoped graph/map/chart props from `App.jsx`.
+ * - The bottom timeline scrubber changes global App state; those changes flow
+ *   back through graph derivation before this workspace renders the next view.
+ * - Header Export should export the same scoped visualization state that is
+ *   currently rendered. Do not point export actions at raw uploaded rows unless
+ *   adding a separate, explicitly labeled full-dataset export.
+ * - Chart export is registered by `AnalyticsPanel.jsx`; map/network export is
+ *   passed from App. The header menu switches between those contexts.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';

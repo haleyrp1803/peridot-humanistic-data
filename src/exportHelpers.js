@@ -11,6 +11,14 @@
  * Maintenance cautions:
  * - Always revoke object URLs after downloads.
  * - When changing SVG serialization, test both SVG download and PNG rendering in browser.
+ *
+ * Scope contract:
+ * - This file serializes whatever rows/elements the caller passes. It does not
+ *   know whether data is full-dataset, filtered, timeline-scoped, or playback-
+ *   scoped.
+ * - App/Visualizations must therefore pass the correct currently visible graph
+ *   nodes/edges or chart SVG. Do not add filtering decisions here; keep export
+ *   helpers pure and caller-driven.
  */
 
 export function slugifyFilenamePart(value, fallback = 'export') {
@@ -219,6 +227,9 @@ export async function renderSvgElementToPngBlob(svgElement, options = {}) {
   return pngBlob;
 }
 
+// Convert the caller-provided graph edges to CSV rows. In current app flow the
+// caller passes edges from the visible graph, so this exports the scoped
+// visualization rather than the entire uploaded dataset.
 export function buildExportEdgeRows(edges) {
   return edges.map((edge) => ({
     id: edge.id,

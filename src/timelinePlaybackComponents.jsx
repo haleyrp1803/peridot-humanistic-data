@@ -10,6 +10,17 @@
  * 
  * Maintenance cautions:
  * - Timeline must respect the active Search & Filter date scope. Test Apply/Clear Filters, range dragging, playback, reset, and All dates together.
+ *
+ * State-flow contract:
+ * - This file renders controls only; it does not own the canonical timeline
+ *   state. `App.jsx` owns `timelineMode`, `rangeStart`, `rangeEnd`,
+ *   `playbackIndex`, `isPlaying`, and `playbackSpeed`.
+ * - The bottom scrubber changes the global visualization scope. It is not an
+ *   Analytics-only chart range and should not be wired directly to chart-local
+ *   state in `AnalyticsPanel.jsx`.
+ * - `onResetTimeline` should restore both the selected range and playback
+ *   progress because downstream graph/export rows depend on the resulting
+ *   visible row scope.
  */
 
 import React from 'react';

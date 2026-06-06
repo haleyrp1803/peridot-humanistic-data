@@ -281,6 +281,10 @@ export function AnalyticsPanelContent({
   analyticsState,
   onChartExportControlsChange,
 }) {
+  // Analytics receives rows from the visualization workspace/App state and then
+  // applies chart-local derivation settings. Do not read from raw uploaded rows
+  // here; doing so would bypass Search/Timeline scope and make chart export
+  // disagree with the visible chart.
   const chartSvgRef = useRef(null);
   const [exportStatus, setExportStatus] = useState(null);
   const [barOrientation, setBarOrientation] = useState('vertical');
@@ -317,10 +321,25 @@ export function AnalyticsPanelContent({
   const [endYear, setEndYear] = useState('');
 
   useEffect(() => {
-    if (!yearRange.years.length) return;
-    setStartYear((current) => current || String(yearRange.minYear));
-    setEndYear((current) => current || String(yearRange.maxYear));
-  }, [yearRange.maxYear, yearRange.minYear, yearRange.years.length]);
+    if (!yearRange.years.length) {
+      setStartYear('');
+      setEndYear('');
+      return;
+    }
+
+    const availableYears = new Set(yearRange.years.map((year) => String(year)));
+    const fallbackStartYear = String(yearRange.minYear);
+    const fallbackEndYear = String(yearRange.maxYear);
+
+    setStartYear((current) => {
+      const currentYear = String(current || '');
+      return availableYears.has(currentYear) ? currentYear : fallbackStartYear;
+    });
+    setEndYear((current) => {
+      const currentYear = String(current || '');
+      return availableYears.has(currentYear) ? currentYear : fallbackEndYear;
+    });
+  }, [yearRange.maxYear, yearRange.minYear, yearRange.years]);
 
   const chartDefinition = getAnalyticsChartDefinition(chartType);
   const availableBarFields = availableFields?.barGroupOptions || [];

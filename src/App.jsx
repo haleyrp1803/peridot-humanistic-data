@@ -68,7 +68,8 @@ import {
   PERIDOT_WORKSPACE_MODES,
   resolvePeridotWorkspaceMode,
 } from './peridotWorkspaceConfig';
-import { DEFAULT_ANALYTICS_STATE } from './analyticsConfig'; import { buildAnalyticsChartData, getAvailableAnalyticsFields } from './analyticsDerivationHelpers'; import { MapLibreMapStage } from './MapLibreMapStage';
+import { DEFAULT_ANALYTICS_STATE } from './analyticsConfig';
+import { buildAnalyticsChartData, getAvailableAnalyticsFields } from './analyticsDerivationHelpers';
 import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmptyState';
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';
@@ -2701,34 +2702,9 @@ function LegacyD3MapStage({
 
 
 function MapStage(props) {
-  const showMapLibrePreview =
-    import.meta.env.DEV &&
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('maplibrePreview') === '1';
-
-  if (showMapLibrePreview) {
-    return (
-      <div
-        ref={props.mapViewportRef}
-        className="relative h-full min-h-[520px] w-full overflow-hidden rounded-2xl border border-[var(--panel-border)] bg-[var(--map-water)]"
-      >
-        <MapLibreMapStage
-          graph={props.graph}
-          viewMode={props.viewMode} className="h-full min-h-full w-full rounded-none"
-          handleNodeClick={props.handleNodeClick}
-          handleEdgeClick={props.handleEdgeClick}
-          handleBlankMapClick={props.handleBlankMapClick}
-        />
-        <div className="pointer-events-none absolute left-4 top-4 max-w-sm rounded-xl border border-[var(--panel-border)] bg-[var(--panel-bg)]/95 px-4 py-3 text-xs text-[var(--panel-muted)] shadow-lg">
-          <div className="font-semibold text-[var(--panel-text)]">MapLibre workspace preview</div>
-          <div className="mt-1">
-            Development-only preview enabled by <code>?maplibrePreview=1</code>. The production D3/SVG map remains the default path.
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Stable map-stage boundary. The dormant MapLibre preview was removed, so
+  // this wrapper now deliberately routes every production and development map
+  // render through the SVG/D3 stage used by the rest of the app.
   return <LegacyD3MapStage {...props} />;
 }
 
@@ -3121,8 +3097,30 @@ export default function EuropeNetworkMapApp() {
   const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(normalizedRows), [normalizedRows]);
 
   // ------------------------------------------------------------
-  // Timeline derivations
+  // Timeline / filter / playback scope contract
   // ------------------------------------------------------------
+  // `normalizedRows` is the loaded dataset after parsing, validation, and
+  // normalization. It is intentionally the broadest row scope in the app.
+  //
+  // The active visualization/export scope is narrowed in this order:
+  // 1. `timelineWindowRows` applies the global timeline range when Timeline is
+  //    not in "all dates" mode.
+  // 2. `filteredRowsForActiveFilters` applies the committed Search & Filter
+  //    text/entity filters on top of that timeline window.
+  // 3. `selectedRowsForPlayback` sorts the filtered window into playback order.
+  // 4. `filteredRowsByTime` applies the current playback progress and becomes
+  //    the row scope for graph/map/network rendering.
+  //
+  // This ordering is fragile but intentional. Search and timeline both affect
+  // which records are visible; playback only limits visibility within the
+  // already-filtered set. Header export uses the derived graph produced from
+  // `filteredRowsByTime`, so export follows the same visible scope as the
+  // current visualization rather than the full uploaded dataset.
+  //
+  // Analytics has one additional local date-range concept inside
+  // `AnalyticsPanel.jsx`. That chart-local range is not the same state as the
+  // global timeline scrubber below, so do not merge or rename those states
+  // without first defining the desired cross-workspace filtering semantics.
   const timelineMonths = useMemo(() => buildTimelineMonths(normalizedRows), [normalizedRows]);
 
   useEffect(() => {
@@ -3376,6 +3374,12 @@ export default function EuropeNetworkMapApp() {
     ];
   }, [viewMode, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, currentMinCountLabel, exportVisibleDateLabel]);
 
+  // Export rows are intentionally built from the current `graph`, not directly
+  // from `normalizedRows`. `graph` has already absorbed the active timeline
+  // window, Search & Filter state, playback progress, selected visualization
+  // mode, and minimum-count threshold. This keeps header export aligned with
+  // what the user is seeing, but it also means export behavior must be tested
+  // whenever timeline/filter/playback graph derivation changes.
   const exportEdgesRows = useMemo(() => buildExportEdgeRows(graph.edges), [graph.edges]);
 
   const exportNodesRows = useMemo(() => buildExportNodeRows(graph.nodes), [graph.nodes]);

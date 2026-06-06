@@ -10,6 +10,15 @@
  * Maintenance cautions:
  * - Do not make text inputs recompute data on every keystroke.
  * - Predictive suggestions should fill draft fields only; Apply Filters should commit global state.
+ *
+ * Scope contract:
+ * - Text/entity inputs here update draft state only. They must not recompute
+ *   graph data while the user is typing.
+ * - Apply commits Search & Filter fields and resets playback so the next
+ *   visual/export scope starts at the beginning of the newly filtered row set.
+ * - Clear resets Search & Filter fields and timeline boundaries together,
+ *   because the global visible dataset is the intersection of timeline window
+ *   and committed Search & Filter criteria.
  */
 
 import React, { useEffect, useMemo, useState } from 'react';

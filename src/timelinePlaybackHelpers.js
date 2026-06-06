@@ -9,6 +9,16 @@
  * 
  * Maintenance cautions:
  * - Keep this file pure. UI events belong in components; date/window semantics belong here.
+ *
+ * Scope contract:
+ * - `buildTimelineMonths` derives the selectable global timeline boundaries
+ *   from the full normalized row set.
+ * - `filterRowsByTimelineWindow` applies the global timeline range before
+ *   Search & Filter text/entity narrowing.
+ * - `buildPlaybackRows` determines playback order after global filters are
+ *   already applied.
+ * - `filterRowsForPlayback` is the final row narrowing step before graph
+ *   derivation. It should never mutate rows or recompute graph state directly.
  */
 
 export function buildTimelineMonths(rows) {
@@ -22,6 +32,10 @@ export function buildTimelineMonths(rows) {
   ).sort();
 }
 
+// Apply the global timeline range to a candidate row set. The caller controls
+// whether this receives all normalized rows or a narrower scope; in current
+// App.jsx flow it receives `normalizedRows` before Search & Filter text/entity
+// filters are applied.
 export function filterRowsByTimelineWindow(rows, timelineMode, timelineMonths, rangeStart, rangeEnd) {
   if (timelineMode === 'all' || !timelineMonths.length) return rows;
 
@@ -48,6 +62,9 @@ export function buildPlaybackRows(rowsInWindow) {
     });
 }
 
+// Restrict an already-filtered row set to the current playback prefix. This is
+// the last row-scope narrowing step before map/network graph derivation and
+// therefore indirectly controls header export scope for graph visualizations.
 export function filterRowsForPlayback(baseRows, playbackRows, playbackIndex) {
   if (!playbackRows.length || playbackIndex < 0) return baseRows;
   const visibleIds = new Set(playbackRows.slice(0, playbackIndex + 1).map((row) => row.id));
