@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 Current clean baseline:
 
 ```text
-e7c3b57 — Add point-location role mapping
+08b628b — Use include and ignore checkboxes for evidence fields
 ```
 
 Current branch note:
@@ -80,8 +80,9 @@ Current fragile zones include:
 - Search & Filter active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, predictive-suggestion, apply/clear, and future metadata filters
 - Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
+- Analytics flexible chart-variable controls, record-count metrics, wide numeric-series selection, and chart availability routing
 - Analytics SVG-to-PNG export rendering
-- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, coordinate-pair parsing, date-range/display-date handling, and legacy upload cleanup
+- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, generic chart/evidence record admission, evidence-field include/ignore checkbox behavior, coordinate-pair parsing, date-range/display-date handling, and legacy upload cleanup
 
 ---
 
@@ -292,6 +293,11 @@ Current notable decisions:
 - Directed route rows should open route/edge Inspector dossiers and participate in Back history.
 - Analytics is conceptually part of Visualizations, not an independent side-panel-first workflow.
 - The ordinary legacy Geography / Raw Data / Person Metadata three-file workflow is superseded by the one-file template upload and mapped arbitrary-table import workflows; do not reintroduce it unless a specific recovery or compatibility need is identified.
+- Capability-aware visualization menus should explain unavailable views instead of showing empty workspaces when the active dataset cannot support a selected visualization.
+- Chart Visualizations should list chart types directly, and each chart should expose relevant variable controls rather than routing users to one broad Analytics choice.
+- Record count is a chart metric, not an implicit hidden default; it should be selectable where aggregate charts use record aggregation.
+- Generic chart/evidence records should be accepted into the active dataset when they contain useful temporal, numeric, categorical, citation, link, note, or selected metadata content, even when they are not map-ready or network-ready.
+- Evidence and analysis field inclusion should use explicit Include and Ignore choices, defaulting to Include, so users understand what metadata will be preserved for Inspector, charts, search, and export.
 
 ---
 
@@ -353,7 +359,9 @@ Committed Data Inputs behavior includes:
 - capability reporting for Inspector, Search, point-map readiness, route-map readiness, network readiness, timeline readiness, Analytics/chart readiness, and Export;
 - public legacy Geography / Raw Data / Person Metadata upload controls superseded by the one-file and mapped-import workflows;
 - workbook parsing, mapping, unique-ID joins, and import assembly for XLSX/XLS workbooks;
-- selected workbook custom fields visible in linked-letter and entity-profile Inspector views.
+- selected workbook custom fields visible in linked-record and entity-profile Inspector views;
+- generic chart/evidence records admitted into the active dataset where they have usable content;
+- evidence/analysis include/ignore checkboxes that default to Include.
 
 Future Data Inputs changes should explicitly test:
 

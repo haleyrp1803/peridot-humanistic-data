@@ -1,6 +1,6 @@
 # Peridot Data Capability Model Plan
 
-**Document status:** Planning document with implementation-status notes through `e7c3b57` — `Add point-location role mapping`.  
+**Document status:** Planning document with implementation-status notes through `08b628b` — `Use include and ignore checkboxes for evidence fields`.  
 **Prepared after:** `4f280a0` — `Use gold accent for workspace button hover states`.  
 **Change type:** Documentation / product-design planning.  
 **Purpose:** Define how Peridot can accommodate multiple kinds of humanistic datasets without forcing every dataset into the current correspondence/network model.
@@ -9,7 +9,7 @@
 
 ---
 
-## Implementation status after `e7c3b57`
+## Implementation status after `08b628b`
 
 Implemented from this plan:
 
@@ -22,15 +22,21 @@ Implemented from this plan:
 - Place mapping supports route roles with either separated source/target latitude-longitude columns or combined latitude-first source/target coordinate-pair columns.
 - Point/site datasets can render in Place Map without requiring source-target people.
 - Point/site datasets without source-target entity mappings correctly do not populate People Network or Force-Directed views.
+- Capability-aware Visualizations menus now distinguish mapping, network, chart, and data-exploration views and show unavailable-state explanations for unsupported visualizations.
+- Chart Visualizations now lists individual chart types rather than routing users to a broad Analytics entry.
+- Analytics supports flexible chart-variable controls for axes/categories, metrics, aggregation, grouping/series fields, heatmap axes, histogram distributions, and selected wide numeric series.
+- Record count is now explicitly available across aggregate chart types, including histogram and sunburst.
+- Generic chart/evidence rows can now be accepted into the active dataset without map or network roles.
+- Evidence and analysis fields use explicit Include and Ignore checkboxes that default to Include.
 
 Still deferred or partial:
 
 - Generic record/site Inspector dossiers remain basic and should be revisited later.
-- Analytics generalization for wide numeric time-series tables is still future work.
+- Further Analytics polish remains future work, but the first flexible chart-variable system and wide numeric-series support are implemented.
 - Timeline interval filtering semantics are not yet fully generalized.
 - Export is still more route/network-oriented than the eventual generic-record export model.
 
-The original plan below remains the product-design reference, but Phases 1–3 and the first point-map behavior target should now be read as substantially implemented.
+The original plan below remains the product-design reference, but Phases 1–3, the first point-map behavior target, the first Analytics generalization target, and generic chart/evidence row admission should now be read as substantially implemented.
 
 ## 1. Executive summary
 
@@ -750,11 +756,13 @@ warnings
 
 ### Phase 5 — Analytics generalization
 
+**Status:** First implementation complete through flexible chart-variable controls and explicit record-count metrics. Further chart polish and edge-case testing remain future work.
+
 **Type:** Behavior.
 
 **Goal:** Allow charting from generalized numeric/categorical/date fields, including wide numeric series where feasible.
 
-**Acceptance test:** The stock-price file can produce a multi-line chart from date plus company price columns.
+**Acceptance test:** The stock-price file can produce a line chart from date plus one company price column and a multi-line chart from date plus selected company price columns.
 
 ### Phase 6 — Point map mode
 

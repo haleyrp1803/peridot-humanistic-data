@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document is the architectural reference for the Peridot correspondence visualizer app. It should stay aligned with the committed source of truth in the repository and with the workflow rules in `PROJECT_WORKFLOW_CHARTER.md`.
+This document is the architectural reference for the Peridot humanistic-data visualizer app. It should stay aligned with the committed source of truth in the repository and with the workflow rules in `PROJECT_WORKFLOW_CHARTER.md`.
 
 This guide is updated on committed architectural changes and should be sufficient to hand off work into a fresh chat session without depending on older conversation context.
 
@@ -22,12 +22,22 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`e7c3b57` — `Add point-location role mapping`**
+- **`08b628b` — `Use include and ignore checkboxes for evidence fields`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, and the first implemented broader data-capability milestone. The Inspector now has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from hamburger/Expand, shared selection/history, linked-letter detail state, clickable linked people/places/letters/routes, and directed route row dossier navigation. The Data workflow now supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records that can render in Place Map without people/network relationships.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, and the current broader data-capability milestone. The Inspector now has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from hamburger/Expand, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow now supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus, and Analytics supports flexible chart variables rather than fixed correspondence-count assumptions.
 
-Preceding data-input milestones include:
+Recent data, visualization, and language milestones include:
 
+- **`08b628b` — `Use include and ignore checkboxes for evidence fields`**
+- **`231ccde` — `Accept generic chart records`**
+- **`b19019e` — `Generalize user-facing language beyond correspondence`**
+- **`ab7affa` — `Clean up flexible Analytics chart controls`**
+- **`ec6a70e` — `Support record-count sunburst charts`**
+- **`596b958` — `Support record-count histograms`**
+- **`b2dcde5` — `Add flexible Analytics chart variables`**
+- **`6d0b37c` — `Wire visualization availability state`**
+- **`b273a27` — `Make visualization menu hover more forgiving`**
+- **`aae209a` — `Document data capability mapping milestone`**
 - **`e7c3b57` — `Add point-location role mapping`**
 - **`85f3d46` — `Move data capability audit to mapping review`**
 - **`eef9cfe` — `Show read-only data capability summaries`**
@@ -156,12 +166,12 @@ The current top-level interface includes:
 - Timeline transitional side-panel bridge
 - Inspector dual-mode compact/full evidence system
 
-The current Visualizations workspace includes:
+The current Visualizations workspace includes capability-aware menu groups:
 
-- **Place Map**
-- **People Network**
-- **Force-Directed**
-- **Analytics**
+- **Mapping Visualizations** — Point Map and Route Map
+- **Network Visualizations** — Entity / People Network and Force-Directed Network
+- **Chart Visualizations** — Bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap charts
+- **Explore Your Data** — Capability Summary and search/exploration affordances
 
 Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing model now groups map, network, force-directed, and chart tools together inside Visualizations.
 
@@ -219,7 +229,7 @@ Full Data workspace for CSV template download, unified CSV/TSV/XLSX/XLS upload, 
 
 ### `src/PeridotVisualizationsWorkspace.jsx`
 
-Full Visualizations workspace. It contains the compact Place Map / People Network / Force-Directed / Analytics selector, renders Analytics in-workspace, and wraps the live map/network stage.
+Full Visualizations workspace. It contains capability-aware dropdown groups for mapping, network, chart, and data-exploration views; renders unavailable-state explanations when a dataset cannot support a selected view; routes chart selections directly into Analytics; and wraps the live map/network stage.
 
 ### `src/PeridotSearchWorkspace.jsx`
 
@@ -300,11 +310,11 @@ The expanded chart view is rendered through a React portal and overlays the map 
 
 ### `src/analyticsConfig.js`
 
-Owns Analytics chart configuration, including chart labels/descriptions, example research questions, default Analytics state, top-N display options, curated variable definitions, and **Route (Place)** / **Route (Person)** definitions.
+Owns Analytics chart configuration, including chart labels/descriptions, example research questions, default Analytics state, aggregation options, top-N display options, curated variable definitions, and **Route (Place)** / **Route (Person)** definitions.
 
 ### `src/analyticsDerivationHelpers.js`
 
-Owns Analytics data derivation, including available variable detection, conservative filtering of dynamic metadata fields, time-period bucketing for date-range charts, chart data construction, and semantic alias handling for curated fields such as Language and Relationship.
+Owns Analytics data derivation, including available variable detection, numeric measure detection, conservative filtering of dynamic metadata fields, time-period bucketing for date-range charts, flexible chart data construction, record-count aggregation, and semantic alias handling for curated fields such as Language and Relationship.
 
 Dynamic variable detection should exclude technical or non-categorical fields such as IDs, latitude/longitude fields, date fields, mappability flags, object/array values, purely numeric values, long note-like fields, and near-unique row identifiers.
 
@@ -462,6 +472,8 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - point-location roles for datasets with one location per record
 - route coordinate roles that accept separated latitude/longitude columns or combined latitude-first coordinate pairs
 - successful Place Map rendering for point/site datasets without forcing People Network or Force-Directed network behavior
+- generic chart/evidence rows accepted into the active dataset without requiring map or network roles
+- Evidence and analysis field controls use explicit Include and Ignore checkboxes, defaulting to Include
 - concise data tips explaining row granularity, incomplete data, coordinates, and user responsibility for standardization
 - legacy three-file public upload workflow superseded by one-file and mapped-import workflows
 
@@ -532,6 +544,9 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - constrained compact preview sizing inside Visualizations
 - higher-contrast shared chart hover tooltips
 - expanded chart overlay with dark green translucent backdrop, cool off-white text/borders, preserved blur, and white/cream chart card
+- direct chart-type selection from the Visualizations workspace chart menu
+- flexible x-axis/category, y-axis/metric, aggregation, grouping/series, histogram, heatmap, and wide numeric-series controls
+- explicit Record count metric support across aggregate chart types
 - PNG chart export
 
 ## Workbook import contract
@@ -789,7 +804,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`e7c3b57` — `Add point-location role mapping`**
+- current documented baseline: **`08b628b` — `Use include and ignore checkboxes for evidence fields`**
 
 A future chat should also be told that:
 

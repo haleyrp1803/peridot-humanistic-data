@@ -1,6 +1,6 @@
 # Peridot Interface Redesign Plan
 
-**Draft status:** Planning document with implementation-status notes through `e7c3b57` — `Add point-location role mapping`.  
+**Draft status:** Planning document with implementation-status notes through `08b628b` — `Use include and ignore checkboxes for evidence fields`.  
 **Prepared after:** Baseline `0f72182` — `Remove redundant Inspector correspondents summary row`.  
 **Scope:** Interface architecture, information architecture, workspace model, side-panel reduction, visualization reorganization, Inspector redesign, timeline generalization, and phased implementation plan.  
 **Implementation note:** Major early phases have now been implemented: Home, Data, Visualizations, Search & Filter, Theme, Export, and the dual-mode Inspector workspace are implemented; the hamburger menu replaced the visible persistent rail; Timeline remains the major deferred workspace redesign target. Data upload has also shifted to role-based mapping for broader humanistic datasets.
@@ -20,7 +20,7 @@ This plan defines the intended interface direction before implementation begins,
 
 ---
 
-## Implementation status after `e7c3b57`
+## Implementation status after `08b628b`
 
 Implemented from this plan:
 
@@ -35,14 +35,20 @@ Implemented from this plan:
 - dual-mode Inspector with compact visualization summaries and a full evidence-dossier workspace;
 - Home-style visual system applied across full workspaces;
 - role-based data mapping inside the Data workflow, organized around record identity, time, places, relationships, evidence/analysis, and capability review;
-- point/site datasets that can render on Place Map without requiring people/network relationships.
+- point/site datasets that can render on Place Map without requiring people/network relationships;
+- generic chart/evidence datasets that can enter the active dataset without map or network roles;
+- capability-aware Visualizations workspace menus for Mapping Visualizations, Network Visualizations, Chart Visualizations, and Explore Your Data;
+- direct chart-type selection from the Chart Visualizations menu;
+- flexible Analytics chart controls with explicit record-count and numeric-metric paths;
+- broader user-facing language oriented around records, entities, evidence, and humanistic datasets;
+- evidence/analysis field inclusion as explicit Include and Ignore checkboxes defaulting to Include.
 
 Still deferred:
 
 - Timeline redesign as a bottom Visualizations timeline/scrubber;
 - deeper visual-differentiation pass beyond the Home-style workspace system;
 - eventual cleanup/removal of legacy side-panel code after Timeline and compact Inspector dependencies are fully resolved;
-- broader generic-record Inspector and Analytics generalization for chart-first datasets.
+- broader generic-record Inspector dossiers and deeper chart polish for chart-first datasets.
 
 The original plan below remains useful as the product-design reference, but several “future” phases are now completed and should be read in light of this status note.
 
@@ -982,7 +988,7 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** theme redesign beyond relocation; data/filter/timeline behavior.  
 **Acceptance test:** Obsolete sections are gone from user-facing UI. Theme remains accessible and functional.
 
-### Phase 5 — Build unified Visualizations workspace — Complete for first implementation
+### Phase 5 — Build unified Visualizations workspace — Complete for first implementation and capability-aware menus
 
 **Change type:** structural + behavior + visual  
 **Goal:** Put People, Place, Force-Directed, and chart visualizations under one Visualizations workspace.  

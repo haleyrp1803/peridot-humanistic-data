@@ -2,9 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`e7c3b57` — `Add point-location role mapping`** on branch **`main`**
+- **`08b628b` — `Use include and ignore checkboxes for evidence fields`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, and the first implemented data-capability/modeling milestone. The current app is workspace-first for Home, Data, Visualizations, Search & Filter, Theme, Export, and the full Inspector workspace, while retaining compact side-panel Inspector summaries for visualization clicks and retaining Timeline as a transitional side-panel bridge. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, and the expanded humanistic-data capability milestone. The current app is workspace-first for Home, Data, Visualizations, Search & Filter, Theme, Export, and the full Inspector workspace, while retaining compact side-panel Inspector summaries for visualization clicks and retaining Timeline as a transitional side-panel bridge. Recent milestones include capability-aware visualization menus, flexible chart-variable controls, record-count support across aggregate charts, generalized user-facing language, generic chart/evidence row admission, and include/ignore checkbox handling for evidence fields. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 
 The current Data Inputs / import workflow now provides:
 
@@ -18,6 +18,8 @@ The current Data Inputs / import workflow now provides:
 - route coordinate roles that support separated latitude/longitude columns and combined source/target coordinate-pair columns;
 - latitude-first coordinate-pair guidance, including `POINT(latitude longitude)` strings;
 - successful point/site dataset mapping and Place Map rendering without requiring people/network relationships;
+- generic chart/evidence rows accepted into the active dataset without requiring map or network roles;
+- evidence/analysis field inclusion controls using explicit Include and Ignore checkboxes that default to Include;
 - arbitrary CSV/TSV staging and column mapping;
 - Excel workbook parsing for `.xlsx` and `.xls` files through the isolated workbook parser helper;
 - multi-sheet workbook staging with workbook and sheet summaries;
@@ -56,12 +58,37 @@ The current interface/workspace workflow now provides:
 - Data workspace using the unified CSV/TSV/XLSX/XLS uploader;
 - Timeline retained as a transitional side-panel bridge pending a later bottom Visualizations timeline/scrubber design;
 - Inspector now implemented as a dual-mode system: compact side-panel summaries for visualization clicks plus a full evidence-dossier workspace from hamburger/Expand, sharing selection and history.
+- capability-aware Visualizations menus grouping tools as Mapping Visualizations, Network Visualizations, Chart Visualizations, and Explore Your Data;
+- unavailable-state explanations for visualization types that the active dataset cannot support;
+- direct chart-type selection from the Chart Visualizations menu;
+- flexible chart variable controls for x-axis, y-axis/metric, grouping/series, aggregation, and selected wide numeric series;
+- explicit Record count support for bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap charts;
+- generic chart/evidence records accepted into the active dataset even when they have no map or network roles;
+- evidence/analysis field inclusion controls using explicit Include and Ignore checkboxes, defaulting to Include.
 
 The early MapLibre preview code remains present and gated behind `?maplibrePreview=1`, but it is dormant for ordinary use. The later `maplibre-native-geographic-view` experiment remains set aside rather than merged into the active implementation path.
 
 ---
 
 ## Current milestone notes
+
+### Visualization capability and flexible Analytics milestone
+
+- Added capability-aware Visualizations workspace menus for Mapping Visualizations, Network Visualizations, Chart Visualizations, and Explore Your Data.
+- Added readable availability labels, forgiving hover behavior, and unavailable-state explanations when a dataset cannot support a selected map, network, or chart view.
+- Changed Chart Visualizations so the dropdown lists chart types directly rather than a broad Analytics entry.
+- Generalized Analytics chart controls around user-selected x-axis/category fields, y-axis/metric fields, aggregation, grouping/series fields, heatmap rows/columns, histogram distributions, and selected wide numeric series.
+- Made **Record count** an explicit metric for aggregate chart types, including histogram and sunburst.
+- Cleaned chart language so generic record/metric charts no longer imply that all values are letters.
+- Current implemented flexible-Analytics baseline: **`ab7affa` — `Clean up flexible Analytics chart controls`**.
+
+### Generic chart/evidence record and mapping-field inclusion milestone
+
+- Generalized user-facing app language beyond correspondence-only wording while preserving compatibility terms and legacy internal names where still required.
+- Added generic chart/evidence row admission so chart-first and evidence-first datasets can enter the active dataset without map or network roles.
+- Kept map and network availability capability-based: generic chart records can be chart-ready and export-ready while remaining unmappable and non-network-ready.
+- Replaced the Evidence and analysis include/ignore dropdown control with explicit **Include** and **Ignore** checkboxes per field, defaulting to Include.
+- Current implemented generic-record and evidence-field UI baseline: **`08b628b` — `Use include and ignore checkboxes for evidence fields`**.
 
 ### Data capability and role-based mapping milestone
 
@@ -177,7 +204,16 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 
 ## Current branch status
 
-- **`e7c3b57` — `Add point-location role mapping`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`08b628b` — `Use include and ignore checkboxes for evidence fields`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`231ccde` — `Accept generic chart records`** accepts chart/evidence rows into the active dataset without requiring map or network roles.
+- **`b19019e` — `Generalize user-facing language beyond correspondence`** updates visible language toward humanistic records, entities, and data roles.
+- **`ab7affa` — `Clean up flexible Analytics chart controls`** stabilizes flexible chart variables and multi-line chart modes.
+- **`ec6a70e` — `Support record-count sunburst charts`** adds explicit record-count support to sunburst charts.
+- **`596b958` — `Support record-count histograms`** adds record-count distribution support to histograms.
+- **`b2dcde5` — `Add flexible Analytics chart variables`** introduces flexible chart axis, metric, aggregation, and series controls.
+- **`6d0b37c` — `Wire visualization availability state`** wires dataset capability state into the Visualizations workspace.
+- **`b273a27` — `Make visualization menu hover more forgiving`** improves the visualization menu hover boundary.
+- **`aae209a` — `Document data capability mapping milestone`** documents the implemented data-capability mapping milestone.
 - **`85f3d46` — `Move data capability audit to mapping review`** places capability reporting at the import decision point.
 - **`eef9cfe` — `Show read-only data capability summaries`** first surfaced data-capability summaries in the UI.
 - **`1889b95` — `Add data capability audit helper`** adds the pure capability-audit helper.
@@ -254,7 +290,17 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
-| 2026-06-06 | `e7c3b57` | (HEAD -> main, origin/main, origin/HEAD) | Add point-location role mapping |
+| 2026-06-06 | `08b628b` | (HEAD -> main, origin/main, origin/HEAD) | Use include and ignore checkboxes for evidence fields |
+| 2026-06-06 | `231ccde` |  | Accept generic chart records |
+| 2026-06-06 | `b19019e` |  | Generalize user-facing language beyond correspondence |
+| 2026-06-06 | `ab7affa` |  | Clean up flexible Analytics chart controls |
+| 2026-06-06 | `ec6a70e` |  | Support record-count sunburst charts |
+| 2026-06-06 | `596b958` |  | Support record-count histograms |
+| 2026-06-06 | `b2dcde5` |  | Add flexible Analytics chart variables |
+| 2026-06-06 | `6d0b37c` |  | Wire visualization availability state |
+| 2026-06-06 | `b273a27` |  | Make visualization menu hover more forgiving |
+| 2026-06-06 | `aae209a` |  | Document data capability mapping milestone |
+| 2026-06-06 | `e7c3b57` |  | Add point-location role mapping |
 | 2026-06-06 | `85f3d46` |  | Move data capability audit to mapping review |
 | 2026-06-06 | `eef9cfe` |  | Show read-only data capability summaries |
 | 2026-06-06 | `1889b95` |  | Add data capability audit helper |

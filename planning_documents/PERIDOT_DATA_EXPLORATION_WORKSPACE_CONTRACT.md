@@ -5,6 +5,8 @@
 **Change type:** Documentation / planning.  
 **Purpose:** Define how Peridot should combine evidence inspection and advanced search into a shared **Data Exploration** workspace while preserving the compact side-panel Inspector workflow and the existing Search & Filter active-dataset model.
 
+**Implementation note after `08b628b`:** This remains a future planning contract. The Visualizations workspace now includes an **Explore Your Data** menu with a capability-summary path, but the full Inspector/Advanced Search Data Exploration workspace described here has not yet been implemented.
+
 ---
 
 ## 1. Executive summary

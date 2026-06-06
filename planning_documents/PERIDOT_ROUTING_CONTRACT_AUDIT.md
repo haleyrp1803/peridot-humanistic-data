@@ -1,6 +1,6 @@
 # Peridot Routing Contract Audit
 
-**Draft status:** Routing and workspace transition audit updated after commit `b24e19a` — `Link Inspector directed route rows`.
+**Draft status:** Routing and workspace transition audit updated after commit `08b628b` — `Use include and ignore checkboxes for evidence fields`.
 
 **Purpose:** Document how Peridot’s current navigation and workspace routing works, how it should ideally work after the interface redesign, and how to transition safely from the current hybrid state to the intended workspace-first architecture.
 
@@ -35,12 +35,23 @@ The next stage should not be a broad deletion pass. It should be a staged transi
 Current verified baseline:
 
 ```text
-b24e19a — Link Inspector directed route rows
+08b628b — Use include and ignore checkboxes for evidence fields
 ```
 
 Recent redesign and Inspector sequence:
 
 ```text
+08b628b Use include and ignore checkboxes for evidence fields
+231ccde Accept generic chart records
+b19019e Generalize user-facing language beyond correspondence
+ab7affa Clean up flexible Analytics chart controls
+ec6a70e Support record-count sunburst charts
+596b958 Support record-count histograms
+b2dcde5 Add flexible Analytics chart variables
+6d0b37c Wire visualization availability state
+b273a27 Make visualization menu hover more forgiving
+aae209a Document data capability mapping milestone
+e7c3b57 Add point-location role mapping
 b24e19a Link Inspector directed route rows
 ed0f2c7 Make compact Inspector summary tiles open workspace
 ace7f52 Fix linked letter person and place navigation
@@ -108,7 +119,7 @@ The following are already implemented as full-window workspaces in `App.jsx`:
 |---|---|---|
 | Home | Full workspace | Startup landing page with Upload my data / Use sample data paths. |
 | Data | Full workspace | Unified table/workbook upload path for CSV / TSV / XLSX / XLS. |
-| Visualizations | Full workspace | Hosts Place Map, People Network, Force-Directed, and Analytics. |
+| Visualizations | Full workspace | Hosts capability-aware mapping, network, chart, and data-exploration menus; map/network stages; direct chart-type routing; and capability explanations for unsupported views. |
 | Theme | Full workspace | Appearance presets and return-to-visualizations path. |
 | Search & Filter | Full workspace | Advanced-search/filter scope controls moved out of the side panel. |
 | Export | Full workspace | Export controls moved out of the side panel, with a live visualization preview preserved for SVG/PNG export. |
@@ -155,7 +166,7 @@ The hamburger menu should be treated as the current primary user-facing navigati
 | Visualizations | Visualizations workspace | `workspaceMode = visualizations`; visualization panel defaults to Place Map | Stable after viewport fixes |
 | Search & Filter | Search workspace | `workspaceMode = search`; side panel closed | Stable after promotion |
 | Timeline | Legacy side panel | `workspaceMode = visualizations`; `activePanelTab = timeline`; side panel open | Transitional |
-| Analytics | Visualizations workspace | `workspaceMode = visualizations`; `visualizationsWorkspacePanel = analytics`; side panel closed | Stable after sizing fixes |
+| Chart Visualizations | Visualizations workspace | `workspaceMode = visualizations`; active chart type routed into Analytics workspace content; side panel closed | Stable after flexible chart-variable pass |
 | Inspector | Full Inspector workspace from menu; compact side panel from visualization clicks | `inspectorPresentationMode = workspace` for menu/Expand/linked data; `compact` for visualization clicks | Implemented dual-mode; still fragile because it preserves compact side-panel auto-open |
 | Theme | Theme workspace | `workspaceMode = theme`; side panel closed | Stable |
 | Export | Export workspace | `workspaceMode = export`; side panel closed | Stable after promotion |
@@ -190,7 +201,9 @@ Any routing transition involving Inspector must preserve automatic Inspector ope
 
 ### 5.1 Visualizations workspace structure
 
-The Visualizations workspace currently hosts four modes:
+The Visualizations workspace currently hosts capability-aware menu groups and direct visualization choices. Mapping, network, chart, and data-exploration options are presented in the header; unavailable choices route to explanatory compatibility states instead of blank workspaces.
+
+The principal rendered modes include:
 
 | Visualization panel | State behavior | Visible behavior |
 |---|---|---|
@@ -261,7 +274,8 @@ Data workspace
   → Stage CSV / TSV / XLSX / XLS
   → Open mapping workspace
   → Confirm mapping/import
-  → Visualizations workspace, defaulting to Place Map
+  → active records may be route records, point/site records, chart/evidence records, or mixed-capability records
+  → Visualizations workspace, with capability-aware availability states
 ```
 
 ### 6.3 Data path principle
