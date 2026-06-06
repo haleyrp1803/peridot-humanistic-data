@@ -620,19 +620,37 @@ export function buildHistogramChartData(rows = [], valueField = 'recordCount', g
   return bins.map(({ label, count }) => ({ label, count, unit: valueField === 'recordCount' ? 'categories' : 'records' }));
 }
 
-export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childBy = 'sourcePerson', topN = 10) {
-  const parentTotals = new Map();
-  const childCounts = new Map();
+export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count') {
+  const parentValues = new Map();
+  const childValues = new Map();
   rows.forEach((row) => {
     const parent = fieldValue(row, parentBy);
     const child = fieldValue(row, childBy);
     if (!parent || !child) return;
-    parentTotals.set(parent, (parentTotals.get(parent) || 0) + 1);
-    incrementNestedMap(childCounts, parent, child);
+    const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
+
+    if (!parentValues.has(parent)) parentValues.set(parent, []);
+    parentValues.get(parent).push(rawValue);
+
+    if (!childValues.has(parent)) childValues.set(parent, new Map());
+    const children = childValues.get(parent);
+    if (!children.has(child)) children.set(child, []);
+    children.get(child).push(rawValue);
   });
+
+  const parentTotals = new Map(
+    Array.from(parentValues.entries()).map(([label, values]) => [
+      label,
+      aggregateValues(values, metricField === 'recordCount' ? 'count' : aggregation),
+    ]),
+  );
+
   const parents = topKeysByTotal(parentTotals, topN).map((parentLabel) => {
-    const children = Array.from((childCounts.get(parentLabel) || new Map()).entries())
-      .map(([label, count]) => ({ label, count }))
+    const children = Array.from((childValues.get(parentLabel) || new Map()).entries())
+      .map(([label, values]) => ({
+        label,
+        count: aggregateValues(values, metricField === 'recordCount' ? 'count' : aggregation),
+      }))
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
       .slice(0, Math.max(1, Number(topN) || 10));
     return { label: parentLabel, count: parentTotals.get(parentLabel) || 0, children };
@@ -706,8 +724,8 @@ export function buildAnalyticsChartData({
     return { chartType: 'heatmap', title: `${humanizeFieldLabel(heatmapRowBy)} × ${humanizeFieldLabel(heatmapColumnBy)}`, subtitle: `Matrix cells use ${metricLabel}.${rangeSuffix}`, ...data };
   }
   if (chartType === 'sunburst') {
-    const data = buildSunburstChartData(filteredRows, sunburstParentBy, sunburstChildBy, topN);
-    return { chartType: 'sunburst', title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`, subtitle: `Hierarchical part-to-whole view by selected parent and child fields.${rangeSuffix}`, ...data };
+    const data = buildSunburstChartData(filteredRows, sunburstParentBy, sunburstChildBy, topN, yField, aggregation);
+    return { chartType: 'sunburst', title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`, subtitle: `Hierarchical part-to-whole view using ${metricLabel}.${rangeSuffix}`, ...data };
   }
   const data = buildBarChartData(filteredRows, barGroupBy, topN, yField, aggregation);
   return { chartType: 'bar', orientation: barOrientation, title: `${humanizeFieldLabel(yField)} by ${humanizeFieldLabel(barGroupBy)}`, subtitle: `${metricLabel} grouped by selected category.${rangeSuffix}`, xLabel: humanizeFieldLabel(barGroupBy), yLabel: humanizeFieldLabel(yField), data };
