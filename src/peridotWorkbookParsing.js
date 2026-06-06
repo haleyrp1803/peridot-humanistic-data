@@ -1,3 +1,16 @@
+/*
+ * Workbook and table parsing helper.
+ * 
+ * This module isolates CSV/TSV/XLSX/XLS parsing into a normalized workbook model. It detects file type, parses sheets, normalizes display rows/headers, removes empty rows/columns, and avoids preserving spreadsheet formatting that Peridot does not use.
+ * 
+ * Important relationships:
+ * - `App.jsx` calls this when a user uploads a table/workbook.
+ * - `peridotWorkbookMapping.js` consumes the normalized workbook model for user-guided mapping.
+ * 
+ * Maintenance cautions:
+ * - Keep parser output plain and predictable. Avoid carrying spreadsheet formatting, formulas, or unsafe prototype-bearing objects into app state.
+ */
+
 /**
  * Peridot workbook/table parsing helper.
  *

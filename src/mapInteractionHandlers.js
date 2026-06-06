@@ -1,3 +1,13 @@
+/*
+ * Event-handler factory for the SVG map/network stage.
+ * 
+ * This file centralizes hover/click behavior so rendered map-stage elements do not each need to know how to resolve selections or update application state. It delegates semantic selection construction to `interactionHelpers.js`.
+ * 
+ * Maintenance cautions:
+ * - Keep event-handling thin here. Complex selection semantics belong in `interactionHelpers.js`.
+ * - Test dense-map hover, node click, edge click, cluster click, blank-map click, and Inspector auto-open when editing this file.
+ */
+
 export function buildMapInteractionHandlers({
   clearSelection,
   setHoverCard,

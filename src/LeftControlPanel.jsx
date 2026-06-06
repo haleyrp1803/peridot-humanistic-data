@@ -1,3 +1,18 @@
+/*
+ * Legacy shared side-panel shell and compatibility bridge.
+ * 
+ * This file contains the older side-panel/rail system that predated the current workspace-first interface. Much of its UI is no longer the primary product path, but parts remain important for compatibility, especially compact Inspector presentation and legacy Timeline/side-panel behavior.
+ * 
+ * Important relationships:
+ * - `App.jsx` still builds compatibility props for this shell.
+ * - Compact Inspector auto-open from map/network clicks depends on paths that historically used left/right sidebar naming.
+ * - Search, Data, Export, and Analytics may have legacy panel remnants here even though their active user-facing surfaces now live in workspaces or header controls.
+ * 
+ * Maintenance cautions:
+ * - Do not delete or rename large sections casually. First verify which panel tabs are still reachable and which props preserve Inspector behavior.
+ * - If cleaning this file, use very small structural passes with tests for node click, edge click, cluster click, contained member click, Timeline, and Back behavior.
+ */
+
 import React, { useEffect, useRef, useState } from 'react';
 import { TimelineDateRangeControls, TimelinePanelContent } from './timelinePlaybackComponents.jsx';
 import { InspectorPanelContent } from './InspectorPanel.jsx'; import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';

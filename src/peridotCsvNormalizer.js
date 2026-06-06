@@ -1,3 +1,16 @@
+/*
+ * Normalizer for the public one-file Peridot CSV template.
+ * 
+ * This module converts template rows into the legacy internal shapes used by the visualization pipeline: geography rows, linked-record metadata, lightweight person metadata, place entries, and custom Inspector fields.
+ * 
+ * Important relationships:
+ * - `peridotCsvSchema.js` defines the public columns this file expects.
+ * - `App.jsx` uses this file after upload to produce active app data.
+ * 
+ * Maintenance cautions:
+ * - Do not clean or standardize user-entered names, places, topics, languages, or dates beyond the explicit parsing needed for capabilities. Peridot preserves user values as entered.
+ */
+
 /**
  * Peridot template CSV normalizer.
  *

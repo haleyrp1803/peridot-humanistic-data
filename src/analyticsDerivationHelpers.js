@@ -1,3 +1,18 @@
+/*
+ * Analytics data-derivation layer.
+ * 
+ * This module converts the current filtered rows into chart-ready structures. It detects available categorical/numeric fields, applies Analytics-local date scopes, builds grouped/stacked/multi-series data, computes record-count and numeric aggregations, and formats time periods.
+ * 
+ * Important relationships:
+ * - `AnalyticsPanel.jsx` calls this file to build data for the selected chart configuration.
+ * - `analyticsConfig.js` supplies curated semantic field definitions and chart defaults.
+ * - `analyticsChartComponents.jsx` expects this file to return already-shaped data rather than raw application rows.
+ * 
+ * Maintenance cautions:
+ * - Dynamic field detection must stay conservative. Avoid admitting ID columns, raw coordinates, long notes, object values, or near-unique identifiers as categorical chart variables.
+ * - Record count is a first-class metric; do not hide it as an implicit fallback when aggregate charts need a metric.
+ */
+
 import {
   ANALYTICS_BAR_FIELD_DEFINITIONS,
   ANALYTICS_HEATMAP_FIELD_DEFINITIONS,

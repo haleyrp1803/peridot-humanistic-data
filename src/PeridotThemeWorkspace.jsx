@@ -1,3 +1,15 @@
+/*
+ * Themes and Accessibility workspace.
+ * 
+ * This component presents appearance-related settings, including existing map/interface theme presets and placeholder space for future accessibility options.
+ * 
+ * Important relationships:
+ * - Theme application is still owned by `App.jsx`; this component renders the controls and explanatory UI.
+ * 
+ * Maintenance cautions:
+ * - Keep appearance/accessibility settings grouped here rather than scattering them across visualization components.
+ */
+
 import React from 'react';
 
 export function PeridotThemeWorkspace({ themePresetKey, applyThemePreset, resetTheme, onOpenVisualizations }) {

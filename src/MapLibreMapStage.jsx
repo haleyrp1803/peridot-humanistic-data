@@ -1,3 +1,16 @@
+/*
+ * Dormant MapLibre preview stage.
+ * 
+ * This component is retained from the paused MapLibre experiment and is not the active production map renderer on `main`. It contains experimental MapLibre source/layer setup, diagnostics, feature building, hit detection, and selection routing.
+ * 
+ * Important relationships:
+ * - The active map/network rendering path remains SVG/D3-based.
+ * - This file should not be used as evidence for current production behavior unless the MapLibre preview flag or branch is explicitly in scope.
+ * 
+ * Maintenance cautions:
+ * - Do not casually clean up or modernize this file during ordinary Peridot work. Its dormant state is intentional.
+ */
+
 import { useEffect, useMemo, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';

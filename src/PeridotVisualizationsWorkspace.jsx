@@ -1,3 +1,18 @@
+/*
+ * Main visualization workspace.
+ * 
+ * This component coordinates the visualization header, visualization-category menus, map/network/chart stage, capability-unavailable states, header Export menu, collapsible header, and bottom Timeline scrubber.
+ * 
+ * Important relationships:
+ * - `App.jsx` owns the current data, selected visualization, map stage, export handlers, and timeline state passed here.
+ * - `AnalyticsPanel.jsx` owns chart controls/rendering but registers chart export with the shared header export menu.
+ * - `timelinePlaybackComponents.jsx` renders the bottom scrubber used here.
+ * 
+ * Maintenance cautions:
+ * - This is now a key workspace-coordination file. Keep behavior changes narrow and test maps, networks, charts, timeline, and export after edits.
+ * - Header Export should be the single export surface for visualization contexts.
+ */
+
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';

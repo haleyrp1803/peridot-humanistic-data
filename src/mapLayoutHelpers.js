@@ -1,3 +1,16 @@
+/*
+ * Pure geometry and map-layout helpers.
+ * 
+ * This module handles viewport defaults, quadratic edge hit geometry, volume-aware clustering, cluster radius calculation, and label visibility decisions. It is deliberately UI-agnostic so map layout behavior can be tested or reasoned about separately from React rendering.
+ * 
+ * Important relationships:
+ * - `App.jsx` uses these helpers to derive visible nodes/clusters and map geometry.
+ * - `mapInteractionHandlers.js` and `interactionHelpers.js` rely on the same geometric assumptions for hover/click resolution.
+ * 
+ * Maintenance cautions:
+ * - Map viewport, clustering, and hit-testing are fragile together. Test zoomed-in and zoomed-out maps after changing any geometry helper.
+ */
+
 export function parseQuadraticPath(path) {
   const values = String(path || '').match(/-?\d*\.?\d+/g)?.map(Number) || [];
 

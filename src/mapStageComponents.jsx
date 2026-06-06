@@ -1,3 +1,17 @@
+/*
+ * Small visual overlays for the map/network stage.
+ * 
+ * This module contains chrome around the SVG visualization: legend, controls, hover card, and title bar. These components should remain presentational and receive all behavior/state through props.
+ * 
+ * Important relationships:
+ * - `App.jsx` and `PeridotVisualizationsWorkspace.jsx` decide when these overlays appear.
+ * - Export captures the visualization stage, so overlay placement and SVG contents can affect what users expect in exported views.
+ * 
+ * Maintenance cautions:
+ * - Legend and controls are intentionally minimized by default on map views to preserve workspace space.
+ * - Avoid adding data derivation here; keep this file focused on stage-adjacent UI.
+ */
+
 import React, { useState } from 'react';
 
 export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCardClassName }) {

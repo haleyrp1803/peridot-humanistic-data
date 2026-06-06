@@ -1,3 +1,16 @@
+/*
+ * Cluster Inspector view.
+ * 
+ * This component renders evidence for a map/network cluster, including grouped member lists and navigation into individual member details.
+ * 
+ * Important relationships:
+ * - Cluster selection payloads come from `interactionHelpers.js` and map-layout clustering logic.
+ * - Member clicks route back through the shared Inspector navigation managed by `App.jsx`.
+ * 
+ * Maintenance cautions:
+ * - Preserve grouping by place and Back behavior when editing cluster navigation.
+ */
+
 import React from 'react';
 
 function detailLabelClassName() {

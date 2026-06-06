@@ -1,3 +1,16 @@
+/*
+ * Validation and capability summaries for uploaded Peridot rows.
+ * 
+ * This module builds user-facing summaries that explain what uploaded rows can support: Inspector, Search, point map, route map, network, timeline, chart, and export readiness. It reports limitations without rejecting otherwise useful records.
+ * 
+ * Important relationships:
+ * - `App.jsx` stores and displays the validation summary after upload.
+ * - `PeridotDataWorkspace.jsx` presents the latest upload summary to users.
+ * 
+ * Maintenance cautions:
+ * - Validation language should be precise and non-punitive. Missing coordinates or dates are capability limits, not necessarily upload failures.
+ */
+
 /**
  * Peridot CSV validation summary helper.
  *

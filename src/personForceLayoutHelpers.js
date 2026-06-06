@@ -1,3 +1,16 @@
+/*
+ * Force-directed person-network layout helpers.
+ * 
+ * This module builds deterministic seed positions and runs the pre-settled `d3-force` layout used by the Force-Directed Network view.
+ * 
+ * Important relationships:
+ * - `App.jsx` calls this when deriving force-layout node positions.
+ * - The map/geographic person layout is separate; this file only concerns the force-directed layout.
+ * 
+ * Maintenance cautions:
+ * - Preserve determinism where possible so the network does not jump unpredictably between renders.
+ */
+
 import {
   forceCenter,
   forceCollide,

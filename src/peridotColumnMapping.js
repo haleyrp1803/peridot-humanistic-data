@@ -1,3 +1,18 @@
+/*
+ * Pure helpers for arbitrary table column mapping.
+ * 
+ * This module defines Peridot core field roles, suggested mappings, field groups, coordinate-pair parsing guidance, temporal roles, point-location roles, route-coordinate roles, custom evidence field handling, and row assembly for single-table imports.
+ * 
+ * Important relationships:
+ * - `PeridotColumnMappingModal.jsx` renders controls based on these definitions.
+ * - `peridotDataCapabilityAudit.js` evaluates the rows that these helpers assemble.
+ * - `peridotCsvNormalizer.js` handles the public template path; this file handles arbitrary mapped tables.
+ * 
+ * Maintenance cautions:
+ * - Keep mapping suggestions transparent and user-confirmed. Do not silently force uploaded columns into roles.
+ * - Coordinate pairs are latitude-first by project decision.
+ */
+
 /**
  * Peridot arbitrary-column mapping helper.
  *

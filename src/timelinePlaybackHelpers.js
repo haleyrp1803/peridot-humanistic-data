@@ -1,3 +1,16 @@
+/*
+ * Pure timeline and playback helpers.
+ * 
+ * This module builds available timeline boundaries, filters rows to a selected timeline window, sorts playback rows, and restricts visible rows to playback progress.
+ * 
+ * Important relationships:
+ * - `App.jsx` uses these helpers to derive visible rows before map/network/chart rendering.
+ * - `timelinePlaybackComponents.jsx` renders controls for the state derived here.
+ * 
+ * Maintenance cautions:
+ * - Keep this file pure. UI events belong in components; date/window semantics belong here.
+ */
+
 export function buildTimelineMonths(rows) {
   return Array.from(
     new Set(

@@ -1,3 +1,18 @@
+/*
+ * Workbook-aware mapping and join helpers.
+ * 
+ * This module models multi-sheet workbook imports. It tracks primary sheets, joined sheets, user-selected unique-ID columns, joined row contexts, core field references, evidence fields, validation, and final assembly into Peridot-shaped rows.
+ * 
+ * Important relationships:
+ * - `PeridotColumnMappingModal.jsx` renders the workbook mapping UI based on these helpers.
+ * - `peridotWorkbookParsing.js` produces the workbook model consumed here.
+ * - `peridotColumnMapping.js` supplies shared field definitions and single-table logic.
+ * 
+ * Maintenance cautions:
+ * - Joins must remain user-configured and explicit. Do not use row-order joining as the primary strategy.
+ * - Header names for join columns do not need to match; selected ID columns are authoritative.
+ */
+
 /**
  * Peridot workbook-aware mapping helper.
  *

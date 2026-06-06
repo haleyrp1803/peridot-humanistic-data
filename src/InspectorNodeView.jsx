@@ -1,3 +1,16 @@
+/*
+ * Node, person-profile, place-profile, and linked-record Inspector view.
+ * 
+ * This component renders the richest Inspector evidence pages: entity summaries, related people/places, directed routes, date spans, selected custom fields, linked-letter/detail records, and compact summary affordances.
+ * 
+ * Important relationships:
+ * - Selection/detail payloads come from `interactionHelpers.js`, `App.jsx`, and workbook/custom-field metadata.
+ * - Navigation actions call back into App-owned Inspector history so compact and full modes remain synchronized.
+ * 
+ * Maintenance cautions:
+ * - This is a dense evidence UI file. Test person profile, place profile, linked record, route row, compact summary tile, and Back behavior after edits.
+ */
+
 import React from 'react';
 
 function detailLabelClassName() {

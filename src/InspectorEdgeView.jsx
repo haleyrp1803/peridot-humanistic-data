@@ -1,3 +1,16 @@
+/*
+ * Route / edge Inspector view.
+ * 
+ * This component renders evidence for directed routes or network edges, including linked records and route details.
+ * 
+ * Important relationships:
+ * - Edge selections are built from graph/route data in `App.jsx` and `interactionHelpers.js`.
+ * - Linked-record navigation should participate in shared Inspector history.
+ * 
+ * Maintenance cautions:
+ * - Directed route semantics matter. Avoid collapsing source→target and target→source evidence unless a pass explicitly changes route direction behavior.
+ */
+
 import React from 'react';
 
 function detailLabelClassName() {

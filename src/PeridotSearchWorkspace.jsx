@@ -1,3 +1,17 @@
+/*
+ * Search & Filter workspace.
+ * 
+ * This component renders the global active-dataset filtering surface. It separates draft filter input from applied filter state so expensive graph/data recomputation only happens when the user chooses Apply Filters.
+ * 
+ * Important relationships:
+ * - `App.jsx` owns draft/applied filter state and recomputation status.
+ * - Visualizations, Timeline, Analytics, Inspector, and Export should consume the active filtered dataset defined here.
+ * 
+ * Maintenance cautions:
+ * - Do not make text inputs recompute data on every keystroke.
+ * - Predictive suggestions should fill draft fields only; Apply Filters should commit global state.
+ */
+
 import React, { useEffect, useMemo, useState } from 'react';
 
 function AutocompleteTextInput({

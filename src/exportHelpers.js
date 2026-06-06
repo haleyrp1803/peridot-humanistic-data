@@ -1,3 +1,18 @@
+/*
+ * Pure export helper utilities.
+ * 
+ * This module contains reusable routines for CSV serialization, SVG serialization, SVG-to-PNG rasterization, filename slugging, object URL lifecycle management, and node/edge row builders.
+ * 
+ * Important relationships:
+ * - `App.jsx` and `PeridotVisualizationsWorkspace.jsx` wire these helpers into the header Export menu.
+ * - Chart PNG export relies on SVG serialization behavior that is parallel to, but distinct from, map/network export.
+ * - CSS variable inlining is needed so exported SVG/PNG files preserve the visible Peridot theme rather than losing CSS-driven colors.
+ * 
+ * Maintenance cautions:
+ * - Always revoke object URLs after downloads.
+ * - When changing SVG serialization, test both SVG download and PNG rendering in browser.
+ */
+
 export function slugifyFilenamePart(value, fallback = 'export') {
   const cleaned = String(value || '')
     .trim()

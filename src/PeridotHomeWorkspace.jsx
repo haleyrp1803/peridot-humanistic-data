@@ -1,3 +1,16 @@
+/*
+ * Home / welcome workspace.
+ * 
+ * This component provides the first-run entry point for Peridot. It introduces the app and routes users toward either uploading their own data or opening the embedded sample dataset.
+ * 
+ * Important relationships:
+ * - Data upload routes to `PeridotDataWorkspace`.
+ * - Sample-data entry routes to `PeridotVisualizationsWorkspace` while relying on embedded fallback data managed by `App.jsx`.
+ * 
+ * Maintenance cautions:
+ * - Keep this page lightweight; it should orient users without duplicating detailed documentation that belongs in Learn More.
+ */
+
 import React from 'react';
 
 function HomeTextureBackdrop() {

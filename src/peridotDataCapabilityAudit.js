@@ -1,4 +1,18 @@
 /*
+ * Dataset capability audit helper.
+ * 
+ * This pure module inspects uploaded/mapped rows and reports field-role evidence, row shapes, and dataset-level readiness for Peridot's tools. It supports broader humanistic data beyond correspondence: point/site rows, route rows, temporal intervals, chart/evidence rows, and exportable records.
+ * 
+ * Important relationships:
+ * - `PeridotColumnMappingModal.jsx` uses this for mapping review.
+ * - `PeridotExploreWorkspace.jsx` and Visualizations capability states present results derived from this model.
+ * 
+ * Maintenance cautions:
+ * - Capability rules should explain what a dataset can support without mutating or standardizing the data.
+ * - Keep role detection conservative so accidental column matches do not overpromise visualization readiness.
+ */
+
+/*
  * Peridot data capability audit helper.
  *
  * This module is intentionally pure and UI-agnostic. It inspects arbitrary

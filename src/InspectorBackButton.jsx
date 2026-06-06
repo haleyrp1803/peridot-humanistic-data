@@ -1,3 +1,9 @@
+/*
+ * Small Inspector Back button component.
+ * 
+ * This component is intentionally tiny and receives all navigation state through props. It avoids owning history itself so App-level Inspector history stays consistent across compact and full Inspector modes.
+ */
+
 import React from 'react';
 
 export function InspectorBackButton({ canGoBack, onBack }) {

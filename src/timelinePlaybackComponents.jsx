@@ -1,3 +1,17 @@
+/*
+ * Timeline UI components.
+ * 
+ * This module renders both the older Timeline panel content and the current bottom Visualizations timeline scrubber. The scrubber provides dual-handle year range control, playback controls, speed selection, and playback-position scrubbing.
+ * 
+ * Important relationships:
+ * - `App.jsx` owns timeline state and filtered rows.
+ * - `PeridotVisualizationsWorkspace.jsx` places the scrubber below the visualization stage.
+ * - `timelinePlaybackHelpers.js` contains pure date/window derivation.
+ * 
+ * Maintenance cautions:
+ * - Timeline must respect the active Search & Filter date scope. Test Apply/Clear Filters, range dragging, playback, reset, and All dates together.
+ */
+
 import React from 'react';
 import {
   buildTimelineBoundaryOptions,

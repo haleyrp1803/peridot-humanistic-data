@@ -1,3 +1,9 @@
+/*
+ * React entry point.
+ * 
+ * This file mounts the Peridot app into the DOM. It should remain minimal: import global CSS, import `App`, and render inside React Strict Mode.
+ */
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';

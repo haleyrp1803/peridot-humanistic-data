@@ -1,3 +1,20 @@
+/*
+ * Peridot application shell and orchestration boundary.
+ * 
+ * This file is intentionally the broadest file in the app. It owns the top-level React state that has to be shared across workspaces: loaded data, normalized rows, derived graph structures, timeline/playback state, Search & Filter draft/applied state, Inspector selection/history, theme tokens, export wiring, and workspace routing. Most visual surfaces are now delegated to extracted `Peridot*Workspace` and Inspector/map helper components, but this file remains the place where those surfaces are composed and where cross-workflow data dependencies are coordinated.
+ * 
+ * Important relationships:
+ * - Data ingestion flows through `peridotCsv*`, `peridotColumnMapping`, and `peridotWorkbook*` helpers before becoming the active internal row/model state here.
+ * - Visualization rendering is delegated to `PeridotVisualizationsWorkspace`, map-stage helpers, Analytics helpers, and Inspector components, but those consumers receive data derived here.
+ * - Search & Filter defines the active filtered dataset; Timeline, Analytics, Inspector, and Export should consume that filtered scope rather than independently recomputing incompatible scopes.
+ * - Inspector compact/full presentation is coordinated here so both modes share the same selection and history.
+ * 
+ * Maintenance cautions:
+ * - Treat this as a fragile orchestration file. Prefer extracting pure helpers or UI boundaries rather than adding more long inline sections.
+ * - Do not rename legacy side-panel compatibility props casually; they still protect Inspector auto-open behavior.
+ * - When changing data shape, test Data upload, Search, Timeline, Analytics, Inspector, and Export together because each consumes derived state from this file.
+ */
+
 // Core React hooks used throughout the app.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { geoContains, geoNaturalEarth1, geoPath } from 'd3-geo';

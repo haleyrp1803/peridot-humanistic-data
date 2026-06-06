@@ -1,3 +1,17 @@
+/*
+ * Public Peridot CSV template contract.
+ * 
+ * This file defines the one-file template columns, field groups, capability labels, minimum admission rules, upload tips, and small capability predicates used to explain what each row can support.
+ * 
+ * Important relationships:
+ * - `PeridotDataWorkspace.jsx` exposes the template to users.
+ * - `peridotCsvNormalizer.js` converts template rows into internal app shapes.
+ * - `peridotCsvValidation.js` uses this contract to summarize accepted rows and capabilities.
+ * 
+ * Maintenance cautions:
+ * - This file represents public data-entry policy. Column renames or admission-rule changes affect users' saved templates and documentation.
+ */
+
 /**
  * Peridot single-CSV data contract.
  *

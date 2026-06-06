@@ -1,3 +1,18 @@
+/*
+ * Static chart configuration for Analytics.
+ * 
+ * This file defines the supported chart vocabulary, user-facing chart labels, aggregation options, default Analytics state, and curated field definitions used by chart controls and chart data derivation.
+ * 
+ * Important relationships:
+ * - `AnalyticsPanel.jsx` uses these definitions to render controls.
+ * - `analyticsDerivationHelpers.js` uses the field definitions and aliases to resolve current-row data into chartable dimensions.
+ * - User-facing wording here should remain general enough for non-correspondence humanistic datasets.
+ * 
+ * Maintenance cautions:
+ * - Adding a chart type usually requires changes here, in `analyticsDerivationHelpers.js`, and in `analyticsChartComponents.jsx`.
+ * - Keep aliases conservative; over-broad aliases can map user columns incorrectly.
+ */
+
 export const ANALYTICS_CHART_DEFINITIONS = {
   bar: {
     key: 'bar',

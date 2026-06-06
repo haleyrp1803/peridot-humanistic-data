@@ -1,3 +1,16 @@
+/*
+ * Explore Your Data workspace.
+ * 
+ * This workspace collects data-exploration affordances that are not themselves map/network/chart rendering. It surfaces capability information and provides entry points into Search and Inspector-oriented evidence review.
+ * 
+ * Important relationships:
+ * - Capability labels summarize readiness calculated elsewhere from the active dataset.
+ * - Inspector content is reused here so evidence review can live alongside dataset exploration rather than being isolated as a menu item.
+ * 
+ * Maintenance cautions:
+ * - Keep this workspace exploratory rather than making it the global filter owner. Search remains the owner of active-dataset filtering.
+ */
+
 import React from 'react';
 import { InspectorContent } from './InspectorPanel.jsx';
 

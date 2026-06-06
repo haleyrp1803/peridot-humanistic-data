@@ -1,3 +1,16 @@
+/*
+ * Data-management workspace.
+ * 
+ * This component renders the public data-ingestion surface: template download, table/workbook upload, mapping launch, workbook/table staging summaries, upload validation summaries, and navigation into Visualizations.
+ * 
+ * Important relationships:
+ * - Parsing and normalization live in `peridotCsv*`, `peridotColumnMapping`, and `peridotWorkbook*` helpers, not here.
+ * - `App.jsx` owns file input handlers and upload state; this component presents that state and actions.
+ * 
+ * Maintenance cautions:
+ * - Keep wording clear that Peridot is permissive and capability-based: incomplete rows may be accepted even when they cannot support every visualization.
+ */
+
 import React from 'react';
 
 export function PeridotDataWorkspace({

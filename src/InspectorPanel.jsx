@@ -1,3 +1,16 @@
+/*
+ * Shared Inspector content shell.
+ * 
+ * This component renders the Inspector header, close/expand affordances, Back button, and routed body content. It is intentionally content-only so compact side-panel and full workspace Inspector modes can share selection state and history.
+ * 
+ * Important relationships:
+ * - `App.jsx` owns selection state, presentation mode, and history.
+ * - `InspectorBodyRouter.jsx` chooses the correct detailed view for the current selection.
+ * 
+ * Maintenance cautions:
+ * - Do not split compact and full Inspector into independent state systems. They must remain views over the same selected evidence state.
+ */
+
 import React from 'react';
 import { InspectorBodyRouter } from './InspectorBodyRouter.jsx';
 

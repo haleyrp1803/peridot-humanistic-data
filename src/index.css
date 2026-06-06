@@ -1,3 +1,13 @@
+/*
+ * Global CSS layer for Peridot.
+ * 
+ * This file should stay small. Most visual styling is intentionally implemented with Tailwind utility classes and theme tokens in React components. Global CSS is reserved for base Tailwind setup, app-wide layout behavior, typography defaults, and a few cross-cutting rules that are awkward to express locally.
+ * 
+ * Maintenance cautions:
+ * - Avoid putting component-specific styling here unless it truly applies across the app.
+ * - Check whether a style belongs in a workspace/component first; global rules can unintentionally affect maps, charts, Inspector, and export rendering.
+ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

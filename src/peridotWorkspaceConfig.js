@@ -1,3 +1,13 @@
+/*
+ * Workspace-mode constants and routing guards.
+ * 
+ * This module defines the small vocabulary of valid workspace modes used by `App.jsx`, the hamburger menu, and workflow buttons. The public product menu is now simpler than the internal mode list: some internal modes remain because Search and Inspector are still opened by workflow buttons and compatibility paths.
+ * 
+ * Maintenance cautions:
+ * - Removing a mode is only safe after checking every route setter, workspace render branch, and compatibility path.
+ * - Keep comments here aligned with the current hamburger menu so future developers can distinguish public navigation from internal routes.
+ */
+
 // Workspace-mode constants and guards for Peridot's redesigned routing model.
 // The primary product navigation is now Manage Your Data, Visualize Your Data,
 // Explore Your Data, Learn More about Peridot, and Themes and Accessibility.

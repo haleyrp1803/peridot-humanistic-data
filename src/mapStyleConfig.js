@@ -1,3 +1,13 @@
+/*
+ * Dormant MapLibre preview style configuration.
+ * 
+ * This file belongs to the paused MapLibre preview path. The active production renderer is still the legacy D3/SVG path.
+ * 
+ * Maintenance cautions:
+ * - Do not refactor, remove, or revive this file unless a pass explicitly resumes MapLibre work.
+ * - If MapLibre resumes, start with a fresh branch/source-of-truth audit rather than assuming the old experiment can be merged directly.
+ */
+
 // MapLibre style configuration for Peridot.
 //
 // This module is intentionally small and side-effect free. It gives the app a

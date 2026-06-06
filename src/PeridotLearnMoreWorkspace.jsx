@@ -1,3 +1,12 @@
+/*
+ * Learn More placeholder workspace.
+ * 
+ * This intentionally lightweight page reserves a stable route for future project information, credits, tutorials, data-preparation guidance, and interpretive documentation.
+ * 
+ * Maintenance cautions:
+ * - Keep this route present even while sparse; it is part of the simplified product navigation model.
+ */
+
 import React from 'react';
 
 export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {

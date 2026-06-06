@@ -1,3 +1,19 @@
+/*
+ * Analytics / Chart Visualizations workspace panel.
+ * 
+ * This component renders the chart-building experience inside Visualizations. It owns the left-side chart controls, derives chart data from the current filtered rows, renders the large chart stage, and registers chart export behavior with the shared Visualizations header export menu.
+ * 
+ * Important relationships:
+ * - Chart definitions and defaults come from `analyticsConfig.js`.
+ * - Data shaping comes from `analyticsDerivationHelpers.js`.
+ * - SVG chart rendering is delegated to `analyticsChartComponents.jsx`.
+ * - Header-level export is coordinated by `PeridotVisualizationsWorkspace.jsx`; chart controls should not create a separate export surface.
+ * 
+ * Maintenance cautions:
+ * - Keep this component focused on chart configuration and presentation; avoid adding global filtering logic here.
+ * - If chart refs or export behavior change, test both chart PNG export and map/network export because the header menu switches between those modes.
+ */
+
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ANALYTICS_AGGREGATION_OPTIONS, ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';

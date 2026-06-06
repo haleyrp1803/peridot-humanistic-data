@@ -1,3 +1,9 @@
+/*
+ * Empty Inspector state.
+ * 
+ * This small component renders the default message shown when no Inspector evidence target is selected. It should remain simple and reusable across compact and full Inspector surfaces.
+ */
+
 import React from 'react';
 
 export function InspectorEmptyState() {

@@ -1,3 +1,12 @@
+/*
+ * Person-to-person Inspector navigation list.
+ * 
+ * This component renders related people/correspondents ordered by relationship weight and delegates navigation to the shared Inspector callback supplied by the parent.
+ * 
+ * Maintenance cautions:
+ * - Keep it presentational; relationship derivation belongs upstream.
+ */
+
 import React from 'react';
 
 export function InspectorConnectedCorrespondents({ names, onOpenPerson }) {

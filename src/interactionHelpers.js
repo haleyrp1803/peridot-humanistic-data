@@ -1,3 +1,17 @@
+/*
+ * Map/network selection and Inspector payload helpers.
+ * 
+ * This module turns low-level hover/click information into semantically meaningful selections for the Inspector. It resolves nearby nodes/edges/clusters, builds cluster selections, enriches linked-letter metadata, and constructs person/place detail payloads.
+ * 
+ * Important relationships:
+ * - `mapInteractionHandlers.js` calls this module when browser events occur on the map/network stage.
+ * - `App.jsx` stores the resulting selection and passes it into compact/full Inspector surfaces.
+ * - Inspector components assume these helpers provide stable selection shapes for nodes, edges, clusters, people, places, and linked records.
+ * 
+ * Maintenance cautions:
+ * - Selection shape changes must be tested in compact Inspector, full Inspector, linked-letter detail, Back history, and cluster-member navigation.
+ */
+
 import { pointToQuadraticDistance } from './mapLayoutHelpers';
 
 export function buildNearbyCandidates(point, screenNodes, screenEdges, clusterSingularLabel, clusterPluralLabel) {

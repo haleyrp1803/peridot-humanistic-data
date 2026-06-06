@@ -1,3 +1,12 @@
+/*
+ * Person-to-place Inspector navigation list.
+ * 
+ * This component renders places associated with a person, including separate sent-to and received-at sections where that distinction is available.
+ * 
+ * Maintenance cautions:
+ * - Keep the sent/received distinction visible; it carries interpretive meaning for correspondence data.
+ */
+
 import React from 'react';
 
 function extractPlace(value) {

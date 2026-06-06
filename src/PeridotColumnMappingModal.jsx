@@ -1,3 +1,18 @@
+/*
+ * Role-based column and workbook mapping workspace.
+ * 
+ * This large component lets users map arbitrary CSV/TSV/Excel tables into Peridot's internal record model. It supports single-table mapping, workbook primary-sheet selection, user-configured unique-ID joins, field-role mapping, evidence/analysis include/ignore choices, and capability review before import.
+ * 
+ * Important relationships:
+ * - Mapping constants and pure mapping logic live in `peridotColumnMapping.js` and `peridotWorkbookMapping.js`.
+ * - Capability summaries come from `peridotDataCapabilityAudit.js`.
+ * - `App.jsx` owns the staged upload/workbook state and receives the assembled Peridot rows.
+ * 
+ * Maintenance cautions:
+ * - This file is a major structural pain point because UI flow, validation display, and mapping controls are concentrated here. Prefer extracting step components only in a dedicated structural pass.
+ * - Preserve the distinction between correspondence-compatible roles and broader humanistic-data roles.
+ */
+
 import React, { useEffect, useMemo, useState } from 'react';
 import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
 import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';

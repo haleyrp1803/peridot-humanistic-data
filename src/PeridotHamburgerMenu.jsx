@@ -1,3 +1,16 @@
+/*
+ * Primary product navigation menu.
+ * 
+ * This component renders the hamburger-triggered menu. It exposes the current top-level product model: data management, visualization, exploration, project information, and appearance/accessibility settings.
+ * 
+ * Important relationships:
+ * - It calls workspace route setters owned by `App.jsx`.
+ * - Not every internal workspace mode should appear here; Search, Inspector, Timeline, and Export can still be reached through contextual UI when appropriate.
+ * 
+ * Maintenance cautions:
+ * - Treat this as user-facing product vocabulary. Label changes affect the conceptual model of the app, not only navigation text.
+ */
+
 import React from 'react';
 
 export function PeridotHamburgerMenu({

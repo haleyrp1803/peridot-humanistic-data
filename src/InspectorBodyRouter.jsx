@@ -1,3 +1,16 @@
+/*
+ * Inspector selection router.
+ * 
+ * This component receives a resolved Inspector selection and chooses the correct body view: empty state, cluster, route/edge, person/place/node profile, linked record, or other supported evidence target.
+ * 
+ * Important relationships:
+ * - Selection shapes are constructed in `interactionHelpers.js` and coordinated by `App.jsx`.
+ * - Detailed rendering is delegated to `InspectorClusterView`, `InspectorEdgeView`, and `InspectorNodeView`.
+ * 
+ * Maintenance cautions:
+ * - New selection types require updates here and should be tested with Back history in both compact and full Inspector modes.
+ */
+
 import React from 'react';
 
 export function InspectorBodyRouter({

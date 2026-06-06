@@ -1,3 +1,18 @@
+/*
+ * SVG chart-rendering primitives for Analytics.
+ * 
+ * This module contains the presentational chart components used by `AnalyticsPanel.jsx`. It expects chart-ready data objects from `analyticsDerivationHelpers.js` and focuses on drawing axes, marks, labels, legends, tooltips, and empty states for the supported chart families.
+ * 
+ * Important relationships:
+ * - Do not derive filtered datasets here; this file should remain a rendering layer.
+ * - Chart dimensions and SVG behavior affect PNG export, because chart export serializes the rendered SVG.
+ * - Tooltip and label choices should remain readable for dense humanities datasets with long names, variant spellings, and uneven category counts.
+ * 
+ * Maintenance cautions:
+ * - Prefer improving shared primitives such as `ChartFrame`, `ChartTooltip`, and formatting helpers before adding one-off styling inside individual chart types.
+ * - When changing SVG structure, retest chart PNG export.
+ */
+
 import React, { useState } from 'react';
 
 const CHART_COLORS = {
