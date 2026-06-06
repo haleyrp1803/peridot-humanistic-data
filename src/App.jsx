@@ -3218,8 +3218,11 @@ export default function EuropeNetworkMapApp() {
     const networkEdgeCount = personGraph.edges?.length || 0;
     const chartFieldCount = [
       ...(analyticsFields.barGroupOptions || []),
-      ...(analyticsFields.routePlaceOptions || []),
-      ...(analyticsFields.routePersonOptions || []),
+      ...(analyticsFields.segmentGroupOptions || []),
+      ...(analyticsFields.heatmapRowOptions || []),
+      ...(analyticsFields.xAxisOptions || []),
+      ...(analyticsFields.yMetricOptions || []),
+      ...(analyticsFields.numericMeasureOptions || []),
     ].length;
 
     return {
@@ -3232,7 +3235,7 @@ export default function EuropeNetworkMapApp() {
       hasPointMap: pointCount > 0,
       hasRouteMap: routeCount > 0,
       hasNetwork: networkNodeCount > 0 && networkEdgeCount > 0,
-      hasCharts: rowCount > 0,
+      hasCharts: rowCount > 0 && chartFieldCount > 0,
       hasExploreData: rowCount > 0,
     };
   }, [analyticsFields, filteredAggregatedEdges.length, filteredRowsByTime.length, personGraph.edges, personGraph.nodes, places.length]);
@@ -4167,6 +4170,13 @@ export default function EuropeNetworkMapApp() {
     setIsSidePanelOpen(false);
   };
 
+  const openChartVisualization = (chartType) => {
+    if (chartType) {
+      setAnalyticsChartType(chartType);
+    }
+    openAnalyticsWorkspace();
+  };
+
   const homeWorkspaceProps = {
     onUploadData: openDataWorkspace,
     onUseSampleData: openVisualizationsWorkspace,
@@ -4217,6 +4227,7 @@ export default function EuropeNetworkMapApp() {
     onSelectPeopleNetwork: selectPeopleNetworkVisualization,
     onSelectForceDirected: selectForceDirectedVisualization,
     onOpenAnalytics: openAnalyticsWorkspace,
+    onOpenChartVisualization: openChartVisualization,
     onOpenSearch: () => {
       setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
       setIsSidePanelOpen(false);

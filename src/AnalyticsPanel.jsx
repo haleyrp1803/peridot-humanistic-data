@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
+import { ANALYTICS_AGGREGATION_OPTIONS, ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
 import { buildAnalyticsChartData, getAnalyticsYearRange } from './analyticsDerivationHelpers';
 
@@ -97,8 +97,8 @@ async function exportSvgElementToPng(svgElement, filename) {
 }
 
 function ChartTypeIcon({ chartType }) {
-  if (chartType === 'line' || chartType === 'multiLine') {
-    const secondLine = chartType === 'multiLine';
+  if (chartType === 'line' || chartType === 'multiLine' || chartType === 'measureLine') {
+    const secondLine = chartType === 'multiLine' || chartType === 'measureLine';
     return (
       <svg viewBox="0 0 48 48" className="h-14 w-14" aria-hidden="true">
         <rect x="5" y="5" width="38" height="38" rx="10" fill="currentColor" opacity="0.08" />
@@ -305,11 +305,16 @@ export function AnalyticsPanelContent({
   const [exportStatus, setExportStatus] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [barOrientation, setBarOrientation] = useState('vertical');
+  const [xField, setXField] = useState('timePeriod');
+  const [yField, setYField] = useState('recordCount');
+  const [aggregation, setAggregation] = useState('count');
   const [pieGroupBy, setPieGroupBy] = useState('language');
-  const [histogramGroupBy, setHistogramGroupBy] = useState('sourcePerson');
+  const [histogramValueField, setHistogramValueField] = useState('');
   const [stackSegmentBy, setStackSegmentBy] = useState('sourcePerson');
   const [groupedBarGroupBy, setGroupedBarGroupBy] = useState('sourcePerson');
+  const [multiLineMode, setMultiLineMode] = useState('wide');
   const [multiLineGroupBy, setMultiLineGroupBy] = useState('sourcePerson');
+  const [wideSeriesPreset, setWideSeriesPreset] = useState('top');
   const [heatmapRowBy, setHeatmapRowBy] = useState('sourcePerson');
   const [heatmapColumnBy, setHeatmapColumnBy] = useState('targetPerson');
   const [sunburstParentBy, setSunburstParentBy] = useState('sourceLoc');
@@ -342,40 +347,70 @@ export function AnalyticsPanelContent({
   const availableSegmentFields = availableFields?.segmentGroupOptions || [];
   const availableHeatmapRows = availableFields?.heatmapRowOptions || [];
   const availableHeatmapColumns = availableFields?.heatmapColumnOptions || [];
-  const canRenderBarControls = chartType === 'bar' && availableBarFields.length > 0;
-  const canRenderLine = chartType === 'line' && availableFields?.hasYearData;
+  const availableXAxisFields = availableFields?.xAxisOptions || [];
+  const availableDateFields = availableFields?.dateFieldOptions || [];
+  const availableMeasureFields = availableFields?.numericMeasureOptions || [];
+  const yMetricOptions = availableFields?.yMetricOptions || [{ key: 'recordCount', label: 'Record count', description: 'Count records in each group.' }];
+  const aggregationOptions = ANALYTICS_AGGREGATION_OPTIONS.filter((option) => yField !== 'recordCount' || option.key === 'count');
+
+  useEffect(() => {
+    if (!availableXAxisFields.length) return;
+    if (!availableXAxisFields.some((field) => field.key === xField)) {
+      setXField(availableDateFields[0]?.key || availableXAxisFields[0].key);
+    }
+  }, [availableDateFields, availableXAxisFields, xField]);
+
+  useEffect(() => {
+    if (!yMetricOptions.some((field) => field.key === yField)) {
+      setYField(yMetricOptions[0]?.key || 'recordCount');
+    }
+  }, [yField, yMetricOptions]);
+
+  useEffect(() => {
+    if (yField === 'recordCount') setAggregation('count');
+  }, [yField]);
 
   const selectedBarField = useMemo(() => availableBarFields.find((field) => field.key === barGroupBy) || availableBarFields[0], [availableBarFields, barGroupBy]);
   const selectedPieField = useMemo(() => availablePieFields.find((field) => field.key === pieGroupBy) || availablePieFields[0], [availablePieFields, pieGroupBy]);
-  const selectedHistogramField = useMemo(() => availableSegmentFields.find((field) => field.key === histogramGroupBy) || availableSegmentFields[0], [availableSegmentFields, histogramGroupBy]);
+  const selectedHistogramField = useMemo(() => availableMeasureFields.find((field) => field.key === histogramValueField) || availableMeasureFields[0], [availableMeasureFields, histogramValueField]);
   const selectedStackField = useMemo(() => availableSegmentFields.find((field) => field.key === stackSegmentBy) || availableSegmentFields[0], [availableSegmentFields, stackSegmentBy]);
   const selectedGroupedBarField = useMemo(() => availableSegmentFields.find((field) => field.key === groupedBarGroupBy) || availableSegmentFields[0], [availableSegmentFields, groupedBarGroupBy]);
   const selectedMultiLineField = useMemo(() => availableSegmentFields.find((field) => field.key === multiLineGroupBy) || availableSegmentFields[0], [availableSegmentFields, multiLineGroupBy]);
   const selectedHeatmapRowField = useMemo(() => availableHeatmapRows.find((field) => field.key === heatmapRowBy) || availableHeatmapRows[0], [availableHeatmapRows, heatmapRowBy]);
   const selectedHeatmapColumnField = useMemo(() => availableHeatmapColumns.find((field) => field.key === heatmapColumnBy) || availableHeatmapColumns[1] || availableHeatmapColumns[0], [availableHeatmapColumns, heatmapColumnBy]);
-  const selectedSunburstParentField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstParentBy) || availableSegmentFields.find((field) => field.key === 'sourceLoc') || availableSegmentFields[0], [availableSegmentFields, sunburstParentBy]);
-  const selectedSunburstChildField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstChildBy) || availableSegmentFields.find((field) => field.key === 'sourcePerson') || availableSegmentFields[1] || availableSegmentFields[0], [availableSegmentFields, sunburstChildBy]);
+  const selectedSunburstParentField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstParentBy) || availableSegmentFields[0], [availableSegmentFields, sunburstParentBy]);
+  const selectedSunburstChildField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstChildBy) || availableSegmentFields[1] || availableSegmentFields[0], [availableSegmentFields, sunburstChildBy]);
+  const selectedWideSeriesFields = useMemo(() => {
+    const limit = Math.max(1, Number(topN) || 10);
+    if (wideSeriesPreset === 'all') return availableMeasureFields;
+    return availableMeasureFields.slice(0, limit);
+  }, [availableMeasureFields, topN, wideSeriesPreset]);
 
   const chartData = useMemo(
     () => buildAnalyticsChartData({
       rows,
       chartType,
-      barGroupBy,
+      xField,
+      yField,
+      aggregation,
+      barGroupBy: selectedBarField?.key || barGroupBy,
       barOrientation,
       pieGroupBy: selectedPieField?.key || pieGroupBy,
-      histogramGroupBy: selectedHistogramField?.key || histogramGroupBy,
+      histogramValueField: selectedHistogramField?.key || histogramValueField,
       stackSegmentBy: selectedStackField?.key || stackSegmentBy,
       groupedBarGroupBy: selectedGroupedBarField?.key || groupedBarGroupBy,
       heatmapRowBy: selectedHeatmapRowField?.key || heatmapRowBy,
       heatmapColumnBy: selectedHeatmapColumnField?.key || heatmapColumnBy,
+      multiLineMode,
       multiLineGroupBy: selectedMultiLineField?.key || multiLineGroupBy,
+      multiLineSeriesFields: selectedWideSeriesFields,
       sunburstParentBy: selectedSunburstParentField?.key || sunburstParentBy,
       sunburstChildBy: selectedSunburstChildField?.key || sunburstChildBy,
       topN,
       startYear: startYear || yearRange.minYear,
       endYear: endYear || yearRange.maxYear,
     }),
-    [barGroupBy, barOrientation, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, multiLineGroupBy, pieGroupBy, rows, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, startYear, endYear, yearRange.maxYear, yearRange.minYear]
+    [aggregation, barGroupBy, barOrientation, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramValueField, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
   );
 
   const handleExportPng = async () => {
@@ -391,7 +426,6 @@ export function AnalyticsPanelContent({
 
   const renderDateRangeControls = () => {
     if (!yearRange.years.length) return null;
-
     return (
       <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] p-3">
         <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--panel-card-muted-text)]">Date range</div>
@@ -399,20 +433,26 @@ export function AnalyticsPanelContent({
           <SelectControl label="Start year" value={startYear || String(yearRange.minYear)} onChange={setStartYear} options={yearRange.years.map((year) => ({ key: String(year), label: String(year) }))} />
           <SelectControl label="End year" value={endYear || String(yearRange.maxYear)} onChange={setEndYear} options={yearRange.years.map((year) => ({ key: String(year), label: String(year) }))} />
         </div>
-        <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">
-          Periods automatically adjust: year, half-year, quarter, or month depending on range length.
-        </div>
+        <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">The date range filters chart rows when Peridot can derive a year from the data.</div>
       </div>
     );
   };
+
+  const renderMetricControls = ({ allowRecordCount = true } = {}) => (
+    <>
+      <SelectControl label="Y-axis / metric" value={yField} onChange={setYField} options={allowRecordCount ? yMetricOptions : availableMeasureFields} description={yField === 'recordCount' ? 'Count records in each group.' : 'Use numeric values from the selected uploaded column.'} />
+      {yField !== 'recordCount' ? <SelectControl label="Aggregation" value={aggregation} onChange={setAggregation} options={aggregationOptions} /> : null}
+    </>
+  );
 
   const renderChartControls = () => {
     if (chartType === 'bar') {
       return (
         <VariableControlsShell>
-          {canRenderBarControls ? (
+          {availableBarFields.length ? (
             <>
-              <SelectControl label="Variable 1: category to rank" value={selectedBarField?.key || ''} onChange={setBarGroupBy} options={availableBarFields} description={selectedBarField?.description} />
+              <SelectControl label="X-axis / category" value={selectedBarField?.key || ''} onChange={setBarGroupBy} options={availableBarFields} description={selectedBarField?.description} />
+              {renderMetricControls()}
               <SelectControl label="Orientation" value={barOrientation} onChange={setBarOrientation} options={[{ key: 'vertical', label: 'Vertical' }, { key: 'horizontal', label: 'Horizontal' }]} />
               <SelectControl label="Limit displayed categories" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
             </>
@@ -420,137 +460,109 @@ export function AnalyticsPanelContent({
         </VariableControlsShell>
       );
     }
-
     if (chartType === 'line') {
       return (
         <VariableControlsShell>
-          <SelectControl label="Variable 1: x-axis" value="timePeriod" onChange={() => {}} options={[{ key: 'timePeriod', label: 'Time period' }]} description="The period automatically switches from year to half-year, quarter, or month based on the selected date range." disabled />
-          <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Metric: letter count.</div>
-          {!canRenderLine ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No usable date values are available in the current data.</div> : null}
+          {availableXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
+          {renderMetricControls()}
+          {!availableXAxisFields.length ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No x-axis fields are available in the current data.</div> : null}
         </VariableControlsShell>
       );
     }
-
-    if (chartType === 'pie') {
-      return (
-        <VariableControlsShell>
-          {availablePieFields.length ? (
-            <>
-              <SelectControl label="Variable 1: slice category" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} />
-              <SelectControl label="Limit displayed slices" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-            </>
-          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported part-to-whole fields are available in the current data.</div>}
-        </VariableControlsShell>
-      );
-    }
-
-    if (chartType === 'histogram') {
-      return (
-        <VariableControlsShell>
-          {availableSegmentFields.length ? (
-            <SelectControl label="Variable 1: entity to distribute by letter volume" value={selectedHistogramField?.key || ''} onChange={setHistogramGroupBy} options={availableSegmentFields} description={selectedHistogramField?.description} />
-          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported histogram fields are available in the current data.</div>}
-        </VariableControlsShell>
-      );
-    }
-
-    if (chartType === 'groupedBar') {
-      return (
-        <VariableControlsShell>
-          {availableSegmentFields.length ? (
-            <>
-              <SelectControl label="Variable 1: x-axis" value="timePeriod" onChange={() => {}} options={[{ key: 'timePeriod', label: 'Time period' }]} description="Time periods are grouped along the x-axis." disabled />
-              <SelectControl label="Variable 2: side-by-side group field" value={selectedGroupedBarField?.key || ''} onChange={setGroupedBarGroupBy} options={availableSegmentFields} description={selectedGroupedBarField?.description} />
-              <SelectControl label="Limit displayed groups" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-            </>
-          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported grouping fields are available in the current data.</div>}
-        </VariableControlsShell>
-      );
-    }
-
-    if (chartType === 'stackedBar') {
-      return (
-        <VariableControlsShell>
-          {availableSegmentFields.length ? (
-            <>
-              <SelectControl label="Variable 1: x-axis" value="timePeriod" onChange={() => {}} options={[{ key: 'timePeriod', label: 'Time period' }]} description="Time periods are grouped along the x-axis." disabled />
-              <SelectControl label="Variable 2: segment field" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
-              <SelectControl label="Limit displayed segments" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-            </>
-          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported split fields are available in the current data.</div>}
-        </VariableControlsShell>
-      );
-    }
-
     if (chartType === 'multiLine') {
       return (
         <VariableControlsShell>
-          {availableSegmentFields.length ? (
+          {availableXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
+          <SelectControl label="Series mode" value={multiLineMode} onChange={setMultiLineMode} options={[{ key: 'wide', label: 'Multiple numeric columns' }, { key: 'grouped', label: 'One metric split by a grouping field' }]} description="Use multiple numeric columns for wide datasets such as stock prices, or split one metric by a category for long-format data." />
+          {multiLineMode === 'wide' ? (
             <>
-              <SelectControl label="Variable 1: x-axis" value="timePeriod" onChange={() => {}} options={[{ key: 'timePeriod', label: 'Time period' }]} description="Time periods place every line on a common chronological scale." disabled />
-              <SelectControl label="Variable 2: line grouping" value={selectedMultiLineField?.key || ''} onChange={setMultiLineGroupBy} options={availableSegmentFields} description={selectedMultiLineField?.description} />
+              <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-series: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none available'}.</div>
+              <SelectControl label="Series selection" value={wideSeriesPreset} onChange={setWideSeriesPreset} options={[{ key: 'top', label: 'First/top numeric fields' }, { key: 'all', label: 'All numeric fields' }]} />
+              <SelectControl label="Limit displayed series" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+            </>
+          ) : (
+            <>
+              {renderMetricControls()}
+              <SelectControl label="Series / grouping field" value={selectedMultiLineField?.key || ''} onChange={setMultiLineGroupBy} options={availableSegmentFields} description={selectedMultiLineField?.description} />
               <SelectControl label="Limit displayed lines" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
             </>
-          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported line-splitting fields are available in the current data.</div>}
+          )}
+          {!availableMeasureFields.length && multiLineMode === 'wide' ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">This mode needs at least one numeric measure field.</div> : null}
         </VariableControlsShell>
       );
     }
-
+    if (chartType === 'pie') {
+      return (
+        <VariableControlsShell>
+          {availablePieFields.length ? <SelectControl label="Slice category" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} /> : null}
+          {renderMetricControls()}
+          <SelectControl label="Limit displayed slices" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+        </VariableControlsShell>
+      );
+    }
+    if (chartType === 'histogram') {
+      return (
+        <VariableControlsShell>
+          {availableMeasureFields.length ? <SelectControl label="Numeric value field" value={selectedHistogramField?.key || ''} onChange={setHistogramValueField} options={availableMeasureFields} description={selectedHistogramField?.description} /> : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No numeric measure fields are available in the current data.</div>}
+        </VariableControlsShell>
+      );
+    }
+    if (chartType === 'groupedBar') {
+      return (
+        <VariableControlsShell>
+          {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
+          <SelectControl label="Side-by-side grouping field" value={selectedGroupedBarField?.key || ''} onChange={setGroupedBarGroupBy} options={availableSegmentFields} description={selectedGroupedBarField?.description} />
+          {renderMetricControls()}
+          <SelectControl label="Limit displayed groups" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+        </VariableControlsShell>
+      );
+    }
+    if (chartType === 'stackedBar') {
+      return (
+        <VariableControlsShell>
+          {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
+          <SelectControl label="Segment field" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
+          {renderMetricControls()}
+          <SelectControl label="Limit displayed segments" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+        </VariableControlsShell>
+      );
+    }
     if (chartType === 'heatmap') {
       return (
         <VariableControlsShell>
-          {availableHeatmapRows.length && availableHeatmapColumns.length ? (
-            <>
-              <SelectControl label="Variable 1: rows" value={selectedHeatmapRowField?.key || ''} onChange={setHeatmapRowBy} options={availableHeatmapRows} description={selectedHeatmapRowField?.description} />
-              <SelectControl label="Variable 2: columns" value={selectedHeatmapColumnField?.key || ''} onChange={setHeatmapColumnBy} options={availableHeatmapColumns} description={selectedHeatmapColumnField?.description} />
-              <SelectControl label="Limit displayed rows/columns" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-            </>
-          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported heat-map fields are available in the current data.</div>}
+          <SelectControl label="Rows" value={selectedHeatmapRowField?.key || ''} onChange={setHeatmapRowBy} options={availableHeatmapRows} description={selectedHeatmapRowField?.description} />
+          <SelectControl label="Columns" value={selectedHeatmapColumnField?.key || ''} onChange={setHeatmapColumnBy} options={availableHeatmapColumns} description={selectedHeatmapColumnField?.description} />
+          {renderMetricControls()}
+          <SelectControl label="Limit displayed rows/columns" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
         </VariableControlsShell>
       );
     }
-
     if (chartType === 'sunburst') {
       return (
         <VariableControlsShell>
-          {availableSegmentFields.length ? (
-            <>
-              <SelectControl label="Variable 1: inner-ring parent category" value={selectedSunburstParentField?.key || ''} onChange={setSunburstParentBy} options={availableSegmentFields} description={selectedSunburstParentField?.description} />
-              <SelectControl label="Variable 2: outer-ring child category" value={selectedSunburstChildField?.key || ''} onChange={setSunburstChildBy} options={availableSegmentFields} description={selectedSunburstChildField?.description} />
-              <SelectControl label="Limit displayed categories" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
-            </>
-          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported hierarchy fields are available in the current data.</div>}
+          <SelectControl label="Parent category" value={selectedSunburstParentField?.key || ''} onChange={setSunburstParentBy} options={availableSegmentFields} description={selectedSunburstParentField?.description} />
+          <SelectControl label="Child category" value={selectedSunburstChildField?.key || ''} onChange={setSunburstChildBy} options={availableSegmentFields} description={selectedSunburstChildField?.description} />
+          <SelectControl label="Limit displayed categories" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
         </VariableControlsShell>
       );
     }
-
     return null;
   };
 
   return (
     <div className="space-y-5">
       {isExpanded ? <ExpandedChartModal chartData={chartData} onClose={() => setIsExpanded(false)} /> : null}
-
       <div>
-        <div className="text-sm text-[var(--muted-text)]">
-          Build compact charts from the current Peridot data. Charts reflect the current filtered data where applicable.
-        </div>
+        <div className="text-sm text-[var(--muted-text)]">Build charts from the current Peridot data. Choose the chart type, then choose the uploaded columns used for x-axis, y-axis, series, grouping, and aggregation.</div>
       </div>
-
       <section className="space-y-3">
         <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Choose a chart</div>
         <div className="grid grid-cols-3 gap-3">
           {Object.values(ANALYTICS_CHART_DEFINITIONS).map((option) => (
-            <ChartTypeButton
-              key={option.key}
-              option={option}
-              active={chartType === option.key}
-              onSelect={() => setChartType(option.key)}
-            />
+            <ChartTypeButton key={option.key} option={option} active={chartType === option.key} onSelect={() => setChartType(option.key)} />
           ))}
         </div>
       </section>
-
       <section className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-4">
         <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Configure chart</div>
         <ChartUseDescription chartDefinition={chartDefinition} />
@@ -559,25 +571,15 @@ export function AnalyticsPanelContent({
           {renderChartControls()}
         </div>
       </section>
-
       <section className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Preview</div>
-          <button type="button" onClick={() => setIsExpanded(true)} className="rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]">
-            Expand Chart
-          </button>
+          <button type="button" onClick={() => setIsExpanded(true)} className="rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]">Expand Chart</button>
         </div>
         <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
-        <button type="button" onClick={handleExportPng} className={buttonClassName()} disabled={!chartData}>
-          Export chart PNG
-        </button>
-        {exportStatus ? (
-          <div className={['rounded-xl border p-3 text-sm', exportStatus.type === 'error' ? 'border-red-300 bg-red-50 text-red-800' : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)]'].join(' ')}>
-            {exportStatus.message}
-          </div>
-        ) : null}
+        <button type="button" onClick={handleExportPng} className={buttonClassName()} disabled={!chartData}>Export chart PNG</button>
+        {exportStatus ? <div className={['rounded-xl border p-3 text-sm', exportStatus.type === 'error' ? 'border-red-300 bg-red-50 text-red-800' : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)]'].join(' ')}>{exportStatus.message}</div> : null}
       </section>
     </div>
   );
 }
-

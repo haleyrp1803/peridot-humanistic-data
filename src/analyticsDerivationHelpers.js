@@ -52,6 +52,16 @@ function getFieldDefinition(fieldKey) {
   ].find((definition) => definition.key === fieldKey);
 }
 
+function parseNumber(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  const text = String(value ?? '').trim();
+  if (!text) return null;
+  const cleaned = text.replace(/[,$£€]/g, '').replace(/%$/, '').trim();
+  if (!/^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(cleaned)) return null;
+  const number = Number(cleaned);
+  return Number.isFinite(number) ? number : null;
+}
+
 function getDatePartsFromRow(row) {
   const parsedYear = row?.parsedDate?.year;
   const parsedMonth = row?.parsedDate?.month;
@@ -59,16 +69,20 @@ function getDatePartsFromRow(row) {
   const monthFromParsed = Number.isFinite(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12 ? parsedMonth : null;
 
   if (yearFromParsed) {
-    return { year: yearFromParsed, month: monthFromParsed || 1 };
+    return { year: yearFromParsed, month: monthFromParsed || 1, sort: yearFromParsed * 12 + ((monthFromParsed || 1) - 1) };
   }
 
-  const dateText = String(row?.date ?? row?.Date ?? '').trim();
-  const match = dateText.match(/^(\d{4})(?:[-/](\d{1,2}))?/);
-  if (!match || match[1] === '0000') return null;
+  const candidateValues = [row?.date, row?.Date, row?.Date_Start, row?.Date_End, row?.Date_Display];
+  for (const candidate of candidateValues) {
+    const dateText = String(candidate ?? '').trim();
+    const match = dateText.match(/^(\d{3,4})(?:[-/](\d{1,2}))?/);
+    if (!match || match[1] === '0000') continue;
+    const year = Number(match[1]);
+    const month = match[2] ? Math.min(12, Math.max(1, Number(match[2]))) : 1;
+    return { year, month, sort: year * 12 + (month - 1) };
+  }
 
-  const year = Number(match[1]);
-  const month = match[2] ? Math.min(12, Math.max(1, Number(match[2]))) : 1;
-  return { year, month };
+  return null;
 }
 
 function getYearFromRow(row) {
@@ -107,7 +121,7 @@ function formatPeriod({ year, month }, granularity) {
 }
 
 function periodSortValue(label) {
-  const yearMatch = String(label).match(/^(\d{4})/);
+  const yearMatch = String(label).match(/^(\d{3,4})/);
   const year = yearMatch ? Number(yearMatch[1]) : 0;
 
   if (label.includes('Q')) {
@@ -118,13 +132,16 @@ function periodSortValue(label) {
   if (label.includes('H2')) return year * 12 + 6;
   if (label.includes('H1')) return year * 12;
 
-  const monthMatch = String(label).match(/^\d{4}-(\d{2})$/);
+  const monthMatch = String(label).match(/^\d{3,4}-(\d{2})$/);
   if (monthMatch) return year * 12 + Number(monthMatch[1]) - 1;
 
   return year * 12;
 }
 
 function fieldValue(row, fieldKey) {
+  if (fieldKey === 'timePeriod') return periodLabelForRow(row, 'year');
+  if (fieldKey === 'recordCount') return 'Record count';
+
   if (fieldKey === 'routePlace') {
     const source = fieldValue(row, 'sourceLoc');
     const target = fieldValue(row, 'targetLoc');
@@ -139,15 +156,10 @@ function fieldValue(row, fieldKey) {
     return `${source} → ${target}`;
   }
 
-  // Backward compatibility with the former place-route key.
-  if (fieldKey === 'route') {
-    return fieldValue(row, 'routePlace');
-  }
+  if (fieldKey === 'route') return fieldValue(row, 'routePlace');
 
   const definition = getFieldDefinition(fieldKey);
-  if (definition) {
-    return getAliasedRowValue(row, definition.key, definition.aliases || []);
-  }
+  if (definition) return getAliasedRowValue(row, definition.key, definition.aliases || []);
 
   return normalizeText(row[fieldKey]);
 }
@@ -160,6 +172,21 @@ function incrementNestedMap(map, outerKey, innerKey, increment = 1) {
   if (!map.has(outerKey)) map.set(outerKey, new Map());
   const inner = map.get(outerKey);
   inner.set(innerKey, (inner.get(innerKey) || 0) + increment);
+}
+
+function aggregateValues(values, aggregation = 'count') {
+  if (aggregation === 'count') return values.length;
+  const numericValues = values.map(parseNumber).filter((value) => value !== null);
+  if (!numericValues.length) return 0;
+  if (aggregation === 'sum') return numericValues.reduce((sum, value) => sum + value, 0);
+  if (aggregation === 'min') return Math.min(...numericValues);
+  if (aggregation === 'max') return Math.max(...numericValues);
+  return numericValues.reduce((sum, value) => sum + value, 0) / numericValues.length;
+}
+
+function metricValue(row, metricField) {
+  if (!metricField || metricField === 'recordCount') return 1;
+  return parseNumber(row?.[metricField]);
 }
 
 function topKeysByTotal(counts, topN) {
@@ -191,6 +218,20 @@ function periodLabelForRow(row, granularity) {
   return formatPeriod(parts, granularity);
 }
 
+function sortAxisLabels(labels, rows, fieldKey) {
+  if (fieldKey === 'timePeriod') return labels.sort((a, b) => periodSortValue(a) - periodSortValue(b));
+  const numericValues = new Map();
+  rows.forEach((row) => {
+    const label = fieldValue(row, fieldKey);
+    const number = parseNumber(label);
+    if (label && number !== null) numericValues.set(label, number);
+  });
+  if (numericValues.size === labels.length) {
+    return labels.sort((a, b) => numericValues.get(a) - numericValues.get(b));
+  }
+  return labels.sort((a, b) => String(a).localeCompare(String(b)));
+}
+
 function humanizeFieldLabel(key) {
   const explicitLabels = {
     sourcePerson: 'Source person',
@@ -200,6 +241,8 @@ function humanizeFieldLabel(key) {
     routePlace: 'Route (Place)',
     routePerson: 'Route (Person)',
     archivalCollection: 'Archival collection',
+    timePeriod: 'Time period',
+    recordCount: 'Record count',
   };
 
   if (explicitLabels[key]) return explicitLabels[key];
@@ -217,33 +260,10 @@ function isTechnicalFieldKey(key) {
   if (!normalized) return true;
 
   const exactExclusions = new Set([
-    'id',
-    'row id',
-    'parsed date',
-    'date',
-    'mappable',
-    'map able',
-    'source place id',
-    'target place id',
-    'source id',
-    'target id',
-    'person id',
-    'place id',
-    'source lat',
-    'source long',
-    'source lng',
-    'target lat',
-    'target long',
-    'target lng',
-    'lat',
-    'lng',
-    'long',
-    'latitude',
-    'longitude',
-    'source latitude',
-    'source longitude',
-    'target latitude',
-    'target longitude',
+    'id', 'row id', 'parsed date', 'mappable', 'map able', 'source place id', 'target place id',
+    'source id', 'target id', 'person id', 'place id', 'source lat', 'source long', 'source lng',
+    'target lat', 'target long', 'target lng', 'lat', 'lng', 'long', 'latitude', 'longitude',
+    'source latitude', 'source longitude', 'target latitude', 'target longitude',
   ]);
 
   if (exactExclusions.has(normalized)) return true;
@@ -255,6 +275,28 @@ function isTechnicalFieldKey(key) {
   return false;
 }
 
+function isDateLikeFieldKey(key) {
+  const normalized = normalizeKey(key);
+  return normalized === 'date'
+    || normalized === 'year'
+    || normalized === 'date start'
+    || normalized === 'date end'
+    || normalized === 'date display'
+    || /\b(date|year|period|time)\b/.test(normalized);
+}
+
+function isEvidenceLikeFieldKey(key) {
+  const normalized = normalizeKey(key);
+  return /\b(source|citation|archive|collection|repository|page|folio|link|url|image|note|description|transcription|translation)\b/.test(normalized);
+}
+
+function numericFieldStats(rows, key) {
+  const values = rows.map((row) => row?.[key]).filter((value) => value !== null && value !== undefined && String(value).trim() !== '');
+  if (!values.length) return { count: 0, ratio: 0 };
+  const numericValues = values.map(parseNumber).filter((value) => value !== null);
+  return { count: numericValues.length, ratio: numericValues.length / values.length };
+}
+
 function isUsableDynamicFieldValue(value) {
   if (value == null) return false;
   if (Array.isArray(value)) return false;
@@ -263,7 +305,6 @@ function isUsableDynamicFieldValue(value) {
   const text = normalizeText(value);
   if (!text) return false;
   if (text.length > 140) return false;
-  if (/^-?\d+(\.\d+)?$/.test(text)) return false;
 
   return true;
 }
@@ -271,10 +312,7 @@ function isUsableDynamicFieldValue(value) {
 function isDynamicFieldCandidate(rows, key) {
   if (!key || isTechnicalFieldKey(key)) return false;
 
-  const values = rows
-    .map((row) => row?.[key])
-    .filter((value) => value != null);
-
+  const values = rows.map((row) => row?.[key]).filter((value) => value != null);
   if (!values.length) return false;
 
   const usableValues = values.filter(isUsableDynamicFieldValue);
@@ -282,9 +320,7 @@ function isDynamicFieldCandidate(rows, key) {
 
   const uniqueValues = new Set(usableValues.map((value) => normalizeText(value)));
   if (!uniqueValues.size) return false;
-
-  // Avoid fields that are effectively unique row identifiers or long notes.
-  if (values.length >= 5 && uniqueValues.size / values.length > 0.95) return false;
+  if (values.length >= 5 && uniqueValues.size / values.length > 0.98) return false;
 
   return true;
 }
@@ -311,11 +347,47 @@ function buildDynamicFieldDefinitions(rows = [], existingDefinitions = []) {
     .map((key) => ({
       key,
       label: humanizeFieldLabel(key),
-      description: `Letters grouped by the uploaded “${humanizeFieldLabel(key)}” field.`,
+      description: `Use the uploaded “${humanizeFieldLabel(key)}” field.`,
       requiredFields: [key],
       dynamic: true,
     }))
     .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function buildNumericMeasureDefinitions(rows = []) {
+  const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row || {}))));
+  return keys
+    .filter((key) => !isTechnicalFieldKey(key))
+    .filter((key) => !isDateLikeFieldKey(key))
+    .filter((key) => !isEvidenceLikeFieldKey(key))
+    .filter((key) => numericFieldStats(rows, key).ratio >= 0.65)
+    .map((key) => ({
+      key,
+      label: humanizeFieldLabel(key),
+      description: `Use numeric values from the uploaded “${humanizeFieldLabel(key)}” column.`,
+      requiredFields: [key],
+      dynamic: true,
+    }))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function buildDateFieldDefinitions(rows = []) {
+  const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row || {}))));
+  const definitions = [];
+
+  if (rows.some((row) => Boolean(getDatePartsFromRow(row)))) {
+    definitions.push({ key: 'timePeriod', label: 'Time period', description: 'Derived from the mapped date/date-start/date-end values.' });
+  }
+
+  keys.forEach((key) => {
+    if (!isDateLikeFieldKey(key)) return;
+    if (definitions.some((definition) => definition.key === key)) return;
+    const hasValues = rows.some((row) => normalizeText(row?.[key]));
+    if (!hasValues) return;
+    definitions.push({ key, label: humanizeFieldLabel(key), description: `Use values from “${humanizeFieldLabel(key)}” as the x-axis.` });
+  });
+
+  return definitions;
 }
 
 function mergeFieldDefinitions(baseDefinitions, dynamicDefinitions, { allowRoutes = true } = {}) {
@@ -335,19 +407,8 @@ function mergeFieldDefinitions(baseDefinitions, dynamicDefinitions, { allowRoute
 }
 
 export function getAnalyticsYearRange(rows = []) {
-  const years = Array.from(
-    new Set(
-      rows
-        .map((row) => getDatePartsFromRow(row)?.year)
-        .filter((year) => Number.isFinite(year) && year > 0)
-    )
-  ).sort((a, b) => a - b);
-
-  return {
-    years,
-    minYear: years[0] || null,
-    maxYear: years[years.length - 1] || null,
-  };
+  const years = Array.from(new Set(rows.map((row) => getDatePartsFromRow(row)?.year).filter((year) => Number.isFinite(year) && year > 0))).sort((a, b) => a - b);
+  return { years, minYear: years[0] || null, maxYear: years[years.length - 1] || null };
 }
 
 export function getAnalyticsPeriodGranularity(startYear, endYear) {
@@ -356,21 +417,20 @@ export function getAnalyticsPeriodGranularity(startYear, endYear) {
 
 export function getAvailableAnalyticsFields(rows = []) {
   const dynamicDefinitions = buildDynamicFieldDefinitions(rows, ANALYTICS_BAR_FIELD_DEFINITIONS);
+  const numericMeasureOptions = buildNumericMeasureDefinitions(rows);
+  const dateFieldOptions = buildDateFieldDefinitions(rows);
   const allBarDefinitions = mergeFieldDefinitions(ANALYTICS_BAR_FIELD_DEFINITIONS, dynamicDefinitions);
   const allSegmentDefinitions = mergeFieldDefinitions(ANALYTICS_SEGMENT_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoutes: false });
   const allHeatmapDefinitions = mergeFieldDefinitions(ANALYTICS_HEATMAP_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoutes: false });
 
-  const barGroupOptions = allBarDefinitions.filter((definition) =>
-    hasRequiredField(rows, definition)
-  );
+  const barGroupOptions = allBarDefinitions.filter((definition) => hasRequiredField(rows, definition));
+  const segmentGroupOptions = allSegmentDefinitions.filter((definition) => hasRequiredField(rows, definition));
+  const heatmapOptions = allHeatmapDefinitions.filter((definition) => hasRequiredField(rows, definition));
 
-  const segmentGroupOptions = allSegmentDefinitions.filter((definition) =>
-    hasRequiredField(rows, definition)
-  );
-
-  const heatmapOptions = allHeatmapDefinitions.filter((definition) =>
-    hasRequiredField(rows, definition)
-  );
+  const genericXAxisOptions = [
+    ...dateFieldOptions,
+    ...barGroupOptions.filter((definition) => !dateFieldOptions.some((dateDefinition) => dateDefinition.key === definition.key)),
+  ];
 
   return {
     barGroupOptions,
@@ -378,239 +438,223 @@ export function getAvailableAnalyticsFields(rows = []) {
     segmentGroupOptions,
     heatmapRowOptions: heatmapOptions,
     heatmapColumnOptions: heatmapOptions,
+    xAxisOptions: genericXAxisOptions,
+    dateFieldOptions,
+    numericMeasureOptions,
+    yMetricOptions: [{ key: 'recordCount', label: 'Record count', description: 'Count records in each group.' }, ...numericMeasureOptions],
     hasYearData: rows.some((row) => Boolean(getYearFromRow(row))),
+    hasMeasureTimeSeries: dateFieldOptions.length > 0 && numericMeasureOptions.length > 0,
   };
 }
 
-export function buildBarChartData(rows = [], groupBy = 'sourcePerson', topN = 10) {
-  const counts = new Map();
-
+export function buildBarChartData(rows = [], groupBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count') {
+  const grouped = new Map();
   rows.forEach((row) => {
     const label = fieldValue(row, groupBy);
     if (!label) return;
-    counts.set(label, (counts.get(label) || 0) + 1);
+    if (!grouped.has(label)) grouped.set(label, []);
+    grouped.get(label).push(metricField === 'recordCount' ? 1 : row?.[metricField]);
   });
-
-  return Array.from(counts.entries())
-    .map(([label, count]) => ({ label, count }))
+  return Array.from(grouped.entries())
+    .map(([label, values]) => ({ label, count: aggregateValues(values, metricField === 'recordCount' ? 'count' : aggregation), unit: metricField === 'recordCount' ? 'records' : 'value' }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
     .slice(0, Math.max(1, Number(topN) || 10));
 }
 
-export function buildLettersByPeriodData(rows = [], startYear, endYear) {
+export function buildLineChartData(rows = [], xField = 'timePeriod', metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
   const granularity = getPeriodGranularity(startYear, endYear);
-  const counts = new Map();
-
+  const grouped = new Map();
   rows.forEach((row) => {
-    const label = periodLabelForRow(row, granularity);
+    const label = xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
     if (!label) return;
-    counts.set(label, (counts.get(label) || 0) + 1);
+    if (!grouped.has(label)) grouped.set(label, []);
+    grouped.get(label).push(metricField === 'recordCount' ? 1 : row?.[metricField]);
   });
-
-  return {
-    granularity,
-    data: Array.from(counts.entries())
-      .map(([label, count]) => ({ label, count }))
-      .sort((a, b) => periodSortValue(a.label) - periodSortValue(b.label)),
-  };
-}
-
-export function buildGroupedBarChartData(rows = [], groupBy = 'sourcePerson', topN = 10, startYear, endYear) {
-  const granularity = getPeriodGranularity(startYear, endYear);
-  const groupTotals = new Map();
-  const periodGroupCounts = new Map();
-  const periods = new Set();
-
-  rows.forEach((row) => {
-    const period = periodLabelForRow(row, granularity);
-    const group = fieldValue(row, groupBy);
-    if (!period || !group) return;
-
-    periods.add(period);
-    groupTotals.set(group, (groupTotals.get(group) || 0) + 1);
-    incrementNestedMap(periodGroupCounts, period, group);
-  });
-
-  const series = topKeysByTotal(groupTotals, topN);
-  const data = Array.from(periods)
-    .sort((a, b) => periodSortValue(a) - periodSortValue(b))
-    .map((period) => ({
-      label: period,
-      groups: series.map((label) => ({
-        label,
-        count: periodGroupCounts.get(period)?.get(label) || 0,
-      })),
-    }));
-
-  return { granularity, series, data };
-}
-
-export function buildStackedBarChartData(rows = [], segmentBy = 'sourcePerson', topN = 10, startYear, endYear) {
-  const granularity = getPeriodGranularity(startYear, endYear);
-  const segmentTotals = new Map();
-  const periodSegmentCounts = new Map();
-
-  rows.forEach((row) => {
-    const period = periodLabelForRow(row, granularity);
-    const segment = fieldValue(row, segmentBy);
-    if (!period || !segment) return;
-
-    segmentTotals.set(segment, (segmentTotals.get(segment) || 0) + 1);
-    incrementNestedMap(periodSegmentCounts, period, segment);
-  });
-
-  const series = topKeysByTotal(segmentTotals, topN);
-  const data = Array.from(periodSegmentCounts.keys())
-    .sort((a, b) => periodSortValue(a) - periodSortValue(b))
-    .map((period) => {
-      const counts = periodSegmentCounts.get(period) || new Map();
-      const segments = series.map((label) => ({
-        label,
-        count: counts.get(label) || 0,
-      }));
-      return {
-        label: period,
-        segments,
-        total: segments.reduce((sum, item) => sum + item.count, 0),
-      };
-    });
-
-  return { granularity, series, data };
-}
-
-export function buildMultiLineChartData(rows = [], groupBy = 'sourcePerson', topN = 10, startYear, endYear) {
-  const granularity = getPeriodGranularity(startYear, endYear);
-  const groupTotals = new Map();
-  const periodGroupCounts = new Map();
-  const periods = new Set();
-
-  rows.forEach((row) => {
-    const period = periodLabelForRow(row, granularity);
-    const group = fieldValue(row, groupBy);
-    if (!period || !group) return;
-
-    periods.add(period);
-    groupTotals.set(group, (groupTotals.get(group) || 0) + 1);
-    incrementNestedMap(periodGroupCounts, period, group);
-  });
-
-  const selectedGroups = topKeysByTotal(groupTotals, topN);
-  const sortedPeriods = Array.from(periods).sort((a, b) => periodSortValue(a) - periodSortValue(b));
-
-  const series = selectedGroups.map((label) => ({
+  return sortAxisLabels(Array.from(grouped.keys()), rows, xField).map((label) => ({
     label,
-    points: sortedPeriods.map((period) => ({
-      label: period,
-      count: periodGroupCounts.get(period)?.get(label) || 0,
+    count: aggregateValues(grouped.get(label) || [], metricField === 'recordCount' ? 'count' : aggregation),
+    unit: metricField === 'recordCount' ? 'records' : 'value',
+  }));
+}
+
+export function buildGroupedBarChartData(rows = [], xField = 'timePeriod', groupBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
+  const granularity = getPeriodGranularity(startYear, endYear);
+  const groupTotals = new Map();
+  const groupedValues = new Map();
+  const xLabels = new Set();
+  rows.forEach((row) => {
+    const xLabel = xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
+    const group = fieldValue(row, groupBy);
+    if (!xLabel || !group) return;
+    const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
+    xLabels.add(xLabel);
+    groupTotals.set(group, (groupTotals.get(group) || 0) + (metricField === 'recordCount' ? 1 : (parseNumber(rawValue) || 0)));
+    incrementNestedMap(groupedValues, xLabel, group, 0);
+    const inner = groupedValues.get(xLabel);
+    if (!Array.isArray(inner.get(group))) inner.set(group, []);
+    inner.get(group).push(rawValue);
+  });
+  const series = topKeysByTotal(groupTotals, topN);
+  const data = sortAxisLabels(Array.from(xLabels), rows, xField).map((label) => ({
+    label,
+    groups: series.map((seriesLabel) => ({
+      label: seriesLabel,
+      count: aggregateValues(groupedValues.get(label)?.get(seriesLabel) || [], metricField === 'recordCount' ? 'count' : aggregation),
     })),
   }));
+  return { granularity, series, data };
+}
 
+export function buildStackedBarChartData(rows = [], xField = 'timePeriod', segmentBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
+  const grouped = buildGroupedBarChartData(rows, xField, segmentBy, topN, metricField, aggregation, startYear, endYear);
   return {
-    granularity,
-    periods: sortedPeriods,
-    series,
+    ...grouped,
+    data: grouped.data.map((row) => ({
+      label: row.label,
+      segments: row.groups,
+      total: row.groups.reduce((sum, group) => sum + group.count, 0),
+    })),
   };
 }
 
-export function buildHeatmapChartData(rows = [], rowField = 'sourcePerson', columnField = 'targetPerson', topN = 10) {
+export function buildMultiLineChartData(rows = [], xField = 'timePeriod', seriesMode = 'wide', seriesFields = [], groupBy = 'sourcePerson', metricField = 'recordCount', aggregation = 'average', topN = 10, startYear, endYear) {
+  const granularity = getPeriodGranularity(startYear, endYear);
+  const xLabels = new Set();
+  const xLabelForRow = (row) => xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
+
+  if (seriesMode === 'wide') {
+    const series = seriesFields.slice(0, Math.max(1, Number(topN) || 10)).map((field) => {
+      const grouped = new Map();
+      rows.forEach((row) => {
+        const label = xLabelForRow(row);
+        const value = row?.[field.key || field];
+        if (!label || parseNumber(value) === null) return;
+        xLabels.add(label);
+        if (!grouped.has(label)) grouped.set(label, []);
+        grouped.get(label).push(value);
+      });
+      return { label: field.label || humanizeFieldLabel(field.key || field), grouped };
+    });
+    const sortedLabels = sortAxisLabels(Array.from(xLabels), rows, xField);
+    return {
+      granularity,
+      periods: sortedLabels,
+      series: series.map((item) => ({
+        label: item.label,
+        points: sortedLabels.map((label) => ({ label, count: aggregateValues(item.grouped.get(label) || [], aggregation) })),
+      })),
+    };
+  }
+
+  const totals = new Map();
+  const groupedValues = new Map();
+  rows.forEach((row) => {
+    const xLabel = xLabelForRow(row);
+    const group = fieldValue(row, groupBy);
+    if (!xLabel || !group) return;
+    const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
+    xLabels.add(xLabel);
+    totals.set(group, (totals.get(group) || 0) + (metricField === 'recordCount' ? 1 : (parseNumber(rawValue) || 0)));
+    incrementNestedMap(groupedValues, group, xLabel, 0);
+    const inner = groupedValues.get(group);
+    if (!Array.isArray(inner.get(xLabel))) inner.set(xLabel, []);
+    inner.get(xLabel).push(rawValue);
+  });
+  const selectedGroups = topKeysByTotal(totals, topN);
+  const sortedLabels = sortAxisLabels(Array.from(xLabels), rows, xField);
+  return {
+    granularity,
+    periods: sortedLabels,
+    series: selectedGroups.map((label) => ({
+      label,
+      points: sortedLabels.map((xLabel) => ({ label: xLabel, count: aggregateValues(groupedValues.get(label)?.get(xLabel) || [], metricField === 'recordCount' ? 'count' : aggregation) })),
+    })),
+  };
+}
+
+export function buildHeatmapChartData(rows = [], rowField = 'sourcePerson', columnField = 'targetPerson', topN = 10, metricField = 'recordCount', aggregation = 'count') {
   const rowTotals = new Map();
   const columnTotals = new Map();
   const matrix = new Map();
-
   rows.forEach((row) => {
     const rowLabel = fieldValue(row, rowField);
     const columnLabel = fieldValue(row, columnField);
     if (!rowLabel || !columnLabel) return;
-
-    rowTotals.set(rowLabel, (rowTotals.get(rowLabel) || 0) + 1);
-    columnTotals.set(columnLabel, (columnTotals.get(columnLabel) || 0) + 1);
-    incrementNestedMap(matrix, rowLabel, columnLabel);
+    const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
+    rowTotals.set(rowLabel, (rowTotals.get(rowLabel) || 0) + (metricField === 'recordCount' ? 1 : (parseNumber(rawValue) || 0)));
+    columnTotals.set(columnLabel, (columnTotals.get(columnLabel) || 0) + (metricField === 'recordCount' ? 1 : (parseNumber(rawValue) || 0)));
+    if (!matrix.has(rowLabel)) matrix.set(rowLabel, new Map());
+    const inner = matrix.get(rowLabel);
+    if (!Array.isArray(inner.get(columnLabel))) inner.set(columnLabel, []);
+    inner.get(columnLabel).push(rawValue);
   });
-
   const rowLabels = topKeysByTotal(rowTotals, topN);
   const columnLabels = topKeysByTotal(columnTotals, topN);
   const cells = [];
-
   rowLabels.forEach((rowLabel) => {
     columnLabels.forEach((columnLabel) => {
-      cells.push({
-        rowLabel,
-        columnLabel,
-        count: matrix.get(rowLabel)?.get(columnLabel) || 0,
-      });
+      cells.push({ rowLabel, columnLabel, count: aggregateValues(matrix.get(rowLabel)?.get(columnLabel) || [], metricField === 'recordCount' ? 'count' : aggregation) });
     });
   });
-
-  return {
-    rows: rowLabels,
-    columns: columnLabels,
-    cells,
-  };
+  return { rows: rowLabels, columns: columnLabels, cells };
 }
 
-export function buildHistogramChartData(rows = [], groupBy = 'sourcePerson') {
-  const groupCounts = buildBarChartData(rows, groupBy, 100000);
-  const bins = [
-    { label: '1', min: 1, max: 1, count: 0 },
-    { label: '2–5', min: 2, max: 5, count: 0 },
-    { label: '6–10', min: 6, max: 10, count: 0 },
-    { label: '11–20', min: 11, max: 20, count: 0 },
-    { label: '21–50', min: 21, max: 50, count: 0 },
-    { label: '51+', min: 51, max: Infinity, count: 0 },
-  ];
-
-  groupCounts.forEach((item) => {
-    const bin = bins.find((candidate) => item.count >= candidate.min && item.count <= candidate.max);
-    if (bin) bin.count += 1;
+export function buildHistogramChartData(rows = [], valueField = '') {
+  const values = rows.map((row) => parseNumber(row?.[valueField])).filter((value) => value !== null);
+  if (!values.length) return [];
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const binCount = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(values.length))));
+  const width = max === min ? 1 : (max - min) / binCount;
+  const bins = Array.from({ length: binCount }, (_, index) => {
+    const start = min + width * index;
+    const end = index === binCount - 1 ? max : min + width * (index + 1);
+    return { label: `${Math.round(start * 100) / 100}–${Math.round(end * 100) / 100}`, min: start, max: end, count: 0 };
   });
-
-  return bins.map(({ label, count }) => ({ label, count }));
+  values.forEach((value) => {
+    const index = Math.min(binCount - 1, Math.max(0, Math.floor((value - min) / width)));
+    bins[index].count += 1;
+  });
+  return bins.map(({ label, count }) => ({ label, count, unit: 'records' }));
 }
 
 export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childBy = 'sourcePerson', topN = 10) {
   const parentTotals = new Map();
   const childCounts = new Map();
-
   rows.forEach((row) => {
     const parent = fieldValue(row, parentBy);
     const child = fieldValue(row, childBy);
     if (!parent || !child) return;
-
     parentTotals.set(parent, (parentTotals.get(parent) || 0) + 1);
     incrementNestedMap(childCounts, parent, child);
   });
-
   const parents = topKeysByTotal(parentTotals, topN).map((parentLabel) => {
     const children = Array.from((childCounts.get(parentLabel) || new Map()).entries())
       .map(([label, count]) => ({ label, count }))
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
       .slice(0, Math.max(1, Number(topN) || 10));
-
-    return {
-      label: parentLabel,
-      count: parentTotals.get(parentLabel) || 0,
-      children,
-    };
+    return { label: parentLabel, count: parentTotals.get(parentLabel) || 0, children };
   });
-
-  return {
-    total: parents.reduce((sum, parent) => sum + parent.count, 0),
-    parents,
-  };
+  return { total: parents.reduce((sum, parent) => sum + parent.count, 0), parents };
 }
 
 export function buildAnalyticsChartData({
   rows = [],
   chartType = 'bar',
+  xField = 'timePeriod',
+  yField = 'recordCount',
+  aggregation = 'count',
   barGroupBy = 'sourcePerson',
   barOrientation = 'vertical',
   pieGroupBy = 'language',
-  histogramGroupBy = 'sourcePerson',
+  histogramValueField = '',
   stackSegmentBy = 'sourcePerson',
   groupedBarGroupBy = 'sourcePerson',
   heatmapRowBy = 'sourcePerson',
   heatmapColumnBy = 'targetPerson',
+  multiLineMode = 'wide',
   multiLineGroupBy = 'sourcePerson',
+  multiLineSeriesFields = [],
   sunburstParentBy = 'sourceLoc',
   sunburstChildBy = 'sourcePerson',
   topN = 10,
@@ -619,100 +663,40 @@ export function buildAnalyticsChartData({
 } = {}) {
   const filteredRows = filterRowsByAnalyticsDateRange(rows, startYear, endYear);
   const rangeSuffix = startYear && endYear ? ` Selected range: ${Math.min(startYear, endYear)}–${Math.max(startYear, endYear)}.` : '';
+  const metricLabel = yField === 'recordCount' ? 'record count' : `${aggregation} ${humanizeFieldLabel(yField)}`;
 
   if (chartType === 'line') {
-    const { granularity, data } = buildLettersByPeriodData(filteredRows, startYear, endYear);
-    return {
-      chartType: 'line',
-      title: `Correspondence volume by ${granularity}`,
-      subtitle: `Letter count by ${granularity} in the current filtered data.${rangeSuffix}`,
-      xLabel: 'Time period',
-      yLabel: 'Letters',
-      data,
-    };
+    const data = buildLineChartData(filteredRows, xField, yField, aggregation, startYear, endYear);
+    return { chartType: 'line', title: `${humanizeFieldLabel(yField)} by ${humanizeFieldLabel(xField)}`, subtitle: `${metricLabel} by selected x-axis.${rangeSuffix}`, xLabel: humanizeFieldLabel(xField), yLabel: humanizeFieldLabel(yField), data };
   }
-
   if (chartType === 'pie') {
-    const data = buildBarChartData(filteredRows, pieGroupBy, topN);
-    return {
-      chartType: 'pie',
-      title: `${humanizeFieldLabel(pieGroupBy)} share`,
-      subtitle: `Letters grouped by selected category.${rangeSuffix}`,
-      data,
-    };
+    const data = buildBarChartData(filteredRows, pieGroupBy, topN, yField, aggregation);
+    return { chartType: 'pie', title: `${humanizeFieldLabel(pieGroupBy)} share`, subtitle: `${metricLabel} grouped by selected category.${rangeSuffix}`, data };
   }
-
   if (chartType === 'histogram') {
-    const data = buildHistogramChartData(filteredRows, histogramGroupBy);
-    return {
-      chartType: 'histogram',
-      title: `Distribution by ${humanizeFieldLabel(histogramGroupBy)} volume`,
-      subtitle: `Number of categories falling into each letter-count range.${rangeSuffix}`,
-      data,
-    };
+    const data = buildHistogramChartData(filteredRows, histogramValueField || yField);
+    return { chartType: 'histogram', title: `Distribution of ${humanizeFieldLabel(histogramValueField || yField)}`, subtitle: `Binned numeric values from the selected field.${rangeSuffix}`, data };
   }
-
   if (chartType === 'groupedBar') {
-    const { granularity, series, data } = buildGroupedBarChartData(filteredRows, groupedBarGroupBy, topN, startYear, endYear);
-    return {
-      chartType: 'groupedBar',
-      title: `${humanizeFieldLabel(groupedBarGroupBy)} by ${granularity}`,
-      subtitle: `Side-by-side period counts for top ${Math.max(1, Number(topN) || 10)} categories.${rangeSuffix}`,
-      series,
-      data,
-    };
+    const { series, data } = buildGroupedBarChartData(filteredRows, xField, groupedBarGroupBy, topN, yField, aggregation, startYear, endYear);
+    return { chartType: 'groupedBar', title: `${humanizeFieldLabel(groupedBarGroupBy)} by ${humanizeFieldLabel(xField)}`, subtitle: `Side-by-side groups using ${metricLabel}.${rangeSuffix}`, series, data };
   }
-
   if (chartType === 'stackedBar') {
-    const { granularity, series, data } = buildStackedBarChartData(filteredRows, stackSegmentBy, topN, startYear, endYear);
-    return {
-      chartType: 'stackedBar',
-      title: `Letters by ${granularity} and ${humanizeFieldLabel(stackSegmentBy)}`,
-      subtitle: `Period letter counts split by ${humanizeFieldLabel(stackSegmentBy)}.${rangeSuffix}`,
-      series,
-      data,
-    };
+    const { series, data } = buildStackedBarChartData(filteredRows, xField, stackSegmentBy, topN, yField, aggregation, startYear, endYear);
+    return { chartType: 'stackedBar', title: `${humanizeFieldLabel(xField)} split by ${humanizeFieldLabel(stackSegmentBy)}`, subtitle: `Stacked segments using ${metricLabel}.${rangeSuffix}`, series, data };
   }
-
   if (chartType === 'multiLine') {
-    const data = buildMultiLineChartData(filteredRows, multiLineGroupBy, topN, startYear, endYear);
-    return {
-      chartType: 'multiLine',
-      title: `Period trends by ${humanizeFieldLabel(multiLineGroupBy)}`,
-      subtitle: `Top ${Math.max(1, Number(topN) || 10)} categories shown across available periods.${rangeSuffix}`,
-      ...data,
-    };
+    const data = buildMultiLineChartData(filteredRows, xField, multiLineMode, multiLineSeriesFields, multiLineGroupBy, yField, aggregation, topN, startYear, endYear);
+    return { chartType: 'multiLine', title: `Trends by ${humanizeFieldLabel(xField)}`, subtitle: multiLineMode === 'wide' ? `Selected numeric columns shown as separate series.${rangeSuffix}` : `Series split by ${humanizeFieldLabel(multiLineGroupBy)} using ${metricLabel}.${rangeSuffix}`, ...data };
   }
-
   if (chartType === 'heatmap') {
-    const data = buildHeatmapChartData(filteredRows, heatmapRowBy, heatmapColumnBy, topN);
-    return {
-      chartType: 'heatmap',
-      title: `${humanizeFieldLabel(heatmapRowBy)} × ${humanizeFieldLabel(heatmapColumnBy)}`,
-      subtitle: `Letter count by paired categorical fields.${rangeSuffix}`,
-      ...data,
-    };
+    const data = buildHeatmapChartData(filteredRows, heatmapRowBy, heatmapColumnBy, topN, yField, aggregation);
+    return { chartType: 'heatmap', title: `${humanizeFieldLabel(heatmapRowBy)} × ${humanizeFieldLabel(heatmapColumnBy)}`, subtitle: `Matrix cells use ${metricLabel}.${rangeSuffix}`, ...data };
   }
-
   if (chartType === 'sunburst') {
     const data = buildSunburstChartData(filteredRows, sunburstParentBy, sunburstChildBy, topN);
-    return {
-      chartType: 'sunburst',
-      title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`,
-      subtitle: `Hierarchical part-to-whole view by selected parent and child fields.${rangeSuffix}`,
-      ...data,
-    };
+    return { chartType: 'sunburst', title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`, subtitle: `Hierarchical part-to-whole view by selected parent and child fields.${rangeSuffix}`, ...data };
   }
-
-  const data = buildBarChartData(filteredRows, barGroupBy, topN);
-
-  return {
-    chartType: 'bar',
-    orientation: barOrientation,
-    title: `Top ${Math.max(1, Number(topN) || 10)} ${humanizeFieldLabel(barGroupBy)}`,
-    subtitle: `Letters grouped by selected category.${rangeSuffix}`,
-    xLabel: humanizeFieldLabel(barGroupBy),
-    yLabel: 'Letters',
-    data,
-  };
+  const data = buildBarChartData(filteredRows, barGroupBy, topN, yField, aggregation);
+  return { chartType: 'bar', orientation: barOrientation, title: `${humanizeFieldLabel(yField)} by ${humanizeFieldLabel(barGroupBy)}`, subtitle: `${metricLabel} grouped by selected category.${rangeSuffix}`, xLabel: humanizeFieldLabel(barGroupBy), yLabel: humanizeFieldLabel(yField), data };
 }

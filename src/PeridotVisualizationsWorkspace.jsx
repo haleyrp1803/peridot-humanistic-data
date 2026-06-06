@@ -1,15 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
+import { ANALYTICS_CHART_DEFINITIONS } from './analyticsConfig.js';
 
 const VISUALIZATION_TOOLS = Object.freeze({
   POINT_MAP: 'point-map',
   ROUTE_MAP: 'route-map',
   ENTITY_NETWORK: 'entity-network',
   FORCE_NETWORK: 'force-network',
-  ANALYTICS: 'analytics',
   CAPABILITY_SUMMARY: 'capability-summary',
 });
+
+function chartToolKey(chartType) {
+  return `chart:${chartType}`;
+}
+
+function chartTypeFromToolKey(toolKey) {
+  return String(toolKey || '').startsWith('chart:') ? String(toolKey).slice(6) : null;
+}
 
 function numberLabel(value) {
   return Number.isFinite(value) ? String(value) : '0';
@@ -109,7 +117,7 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
       value: availability.hasCharts ? `${numberLabel(availability.rowCount)} records` : 'Not available',
       ready: availability.hasCharts,
       note: availability.hasCharts
-        ? 'The active dataset can be sent to Chart Visualizations. Measure-aware charting is the next implementation pass.'
+        ? 'The active dataset can be sent to Chart Visualizations, where chart types expose x-axis, y-axis, grouping, series, and aggregation controls.'
         : 'No active records are available for charting.',
     },
   ];
@@ -172,6 +180,7 @@ export function PeridotVisualizationsWorkspace({
   onSelectPeopleNetwork,
   onSelectForceDirected,
   onOpenAnalytics,
+  onOpenChartVisualization,
   onOpenSearch,
 }) {
   const availability = {
@@ -190,7 +199,7 @@ export function PeridotVisualizationsWorkspace({
   };
 
   const initialTool = visualizationsWorkspacePanel === 'analytics'
-    ? VISUALIZATION_TOOLS.ANALYTICS
+    ? chartToolKey(analyticsWorkspaceProps?.analyticsState?.chartType || 'bar')
     : viewMode === 'geographic'
       ? availability.hasRouteMap
         ? VISUALIZATION_TOOLS.ROUTE_MAP
@@ -205,9 +214,9 @@ export function PeridotVisualizationsWorkspace({
 
   useEffect(() => {
     if (visualizationsWorkspacePanel === 'analytics') {
-      setSelectedTool(VISUALIZATION_TOOLS.ANALYTICS);
+      setSelectedTool(chartToolKey(analyticsWorkspaceProps?.analyticsState?.chartType || 'bar'));
     }
-  }, [visualizationsWorkspacePanel]);
+  }, [analyticsWorkspaceProps?.analyticsState?.chartType, visualizationsWorkspacePanel]);
 
   useEffect(() => () => {
     if (menuCloseTimerRef.current) {
@@ -295,20 +304,23 @@ export function PeridotVisualizationsWorkspace({
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
     },
-    [VISUALIZATION_TOOLS.ANALYTICS]: {
-      label: 'Analytics',
-      category: 'Chart Visualizations',
-      available: availability.hasCharts,
-      action: onOpenAnalytics,
-      unavailableTitle: 'Chart Visualizations are not available for this dataset.',
-      why: 'No active records are available for charting.',
-      availableInstead: [
-        availability.hasPointMap ? 'Point Map' : null,
-        availability.hasRouteMap ? 'Route Map' : null,
-        availability.hasNetwork ? 'Network Visualizations' : null,
-        availability.hasExploreData ? 'Explore Your Data' : null,
-      ].filter(Boolean),
-    },
+    ...Object.fromEntries(Object.values(ANALYTICS_CHART_DEFINITIONS).map((chartDefinition) => [
+      chartToolKey(chartDefinition.key),
+      {
+        label: chartDefinition.label,
+        category: 'Chart Visualizations',
+        available: availability.hasCharts,
+        action: () => (typeof onOpenChartVisualization === 'function' ? onOpenChartVisualization(chartDefinition.key) : onOpenAnalytics?.()),
+        unavailableTitle: `${chartDefinition.label} is not available for this dataset.`,
+        why: 'No active records or chartable fields are available for this chart.',
+        availableInstead: [
+          availability.hasPointMap ? 'Point Map' : null,
+          availability.hasRouteMap ? 'Route Map' : null,
+          availability.hasNetwork ? 'Network Visualizations' : null,
+          availability.hasExploreData ? 'Explore Your Data' : null,
+        ].filter(Boolean),
+      },
+    ])),
     [VISUALIZATION_TOOLS.CAPABILITY_SUMMARY]: {
       label: 'Capability Summary',
       category: 'Explore Your Data',
@@ -318,7 +330,7 @@ export function PeridotVisualizationsWorkspace({
       why: '',
       availableInstead: [],
     },
-  }), [availability.hasCharts, availability.hasExploreData, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onSelectForceDirected, onSelectPeopleNetwork, onSelectPlaceMap]);
+  }), [availability.hasCharts, availability.hasExploreData, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onOpenChartVisualization, onSelectForceDirected, onSelectPeopleNetwork, onSelectPlaceMap]);
 
   const selectedDefinition = toolDefinitions[selectedTool] || toolDefinitions[VISUALIZATION_TOOLS.CAPABILITY_SUMMARY];
   const activeVisualizationLabel = selectedDefinition.label;
@@ -336,8 +348,8 @@ export function PeridotVisualizationsWorkspace({
     },
     {
       label: 'Chart Visualizations',
-      description: 'Analytics and charts',
-      tools: [VISUALIZATION_TOOLS.ANALYTICS],
+      description: 'Choose a chart type',
+      tools: Object.values(ANALYTICS_CHART_DEFINITIONS).map((definition) => chartToolKey(definition.key)),
     },
     {
       label: 'Explore Your Data',
@@ -393,7 +405,7 @@ export function PeridotVisualizationsWorkspace({
       );
     }
 
-    if (selectedTool === VISUALIZATION_TOOLS.ANALYTICS) {
+    if (chartTypeFromToolKey(selectedTool)) {
       return (
         <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-auto rounded-[28px] border border-[#c4e0ef]/50 bg-[rgba(8,39,25,0.9)] p-3 shadow-[0_20px_54px_rgba(0,0,0,0.34)] backdrop-blur-sm md:p-4">
           <AnalyticsPanelContent analyticsState={analyticsWorkspaceProps.analyticsState} />
