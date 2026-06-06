@@ -22,7 +22,6 @@ import {
   PERIDOT_CORE_FIELD_DEFINITIONS,
   PERIDOT_POINT_FIELD_DEFINITIONS,
   PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS,
-  PERIDOT_TEMPORAL_FIELD_DEFINITIONS,
   validatePeridotColumnMapping,
 } from './peridotColumnMapping.js';
 import {
@@ -52,6 +51,12 @@ import {
   SINGLE_TABLE_STEP_KEYS,
   WORKBOOK_STEP_KEYS,
 } from './peridotColumnMappingUiConfig.js';
+import {
+  CoreRoleMappingTable,
+  TemporalMappingTable,
+  WorkbookCoreRoleMappingTable,
+  WorkbookTemporalMappingTable,
+} from './PeridotMappingFieldControls.jsx';
 
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
@@ -269,113 +274,12 @@ function CapabilityAuditCard({ audit, note }) {
 }
 
 
-function TemporalMappingTable({ headers, temporalMapping = {}, onChange, compact = false }) {
-  return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Temporal roles</div>
-          <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">Map one date, a start/end interval, or multiple recorded dates.</div>
-        </div>
-      </div>
-      <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-        The single-date role preserves simple record workflows. Date Start and Date End preserve intervals such as sent/received dates, inception/dissolution dates, activity spans, or active date ranges.
-      </p>
-
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
-            <tr>
-              <th className="px-4 py-3">Temporal role</th>
-              {!compact ? <th className="px-4 py-3">Description</th> : null}
-              <th className="px-4 py-3">Your column</th>
-            </tr>
-          </thead>
-          <tbody className="text-[var(--panel-card-muted-text)]">
-            {PERIDOT_TEMPORAL_FIELD_DEFINITIONS.map((definition) => (
-              <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
-                <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
-                  {definition.label}
-                  <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
-                </td>
-                {!compact ? <td className="max-w-[26rem] px-4 py-3 leading-relaxed">{definition.description}</td> : null}
-                <td className="px-4 py-3">
-                  <select
-                    value={temporalMapping[definition.key] || ''}
-                    onChange={(event) => onChange(definition.key, event.target.value)}
-                    className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                  >
-                    <option value="">Unassigned</option>
-                    {headers.map((header) => (
-                      <option key={header} value={header}>{header}</option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 function MappingIntroCard({ eyebrow, title, children }) {
   return (
     <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{eyebrow}</div>
       <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{title}</div>
       <div className="mt-2">{children}</div>
-    </div>
-  );
-}
-
-function CoreRoleMappingTable({ title, description, definitions, headers, coreMapping, onChange }) {
-  return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{title}</div>
-          <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{description}</div>
-        </div>
-      </div>
-
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
-            <tr>
-              <th className="px-4 py-3">Field role</th>
-              <th className="px-4 py-3">What it does</th>
-              <th className="px-4 py-3">Used for</th>
-              <th className="px-4 py-3">Your column</th>
-            </tr>
-          </thead>
-          <tbody className="text-[var(--panel-card-muted-text)]">
-            {definitions.map((definition) => (
-              <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
-                <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
-                  {definition.label || definition.key}
-                  <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
-                </td>
-                <td className="max-w-[24rem] px-4 py-3 leading-relaxed">{definition.description}</td>
-                <td className="max-w-[14rem] px-4 py-3">{(definition.usedFor || []).join(', ')}</td>
-                <td className="px-4 py-3">
-                  <select
-                    value={coreMapping[definition.key] || ''}
-                    onChange={(event) => onChange(definition.key, event.target.value)}
-                    className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                  >
-                    <option value="">Unassigned</option>
-                    {headers.map((header) => (
-                      <option key={header} value={header}>{header}</option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }
@@ -994,143 +898,6 @@ function WorkbookSetupStep({
   );
 }
 
-
-function WorkbookTemporalMappingTable({ workbookModel, workbookMapping, onChange }) {
-  const usableSheets = getUsableWorkbookSheets(workbookModel);
-  const temporalMappings = workbookMapping.temporalMappings || {};
-
-  return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Temporal roles</div>
-      <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">Map one date, a start/end interval, or multiple recorded dates from workbook sheets.</div>
-      <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-        Use Date Start and Date End for ranges such as sent/received dates, inception/dissolution dates, active periods, or site lifespans. These roles are preserved separately from the single Date field.
-      </p>
-
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
-            <tr>
-              <th className="px-4 py-3">Temporal role</th>
-              <th className="px-4 py-3">Description</th>
-              <th className="px-4 py-3">Sheet</th>
-              <th className="px-4 py-3">Column</th>
-            </tr>
-          </thead>
-          <tbody className="text-[var(--panel-card-muted-text)]">
-            {PERIDOT_TEMPORAL_FIELD_DEFINITIONS.map((definition) => {
-              const currentRef = temporalMappings[definition.key] || {};
-              const selectedSheet = getWorkbookSheet(workbookModel, currentRef.sheetName) || getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
-              const headers = selectedSheet?.headers || [];
-              return (
-                <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
-                  <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
-                    {definition.label}
-                    <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
-                  </td>
-                  <td className="max-w-[24rem] px-4 py-3 leading-relaxed">{definition.description}</td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={currentRef.sheetName || ''}
-                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(event.target.value, ''))}
-                      className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                    >
-                      <option value="">Unassigned</option>
-                      {usableSheets.map((sheet) => (
-                        <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={currentRef.columnName || ''}
-                      disabled={!currentRef.sheetName}
-                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(currentRef.sheetName, event.target.value))}
-                      className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
-                    >
-                      <option value="">Unassigned</option>
-                      {headers.map((header) => (
-                        <option key={header} value={header}>{header}</option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function WorkbookCoreRoleMappingTable({ title, description, definitions, workbookModel, workbookMapping, onChange }) {
-  const usableSheets = getUsableWorkbookSheets(workbookModel);
-  const coreMappings = workbookMapping.coreMappings || {};
-
-  return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{title}</div>
-      <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{description}</div>
-
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
-        <table className="min-w-full border-collapse text-left text-sm">
-          <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
-            <tr>
-              <th className="px-4 py-3">Field role</th>
-              <th className="px-4 py-3">What it does</th>
-              <th className="px-4 py-3">Used for</th>
-              <th className="px-4 py-3">Sheet</th>
-              <th className="px-4 py-3">Column</th>
-            </tr>
-          </thead>
-          <tbody className="text-[var(--panel-card-muted-text)]">
-            {definitions.map((definition) => {
-              const currentRef = coreMappings[definition.key] || {};
-              const selectedSheet = getWorkbookSheet(workbookModel, currentRef.sheetName) || getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
-              const headers = selectedSheet?.headers || [];
-              return (
-                <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
-                  <td className="px-4 py-3 font-semibold text-[var(--panel-card-text)]">
-                    {definition.label || definition.key}
-                    <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
-                  </td>
-                  <td className="max-w-[24rem] px-4 py-3 leading-relaxed">{definition.description}</td>
-                  <td className="max-w-[14rem] px-4 py-3">{(definition.usedFor || []).join(', ')}</td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={currentRef.sheetName || ''}
-                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(event.target.value, ''))}
-                      className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                    >
-                      <option value="">Unassigned</option>
-                      {usableSheets.map((sheet) => (
-                        <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-3">
-                    <select
-                      value={currentRef.columnName || ''}
-                      disabled={!currentRef.sheetName}
-                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(currentRef.sheetName, event.target.value))}
-                      className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
-                    >
-                      <option value="">Unassigned</option>
-                      {headers.map((header) => (
-                        <option key={header} value={header}>{header}</option>
-                      ))}
-                    </select>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
 
 function WorkbookIdentifyRecordsStep({ workbookModel, workbookMapping }) {
   const selectedSheet = getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
