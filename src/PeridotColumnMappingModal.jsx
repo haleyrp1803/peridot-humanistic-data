@@ -44,26 +44,15 @@ import {
   validatePeridotWorkbookMapping,
 } from './peridotWorkbookMapping.js';
 import { auditPeridotDataCapabilities } from './peridotDataCapabilityAudit.js';
+import {
+  CORE_FIELD_GROUPS,
+  definitionsForFields,
+  formatCapabilityName,
+  formatRecordShapeName,
+  SINGLE_TABLE_STEP_KEYS,
+  WORKBOOK_STEP_KEYS,
+} from './peridotColumnMappingUiConfig.js';
 
-const SINGLE_TABLE_STEP_KEYS = ['preview', 'identify', 'time', 'places', 'relationships', 'evidence', 'review'];
-const WORKBOOK_STEP_KEYS = ['workbook-preview', 'workbook-setup', 'workbook-identify', 'workbook-time', 'workbook-places', 'workbook-relationships', 'workbook-evidence', 'workbook-review'];
-
-const CORE_FIELD_GROUPS = Object.freeze({
-  relationship: Object.freeze(['Source_Name', 'Target_Name']),
-  routePlaces: Object.freeze([
-    'Source_Location',
-    'Source_Latitude',
-    'Source_Longitude',
-    'Target_Location',
-    'Target_Latitude',
-    'Target_Longitude',
-  ]),
-});
-
-function definitionsForFields(definitions = [], fields = []) {
-  const fieldSet = new Set(fields);
-  return definitions.filter((definition) => fieldSet.has(definition.key));
-}
 
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
@@ -183,29 +172,6 @@ function PreviewTable({ rows = [], headers = [], maxRows = 5 }) {
 }
 
 
-function formatRecordShapeName(shape) {
-  const labels = {
-    directedRelationship: 'Directed relationship',
-    pointSite: 'Point / site',
-    timeSeriesMeasurement: 'Time-series measurement',
-    genericEvidence: 'Generic evidence',
-  };
-  return labels[shape] || shape;
-}
-
-function formatCapabilityName(capability) {
-  const labels = {
-    inspectorReady: 'Inspector-ready',
-    searchReady: 'Search-ready',
-    pointMapReady: 'Point-map-ready',
-    routeMapReady: 'Route-map-ready',
-    networkReady: 'Network-ready',
-    timelineReady: 'Timeline-ready',
-    chartReady: 'Chart-ready',
-    exportReady: 'Export-ready',
-  };
-  return labels[capability] || capability;
-}
 
 function CapabilityAuditCard({ audit, note }) {
   const dataset = audit?.dataset;
