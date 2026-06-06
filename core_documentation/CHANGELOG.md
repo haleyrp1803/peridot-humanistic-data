@@ -2,9 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`08b628b` — `Use include and ignore checkboxes for evidence fields`** on branch **`main`**
+- **`43fa09d` — `Remove obsolete export workspace route`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, and the expanded humanistic-data capability milestone. The current app is workspace-first for Home, Data, Visualizations, Search & Filter, Theme, Export, and the full Inspector workspace, while retaining compact side-panel Inspector summaries for visualization clicks and retaining Timeline as a transitional side-panel bridge. Recent milestones include capability-aware visualization menus, flexible chart-variable controls, record-count support across aggregate charts, generalized user-facing language, generic chart/evidence row admission, and include/ignore checkbox handling for evidence fields. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, and the June 2026 visualization-workspace compression and navigation/export consolidation pass. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. The standalone Export workspace route has been removed from the active app path, while Search and Inspector remain internally available through Explore/workflow actions and compatibility routes. Recent milestones include capability-aware visualization menus, flexible chart-variable controls, record-count support across aggregate charts, generalized user-facing language, generic chart/evidence row admission, and include/ignore checkbox handling for evidence fields. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 
 The current Data Inputs / import workflow now provides:
 
@@ -50,17 +50,21 @@ The current interface/workspace workflow now provides:
 
 - Home / welcome workspace with Upload my data and Use sample data start paths;
 - hamburger-triggered labeled menu replacing the persistent icon rail as the primary visible navigation surface;
-- full-window workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export;
-- Visualizations workspace containing Place Map, People Network, Force-Directed, and Analytics;
-- Search & Filter promoted to a full workspace while preserving draft/apply filtering behavior;
-- Export promoted to a full workspace with a live visualization preview preserved for SVG/PNG export;
-- Theme promoted to a full workspace;
+- simplified hamburger stack: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**;
+- full-window workspaces for Data, Visualizations, Explore, Learn More, Themes and Accessibility, Search, and Inspector-compatible evidence review paths, with Search and Inspector no longer exposed as top-level hamburger destinations;
+- Visualizations workspace containing Place Map, People Network, Force-Directed, Chart Visualizations, a collapsible visualization header, and a bottom timeline scrubber;
+- Chart Visualizations redesigned as a large chart workspace with controls on the left and the chart canvas on the right;
+- chart export consolidated into the shared Visualizations header Export menu;
+- map and network export consolidated into the same Visualizations header Export menu, replacing the standalone Export workspace route;
+- map legend and map controls minimized by default as bottom-corner buttons;
+- Timeline implemented as a compact bottom Visualizations scrubber with dual range handles, playback controls, and collapse/expand behavior;
+- Explore workspace added as the combined data-exploration, capability-summary, Search, and Inspector-adjacent entry point;
+- Learn More about Peridot placeholder workspace added for future project information, credits, tutorials, and help content;
+- Theme reframed as **Themes and Accessibility**;
 - Data workspace using the unified CSV/TSV/XLSX/XLS uploader;
-- Timeline retained as a transitional side-panel bridge pending a later bottom Visualizations timeline/scrubber design;
-- Inspector now implemented as a dual-mode system: compact side-panel summaries for visualization clicks plus a full evidence-dossier workspace from hamburger/Expand, sharing selection and history.
+- Inspector implemented as a dual-mode system: compact side-panel summaries for visualization clicks plus a full evidence-dossier workspace from Expand/linked-data navigation, sharing selection and history;
 - capability-aware Visualizations menus grouping tools as Mapping Visualizations, Network Visualizations, Chart Visualizations, and Explore Your Data;
 - unavailable-state explanations for visualization types that the active dataset cannot support;
-- direct chart-type selection from the Chart Visualizations menu;
 - flexible chart variable controls for x-axis, y-axis/metric, grouping/series, aggregation, and selected wide numeric series;
 - explicit Record count support for bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap charts;
 - generic chart/evidence records accepted into the active dataset even when they have no map or network roles;
@@ -71,6 +75,22 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 ---
 
 ## Current milestone notes
+
+### Visualization workspace compression, menu simplification, timeline, and export consolidation milestone
+
+- Redesigned Chart Visualizations from a compact chart-picker panel into a large chart workspace with controls on the left and a full-size chart canvas on the right.
+- Removed the redundant chart-workspace header and scaled chart rendering so charts fit the available workspace without internal scrolling.
+- Added a collapsible Visualizations header and a collapsible bottom Timeline bar, both starting expanded.
+- Implemented the Timeline as a compact bottom scrubber inside Visualizations with dual range handles, playback controls, reset/all-dates controls, and playback position controls.
+- Changed map legend and controls to start minimized as bottom-corner buttons that can be opened and minimized in place.
+- Simplified the hamburger menu to **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**.
+- Added `src/PeridotExploreWorkspace.jsx` for combined capability summary, Search access, and Inspector-adjacent evidence review.
+- Added `src/PeridotLearnMoreWorkspace.jsx` as a placeholder for future project information, credits, tutorials, and help content.
+- Reframed Theme as **Themes and Accessibility**.
+- Moved map/network export actions into the Visualizations header Export menu.
+- Moved chart PNG export out of the chart controls rail and into the same Visualizations header Export menu.
+- Removed the obsolete standalone Export workspace route and deleted `src/PeridotExportWorkspace.jsx` from the active source tree.
+- Current implemented visualization-workspace/export baseline: **`43fa09d` — `Remove obsolete export workspace route`**.
 
 ### Visualization capability and flexible Analytics milestone
 
@@ -204,7 +224,16 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 
 ## Current branch status
 
-- **`08b628b` — `Use include and ignore checkboxes for evidence fields`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`43fa09d` — `Remove obsolete export workspace route`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`aca8f1f` — `Update visualization export wiring`** completes the App-level wiring for header-based visualization export.
+- **`b6eb7c0` — `Move chart export into visualization header`** consolidates chart PNG export into the shared Visualizations header Export menu.
+- **`0b0cacd` — `Simplify hamburger menu and add Explore workspace`** adds the simplified product navigation, Explore workspace, Learn More workspace, and Themes and Accessibility framing.
+- **`47aaa03` — `Remove redundant chart workspace header`** removes duplicate chart workspace chrome.
+- **`675a655` — `Fit charts to workspace and minimize map overlays`** scales charts to the available workspace and starts map overlays minimized.
+- **`b10a68b` — `Compact visualization header and timeline controls`** adds collapsible header/timeline controls and the compact dual-handle timeline layout.
+- **`b0d83fb` — `Simplify chart workspace and add bottom timeline scrubber`** introduces the large chart workspace and bottom Visualizations timeline scrubber.
+- **`7fcb348` — `Document flexible data and chart capability milestone`** documented the preceding flexible data/chart capability milestone.
+- **`08b628b` — `Use include and ignore checkboxes for evidence fields`** is the preceding documented baseline for the flexible data capability milestone.
 - **`231ccde` — `Accept generic chart records`** accepts chart/evidence rows into the active dataset without requiring map or network roles.
 - **`b19019e` — `Generalize user-facing language beyond correspondence`** updates visible language toward humanistic records, entities, and data roles.
 - **`ab7affa` — `Clean up flexible Analytics chart controls`** stabilizes flexible chart variables and multi-line chart modes.
@@ -286,10 +315,19 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided for this documentation pass, newest first. The newest rows reflect the sync ritual ending at `e7c3b57`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `43fa09d`.
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
+| 2026-06-06 | `43fa09d` | (HEAD -> main, origin/main, origin/HEAD) | Remove obsolete export workspace route |
+| 2026-06-06 | `aca8f1f` |  | Update visualization export wiring |
+| 2026-06-06 | `b6eb7c0` |  | Move chart export into visualization header |
+| 2026-06-06 | `0b0cacd` |  | Simplify hamburger menu and add Explore workspace |
+| 2026-06-06 | `47aaa03` |  | Remove redundant chart workspace header |
+| 2026-06-06 | `675a655` |  | Fit charts to workspace and minimize map overlays |
+| 2026-06-06 | `b10a68b` |  | Compact visualization header and timeline controls |
+| 2026-06-06 | `b0d83fb` |  | Simplify chart workspace and add bottom timeline scrubber |
+| 2026-06-06 | `7fcb348` |  | Document flexible data and chart capability milestone |
 | 2026-06-06 | `08b628b` | (HEAD -> main, origin/main, origin/HEAD) | Use include and ignore checkboxes for evidence fields |
 | 2026-06-06 | `231ccde` |  | Accept generic chart records |
 | 2026-06-06 | `b19019e` |  | Generalize user-facing language beyond correspondence |

@@ -22,11 +22,21 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`08b628b` — `Use include and ignore checkboxes for evidence fields`**
+- **`43fa09d` — `Remove obsolete export workspace route`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, and the current broader data-capability milestone. The Inspector now has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from hamburger/Expand, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow now supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus, and Analytics supports flexible chart variables rather than fixed correspondence-count assumptions.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, and the June 2026 visualization workspace/menu/export consolidation pass. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large chart workspace; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
 
 Recent data, visualization, and language milestones include:
+
+- **`43fa09d` — `Remove obsolete export workspace route`**
+- **`aca8f1f` — `Update visualization export wiring`**
+- **`b6eb7c0` — `Move chart export into visualization header`**
+- **`0b0cacd` — `Simplify hamburger menu and add Explore workspace`**
+- **`47aaa03` — `Remove redundant chart workspace header`**
+- **`675a655` — `Fit charts to workspace and minimize map overlays`**
+- **`b10a68b` — `Compact visualization header and timeline controls`**
+- **`b0d83fb` — `Simplify chart workspace and add bottom timeline scrubber`**
+- **`7fcb348` — `Document flexible data and chart capability milestone`**
 
 - **`08b628b` — `Use include and ignore checkboxes for evidence fields`**
 - **`231ccde` — `Accept generic chart records`**
@@ -81,6 +91,7 @@ This project should continue to follow the user's bounded-pass workflow:
 - checkpoint before higher-risk work
 - separate behavior changes from visual changes
 - when runtime issues appear after interaction, check the **F12 browser console early**
+- maintain comments thoroughly enough for a new human developer to understand major sections, cross-file relationships, fragile paths, and non-obvious decisions
 
 ---
 
@@ -157,20 +168,22 @@ Peridot is a Vite/React/Tailwind correspondence visualizer that has moved from a
 
 The current top-level interface includes:
 
-- Home / welcome workspace
-- Data workspace
-- Visualizations workspace
-- Search & Filter workspace
-- Theme workspace
-- Export workspace
-- Timeline transitional side-panel bridge
+- Home / welcome startup path
+- Manage Your Data / Data workspace
+- Visualize Your Data / Visualizations workspace
+- Explore Your Data workspace
+- Learn More about Peridot placeholder workspace
+- Themes and Accessibility workspace
+- Search & Filter workspace reachable through Explore/workflow actions
+- bottom Timeline scrubber integrated with Visualizations
 - Inspector dual-mode compact/full evidence system
+- in-place Visualizations header Export menu
 
 The current Visualizations workspace includes capability-aware menu groups:
 
 - **Mapping Visualizations** — Point Map and Route Map
 - **Network Visualizations** — Entity / People Network and Force-Directed Network
-- **Chart Visualizations** — Bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap charts
+- **Chart Visualizations** — large chart workspace for Bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap charts
 - **Explore Your Data** — Capability Summary and search/exploration affordances
 
 Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing model now groups map, network, force-directed, and chart tools together inside Visualizations.
@@ -184,12 +197,12 @@ The app includes:
 - database-first handling of messy/incomplete historical records
 - graph derivation
 - interactive SVG-based rendering
-- year-based timeline filtering and playback through the current bridge
+- year-based timeline filtering and playback through the bottom Visualizations scrubber
 - dual-mode Inspector workflow with compact side-panel summaries and a full evidence-dossier workspace
 - implemented Search & Filter consolidation defining one active filtered dataset for map, Inspector, Analytics, Timeline, and Export workflows
 - theme presets and visual controls in a full workspace
-- export tools for image and tabular outputs in a full workspace
-- Analytics charting tools embedded in Visualizations
+- export tools for image and tabular outputs through the Visualizations header
+- Chart Visualizations embedded in Visualizations
 
 The main maintenance challenge remains structural concentration in `src/App.jsx`, but that concentration has been reduced through bounded extraction passes.
 
@@ -199,13 +212,12 @@ The main maintenance challenge remains structural concentration in `src/App.jsx`
 
 Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel compatibility contract building, Search & Filter state, timeline state, inspector navigation state, export wiring, and the live Data workflow. It wires template download, upload parsing, arbitrary CSV/TSV/workbook mapping flow, validation summary state, normalization output, upload-source reset behavior, and modal visibility.
 
-`App.jsx` no longer contains the inline Home, Data, Theme, Visualizations, Search, Export, or hamburger-menu UI components. Those have been extracted into dedicated `Peridot*Workspace` / menu files. It still remains the main state/orchestration boundary.
+`App.jsx` no longer contains the inline Home, Data, Theme, Visualizations, Explore, Learn More, Search, Export, or hamburger-menu UI components. Those have been extracted into dedicated `Peridot*Workspace` / menu files. It still remains the main state/orchestration boundary.
 
 ### `src/LeftControlPanel.jsx`
 
 Legacy shared side-panel shell and compatibility host. It still contains the old rail/panel structure and legacy panel content. In the current hamburger workflow, most major workflows have moved to full workspaces; the side-panel shell remains structurally important primarily for:
 
-- **Timeline** bridge behavior
 - **Inspector** bridge behavior and auto-open interactions from map/network clicks
 
 Do not broadly delete or rename this file’s compatibility-sensitive paths until Timeline and Inspector routing are resolved. In particular, old `showLeftSidebar` / `showRightSidebar` naming may still preserve Inspector auto-open behavior even though the names are semantically stale.
@@ -213,11 +225,11 @@ Do not broadly delete or rename this file’s compatibility-sensitive paths unti
 
 ### `src/peridotWorkspaceConfig.js`
 
-Workspace-mode vocabulary and helper functions used by `App.jsx` for Home, Data, Visualizations, Search, Inspector, Timeline, Theme, and Export routing.
+Workspace-mode vocabulary and helper functions used by `App.jsx` for Home, Data, Visualizations, Explore, Learn More, Search, Inspector, and Themes/Accessibility routing. Export and Timeline are now Visualizations-integrated features rather than standalone workspace modes.
 
 ### `src/PeridotHamburgerMenu.jsx`
 
-Primary visible navigation component. It renders the hamburger button and labeled menu options. It replaces the earlier persistent icon rail as the intended user-facing navigation model.
+Primary visible navigation component. It renders the hamburger button and the simplified task-oriented menu: Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
 
 ### `src/PeridotHomeWorkspace.jsx`
 
@@ -229,7 +241,7 @@ Full Data workspace for CSV template download, unified CSV/TSV/XLSX/XLS upload, 
 
 ### `src/PeridotVisualizationsWorkspace.jsx`
 
-Full Visualizations workspace. It contains capability-aware dropdown groups for mapping, network, chart, and data-exploration views; renders unavailable-state explanations when a dataset cannot support a selected view; routes chart selections directly into Analytics; and wraps the live map/network stage.
+Full Visualizations workspace. It contains capability-aware dropdown groups for mapping, network, chart, and data-exploration views; renders unavailable-state explanations when a dataset cannot support a selected view; hosts the large chart workspace; owns the collapsible visualization header, the bottom Timeline scrubber placement, and the shared header Export menu; and wraps the live map/network stage.
 
 ### `src/PeridotSearchWorkspace.jsx`
 
@@ -237,11 +249,15 @@ Full Search & Filter workspace. It renders active-scope summary, keyword/person/
 
 ### `src/PeridotThemeWorkspace.jsx`
 
-Full Theme workspace for Peridot default, Early modern map, and Modern map presets.
+Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, and future accessibility/appearance controls.
 
-### `src/PeridotExportWorkspace.jsx`
+### `src/PeridotExploreWorkspace.jsx`
 
-Full Export workspace for SVG, PNG, nodes CSV, and edges/routes CSV export actions. It keeps a live visualization preview mounted so SVG/PNG export can operate on the current stage.
+Full Explore workspace that combines capability-summary review, Search access, and Inspector-adjacent evidence review entry points.
+
+### `src/PeridotLearnMoreWorkspace.jsx`
+
+Placeholder workspace for future project information, credits, tutorials, and help content.
 
 ### `src/peridotCsvSchema.js`
 
@@ -304,9 +320,7 @@ Owns workbook parsing helper logic for CSV, TSV, XLSX, and XLS inputs. It isolat
 
 ### `src/AnalyticsPanel.jsx`
 
-Owns the Analytics panel UI. It renders chart selection, chart descriptions/example questions, variable controls, Analytics-local date-range controls, compact chart preview, expanded chart overlay trigger, and chart PNG export action.
-
-The expanded chart view is rendered through a React portal and overlays the map area without changing map state. Its current visual treatment uses a dark green translucent backdrop (`#182c25` at 70% opacity), cool off-white text/borders, the existing blurred-map effect behind the overlay, and a white/cream chart card.
+Owns the Analytics panel UI. It renders chart selection, chart descriptions/example questions, variable controls, Analytics-local date-range controls, and the large chart workspace. It registers chart PNG export with the Visualizations header Export menu rather than rendering a separate export control in the chart rail.
 
 ### `src/analyticsConfig.js`
 
@@ -432,18 +446,18 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - app opens to the Home workspace
 - hamburger menu is the primary visible navigation surface
-- full workspaces exist for Home, Data, Visualizations, Search & Filter, Theme, and Export
-- Timeline remains on a transitional side-panel bridge
-- Inspector remains on a transitional side-panel bridge and auto-opens from node/edge/cluster interactions
-- Timeline should eventually become a bottom timeline/scrubber integrated with Visualizations, not a standalone full workspace
-- Inspector should eventually become a full evidence-dossier workspace after a dedicated design contract
+- hamburger menu exposes Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility
+- full workspaces exist for Data, Visualizations, Explore, Learn More, Themes and Accessibility, Search, and Inspector-compatible evidence review
+- Timeline is integrated as a bottom Visualizations scrubber
+- Export is integrated as a Visualizations header menu rather than a standalone workspace
+- Inspector compact mode remains tied to visualization-click side-panel behavior and auto-opens from node/edge/cluster interactions
 
 ### Visualization modes
 
 - Place Map view
 - People Network view
 - Force-Directed view
-- Analytics inside Visualizations
+- Chart Visualizations inside Visualizations
 
 ### Person-network layouts
 
@@ -452,7 +466,7 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 ### Side-panel capabilities
 
-- legacy shared side-panel shell remains available for Timeline and Inspector bridge behavior
+- legacy shared side-panel shell remains available for Inspector bridge behavior
 - Inspector auto-opens from node, edge, and cluster interactions
 - legacy rail/Controls/Data/Search/Export/Analytics code may still exist in `LeftControlPanel.jsx`, but it is no longer the intended primary user-facing navigation path for workflows already promoted to full workspaces
 
@@ -510,9 +524,10 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - year-based date filtering
 - playback controls
-- timeline currently opens through a transitional side-panel bridge
-- month selectors removed in favor of start-year / end-year controls
-- future target: bottom Visualizations timeline/scrubber that can toggle/scrub while users view maps, networks, or charts
+- timeline is a compact bottom scrubber inside Visualizations
+- dual range handles define start and end years
+- collapse/expand behavior preserves workspace space
+- month selectors removed in favor of year-based controls
 
 ### Map and sizing capabilities
 
@@ -523,28 +538,29 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 ### Export capabilities
 
-- full Export workspace
-- SVG export
-- PNG export
+- shared Visualizations header Export menu
+- SVG export for map/network views
+- PNG export for map/network views
 - nodes CSV export
 - edges/routes CSV export
-- Analytics chart PNG export
-- live visualization preview preserved for SVG/PNG export
+- Chart Visualizations PNG export
+- standalone Export workspace route removed from the active app path
 
 ### Analytics capabilities
 
-- Analytics is now shown inside the Visualizations workspace
-- chart picker with Bar, Grouped Bar, Stacked Bar, Line, Multi-Line, Histogram, Pie, Sunburst, and Heatmap chart types
+- Chart Visualizations are shown inside the Visualizations workspace
+- chart type selector with Bar, Grouped Bar, Stacked Bar, Line, Multi-Line, Histogram, Pie, Sunburst, and Heatmap chart types
 - chart descriptions and example questions
 - chart-specific variable controls
 - curated semantic variables plus usable dynamically detected categorical metadata fields
 - explicit **Route (Place)** and **Route (Person)** variables
 - Analytics-local date-range controls for time-based charts
 - automatic time-period granularity based on selected date range
-- constrained compact preview sizing inside Visualizations
+- large chart workspace with controls on the left and the full chart canvas on the right
+- chart rendering scaled to fit without internal workspace scrolling
 - higher-contrast shared chart hover tooltips
-- expanded chart overlay with dark green translucent backdrop, cool off-white text/borders, preserved blur, and white/cream chart card
-- direct chart-type selection from the Visualizations workspace chart menu
+- chart PNG export through the shared Visualizations header Export menu
+- chart-type selection from the chart control rail
 - flexible x-axis/category, y-axis/metric, aggregation, grouping/series, histogram, heatmap, and wide numeric-series controls
 - explicit Record count metric support across aggregate chart types
 - PNG chart export
@@ -602,10 +618,10 @@ Search & Filter defines the **active filtered dataset**: the subset of loaded co
 - **Data Inputs** defines which data is loaded.
 - **Search & Filter** defines which records, people, places, routes, and time/weight scopes are in the active dataset.
 - **Controls / View** defines how the active dataset is displayed.
-- **Timeline** focuses on chronological playback and temporal navigation while consuming the applied date scope.
-- **Analytics** charts the current filtered dataset by default.
+- **Timeline** focuses on chronological playback and temporal navigation through the bottom Visualizations scrubber while consuming the applied date scope.
+- **Chart Visualizations** chart the current filtered dataset by default.
 - **Inspector** remains selection-driven, with possible later actions to filter to the selected person/place/route.
-- **Export** should label whether it exports loaded, filtered, visible, selected, or charted data.
+- **Export** is an in-place Visualizations header action and should label whether it exports loaded, filtered, visible, selected, or charted data.
 
 ### Current filters
 
@@ -692,10 +708,12 @@ Other retained presets still function as map-focused alternatives:
 
 Current routing state:
 
-- Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces
+- Hamburger entries are Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility
+- Data, Visualizations, Explore, Learn More, Themes and Accessibility, Search, and Inspector-compatible evidence review are full workspace paths
+- Export is integrated into the Visualizations header, not a top-level workspace
 - hamburger-triggered labeled menu is the intended navigation model
 - the persistent rail is no longer the intended primary visible navigation surface
-- Timeline remains transitional and side-panel-based for now
+- Timeline is integrated into Visualizations as a bottom scrubber
 - Inspector is now dual-mode: compact side panel from visualization clicks plus full workspace from hamburger/Expand/linked-data navigation
 - the legacy shared side-panel shell should be treated as a compatibility layer until Timeline and Inspector are redesigned
 
@@ -704,11 +722,11 @@ Recent committed behavior includes:
 - Home / welcome startup workspace
 - unified Data workspace upload path for CSV / TSV / XLSX / XLS
 - compact Visualizations workspace with Place Map, People Network, Force-Directed, and Analytics
-- Search & Filter promoted to full workspace
-- Export promoted to full workspace with live visualization preview
-- Theme promoted to full workspace
+- Search & Filter available as a full workspace through Explore/workflow actions
+- Export consolidated into the Visualizations header
+- Theme reframed as Themes and Accessibility
 - routing contract updated after workspace promotions
-- Timeline deliberately deferred as a future bottom Visualizations timeline/scrubber
+- Timeline implemented as a bottom Visualizations scrubber
 - Inspector full evidence-dossier workspace implemented in dual-mode form; future work should refine content density, breadcrumbs, section anchors, and visual polish
 
 ## Deferred / rolled-back work
@@ -786,6 +804,7 @@ Future work should continue to follow the user's established workflow:
 - prefer direct file delivery and exact Windows PowerShell commands
 - prefer `.txt` delivery for generated source replacements when direct source-file downloads are unreliable
 - when runtime issues appear after interaction, check the **F12 browser console early**
+- maintain comments thoroughly enough for a new human developer to understand major sections, cross-file relationships, fragile paths, and non-obvious decisions
 
 This recent work also reinforced these process rules:
 
@@ -804,16 +823,16 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`08b628b` — `Use include and ignore checkboxes for evidence fields`**
+- current documented baseline: **`43fa09d` — `Remove obsolete export workspace route`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
-- the current hamburger/workspace structure is committed; the shared side panel remains as a transitional bridge for Timeline and as the compact Inspector surface
+- the simplified hamburger/workspace structure is committed; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge
 - `InspectorPanel.jsx` is content-only
-- `LeftControlPanel.jsx` owns the legacy shared panel shell and transitional Timeline/Inspector bridge; Home/Data/Visualizations/Search/Theme/Export are full workspaces
+- `LeftControlPanel.jsx` owns the legacy shared panel shell and compact Inspector bridge; Data/Visualizations/Explore/Learn More/Search/Themes and Accessibility are full workspace paths, while Export and Timeline are Visualizations-integrated
 - `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, `peridotCsvValidation.js`, `peridotColumnMapping.js`, `PeridotColumnMappingModal.jsx`, and `peridotWorkbookParsing.js` own the current template upload, arbitrary table mapping, validation, and workbook-helper boundaries
 - current cluster, Inspector profile, dual-mode Inspector, linked-letter history, clickable linked people/places, compact summary tile, and route-row features are committed, not deferred
 - MapLibre migrated-overlay work is paused and should not be treated as the active implementation direction
@@ -821,4 +840,9 @@ A future chat should also be told that:
 - the implemented Search & Filter panel consolidates global filtering and defines the active filtered dataset before Analytics, Timeline, Inspector, and Export consume it
 - Search & Filter currently uses a compact advanced-search layout with current applied scope at the top
 - Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV mapping, workbook import with unique-ID joins, downloadable template, validation popup, and persistent upload summary
-- Analytics currently uses higher-contrast tooltips and a dark green translucent expanded-view backdrop
+- Chart Visualizations use a large left-controls/right-chart workspace, higher-contrast tooltips, fit-to-workspace chart rendering, and header-based chart PNG export
+
+
+## Code commenting standard
+
+All future implementation work should keep source comments detailed enough for a new human developer to understand what each major section does, how it relates to other app sections and files, and why fragile or non-obvious decisions were made. Comments should identify compatibility bridges, cross-file state coupling, exported helper responsibilities, and retained legacy paths. They should be updated when behavior or routing changes so documentation in the code does not drift from the active app.

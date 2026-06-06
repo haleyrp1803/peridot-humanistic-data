@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 Current clean baseline:
 
 ```text
-08b628b — Use include and ignore checkboxes for evidence fields
+43fa09d — Remove obsolete export workspace route
 ```
 
 Current branch note:
@@ -82,6 +82,7 @@ Current fragile zones include:
 - Analytics dynamic variable detection
 - Analytics flexible chart-variable controls, record-count metrics, wide numeric-series selection, and chart availability routing
 - Analytics SVG-to-PNG export rendering
+- stale or insufficient code comments around fragile compatibility and cross-file wiring
 - Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, generic chart/evidence record admission, evidence-field include/ignore checkbox behavior, coordinate-pair parsing, date-range/display-date handling, and legacy upload cleanup
 
 ---
@@ -115,6 +116,14 @@ Small targeted replacement blocks are allowed only when all of the following are
 If a patch fails, begins to loop, or requires repeated corrective scripts, stop immediately. Roll back to the last clean commit/checkpoint, restate the goal, and switch to a reviewed full-file replacement or a new implementation plan.
 
 This project is grounded in real code and real data. Do not reconstruct likely code from memory, snippets, or expectations when the actual file can be read.
+
+### Human-readable code comment rule
+
+Code should be commented thoroughly enough for a new human developer to understand what each major section does and how it relates to other app sections and files. Comments should explain architecture, data flow, fragile compatibility paths, non-obvious state coupling, and why a decision was made. They should not merely restate obvious syntax.
+
+When editing a file, review nearby comments for accuracy. Update comments that describe obsolete UI paths, removed routes, or superseded data workflows. Add short architectural comments before complex state blocks, exported helper groups, compatibility bridges, and cross-file wiring. Avoid large noisy comment blocks, but leave enough context that a future maintainer can safely continue work without relying on prior chat history.
+
+Before deleting comments, verify that the information is either obsolete, duplicated by clearer documentation, or obvious from the code. If a path is retained only for compatibility, comment that explicitly.
 
 ### Most-recent-upload rule
 
@@ -283,6 +292,14 @@ Current notable decisions:
 - Person/place profile views should aggregate linked-record information and display related people, related places, directed routes, date spans, linked letters, and selected uploaded fields where available.
 - Linked letters should open as dedicated Inspector detail views rather than long inline expansions.
 - Peridot’s primary interface direction is now workspace-first rather than side-panel-first.
+- The hamburger menu is now product-task oriented: Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
+- Search and Inspector remain available through workflow routes and compatibility paths rather than as top-level hamburger destinations.
+- Export should be an in-place visualization header action rather than a standalone top-level workspace.
+- Chart Visualizations should use a dedicated large workspace with controls on the left and the chart canvas on the right.
+- Timeline is now implemented as a bottom Visualizations scrubber; future timeline work should refine this integration rather than reviving a standalone timeline workspace.
+- Map legend and controls should start minimized to preserve visualization workspace area.
+- Learn More about Peridot is intentionally a placeholder workspace for future project information, credits, tutorials, and help content.
+- Themes and Accessibility is the appearance/settings hub; future accessibility controls should live there.
 - The hamburger-triggered labeled menu is the intended primary navigation surface; the old persistent icon rail is legacy/compatibility code unless explicitly revived.
 - Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces.
 - Timeline should not be promoted to a standalone full workspace; the preferred future direction is a bottom timeline/scrubber integrated with Visualizations.
@@ -447,8 +464,8 @@ The new chat should be told:
 
 - Peridot is the current app identity.
 - The current fixed basemap is `countries50m`.
-- The app uses a hamburger-triggered labeled menu and full workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export.
-- Timeline remains a transitional side-panel bridge and is later intended to become a bottom Visualizations timeline/scrubber.
+- The app uses a hamburger-triggered labeled menu with Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
+- Timeline is implemented as a bottom Visualizations scrubber with collapse/expand behavior and dual range handles.
 - Inspector is dual-mode: compact side-panel summaries are still used for visualization clicks, and the full evidence-dossier workspace is implemented for hamburger/Expand/linked-data navigation.
 - `LeftControlPanel.jsx` owns the legacy shared side-panel shell, the transitional Timeline bridge, and compact Inspector presentation.
 - `InspectorPanel.jsx` is the shared compact/full Inspector content shell.
@@ -457,10 +474,11 @@ The new chat should be told:
 - Documentation updates are batched, not performed after every small code commit.
 - MapLibre migrated-overlay work is paused while legacy Peridot continuation proceeds.
 - Before any code change, fully read/review the complete current affected GitHub file(s) when local and GitHub are synced.
+- Code comments should be maintained so a new human developer can understand each major section, cross-file relationship, fragile path, and non-obvious decision.
 - Use full-file replacements by default for code changes in affected files, especially dense or fragile files.
 - Avoid brittle snippet-based patching unless the full file has been reviewed and the edit is clearly unambiguous.
 - When the user uploads source files after being asked for current files, treat the most recent uploads as authoritative for that pass unless told otherwise.
-- Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout.
+- Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout, and is reached through Explore/workflow actions rather than the top-level hamburger.
 - Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, workbook import with unique-ID joins, validation popup, and persistent latest-upload summary.
 - Analytics expanded chart views currently use a dark translucent green backdrop with cool off-white text/borders and a white/cream chart card.
 - Inspector person/place profiles currently show profile summaries, compact summary buttons, role-grouped related people/places, directed route summaries, selected uploaded fields, shared linked-letter detail navigation, clickable linked people/places, and route-row dossier navigation.
