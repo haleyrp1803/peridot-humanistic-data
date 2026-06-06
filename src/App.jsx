@@ -4272,6 +4272,14 @@ export default function EuropeNetworkMapApp() {
       setIsSidePanelOpen(false);
     },
     timelineControlsProps,
+    exportControls: {
+      exportStatus,
+      handleExportSvg,
+      handleExportPng,
+      handleExportEdgesCsv,
+      handleExportNodesCsv,
+      graph,
+    },
     visualizationAvailability,
   };
 
