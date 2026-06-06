@@ -599,8 +599,10 @@ export function buildHeatmapChartData(rows = [], rowField = 'sourcePerson', colu
   return { rows: rowLabels, columns: columnLabels, cells };
 }
 
-export function buildHistogramChartData(rows = [], valueField = '') {
-  const values = rows.map((row) => parseNumber(row?.[valueField])).filter((value) => value !== null);
+export function buildHistogramChartData(rows = [], valueField = 'recordCount', groupBy = 'sourcePerson') {
+  const values = valueField === 'recordCount'
+    ? buildBarChartData(rows, groupBy, 100000, 'recordCount', 'count').map((item) => item.count).filter((value) => Number.isFinite(value))
+    : rows.map((row) => parseNumber(row?.[valueField])).filter((value) => value !== null);
   if (!values.length) return [];
   const min = Math.min(...values);
   const max = Math.max(...values);
@@ -615,7 +617,7 @@ export function buildHistogramChartData(rows = [], valueField = '') {
     const index = Math.min(binCount - 1, Math.max(0, Math.floor((value - min) / width)));
     bins[index].count += 1;
   });
-  return bins.map(({ label, count }) => ({ label, count, unit: 'records' }));
+  return bins.map(({ label, count }) => ({ label, count, unit: valueField === 'recordCount' ? 'categories' : 'records' }));
 }
 
 export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childBy = 'sourcePerson', topN = 10) {
@@ -647,7 +649,8 @@ export function buildAnalyticsChartData({
   barGroupBy = 'sourcePerson',
   barOrientation = 'vertical',
   pieGroupBy = 'language',
-  histogramValueField = '',
+  histogramValueField = 'recordCount',
+  histogramGroupBy = 'sourcePerson',
   stackSegmentBy = 'sourcePerson',
   groupedBarGroupBy = 'sourcePerson',
   heatmapRowBy = 'sourcePerson',
@@ -674,8 +677,17 @@ export function buildAnalyticsChartData({
     return { chartType: 'pie', title: `${humanizeFieldLabel(pieGroupBy)} share`, subtitle: `${metricLabel} grouped by selected category.${rangeSuffix}`, data };
   }
   if (chartType === 'histogram') {
-    const data = buildHistogramChartData(filteredRows, histogramValueField || yField);
-    return { chartType: 'histogram', title: `Distribution of ${humanizeFieldLabel(histogramValueField || yField)}`, subtitle: `Binned numeric values from the selected field.${rangeSuffix}`, data };
+    const valueField = histogramValueField || yField || 'recordCount';
+    const data = buildHistogramChartData(filteredRows, valueField, histogramGroupBy);
+    if (valueField === 'recordCount') {
+      return {
+        chartType: 'histogram',
+        title: `Distribution of record counts by ${humanizeFieldLabel(histogramGroupBy)}`,
+        subtitle: `Binned counts of records per selected category.${rangeSuffix}`,
+        data,
+      };
+    }
+    return { chartType: 'histogram', title: `Distribution of ${humanizeFieldLabel(valueField)}`, subtitle: `Binned numeric values from the selected field.${rangeSuffix}`, data };
   }
   if (chartType === 'groupedBar') {
     const { series, data } = buildGroupedBarChartData(filteredRows, xField, groupedBarGroupBy, topN, yField, aggregation, startYear, endYear);

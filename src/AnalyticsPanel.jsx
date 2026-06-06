@@ -309,7 +309,8 @@ export function AnalyticsPanelContent({
   const [yField, setYField] = useState('recordCount');
   const [aggregation, setAggregation] = useState('count');
   const [pieGroupBy, setPieGroupBy] = useState('language');
-  const [histogramValueField, setHistogramValueField] = useState('');
+  const [histogramValueField, setHistogramValueField] = useState('recordCount');
+  const [histogramGroupBy, setHistogramGroupBy] = useState('sourcePerson');
   const [stackSegmentBy, setStackSegmentBy] = useState('sourcePerson');
   const [groupedBarGroupBy, setGroupedBarGroupBy] = useState('sourcePerson');
   const [multiLineMode, setMultiLineMode] = useState('wide');
@@ -372,7 +373,9 @@ export function AnalyticsPanelContent({
 
   const selectedBarField = useMemo(() => availableBarFields.find((field) => field.key === barGroupBy) || availableBarFields[0], [availableBarFields, barGroupBy]);
   const selectedPieField = useMemo(() => availablePieFields.find((field) => field.key === pieGroupBy) || availablePieFields[0], [availablePieFields, pieGroupBy]);
-  const selectedHistogramField = useMemo(() => availableMeasureFields.find((field) => field.key === histogramValueField) || availableMeasureFields[0], [availableMeasureFields, histogramValueField]);
+  const histogramFieldOptions = yMetricOptions;
+  const selectedHistogramField = useMemo(() => histogramFieldOptions.find((field) => field.key === histogramValueField) || histogramFieldOptions[0], [histogramFieldOptions, histogramValueField]);
+  const selectedHistogramGroupField = useMemo(() => availableBarFields.find((field) => field.key === histogramGroupBy) || availableBarFields[0], [availableBarFields, histogramGroupBy]);
   const selectedStackField = useMemo(() => availableSegmentFields.find((field) => field.key === stackSegmentBy) || availableSegmentFields[0], [availableSegmentFields, stackSegmentBy]);
   const selectedGroupedBarField = useMemo(() => availableSegmentFields.find((field) => field.key === groupedBarGroupBy) || availableSegmentFields[0], [availableSegmentFields, groupedBarGroupBy]);
   const selectedMultiLineField = useMemo(() => availableSegmentFields.find((field) => field.key === multiLineGroupBy) || availableSegmentFields[0], [availableSegmentFields, multiLineGroupBy]);
@@ -397,6 +400,7 @@ export function AnalyticsPanelContent({
       barOrientation,
       pieGroupBy: selectedPieField?.key || pieGroupBy,
       histogramValueField: selectedHistogramField?.key || histogramValueField,
+      histogramGroupBy: selectedHistogramGroupField?.key || histogramGroupBy,
       stackSegmentBy: selectedStackField?.key || stackSegmentBy,
       groupedBarGroupBy: selectedGroupedBarField?.key || groupedBarGroupBy,
       heatmapRowBy: selectedHeatmapRowField?.key || heatmapRowBy,
@@ -410,7 +414,7 @@ export function AnalyticsPanelContent({
       startYear: startYear || yearRange.minYear,
       endYear: endYear || yearRange.maxYear,
     }),
-    [aggregation, barGroupBy, barOrientation, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramValueField, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
+    [aggregation, barGroupBy, barOrientation, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
   );
 
   const handleExportPng = async () => {
@@ -501,9 +505,29 @@ export function AnalyticsPanelContent({
       );
     }
     if (chartType === 'histogram') {
+      const histogramUsesRecordCount = selectedHistogramField?.key === 'recordCount';
       return (
         <VariableControlsShell>
-          {availableMeasureFields.length ? <SelectControl label="Numeric value field" value={selectedHistogramField?.key || ''} onChange={setHistogramValueField} options={availableMeasureFields} description={selectedHistogramField?.description} /> : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No numeric measure fields are available in the current data.</div>}
+          <SelectControl
+            label="Value to distribute"
+            value={selectedHistogramField?.key || 'recordCount'}
+            onChange={setHistogramValueField}
+            options={histogramFieldOptions}
+            description={histogramUsesRecordCount ? 'Bin categories by how many records each category contains.' : selectedHistogramField?.description}
+          />
+          {histogramUsesRecordCount ? (
+            availableBarFields.length ? (
+              <SelectControl
+                label="Group record counts by"
+                value={selectedHistogramGroupField?.key || ''}
+                onChange={setHistogramGroupBy}
+                options={availableBarFields}
+                description={selectedHistogramGroupField?.description || 'Choose the category whose record-count distribution should be binned.'}
+              />
+            ) : (
+              <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">Record-count histograms need at least one categorical field to group records before binning the counts.</div>
+            )
+          ) : null}
         </VariableControlsShell>
       );
     }
