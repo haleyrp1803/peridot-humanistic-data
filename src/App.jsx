@@ -3190,7 +3190,52 @@ export default function EuropeNetworkMapApp() {
     ),
     [filteredRowsByTime, mapViewportSize.width, mapViewportSize.height, personLayoutMode, minCount]
   );
-  const graph = viewMode === 'geographic' ? geographicGraph : personGraph; const analyticsFields = useMemo(() => getAvailableAnalyticsFields(filteredRowsByTime), [filteredRowsByTime]); useEffect(() => { if (analyticsChartType !== 'bar') return; const available = analyticsFields.barGroupOptions || []; if (!available.length) return; if (!available.some((field) => field.key === analyticsBarGroupBy)) { setAnalyticsBarGroupBy(available[0].key); } }, [analyticsBarGroupBy, analyticsChartType, analyticsFields]); const analyticsChartData = useMemo(() => buildAnalyticsChartData({ rows: filteredRowsByTime, chartType: analyticsChartType, barGroupBy: analyticsBarGroupBy, topN: analyticsTopN, }), [filteredRowsByTime, analyticsChartType, analyticsBarGroupBy, analyticsTopN]);
+  const graph = viewMode === 'geographic' ? geographicGraph : personGraph;
+  const analyticsFields = useMemo(() => getAvailableAnalyticsFields(filteredRowsByTime), [filteredRowsByTime]);
+  useEffect(() => {
+    if (analyticsChartType !== 'bar') return;
+    const available = analyticsFields.barGroupOptions || [];
+    if (!available.length) return;
+    if (!available.some((field) => field.key === analyticsBarGroupBy)) {
+      setAnalyticsBarGroupBy(available[0].key);
+    }
+  }, [analyticsBarGroupBy, analyticsChartType, analyticsFields]);
+  const analyticsChartData = useMemo(
+    () => buildAnalyticsChartData({
+      rows: filteredRowsByTime,
+      chartType: analyticsChartType,
+      barGroupBy: analyticsBarGroupBy,
+      topN: analyticsTopN,
+    }),
+    [filteredRowsByTime, analyticsChartType, analyticsBarGroupBy, analyticsTopN]
+  );
+
+  const visualizationAvailability = useMemo(() => {
+    const rowCount = filteredRowsByTime.length;
+    const pointCount = places.length;
+    const routeCount = filteredAggregatedEdges.length;
+    const networkNodeCount = personGraph.nodes?.length || 0;
+    const networkEdgeCount = personGraph.edges?.length || 0;
+    const chartFieldCount = [
+      ...(analyticsFields.barGroupOptions || []),
+      ...(analyticsFields.routePlaceOptions || []),
+      ...(analyticsFields.routePersonOptions || []),
+    ].length;
+
+    return {
+      rowCount,
+      pointCount,
+      routeCount,
+      networkNodeCount,
+      networkEdgeCount,
+      chartFieldCount,
+      hasPointMap: pointCount > 0,
+      hasRouteMap: routeCount > 0,
+      hasNetwork: networkNodeCount > 0 && networkEdgeCount > 0,
+      hasCharts: rowCount > 0,
+      hasExploreData: rowCount > 0,
+    };
+  }, [analyticsFields, filteredAggregatedEdges.length, filteredRowsByTime.length, personGraph.edges, personGraph.nodes, places.length]);
   const viewResetKey = useMemo(() => {
     const layoutKey = viewMode === 'person' ? `${viewMode}:${personLayoutMode}` : viewMode;
     return `${layoutKey}:${timelineMode}:${rangeStart}:${rangeEnd}`;
@@ -4172,6 +4217,11 @@ export default function EuropeNetworkMapApp() {
     onSelectPeopleNetwork: selectPeopleNetworkVisualization,
     onSelectForceDirected: selectForceDirectedVisualization,
     onOpenAnalytics: openAnalyticsWorkspace,
+    onOpenSearch: () => {
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
+      setIsSidePanelOpen(false);
+    },
+    visualizationAvailability,
   };
 
   const searchWorkspaceProps = {
