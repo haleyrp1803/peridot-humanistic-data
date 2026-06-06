@@ -313,9 +313,10 @@ export function AnalyticsPanelContent({
   const [histogramGroupBy, setHistogramGroupBy] = useState('sourcePerson');
   const [stackSegmentBy, setStackSegmentBy] = useState('sourcePerson');
   const [groupedBarGroupBy, setGroupedBarGroupBy] = useState('sourcePerson');
-  const [multiLineMode, setMultiLineMode] = useState('wide');
+  const [multiLineMode, setMultiLineMode] = useState('recordCount');
   const [multiLineGroupBy, setMultiLineGroupBy] = useState('sourcePerson');
-  const [wideSeriesPreset, setWideSeriesPreset] = useState('top');
+  const [wideSeriesPreset, setWideSeriesPreset] = useState('selected');
+  const [selectedWideSeriesKeys, setSelectedWideSeriesKeys] = useState([]);
   const [heatmapRowBy, setHeatmapRowBy] = useState('sourcePerson');
   const [heatmapColumnBy, setHeatmapColumnBy] = useState('targetPerson');
   const [sunburstParentBy, setSunburstParentBy] = useState('sourceLoc');
@@ -383,19 +384,51 @@ export function AnalyticsPanelContent({
   const selectedHeatmapColumnField = useMemo(() => availableHeatmapColumns.find((field) => field.key === heatmapColumnBy) || availableHeatmapColumns[1] || availableHeatmapColumns[0], [availableHeatmapColumns, heatmapColumnBy]);
   const selectedSunburstParentField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstParentBy) || availableSegmentFields[0], [availableSegmentFields, sunburstParentBy]);
   const selectedSunburstChildField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstChildBy) || availableSegmentFields[1] || availableSegmentFields[0], [availableSegmentFields, sunburstChildBy]);
+  useEffect(() => {
+    if (!availableMeasureFields.length) {
+      setSelectedWideSeriesKeys([]);
+      return;
+    }
+
+    setSelectedWideSeriesKeys((current) => {
+      const availableKeys = new Set(availableMeasureFields.map((field) => field.key));
+      const retained = current.filter((key) => availableKeys.has(key));
+      if (retained.length) return retained;
+      return availableMeasureFields.slice(0, Math.min(5, availableMeasureFields.length)).map((field) => field.key);
+    });
+  }, [availableMeasureFields]);
+
+  useEffect(() => {
+    if (multiLineMode === 'wide' && !availableMeasureFields.length) {
+      setMultiLineMode('recordCount');
+    }
+  }, [availableMeasureFields.length, multiLineMode]);
+
+  const toggleWideSeriesKey = (key) => {
+    setSelectedWideSeriesKeys((current) => {
+      if (current.includes(key)) return current.filter((item) => item !== key);
+      return [...current, key];
+    });
+  };
+
   const selectedWideSeriesFields = useMemo(() => {
-    const limit = Math.max(1, Number(topN) || 10);
+    if (!availableMeasureFields.length) return [];
     if (wideSeriesPreset === 'all') return availableMeasureFields;
-    return availableMeasureFields.slice(0, limit);
-  }, [availableMeasureFields, topN, wideSeriesPreset]);
+
+    const selected = availableMeasureFields.filter((field) => selectedWideSeriesKeys.includes(field.key));
+    return selected.length ? selected : availableMeasureFields.slice(0, Math.min(5, availableMeasureFields.length));
+  }, [availableMeasureFields, selectedWideSeriesKeys, wideSeriesPreset]);
+
+  const resolvedMultiLineMetricField = multiLineMode === 'recordCount' ? 'recordCount' : yField;
+  const resolvedMultiLineAggregation = multiLineMode === 'recordCount' ? 'count' : aggregation;
 
   const chartData = useMemo(
     () => buildAnalyticsChartData({
       rows,
       chartType,
       xField,
-      yField,
-      aggregation,
+      yField: chartType === 'multiLine' ? resolvedMultiLineMetricField : yField,
+      aggregation: chartType === 'multiLine' ? resolvedMultiLineAggregation : aggregation,
       barGroupBy: selectedBarField?.key || barGroupBy,
       barOrientation,
       pieGroupBy: selectedPieField?.key || pieGroupBy,
@@ -405,7 +438,7 @@ export function AnalyticsPanelContent({
       groupedBarGroupBy: selectedGroupedBarField?.key || groupedBarGroupBy,
       heatmapRowBy: selectedHeatmapRowField?.key || heatmapRowBy,
       heatmapColumnBy: selectedHeatmapColumnField?.key || heatmapColumnBy,
-      multiLineMode,
+      multiLineMode: multiLineMode === 'wide' ? 'wide' : 'grouped',
       multiLineGroupBy: selectedMultiLineField?.key || multiLineGroupBy,
       multiLineSeriesFields: selectedWideSeriesFields,
       sunburstParentBy: selectedSunburstParentField?.key || sunburstParentBy,
@@ -414,7 +447,7 @@ export function AnalyticsPanelContent({
       startYear: startYear || yearRange.minYear,
       endYear: endYear || yearRange.maxYear,
     }),
-    [aggregation, barGroupBy, barOrientation, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
+    [aggregation, barGroupBy, barOrientation, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, resolvedMultiLineMetricField, resolvedMultiLineAggregation, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
   );
 
   const handleExportPng = async () => {
@@ -477,21 +510,55 @@ export function AnalyticsPanelContent({
       return (
         <VariableControlsShell>
           {availableXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
-          <SelectControl label="Series mode" value={multiLineMode} onChange={setMultiLineMode} options={[{ key: 'wide', label: 'Multiple numeric columns' }, { key: 'grouped', label: 'One metric split by a grouping field' }]} description="Use multiple numeric columns for wide datasets such as stock prices, or split one metric by a category for long-format data." />
+          <SelectControl
+            label="Series mode"
+            value={multiLineMode}
+            onChange={setMultiLineMode}
+            options={[
+              { key: 'recordCount', label: 'Record count by grouping field' },
+              { key: 'groupedMetric', label: 'Numeric metric by grouping field' },
+              { key: 'wide', label: 'Multiple numeric columns' },
+            ]}
+            description="Choose whether each line represents record count by group, a selected numeric metric by group, or separate numeric columns from a wide table."
+          />
           {multiLineMode === 'wide' ? (
             <>
-              <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-series: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none available'}.</div>
-              <SelectControl label="Series selection" value={wideSeriesPreset} onChange={setWideSeriesPreset} options={[{ key: 'top', label: 'First/top numeric fields' }, { key: 'all', label: 'All numeric fields' }]} />
+              <SelectControl label="Series selection" value={wideSeriesPreset} onChange={setWideSeriesPreset} options={[{ key: 'selected', label: 'Selected numeric fields' }, { key: 'all', label: 'All numeric fields' }]} />
+              {wideSeriesPreset === 'selected' ? (
+                <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] p-3">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--panel-card-muted-text)]">Y-series columns</div>
+                  {availableMeasureFields.length ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {availableMeasureFields.map((field) => (
+                        <label key={field.key} className="flex items-center gap-2 rounded-lg border border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] px-3 py-2 text-sm text-[var(--panel-card-text)]">
+                          <input
+                            type="checkbox"
+                            checked={selectedWideSeriesKeys.includes(field.key)}
+                            onChange={() => toggleWideSeriesKey(field.key)}
+                          />
+                          <span>{field.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-[var(--panel-card-muted-text)]">No numeric measure fields are available.</div>
+                  )}
+                  <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">Selected: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none'}.</div>
+                </div>
+              ) : null}
+              {wideSeriesPreset === 'all' ? <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-series: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none available'}.</div> : null}
               <SelectControl label="Limit displayed series" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
             </>
           ) : (
             <>
-              {renderMetricControls()}
+              {multiLineMode === 'groupedMetric' ? renderMetricControls({ allowRecordCount: false }) : null}
+              {multiLineMode === 'recordCount' ? <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-axis / metric: Record count.</div> : null}
               <SelectControl label="Series / grouping field" value={selectedMultiLineField?.key || ''} onChange={setMultiLineGroupBy} options={availableSegmentFields} description={selectedMultiLineField?.description} />
               <SelectControl label="Limit displayed lines" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
             </>
           )}
           {!availableMeasureFields.length && multiLineMode === 'wide' ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">This mode needs at least one numeric measure field.</div> : null}
+          {!availableMeasureFields.length && multiLineMode === 'groupedMetric' ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">Numeric metric mode needs at least one numeric measure field. Use Record count by grouping field instead.</div> : null}
         </VariableControlsShell>
       );
     }

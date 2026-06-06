@@ -189,6 +189,10 @@ function metricValue(row, metricField) {
   return parseNumber(row?.[metricField]);
 }
 
+function unitForMetric(metricField) {
+  return metricField === 'recordCount' ? 'records' : 'value';
+}
+
 function topKeysByTotal(counts, topN) {
   return Array.from(counts.entries())
     .map(([label, count]) => ({ label, count }))
@@ -500,6 +504,7 @@ export function buildGroupedBarChartData(rows = [], xField = 'timePeriod', group
     groups: series.map((seriesLabel) => ({
       label: seriesLabel,
       count: aggregateValues(groupedValues.get(label)?.get(seriesLabel) || [], metricField === 'recordCount' ? 'count' : aggregation),
+      unit: unitForMetric(metricField),
     })),
   }));
   return { granularity, series, data };
@@ -541,7 +546,7 @@ export function buildMultiLineChartData(rows = [], xField = 'timePeriod', series
       periods: sortedLabels,
       series: series.map((item) => ({
         label: item.label,
-        points: sortedLabels.map((label) => ({ label, count: aggregateValues(item.grouped.get(label) || [], aggregation) })),
+        points: sortedLabels.map((label) => ({ label, count: aggregateValues(item.grouped.get(label) || [], aggregation), unit: 'value' })),
       })),
     };
   }
@@ -567,7 +572,7 @@ export function buildMultiLineChartData(rows = [], xField = 'timePeriod', series
     periods: sortedLabels,
     series: selectedGroups.map((label) => ({
       label,
-      points: sortedLabels.map((xLabel) => ({ label: xLabel, count: aggregateValues(groupedValues.get(label)?.get(xLabel) || [], metricField === 'recordCount' ? 'count' : aggregation) })),
+      points: sortedLabels.map((xLabel) => ({ label: xLabel, count: aggregateValues(groupedValues.get(label)?.get(xLabel) || [], metricField === 'recordCount' ? 'count' : aggregation), unit: unitForMetric(metricField) })),
     })),
   };
 }
@@ -593,7 +598,7 @@ export function buildHeatmapChartData(rows = [], rowField = 'sourcePerson', colu
   const cells = [];
   rowLabels.forEach((rowLabel) => {
     columnLabels.forEach((columnLabel) => {
-      cells.push({ rowLabel, columnLabel, count: aggregateValues(matrix.get(rowLabel)?.get(columnLabel) || [], metricField === 'recordCount' ? 'count' : aggregation) });
+      cells.push({ rowLabel, columnLabel, count: aggregateValues(matrix.get(rowLabel)?.get(columnLabel) || [], metricField === 'recordCount' ? 'count' : aggregation), unit: unitForMetric(metricField) });
     });
   });
   return { rows: rowLabels, columns: columnLabels, cells };
@@ -650,10 +655,11 @@ export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childB
       .map(([label, values]) => ({
         label,
         count: aggregateValues(values, metricField === 'recordCount' ? 'count' : aggregation),
+        unit: unitForMetric(metricField),
       }))
       .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
       .slice(0, Math.max(1, Number(topN) || 10));
-    return { label: parentLabel, count: parentTotals.get(parentLabel) || 0, children };
+    return { label: parentLabel, count: parentTotals.get(parentLabel) || 0, unit: unitForMetric(metricField), children };
   });
   return { total: parents.reduce((sum, parent) => sum + parent.count, 0), parents };
 }
@@ -717,7 +723,14 @@ export function buildAnalyticsChartData({
   }
   if (chartType === 'multiLine') {
     const data = buildMultiLineChartData(filteredRows, xField, multiLineMode, multiLineSeriesFields, multiLineGroupBy, yField, aggregation, topN, startYear, endYear);
-    return { chartType: 'multiLine', title: `Trends by ${humanizeFieldLabel(xField)}`, subtitle: multiLineMode === 'wide' ? `Selected numeric columns shown as separate series.${rangeSuffix}` : `Series split by ${humanizeFieldLabel(multiLineGroupBy)} using ${metricLabel}.${rangeSuffix}`, ...data };
+    return {
+      chartType: 'multiLine',
+      title: `Trends by ${humanizeFieldLabel(xField)}`,
+      subtitle: multiLineMode === 'wide'
+        ? `Selected numeric columns shown as separate series.${rangeSuffix}`
+        : `One line per ${humanizeFieldLabel(multiLineGroupBy)} using ${metricLabel}.${rangeSuffix}`,
+      ...data,
+    };
   }
   if (chartType === 'heatmap') {
     const data = buildHeatmapChartData(filteredRows, heatmapRowBy, heatmapColumnBy, topN, yField, aggregation);

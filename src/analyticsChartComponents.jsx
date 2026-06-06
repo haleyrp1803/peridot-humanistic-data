@@ -46,7 +46,7 @@ function ChartTooltip({ tooltip }) {
     >
       <div className="font-semibold text-[#fff9ed]">{tooltip.label}</div>
       {tooltip.secondary ? <div className="text-[#edf2df]">{tooltip.secondary}</div> : null}
-      <div className="text-[#fbf8f1]">{formatNumber(tooltip.count)} {tooltip.unit || 'letters'}</div>
+      <div className="text-[#fbf8f1]">{formatNumber(tooltip.count)} {tooltip.unit || 'records'}</div>
     </div>
   );
 }
@@ -115,7 +115,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
                   </g>
                 );
               })}
-              <text x={left} y={height - 14} fontSize="12" fill={CHART_COLORS.mutedText}>Letter count</text>
+              <text x={left} y={height - 14} fontSize="12" fill={CHART_COLORS.mutedText}>Value</text>
             </>
           ),
         }}
@@ -295,7 +295,7 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
                     const x = clusterX + groupIndex * (barWidth + 2);
                     const y = top + plotHeight - barHeight;
                     return (
-                      <rect key={group.label} x={x} y={y} width={barWidth} height={Math.max(1, barHeight)} rx="3" fill={PALETTE[groupIndex % PALETTE.length]} onMouseMove={(event) => setTooltip(buildTooltip(event, { label: group.label, secondary: row.label, count: group.count }))} onMouseLeave={() => setTooltip(null)} />
+                      <rect key={group.label} x={x} y={y} width={barWidth} height={Math.max(1, barHeight)} rx="3" fill={PALETTE[groupIndex % PALETTE.length]} onMouseMove={(event) => setTooltip(buildTooltip(event, { label: group.label, secondary: row.label, count: group.count, unit: group.unit }))} onMouseLeave={() => setTooltip(null)} />
                     );
                   })}
                   {index % labelEvery === 0 || index === data.length - 1 ? <text x={clusterX + clusterWidth / 2} y={top + plotHeight + 20} textAnchor="middle" fontSize="11" fill={CHART_COLORS.mutedText}>{row.label}</text> : null}
@@ -348,7 +348,7 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
                     const segmentHeight = (segment.count / maxTotal) * plotHeight;
                     yCursor -= segmentHeight;
                     if (!segment.count) return null;
-                    return <rect key={segment.label} x={x} y={yCursor} width={barWidth} height={Math.max(1, segmentHeight)} fill={PALETTE[segmentIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="0.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: segment.label, secondary: row.label, count: segment.count }))} onMouseLeave={() => setTooltip(null)} />;
+                    return <rect key={segment.label} x={x} y={yCursor} width={barWidth} height={Math.max(1, segmentHeight)} fill={PALETTE[segmentIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="0.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: segment.label, secondary: row.label, count: segment.count, unit: segment.unit }))} onMouseLeave={() => setTooltip(null)} />;
                   })}
                   {index % labelEvery === 0 || index === data.length - 1 ? <text x={x + barWidth / 2} y={top + plotHeight + 22} textAnchor="middle" fontSize="11" fill={CHART_COLORS.mutedText}>{row.label}</text> : null}
                 </g>
@@ -401,7 +401,7 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
               return (
                 <g key={item.label}>
                   <path d={path} fill="none" stroke={PALETTE[seriesIndex % PALETTE.length]} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  {points.map((point) => <circle key={`${item.label}-${point.label}`} cx={point.x} cy={point.y} r={tooltip?.label === item.label && tooltip?.secondary === point.label ? 6 : 3.6} fill={PALETTE[seriesIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="1.6" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: item.label, secondary: point.label, count: point.count }))} onMouseLeave={() => setTooltip(null)} />)}
+                  {points.map((point) => <circle key={`${item.label}-${point.label}`} cx={point.x} cy={point.y} r={tooltip?.label === item.label && tooltip?.secondary === point.label ? 6 : 3.6} fill={PALETTE[seriesIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="1.6" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: item.label, secondary: point.label, count: point.count, unit: point.unit }))} onMouseLeave={() => setTooltip(null)} />)}
                 </g>
               );
             })}
@@ -446,7 +446,7 @@ export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, s
                 {columns.map((column, columnIndex) => {
                   const cell = cellMap.get(`${row}__${column}`) || { rowLabel: row, columnLabel: column, count: 0 };
                   const opacity = cell.count ? 0.2 + (cell.count / maxValue) * 0.75 : 0.08;
-                  return <rect key={`${row}-${column}`} x={left + columnIndex * cellSize} y={top + rowIndex * cellSize} width={cellSize - 2} height={cellSize - 2} rx="7" fill={CHART_COLORS.accent} opacity={opacity} stroke={tooltip?.label === row && tooltip?.secondary === column ? CHART_COLORS.accentDark : CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: row, secondary: column, count: cell.count }))} onMouseLeave={() => setTooltip(null)} />;
+                  return <rect key={`${row}-${column}`} x={left + columnIndex * cellSize} y={top + rowIndex * cellSize} width={cellSize - 2} height={cellSize - 2} rx="7" fill={CHART_COLORS.accent} opacity={opacity} stroke={tooltip?.label === row && tooltip?.secondary === column ? CHART_COLORS.accentDark : CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: row, secondary: column, count: cell.count, unit: cell.unit }))} onMouseLeave={() => setTooltip(null)} />;
                 })}
               </g>
             ))}
@@ -458,7 +458,7 @@ export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, s
 }
 
 export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
-  return <AnalyticsBarChart data={data.map((row) => ({ ...row, unit: 'categories' }))} title={title} subtitle={subtitle} svgRef={svgRef} orientation="vertical" />;
+  return <AnalyticsBarChart data={data} title={title} subtitle={subtitle} svgRef={svgRef} orientation="vertical" />;
 }
 
 export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, svgRef }) {
@@ -496,7 +496,7 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
           <>
             <circle cx={cx} cy={cy} r={innerRadius - 12} fill={CHART_COLORS.accentLight} opacity="0.55" />
             <text x={cx} y={cy - 4} textAnchor="middle" fontSize="18" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(total)}</text>
-            <text x={cx} y={cy + 16} textAnchor="middle" fontSize="11" fill={CHART_COLORS.mutedText}>letters</text>
+            <text x={cx} y={cy + 16} textAnchor="middle" fontSize="11" fill={CHART_COLORS.mutedText}>total</text>
             {parents.map((parent, parentIndex) => {
               const parentSpan = (parent.count / total) * 360;
               const parentStart = parentAngle;
@@ -511,7 +511,7 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
                     const childStart = childAngle;
                     const childEnd = childAngle + childSpan;
                     childAngle = childEnd;
-                    return <path key={`${parent.label}-${child.label}`} d={ringArc(childStart, childEnd, outerInnerRadius, outerRadius)} fill={PALETTE[(parentIndex + childIndex + 1) % PALETTE.length]} opacity="0.82" stroke={CHART_COLORS.chartBg} strokeWidth="1.4" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: child.label, secondary: parent.label, count: child.count }))} onMouseLeave={() => setTooltip(null)} />;
+                    return <path key={`${parent.label}-${child.label}`} d={ringArc(childStart, childEnd, outerInnerRadius, outerRadius)} fill={PALETTE[(parentIndex + childIndex + 1) % PALETTE.length]} opacity="0.82" stroke={CHART_COLORS.chartBg} strokeWidth="1.4" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: child.label, secondary: parent.label, count: child.count, unit: child.unit }))} onMouseLeave={() => setTooltip(null)} />;
                   })}
                 </g>
               );
