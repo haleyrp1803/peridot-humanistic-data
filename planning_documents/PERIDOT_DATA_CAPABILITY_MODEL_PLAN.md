@@ -1,11 +1,36 @@
 # Peridot Data Capability Model Plan
 
-**Document status:** Draft planning document for review.  
+**Document status:** Planning document with implementation-status notes through `e7c3b57` — `Add point-location role mapping`.  
 **Prepared after:** `4f280a0` — `Use gold accent for workspace button hover states`.  
 **Change type:** Documentation / product-design planning.  
 **Purpose:** Define how Peridot can accommodate multiple kinds of humanistic datasets without forcing every dataset into the current correspondence/network model.
 
 ---
+
+---
+
+## Implementation status after `e7c3b57`
+
+Implemented from this plan:
+
+- `src/peridotDataCapabilityAudit.js` exists as a pure capability-audit helper.
+- The mapping-review screen surfaces the read-only data capability audit at the import decision point.
+- The upload mapping interface is organized by role groups rather than by correspondence-only “Peridot variables.”
+- Current role groups include record identity, time, places, relationships, evidence/analysis, and capability review.
+- Time mapping supports single date, date start, date end, and display date roles.
+- Place mapping supports one-location-per-record point roles.
+- Place mapping supports route roles with either separated source/target latitude-longitude columns or combined latitude-first source/target coordinate-pair columns.
+- Point/site datasets can render in Place Map without requiring source-target people.
+- Point/site datasets without source-target entity mappings correctly do not populate People Network or Force-Directed views.
+
+Still deferred or partial:
+
+- Generic record/site Inspector dossiers remain basic and should be revisited later.
+- Analytics generalization for wide numeric time-series tables is still future work.
+- Timeline interval filtering semantics are not yet fully generalized.
+- Export is still more route/network-oriented than the eventual generic-record export model.
+
+The original plan below remains the product-design reference, but Phases 1–3 and the first point-map behavior target should now be read as substantially implemented.
 
 ## 1. Executive summary
 
@@ -670,13 +695,15 @@ A later export pass may add:
 
 ### Phase 0 — Planning document
 
-**Status:** This document.
+**Status:** Complete. Added as `planning_documents/PERIDOT_DATA_CAPABILITY_MODEL_PLAN.md` in `bfc8872`.
 
 **Goal:** Define the capability model before code changes.
 
 **Acceptance test:** The team can explain how correspondence, point/site, time-series, and generic evidence datasets map to Peridot capabilities.
 
 ### Phase 1 — Data capability audit helper
+
+**Status:** Complete in `1889b95` and surfaced in later UI passes.
 
 **Type:** Structural / behavior, no UI redesign.
 
@@ -695,6 +722,8 @@ warnings
 
 ### Phase 2 — Add date-range parsing and capability reporting
 
+**Status:** Implemented at the mapping/capability layer through explicit single date, date start, date end, and display date roles. Timeline interval filtering semantics remain future work.
+
 **Type:** Behavior.
 
 **Goal:** Add date_start/date_end capability support at the helper/model layer.
@@ -702,6 +731,8 @@ warnings
 **Acceptance test:** A row with Date Start and End Date is timeline-ready as an interval; a row with one Date remains timeline-ready as a single-point interval; invalid display dates are preserved.
 
 ### Phase 3 — Add point-map-ready capability
+
+**Status:** Implemented for point/site mapping and confirmed with the Alaska dataset: point records render on Place Map without source-target people.
 
 **Type:** Behavior.
 
@@ -727,6 +758,8 @@ warnings
 
 ### Phase 6 — Point map mode
 
+**Status:** First implementation exists for point/site records that can render on the Place Map. Full point-map visual polish, record dossiers, and additional encodings remain future work.
+
 **Type:** Behavior / visual.
 
 **Goal:** Render point/site records on a map without requiring routes.
@@ -734,6 +767,8 @@ warnings
 **Acceptance test:** The Alaska sites can render as points, with hover/click Inspector and optional category/measure encodings.
 
 ### Phase 7 — UI profile selection
+
+**Status:** Partially implemented as role-based mapping groups rather than rigid profile selection.
 
 **Type:** Behavior / visual.
 
@@ -802,9 +837,9 @@ Peridot should remain a practical research tool, not become an all-purpose data-
 
 ### Decision 5 — Add coordinate pairs
 
-**Chosen:** Support pairs of lat/long coordinates in one column or two separate columns defining latitude or longitude individually.
-**Rejected:** Continue relying only on separated coordinates.
-**Reason:** Researchers commonly input coordinates in either of these two formats during data collection.
+**Chosen:** Support latitude-first coordinate pairs in one column or two separate latitude/longitude columns. This applies to point records and to source/target route coordinates. `POINT(...)` strings are interpreted as `POINT(latitude longitude)` in Peridot's user-facing upload workflow.
+**Rejected:** Continue relying only on separated coordinates; defaulting to GIS/WKT longitude-first parsing for user-entered `POINT(...)` values.
+**Reason:** Researchers commonly input coordinates in either combined or separated formats, and non-GIS users are more likely to expect latitude-first pairs.
 
 ### Decision 6 — Make charts dataset-agnostic earlier than maps/networks
 

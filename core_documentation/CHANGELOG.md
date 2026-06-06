@@ -2,15 +2,22 @@
 
 ## Current documented safe baseline
 
-- **`b24e19a` — `Link Inspector directed route rows`** on branch **`main`**
+- **`e7c3b57` — `Add point-location role mapping`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone and the completed dual-mode Inspector implementation cluster. The current app is workspace-first for Home, Data, Visualizations, Search & Filter, Theme, Export, and the full Inspector workspace, while retaining compact side-panel Inspector summaries for visualization clicks and retaining Timeline as a transitional side-panel bridge. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, and Inspector profile/navigation refinement.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, and the first implemented data-capability/modeling milestone. The current app is workspace-first for Home, Data, Visualizations, Search & Filter, Theme, Export, and the full Inspector workspace, while retaining compact side-panel Inspector summaries for visualization clicks and retaining Timeline as a transitional side-panel bridge. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 
 The current Data Inputs / import workflow now provides:
 
 - downloadable Peridot CSV template plus one unified CSV/TSV/XLSX/XLS table-workbook upload path;
 - permissive database-first upload handling for incomplete historical correspondence records;
 - validation/capability reporting and persistent upload summaries;
+- a pure data-capability audit helper for Inspector, Search, point-map, route-map, network, timeline, chart, and export readiness;
+- role-based upload mapping organized around records, time, places, relationships, evidence/analysis, and capability review;
+- explicit temporal roles for single date, date start, date end, and display date;
+- point-location roles for point/site datasets that have one location per record;
+- route coordinate roles that support separated latitude/longitude columns and combined source/target coordinate-pair columns;
+- latitude-first coordinate-pair guidance, including `POINT(latitude longitude)` strings;
+- successful point/site dataset mapping and Place Map rendering without requiring people/network relationships;
 - arbitrary CSV/TSV staging and column mapping;
 - Excel workbook parsing for `.xlsx` and `.xls` files through the isolated workbook parser helper;
 - multi-sheet workbook staging with workbook and sheet summaries;
@@ -55,6 +62,26 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 ---
 
 ## Current milestone notes
+
+### Data capability and role-based mapping milestone
+
+- Added `planning_documents/PERIDOT_DATA_CAPABILITY_MODEL_PLAN.md` to define Peridot's broader humanistic-data capability model.
+- Added `src/peridotDataCapabilityAudit.js` as a pure helper for field-role inference and dataset capability reporting.
+- Moved the data capability audit to the mapping-review decision point instead of leaving it as a post-cancel Data workspace status card.
+- Reorganized the mapping modal away from **Map Peridot variables** and **Choose Inspector fields** toward role-based stages: **Identify records**, **Time**, **Places**, **Relationships**, **Evidence and analysis**, and **Review capabilities**.
+- Added explicit temporal mapping roles for single date, date start, date end, and display date.
+- Added point-location mapping roles for datasets with one location per record.
+- Added combined coordinate-pair mapping roles for point records and source/target route records, using latitude-first pairs.
+- Preserved existing correspondence route/network behavior while allowing non-network point/site datasets to import and render in Place Map.
+- Confirmed that point/site datasets without source-target relationships correctly do not populate People Network or Force-Directed views.
+- Current implemented data-capability baseline: **`e7c3b57` — `Add point-location role mapping`**.
+
+### Home/workspace visual-system milestone
+
+- Refined the Home workspace layout and menu access.
+- Removed Home navigation from active workspaces.
+- Applied the Home-style visual system to full workspaces.
+- Standardized most workspace button hover/highlight states around the existing gold-brown accent.
 
 ### Dual-mode Inspector workspace milestone
 
@@ -150,7 +177,17 @@ The early MapLibre preview code remains present and gated behind `?maplibrePrevi
 
 ## Current branch status
 
-- **`b24e19a` — `Link Inspector directed route rows`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`e7c3b57` — `Add point-location role mapping`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`85f3d46` — `Move data capability audit to mapping review`** places capability reporting at the import decision point.
+- **`eef9cfe` — `Show read-only data capability summaries`** first surfaced data-capability summaries in the UI.
+- **`1889b95` — `Add data capability audit helper`** adds the pure capability-audit helper.
+- **`bfc8872` — `Add Peridot data capability model plan`** adds the capability-model planning document.
+- **`4f280a0` — `Use gold accent for workspace button hover states`** completes the gold-accent hover-state pass.
+- **`737a970` — `Apply Home-style visual system to full workspaces`** applies the Home-style visual system to the full workspaces.
+- **`c0ea2ab` — `Refine Home workspace layout and menu access`** refines Home and menu access.
+- **`a9a25f1` — `Remove Home navigation from active workspaces`** removes redundant Home navigation inside active workspaces.
+- **`88ab302` — `Refine Home workspace card styling`** refines Home card styling.
+- **`b24e19a` — `Link Inspector directed route rows`** is the preceding documented Inspector baseline.
 - **`ed0f2c7` — `Make compact Inspector summary tiles open workspace`** makes compact person/place summary tiles visibly open the full Inspector workspace.
 - **`ace7f52` — `Fix linked letter person and place navigation`** fixes linked-letter source/target person/place navigation and Back placement.
 - **`0a1b57a` — `Link letter detail people and places`** makes linked-letter source/target people and places clickable.
@@ -213,11 +250,21 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided for this documentation pass, newest first. The newest rows reflect the sync ritual ending at `b24e19a`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided for this documentation pass, newest first. The newest rows reflect the sync ritual ending at `e7c3b57`.
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
-| 2026-06-04 | `b24e19a` | (HEAD -> main, origin/main, origin/HEAD) | Link Inspector directed route rows |
+| 2026-06-06 | `e7c3b57` | (HEAD -> main, origin/main, origin/HEAD) | Add point-location role mapping |
+| 2026-06-06 | `85f3d46` |  | Move data capability audit to mapping review |
+| 2026-06-06 | `eef9cfe` |  | Show read-only data capability summaries |
+| 2026-06-06 | `1889b95` |  | Add data capability audit helper |
+| 2026-06-06 | `bfc8872` |  | Add Peridot data capability model plan |
+| 2026-06-05 | `4f280a0` |  | Use gold accent for workspace button hover states |
+| 2026-06-05 | `737a970` |  | Apply Home-style visual system to full workspaces |
+| 2026-06-05 | `c0ea2ab` |  | Refine Home workspace layout and menu access |
+| 2026-06-05 | `a9a25f1` |  | Remove Home navigation from active workspaces |
+| 2026-06-05 | `88ab302` |  | Refine Home workspace card styling |
+| 2026-06-04 | `b24e19a` |  | Link Inspector directed route rows |
 | 2026-06-04 | `ed0f2c7` |  | Make compact Inspector summary tiles open workspace |
 | 2026-06-04 | `ace7f52` |  | Fix linked letter person and place navigation |
 | 2026-06-04 | `0a1b57a` |  | Link letter detail people and places |

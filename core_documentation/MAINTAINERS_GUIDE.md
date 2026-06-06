@@ -22,12 +22,17 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`b24e19a` — `Link Inspector directed route rows`**
+- **`e7c3b57` — `Add point-location role mapping`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone and the completed dual-mode Inspector implementation cluster. The Inspector now has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from hamburger/Expand, shared selection/history, linked-letter detail state, clickable linked people/places/letters/routes, and directed route row dossier navigation.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, and the first implemented broader data-capability milestone. The Inspector now has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from hamburger/Expand, shared selection/history, linked-letter detail state, clickable linked people/places/letters/routes, and directed route row dossier navigation. The Data workflow now supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records that can render in Place Map without people/network relationships.
 
 Preceding data-input milestones include:
 
+- **`e7c3b57` — `Add point-location role mapping`**
+- **`85f3d46` — `Move data capability audit to mapping review`**
+- **`eef9cfe` — `Show read-only data capability summaries`**
+- **`1889b95` — `Add data capability audit helper`**
+- **`bfc8872` — `Add Peridot data capability model plan`**
 - **`9c8971b` — `Display custom Inspector fields in linked letters`**
 - **`5f25322` — `Select custom Inspector fields from joined workbook sheets`**
 - **`964ce57` — `Import multi-sheet workbooks by unique ID joins`**
@@ -119,6 +124,7 @@ Extracted support modules in `src/`:
 - `src/peridotCsvSchema.js`
 - `src/peridotCsvNormalizer.js`
 - `src/peridotCsvValidation.js`
+- `src/peridotDataCapabilityAudit.js`
 - `src/peridotColumnMapping.js`
 - `src/peridotWorkbookMapping.js`
 - `src/peridotWorkbookParsing.js`
@@ -268,15 +274,19 @@ Owns pure post-upload validation summaries. It produces:
 
 ### `src/PeridotColumnMappingModal.jsx`
 
-Owns the large column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports. It presents Peridot core fields, source-column selections, user-confirmed mappings, optional custom metadata selection for Inspector/Analytics use, workbook primary-sheet selection, multi-sheet unique-ID joins, workbook core mappings, and custom field selection from joined workbook sheets.
+Owns the large column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports. The current UI is role-based rather than correspondence-template-first: users move through record identification, time, places, relationships, evidence/analysis, and capability review. It still produces Peridot-compatible rows for the existing visualization pipeline, but it now exposes explicit temporal roles, point-location roles, route coordinate-pair roles, workbook primary-sheet selection, multi-sheet unique-ID joins, and selected evidence/Analytics metadata from primary and joined sheets.
 
 ### `src/peridotColumnMapping.js`
 
-Owns helper logic for arbitrary table column mapping, including common-name suggestions, core-field mapping rules, and selected custom metadata handling. Core Peridot fields remain limited to Date, source/target person names, source/target place names, and source/target coordinates; other mapped columns are treated as optional metadata rather than graph-driving core fields.
+Owns helper logic for arbitrary table column mapping, including common-name suggestions, core-field mapping rules, temporal-role mapping, point-location role mapping, route coordinate-pair mapping, and selected evidence/Analytics metadata handling. It preserves the existing correspondence-compatible route/network fields while adding role mappings for point/site datasets, start/end/display dates, and latitude-first combined coordinate pairs.
 
 ### `src/peridotWorkbookMapping.js`
 
-Owns workbook-aware mapping and import assembly helpers. It models primary record sheets, sheet/column references, arbitrary unique-ID joins, workbook validation, joined-row context construction, Peridot-shaped row assembly, and selected custom Inspector field handling from primary and joined sheets.
+Owns workbook-aware mapping and import assembly helpers. It models primary record sheets, sheet/column references, arbitrary unique-ID joins, workbook validation, joined-row context construction, Peridot-shaped row assembly, temporal/point/route role mappings, and selected evidence/Analytics field handling from primary and joined sheets.
+
+### `src/peridotDataCapabilityAudit.js`
+
+Pure UI-agnostic helper for inspecting uploaded rows and reporting field roles, row capabilities, and dataset-level readiness for Inspector, Search, point maps, route maps, networks, timelines, charts, and export. It supports temporal intervals, latitude-first coordinate pairs, point/site records, route records, time-series-like numeric fields, and generic evidence records.
 
 ### `src/peridotWorkbookParsing.js`
 
@@ -441,11 +451,17 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - full Data workspace
 - unified CSV / TSV / XLSX / XLS upload path
 - downloadable Peridot CSV template
-- arbitrary CSV/TSV column-mapping workflow
+- arbitrary CSV/TSV/Excel role-based mapping workflow
 - XLSX/XLS workbook staging, mapping, unique-ID joins, and import assembly
 - database-first permissive upload model
 - upload validation popup
 - persistent latest-upload summary
+- capability audit at the mapping-review decision point
+- role-based upload mapping for record identity, time, places, relationships, evidence/analysis, and capability review
+- explicit temporal roles for single dates, start dates, end dates, and display dates
+- point-location roles for datasets with one location per record
+- route coordinate roles that accept separated latitude/longitude columns or combined latitude-first coordinate pairs
+- successful Place Map rendering for point/site datasets without forcing People Network or Force-Directed network behavior
 - concise data tips explaining row granularity, incomplete data, coordinates, and user responsibility for standardization
 - legacy three-file public upload workflow superseded by one-file and mapped-import workflows
 
@@ -773,7 +789,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`b24e19a` — `Link Inspector directed route rows`**
+- current documented baseline: **`e7c3b57` — `Add point-location role mapping`**
 
 A future chat should also be told that:
 

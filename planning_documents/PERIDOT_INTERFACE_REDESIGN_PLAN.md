@@ -1,9 +1,9 @@
 # Peridot Interface Redesign Plan
 
-**Draft status:** Planning document with implementation-status notes through `55fae50` — `Update routing contract after workspace promotions`.  
+**Draft status:** Planning document with implementation-status notes through `e7c3b57` — `Add point-location role mapping`.  
 **Prepared after:** Baseline `0f72182` — `Remove redundant Inspector correspondents summary row`.  
 **Scope:** Interface architecture, information architecture, workspace model, side-panel reduction, visualization reorganization, Inspector redesign, timeline generalization, and phased implementation plan.  
-**Implementation note:** Major early phases have now been implemented: Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces; the hamburger menu replaced the visible persistent rail; Timeline and Inspector remain deferred redesign targets.
+**Implementation note:** Major early phases have now been implemented: Home, Data, Visualizations, Search & Filter, Theme, Export, and the dual-mode Inspector workspace are implemented; the hamburger menu replaced the visible persistent rail; Timeline remains the major deferred workspace redesign target. Data upload has also shifted to role-based mapping for broader humanistic datasets.
 
 ---
 
@@ -20,7 +20,7 @@ This plan defines the intended interface direction before implementation begins,
 
 ---
 
-## Implementation status after `55fae50`
+## Implementation status after `e7c3b57`
 
 Implemented from this plan:
 
@@ -32,16 +32,19 @@ Implemented from this plan:
 - full Visualizations workspace with Place Map, People Network, Force-Directed, and Analytics;
 - full Export workspace;
 - full Search & Filter workspace;
-- routing contract updated after workspace promotions.
+- dual-mode Inspector with compact visualization summaries and a full evidence-dossier workspace;
+- Home-style visual system applied across full workspaces;
+- role-based data mapping inside the Data workflow, organized around record identity, time, places, relationships, evidence/analysis, and capability review;
+- point/site datasets that can render on Place Map without requiring people/network relationships.
 
 Still deferred:
 
-- Inspector full evidence-dossier workspace;
 - Timeline redesign as a bottom Visualizations timeline/scrubber;
-- deeper visual-differentiation pass;
-- eventual cleanup/removal of legacy side-panel code after Timeline and Inspector no longer depend on it.
+- deeper visual-differentiation pass beyond the Home-style workspace system;
+- eventual cleanup/removal of legacy side-panel code after Timeline and compact Inspector dependencies are fully resolved;
+- broader generic-record Inspector and Analytics generalization for chart-first datasets.
 
-The original plan below remains useful as the product-design reference, but some “future” phases are now completed and should be read in light of this status note.
+The original plan below remains useful as the product-design reference, but several “future” phases are now completed and should be read in light of this status note.
 
 ---
 
@@ -493,6 +496,7 @@ The Data workspace manages data loading, templates, mapping, workbook joins, val
 - arbitrary CSV/TSV upload staging
 - Excel workbook staging for `.xlsx` and `.xls`
 - workbook/sheet summary
+- role-based mapping for record identity, time, places, relationships, evidence/analysis, and capability review
 - primary sheet selection
 - unique-ID join configuration
 - core field mapping
@@ -986,7 +990,7 @@ Implementation should proceed through narrow, tested phases.
 **Out of scope:** global timeline animation across all charts unless specifically included in a later subpass.  
 **Acceptance test:** User can select network/map views and chart views from one Visualizations workspace. Existing map/network behavior and chart rendering remain functional.
 
-### Phase 6 — Promote Inspector to full evidence dossier workspace — Deferred
+### Phase 6 — Promote Inspector to full evidence dossier workspace — Complete for first implementation
 
 **Change type:** structural + visual  
 **Goal:** Add full-window Inspector workspace while preserving selection-driven Inspector behavior.  
@@ -1011,6 +1015,8 @@ Implementation should proceed through narrow, tested phases.
 **Acceptance test:** Each workspace is visually distinct but still part of the Peridot design system.
 
 ### Phase 9 — Documentation update milestone
+
+**Status:** Revisited after the data-capability and role-based upload-mapping milestone.
 
 **Change type:** documentation  
 **Goal:** Update README, Maintainer's Guide, Changelog, and possibly Workflow Charter to reflect implemented redesign milestones.  

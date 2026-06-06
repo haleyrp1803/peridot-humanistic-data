@@ -2,13 +2,13 @@
 
 ## 1. Project title
 
-**Peridot** is the current app identity for the repository **Correspondence Visualizer**. It is a research-oriented interactive web app for exploring historical correspondence networks as geographic route maps, person-centered relationship graphs, and force-directed person networks.
+**Peridot** is the current app identity for the repository **Correspondence Visualizer**. It is a research-oriented interactive web app for exploring humanistic tabular datasets through maps, networks, timelines, charts, search/filter workflows, exports, and evidence dossiers. Correspondence networks remain the mature first case, but Peridot now also supports point/site datasets that do not require people or network relationships.
 
 ---
 
 ## 2. One-paragraph summary
 
-The application ingests correspondence-related tabular data, derives network structures from that data, and renders an interactive workspace for exploring correspondence records through maps, person-centered networks, force-directed graphs, chart-based Analytics, full-window Search & Filter, theme controls, export tools, timeline playback, and evidence inspection. The current interface has moved away from the earlier map-first, persistent-rail model: Peridot now opens to a Home / welcome workspace, uses a hamburger-triggered menu, and provides full-window workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export. Timeline remains a transitional side-panel bridge for now, and Inspector remains a legacy side-panel evidence reader until its full dossier workspace is planned and implemented.
+The application ingests humanistic tabular data, derives the structures the mapped fields can safely support, and renders an interactive workspace for exploring records through point maps, route maps, person-centered networks, force-directed graphs, chart-based Analytics, full-window Search & Filter, theme controls, export tools, timeline playback, and evidence inspection. The current interface has moved away from the earlier map-first, persistent-rail model: Peridot now opens to a Home / welcome workspace, uses a hamburger-triggered menu, and provides full-window workspaces for Home, Data, Visualizations, Search & Filter, Theme, and Export. Timeline remains a transitional side-panel bridge for now, while Inspector now uses a dual-mode model: compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for deeper navigation.
 
 ## 3. Current status
 
@@ -16,9 +16,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`b24e19a` — `Link Inspector directed route rows`** on branch **`main`**
+- **`e7c3b57` — `Add point-location role mapping`** on branch **`main`**
 
-This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone and the completed dual-mode Inspector implementation cluster. The Inspector now uses compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for hamburger/Expand/linked-data navigation, sharing selection and multi-step Back history. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active legacy D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, and the first implemented broader data-capability milestone. The Inspector now uses compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for hamburger/Expand/linked-data navigation, sharing selection and multi-step Back history. The upload workflow now uses role-based mapping and can support point/site datasets that render in Place Map without People Network or Force-Directed readiness. Early MapLibre preview files remain present but dormant unless the development-only `?maplibrePreview=1` URL flag is used. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -49,7 +49,10 @@ The current state of the active `main` project includes:
 - arbitrary CSV/TSV column-mapping workflow for non-template tables
 - workbook import support for `.xlsx` and `.xls` files
 - multi-sheet workbook mapping with user-configured unique-ID joins
-- upload validation that reports which records are Inspector-ready, People-network-ready, Place-network-ready, Map-ready, Timeline-ready, Analytics-ready, and Export-ready
+- role-based upload mapping for records, time, places, relationships, evidence/analysis, and capability review
+- explicit support for single dates, start/end date intervals, display-date labels, point locations, separated coordinates, and latitude-first coordinate pairs
+- point/site datasets that can render in Place Map without requiring people/network relationships
+- upload validation that reports which records are Inspector-ready, Search-ready, Point-map-ready, Route-map-ready, Network-ready, Timeline-ready, Chart-ready, and Export-ready
 - legacy Geography / Raw Data / Person Metadata upload controls removed from the ordinary public workflow after the one-file and mapped-import direction became active
 - implemented Search & Filter controls for keyword, person, place, route-place, route-people, minimum weight, and date range, now in a full workspace
 - actionable cluster inspector behavior
@@ -92,6 +95,9 @@ The codebase is functional, but it is still under active maintenance. The larges
 - standardized one-file **Peridot CSV** template download
 - arbitrary CSV/TSV/Excel workbook mapping for non-template uploaded tables
 - workbook-aware import with primary sheet selection and multi-sheet unique-ID joins
+- role-based mapping stages for record identity, time, places, relationships, evidence/analysis, and capability review
+- point-location mapping for one-location-per-record datasets
+- route coordinate mapping with separated latitude/longitude fields or combined latitude-first coordinate pairs
 - permissive database-first ingestion model: accepted rows can remain useful even when they cannot support every visualization
 - post-upload validation popup and persistent latest-upload summary
 - embedded baseline data so the app can render before uploads
@@ -521,7 +527,7 @@ https://github.com/haleyrp1803/correspondence-visualizer
 
 ## 10. Data inputs
 
-Peridot now treats uploaded data through a standardized one-file CSV template, arbitrary CSV/TSV mapping, and workbook-aware Excel mapping/import.
+Peridot now treats uploaded data through a standardized one-file CSV template, arbitrary CSV/TSV mapping, workbook-aware Excel mapping/import, and a broader role-based capability model.
 
 The Data workspace provides:
 
@@ -533,7 +539,7 @@ The Data workspace provides:
 - persistent **Latest upload summary** card
 - concise data tips
 
-Each row should represent one letter, document, or correspondence record. The public template columns are:
+For the standardized correspondence template, each row should represent one letter, document, or correspondence record. The public template columns are:
 
 ```text
 Archive
@@ -575,6 +581,10 @@ Coordinates and dates are not required for upload. Instead, the upload summary t
 
 Peridot does **not** clean or standardize person names, place names, dates, topics, relationships, languages, titles, or other user-entered values. Charts, filters, and labels use uploaded values exactly as entered. Users who want cleaner networks or less fragmented Analytics categories should standardize their data before upload.
 
+For arbitrary tables and workbooks, the mapping workflow now asks users to describe field roles rather than forcing every table into a correspondence schema. Current role groups include record identity, time, places, relationships, evidence/analysis fields, and final capability review. This allows datasets such as point/site tables to map one location per row and render in Place Map even when they have no source-target people and therefore do not populate People Network or Force-Directed views.
+
+Coordinate-pair fields are interpreted as latitude first, longitude second, including `POINT(latitude longitude)` strings. Route datasets may use separated source/target latitude-longitude columns or combined source/target coordinate-pair columns.
+
 Legacy Geography / Raw Data / Person Metadata uploads have been removed from the ordinary public workflow. The active direction is one-file template download plus mapped arbitrary-table/workbook import through the unified uploader.
 
 ### Workbook / Excel import
@@ -602,7 +612,8 @@ A typical workflow is:
 3. Choose **Use sample data** or **Upload my data**.
 4. If uploading data, use the Data workspace to download the template or upload a CSV/TSV/XLSX/XLS table/workbook.
 5. Use the mapping workspace if the uploaded file needs column or workbook mapping.
-6. For workbooks, configure the primary sheet, unique-ID joins, core field mappings, and selected Inspector/Analytics fields.
+6. Map fields by role: identify records, map time, map places, map relationships if present, choose evidence/analysis fields, and review capabilities.
+7. For workbooks, configure the primary sheet, unique-ID joins, role mappings, and selected evidence/Analytics fields.
 7. Review the upload validation popup and persistent latest-upload summary.
 8. Open Visualizations and choose **Place Map**, **People Network**, **Force-Directed**, or **Analytics**.
 9. Use **Search & Filter** to define the active filtered dataset.
@@ -705,8 +716,8 @@ Likely near-term priorities include:
 - preserve the current workspace-first routing model
 - keep Timeline deferred until the bottom Visualizations timeline/scrubber design is ready
 - refine the implemented dual-mode Inspector workspace, including section anchors, breadcrumbs, and future selected-entity/filter actions
-- test the one-file Peridot CSV workflow and workbook importer against larger and messier datasets
-- refine upload validation wording if user testing shows confusion
+- test the one-file Peridot CSV workflow, arbitrary role-based mapping, point/site imports, route coordinate pairs, and workbook importer against larger and messier datasets
+- refine upload validation/capability wording if user testing shows confusion
 - treat the legacy three-file upload workflow as superseded by the one-file and mapped-import workflows
 - continue improving Analytics usability and data-scope clarity inside Visualizations
 - consider future safe metadata filters after the upload/mapping model settles

@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 Current clean baseline:
 
 ```text
-b24e19a — Link Inspector directed route rows
+e7c3b57 — Add point-location role mapping
 ```
 
 Current branch note:
@@ -81,7 +81,7 @@ Current fragile zones include:
 - Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
 - Analytics SVG-to-PNG export rendering
-- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV column mapping, workbook parsing and mapping behavior, unique-ID join configuration, validation summary behavior, and legacy upload cleanup
+- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, coordinate-pair parsing, date-range/display-date handling, and legacy upload cleanup
 
 ---
 
@@ -268,7 +268,14 @@ Current notable decisions:
 - Rows can be accepted when they contain either source/target names or source/target place information; coordinates and parseable dates are capability-enabling fields, not upload-admission requirements.
 - Peridot should not clean, standardize, merge, or enforce controlled vocabularies for uploaded names, places, dates, topics, relationships, languages, titles, notes, or links. Users are responsible for standardization outside the app.
 - Arbitrary CSV/TSV imports should use an explicit user-confirmed column-mapping workflow rather than silent guessing.
-- Core mapped Peridot variables should remain limited to Date, Source_Name, Target_Name, Source_Location, Source_Latitude, Source_Longitude, Target_Location, Target_Latitude, and Target_Longitude. Other uploaded columns should be preserved as optional metadata, with user-selected fields available for Inspector and suitable Analytics visualizations.
+- Core correspondence-compatible Peridot variables remain supported for route/network workflows, but the upload mapping UI should present field roles rather than asking users to conform to correspondence-only “Peridot variables.”
+- Peridot should support broader humanistic datasets through role-based mapping for record identity, time, places, relationships, evidence/analysis, and capability review.
+- Point/site datasets with one mapped location should be valid Place Map datasets even when they have no People Network or Force-Directed network readiness.
+- People Network and Force-Directed views should remain unavailable or empty for datasets that do not map source-target entity relationships; that is correct behavior, not a failed import.
+- Coordinate pairs should be interpreted as latitude first, longitude second, including `POINT(latitude longitude)` strings.
+- Route datasets should support separated source/target latitude-longitude fields and combined source/target coordinate-pair fields.
+- Date handling should distinguish single date, date start, date end, and display date roles. Display dates are human-readable labels and may represent a single date or a composed range.
+- Other uploaded columns should be preserved as optional evidence/analysis metadata, with user-selected fields available for Inspector and suitable Analytics visualizations.
 - Workbook parsing is now connected to a workbook-aware import path for CSV, TSV, XLSX, and XLS.
 - Multi-sheet workbook imports should use user-configured unique-ID joins. Header names for ID columns do not have to match, and row-order joining should not be used as the primary strategy.
 - Users may select custom Inspector/Analytics fields from primary and joined workbook sheets.
@@ -339,11 +346,11 @@ Committed Data Inputs behavior includes:
 
 - downloadable Peridot CSV template;
 - one unified CSV / TSV / XLSX / XLS table-workbook upload control;
-- arbitrary CSV/TSV upload staging and column mapping;
+- arbitrary CSV/TSV/Excel upload staging and role-based column mapping;
 - mapped arbitrary-table import into Peridot data;
 - post-upload validation popup;
 - persistent latest-upload summary in the Data Inputs panel after the popup closes;
-- capability reporting for Inspector, People view, place relationships, map readiness, timeline readiness, Analytics, and Export;
+- capability reporting for Inspector, Search, point-map readiness, route-map readiness, network readiness, timeline readiness, Analytics/chart readiness, and Export;
 - public legacy Geography / Raw Data / Person Metadata upload controls superseded by the one-file and mapped-import workflows;
 - workbook parsing, mapping, unique-ID joins, and import assembly for XLSX/XLS workbooks;
 - selected workbook custom fields visible in linked-letter and entity-profile Inspector views.
