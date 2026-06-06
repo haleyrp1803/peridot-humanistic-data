@@ -43,6 +43,8 @@ import { PeridotHomeWorkspace } from './PeridotHomeWorkspace';
 import { PeridotDataWorkspace } from './PeridotDataWorkspace';
 import { PeridotThemeWorkspace } from './PeridotThemeWorkspace';
 import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace';
+import { PeridotExploreWorkspace } from './PeridotExploreWorkspace';
+import { PeridotLearnMoreWorkspace } from './PeridotLearnMoreWorkspace';
 import { PeridotExportWorkspace } from './PeridotExportWorkspace';
 import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
 import {
@@ -2766,6 +2768,8 @@ function AppMainWorkspace({
   dataWorkspaceProps,
   themeWorkspaceProps,
   visualizationWorkspaceProps,
+  exploreWorkspaceProps,
+  learnMoreWorkspaceProps,
   searchWorkspaceProps,
   exportWorkspaceProps,
   inspectorWorkspaceProps,
@@ -2793,6 +2797,10 @@ function AppMainWorkspace({
         <PeridotThemeWorkspace {...themeWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS ? (
         <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
+      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPLORE ? (
+        <PeridotExploreWorkspace {...exploreWorkspaceProps} />
+      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.LEARN_MORE ? (
+        <PeridotLearnMoreWorkspace {...learnMoreWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH ? (
         <PeridotSearchWorkspace {...searchWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPORT ? (
@@ -2843,9 +2851,9 @@ export default function EuropeNetworkMapApp() {
   // ------------------------------------------------------------
   // Workspace routing state
   // ------------------------------------------------------------
-  // Home, Data, Theme, Visualizations, Search, and Export now render as
-  // full workspaces. Timeline and Inspector still use this state as a routing
-  // bridge into the legacy side-panel views until those workflows are promoted.
+  // Home, Data, Visualizations, Explore, Learn More, Search, Theme, and Export
+  // render as workspace modes. Some legacy modes remain for internal workflow
+  // routing and compatibility while the product menu presents a smaller stack.
   const [workspaceMode, setWorkspaceMode] = useState(DEFAULT_PERIDOT_WORKSPACE_MODE);
   const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('place-map');
   const setResolvedWorkspaceMode = (nextMode) => {
@@ -4259,6 +4267,10 @@ export default function EuropeNetworkMapApp() {
       setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
       setIsSidePanelOpen(false);
     },
+    onOpenExplore: () => {
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.EXPLORE);
+      setIsSidePanelOpen(false);
+    },
     timelineControlsProps,
     visualizationAvailability,
   };
@@ -4345,6 +4357,14 @@ export default function EuropeNetworkMapApp() {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.EXPORT);
     setIsSidePanelOpen(false);
   };
+  const openExploreWorkspaceFromMenu = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.EXPLORE);
+    setIsSidePanelOpen(false);
+  };
+  const openLearnMoreWorkspaceFromMenu = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.LEARN_MORE);
+    setIsSidePanelOpen(false);
+  };
   const openThemeWorkspaceFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.THEME);
     setIsSidePanelOpen(false);
@@ -4360,6 +4380,22 @@ export default function EuropeNetworkMapApp() {
     inspectorViewComponents,
     inspectorPresentationMode,
     onCloseInspectorWorkspace: closeInspectorWorkspace,
+  };
+
+  const exploreWorkspaceProps = {
+    visualizationAvailability,
+    workspaceInspectorPanelProps: inspectorPanelProps,
+    inspectorShellComponents,
+    inspectorViewComponents,
+    onOpenSearch: () => {
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
+      setIsSidePanelOpen(false);
+    },
+    onOpenVisualizations: openVisualizationsWorkspace,
+  };
+
+  const learnMoreWorkspaceProps = {
+    onOpenVisualizations: openVisualizationsWorkspace,
   };
 
   return (
@@ -4396,19 +4432,12 @@ export default function EuropeNetworkMapApp() {
             open={isMainMenuOpen}
             onToggle={() => setIsMainMenuOpen((value) => !value)}
             onClose={() => setIsMainMenuOpen(false)}
-            activePanelTab={activePanelTab}
             workspaceMode={workspaceMode}
-            isSidePanelOpen={isSidePanelOpen}
-            onGoHome={openHomeWorkspace}
             onOpenData={openDataWorkspace}
             onOpenVisualizations={openVisualizationsWorkspace}
-            onOpenSearch={openSearchWorkspaceFromMenu}
-            onOpenTimeline={openTimelinePanelFromMenu}
-            onOpenAnalytics={openAnalyticsWorkspace}
-            onOpenInspector={openInspectorPanelFromMenu}
+            onOpenExplore={openExploreWorkspaceFromMenu}
+            onOpenLearnMore={openLearnMoreWorkspaceFromMenu}
             onOpenTheme={openThemeWorkspaceFromMenu}
-            onOpenExport={openExportWorkspaceFromMenu}
-            onCloseSidePanel={closeCurrentSidePanel}
           />
         ) : null}
         {/*
@@ -4442,6 +4471,8 @@ export default function EuropeNetworkMapApp() {
           dataWorkspaceProps={dataWorkspaceProps}
           themeWorkspaceProps={themeWorkspaceProps}
           visualizationWorkspaceProps={visualizationWorkspaceProps}
+          exploreWorkspaceProps={exploreWorkspaceProps}
+          learnMoreWorkspaceProps={learnMoreWorkspaceProps}
           searchWorkspaceProps={searchWorkspaceProps}
           exportWorkspaceProps={exportWorkspaceProps}
           inspectorWorkspaceProps={inspectorWorkspaceProps}

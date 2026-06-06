@@ -184,6 +184,7 @@ export function PeridotVisualizationsWorkspace({
   onOpenAnalytics,
   onOpenChartVisualization,
   onOpenSearch,
+  onOpenExplore,
   timelineControlsProps,
 }) {
   const availability = {
@@ -327,12 +328,12 @@ export function PeridotVisualizationsWorkspace({
       label: 'Capability Summary',
       category: 'Explore Your Data',
       available: true,
-      action: null,
+      action: onOpenExplore,
       unavailableTitle: '',
       why: '',
       availableInstead: [],
     },
-  }), [availability.hasCharts, availability.hasExploreData, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onOpenChartVisualization, onSelectForceDirected, onSelectPeopleNetwork, onSelectPlaceMap]);
+  }), [availability.hasCharts, availability.hasExploreData, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onOpenChartVisualization, onOpenExplore, onSelectForceDirected, onSelectPeopleNetwork, onSelectPlaceMap]);
 
   const selectedDefinition = toolDefinitions[selectedTool] || toolDefinitions[VISUALIZATION_TOOLS.CAPABILITY_SUMMARY];
   const activeVisualizationLabel = selectedDefinition.label;

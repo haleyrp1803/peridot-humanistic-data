@@ -13,10 +13,10 @@ export function PeridotThemeWorkspace({ themePresetKey, applyThemePreset, resetT
         <div className="peridot-hero-card">
           <div className="peridot-workspace-header-row">
             <div>
-              <p className="peridot-kicker">Theme workspace</p>
+              <p className="peridot-kicker">Themes and accessibility</p>
               <h1 className="peridot-title-medium">Choose Peridot&apos;s appearance</h1>
               <p className="peridot-lede">
-                Theme now lives as its own workspace rather than inside the legacy Controls panel. These presets adjust the map and interface palette without changing the loaded data, filters, timeline, Inspector, or export scope.
+                Themes and accessibility holds Peridot appearance settings. These presets adjust the map and interface palette without changing loaded data, filters, timeline, Inspector, or export scope. Accessibility-specific controls can be added here as the interface matures.
               </p>
             </div>
             <button type="button" onClick={onOpenVisualizations} className="peridot-button-secondary shrink-0">
@@ -44,6 +44,16 @@ export function PeridotThemeWorkspace({ themePresetKey, applyThemePreset, resetT
               </button>
             );
           })}
+        </div>
+
+        <div className="mt-6 rounded-[28px] border border-[#dfe9c8]/32 bg-[#dfe9c8]/10 p-5 text-[#f8f4e6] shadow-[0_18px_46px_rgba(0,0,0,0.22)]">
+          <p className="peridot-kicker text-[11px] text-[#dfe9c8]">Accessibility settings</p>
+          <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#f5ecd2]">
+            More controls can live here later.
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#dfe9c8]">
+            This workspace now owns appearance-related settings. Future passes can add contrast, density, motion, or label-display preferences here without changing the main visualization workflow.
+          </p>
         </div>
       </div>
     </section>

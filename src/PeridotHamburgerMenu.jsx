@@ -4,19 +4,12 @@ export function PeridotHamburgerMenu({
   open,
   onToggle,
   onClose,
-  activePanelTab,
   workspaceMode,
-  isSidePanelOpen,
-  onGoHome,
   onOpenData,
   onOpenVisualizations,
-  onOpenSearch,
-  onOpenTimeline,
-  onOpenAnalytics,
-  onOpenInspector,
+  onOpenExplore,
+  onOpenLearnMore,
   onOpenTheme,
-  onOpenExport,
-  onCloseSidePanel,
 }) {
   if (workspaceMode === 'home') {
     return null;
@@ -25,141 +18,96 @@ export function PeridotHamburgerMenu({
   const menuItems = [
     {
       key: 'data',
-      title: 'Data',
-      description: 'Upload, stage, map, and validate correspondence records.',
+      title: 'Manage Your Data',
+      description: 'Upload, stage, map, join, and validate your records.',
       action: onOpenData,
       active: workspaceMode === 'data',
     },
     {
       key: 'visualizations',
-      title: 'Visualizations',
-      description: 'Open maps, networks, and chart options for the current data.',
+      title: 'Visualize Your Data',
+      description: 'Open maps, networks, charts, and timeline controls.',
       action: onOpenVisualizations,
       active: workspaceMode === 'visualizations',
     },
     {
-      key: 'search',
-      title: 'Search & Filter',
-      description: 'Define the active dataset used by views, charts, timeline, and export.',
-      action: onOpenSearch,
-      active: isSidePanelOpen && activePanelTab === 'search',
+      key: 'explore',
+      title: 'Explore Your Data',
+      description: 'Review dataset capability and inspect selected evidence.',
+      action: onOpenExplore,
+      active: workspaceMode === 'explore' || workspaceMode === 'search' || workspaceMode === 'inspector',
     },
     {
-      key: 'timeline',
-      title: 'Timeline',
-      description: 'Control date scope and playback for the active correspondence data.',
-      action: onOpenTimeline,
-      active: isSidePanelOpen && activePanelTab === 'timeline',
-    },
-    {
-      key: 'analytics',
-      title: 'Analytics',
-      description: 'Configure and preview charts from the current filtered records.',
-      action: onOpenAnalytics,
-      active: isSidePanelOpen && activePanelTab === 'analytics',
-    },
-    {
-      key: 'inspector',
-      title: 'Inspector',
-      description: 'Review selected people, places, routes, clusters, and linked records.',
-      action: onOpenInspector,
-      active: isSidePanelOpen && activePanelTab === 'inspector',
+      key: 'learn-more',
+      title: 'Learn More about Peridot',
+      description: 'Project information, credits, tutorials, and guides.',
+      action: onOpenLearnMore,
+      active: workspaceMode === 'learn-more',
     },
     {
       key: 'theme',
-      title: 'Theme',
-      description: 'Open appearance presets as a full workspace.',
+      title: 'Themes and Accessibility',
+      description: 'Adjust Peridot appearance and future accessibility settings.',
       action: onOpenTheme,
       active: workspaceMode === 'theme',
     },
-    {
-      key: 'export',
-      title: 'Export',
-      description: 'Export the current visualization and derived node or route tables.',
-      action: onOpenExport,
-      active: isSidePanelOpen && activePanelTab === 'export',
-    },
   ];
 
-  const runAction = (action) => {
-    action?.();
-    onClose?.();
+  const handleItemClick = (item) => {
+    if (typeof item.action === 'function') {
+      item.action();
+    }
+    onClose();
   };
 
   return (
-    <>
+    <div className="fixed left-5 top-5 z-[200]">
       <button
         type="button"
         onClick={onToggle}
-        className="fixed left-3 top-3 z-[90] flex h-11 w-11 items-center justify-center rounded-full border border-[var(--toggle-border)] bg-[var(--toggle-bg-open)] text-[var(--toggle-text)] shadow-[0_12px_28px_rgba(0,0,0,0.26)] transition hover:bg-[var(--utility-panel-bg)] hover:text-[var(--toggle-text-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-[#dfe9c8]/70 bg-[#f5f1df] text-xl font-black text-[#173120] shadow-[0_12px_28px_rgba(0,0,0,0.38)] transition hover:bg-[#d6a36a] focus:outline-none focus:ring-2 focus:ring-[#f5ecd2]/80"
         aria-label={open ? 'Close Peridot menu' : 'Open Peridot menu'}
-        title={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
       >
-        <span className="sr-only">{open ? 'Close Peridot menu' : 'Open Peridot menu'}</span>
-        {open ? (
-          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-            <path d="M6 6l12 12M18 6L6 18" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M4.5 7h15" />
-            <path d="M4.5 12h15" />
-            <path d="M4.5 17h15" />
-          </svg>
-        )}
+        {open ? '×' : '≡'}
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[80]" role="presentation">
-          <button
-            type="button"
-            className="absolute inset-0 cursor-default bg-[rgba(8,13,10,0.24)] backdrop-blur-[2px]"
-            aria-label="Close Peridot menu"
-            onClick={onClose}
-          />
-          <nav
-            className="absolute left-3 top-16 max-h-[calc(100vh-5rem)] w-[min(92vw,420px)] overflow-y-auto rounded-[24px] border border-[var(--panel-card-border)]/85 bg-[var(--panel-card-bg)]/96 p-3 text-[var(--text-main)] shadow-[0_24px_64px_rgba(0,0,0,0.38)] backdrop-blur-md"
-            aria-label="Peridot main menu"
-          >
-            <div className="px-2 pb-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--accent)]">Peridot</p>
-              <h2 className="mt-1 [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-xl font-bold text-[var(--heading-text)]">
-                Main menu
-              </h2>
-            </div>
-            <div className="space-y-2">
-              {menuItems.map((item) => (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => runAction(item.action)}
-                  className={[
-                    'group block w-full rounded-xl border px-4 py-3 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45',
-                    item.active
-                      ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.22)]'
-                      : 'border-[var(--section-border)] bg-[var(--section-bg)] text-[var(--text-main)] hover:bg-[var(--panel-card-hover)]',
-                  ].join(' ')}
-                >
-                  <span className="block text-lg font-bold leading-6">{item.title}</span>
-                  <span className="mx-auto mt-0 block max-h-0 max-w-[19rem] overflow-hidden text-sm leading-5 opacity-0 transition-all duration-200 group-hover:mt-1 group-hover:max-h-16 group-hover:opacity-85 group-focus-visible:mt-1 group-focus-visible:max-h-16 group-focus-visible:opacity-85">
-                    {item.description}
-                  </span>
-                </button>
-              ))}
-            </div>
-            {isSidePanelOpen ? (
+        <div
+          className="mt-3 w-[min(360px,calc(100vw-2.5rem))] overflow-hidden rounded-[28px] border border-[#dfe9c8]/55 bg-[linear-gradient(145deg,rgba(2,20,13,0.98),rgba(12,44,31,0.96))] p-3 text-[#fbf7ea] shadow-[0_24px_70px_rgba(0,0,0,0.58)] backdrop-blur-md"
+          role="menu"
+          aria-label="Peridot navigation"
+        >
+          <div className="border-b border-[#dfe9c8]/20 px-3 pb-3 pt-2">
+            <p className="peridot-kicker !mb-0 text-[10px] text-[#dfe9c8]">Peridot menu</p>
+            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#f5ecd2]">
+              Workspaces
+            </h2>
+          </div>
+
+          <div className="mt-3 grid gap-2">
+            {menuItems.map((item) => (
               <button
+                key={item.key}
                 type="button"
-                onClick={() => runAction(onCloseSidePanel)}
-                className="mt-2 w-full rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2.5 text-left text-sm font-semibold text-[var(--button-secondary-text)] transition hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
+                onClick={() => handleItemClick(item)}
+                className={[
+                  'group rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/70',
+                  item.active
+                    ? 'border-[#f5ecd2]/85 bg-[#b58b42]/72 text-[#fff8e8] shadow-[0_12px_28px_rgba(0,0,0,0.26)]'
+                    : 'border-[#dfe9c8]/22 bg-[#dfe9c8]/8 text-[#fbf7ea] hover:border-[#f5ecd2]/65 hover:bg-[#dfe9c8]/14',
+                ].join(' ')}
+                role="menuitem"
               >
-                Close current panel
+                <span className="block text-sm font-bold">{item.title}</span>
+                <span className={['mt-1 block text-xs leading-relaxed', item.active ? 'text-[#fff3d4]' : 'text-[#dfe9c8]'].join(' ')}>
+                  {item.description}
+                </span>
               </button>
-            ) : null}
-          </nav>
+            ))}
+          </div>
         </div>
       ) : null}
-    </>
+    </div>
   );
 }
