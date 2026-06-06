@@ -67,11 +67,19 @@ function buildTooltip(event, item) {
   };
 }
 
-function ChartFrame({ children, title, subtitle, svgRef, width, height, minWidth = 520 }) {
+function ChartFrame({ children, title, subtitle, svgRef, width, height }) {
   return (
-    <div className="relative overflow-x-auto rounded-2xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] p-3">
+    <div className="relative flex h-full min-h-[320px] w-full min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] p-3">
       {children.tooltip}
-      <svg ref={svgRef} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={title} className="h-auto w-full" style={{ minWidth }} xmlns="http://www.w3.org/2000/svg">
+      <svg
+        ref={svgRef}
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={title}
+        preserveAspectRatio="xMidYMid meet"
+        className="block h-full max-h-full w-full max-w-full"
+        xmlns="http://www.w3.org/2000/svg"
+      >
         <rect width={width} height={height} rx="24" fill={CHART_COLORS.chartBg} />
         <text x="28" y="34" fontSize="22" fontWeight="700" fill={CHART_COLORS.text}>{title}</text>
         <text x="28" y="56" fontSize="13" fill={CHART_COLORS.mutedText}>{subtitle}</text>

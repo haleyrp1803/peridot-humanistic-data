@@ -666,9 +666,9 @@ export function AnalyticsPanelContent({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-auto p-4 md:p-6">
-          <div className="mx-auto flex min-h-full w-full max-w-[1280px] items-center">
-            <div className="w-full rounded-[26px] border border-[#d7c8a6] bg-[#fffdf8] p-4 shadow-[0_18px_42px_rgba(38,56,43,0.14)] md:p-5">
+        <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
+          <div className="mx-auto flex h-full min-h-0 w-full max-w-[1320px] items-stretch">
+            <div className="flex h-full min-h-0 w-full rounded-[26px] border border-[#d7c8a6] bg-[#fffdf8] p-3 shadow-[0_18px_42px_rgba(38,56,43,0.14)] md:p-4">
               <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
             </div>
           </div>
