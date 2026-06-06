@@ -27,6 +27,7 @@ import {
   hasPersonPair,
   hasPlacePair,
   hasValue,
+  hasGenericEvidenceRecord,
   isAcceptedPeridotRecord,
   isValidLatitude,
   isValidLongitude,
@@ -205,9 +206,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'unsupported_rows',
-        'Rows lacking minimum record-role information',
+        'Rows lacking usable record content',
         unsupportedRows,
-        `${describeRows(unsupportedRows)} do not have Source_Name + Target_Name, enough source/target place information, or point-place information to be accepted as Peridot records.`
+        `${describeRows(unsupportedRows)} do not contain usable relationship, place, point/site, temporal, chart, citation, evidence, or metadata content to be accepted as Peridot records.`
       )
     );
   }
@@ -308,13 +309,13 @@ function buildSummaryLines({ totalRows, acceptedRecordCount, unsupportedRowCount
     `${PERIDOT_VALIDATION_SUMMARY_COPY.uploadAcceptedHeading}`,
     `Peridot reviewed ${totalRows} uploaded ${totalRows === 1 ? 'row' : 'rows'} and accepted ${acceptedRecordCount} ${acceptedRecordCount === 1 ? 'record' : 'records'}.`,
     `${capabilityCounts.inspectorReady} ${capabilityCounts.inspectorReady === 1 ? 'record is' : 'records are'} available in Inspector and Export where possible.`,
-    `${capabilityCounts.peopleNetworkReady} ${capabilityCounts.peopleNetworkReady === 1 ? 'record can' : 'records can'} contribute to People view.`,
-    `${capabilityCounts.placeNetworkReady} ${capabilityCounts.placeNetworkReady === 1 ? 'record can' : 'records can'} contribute to place-based relationships.`,
-    `${capabilityCounts.mapReady} ${capabilityCounts.mapReady === 1 ? 'record is' : 'records are'} mappable with valid source and target coordinates.`,
+    `${capabilityCounts.peopleNetworkReady} ${capabilityCounts.peopleNetworkReady === 1 ? 'record can' : 'records can'} contribute to People/Entity Network relationships.`,
+    `${capabilityCounts.placeNetworkReady} ${capabilityCounts.placeNetworkReady === 1 ? 'record can' : 'records can'} contribute to route or place-relationship visualizations.`,
+    `${capabilityCounts.mapReady} ${capabilityCounts.mapReady === 1 ? 'record is' : 'records are'} mappable with valid point coordinates or valid source/target route coordinates.`,
     `${capabilityCounts.timelineReady} ${capabilityCounts.timelineReady === 1 ? 'record is' : 'records are'} timeline-ready as sortable dates or intervals${temporalCounts?.intervalReady ? `; ${temporalCounts.intervalReady} ${temporalCounts.intervalReady === 1 ? 'includes' : 'include'} temporal interval information` : ''}.`,
     `${capabilityCounts.analyticsReady} ${capabilityCounts.analyticsReady === 1 ? 'record is' : 'records are'} available to Analytics where fields are usable.`,
     unsupportedRowCount
-      ? `${unsupportedRowCount} ${unsupportedRowCount === 1 ? 'row was' : 'rows were'} not accepted because minimum record-role information was missing.`
+      ? `${unsupportedRowCount} ${unsupportedRowCount === 1 ? 'row was' : 'rows were'} not accepted because no usable record content was detected.`
       : 'No rows were rejected by the minimum Peridot record rule.',
     PERIDOT_VALIDATION_SUMMARY_COPY.preservedRecordsNotice,
     PERIDOT_VALIDATION_SUMMARY_COPY.noCleaningNotice,
@@ -351,6 +352,7 @@ export function buildPeridotRowValidationReports(rows = []) {
       capabilities,
       temporal,
       issues: Object.freeze({
+        missingGenericEvidenceContent: !hasGenericEvidenceRecord(row),
         missingPersonPair: !hasPersonPair(row),
         missingPlacePair: !hasPlacePair(row),
         missingSourcePlaceInformation: !hasEndpointPlaceInformation(

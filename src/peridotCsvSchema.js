@@ -108,17 +108,23 @@ export const PERIDOT_FIELD_GROUPS = Object.freeze({
 
 /**
  * Later validation should treat a row as an accepted Peridot record if it has
- * either:
+ * any meaningful database content, while still distinguishing which
+ * visualization capabilities that row can support.
  *
- * 1. source and target person names; or
- * 2. some source and target place information, where place information may be
- *    a place name, a coordinate pair, or both.
+ * Accepted record shapes include:
  *
- * Date and coordinates are capability-enabling fields, not admission criteria.
+ * 1. source and target person/entity names;
+ * 2. source-side and target-side place information;
+ * 3. one point/site place or coordinate role; or
+ * 4. generic evidence, chart, temporal, or citation content.
+ *
+ * Date and coordinates are capability-enabling fields, not universal admission
+ * criteria. Generic evidence/chart records should be accepted into the active
+ * dataset even when they are not map-ready or network-ready.
  */
 export const PERIDOT_MINIMUM_RECORD_RULES = Object.freeze({
   acceptedRecord:
-    "A row is accepted when it has either Source_Name + Target_Name, or source-side and target-side place information.",
+    "A row is accepted when it has relationship fields, point/site fields, route/place fields, or generic evidence/chart content.",
   personPair: Object.freeze(["Source_Name", "Target_Name"]),
   sourcePlaceFields: Object.freeze([
     "Source_Location",
@@ -130,6 +136,8 @@ export const PERIDOT_MINIMUM_RECORD_RULES = Object.freeze({
     "Target_Latitude",
     "Target_Longitude",
   ]),
+  genericEvidence:
+    "Any non-empty uploaded row can be preserved as a database record for evidence, search, charts, and export.",
 });
 
 /**
@@ -360,11 +368,51 @@ export function hasMappableCoordinatePair(row) {
   return hasMappablePointCoordinate(row) || hasMappableRouteCoordinatePair(row);
 }
 
+function hasUsableCustomInspectorField(row) {
+  const fields = Array.isArray(row?.customInspectorFields) ? row.customInspectorFields : [];
+  return fields.some((field) => hasValue(field?.value) || hasValue(field?.label) || hasValue(field?.sourceColumn));
+}
+
+function hasUsableOriginalUploadedValue(row) {
+  const original = row?.originalUploadedRow;
+  if (!original || typeof original !== 'object' || Array.isArray(original)) return false;
+  return Object.values(original).some(hasValue);
+}
+
+function isInternalBookkeepingKey(key) {
+  return [
+    'customInspectorFields',
+    'ignoredUploadedColumns',
+    'originalUploadedRow',
+    'originalTemplateRow',
+    'peridotCapabilities',
+  ].includes(key);
+}
+
+/**
+ * Return true when a row has enough content to remain useful as a database
+ * record even if it cannot support maps or networks. This is the generic
+ * chart/evidence admission path used by time-series, catalogue, table, and
+ * source/citation datasets.
+ */
+export function hasGenericEvidenceRecord(row) {
+  if (!row || typeof row !== 'object') return false;
+
+  const hasDirectValue = Object.entries(row).some(([key, value]) => {
+    if (isInternalBookkeepingKey(key)) return false;
+    if (Array.isArray(value)) return value.some(hasValue);
+    if (value && typeof value === 'object') return false;
+    return hasValue(value);
+  });
+
+  return hasDirectValue || hasUsableCustomInspectorField(row) || hasUsableOriginalUploadedValue(row);
+}
+
 /**
  * Return true when a row satisfies the minimum Peridot record rule.
  */
 export function isAcceptedPeridotRecord(row) {
-  return hasPersonPair(row) || hasPlacePair(row) || hasPointPlaceInformation(row);
+  return hasPersonPair(row) || hasPlacePair(row) || hasPointPlaceInformation(row) || hasGenericEvidenceRecord(row);
 }
 
 /**

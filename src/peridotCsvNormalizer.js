@@ -384,8 +384,8 @@ export function buildPersonMetadataRowsFromPeridotTemplate(rows = []) {
  *   names/titles only;
  * - places: map-ready places derived only from valid coordinate pairs;
  * - acceptedRows: accepted database records under the permissive minimum rule;
- * - unsupportedRows: rows lacking enough source/target information to form an
- *   accepted Peridot record.
+ * - unsupportedRows: rows with no usable relationship, place, point/site,
+ *   temporal, chart, citation, evidence, or metadata content.
  */
 export function normalizePeridotTemplateRows(rows = []) {
   const placeMap = new Map();
