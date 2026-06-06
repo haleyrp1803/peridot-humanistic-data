@@ -651,21 +651,6 @@ export function AnalyticsPanelContent({
       </aside>
 
       <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#fbf8f1]">
-        <div className="shrink-0 border-b border-[#d7c8a6] px-5 py-4">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="peridot-kicker !mb-0 text-[11px] text-[#6b7d55]">Chart workspace</p>
-              <h1 className="mt-1 [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.04em] text-[#132a20]">
-                {chartData?.title || chartDefinition.label}
-              </h1>
-              {chartData?.subtitle ? <p className="mt-1 text-sm text-[#52675a]">{chartData.subtitle}</p> : null}
-            </div>
-            <div className="rounded-full border border-[#cbdab2] bg-[#edf4df] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#3f5b43]">
-              {rows.length.toLocaleString()} active records
-            </div>
-          </div>
-        </div>
-
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
           <div className="mx-auto flex h-full min-h-0 w-full max-w-[1320px] items-stretch">
             <div className="flex h-full min-h-0 w-full rounded-[26px] border border-[#d7c8a6] bg-[#fffdf8] p-3 shadow-[0_18px_42px_rgba(38,56,43,0.14)] md:p-4">
