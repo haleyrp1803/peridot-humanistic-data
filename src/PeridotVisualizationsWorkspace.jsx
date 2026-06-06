@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
+import { VisualizationTimelineScrubber } from './timelinePlaybackComponents.jsx';
 import { ANALYTICS_CHART_DEFINITIONS } from './analyticsConfig.js';
 
 const VISUALIZATION_TOOLS = Object.freeze({
@@ -8,6 +9,7 @@ const VISUALIZATION_TOOLS = Object.freeze({
   ROUTE_MAP: 'route-map',
   ENTITY_NETWORK: 'entity-network',
   FORCE_NETWORK: 'force-network',
+  CHART_WORKSPACE: 'chart-workspace',
   CAPABILITY_SUMMARY: 'capability-summary',
 });
 
@@ -182,6 +184,7 @@ export function PeridotVisualizationsWorkspace({
   onOpenAnalytics,
   onOpenChartVisualization,
   onOpenSearch,
+  timelineControlsProps,
 }) {
   const availability = {
     rowCount: 0,
@@ -199,7 +202,7 @@ export function PeridotVisualizationsWorkspace({
   };
 
   const initialTool = visualizationsWorkspacePanel === 'analytics'
-    ? chartToolKey(analyticsWorkspaceProps?.analyticsState?.chartType || 'bar')
+    ? VISUALIZATION_TOOLS.CHART_WORKSPACE
     : viewMode === 'geographic'
       ? availability.hasRouteMap
         ? VISUALIZATION_TOOLS.ROUTE_MAP
@@ -214,9 +217,9 @@ export function PeridotVisualizationsWorkspace({
 
   useEffect(() => {
     if (visualizationsWorkspacePanel === 'analytics') {
-      setSelectedTool(chartToolKey(analyticsWorkspaceProps?.analyticsState?.chartType || 'bar'));
+      setSelectedTool(VISUALIZATION_TOOLS.CHART_WORKSPACE);
     }
-  }, [analyticsWorkspaceProps?.analyticsState?.chartType, visualizationsWorkspacePanel]);
+  }, [visualizationsWorkspacePanel]);
 
   useEffect(() => () => {
     if (menuCloseTimerRef.current) {
@@ -304,23 +307,20 @@ export function PeridotVisualizationsWorkspace({
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
     },
-    ...Object.fromEntries(Object.values(ANALYTICS_CHART_DEFINITIONS).map((chartDefinition) => [
-      chartToolKey(chartDefinition.key),
-      {
-        label: chartDefinition.label,
-        category: 'Chart Visualizations',
-        available: availability.hasCharts,
-        action: () => (typeof onOpenChartVisualization === 'function' ? onOpenChartVisualization(chartDefinition.key) : onOpenAnalytics?.()),
-        unavailableTitle: `${chartDefinition.label} is not available for this dataset.`,
-        why: 'No active records or chartable fields are available for this chart.',
-        availableInstead: [
-          availability.hasPointMap ? 'Point Map' : null,
-          availability.hasRouteMap ? 'Route Map' : null,
-          availability.hasNetwork ? 'Network Visualizations' : null,
-          availability.hasExploreData ? 'Explore Your Data' : null,
-        ].filter(Boolean),
-      },
-    ])),
+    [VISUALIZATION_TOOLS.CHART_WORKSPACE]: {
+      label: 'Chart Visualizations',
+      category: 'Chart Visualizations',
+      available: availability.hasCharts,
+      action: onOpenAnalytics,
+      unavailableTitle: 'Chart Visualizations are not available for this dataset.',
+      why: 'No active records or chartable fields are available for charting.',
+      availableInstead: [
+        availability.hasPointMap ? 'Point Map' : null,
+        availability.hasRouteMap ? 'Route Map' : null,
+        availability.hasNetwork ? 'Network Visualizations' : null,
+        availability.hasExploreData ? 'Explore Your Data' : null,
+      ].filter(Boolean),
+    },
     [VISUALIZATION_TOOLS.CAPABILITY_SUMMARY]: {
       label: 'Capability Summary',
       category: 'Explore Your Data',
@@ -349,7 +349,7 @@ export function PeridotVisualizationsWorkspace({
     {
       label: 'Chart Visualizations',
       description: 'Choose a chart type',
-      tools: Object.values(ANALYTICS_CHART_DEFINITIONS).map((definition) => chartToolKey(definition.key)),
+      tools: [VISUALIZATION_TOOLS.CHART_WORKSPACE],
     },
     {
       label: 'Explore Your Data',
@@ -405,9 +405,9 @@ export function PeridotVisualizationsWorkspace({
       );
     }
 
-    if (chartTypeFromToolKey(selectedTool)) {
+    if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
       return (
-        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-auto rounded-[28px] border border-[#c4e0ef]/50 bg-[rgba(8,39,25,0.9)] p-3 shadow-[0_20px_54px_rgba(0,0,0,0.34)] backdrop-blur-sm md:p-4">
+        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[#c4e0ef]/50 bg-[rgba(8,39,25,0.9)] p-2 shadow-[0_20px_54px_rgba(0,0,0,0.34)] backdrop-blur-sm md:p-3">
           <AnalyticsPanelContent analyticsState={analyticsWorkspaceProps.analyticsState} />
         </div>
       );
@@ -493,8 +493,11 @@ export function PeridotVisualizationsWorkspace({
             </div>
           </div>
 
-          <div className="relative z-0 min-h-0 flex flex-1" onMouseEnter={scheduleMenuClose}>
-            {renderWorkspaceBody()}
+          <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3" onMouseEnter={scheduleMenuClose}>
+            <div className="min-h-0 flex flex-1">
+              {renderWorkspaceBody()}
+            </div>
+            {timelineControlsProps ? <VisualizationTimelineScrubber {...timelineControlsProps} /> : null}
           </div>
         </div>
       </div>

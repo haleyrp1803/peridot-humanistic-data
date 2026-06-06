@@ -4220,6 +4220,27 @@ export default function EuropeNetworkMapApp() {
     },
   };
 
+  const timelineControlsProps = {
+    currentRangeLabel,
+    timelineMonths,
+    rangeStart,
+    setRangeStart,
+    rangeEnd,
+    setRangeEnd,
+    currentPlaybackLabel,
+    currentPlaybackSpeedLabel,
+    playbackSpeedOptions,
+    playbackSpeed,
+    setPlaybackSpeed,
+    isPlaying,
+    setIsPlaying,
+    playbackIndex,
+    setPlaybackIndex,
+    selectedRowsForPlayback,
+    timelineMode,
+    setTimelineMode,
+  };
+
   const visualizationWorkspaceProps = {
     pageTitle,
     setPageTitle,
@@ -4238,6 +4259,7 @@ export default function EuropeNetworkMapApp() {
       setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
       setIsSidePanelOpen(false);
     },
+    timelineControlsProps,
     visualizationAvailability,
   };
 
@@ -4306,7 +4328,10 @@ export default function EuropeNetworkMapApp() {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
     setIsSidePanelOpen(false);
   };
-  const openTimelinePanelFromMenu = () => openLegacyPanelTabFromMenu('timeline');
+  const openTimelinePanelFromMenu = () => {
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    setIsSidePanelOpen(false);
+  };
   const openInspectorPanelFromMenu = () => {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.INSPECTOR);
     setInspectorPresentationMode(
@@ -4360,48 +4385,9 @@ export default function EuropeNetworkMapApp() {
           .peridot-redesign-root main > .flex.h-full.flex-col > .shrink-0 {
             background: var(--title-bar-bg) !important;
           }
-          .peridot-analytics-workspace button[aria-pressed] {
-            min-height: 3.25rem !important;
-            height: 3.5rem !important;
-            max-height: 3.75rem !important;
-            aspect-ratio: auto !important;
-            padding: 0.45rem 0.75rem !important;
-          }
-          .peridot-analytics-workspace button[aria-pressed] svg {
-            width: 1.35rem !important;
-            height: 1.35rem !important;
-            max-height: 1.35rem !important;
-          }
-          .peridot-analytics-workspace button[aria-pressed] [class*="text-"] {
-            margin-top: 0.15rem !important;
-            font-size: 0.78rem !important;
-            line-height: 1.1 !important;
-          }
-          .peridot-analytics-workspace section {
-            margin-top: 0.75rem !important;
-          }
-          .peridot-analytics-workspace [class*="grid"] {
-            gap: 0.6rem !important;
-          }
           .peridot-analytics-workspace select,
           .peridot-analytics-workspace input {
             min-height: 2.35rem !important;
-          }
-          .peridot-analytics-workspace svg {
-            max-height: 340px !important;
-          }
-          .peridot-analytics-workspace [class*="rounded"][class*="border"]:has(svg) {
-            max-height: 430px !important;
-            overflow: auto !important;
-          }
-          .peridot-analytics-workspace button[aria-pressed]:has(svg) {
-            overflow: hidden !important;
-          }
-          @media (min-width: 1024px) {
-            .peridot-analytics-workspace button[aria-pressed] {
-              min-height: 3.25rem !important;
-              height: 3.5rem !important;
-            }
           }
         `}</style>
       <div className="relative h-full">

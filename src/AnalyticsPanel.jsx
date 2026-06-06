@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { ANALYTICS_AGGREGATION_OPTIONS, ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
 import { buildAnalyticsChartData, getAnalyticsYearRange } from './analyticsDerivationHelpers';
@@ -262,48 +261,11 @@ function VariableControlsShell({ children }) {
   );
 }
 
-function ExpandedChartModal({ chartData, onClose }) {
-  const expandedSvgRef = useRef(null);
-
-  return createPortal(
-    <div
-      className="fixed bottom-4 right-4 top-[112px] z-[120]"
-      style={{ left: 'clamp(86px, 22vw, 420px)' }}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Expanded Analytics chart"
-    >
-      <div className="relative flex h-full w-full flex-col rounded-3xl border border-[#e8eee8] bg-[#182c25]/70 p-5 text-[#e8eee8] shadow-[0_28px_80px_rgba(0,0,0,0.38)] backdrop-blur">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-[#e8eee8] bg-[#182c25]/40 text-xl font-semibold text-[#f4f7f2] shadow hover:bg-[#182c25]/60"
-          aria-label="Close expanded chart"
-          title="Close expanded chart"
-        >
-          Ã—
-        </button>
-        <div className="mb-4 pr-14">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#dfe8df]">Expanded Analytics View</div>
-          <h2 className="mt-1 text-2xl font-semibold text-[#f4f7f2]">{chartData?.title || 'Analytics chart'}</h2>
-          {chartData?.subtitle ? <div className="mt-1 text-sm text-[#dfe8df]">{chartData.subtitle}</div> : null}
-        </div>
-        <div className="min-h-0 flex-1 overflow-auto rounded-2xl bg-[var(--panel-card-bg)] p-4">
-          <div className="mx-auto w-full max-w-6xl">
-            <AnalyticsChartPreview chartData={chartData} svgRef={expandedSvgRef} />
-          </div>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
 export function AnalyticsPanelContent({
   analyticsState,
 }) {
   const chartSvgRef = useRef(null);
   const [exportStatus, setExportStatus] = useState(null);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [barOrientation, setBarOrientation] = useState('vertical');
   const [xField, setXField] = useState('timePeriod');
   const [yField, setYField] = useState('recordCount');
@@ -642,36 +604,76 @@ export function AnalyticsPanelContent({
   };
 
   return (
-    <div className="space-y-5">
-      {isExpanded ? <ExpandedChartModal chartData={chartData} onClose={() => setIsExpanded(false)} /> : null}
-      <div>
-        <div className="text-sm text-[var(--muted-text)]">Build charts from the current Peridot data. Choose the chart type, then choose the uploaded columns used for x-axis, y-axis, series, grouping, and aggregation.</div>
-      </div>
-      <section className="space-y-3">
-        <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Choose a chart</div>
-        <div className="grid grid-cols-3 gap-3">
-          {Object.values(ANALYTICS_CHART_DEFINITIONS).map((option) => (
-            <ChartTypeButton key={option.key} option={option} active={chartType === option.key} onSelect={() => setChartType(option.key)} />
-          ))}
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#dfe9c8]/45 bg-[#f8f4e6] text-[#203429] shadow-[0_22px_60px_rgba(0,0,0,0.34)] lg:flex-row">
+      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[#d7c8a6] bg-[#efe6d1] lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
+        <div className="shrink-0 border-b border-[#d7c8a6] px-5 py-4">
+          <p className="peridot-kicker !mb-0 text-[11px] text-[#6b7d55]">Chart controls</p>
+          <h2 className="mt-1 [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#172b20]">
+            Build chart
+          </h2>
+          <p className="mt-2 text-xs leading-relaxed text-[#5b6b5f]">
+            Select a chart type and map the active dataset into axes, metrics, groups, and series. Changes update the chart stage immediately.
+          </p>
         </div>
-      </section>
-      <section className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-4">
-        <div className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Configure chart</div>
-        <ChartUseDescription chartDefinition={chartDefinition} />
-        <div className="mt-4 space-y-4">
+
+        <div className="min-h-0 flex-1 space-y-4 overflow-auto px-5 py-4">
+          <section className="rounded-2xl border border-[#d7c8a6] bg-[#fffaf0] p-4 shadow-sm">
+            <SelectControl
+              label="Chart type"
+              value={chartType}
+              onChange={setChartType}
+              options={Object.values(ANALYTICS_CHART_DEFINITIONS)}
+              description={chartDefinition.descriptor}
+            />
+            <div className="mt-3 rounded-xl bg-[#edf4df] p-3 text-xs leading-relaxed text-[#4d6254]">
+              {chartDefinition.variableSummary}
+            </div>
+          </section>
+
           {renderDateRangeControls()}
-          {renderChartControls()}
+
+          <section className="rounded-2xl border border-[#d7c8a6] bg-[#fffaf0] p-4 shadow-sm">
+            {renderChartControls()}
+          </section>
+
+          <section className="rounded-2xl border border-[#d7c8a6] bg-[#fffaf0] p-4 shadow-sm">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#6c765e]">Export</div>
+            <button type="button" onClick={handleExportPng} className={`${buttonClassName()} mt-3 w-full justify-center`} disabled={!chartData}>
+              Export chart PNG
+            </button>
+            {exportStatus ? (
+              <div className={['mt-3 rounded-xl border p-3 text-sm', exportStatus.type === 'error' ? 'border-red-300 bg-red-50 text-red-800' : 'border-[#cbdab2] bg-[#edf4df] text-[#26382b]'].join(' ')}>
+                {exportStatus.message}
+              </div>
+            ) : null}
+          </section>
         </div>
-      </section>
-      <section className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Preview</div>
-          <button type="button" onClick={() => setIsExpanded(true)} className="rounded-xl border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-3 py-1.5 text-xs font-semibold text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]">Expand Chart</button>
+      </aside>
+
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#fbf8f1]">
+        <div className="shrink-0 border-b border-[#d7c8a6] px-5 py-4">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="peridot-kicker !mb-0 text-[11px] text-[#6b7d55]">Chart workspace</p>
+              <h1 className="mt-1 [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.04em] text-[#132a20]">
+                {chartData?.title || chartDefinition.label}
+              </h1>
+              {chartData?.subtitle ? <p className="mt-1 text-sm text-[#52675a]">{chartData.subtitle}</p> : null}
+            </div>
+            <div className="rounded-full border border-[#cbdab2] bg-[#edf4df] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#3f5b43]">
+              {rows.length.toLocaleString()} active records
+            </div>
+          </div>
         </div>
-        <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
-        <button type="button" onClick={handleExportPng} className={buttonClassName()} disabled={!chartData}>Export chart PNG</button>
-        {exportStatus ? <div className={['rounded-xl border p-3 text-sm', exportStatus.type === 'error' ? 'border-red-300 bg-red-50 text-red-800' : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)]'].join(' ')}>{exportStatus.message}</div> : null}
-      </section>
+
+        <div className="min-h-0 flex-1 overflow-auto p-4 md:p-6">
+          <div className="mx-auto flex min-h-full w-full max-w-[1280px] items-center">
+            <div className="w-full rounded-[26px] border border-[#d7c8a6] bg-[#fffdf8] p-4 shadow-[0_18px_42px_rgba(38,56,43,0.14)] md:p-5">
+              <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
