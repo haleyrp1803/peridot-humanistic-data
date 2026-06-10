@@ -1,30 +1,40 @@
 /*
  * Search & Filter workspace.
  *
- * This component renders the global active-dataset filtering surface. It separates draft filter input from applied filter state so expensive graph/data recomputation only happens when the user chooses Apply Filters.
+ * This component renders the global active-dataset filtering surface. It separates
+ * draft filter input from applied filter state so expensive graph/data
+ * recomputation only happens when the user chooses Apply Filters.
  *
  * Important relationships:
  * - `App.jsx` owns draft/applied filter state and recomputation status.
- * - Visualizations, Timeline, Analytics, Inspector, and Export should consume the active filtered dataset defined here.
+ * - Visualizations, Timeline, Analytics, Inspector, and Export should consume the
+ *   active filtered dataset defined here.
  *
  * Maintenance cautions:
  * - Do not make text inputs recompute data on every keystroke.
- * - Predictive suggestions should fill draft fields only; Apply Filters should commit global state.
+ * - Predictive suggestions should fill draft fields only; Apply Filters should
+ *   commit global state.
+ * - This file is allowed to organize Search UI, but it should not introduce new
+ *   filtering semantics unless the App-level search pipeline is updated in the
+ *   same bounded behavior pass.
  *
  * Scope contract:
  * - Text/entity inputs here update draft state only. They must not recompute
- * graph data while the user is typing.
+ *   graph data while the user is typing.
  * - Apply commits Search & Filter fields and resets playback so the next
- * visual/export scope starts at the beginning of the newly filtered row set.
+ *   visual/export scope starts at the beginning of the newly filtered row set.
  * - Clear resets Search & Filter fields and timeline boundaries together,
- * because the global visible dataset is the intersection of timeline window
- * and committed Search & Filter criteria.
+ *   because the global visible dataset is the intersection of timeline window
+ *   and committed Search & Filter criteria.
  *
- * Phase 2 Advanced Search rework:
- * - The workspace now adds global capability filters and result facets/counts
- *   on top of the Phase 1 result-card + Inspector handoff path.
- * - Facet clicks refine draft criteria only; Apply Filters still commits the
- *   active dataset so typing and exploratory clicks do not recompute data live.
+ * Search green compact tabbed layout pass:
+ * - Converts the dense three-column Advanced Search layout into a tabbed
+ *   workflow: Build Search, Results, and Refine / Inspect.
+ * - Harmonizes the palette with the rest of Peridot's layered light-green, sage, moss, and
+ *   gold workspace system used in the Data mapping modal and Visualizations
+ *   header, while retaining clear hover, active, and keyboard-focus feedback.
+ * - This is a visual/UX-architecture pass. The green compact pass keeps the existing capability
+ *   filters, facets, result cards, and Inspector handoff semantics intact.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -33,6 +43,25 @@ import {
   buildPeridotSearchResults,
   getCapabilityFilterLabel,
 } from './peridotSearchResultHelpers.js';
+
+const SHELL_CLASS =
+  'rounded-[1.6rem] border border-[#9db48e] bg-[#dfead2] text-[#203729] shadow-[0_24px_70px_rgba(0,0,0,0.22)]';
+const CARD_CLASS =
+  'rounded-[1.25rem] border border-[#aec19d] bg-[#edf5e5] shadow-[0_12px_30px_rgba(39,50,36,0.10)]';
+const PANEL_INSET_CLASS =
+  'rounded-[1rem] border border-[#b8c8aa] bg-[#d7e6cc] shadow-inner shadow-white/25';
+const FIELD_LABEL_CLASS = 'block text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#38553d]';
+const MUTED_TEXT_CLASS = 'text-sm leading-5 text-[#465d49]';
+const PRIMARY_BUTTON_CLASS =
+  'rounded-full border border-[#b88734] bg-[#c89843] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#fffaf0] shadow-[0_8px_18px_rgba(68,49,20,0.16)] transition duration-150 hover:border-[#d7b462] hover:bg-[#d2a653] hover:shadow-[0_10px_22px_rgba(68,49,20,0.22)] active:translate-y-[1px] active:bg-[#a9782c] active:shadow-[0_4px_10px_rgba(68,49,20,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c89843]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#dfead2]';
+const SECONDARY_BUTTON_CLASS =
+  'rounded-full border border-[#7f9b70] bg-[#eaf3e1] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#274633] shadow-[0_7px_16px_rgba(39,50,36,0.08)] transition duration-150 hover:border-[#466d47] hover:bg-[#d2e4c4] hover:text-[#183524] hover:shadow-[0_9px_20px_rgba(39,50,36,0.13)] active:translate-y-[1px] active:bg-[#bdd4ad] active:shadow-[0_4px_10px_rgba(39,50,36,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#dfead2]';
+const DARK_BUTTON_CLASS =
+  'rounded-full border border-[#244c35]/20 bg-[#244c35] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#fffaf0] shadow-[0_8px_18px_rgba(32,55,40,0.16)] transition duration-150 hover:bg-[#315f43] hover:shadow-[0_10px_22px_rgba(32,55,40,0.22)] active:translate-y-[1px] active:bg-[#183826] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf5e5]';
+const CHIP_BUTTON_CLASS =
+  'rounded-full border px-2.5 py-1 text-[0.72rem] font-bold transition duration-150 active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf5e5]';
+const INPUT_CLASS =
+  'mt-1.5 w-full rounded-xl border border-[#98ad8c] bg-[#f8fbf4] px-3 py-2 text-sm text-[#203729] shadow-inner shadow-black/5 transition duration-150 placeholder:text-[#718069] hover:border-[#6f8e62] focus:border-[#466d47] focus:outline-none focus:ring-2 focus:ring-[#8ba37a]/30';
 
 function AutocompleteTextInput({
   id,
@@ -48,10 +77,11 @@ function AutocompleteTextInput({
   const query = String(value ?? '').trim().toLowerCase();
   const matchingSuggestions = query.length >= 2
     ? suggestions
-      .filter((suggestion) => String(suggestion ?? '').toLowerCase().includes(query))
-      .slice(0, 20)
+        .filter((suggestion) => String(suggestion ?? '').toLowerCase().includes(query))
+        .slice(0, 20)
     : [];
   const showSuggestions = isFocused && matchingSuggestions.length > 0;
+
   const chooseSuggestion = (suggestion) => {
     onChange(suggestion);
     setIsFocused(false);
@@ -59,156 +89,209 @@ function AutocompleteTextInput({
 
   return (
     <div className="relative">
-      <label htmlFor={id} className="block text-xs font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/72">
-        {label}
-      </label>
+      <label htmlFor={id} className={FIELD_LABEL_CLASS}>{label}</label>
       <input
         id={id}
         value={value}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={onKeyDown}
         onFocus={() => setIsFocused(true)}
-        onBlur={() => { window.setTimeout(() => setIsFocused(false), 120); }}
+        onBlur={() => {
+          window.setTimeout(() => setIsFocused(false), 120);
+        }}
         placeholder={placeholder}
         autoComplete="off"
-        className="peridot-form-input mt-2 text-sm"
+        className={INPUT_CLASS}
       />
       {showSuggestions ? (
-        <div className="absolute left-0 right-0 top-full z-40 mt-2 max-h-56 overflow-y-auto rounded-2xl border border-[#dfe9c8]/35 bg-[#082719] shadow-[0_18px_36px_rgba(0,0,0,0.34)]">
-          <div className="border-b border-[#dfe9c8]/20 px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#dfe9c8]/72">Suggestions</div>
+        <div className="absolute left-0 right-0 z-30 mt-2 max-h-56 overflow-y-auto rounded-2xl border border-[#c9c1aa] bg-[#fffdf6] p-1 shadow-2xl shadow-black/20">
+          <div className="px-3 py-1.5 text-[0.62rem] font-black uppercase tracking-[0.18em] text-[#667960]">
+            Suggestions
+          </div>
           {matchingSuggestions.map((suggestion) => (
             <button
               key={suggestion}
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => chooseSuggestion(suggestion)}
-              className="block w-full px-3 py-2 text-left text-sm leading-5 text-[#fbf7ea] transition-colors hover:bg-[#b58b42] hover:text-[#fff8e8]"
+              className="block w-full rounded-xl px-3 py-2 text-left text-sm leading-5 text-[#24372b] transition duration-150 hover:bg-[#dfead2] hover:text-[#163623] active:translate-y-[1px] active:bg-[#c9d9bb] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/50"
             >
               {suggestion}
             </button>
           ))}
         </div>
       ) : null}
-      {helperText ? <p className="mt-2 text-xs leading-5 text-[#f7f2df]/68">{helperText}</p> : null}
+      {helperText ? (
+        <p className="mt-2 text-xs leading-5 text-[#637064]">{helperText}</p>
+      ) : null}
     </div>
   );
 }
 
 function AppliedScopeCard({ label, value }) {
   return (
-    <div className="rounded-[20px] border border-[#dfe9c8]/25 bg-[#dfe9c8]/10 px-4 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.18)]">
-      <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#dfe9c8]/68">{label}</div>
-      <div className="mt-1 text-sm font-semibold text-[#fbf7ea]">{value}</div>
+    <div className="rounded-xl border border-[#b8c8aa] bg-[#edf5e5] px-3 py-2 shadow-sm shadow-black/5">
+      <div className="text-[0.58rem] font-black uppercase tracking-[0.16em] text-[#4b6a4b]">
+        {label}
+      </div>
+      <div className="mt-0.5 truncate text-sm font-black text-[#203729]">{value}</div>
     </div>
   );
 }
 
-function CriteriaCard({ title, children }) {
+function SectionHeader({ eyebrow, title, children }) {
   return (
-    <div className="rounded-[24px] border border-[#dfe9c8]/26 bg-[#dfe9c8]/10 p-4">
-      <h3 className="text-base font-bold text-[#fbf7ea]">{title}</h3>
-      {children}
+    <div>
+      {eyebrow ? (
+        <div className="text-[0.6rem] font-black uppercase tracking-[0.18em] text-[#8b6c2f]">
+          {eyebrow}
+        </div>
+      ) : null}
+      <h2 className="mt-0.5 text-2xl font-black tracking-tight text-[#203729]">{title}</h2>
+      {children ? <p className={'mt-1 ' + MUTED_TEXT_CLASS}>{children}</p> : null}
     </div>
   );
 }
 
+function SearchTabButton({ id, label, summary, active, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onClick(id)}
+      className={`rounded-[1rem] border px-4 py-2.5 text-left shadow-sm transition duration-150 active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#dfead2] ${
+        active
+          ? 'border-[#6f8e62] bg-[#86a96f] text-[#fffaf0] shadow-[0_10px_20px_rgba(55,79,52,0.20)]'
+          : 'border-[#b8c8aa] bg-[#d7e6cc] text-[#274633] hover:border-[#7f9b70] hover:bg-[#c9ddba] hover:shadow-[0_7px_16px_rgba(39,50,36,0.10)] active:bg-[#b9d0a8]'
+      }`}
+    >
+      <span className={`block text-[0.58rem] font-black uppercase tracking-[0.17em] ${active ? 'text-[#fff5d9]/82' : 'text-[#4b6a4b]'}`}>
+        {id === 'build' ? 'Step 1' : id === 'results' ? 'Step 2' : 'Step 3'}
+      </span>
+      <span className="mt-0.5 block text-base font-black">{label}</span>
+      <span className={`mt-0.5 block text-xs leading-4 ${active ? 'text-[#fffaf0]/82' : 'text-[#4f654d]'}`}>
+        {summary}
+      </span>
+    </button>
+  );
+}
 
 function CapabilityFilterToggle({ option, checked, count, onToggle }) {
   return (
     <button
       type="button"
       onClick={() => onToggle(option.id)}
-      className={`rounded-2xl border px-3 py-3 text-left transition-colors ${checked
-        ? 'border-[#b58b42] bg-[#b58b42]/24 text-[#fff8e8]'
-        : 'border-[#dfe9c8]/24 bg-[#dfe9c8]/8 text-[#f7f2df]/76 hover:border-[#dfe9c8]/50 hover:bg-[#dfe9c8]/14'}`}
+      title={option.description}
+      className={`rounded-xl border px-3 py-2 text-left transition duration-150 active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf5e5] ${
+        checked
+          ? 'border-[#6f8e62] bg-[#b9d6a7] text-[#203729] shadow-[0_7px_14px_rgba(55,79,52,0.14)]'
+          : 'border-[#b8c8aa] bg-[#eef6e8] text-[#3f5b42] hover:border-[#6f8e62] hover:bg-[#d2e4c4] hover:text-[#203729]'
+      }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <span className="text-xs font-bold uppercase tracking-[0.12em]">{option.label}</span>
-        {Number.isFinite(count) ? <span className="rounded-full bg-[#071f16]/55 px-2 py-0.5 text-[10px] font-bold">{count}</span> : null}
-      </div>
-      <p className="mt-2 text-xs leading-5 opacity-80">{option.description}</p>
+      <span className="flex items-center justify-between gap-2">
+        <span className="text-[0.72rem] font-black uppercase leading-4 tracking-[0.12em]">{option.label}</span>
+        {Number.isFinite(count) ? (
+          <span className="rounded-full border border-[#9db48e] bg-[#f8fbf4]/90 px-2 py-0.5 text-[0.62rem] font-black text-[#38553d]">
+            {count}
+          </span>
+        ) : null}
+      </span>
     </button>
   );
 }
 
 function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
   return (
-    <div className="rounded-[20px] border border-[#dfe9c8]/18 bg-[#dfe9c8]/7 p-3">
-      <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-[#dfe9c8]/70">{group.label}</h3>
-      <div className="mt-3 flex flex-wrap gap-2">
+    <section className="rounded-[1rem] border border-[#b8c8aa] bg-[#edf5e5] p-3 shadow-sm shadow-black/5">
+      <h3 className="text-[0.62rem] font-black uppercase tracking-[0.15em] text-[#38553d]">
+        {group.label}
+      </h3>
+      <div className="mt-2 flex flex-wrap gap-1.5">
         {group.items.map((item) => {
           const isCapability = group.type === 'capability';
           const isActive = isCapability && activeCapabilityFilters.includes(item.value);
           return (
             <button
-              key={`${group.id}:${item.value}`}
+              key={`${group.id}-${item.value}`}
               type="button"
               onClick={() => onChooseFacet(group, item)}
-              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${isActive
-                ? 'border-[#b58b42] bg-[#b58b42]/24 text-[#fff8e8]'
-                : 'border-[#dfe9c8]/26 bg-[#071f16]/45 text-[#f7f2df]/74 hover:border-[#dfe9c8]/50 hover:text-[#fbf7ea]'}`}
+              className={`${CHIP_BUTTON_CLASS} ${
+                isActive
+                  ? 'border-[#6f8e62] bg-[#b9d6a7] text-[#203729] hover:bg-[#a9c997] active:bg-[#99bd86]'
+                  : 'border-[#9db48e] bg-[#d7e6cc] text-[#274633] hover:border-[#466d47] hover:bg-[#c9ddba] active:bg-[#b9d0a8]'
+              }`}
               title={isCapability ? `Toggle ${item.label}` : `Set draft filter to ${item.value}`}
             >
               <span>{item.label || item.value}</span>
-              <span className="ml-2 text-[#dfe9c8]/62">{item.count}</span>
+              <span className="ml-1.5 rounded-full bg-[#f8fbf4]/80 px-1.5 py-0.5 text-[0.6rem] text-[#38553d]">
+                {item.count}
+              </span>
             </button>
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }
 
 function SearchResultCard({ result, onInspectSearchResult }) {
   return (
-    <article className="rounded-[22px] border border-[#dfe9c8]/24 bg-[#071f16]/55 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.18)]">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+    <article className="rounded-[1.15rem] border border-[#b8c8aa] bg-[#edf5e5] p-3 text-[#203729] shadow-[0_10px_24px_rgba(39,50,36,0.10)] transition duration-150 hover:-translate-y-0.5 hover:border-[#7f9b70] hover:shadow-[0_14px_32px_rgba(39,50,36,0.15)]">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#dfe9c8]/64">Search result</p>
-          <h3 className="mt-1 text-base font-bold leading-6 text-[#fbf7ea]">{result.title}</h3>
-          <p className="mt-1 text-xs font-semibold text-[#f7f2df]/70">{result.displayDate}</p>
+          <div className="text-[0.58rem] font-black uppercase tracking-[0.17em] text-[#4b6a4b]">
+            Search result
+          </div>
+          <h3 className="mt-0.5 truncate text-base font-black text-[#203729]">{result.title}</h3>
+          <p className="mt-0.5 text-sm font-bold text-[#7a622f]">{result.displayDate}</p>
         </div>
         <button
           type="button"
           onClick={() => onInspectSearchResult?.(result)}
-          className="rounded-full border border-[#dfe9c8]/45 bg-[#dfe9c8]/12 px-3 py-1.5 text-xs font-bold text-[#fbf7ea] transition-colors hover:bg-[#b58b42] hover:text-[#fff8e8]"
+          className={DARK_BUTTON_CLASS + ' shrink-0 px-3 py-1.5'}
         >
           Inspect
         </button>
       </div>
 
-      <dl className="mt-3 grid gap-2 text-xs text-[#f7f2df]/72 sm:grid-cols-2">
-        <div>
-          <dt className="font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/58">Entities</dt>
-          <dd className="mt-1 leading-5">{result.peopleRoute}</dd>
+      <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+        <div className="rounded-xl bg-[#d7e6cc] p-2.5">
+          <dt className="text-[0.58rem] font-black uppercase tracking-[0.13em] text-[#38553d]">Entities</dt>
+          <dd className="mt-1 font-semibold text-[#203729]">{result.peopleRoute}</dd>
         </div>
-        <div>
-          <dt className="font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/58">Places</dt>
-          <dd className="mt-1 leading-5">{result.placeRoute}</dd>
+        <div className="rounded-xl bg-[#d7e6cc] p-2.5">
+          <dt className="text-[0.58rem] font-black uppercase tracking-[0.13em] text-[#38553d]">Places</dt>
+          <dd className="mt-1 font-semibold text-[#203729]">{result.placeRoute}</dd>
         </div>
       </dl>
 
-      {result.matchedFields.length ? (
-        <div className="mt-3 rounded-2xl border border-[#dfe9c8]/16 bg-[#dfe9c8]/8 p-3">
-          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#dfe9c8]/64">Why this matched</p>
-          <ul className="mt-2 space-y-1 text-xs leading-5 text-[#f7f2df]/76">
-            {result.matchedFields.map((match) => (
-              <li key={`${match.label}:${match.value}`}>
-                <span className="font-semibold text-[#fbf7ea]">{match.label}:</span> {match.value}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <p className="mt-3 text-xs leading-5 text-[#f7f2df]/60">
-          This row is in the current applied dataset. It may match through date, weight, or another active scope condition.
-        </p>
-      )}
+      <div className="mt-3 rounded-xl border border-[#b8c8aa] bg-[#eaf3e1] p-2.5">
+        {result.matchedFields.length ? (
+          <div>
+            <div className="text-[0.58rem] font-black uppercase tracking-[0.15em] text-[#38553d]">
+              Why this matched
+            </div>
+            <ul className="mt-1.5 space-y-1 text-xs leading-5 text-[#344a38]">
+              {result.matchedFields.map((match) => (
+                <li key={`${match.label}-${match.value}`}>
+                  <span className="font-black">{match.label}:</span> {match.value}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="text-xs leading-5 text-[#465d49]">
+            This row is in the current applied dataset. It may match through date, weight, capability, or another active scope condition.
+          </p>
+        )}
+      </div>
 
       {result.capabilityBadges.length ? (
-        <div className="mt-3 flex flex-wrap gap-2">
+        <div className="mt-3 flex flex-wrap gap-1.5">
           {result.capabilityBadges.map((badge) => (
-            <span key={badge} className="rounded-full border border-[#dfe9c8]/24 bg-[#dfe9c8]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/76">
+            <span
+              key={badge}
+              className="rounded-full border border-[#9db48e] bg-[#d7e6cc] px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.09em] text-[#274633]"
+            >
               {badge}
             </span>
           ))}
@@ -259,6 +342,7 @@ export function PeridotSearchWorkspace({
   const getDefaultStartYear = () => String(timelineMonths[0] || '').slice(0, 4);
   const getDefaultEndYear = () => String(timelineMonths[Math.max(timelineMonths.length - 1, 0)] || '').slice(0, 4);
 
+  const [activeTab, setActiveTab] = useState('build');
   const [draftSearch, setDraftSearch] = useState(search ?? '');
   const [draftPersonFilter, setDraftPersonFilter] = useState(personFilter ?? '');
   const [draftPlaceFilter, setDraftPlaceFilter] = useState(placeFilter ?? '');
@@ -297,7 +381,9 @@ export function PeridotSearchWorkspace({
 
   useEffect(() => {
     if (!filterStatusMessage) return undefined;
-    const timeoutId = window.setTimeout(() => { setFilterStatusMessage(''); }, 2200);
+    const timeoutId = window.setTimeout(() => {
+      setFilterStatusMessage('');
+    }, 2200);
     return () => window.clearTimeout(timeoutId);
   }, [filterStatusMessage]);
 
@@ -307,14 +393,21 @@ export function PeridotSearchWorkspace({
   ), [timelineMonths]);
 
   const appliedCapabilityFilters = Array.isArray(capabilityFilters) ? capabilityFilters : [];
-
   const searchResultCards = useMemo(() => buildPeridotSearchResults(
     searchRows,
-    { search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters: appliedCapabilityFilters },
+    {
+      search,
+      personFilter,
+      placeFilter,
+      routePlaceFilter,
+      routePeopleFilter,
+      capabilityFilters: appliedCapabilityFilters,
+    },
     { limit: 50 },
   ), [searchRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, appliedCapabilityFilters]);
 
   const searchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 8 }), [searchRows]);
+
   const capabilityFacetCounts = useMemo(() => {
     const capabilityGroup = searchFacetGroups.find((group) => group.id === 'capabilities');
     return new Map((capabilityGroup?.items || []).map((item) => [item.value, item.count]));
@@ -323,13 +416,28 @@ export function PeridotSearchWorkspace({
   const activeCapabilityLabel = appliedCapabilityFilters.length
     ? appliedCapabilityFilters.map(getCapabilityFilterLabel).join(', ')
     : 'None';
-
+  const draftCapabilityLabel = draftCapabilityFilters.length
+    ? draftCapabilityFilters.map(getCapabilityFilterLabel).join(', ')
+    : 'None selected';
   const hiddenSearchResultCount = Math.max(0, (searchRows?.length || 0) - searchResultCards.length);
+  const hasDraftChanges = (
+    String(draftSearch ?? '') !== String(search ?? '')
+    || String(draftPersonFilter ?? '') !== String(personFilter ?? '')
+    || String(draftPlaceFilter ?? '') !== String(placeFilter ?? '')
+    || String(draftRoutePlaceFilter ?? '') !== String(routePlaceFilter ?? '')
+    || String(draftRoutePeopleFilter ?? '') !== String(routePeopleFilter ?? '')
+    || String(draftMinCount ?? '') !== String(minCount ?? 1)
+    || String(draftStartYear ?? '') !== getAppliedStartYear()
+    || String(draftEndYear ?? '') !== getAppliedEndYear()
+    || JSON.stringify(draftCapabilityFilters) !== JSON.stringify(appliedCapabilityFilters)
+  );
 
   const toggleDraftCapabilityFilter = (filterId) => {
-    setDraftCapabilityFilters((current) => (current.includes(filterId)
-      ? current.filter((id) => id !== filterId)
-      : current.concat(filterId)));
+    setDraftCapabilityFilters((current) => (
+      current.includes(filterId)
+        ? current.filter((id) => id !== filterId)
+        : current.concat(filterId)
+    ));
   };
 
   const chooseFacet = (group, item) => {
@@ -343,6 +451,7 @@ export function PeridotSearchWorkspace({
     }
     if (group.type === 'capability') toggleDraftCapabilityFilter(item.value);
     if (group.type === 'evidenceField') setDraftSearch(item.value);
+    setActiveTab('build');
   };
 
   const resolveTimelineBoundaryIndexFromYear = (boundary, year) => {
@@ -393,6 +502,7 @@ export function PeridotSearchWorkspace({
     const nextCapabilityFilters = Array.isArray(draftCapabilityFilters) ? draftCapabilityFilters : [];
     const nextStartIndex = resolveTimelineBoundaryIndexFromYear('start', draftStartYear);
     const nextEndIndex = resolveTimelineBoundaryIndexFromYear('end', draftEndYear);
+
     setFilterStatusMessage('Updating view…');
     window.requestAnimationFrame(() => {
       setSearch(nextSearch);
@@ -416,6 +526,7 @@ export function PeridotSearchWorkspace({
       }
       setIsPlaying(false);
       setPlaybackIndex(-1);
+      setActiveTab('results');
     });
   };
 
@@ -426,167 +537,323 @@ export function PeridotSearchWorkspace({
     }
   };
 
-  return (
-    <section className="peridot-workspace-field text-[#fbf7ea]">
-      <div className="peridot-workspace-frame-wide">
-        <div className="peridot-hero-card pl-[76px] sm:pl-[84px]">
-          <div className="peridot-workspace-header-row">
-            <div>
-              <p className="peridot-kicker">Search workspace</p>
-              <h1 className="peridot-title-medium">Advanced Search &amp; Filter</h1>
-              <p className="peridot-lede">
-                Define the active dataset used by maps, networks, charts, timeline playback, export, and inspection. Draft changes apply only when you choose Apply Filters.
-              </p>
-            </div>
-            <button type="button" onClick={onOpenVisualizations} className="peridot-button-primary shrink-0">Open visualizations</button>
+  const renderBuildSearch = () => (
+    <div className="space-y-4">
+      <SectionHeader eyebrow="Step 1" title="Build Search">
+        Draft changes do not affect maps, charts, export, or Inspector until Apply Filters is pressed.
+      </SectionHeader>
+
+      <div className={PANEL_INSET_CLASS + ' p-4'}>
+        <div className="grid gap-3 lg:grid-cols-12">
+          <div className="lg:col-span-4">
+            <label htmlFor="advanced-search-keyword" className={FIELD_LABEL_CLASS}>Keyword search</label>
+            <input
+              id="advanced-search-keyword"
+              value={draftSearch}
+              onChange={(event) => setDraftSearch(event.target.value)}
+              onKeyDown={handleDraftKeyDown}
+              placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
+              className={INPUT_CLASS}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <AutocompleteTextInput
+              id="advanced-search-start-year"
+              label="Start year"
+              value={draftStartYear}
+              onChange={setDraftStartYear}
+              onKeyDown={handleDraftKeyDown}
+              placeholder="Start"
+              suggestions={timelineYearSuggestions}
+            />
+          </div>
+          <div className="lg:col-span-2">
+            <AutocompleteTextInput
+              id="advanced-search-end-year"
+              label="End year"
+              value={draftEndYear}
+              onChange={setDraftEndYear}
+              onKeyDown={handleDraftKeyDown}
+              placeholder="End"
+              suggestions={timelineYearSuggestions}
+            />
+          </div>
+          <div className="lg:col-span-4">
+            <label htmlFor="advanced-search-minimum" className={FIELD_LABEL_CLASS}>
+              Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
+            </label>
+            <input
+              id="advanced-search-minimum"
+              type="number"
+              min="1"
+              value={draftMinCount}
+              onChange={(event) => setDraftMinCount(event.target.value)}
+              onKeyDown={handleDraftKeyDown}
+              className={INPUT_CLASS}
+            />
           </div>
         </div>
+        <p className="mt-2 text-xs leading-5 text-[#4f654d]">
+          Press Enter in any field to apply. Available years: {timelineMonths.length ? `${timelineMonths[0]}–${timelineMonths[timelineMonths.length - 1]}` : 'none detected'}.
+        </p>
+      </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.55fr)]">
-          <aside className="peridot-surface-card peridot-card-inner">
-            <h2 className="text-xl font-bold text-[#fbf7ea]">Current applied scope</h2>
-            <p className="mt-2 text-sm leading-6 text-[#f7f2df]/76">
-              These filters currently define the active dataset used by maps, networks, charts, timeline playback, export, and inspection.
+      <div className={PANEL_INSET_CLASS + ' p-4'}>
+        <div className="flex flex-col gap-3 lg:flex-row">
+          <div className="lg:w-[34%]">
+            <AutocompleteTextInput
+              id="advanced-search-person"
+              label="Person / entity"
+              value={draftPersonFilter}
+              onChange={setDraftPersonFilter}
+              onKeyDown={handleDraftKeyDown}
+              placeholder="Person or entity"
+              suggestions={personSuggestions}
+            />
+          </div>
+          <div className="lg:w-[28%]">
+            <AutocompleteTextInput
+              id="advanced-search-place"
+              label="Place"
+              value={draftPlaceFilter}
+              onChange={setDraftPlaceFilter}
+              onKeyDown={handleDraftKeyDown}
+              placeholder="Place"
+              suggestions={placeSuggestions}
+            />
+          </div>
+          <div className="lg:flex-1">
+            <AutocompleteTextInput
+              id="advanced-search-route-place"
+              label="Route place"
+              value={draftRoutePlaceFilter}
+              onChange={setDraftRoutePlaceFilter}
+              onKeyDown={handleDraftKeyDown}
+              placeholder="Rome → Florence, or Florence"
+              suggestions={routePlaceSuggestions}
+            />
+          </div>
+          <div className="lg:flex-1">
+            <AutocompleteTextInput
+              id="advanced-search-route-people"
+              label="Route people"
+              value={draftRoutePeopleFilter}
+              onChange={setDraftRoutePeopleFilter}
+              onKeyDown={handleDraftKeyDown}
+              placeholder="Sender → Recipient, or one name"
+              suggestions={routePeopleSuggestions}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className={PANEL_INSET_CLASS + ' p-4'}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className={FIELD_LABEL_CLASS}>Capability filters</div>
+            <p className="mt-1 text-xs leading-5 text-[#4f654d]">
+              Toggle workflow readiness or missing-evidence filters.
             </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-              <AppliedScopeCard label="Keyword" value={search?.trim() || 'None'} />
-              <AppliedScopeCard label="Person" value={personFilter?.trim() || 'None'} />
-              <AppliedScopeCard label="Place" value={placeFilter?.trim() || 'None'} />
-              <AppliedScopeCard label="Route place" value={routePlaceFilter?.trim() || 'None'} />
-              <AppliedScopeCard label="Route entities" value={routePeopleFilter?.trim() || 'None'} />
+          </div>
+          <div className="rounded-full border border-[#9db48e] bg-[#edf5e5] px-3 py-1 text-xs font-bold text-[#38553d]">
+            Draft: {draftCapabilityLabel}
+          </div>
+        </div>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {CAPABILITY_FILTER_OPTIONS.map((option) => (
+            <CapabilityFilterToggle
+              key={option.id}
+              option={option}
+              checked={draftCapabilityFilters.includes(option.id)}
+              count={capabilityFacetCounts.get(option.id)}
+              onToggle={toggleDraftCapabilityFilter}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-[1rem] border border-[#b8c8aa] bg-[#d7e6cc] p-3 shadow-sm shadow-black/5">
+        <p className="text-xs font-semibold leading-5 text-[#38553d]">
+          {hasDraftChanges ? 'Draft changes are pending.' : 'Applied state is current.'}
+        </p>
+        <div className="flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={clearFilters} className={SECONDARY_BUTTON_CLASS}>
+            Clear Filters
+          </button>
+          <button type="button" onClick={applyDraftFilters} className={PRIMARY_BUTTON_CLASS}>
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderResults = () => (
+    <div className="space-y-5">
+      <SectionHeader eyebrow="Step 2" title="Search Results">
+        Result cards reflect the current applied dataset. Use Inspect to open the selected record in the full Inspector workspace.
+      </SectionHeader>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-[#b8c8aa] bg-[#d7e6cc] px-4 py-3 shadow-inner shadow-white/25">
+        <div>
+          <div className="text-3xl font-black text-[#263d2e]">{searchRows?.length || 0}</div>
+          <div className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#667960]">records in applied scope</div>
+        </div>
+        <div className="text-right text-xs leading-5 text-[#5a6659]">
+          Showing up to <span className="font-black text-[#263d2e]">{searchResultCards.length}</span> result cards.
+          {hiddenSearchResultCount > 0 ? (
+            <><br /><span>{hiddenSearchResultCount} additional records remain in scope.</span></>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        {searchResultCards.length ? (
+          searchResultCards.map((result) => (
+            <SearchResultCard
+              key={result.id}
+              result={result}
+              onInspectSearchResult={onInspectSearchResult}
+            />
+          ))
+        ) : (
+          <div className="rounded-[1.25rem] border border-[#b8c8aa] bg-[#edf5e5] p-6 text-center shadow-sm shadow-black/5">
+            <div className="text-lg font-black text-[#263d2e]">No records are currently in scope.</div>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#5a6659]">
+              Clear filters or broaden the date window to restore results.
+            </p>
+            <button type="button" onClick={clearFilters} className={SECONDARY_BUTTON_CLASS + ' mt-4'}>
+              Clear Filters
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderRefineInspect = () => (
+    <div className="space-y-4">
+      <SectionHeader eyebrow="Step 3" title="Refine / Inspect">
+        Facets summarize the applied result set. Clicking a facet fills draft criteria; Apply commits the refinement.
+      </SectionHeader>
+
+      <div className="grid gap-3 lg:grid-cols-3">
+        <div className={PANEL_INSET_CLASS + ' p-3'}>
+          <div className={FIELD_LABEL_CLASS}>Inspector handoff</div>
+          <p className="mt-1 text-sm leading-5 text-[#465d49]">
+            Use <span className="font-black text-[#203729]">Inspect</span> on a result card to open the record in the full evidence workspace.
+          </p>
+        </div>
+        <div className={PANEL_INSET_CLASS + ' p-3 lg:col-span-2'}>
+          <div className={FIELD_LABEL_CLASS}>Data context</div>
+          <dl className="mt-2 grid gap-2 text-sm text-[#465d49] sm:grid-cols-3">
+            <div className="flex justify-between gap-3 rounded-xl bg-[#edf5e5] px-3 py-2">
+              <dt>Visible nodes</dt>
+              <dd className="font-black text-[#203729]">{graph?.nodes?.length ?? 0}</dd>
+            </div>
+            <div className="flex justify-between gap-3 rounded-xl bg-[#edf5e5] px-3 py-2">
+              <dt>Visible routes</dt>
+              <dd className="font-black text-[#203729]">{graph?.edges?.length ?? 0}</dd>
+            </div>
+            <div className="flex justify-between gap-3 rounded-xl bg-[#edf5e5] px-3 py-2">
+              <dt>Rows diagnosed</dt>
+              <dd className="font-black text-[#203729]">{rowDiagnostics?.length ?? 0}</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+
+      {searchFacetGroups.length ? (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {searchFacetGroups.map((group) => (
+            <FacetGroup
+              key={group.id}
+              group={group}
+              activeCapabilityFilters={draftCapabilityFilters}
+              onChooseFacet={chooseFacet}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className={PANEL_INSET_CLASS + ' p-4 text-sm leading-6 text-[#465d49]'}>
+          No facets are available for the current result set.
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <section className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(212,232,194,0.24),transparent_28%),linear-gradient(135deg,#052015_0%,#08301f_50%,#123f29_100%)] px-6 py-5 text-[#203729]">
+      <div className="mx-auto max-w-[1380px]">
+        <div className={SHELL_CLASS + ' overflow-hidden'}>
+          <header className="border-b border-[#b8c8aa] bg-[#dfead2] p-4">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-3xl">
+                <div className="text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#667960]">Search workspace</div>
+                <h1 className="mt-2 text-3xl font-black tracking-tight text-[#263d2e]">Advanced Search</h1>
+                <p className="mt-2 text-sm leading-6 text-[#5a6659]">
+                  Build a draft query, review the applied result set, refine with facets, and open individual records in Inspector.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={onOpenVisualizations} className={SECONDARY_BUTTON_CLASS}>
+                  Open visualizations
+                </button>
+                <button type="button" onClick={clearFilters} className={SECONDARY_BUTTON_CLASS}>
+                  Clear Filters
+                </button>
+                <button type="button" onClick={applyDraftFilters} className={PRIMARY_BUTTON_CLASS}>
+                  Apply Filters
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+              <AppliedScopeCard label="Records in scope" value={`${searchRows?.length || 0} records`} />
+              <AppliedScopeCard label="Timeline" value={currentRangeLabel} />
+              <AppliedScopeCard label="Minimum" value={currentMinCountLabel} />
               <AppliedScopeCard label="Capabilities" value={activeCapabilityLabel} />
-              <AppliedScopeCard label="Minimum weight" value={currentMinCountLabel} />
-              <AppliedScopeCard label="Date window" value={currentRangeLabel} />
-              <AppliedScopeCard label="Rows" value={rowDiagnostics?.filteredRows ?? 'Unknown'} />
-              <AppliedScopeCard label="Nodes" value={graph?.nodes?.length ?? 0} />
-              <AppliedScopeCard label="Routes" value={graph?.edges?.length ?? 0} />
+              <AppliedScopeCard label="Draft state" value={hasDraftChanges ? 'Draft changes pending' : 'Applied state current'} />
             </div>
-          </aside>
+          </header>
 
-          <section className="space-y-6">
-            <div className="peridot-surface-card peridot-card-inner">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-2xl font-bold text-[#fbf7ea]">Advanced search criteria</h2>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#f7f2df]/76">Press Enter in any field to apply the current draft.</p>
-                </div>
-                {filterStatusMessage ? (
-                  <div className="rounded-full border border-[#dfe9c8]/40 bg-[#dfe9c8]/16 px-4 py-2 text-sm font-semibold text-[#fbf7ea]">{filterStatusMessage}</div>
-                ) : null}
-              </div>
-
-              <div className="mt-6 grid gap-5 xl:grid-cols-2">
-                <CriteriaCard title="Text search">
-                  <div className="mt-4">
-                    <label htmlFor="workspace-keyword-search" className="block text-xs font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/72">Keyword search</label>
-                    <input
-                      id="workspace-keyword-search"
-                      value={draftSearch}
-                      onChange={(event) => setDraftSearch(event.target.value)}
-                      onKeyDown={handleDraftKeyDown}
-                      placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
-                      className="peridot-form-input mt-2 text-sm"
-                    />
-                  </div>
-                </CriteriaCard>
-
-                <CriteriaCard title="People and places">
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <AutocompleteTextInput id="workspace-person-filter" label="Person filter" value={draftPersonFilter} onChange={setDraftPersonFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a person or entity" suggestions={personSuggestions} helperText="Matches source or target entity names." />
-                    <AutocompleteTextInput id="workspace-place-filter" label="Place filter" value={draftPlaceFilter} onChange={setDraftPlaceFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a place" suggestions={placeSuggestions} helperText="Matches source or target places." />
-                  </div>
-                </CriteriaCard>
-
-                <CriteriaCard title="Routes">
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                    <AutocompleteTextInput id="workspace-route-place-filter" label="Route filter (place)" value={draftRoutePlaceFilter} onChange={setDraftRoutePlaceFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Florence → Siena" suggestions={routePlaceSuggestions} helperText="Matches directed source-place to target-place routes." />
-                    <AutocompleteTextInput id="workspace-route-people-filter" label="Route filter (entities)" value={draftRoutePeopleFilter} onChange={setDraftRoutePeopleFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Source entity → Target entity" suggestions={routePeopleSuggestions} helperText="Matches directed source-entity to target-entity routes." />
-                  </div>
-                </CriteriaCard>
-
-                <CriteriaCard title="Capability filters">
-                  <p className="mt-3 text-sm leading-6 text-[#f7f2df]/72">
-                    Capability filters are committed with Apply Filters. Use them to isolate rows that can support specific Peridot workflows or to find records missing key evidence.
-                  </p>
-                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    {CAPABILITY_FILTER_OPTIONS.map((option) => (
-                      <CapabilityFilterToggle
-                        key={option.id}
-                        option={option}
-                        checked={draftCapabilityFilters.includes(option.id)}
-                        count={capabilityFacetCounts.get(option.id)}
-                        onToggle={toggleDraftCapabilityFilter}
-                      />
-                    ))}
-                  </div>
-                </CriteriaCard>
-
-                <CriteriaCard title="Threshold and date">
-                  <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                    <div>
-                      <label htmlFor="workspace-min-count" className="block text-xs font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/72">Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}</label>
-                      <input id="workspace-min-count" type="number" min="1" value={draftMinCount} onChange={(event) => setDraftMinCount(event.target.value)} onKeyDown={handleDraftKeyDown} className="peridot-form-input mt-2 text-sm" />
-                      <p className="mt-2 text-xs text-[#f7f2df]/68">Current applied minimum: {currentMinCountLabel}</p>
-                    </div>
-                    <AutocompleteTextInput id="workspace-start-year" label="Start year" value={draftStartYear} onChange={setDraftStartYear} onKeyDown={handleDraftKeyDown} placeholder="Start year" suggestions={timelineYearSuggestions} />
-                    <AutocompleteTextInput id="workspace-end-year" label="End year" value={draftEndYear} onChange={setDraftEndYear} onKeyDown={handleDraftKeyDown} placeholder="End year" suggestions={timelineYearSuggestions} />
-                  </div>
-                  <p className="mt-4 text-xs leading-5 text-[#f7f2df]/68">
-                    Available year range: {timelineMonths.length ? `${timelineMonths[0]} to ${timelineMonths[timelineMonths.length - 1]}` : 'none detected'}.
-                  </p>
-                </CriteriaCard>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center justify-end gap-3 border-t border-[#dfe9c8]/22 pt-5">
-                <button type="button" onClick={clearFilters} className="peridot-button-secondary">Clear Filters</button>
-                <button type="button" onClick={applyDraftFilters} className="peridot-button-primary">Apply Filters</button>
-              </div>
+          {filterStatusMessage ? (
+            <div className="border-b border-[#b8c8aa] bg-[#d2e4c4] px-4 py-2 text-sm font-bold text-[#274633]">
+              {filterStatusMessage}
             </div>
+          ) : null}
 
-            <div className="peridot-surface-card peridot-card-inner">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-2xl font-bold text-[#fbf7ea]">Search results</h2>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#f7f2df]/76">
-                    Result cards reflect the current applied dataset. Facets summarize the active result set and fill draft criteria; choose Apply Filters to commit a refinement. Use Inspect to open the selected record in the full Inspector workspace.
-                  </p>
-                </div>
-                <div className="rounded-full border border-[#dfe9c8]/35 bg-[#dfe9c8]/12 px-4 py-2 text-sm font-bold text-[#fbf7ea]">
-                  {searchRows?.length || 0} records
-                </div>
-              </div>
+          <nav className="grid gap-2 border-b border-[#b8c8aa] bg-[#c9ddba] p-4 lg:grid-cols-3" aria-label="Advanced Search workflow tabs">
+            <SearchTabButton
+              id="build"
+              label="Build Search"
+              summary="Draft criteria and capability filters"
+              active={activeTab === 'build'}
+              onClick={setActiveTab}
+            />
+            <SearchTabButton
+              id="results"
+              label="Results"
+              summary={`${searchRows?.length || 0} records currently applied`}
+              active={activeTab === 'results'}
+              onClick={setActiveTab}
+            />
+            <SearchTabButton
+              id="refine"
+              label="Refine / Inspect"
+              summary="Facet counts and Inspector guidance"
+              active={activeTab === 'refine'}
+              onClick={setActiveTab}
+            />
+          </nav>
 
-              {searchFacetGroups.length ? (
-                <div className="mt-5 grid gap-3">
-                  {searchFacetGroups.map((group) => (
-                    <FacetGroup
-                      key={group.id}
-                      group={group}
-                      activeCapabilityFilters={draftCapabilityFilters}
-                      onChooseFacet={chooseFacet}
-                    />
-                  ))}
-                </div>
-              ) : null}
-
-              {searchResultCards.length ? (
-                <div className="mt-5 grid gap-4">
-                  {searchResultCards.map((result) => (
-                    <SearchResultCard key={result.id} result={result} onInspectSearchResult={onInspectSearchResult} />
-                  ))}
-                  {hiddenSearchResultCount > 0 ? (
-                    <p className="rounded-2xl border border-[#dfe9c8]/20 bg-[#dfe9c8]/8 px-4 py-3 text-sm leading-6 text-[#f7f2df]/72">
-                      Showing the first {searchResultCards.length} records. {hiddenSearchResultCount} additional records are in the active result set.
-                    </p>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="mt-5 rounded-[22px] border border-[#dfe9c8]/24 bg-[#071f16]/55 p-5 text-sm leading-6 text-[#f7f2df]/72">
-                  No records are currently in scope. Clear filters or broaden the date window to restore results.
-                </div>
-              )}
+          <main className="bg-[#dfead2] p-4">
+            <div className={CARD_CLASS + ' p-4'}>
+              {activeTab === 'build' ? renderBuildSearch() : null}
+              {activeTab === 'results' ? renderResults() : null}
+              {activeTab === 'refine' ? renderRefineInspect() : null}
             </div>
-          </section>
+          </main>
         </div>
       </div>
     </section>
