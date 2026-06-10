@@ -8,7 +8,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests humanistic tabular data, derives the structures the mapped fields can safely support, and renders an interactive workspace for exploring records through point maps, route maps, person-centered networks, force-directed graphs, chart-based Analytics, full-window Search & Filter, theme controls, export tools, timeline playback, and evidence inspection. The current interface has moved away from the earlier map-first, persistent-rail model: Peridot now opens to a Home / welcome workspace, uses a hamburger-triggered menu, and provides full-window workspaces for Home, Data, Visualizations, Explore, Learn More, Search & Filter, and Themes and Accessibility. Timeline is now a bottom Visualizations scrubber, while Inspector uses a dual-mode model: compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for deeper navigation.
+The application ingests humanistic tabular data, derives the structures the mapped fields can safely support, and renders an interactive workspace for exploring records through point maps, route maps, person-centered networks, force-directed graphs, chart-based Analytics, full-window Advanced Search, theme controls, export tools, timeline playback, and evidence inspection. The current interface has moved away from the earlier map-first, persistent-rail model: Peridot now opens to a Home / welcome workspace, uses a hamburger-triggered menu, and provides full-window workspaces for Home, Data, Visualizations, Explore, Learn More, Advanced Search, and Themes and Accessibility. Timeline is now a bottom Visualizations scrubber, while Inspector uses a dual-mode model: compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for deeper navigation.
 
 ## 3. Current status
 
@@ -16,9 +16,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`fcd2e1f` — `Document timeline scope and clamp chart date range`** on branch **`main`**
+- **`d52392a` — `Add capabilities tab to advanced search`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, and the June 2026 structural cleanup/commenting pass. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, and the June 2026 structural cleanup/commenting pass, and the Advanced Search / Explore consolidation milestone. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -30,7 +30,7 @@ The current state of the active `main` project includes:
   - **Explore Your Data**
   - **Learn More about Peridot**
   - **Themes and Accessibility**
-- full-window workspaces for Data, Visualizations, Explore, Learn More, Themes and Accessibility, Search, and Inspector-compatible evidence review paths
+- full-window workspaces for Data, Visualizations, Advanced Search, Learn More, Themes and Accessibility, and Inspector-compatible evidence review paths
 - bottom Timeline scrubber integrated into the Visualizations workspace
 - dual-mode Inspector behavior:
   - compact side-panel summaries from visualization clicks
@@ -59,7 +59,7 @@ The current state of the active `main` project includes:
 - Evidence and analysis field inclusion using explicit Include and Ignore checkboxes that default to Include
 - upload validation that reports which records are Inspector-ready, Search-ready, Point-map-ready, Route-map-ready, Network-ready, Timeline-ready, Chart-ready, and Export-ready
 - legacy Geography / Raw Data / Person Metadata upload controls removed from the ordinary public workflow after the one-file and mapped-import direction became active
-- implemented Search & Filter controls for keyword, person, place, route-place, route-people, minimum weight, and date range, now in a full workspace
+- implemented Advanced Search as the direct Explore Your Data destination, with Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs; keyword/person/place/route/date/weight filters; capability filters; dataset-wide browse indexes; structured AND / OR / EXCLUDING criteria; result cards; facets; and Inspector handoff
 - actionable cluster inspector behavior
 - cluster inspector members grouped by place
 - dynamic node radius contrast based on active data
@@ -117,7 +117,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 
 ### Research workflow tools
 
-- full-window Search & Filter workspace defining one active filtered dataset for map, Inspector, Timeline, Analytics, and Export
+- full-window Advanced Search workspace defining one active filtered dataset for map, Inspector, Timeline, Analytics, and Export
 - hover and click inspection
 - compact side-panel Inspector for selected nodes, edges, clusters, and linked records, plus a full Inspector evidence-dossier workspace
 - inspector-internal navigation between people and places
@@ -130,6 +130,18 @@ The codebase is functional, but it is still under active maintenance. The larges
   - **Places where this person received letters**
 - inspector **Back** button for returning to the previous internal panel
 - year-based timeline range filtering and playback through the current transitional Timeline bridge
+
+
+### Advanced Search / Explore tools
+
+- **Explore Your Data** opens Advanced Search directly from the hamburger menu and the Visualizations header.
+- Advanced Search is organized into **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs.
+- Build Search supports simple fields for keyword, person/entity, place, route-place, route-people, date range, minimum weight, and capability filters.
+- Structured criteria allow up to five rows with predictive suggestions and explicit **AND**, **OR**, and **EXCLUDING** connectors after the first criterion.
+- Browse indexes expose dataset-wide people/entities, places, routes, and evidence fields before a search is applied.
+- Results show compact record cards with matched-field explanations, capability badges, and full Inspector handoff.
+- Refine / Inspect shows facets with counts based on the current applied result set and fills draft filters for later Apply.
+- Capabilities preserves the former "what this data can do" summary inside Advanced Search.
 
 ### Analytics tools
 
@@ -193,7 +205,7 @@ Current top-level navigation:
 - full-window workspaces for:
   - **Manage Your Data** — Data workspace with CSV / TSV / XLSX / XLS upload, mapping, template download, and validation summary
   - **Visualize Your Data** — Visualizations workspace with Place Map, People Network, Force-Directed, Chart Visualizations, Timeline, and in-place Export
-  - **Explore Your Data** — combined capability-summary, Search, and Inspector-adjacent evidence workspace
+  - **Explore Your Data** — direct entry point to Advanced Search, including data capabilities, Browse, Results, Refine / Inspect, and Inspector-adjacent evidence workflow
   - **Learn More about Peridot** — placeholder for future project information, credits, tutorials, and help content
   - **Themes and Accessibility** — appearance presets and future accessibility settings
 - dual-mode Inspector workflow:
@@ -207,7 +219,7 @@ Important current behavior:
 - **Upload my data** opens the Data workspace
 - mapped imports route into Visualizations and default to the map/geographic view
 - Chart Visualizations live inside Visualizations rather than as a primary side-panel workflow
-- Search & Filter is reached through Explore/workflow actions, and Export is an in-place Visualizations header menu rather than a separate hamburger workspace
+- Advanced Search is reached through Explore/workflow actions, and Export is an in-place Visualizations header menu rather than a separate hamburger workspace
 - Timeline is implemented as a compact bottom scrubber integrated with Visualizations
 - Inspector now uses the planned dual-mode model: compact side-panel summaries preserve click-and-glance context, while the full workspace supports evidence-dossier navigation
 - `LeftControlPanel.jsx` is now reduced to the compact Inspector side-panel shell; the old persistent rail and workflow panels are no longer part of the active source
@@ -216,7 +228,7 @@ Screenshots in the repository likely need refresh because the interface has chan
 
 ## 6. Screenshots
 
-The screenshots in `docs/images/` may need refresh because the side-panel architecture, Search & Filter layout, Analytics overlay, Data Inputs workflow, and cluster inspector behavior have changed materially since the earlier documentation baseline.
+The screenshots in `docs/images/` may need refresh because the side-panel architecture, Advanced Search layout, Analytics overlay, Data Inputs workflow, and cluster inspector behavior have changed materially since the earlier documentation baseline.
 
 Existing screenshot references:
 
@@ -340,7 +352,7 @@ Contains the minimal global layer for Tailwind directives, layout rules, and bas
 
 #### `src/App.jsx`
 
-The main orchestration layer. It handles top-level application state, data ingestion and normalization, graph derivation, theme token logic, timeline state, inspector state, Search & Filter state, export wiring, workspace composition, and compatibility routing to the remaining legacy Timeline/Inspector side-panel bridge.
+The main orchestration layer. It handles top-level application state, data ingestion and normalization, graph derivation, theme token logic, timeline state, inspector state, Advanced Search state, export wiring, workspace composition, and compatibility routing to the remaining legacy Timeline/Inspector side-panel bridge.
 
 #### `src/peridotWorkspaceConfig.js`
 
@@ -364,7 +376,7 @@ Full-window Visualizations workspace. It hosts the compact selector for Place Ma
 
 #### `src/PeridotSearchWorkspace.jsx`
 
-Full-window Search & Filter workspace. It renders the current applied scope, keyword/person/place/route filters, date and weight controls, predictive suggestions, Apply Filters, Clear Filters, and navigation back to Visualizations.
+Full-window Advanced Search workspace and primary Explore surface. It renders the current applied scope, Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs; keyword/person/place/route filters; date and weight controls; predictive suggestions; capability filters; structured AND / OR / EXCLUDING criteria; Apply Filters; Clear Filters; result cards; facets; dataset-wide browse indexes; and Inspector handoff.
 
 #### `src/PeridotThemeWorkspace.jsx`
 
@@ -372,7 +384,7 @@ Themes and Accessibility workspace for Peridot default, Early modern map, Modern
 
 #### `src/PeridotExploreWorkspace.jsx`
 
-Full-window Explore workspace. It combines data capability summary, Search access, and Inspector-adjacent evidence review entry points.
+Compatibility Explore workspace. Explore Your Data now routes directly to Advanced Search; this component should remain only as a transitional routing boundary unless a future pass intentionally revives a separate Explore workspace.
 
 #### `src/PeridotLearnMoreWorkspace.jsx`
 
@@ -644,7 +656,7 @@ A typical workflow is:
 7. For workbooks, configure the primary sheet, unique-ID joins, role mappings, and selected evidence/Analytics fields.
 7. Review the upload validation popup and persistent latest-upload summary.
 8. Open Visualizations and choose **Place Map**, **People Network**, **Force-Directed**, or **Chart Visualizations**.
-9. Use **Search & Filter** to define the active filtered dataset.
+9. Use **Advanced Search** to define the active filtered dataset.
 10. Use the bottom Timeline scrubber for year-based filtering and playback.
 11. Hover or click nodes, edges, or clusters to inspect them.
 12. Use **Inspector** to navigate between people, places, cluster members, and linked records.
@@ -652,9 +664,9 @@ A typical workflow is:
 14. Use **Chart Visualizations** inside Visualizations to generate large workspace charts and export chart PNG files through the header Export menu.
 15. Use the Visualizations header **Export** menu to save the current visualization state as SVG, PNG, CSV, or chart PNG outputs.
 
-### Search & Filter workflow
+### Advanced Search workflow
 
-Search & Filter defines the active filtered dataset:
+Advanced Search defines the active filtered dataset:
 
 ```text
 data source
@@ -665,14 +677,14 @@ data source
 Under that model:
 
 - **Data** defines which data is loaded.
-- **Search & Filter** defines which records, people, places, routes, and metadata categories are in scope.
+- **Advanced Search** defines which records, people, places, routes, and metadata categories are in scope.
 - **Visualizations** defines how the active dataset is displayed or charted.
 - **Timeline** focuses on playback and chronological navigation through the bottom Visualizations scrubber.
 - **Analytics** charts the current filtered dataset by default inside Visualizations.
 - **Inspector** remains selection-driven.
 - **Export** labels whether it is exporting loaded, filtered, visible, selected, or charted data.
 
-Implemented Search & Filter controls include keyword, person, place, Route Filter (Place), Route Filter (People), minimum correspondence weight, date range, predictive suggestions, Apply Filters, Clear Filters, current applied scope, and pre-update status feedback.
+Implemented Advanced Search controls include keyword, person, place, Route Filter (Place), Route Filter (People), minimum correspondence weight, date range, predictive suggestions, Apply Filters, Clear Filters, current applied scope, and pre-update status feedback.
 
 ## 12. MapLibre status
 
@@ -712,7 +724,7 @@ The maintainer documentation identifies the following areas as especially sensit
 - inspector-open interactions
 - shared side-panel shell behavior
 - cluster grouping and cluster inspector navigation
-- Search & Filter active-dataset state
+- Advanced Search active-dataset state
 - Data upload state, single-CSV normalization, workbook mapping/import assembly, and validation summary behavior
 - Analytics expanded overlay positioning above the map area
 - Analytics dynamic variable detection from uploaded/current row data

@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 Current clean baseline:
 
 ```text
-fcd2e1f — Document timeline scope and clamp chart date range
+d52392a — Add capabilities tab to advanced search
 ```
 
 Current branch note:
@@ -49,7 +49,7 @@ Before each coding pass, state:
 - in-scope files/regions
 - out-of-scope files/regions
 - one plain-language acceptance test
-- expected artifact: pasted diff, full file, `.txt` replacement, zip, or commit-ready instructions
+- expected artifact: pasted diff, full file, individual `.txt` replacement, or commit-ready instructions
 
 Do not mix functional changes, visual redesign, broad refactors, and documentation updates in a single implementation pass unless the user explicitly chooses that scope.
 
@@ -77,7 +77,7 @@ Current fragile zones include:
 - shared side-panel shell behavior
 - inspector-open interactions after map clicks
 - cluster grouping and cluster inspector navigation
-- Search & Filter active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, predictive-suggestion, apply/clear, and future metadata filters
+- Advanced Search active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, capability filters, dataset-wide Browse indexes, result facets, predictive suggestions, structured criteria, Boolean AND / OR / EXCLUDING logic, apply/clear behavior, and future metadata filters
 - Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
 - Analytics flexible chart-variable controls, record-count metrics, wide numeric-series selection, and chart availability routing
@@ -151,11 +151,13 @@ Use the safest delivery mode for the current pass.
 
 Preferred modes:
 
-- documentation-only pass: replacement `.txt` or `.md` file generated from the reviewed current document
+- documentation-only pass: individual replacement `.txt` or `.md` files generated from the reviewed current documents
 - small local edit: targeted replacement block with clear anchors, only after full-file review
 - medium bounded file area: full replacement file unless a targeted block is demonstrably safer
 - fragile/high-risk file: full replacement from the current source of truth
-- generated source replacement: provide a `.txt` file that the user can copy into place
+- generated source replacement: provide individual `.txt` files that the user can copy into place
+
+When delivering files, default to individual `.txt` replacements and direct `Copy-Item` commands from `$HOME\Downloads` into the source-of-truth project folder. Do not deliver ZIP packages or apply scripts unless the user explicitly asks for them.
 
 When delivering files, include exact Windows PowerShell copy commands.
 
@@ -264,14 +266,14 @@ Current notable decisions:
 - Cluster grouping is zoom-responsive.
 - Cluster inspector members are grouped by place.
 - MapLibre migrated-overlay work is paused; legacy D3/SVG Peridot is the active continuation path unless the user explicitly resumes MapLibre.
-- Search & Filter is the long-term owner of global dataset filtering.
+- Advanced Search is the long-term owner of global dataset filtering and the primary Explore Your Data surface.
 - Controls / View should govern display, not the active filtered dataset.
 - Timeline should focus on chronological playback and consume the active date range.
 - Analytics should chart the currently filtered dataset by default.
-- Search & Filter uses draft inputs plus explicit Apply Filters rather than live filtering.
+- Advanced Search uses draft inputs plus explicit Apply Filters rather than live filtering.
 - Predictive suggestions should support discovery without becoming full dropdown selectors.
 - Route filtering is split into Route Filter (Place) and Route Filter (People).
-- Search & Filter should visually resemble a compact database/library advanced-search interface rather than a stack of explanatory cards.
+- Advanced Search should visually resemble a compact database/library advanced-search interface rather than a stack of explanatory cards.
 - Expanded Analytics charts should keep the chart on a white/cream card while the layer behind it can use a dark translucent green with blur to preserve map context.
 - Data Inputs should use one standardized Peridot CSV upload as the public workflow.
 - Peridot should treat uploaded correspondence data as database records first and visualization inputs second.
@@ -293,7 +295,7 @@ Current notable decisions:
 - Linked letters should open as dedicated Inspector detail views rather than long inline expansions.
 - Peridot’s primary interface direction is now workspace-first rather than side-panel-first.
 - The hamburger menu is now product-task oriented: Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
-- Search and Inspector remain available through workflow routes and compatibility paths rather than as top-level hamburger destinations.
+- Explore Your Data routes directly to Advanced Search; Inspector remains available through visualization/evidence workflows and compatibility paths rather than as a standalone top-level hamburger destination.
 - Export should be an in-place visualization header action rather than a standalone top-level workspace.
 - Chart Visualizations should use a dedicated large workspace with controls on the left and the chart canvas on the right.
 - Timeline is now implemented as a bottom Visualizations scrubber; future timeline work should refine this integration rather than reviving a standalone timeline workspace.
@@ -301,7 +303,7 @@ Current notable decisions:
 - Learn More about Peridot is intentionally a placeholder workspace for future project information, credits, tutorials, and help content.
 - Themes and Accessibility is the appearance/settings hub; future accessibility controls should live there.
 - The hamburger-triggered labeled menu is the intended primary navigation surface; the old persistent icon rail is legacy/compatibility code unless explicitly revived.
-- Home, Data, Visualizations, Search & Filter, Theme, and Export are full workspaces.
+- Home, Data, Visualizations, Advanced Search, Learn More, and Themes and Accessibility are the primary full workspaces; Export is integrated into the Visualizations header.
 - Timeline should not be promoted to a standalone full workspace; the preferred future direction is a bottom timeline/scrubber integrated with Visualizations.
 - Inspector is now dual-mode: visualization clicks open compact side-panel summaries, while hamburger **Inspector**, compact **Expand**, compact summary buttons, and linked-data clicks open the full Inspector workspace.
 - Compact and full Inspector modes must share one selection state and multi-step Back history.
@@ -397,11 +399,11 @@ Future Data Inputs changes should explicitly test:
 Do not reintroduce the legacy three-file upload workflow unless there is a specific recovery or compatibility reason; the active public direction is one-file template upload plus mapped arbitrary-table import.
 
 
-### Search & Filter behavior
+### Advanced Search behavior
 
-Search & Filter is the intended consolidation point for global filters.
+Advanced Search is the intended consolidation point for global filters and the primary Explore Your Data surface.
 
-Committed Search & Filter controls include:
+Committed Advanced Search controls include:
 
 - keyword search
 - person filter
@@ -410,12 +412,17 @@ Committed Search & Filter controls include:
 - **Route Filter (People)**
 - minimum correspondence weight
 - date range
-- predictive suggestions for person, place, route-place, route-people, start-year, and end-year fields
+- predictive suggestions for person, place, route-place, route-people, start-year, end-year, and structured-criteria value fields
+- structured criteria with AND / OR / EXCLUDING connectors
+- dataset-wide Browse indexes for people/entities, places, routes, and evidence fields
+- result cards with Inspector handoff
+- result facets based on the current applied result set
+- Capabilities tab containing what-this-data-can-do summaries
 - **Apply Filters**
 - **Clear Filters**
 - pre-update status feedback
 
-Future Search & Filter controls may include:
+Future Advanced Search controls may include:
 
 - language/relationship filters
 - mappability filters
@@ -424,11 +431,11 @@ Future Search & Filter controls may include:
 
 Filter controls should not trigger expensive graph/data recomputation on every keystroke or draft edit. Use draft values with an explicit **Apply Filters** action when the filter can affect the active dataset. Use **Clear Filters** to reset the global filter state. For expensive full-dataset updates, show visible feedback before committing state changes so users understand that the app is updating.
 
-When changing Search & Filter, explicitly test:
+When changing Advanced Search, explicitly test:
 
 - typing in a text field does not freeze the app
 - filters apply only when intended
-- current applied filter scope is clear to the user and remains visible near the top of the panel
+- current applied filter scope is clear to the user and remains visible near the top of the workspace
 - Timeline playback remains functional
 - Analytics receives the intended filtered scope
 - Export scope remains clear

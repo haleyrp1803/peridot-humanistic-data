@@ -22,9 +22,25 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`fcd2e1f` — `Document timeline scope and clamp chart date range`**
+- **`d52392a` — `Add capabilities tab to advanced search`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, and the June 2026 structural cleanup/commenting pass. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large chart workspace; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, and the June 2026 structural cleanup/commenting pass, and the Advanced Search / Explore consolidation milestone. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large chart workspace; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
+
+
+Recent Advanced Search / Explore milestones include:
+
+- **`d52392a` — `Add capabilities tab to advanced search`**
+- **`3d296cb` — `Route Explore directly to advanced search`**
+- **`37f2755` — `Clarify structured search Boolean labels`**
+- **`13fd533` — `Add Boolean structured search criteria`**
+- **`86952c8` — `Improve advanced search moss contrast`**
+- **`d7b0e2f` — `Add dataset-wide advanced search browse indexes`**
+- **`8104739` — `Wire structured criteria filtering`**
+- **`c8cbd5e` — `Add structured search suggestions`**
+- **`e3c36e1` — `Condense advanced search results layout`**
+- **`a21bbd9` — `Refine advanced search layout and palette`**
+- **`e12ed84` — `Add search facets and capability filters`**
+- **`4dc1bdf` — `Add search result Inspector handoff`**
 
 Recent structural, data, visualization, and language milestones include:
 
@@ -186,10 +202,10 @@ The current top-level interface includes:
 - Home / welcome startup path
 - Manage Your Data / Data workspace
 - Visualize Your Data / Visualizations workspace
-- Explore Your Data workspace
+- Explore Your Data routing directly into Advanced Search
 - Learn More about Peridot placeholder workspace
 - Themes and Accessibility workspace
-- Search & Filter workspace reachable through Explore/workflow actions
+- Advanced Search workspace as the primary Explore surface
 - bottom Timeline scrubber integrated with Visualizations
 - Inspector dual-mode compact/full evidence system
 - in-place Visualizations header Export menu
@@ -199,7 +215,7 @@ The current Visualizations workspace includes capability-aware menu groups:
 - **Mapping Visualizations** — Point Map and Route Map
 - **Network Visualizations** — Entity / People Network and Force-Directed Network
 - **Chart Visualizations** — large chart workspace for Bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap charts
-- **Explore Your Data** — Capability Summary and search/exploration affordances
+- **Explore Your Data** — direct Advanced Search entry point, with capabilities moved into the Advanced Search **Capabilities** tab
 
 Internally, the app still uses the geographic/person view split plus person layout mode, but the user-facing model now groups map, network, force-directed, and chart tools together inside Visualizations.
 
@@ -257,7 +273,7 @@ Full Visualizations workspace. It contains capability-aware dropdown groups for 
 
 ### `src/PeridotSearchWorkspace.jsx`
 
-Full Search & Filter workspace. It renders active-scope summary, keyword/person/place/route/date/weight controls, predictive suggestions, Apply Filters, Clear Filters, and navigation back to Visualizations.
+Full Advanced Search workspace and primary Explore surface. It renders active-scope summary plus the **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs. It owns the UI for keyword/person/place/route/date/weight filters, predictive suggestions, capability filters, structured AND / OR / EXCLUDING criteria, dataset-wide browse indexes, result cards, result facets, Apply Filters, Clear Filters, and search-result Inspector handoff.
 
 ### `src/PeridotThemeWorkspace.jsx`
 
@@ -265,7 +281,7 @@ Themes and Accessibility workspace for Peridot default, Early modern map, Modern
 
 ### `src/PeridotExploreWorkspace.jsx`
 
-Full Explore workspace that combines capability-summary review, Search access, and Inspector-adjacent evidence review entry points.
+Compatibility routing boundary for the old Explore workspace. Current Explore entry points should route directly to `PeridotSearchWorkspace.jsx`; the former capability-summary role has moved into the Advanced Search **Capabilities** tab.
 
 ### `src/PeridotLearnMoreWorkspace.jsx`
 
@@ -514,9 +530,10 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - concise data tips explaining row granularity, incomplete data, coordinates, and user responsibility for standardization
 - legacy three-file public upload workflow superseded by one-file and mapped-import workflows
 
-### Search & Filter capabilities
+### Advanced Search / Explore capabilities
 
-- full Search & Filter workspace
+- Explore Your Data routes directly to Advanced Search from the hamburger menu and Visualizations header
+- full Advanced Search workspace organized around Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs
 - draft/apply global filtering model
 - **Apply Filters** commits all filter changes together
 - **Clear Filters** clears keyword/person/place/route fields, restores minimum weight to `1`, restores the full date range, and resets playback
@@ -524,6 +541,12 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - current applied filter scope is displayed at the top of the workspace
 - compact advanced-search criteria form modeled on database/library advanced-search interfaces
 - text filters include keyword search, person filter, place filter, **Route Filter (Place)**, and **Route Filter (People)**
+- structured criteria support first-row search plus later **AND**, **OR**, and **EXCLUDING** connectors
+- structured criteria support predictive suggestions and a five-row cap
+- dataset-wide Browse indexes cover People / Entities, Places, Routes, and Evidence Fields
+- Results show compact result cards, matched-field explanations, capability badges, and Inspector handoff
+- Refine / Inspect shows facets based on the current applied result set
+- Capabilities contains the former "what this data can do" summary inside Advanced Search
 - non-text filters include minimum correspondence weight and date range
 - predictive suggestions are available for person, place, route-place, route-people, start year, and end year
 - suggestion menus show after at least two typed characters, show about five suggestions at once, and scroll for more matches

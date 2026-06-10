@@ -2,9 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`fcd2e1f` — `Document timeline scope and clamp chart date range`** on branch **`main`**
+- **`d52392a` — `Add capabilities tab to advanced search`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, and the June 2026 structural cleanup/commenting pass. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. The standalone Export workspace route has been removed from the active app path, while Search and Inspector remain internally available through Explore/workflow actions and compatibility routes. Recent milestones include capability-aware visualization menus, flexible chart-variable controls, record-count support across aggregate charts, generalized user-facing language, generic chart/evidence row admission, and include/ignore checkbox handling for evidence fields. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, and the Advanced Search / Explore consolidation milestone. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. The standalone Export workspace route has been removed from the active app path. Explore Your Data now opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Recent milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, capability-summary integration inside Advanced Search, capability-aware visualization menus, flexible chart-variable controls, record-count support across aggregate charts, generalized user-facing language, generic chart/evidence row admission, and include/ignore checkbox handling for evidence fields. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 
 The current Data Inputs / import workflow now provides:
 
@@ -43,7 +43,7 @@ The current Inspector workflow now provides a dual-mode evidence system:
 - directed route rows open route/edge dossier views with linked letters;
 - person/place profile pages show summary metrics, related people, related places, directed routes, linked-letter counts, selected uploaded fields, and dedicated linked-letter detail pages.
 
-The current Search & Filter workflow uses a compact database-style advanced-search layout with current applied scope at the top, draft/apply global filtering, predictive suggestions, route-place and route-people filters, year text inputs with suggestions, and pre-update status feedback. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
+The current Advanced Search workflow is the main Explore Your Data surface. It uses a tabbed research-search layout with Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. It preserves draft/apply global filtering, current applied scope, predictive suggestions, route-place and route-people filters, year text inputs, minimum-weight filtering, capability filters, dataset-wide browse indexes for people/places/routes/evidence fields, result cards with Inspector handoff, result facets with counts, and structured criteria supporting AND, OR, and EXCLUDING logic. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
 
 
 The current interface/workspace workflow now provides:
@@ -51,14 +51,14 @@ The current interface/workspace workflow now provides:
 - Home / welcome workspace with Upload my data and Use sample data start paths;
 - hamburger-triggered labeled menu replacing the persistent icon rail as the primary visible navigation surface;
 - simplified hamburger stack: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**;
-- full-window workspaces for Data, Visualizations, Explore, Learn More, Themes and Accessibility, Search, and Inspector-compatible evidence review paths, with Search and Inspector no longer exposed as top-level hamburger destinations;
+- full-window workspaces for Data, Visualizations, Advanced Search, Learn More, Themes and Accessibility, and Inspector-compatible evidence review paths, with Explore Your Data routing directly into Advanced Search and Inspector remaining available through visualization/evidence workflows;
 - Visualizations workspace containing Place Map, People Network, Force-Directed, Chart Visualizations, a collapsible visualization header, and a bottom timeline scrubber;
 - Chart Visualizations redesigned as a large chart workspace with controls on the left and the chart canvas on the right;
 - chart export consolidated into the shared Visualizations header Export menu;
 - map and network export consolidated into the same Visualizations header Export menu, replacing the standalone Export workspace route;
 - map legend and map controls minimized by default as bottom-corner buttons;
 - Timeline implemented as a compact bottom Visualizations scrubber with dual range handles, playback controls, and collapse/expand behavior;
-- Explore workspace added as the combined data-exploration, capability-summary, Search, and Inspector-adjacent entry point;
+- Explore Your Data now routes directly to Advanced Search, which contains the data-exploration, capability-summary, Browse, Results, Refine / Inspect, and Inspector-adjacent evidence entry points;
 - Learn More about Peridot placeholder workspace added for future project information, credits, tutorials, and help content;
 - Theme reframed as **Themes and Accessibility**;
 - Data workspace using the unified CSV/TSV/XLSX/XLS uploader;
@@ -75,6 +75,20 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Advanced Search / Explore consolidation milestone
+
+- Routed **Explore Your Data** directly to Advanced Search from both the hamburger menu and the Visualizations header.
+- Moved the former "what this data can do" capability summary into a dedicated **Capabilities** tab inside Advanced Search.
+- Reworked Search into a tabbed research workflow: **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities**.
+- Added result cards with compact record summaries, match explanations, capability badges, and full Inspector handoff.
+- Added result facets with counts so users can refine current results by people/entities, places, routes, years, capabilities, and evidence fields.
+- Added global capability filters for Inspector/map/route/network/timeline/evidence readiness and missing date/coordinate conditions.
+- Added dataset-wide Browse indexes for People / Entities, Places, Routes, and Evidence Fields; Browse items fill draft search criteria and preserve the explicit Apply Filters workflow.
+- Added structured criteria rows with predictive suggestions and an increased five-row cap.
+- Added Boolean structured-search logic with user-facing connectors: first criterion starts the group, later criteria use **AND**, **OR**, or **EXCLUDING**.
+- Preserved the core draft/apply model: typing, suggestions, Browse selections, facet selections, and structured criteria edits change draft state only until **Apply Filters** is pressed.
+- Current implemented Advanced Search baseline: **`d52392a` — `Add capabilities tab to advanced search`**.
 
 ### Structural cleanup, commenting, and scope-contract milestone
 
@@ -238,7 +252,20 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
-- **`fcd2e1f` — `Document timeline scope and clamp chart date range`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`d52392a` — `Add capabilities tab to advanced search`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`3d296cb` — `Route Explore directly to advanced search`** routes Explore entry points from the hamburger menu and Visualizations header directly to Advanced Search.
+- **`37f2755` — `Clarify structured search Boolean labels`** updates structured-search terminology to first criterion plus AND / OR / EXCLUDING connectors.
+- **`13fd533` — `Add Boolean structured search criteria`** adds Boolean structured criteria logic.
+- **`86952c8` — `Improve advanced search moss contrast`** improves Advanced Search visual hierarchy with moss-green card contrast.
+- **`d7b0e2f` — `Add dataset-wide advanced search browse indexes`** adds Browse indexes for people/entities, places, routes, and evidence fields.
+- **`8104739` — `Wire structured criteria filtering`** connects structured criteria to global filtering and match summaries.
+- **`c8cbd5e` — `Add structured search suggestions`** adds predictive suggestions to structured criteria.
+- **`e3c36e1` — `Condense advanced search results layout`** condenses the Results tab.
+- **`a21bbd9` — `Refine advanced search layout and palette`** converts Advanced Search to a tabbed green layout.
+- **`e12ed84` — `Add search facets and capability filters`** adds result facets and capability filters.
+- **`4dc1bdf` — `Add search result Inspector handoff`** adds search result cards and Inspector handoff.
+- **`2135c1b` — `Refresh documentation for structural cleanup milestone`** is the preceding documentation baseline after the structural-cleanup pass.
+- **`fcd2e1f` — `Document timeline scope and clamp chart date range`** is the prior structural-cleanup baseline.
 - **`84e6a4f` — `Add code structure audit planning document`** tracks the structural audit as a planning artifact.
 - **`55a368c` — `Remove dormant MapLibre preview code`** removes the old MapLibre preview files and dependency from active `main`.
 - **`876eb1d` — `Document Analytics chart extension contract`** records the coordinated chart-extension contract across Analytics files.
@@ -287,11 +314,24 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `fcd2e1f`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `d52392a`.
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
-| 2026-06-06 | `fcd2e1f` | (HEAD -> main, origin/main, origin/HEAD) | Document timeline scope and clamp chart date range |
+| 2026-06-10 | `d52392a` | (HEAD -> main, origin/main, origin/HEAD) | Add capabilities tab to advanced search |
+| 2026-06-10 | `3d296cb` |  | Route Explore directly to advanced search |
+| 2026-06-10 | `37f2755` |  | Clarify structured search Boolean labels |
+| 2026-06-10 | `13fd533` |  | Add Boolean structured search criteria |
+| 2026-06-10 | `86952c8` |  | Improve advanced search moss contrast |
+| 2026-06-10 | `d7b0e2f` |  | Add dataset-wide advanced search browse indexes |
+| 2026-06-10 | `8104739` |  | Wire structured criteria filtering |
+| 2026-06-10 | `c8cbd5e` |  | Add structured search suggestions |
+| 2026-06-10 | `e3c36e1` |  | Condense advanced search results layout |
+| 2026-06-10 | `a21bbd9` |  | Refine advanced search layout and palette |
+| 2026-06-10 | `e12ed84` |  | Add search facets and capability filters |
+| 2026-06-10 | `4dc1bdf` |  | Add search result Inspector handoff |
+| 2026-06-10 | `2135c1b` |  | Refresh documentation for structural cleanup milestone |
+| 2026-06-06 | `fcd2e1f` |  | Document timeline scope and clamp chart date range |
 | 2026-06-06 | `84e6a4f` |  | Add code structure audit planning document |
 | 2026-06-06 | `55a368c` |  | Remove dormant MapLibre preview code |
 | 2026-06-06 | `876eb1d` |  | Document Analytics chart extension contract |
