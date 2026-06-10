@@ -1,0 +1,172 @@
+/*
+ * Human-readable semantic color role metadata for the Peridot theme workspace.
+ *
+ * This file describes the broad color-control categories shown in Themes and
+ * Accessibility. It intentionally stores labels, descriptions, and role paths
+ * only. Actual color values remain centralized in `peridotTheme.js`.
+ *
+ * Maintenance cautions:
+ * - Add or rename roles here when `peridotTheme.js` gains new broad semantic
+ *   groups that should be visible to a non-developer palette editor.
+ * - Keep paths aligned with `PERIDOT_THEME`, not with legacy raw color tokens.
+ * - Use this file to explain creative intent: what a role controls and why a
+ *   designer might change it.
+ */
+
+export const PERIDOT_THEME_ROLE_GROUPS = Object.freeze([
+  {
+    id: 'foundation-tones',
+    label: 'Foundation tones',
+    description: 'The raw tone scale derived from the active palette. Most role colors are assigned from these tones.',
+    roles: [
+      { path: 'tones.ink', label: 'Darkest tone', usage: 'Deepest app backgrounds, strong shadows, and high-contrast map accents.' },
+      { path: 'tones.night', label: 'Night tone', usage: 'Strong dark panels, dense headers, and selected visualization elements.' },
+      { path: 'tones.deep', label: 'Deep tone', usage: 'Workspace backgrounds, dark cards, and primary text on light surfaces.' },
+      { path: 'tones.forest', label: 'Dark mid tone', usage: 'Panels, Inspector chrome, and dark secondary surfaces.' },
+      { path: 'tones.mid', label: 'Mid tone', usage: 'Clickable surfaces, selected visualization contrast, and quiet emphasis.' },
+      { path: 'tones.midAlt', label: 'Alternate mid tone', usage: 'Muted text, borders, chart tooltips, and supporting interface structure.' },
+      { path: 'tones.leaf', label: 'Primary color', usage: 'Primary buttons, analytics accents, active nodes, and core Peridot green emphasis.' },
+      { path: 'tones.sage', label: 'Secondary color', usage: 'Default map nodes, active land fills, and secondary chart series.' },
+      { path: 'tones.soft', label: 'Soft light tone', usage: 'Land fills, Inspector borders, and pale chart/visualization accents.' },
+      { path: 'tones.pale', label: 'Pale tone', usage: 'Sidebar surfaces, subtle backgrounds, muted dark-mode text, and grid lines.' },
+      { path: 'tones.cream', label: 'Cream tone', usage: 'Warm cards, primary dark-mode text, and readable light surfaces.' },
+      { path: 'tones.paper', label: 'Paper tone', usage: 'Lightest cards, canvas frames, form surfaces, and export backgrounds.' },
+      { path: 'tones.gold', label: 'Highlight tone', usage: 'Button hover states, edge color, gold emphasis, and active callouts.' },
+      { path: 'tones.goldLight', label: 'Light highlight tone', usage: 'Hover edges, cluster nodes, focus rings, and brighter highlight contrast.' },
+    ],
+  },
+  {
+    id: 'interface-roles',
+    label: 'Interface roles',
+    description: 'Global app surfaces, panels, borders, overlays, and reusable UI structure.',
+    roles: [
+      { path: 'interface.appBackground', label: 'App background', usage: 'The deepest page-level background behind the app shell.' },
+      { path: 'interface.workspaceBackground', label: 'Workspace background', usage: 'The main field behind workspace cards and panels.' },
+      { path: 'interface.panelBackground', label: 'Panel background', usage: 'Dark navigation panels, compact controls, and dark workspace surfaces.' },
+      { path: 'interface.panelBackgroundStrong', label: 'Strong panel background', usage: 'High-contrast panels, modern map background, and dense dark UI regions.' },
+      { path: 'interface.cardBackground', label: 'Card background', usage: 'Light cards, sidebars, popovers, and default readable surfaces.' },
+      { path: 'interface.cardBackgroundWarm', label: 'Warm card background', usage: 'Creamy cards, utility panels, title bars, and warmer secondary surfaces.' },
+      { path: 'interface.cardBackgroundMuted', label: 'Muted card background', usage: 'Subtle panels, grouped sections, hover surfaces, and quiet blocks.' },
+      { path: 'interface.borderSubtle', label: 'Subtle border', usage: 'Most card, panel, picker, and overlay outlines.' },
+      { path: 'interface.borderStrong', label: 'Strong border', usage: 'More visible outlines, file chips, slider dots, and focused structures.' },
+      { path: 'interface.focusRing', label: 'Focus ring', usage: 'Keyboard focus state for theme cards and interactive controls.' },
+      { path: 'interface.scrim', label: 'Overlay scrim', usage: 'Modal and overlay dimming layer.' },
+      { path: 'interface.scrimStrong', label: 'Strong overlay scrim', usage: 'Heavier modal or map overlay dimming.' },
+    ],
+  },
+  {
+    id: 'text-roles',
+    label: 'Text roles',
+    description: 'Broad text colors for dark and light surfaces.',
+    roles: [
+      { path: 'interface.textOnDark', label: 'Primary text on dark', usage: 'Headings and main copy on dark panels and hero cards.' },
+      { path: 'interface.textMutedOnDark', label: 'Muted text on dark', usage: 'Descriptions, labels, and metadata on dark panels.' },
+      { path: 'interface.textOnLight', label: 'Primary text on light', usage: 'Main copy on cards, data panels, forms, and light surfaces.' },
+      { path: 'interface.textMutedOnLight', label: 'Muted text on light', usage: 'Supporting labels and explanatory copy on light surfaces.' },
+      { path: 'interface.textInverse', label: 'Inverted text', usage: 'Maximum-contrast text for warnings and map callouts.' },
+      { path: 'appDefaults.linkText', label: 'Link text', usage: 'Clickable text links and navigational emphasis.' },
+      { path: 'appDefaults.linkHoverText', label: 'Link hover text', usage: 'Hover state for links and linked Inspector objects.' },
+    ],
+  },
+  {
+    id: 'button-roles',
+    label: 'Buttons and actions',
+    description: 'Primary, secondary, and cream button colors used throughout the interface.',
+    roles: [
+      { path: 'button.primaryBg', label: 'Primary button', usage: 'Main actions and confirmation buttons.' },
+      { path: 'button.primaryHoverBg', label: 'Primary button hover', usage: 'Hover and active emphasis for primary actions.' },
+      { path: 'button.primaryText', label: 'Primary button text', usage: 'Text on primary buttons.' },
+      { path: 'button.primaryBorder', label: 'Primary button border', usage: 'Primary button outlines.' },
+      { path: 'button.secondaryBg', label: 'Secondary button', usage: 'Secondary actions, ghost controls, and supporting buttons.' },
+      { path: 'button.secondaryHoverBg', label: 'Secondary button hover', usage: 'Hover emphasis for secondary buttons.' },
+      { path: 'button.secondaryText', label: 'Secondary button text', usage: 'Text on secondary dark-surface buttons.' },
+      { path: 'button.secondaryBorder', label: 'Secondary button border', usage: 'Secondary button outlines.' },
+      { path: 'button.creamBg', label: 'Cream button', usage: 'Light-surface buttons and calm actions.' },
+      { path: 'button.creamText', label: 'Cream button text', usage: 'Text on cream buttons.' },
+      { path: 'button.creamBorder', label: 'Cream button border', usage: 'Cream button outlines.' },
+    ],
+  },
+  {
+    id: 'card-form-roles',
+    label: 'Cards, forms, and surfaces',
+    description: 'Reusable card, input, table, and form surfaces.',
+    roles: [
+      { path: 'card.darkBg', label: 'Dark card', usage: 'Dark action cards and dark content groups.' },
+      { path: 'card.darkSurfaceBg', label: 'Dark surface card', usage: 'Darker nested surfaces and appearance panels.' },
+      { path: 'card.creamBg', label: 'Cream card', usage: 'Primary readable cream cards and light panels.' },
+      { path: 'card.creamText', label: 'Cream card text', usage: 'Text on cream cards.' },
+      { path: 'card.border', label: 'Card border', usage: 'General card and surface outlines.' },
+      { path: 'card.shadow', label: 'Card shadow', usage: 'Shared card and panel shadow color.' },
+      { path: 'form.bgDark', label: 'Dark input background', usage: 'Inputs placed on dark surfaces.' },
+      { path: 'form.bgLight', label: 'Light input background', usage: 'Inputs placed on cream or light surfaces.' },
+      { path: 'form.border', label: 'Input border', usage: 'Text fields, selects, textareas, and mapping controls.' },
+      { path: 'form.placeholder', label: 'Placeholder text', usage: 'Input placeholder text.' },
+    ],
+  },
+  {
+    id: 'map-visualization-roles',
+    label: 'Map and visualization roles',
+    description: 'Core visual encodings for the map, graph, timeline, and exported visualization surfaces.',
+    roles: [
+      { path: 'visualization.canvasBg', label: 'Map ocean / canvas', usage: 'The map/network background field, ocean tone, and canvas wash.' },
+      { path: 'visualization.frameBg', label: 'Map frame', usage: 'Map frame and visualization background panels.' },
+      { path: 'visualization.frameBorder', label: 'Map frame border', usage: 'Map frame border and visual boundary.' },
+      { path: 'visualization.landFill', label: 'Map land', usage: 'Default geographic land fill.' },
+      { path: 'visualization.landActiveFill', label: 'Active map land', usage: 'Highlighted or active land fill.' },
+      { path: 'visualization.landStroke', label: 'Map land border', usage: 'Land outline and geographic strokes.' },
+      { path: 'visualization.gridStroke', label: 'Map grid / texture', usage: 'Graticule, sea texture, and faint visualization guide lines.' },
+      { path: 'visualization.node', label: 'Map node default', usage: 'Default person/place node color.' },
+      { path: 'visualization.nodeHover', label: 'Map node hover', usage: 'Hovered node and high-attention node states.' },
+      { path: 'visualization.nodeSelected', label: 'Map node selected', usage: 'Selected person/place node.' },
+      { path: 'visualization.nodeCluster', label: 'Cluster node', usage: 'Clustered node markers.' },
+      { path: 'visualization.nodeAnimated', label: 'Animated node', usage: 'Timeline playback and animated node states.' },
+      { path: 'visualization.nodeStroke', label: 'Node outline', usage: 'Node border and halo contrast.' },
+      { path: 'visualization.edge', label: 'Map edge default', usage: 'Default correspondence route / edge lines.' },
+      { path: 'visualization.edgeHover', label: 'Map edge hover', usage: 'Hovered route and emphasized route lines.' },
+      { path: 'visualization.edgeSelected', label: 'Map edge selected', usage: 'Selected route or edge line.' },
+      { path: 'visualization.labelText', label: 'Map label text', usage: 'Map and visualization labels.' },
+      { path: 'visualization.labelStroke', label: 'Map label halo', usage: 'Label stroke/halo used for legibility.' },
+      { path: 'visualization.series', label: 'Visualization series', usage: 'Fallback ordered color series for map, graph, and non-analytics visualization marks.' },
+    ],
+  },
+  {
+    id: 'analytics-roles',
+    label: 'Analytics and charts',
+    description: 'Chart shell, tooltip, grid, and series colors.',
+    roles: [
+      { path: 'analytics.shellBg', label: 'Analytics shell', usage: 'Main analytics workspace background.' },
+      { path: 'analytics.sidebarBg', label: 'Analytics sidebar', usage: 'Analytics control panel and filter sidebar.' },
+      { path: 'analytics.chartBg', label: 'Chart background', usage: 'Individual chart cards and plot surfaces.' },
+      { path: 'analytics.chartText', label: 'Chart text', usage: 'Chart headings, axis labels, and strong chart copy.' },
+      { path: 'analytics.chartMutedText', label: 'Muted chart text', usage: 'Chart captions, secondary labels, and metadata.' },
+      { path: 'analytics.grid', label: 'Chart grid', usage: 'Gridlines and quiet chart scaffolding.' },
+      { path: 'analytics.accent', label: 'Chart accent', usage: 'Primary analytics accent and first chart series.' },
+      { path: 'analytics.accentDark', label: 'Chart dark accent', usage: 'Secondary analytics emphasis.' },
+      { path: 'analytics.accentLight', label: 'Chart light accent', usage: 'Light analytics emphasis and area fills.' },
+      { path: 'analytics.tooltipBg', label: 'Tooltip background', usage: 'Chart tooltip card background.' },
+      { path: 'analytics.tooltipText', label: 'Tooltip text', usage: 'Text inside chart tooltips.' },
+      { path: 'analytics.series', label: 'Analytics series', usage: 'Ordered chart series colors for bar, line, pie, and scatter charts.' },
+    ],
+  },
+  {
+    id: 'inspector-search-status-roles',
+    label: 'Inspector, search, and status',
+    description: 'Selection detail panels, search states, warnings, and error colors.',
+    roles: [
+      { path: 'inspector.chromeBg', label: 'Inspector chrome', usage: 'Compact Inspector shell and top-level Inspector panels.' },
+      { path: 'inspector.chromeBgStrong', label: 'Strong Inspector chrome', usage: 'Inspector headers and high-contrast chrome.' },
+      { path: 'inspector.bodyBg', label: 'Inspector body', usage: 'Inspector body background and nested detail area.' },
+      { path: 'inspector.bodyText', label: 'Inspector body text', usage: 'Main Inspector text on body surfaces.' },
+      { path: 'inspector.cardBg', label: 'Inspector card', usage: 'Inspector detail cards and profile panels.' },
+      { path: 'inspector.cardBorder', label: 'Inspector card border', usage: 'Inspector card outlines and section boundaries.' },
+      { path: 'inspector.clickableBg', label: 'Clickable Inspector chip', usage: 'Linked people, places, routes, and navigable chips.' },
+      { path: 'inspector.clickableHoverBg', label: 'Clickable Inspector hover', usage: 'Hover state for linked Inspector entities.' },
+      { path: 'status.warningBg', label: 'Warning background', usage: 'Warnings, alerts, and caution callouts.' },
+      { path: 'status.warningBorder', label: 'Warning border', usage: 'Warning outlines and caution emphasis.' },
+      { path: 'status.warningText', label: 'Warning text', usage: 'Text on warning backgrounds.' },
+      { path: 'status.dangerBg', label: 'Danger background', usage: 'Errors, invalid data notices, and destructive-state backgrounds.' },
+      { path: 'status.dangerBorder', label: 'Danger border', usage: 'Error outlines and destructive emphasis.' },
+      { path: 'status.dangerText', label: 'Danger text', usage: 'Text on danger backgrounds.' },
+    ],
+  },
+]);

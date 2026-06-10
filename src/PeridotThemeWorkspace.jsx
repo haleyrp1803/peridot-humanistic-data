@@ -2,14 +2,17 @@
  * Themes and Accessibility workspace.
  *
  * This component presents appearance-related settings, including map/interface
- * theme presets and the semantic site-wide palette switcher used for palette
- * experiments.
+ * theme presets, the semantic site-wide palette switcher used for palette
+ * experiments, and a role-based palette dashboard for broad creative control.
  *
  * Important relationships:
  * - Map style presets are still owned by `App.jsx` through `themeTuning`.
  * - Site-wide semantic palettes are owned by `peridotTheme.js` and persisted in
  *   localStorage so a full page reload can rehydrate every CSS variable and
  *   module-level visualization token from the selected palette.
+ * - Human-facing role labels and usage descriptions live in
+ *   `peridotThemeRoleMetadata.js`; actual color values remain in
+ *   `peridotTheme.js`.
  *
  * Maintenance cautions:
  * - Keep appearance/accessibility settings grouped here rather than scattering
@@ -23,10 +26,88 @@ import React from 'react';
 import {
   ACTIVE_PERIDOT_PALETTE_ID,
   DEFAULT_PERIDOT_PALETTE_ID,
+  PERIDOT_APP_THEME_DEFAULTS,
   PERIDOT_PALETTE_OPTIONS,
+  PERIDOT_THEME,
   resetActivePeridotPaletteId,
   setActivePeridotPaletteId,
 } from './peridotTheme.js';
+import { PERIDOT_THEME_ROLE_GROUPS } from './peridotThemeRoleMetadata.js';
+
+function readThemePath(source, path) {
+  return String(path || '')
+    .split('.')
+    .filter(Boolean)
+    .reduce((current, key) => (current && Object.prototype.hasOwnProperty.call(current, key) ? current[key] : undefined), source);
+}
+
+function getColorPreviewItems(value) {
+  if (Array.isArray(value)) {
+    return value.map((item, index) => ({ id: `${index}-${item}`, value: item, label: String(index + 1) }));
+  }
+  if (typeof value === 'string') {
+    return [{ id: value, value, label: '' }];
+  }
+  return [];
+}
+
+function isDisplayableColor(value) {
+  const text = String(value || '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(text) || /^rgba?\(/i.test(text) || text === 'transparent';
+}
+
+function ColorSwatch({ value, label }) {
+  const color = String(value || '').trim();
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      <span
+        className="h-7 w-7 shrink-0 rounded-full border border-[var(--peridot-role-interface-border-subtle)] shadow-[0_5px_16px_var(--peridot-role-card-shadow)]"
+        style={{ backgroundColor: isDisplayableColor(color) ? color : 'transparent' }}
+        title={color}
+        aria-hidden="true"
+      />
+      <span className="min-w-0 font-mono text-[0.72rem] font-semibold text-[var(--peridot-role-interface-text-muted-on-dark)]">
+        {label ? `${label}: ` : ''}{color}
+      </span>
+    </span>
+  );
+}
+
+function PaletteRoleRow({ role, value }) {
+  const previewItems = getColorPreviewItems(value);
+  return (
+    <div className="grid gap-3 border-t border-[var(--peridot-role-interface-border-subtle)] py-3 first:border-t-0 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.15fr)_minmax(0,1.45fr)] md:items-center">
+      <div>
+        <p className="text-sm font-extrabold text-[var(--peridot-role-interface-text-on-dark)]">{role.label}</p>
+        <p className="mt-1 font-mono text-[0.68rem] text-[var(--peridot-role-interface-text-muted-on-dark)]">{role.path}</p>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {previewItems.length ? (
+          previewItems.map((item) => <ColorSwatch key={item.id} value={item.value} label={Array.isArray(value) ? item.label : ''} />)
+        ) : (
+          <span className="font-mono text-[0.72rem] text-[var(--peridot-role-interface-text-muted-on-dark)]">{String(value ?? 'Not assigned')}</span>
+        )}
+      </div>
+      <p className="text-sm leading-relaxed text-[var(--peridot-role-interface-text-muted-on-dark)]">{role.usage}</p>
+    </div>
+  );
+}
+
+function PaletteRoleGroup({ group, themeLookup }) {
+  return (
+    <section className="rounded-[24px] border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-card-dark-bg)] p-4 shadow-[0_14px_34px_var(--peridot-role-card-shadow)]">
+      <div className="mb-2">
+        <p className="text-[0.68rem] font-black uppercase tracking-[0.22em] text-[var(--peridot-role-interface-text-muted-on-dark)]">{group.label}</p>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--peridot-role-interface-text-muted-on-dark)]">{group.description}</p>
+      </div>
+      <div>
+        {group.roles.map((role) => (
+          <PaletteRoleRow key={role.path} role={role} value={readThemePath(themeLookup, role.path)} />
+        ))}
+      </div>
+    </section>
+  );
+}
 
 export function PeridotThemeWorkspace({ themePresetKey, applyThemePreset, resetTheme, onOpenVisualizations }) {
   const themeOptions = [
@@ -34,6 +115,11 @@ export function PeridotThemeWorkspace({ themePresetKey, applyThemePreset, resetT
     { key: 'preModern', title: 'Early modern map', description: 'Use the warmer historical-map palette for geographic exploration.', action: () => applyThemePreset('preModern') },
     { key: 'modern', title: 'Modern map', description: 'Use the higher-contrast modern map palette.', action: () => applyThemePreset('modern') },
   ];
+
+  const themeLookup = {
+    ...PERIDOT_THEME,
+    appDefaults: PERIDOT_APP_THEME_DEFAULTS,
+  };
 
   return (
     <section className="peridot-workspace-field text-[var(--peridot-color-hex-fbf7ea)]">
@@ -108,6 +194,29 @@ export function PeridotThemeWorkspace({ themePresetKey, applyThemePreset, resetT
                 </button>
               );
             })}
+          </div>
+        </div>
+
+        <div className="mt-6 rounded-[28px] border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-card-dark-surface-bg)] p-5 text-[var(--peridot-role-interface-text-on-dark)] shadow-[0_18px_46px_var(--peridot-role-card-shadow)]">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="peridot-kicker text-[11px]">Palette roles</p>
+              <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[var(--peridot-role-interface-text-on-dark)]">
+                Broad color controls for creative editing
+              </h2>
+              <p className="mt-2 max-w-4xl text-sm leading-relaxed text-[var(--peridot-role-interface-text-muted-on-dark)]">
+                This dashboard shows the role-based color assignments behind the active palette. Edit broad groups in <code className="rounded bg-[var(--peridot-role-card-dark-bg)] px-1.5 py-0.5 font-mono text-[0.78rem] text-[var(--peridot-role-interface-text-on-dark)]">src/peridotTheme.js</code> rather than hunting for individual hex values throughout the app.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-card-dark-bg)] px-4 py-3 text-sm text-[var(--peridot-role-interface-text-muted-on-dark)]">
+              Active palette: <span className="font-extrabold text-[var(--peridot-role-interface-text-on-dark)]">{PERIDOT_PALETTE_OPTIONS.find((palette) => palette.id === ACTIVE_PERIDOT_PALETTE_ID)?.label || ACTIVE_PERIDOT_PALETTE_ID}</span>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4">
+            {PERIDOT_THEME_ROLE_GROUPS.map((group) => (
+              <PaletteRoleGroup key={group.id} group={group} themeLookup={themeLookup} />
+            ))}
           </div>
         </div>
 
