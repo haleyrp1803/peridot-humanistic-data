@@ -18,6 +18,7 @@
 
 export const DEFAULT_PERIDOT_PALETTE_ID = 'legacyCurrent';
 export const PERIDOT_PALETTE_STORAGE_KEY = 'peridot.activePaletteId';
+export const PERIDOT_CUSTOM_THEME_STORAGE_KEY = 'peridot.customThemeOverrides';
 
 export const PERIDOT_SOURCE_PALETTES = Object.freeze({
   legacyCurrent: {
@@ -60,6 +61,298 @@ export const PERIDOT_PALETTE_OPTIONS = Object.freeze(
     swatches: getPaletteSwatchesForPreview(palette),
   }))
 );
+
+
+export const PERIDOT_PALETTE_IMPORT_TARGETS = Object.freeze([
+  {
+    id: 'wholeApp',
+    label: 'Whole app',
+    description: 'Map the detected palette across interface surfaces, buttons, charts, map/network marks, Inspector, search, and status colors.',
+  },
+  {
+    id: 'interface',
+    label: 'Interface',
+    description: 'Apply the palette to app backgrounds, workspace surfaces, panels, cards, forms, borders, and general text.',
+  },
+  {
+    id: 'mapNetwork',
+    label: 'Map and network',
+    description: 'Apply the palette to map ocean/canvas, land, nodes, edges, labels, and visualization series colors only.',
+  },
+  {
+    id: 'charts',
+    label: 'Charts',
+    description: 'Apply the palette to analytics chart backgrounds, text, gridlines, tooltips, and categorical chart series colors only.',
+  },
+  {
+    id: 'buttonsHighlights',
+    label: 'Buttons and highlights',
+    description: 'Apply the palette to primary actions, hover states, focus accents, warnings, and highlighted UI states.',
+  },
+  {
+    id: 'inspectorSearch',
+    label: 'Inspector and search',
+    description: 'Apply the palette to Inspector chrome, Inspector cards, clickable chips, search result surfaces, and status callouts.',
+  },
+  {
+    id: 'textBorders',
+    label: 'Text and borders',
+    description: 'Apply the palette to broad text, muted text, borders, dividers, focus rings, and form outlines.',
+  },
+]);
+
+function writeOverridePath(source, path, value) {
+  const keys = String(path || '').split('.').filter(Boolean);
+  if (!keys.length) return source;
+  const next = source && typeof source === 'object' && !Array.isArray(source) ? source : {};
+  let cursor = next;
+  keys.forEach((key, index) => {
+    if (index === keys.length - 1) {
+      cursor[key] = value;
+      return;
+    }
+    if (!cursor[key] || typeof cursor[key] !== 'object' || Array.isArray(cursor[key])) cursor[key] = {};
+    cursor = cursor[key];
+  });
+  return next;
+}
+
+function saturation(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  const max = Math.max(r, g, b) / 255;
+  const min = Math.min(r, g, b) / 255;
+  if (max === 0) return 0;
+  return (max - min) / max;
+}
+
+function warmScore(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  return (r * 1.15 + g * 0.55 - b * 0.55) / 255 + saturation(hex) * 0.5;
+}
+
+function normalizeDetectedPaletteColors(rawColors) {
+  const values = (Array.isArray(rawColors) ? rawColors : [])
+    .map((value) => String(value || '').trim())
+    .filter((value) => /^#[0-9a-fA-F]{6}$/.test(value))
+    .map((value) => value.toLowerCase());
+
+  const unique = [];
+  values.forEach((value) => {
+    if (!unique.includes(value)) unique.push(value);
+  });
+  return unique;
+}
+
+function expandPaletteColors(colors) {
+  const normalized = normalizeDetectedPaletteColors(colors);
+  const fallback = getPaletteSwatchesForPreview(PERIDOT_SOURCE_PALETTES[DEFAULT_PERIDOT_PALETTE_ID]);
+  const seed = normalized.length ? normalized : fallback;
+  const expanded = [...seed];
+  while (expanded.length < 8) {
+    const base = expanded[expanded.length % seed.length] || '#6d8b53';
+    expanded.push(expanded.length % 2 ? shade(base, 0.18) : shade(base, -0.18));
+  }
+  return expanded;
+}
+
+function buildPaletteAssignment(colors) {
+  const expanded = expandPaletteColors(colors);
+  const sorted = [...expanded].sort((a, b) => luminance(a) - luminance(b));
+  const mids = sorted.filter((value) => luminance(value) >= 0.14 && luminance(value) <= 0.72);
+  const nonWhite = sorted.filter((value) => luminance(value) < 0.92);
+  const warmCandidates = [...nonWhite].sort((a, b) => warmScore(b) - warmScore(a));
+  const highSaturation = [...nonWhite].sort((a, b) => saturation(b) - saturation(a));
+  const series = [...mids, ...sorted]
+    .filter((value, index, array) => array.indexOf(value) === index)
+    .slice(0, 10);
+
+  const darkest = sorted[0];
+  const dark = sorted[1] || shade(darkest, 0.12);
+  const deep = sorted[2] || shade(dark, 0.12);
+  const mid = mids[0] || sorted[Math.floor(sorted.length * 0.35)] || deep;
+  const midAlt = mids[1] || sorted[Math.floor(sorted.length * 0.48)] || mid;
+  const primary = mids[2] || highSaturation[0] || mid;
+  const secondary = mids[3] || highSaturation[1] || midAlt;
+  const soft = sorted[Math.max(0, sorted.length - 4)] || shade(secondary, 0.35);
+  const pale = sorted[Math.max(0, sorted.length - 3)] || shade(soft, 0.2);
+  const cream = sorted[Math.max(0, sorted.length - 2)] || shade(pale, 0.2);
+  const paper = sorted[sorted.length - 1] || shade(cream, 0.12);
+  const highlight = warmCandidates[0] || primary;
+  const highlightLight = warmCandidates[1] || shade(highlight, 0.22);
+
+  return {
+    darkest,
+    dark,
+    deep,
+    mid,
+    midAlt,
+    primary,
+    secondary,
+    soft,
+    pale,
+    cream,
+    paper,
+    highlight,
+    highlightLight,
+    series,
+  };
+}
+
+function assignPaths(colors, pathValues) {
+  return pathValues.reduce((overrides, [path, value]) => writeOverridePath(overrides, path, value), {});
+}
+
+function buildInterfacePaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['interface.appBackground', assignment.darkest],
+    ['interface.appBackgroundAlt', assignment.dark],
+    ['interface.workspaceBackground', assignment.deep],
+    ['interface.panelBackground', assignment.dark],
+    ['interface.panelBackgroundStrong', assignment.darkest],
+    ['interface.cardBackground', assignment.paper],
+    ['interface.cardBackgroundWarm', assignment.cream],
+    ['interface.cardBackgroundMuted', assignment.pale],
+    ['interface.cardBackgroundDark', assignment.deep],
+    ['interface.borderSubtle', withAlpha(assignment.midAlt, 0.32)],
+    ['interface.borderStrong', withAlpha(assignment.soft, 0.62)],
+    ['interface.textOnDark', assignment.cream],
+    ['interface.textMutedOnDark', assignment.pale],
+    ['interface.textOnLight', assignment.deep],
+    ['interface.textMutedOnLight', assignment.midAlt],
+    ['interface.focusRing', withAlpha(assignment.highlightLight, 0.45)],
+    ['card.darkBg', withAlpha(assignment.dark, 0.88)],
+    ['card.darkSurfaceBg', withAlpha(assignment.deep, 0.88)],
+    ['card.creamBg', withAlpha(assignment.paper, 0.94)],
+    ['card.creamText', assignment.deep],
+    ['card.border', withAlpha(assignment.pale, 0.58)],
+    ['card.shadow', withAlpha(assignment.darkest, 0.28)],
+    ['form.bgDark', withAlpha(assignment.dark, 0.62)],
+    ['form.bgLight', withAlpha(assignment.paper, 0.88)],
+    ['form.border', withAlpha(assignment.pale, 0.54)],
+    ['form.textDark', assignment.paper],
+    ['form.textLight', assignment.deep],
+    ['form.placeholder', withAlpha(assignment.paper, 0.58)],
+  ]);
+}
+
+function buildMapNetworkPaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['visualization.canvasBg', assignment.darkest],
+    ['visualization.frameBg', assignment.deep],
+    ['visualization.frameBorder', assignment.midAlt],
+    ['visualization.landFill', assignment.soft],
+    ['visualization.landActiveFill', assignment.secondary],
+    ['visualization.landStroke', assignment.midAlt],
+    ['visualization.gridStroke', withAlpha(assignment.pale, 0.28)],
+    ['visualization.edge', assignment.highlight],
+    ['visualization.edgeHover', assignment.highlightLight],
+    ['visualization.edgeActive', assignment.primary],
+    ['visualization.edgeSelected', assignment.cream],
+    ['visualization.node', assignment.secondary],
+    ['visualization.nodeCluster', assignment.highlightLight],
+    ['visualization.nodeAnimated', assignment.primary],
+    ['visualization.nodeHover', assignment.highlight],
+    ['visualization.nodeSelected', assignment.paper],
+    ['visualization.nodeStroke', assignment.darkest],
+    ['visualization.labelText', assignment.paper],
+    ['visualization.labelStroke', assignment.darkest],
+    ['visualization.series', assignment.series],
+  ]);
+}
+
+function buildChartsPaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['analytics.shellBg', assignment.cream],
+    ['analytics.sidebarBg', assignment.pale],
+    ['analytics.chartBg', assignment.paper],
+    ['analytics.chartText', assignment.deep],
+    ['analytics.chartMutedText', assignment.midAlt],
+    ['analytics.grid', withAlpha(assignment.midAlt, 0.32)],
+    ['analytics.accent', assignment.primary],
+    ['analytics.accentDark', assignment.deep],
+    ['analytics.accentLight', assignment.soft],
+    ['analytics.tooltipBg', assignment.deep],
+    ['analytics.tooltipText', assignment.paper],
+    ['analytics.series', assignment.series],
+  ]);
+}
+
+function buildButtonHighlightPaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['button.primaryBg', assignment.primary],
+    ['button.primaryHoverBg', assignment.highlight],
+    ['button.primaryText', assignment.paper],
+    ['button.primaryBorder', withAlpha(assignment.pale, 0.55)],
+    ['button.secondaryBg', withAlpha(assignment.pale, 0.10)],
+    ['button.secondaryHoverBg', assignment.highlight],
+    ['button.secondaryText', assignment.paper],
+    ['button.secondaryBorder', withAlpha(assignment.pale, 0.48)],
+    ['button.creamBg', assignment.cream],
+    ['button.creamText', assignment.deep],
+    ['button.creamBorder', withAlpha(assignment.midAlt, 0.38)],
+    ['interface.focusRing', withAlpha(assignment.highlightLight, 0.45)],
+    ['status.warningBg', withAlpha(assignment.highlight, 0.25)],
+    ['status.warningBorder', withAlpha(assignment.highlightLight, 0.50)],
+    ['status.warningText', assignment.paper],
+  ]);
+}
+
+function buildInspectorSearchPaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['inspector.chromeBg', assignment.dark],
+    ['inspector.chromeBgStrong', assignment.darkest],
+    ['inspector.bodyBg', assignment.pale],
+    ['inspector.bodyText', assignment.deep],
+    ['inspector.cardBg', assignment.cream],
+    ['inspector.cardBorder', assignment.soft],
+    ['inspector.clickableBg', assignment.primary],
+    ['inspector.clickableText', assignment.paper],
+    ['inspector.clickableHoverBg', assignment.highlight],
+    ['inspector.headingText', assignment.cream],
+    ['status.warningBg', withAlpha(assignment.highlight, 0.25)],
+    ['status.warningBorder', withAlpha(assignment.highlightLight, 0.50)],
+    ['status.warningText', assignment.paper],
+    ['status.dangerBg', withAlpha(assignment.deep, 0.32)],
+    ['status.dangerBorder', withAlpha(assignment.highlight, 0.62)],
+    ['status.dangerText', assignment.paper],
+  ]);
+}
+
+function buildTextBorderPaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['interface.textOnDark', assignment.cream],
+    ['interface.textMutedOnDark', assignment.pale],
+    ['interface.textOnLight', assignment.deep],
+    ['interface.textMutedOnLight', assignment.midAlt],
+    ['interface.textInverse', assignment.paper],
+    ['interface.borderSubtle', withAlpha(assignment.midAlt, 0.32)],
+    ['interface.borderStrong', withAlpha(assignment.soft, 0.62)],
+    ['interface.focusRing', withAlpha(assignment.highlightLight, 0.45)],
+    ['card.border', withAlpha(assignment.pale, 0.58)],
+    ['form.border', withAlpha(assignment.pale, 0.54)],
+    ['visualization.labelText', assignment.paper],
+    ['visualization.labelStroke', assignment.darkest],
+  ]);
+}
+
+export function buildPeridotPaletteImportOverrides(rawColors, targetId = 'wholeApp') {
+  const assignment = buildPaletteAssignment(rawColors);
+  const target = String(targetId || 'wholeApp');
+  const builders = {
+    interface: buildInterfacePaletteOverrides,
+    mapNetwork: buildMapNetworkPaletteOverrides,
+    charts: buildChartsPaletteOverrides,
+    buttonsHighlights: buildButtonHighlightPaletteOverrides,
+    inspectorSearch: buildInspectorSearchPaletteOverrides,
+    textBorders: buildTextBorderPaletteOverrides,
+  };
+
+  if (target === 'wholeApp') {
+    return Object.values(builders).reduce((merged, builder) => deepMerge(merged, builder(assignment)), {});
+  }
+
+  return builders[target] ? builders[target](assignment) : buildChartsPaletteOverrides(assignment);
+}
 
 function isBrowserRuntime() {
   return typeof window !== 'undefined' && typeof window.localStorage !== 'undefined';
@@ -112,6 +405,79 @@ export function resetActivePeridotPaletteId(options = {}) {
   }
   return DEFAULT_PERIDOT_PALETTE_ID;
 }
+
+
+function deepClone(value) {
+  if (Array.isArray(value)) return value.map((item) => deepClone(item));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, deepClone(item)]));
+  }
+  return value;
+}
+
+function deepMerge(baseValue, overrideValue) {
+  if (Array.isArray(overrideValue)) return deepClone(overrideValue);
+  if (!overrideValue || typeof overrideValue !== 'object') {
+    return overrideValue === undefined ? deepClone(baseValue) : overrideValue;
+  }
+
+  const merged = baseValue && typeof baseValue === 'object' && !Array.isArray(baseValue)
+    ? deepClone(baseValue)
+    : {};
+
+  Object.entries(overrideValue).forEach(([key, value]) => {
+    merged[key] = deepMerge(merged[key], value);
+  });
+
+  return merged;
+}
+
+function readJsonFromLocalStorage(key, fallback) {
+  if (!isBrowserRuntime()) return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return fallback;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
+  } catch (_error) {
+    return fallback;
+  }
+}
+
+export function getPeridotCustomThemeOverrides() {
+  return readJsonFromLocalStorage(PERIDOT_CUSTOM_THEME_STORAGE_KEY, {});
+}
+
+export function setPeridotCustomThemeOverrides(overrides, options = {}) {
+  const nextOverrides = overrides && typeof overrides === 'object' && !Array.isArray(overrides) ? overrides : {};
+  if (isBrowserRuntime()) {
+    try {
+      window.localStorage.setItem(PERIDOT_CUSTOM_THEME_STORAGE_KEY, JSON.stringify(nextOverrides));
+    } catch (_error) {
+      // Ignore storage failures; callers can still use exported override JSON.
+    }
+    if (options.reload !== false) {
+      window.location.reload();
+    }
+  }
+  return nextOverrides;
+}
+
+export function clearPeridotCustomThemeOverrides(options = {}) {
+  if (isBrowserRuntime()) {
+    try {
+      window.localStorage.removeItem(PERIDOT_CUSTOM_THEME_STORAGE_KEY);
+    } catch (_error) {
+      // Ignore storage failures; the base palette remains available.
+    }
+    if (options.reload !== false) {
+      window.location.reload();
+    }
+  }
+  return {};
+}
+
+export const PERIDOT_CUSTOM_THEME_OVERRIDES = Object.freeze(getPeridotCustomThemeOverrides());
 
 export const ACTIVE_PERIDOT_PALETTE_ID = getActivePeridotPaletteId();
 
@@ -354,7 +720,8 @@ export function buildSemanticTheme(tones = PERIDOT_TONES) {
   });
 }
 
-export const PERIDOT_THEME = buildSemanticTheme(PERIDOT_TONES);
+export const PERIDOT_BASE_THEME = Object.freeze(buildSemanticTheme(PERIDOT_TONES));
+export const PERIDOT_THEME = Object.freeze(deepMerge(PERIDOT_BASE_THEME, PERIDOT_CUSTOM_THEME_OVERRIDES));
 
 function flattenTheme(value, prefix = '--peridot-role', output = {}) {
   Object.entries(value || {}).forEach(([key, nested]) => {

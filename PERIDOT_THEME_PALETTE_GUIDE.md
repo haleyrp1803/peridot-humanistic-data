@@ -95,7 +95,21 @@ The Theme workspace now includes a **Palette roles** section. It shows the curre
 - analytics and chart roles
 - Inspector, search, and status roles
 
-This dashboard is intentionally read-only. It is meant to make the current color system legible before adding a noisier custom color-picker interface.
+The dashboard now includes a lightweight edit/export workflow. Edit role values in the dashboard, use **Apply edited roles** to save them as local custom overrides, and use **Download override JSON** or **Copy override JSON** to preserve the experiment. Applied overrides are stored in localStorage under `peridot.customThemeOverrides` and layer over the currently active base palette.
+
+
+## Trying temporary role edits
+
+The Theme workspace supports temporary role-level overrides without editing source files:
+
+1. Open **Themes and Accessibility**.
+2. Choose a base site-wide palette.
+3. In **Palette roles**, edit broad roles such as `interface.appBackground`, `button.primaryBg`, `visualization.canvasBg`, `visualization.nodeSelected`, or `analytics.series`.
+4. Use **Apply edited roles** to save the current draft to localStorage and reload Peridot.
+5. Use **Download override JSON** or **Copy override JSON** to export the experiment.
+6. Use **Clear applied custom roles** to remove local overrides and return to the active base palette.
+
+Arrays such as chart or visualization series are edited one color per line. Direct `appDefaults.*` rows are displayed for orientation but are derived from underlying semantic roles; edit the interface or visualization role that feeds them instead.
 
 ## Adding another palette
 
@@ -133,3 +147,43 @@ Then open Themes and Accessibility, switch palettes, and confirm that:
 2. the palette selector changes active state,
 3. the Palette roles dashboard updates,
 4. Home, Visualizations, Explore/Search, Inspector, Analytics, map/network marks, and exports still render.
+
+## Importing a palette from an image
+
+The Theme workspace now includes **Palette image import** inside the palette edit/export section.
+
+Use this workflow when you have an Adobe Color screenshot or another palette reference image:
+
+1. Open **Themes and Accessibility**.
+2. In **Palette edit and export**, choose an image file.
+3. Choose the target group to apply it to:
+   - Whole app
+   - Interface
+   - Map and network
+   - Charts
+   - Buttons and highlights
+   - Inspector and search
+   - Text and borders
+4. Review the detected swatches and the draft assignment preview.
+5. Click **Apply detected palette to draft roles**.
+6. Fine-tune any role values manually in the Palette roles dashboard.
+7. Click **Apply edited roles** to reload and test the changes site-wide.
+8. Use **Download override JSON** or **Copy override JSON** to save the experiment.
+
+Image import is intentionally scoped. Applying a palette to **Charts** should update chart backgrounds, chart text/grid/tooltip colors, and categorical series colors without changing the global interface. Applying a palette to **Map and network** should update canvas/ocean, land, nodes, edges, labels, and visualization series colors without changing chart cards.
+
+## Visualization color enforcement
+
+Chart-rendering primitives now read categorical chart colors from:
+
+```js
+PERIDOT_THEME.analytics.series
+```
+
+Map/network and non-analytics visualization marks read from:
+
+```js
+PERIDOT_THEME.visualization.series
+```
+
+That means palette image imports and role-level overrides should affect stacked bars, grouped bars, pie slices, multiline charts, and map/network marks through the same visible role groups shown in the Theme workspace.

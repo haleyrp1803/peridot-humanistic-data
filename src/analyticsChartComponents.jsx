@@ -14,22 +14,26 @@
  */
 
 import React, { useState } from 'react';
-import { PERIDOT_COLORS } from './peridotColorPalette.js';
+import { PERIDOT_THEME } from './peridotTheme.js';
 
 const CHART_COLORS = {
-  cardBg: PERIDOT_COLORS.HEX_FBF8F1,
-  chartBg: PERIDOT_COLORS.HEX_FBF8F1,
-  text: PERIDOT_COLORS.HEX_2F372F,
-  mutedText: PERIDOT_COLORS.HEX_6A7263,
-  grid: PERIDOT_COLORS.HEX_D8D0BF,
-  accent: PERIDOT_COLORS.HEX_6F8A4F,
-  accentDark: PERIDOT_COLORS.HEX_435B31,
-  accentLight: PERIDOT_COLORS.HEX_CFE0B6,
-  hoverFill: PERIDOT_COLORS.HEX_9AAE75,
-  white: PERIDOT_COLORS.HEX_FFFFFF,
+  cardBg: PERIDOT_THEME.analytics.chartBg,
+  chartBg: PERIDOT_THEME.analytics.chartBg,
+  text: PERIDOT_THEME.analytics.chartText,
+  mutedText: PERIDOT_THEME.analytics.chartMutedText,
+  grid: PERIDOT_THEME.analytics.grid,
+  accent: PERIDOT_THEME.analytics.accent,
+  accentDark: PERIDOT_THEME.analytics.accentDark,
+  accentLight: PERIDOT_THEME.analytics.accentLight,
+  hoverFill: PERIDOT_THEME.analytics.accentLight,
+  tooltipBg: PERIDOT_THEME.analytics.tooltipBg,
+  tooltipText: PERIDOT_THEME.analytics.tooltipText,
+  white: PERIDOT_THEME.interface.textInverse,
 };
 
-const PALETTE = [PERIDOT_COLORS.HEX_6F8A4F, PERIDOT_COLORS.HEX_9AAE75, PERIDOT_COLORS.HEX_435B31, PERIDOT_COLORS.HEX_C4A15A, PERIDOT_COLORS.HEX_8F6F4E, PERIDOT_COLORS.HEX_607D8B, PERIDOT_COLORS.HEX_8A6F9E, PERIDOT_COLORS.HEX_B7796B, PERIDOT_COLORS.HEX_4F8277, PERIDOT_COLORS.HEX_A8A05F];
+const PALETTE = Array.isArray(PERIDOT_THEME.analytics.series) && PERIDOT_THEME.analytics.series.length
+  ? PERIDOT_THEME.analytics.series
+  : PERIDOT_THEME.visualization.series;
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString();
@@ -53,16 +57,19 @@ function ChartTooltip({ tooltip }) {
 
   return (
     <div
-      className="pointer-events-none absolute z-30 max-w-[260px] rounded-xl border border-[var(--peridot-color-hex-4d6046)] bg-[var(--peridot-color-hex-6e8475)] px-3 py-2 text-xs text-[var(--peridot-color-hex-fbf8f1)] shadow-[0_16px_34px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
+      className="pointer-events-none absolute z-30 max-w-[260px] rounded-xl border px-3 py-2 text-xs shadow-[0_16px_34px_var(--peridot-role-card-shadow)]"
       style={{
         left: tooltip.x,
         top: tooltip.y,
         transform: 'translate(-50%, calc(-100% - 10px))',
+        background: CHART_COLORS.tooltipBg,
+        borderColor: CHART_COLORS.grid,
+        color: CHART_COLORS.tooltipText,
       }}
     >
-      <div className="font-semibold text-[var(--peridot-color-hex-fff9ed)]">{tooltip.label}</div>
-      {tooltip.secondary ? <div className="text-[var(--peridot-color-hex-edf2df)]">{tooltip.secondary}</div> : null}
-      <div className="text-[var(--peridot-color-hex-fbf8f1)]">{formatNumber(tooltip.count)} {tooltip.unit || 'records'}</div>
+      <div className="font-semibold" style={{ color: CHART_COLORS.tooltipText }}>{tooltip.label}</div>
+      {tooltip.secondary ? <div style={{ color: CHART_COLORS.tooltipText, opacity: 0.82 }}>{tooltip.secondary}</div> : null}
+      <div style={{ color: CHART_COLORS.tooltipText }}>{formatNumber(tooltip.count)} {tooltip.unit || 'records'}</div>
     </div>
   );
 }
