@@ -40,6 +40,19 @@
  * - Condenses only the Results tab and result-card presentation.
  * - Does not alter Apply/Clear handlers, tab state, App-level filtering, facet behavior,
  *   result derivation, or Inspector handoff semantics.
+ *
+ * Structured criteria pass:
+ * - Adds a small implicit-AND criteria builder inside Build Search.
+ * - Keeps criteria draft-only until Apply Filters commits them through App.jsx.
+ * - Limits the builder to three rows to avoid recreating the dense UI this workspace
+ *   was just simplified to avoid.
+ *
+ * Structured criteria predictive suggestions pass:
+ * - Reuses the existing predictive suggestion component for structured value inputs
+ *   when a criterion field maps cleanly to person, place, route, date, capability,
+ *   or evidence-field values.
+ * - Suggestions still update draft criteria only; Apply Filters remains the only
+ *   global recomputation trigger.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -68,6 +81,138 @@ const CHIP_BUTTON_CLASS =
 const INPUT_CLASS =
   'mt-1.5 w-full rounded-xl border border-[#98ad8c] bg-[#f8fbf4] px-3 py-2 text-sm text-[#203729] shadow-inner shadow-black/5 transition duration-150 placeholder:text-[#718069] hover:border-[#6f8e62] focus:border-[#466d47] focus:outline-none focus:ring-2 focus:ring-[#8ba37a]/30';
 
+
+const STRUCTURED_FIELD_OPTIONS = Object.freeze([
+  { id: 'any', label: 'Any record text', placeholder: 'Search across all visible record fields' },
+  { id: 'person', label: 'Person / entity', placeholder: 'Person or entity name' },
+  { id: 'place', label: 'Place', placeholder: 'Place name' },
+  { id: 'routePlace', label: 'Route place', placeholder: 'Rome, Florence, or Rome → Florence' },
+  { id: 'routePeople', label: 'Route people', placeholder: 'Sender, recipient, or Sender → Recipient' },
+  { id: 'date', label: 'Date', placeholder: 'Year or date label' },
+  { id: 'evidence', label: 'Evidence / custom field', placeholder: 'Topic, language, note, citation, custom value' },
+  { id: 'capability', label: 'Capability', placeholder: 'Choose a capability' },
+]);
+
+const STRUCTURED_MATCH_MODE_OPTIONS = Object.freeze([
+  { id: 'contains', label: 'contains', needsValue: true },
+  { id: 'exact', label: 'exactly matches', needsValue: true },
+  { id: 'startsWith', label: 'starts with', needsValue: true },
+  { id: 'isEmpty', label: 'is empty', needsValue: false },
+  { id: 'isNotEmpty', label: 'is not empty', needsValue: false },
+]);
+
+const MAX_STRUCTURED_CRITERIA = 3;
+
+function createStructuredCriterion() {
+  return {
+    id: `criterion-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    field: 'any',
+    mode: 'contains',
+    value: '',
+  };
+}
+
+function normalizeDraftStructuredCriteria(criteria = []) {
+  return (Array.isArray(criteria) ? criteria : [])
+    .map((criterion) => ({
+      id: criterion.id || `criterion-${Math.random().toString(16).slice(2)}`,
+      field: criterion.field || 'any',
+      mode: criterion.mode || 'contains',
+      value: String(criterion.value ?? '').trim(),
+    }))
+    .filter((criterion) => {
+      const mode = STRUCTURED_MATCH_MODE_OPTIONS.find((option) => option.id === criterion.mode);
+      return mode?.needsValue === false || criterion.value;
+    })
+    .slice(0, MAX_STRUCTURED_CRITERIA);
+}
+
+function StructuredCriterionRow({
+  criterion,
+  index,
+  onChange,
+  onRemove,
+  onKeyDown,
+  suggestions = [],
+}) {
+  const selectedField = STRUCTURED_FIELD_OPTIONS.find((option) => option.id === criterion.field) || STRUCTURED_FIELD_OPTIONS[0];
+  const selectedMode = STRUCTURED_MATCH_MODE_OPTIONS.find((option) => option.id === criterion.mode) || STRUCTURED_MATCH_MODE_OPTIONS[0];
+  const needsValue = selectedMode.needsValue !== false;
+  const capabilityValue = CAPABILITY_FILTER_OPTIONS.some((option) => option.id === criterion.value) ? criterion.value : '';
+
+  return (
+    <div className="grid gap-2 rounded-xl border border-[#aec19d] bg-[#edf5e5] p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[1.2fr_1fr_1.4fr_auto] lg:items-end">
+      <div>
+        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field {index + 1}</label>
+        <select
+          id={`structured-field-${criterion.id}`}
+          value={criterion.field}
+          onChange={(event) => {
+            const nextField = event.target.value;
+            onChange({
+              ...criterion,
+              field: nextField,
+              value: nextField === 'capability' ? '' : criterion.value,
+            });
+          }}
+          className={INPUT_CLASS}
+        >
+          {STRUCTURED_FIELD_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-mode-${criterion.id}`}>Match</label>
+        <select
+          id={`structured-mode-${criterion.id}`}
+          value={criterion.mode}
+          onChange={(event) => onChange({ ...criterion, mode: event.target.value })}
+          className={INPUT_CLASS}
+        >
+          {STRUCTURED_MATCH_MODE_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-value-${criterion.id}`}>Value</label>
+        {criterion.field === 'capability' ? (
+          <select
+            id={`structured-value-${criterion.id}`}
+            value={capabilityValue}
+            disabled={!needsValue}
+            onChange={(event) => onChange({ ...criterion, value: event.target.value })}
+            onKeyDown={onKeyDown}
+            className={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
+          >
+            <option value="">Choose capability</option>
+            {CAPABILITY_FILTER_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
+        ) : (
+          <AutocompleteTextInput
+            id={`structured-value-${criterion.id}`}
+            label=""
+            value={criterion.value}
+            disabled={!needsValue}
+            onChange={(nextValue) => onChange({ ...criterion, value: nextValue })}
+            onKeyDown={onKeyDown}
+            placeholder={needsValue ? selectedField.placeholder : 'No value needed'}
+            suggestions={needsValue ? suggestions : []}
+            inputClassName={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
+            hideLabel
+          />
+        )}
+      </div>
+      <button type="button" onClick={() => onRemove(criterion.id)} className={SECONDARY_BUTTON_CLASS + ' justify-self-start px-3 py-2 lg:justify-self-end'}>
+        Remove
+      </button>
+    </div>
+  );
+}
+
 function AutocompleteTextInput({
   id,
   label,
@@ -77,6 +222,9 @@ function AutocompleteTextInput({
   placeholder,
   suggestions = [],
   helperText,
+  disabled = false,
+  inputClassName = INPUT_CLASS,
+  hideLabel = false,
 }) {
   const [isFocused, setIsFocused] = useState(false);
   const query = String(value ?? '').trim().toLowerCase();
@@ -85,7 +233,7 @@ function AutocompleteTextInput({
         .filter((suggestion) => String(suggestion ?? '').toLowerCase().includes(query))
         .slice(0, 20)
     : [];
-  const showSuggestions = isFocused && matchingSuggestions.length > 0;
+  const showSuggestions = !disabled && isFocused && matchingSuggestions.length > 0;
 
   const chooseSuggestion = (suggestion) => {
     onChange(suggestion);
@@ -94,10 +242,11 @@ function AutocompleteTextInput({
 
   return (
     <div className="relative">
-      <label htmlFor={id} className={FIELD_LABEL_CLASS}>{label}</label>
+      {hideLabel ? null : <label htmlFor={id} className={FIELD_LABEL_CLASS}>{label}</label>}
       <input
         id={id}
         value={value}
+        disabled={disabled}
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={onKeyDown}
         onFocus={() => setIsFocused(true)}
@@ -106,7 +255,7 @@ function AutocompleteTextInput({
         }}
         placeholder={placeholder}
         autoComplete="off"
-        className={INPUT_CLASS}
+        className={inputClassName}
       />
       {showSuggestions ? (
         <div className="absolute left-0 right-0 z-30 mt-2 max-h-56 overflow-y-auto rounded-2xl border border-[#c9c1aa] bg-[#fffdf6] p-1 shadow-2xl shadow-black/20">
@@ -337,6 +486,8 @@ export function PeridotSearchWorkspace({
   routePeopleSuggestions = [],
   capabilityFilters = [],
   setCapabilityFilters,
+  structuredCriteria = [],
+  setStructuredCriteria,
   currentMinCountLabel,
   currentRangeLabel,
   graph,
@@ -368,6 +519,9 @@ export function PeridotSearchWorkspace({
   const [draftRoutePlaceFilter, setDraftRoutePlaceFilter] = useState(routePlaceFilter ?? '');
   const [draftRoutePeopleFilter, setDraftRoutePeopleFilter] = useState(routePeopleFilter ?? '');
   const [draftCapabilityFilters, setDraftCapabilityFilters] = useState(Array.isArray(capabilityFilters) ? capabilityFilters : []);
+  const [draftStructuredCriteria, setDraftStructuredCriteria] = useState(
+    Array.isArray(structuredCriteria) ? structuredCriteria : [],
+  );
   const [draftMinCount, setDraftMinCount] = useState(String(minCount ?? 1));
   const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
@@ -380,6 +534,7 @@ export function PeridotSearchWorkspace({
     setDraftRoutePlaceFilter(routePlaceFilter ?? '');
     setDraftRoutePeopleFilter(routePeopleFilter ?? '');
     setDraftCapabilityFilters(Array.isArray(capabilityFilters) ? capabilityFilters : []);
+    setDraftStructuredCriteria(Array.isArray(structuredCriteria) ? structuredCriteria : []);
     setDraftMinCount(String(minCount ?? 1));
     setDraftStartYear(getAppliedStartYear());
     setDraftEndYear(getAppliedEndYear());
@@ -390,6 +545,7 @@ export function PeridotSearchWorkspace({
     routePlaceFilter,
     routePeopleFilter,
     capabilityFilters,
+    structuredCriteria,
     minCount,
     rangeStart,
     rangeEnd,
@@ -421,9 +577,10 @@ export function PeridotSearchWorkspace({
       routePlaceFilter,
       routePeopleFilter,
       capabilityFilters: appliedCapabilityFilters,
+      structuredCriteria,
     },
     { limit: 50 },
-  ), [searchRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, appliedCapabilityFilters]);
+  ), [searchRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, appliedCapabilityFilters, structuredCriteria]);
 
   const searchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 8 }), [searchRows]);
 
@@ -432,12 +589,32 @@ export function PeridotSearchWorkspace({
     return new Map((capabilityGroup?.items || []).map((item) => [item.value, item.count]));
   }, [searchFacetGroups]);
 
+  const evidenceFieldSuggestions = useMemo(() => {
+    const evidenceGroup = searchFacetGroups.find((group) => group.id === 'evidence-fields');
+    return (evidenceGroup?.items || []).map((item) => item.value || item.label).filter(Boolean);
+  }, [searchFacetGroups]);
+
+  const getStructuredCriterionSuggestions = (fieldId) => {
+    if (fieldId === 'person') return personSuggestions;
+    if (fieldId === 'place') return placeSuggestions;
+    if (fieldId === 'routePlace') return routePlaceSuggestions;
+    if (fieldId === 'routePeople') return routePeopleSuggestions;
+    if (fieldId === 'date') return timelineYearSuggestions;
+    if (fieldId === 'capability') return CAPABILITY_FILTER_OPTIONS.map((option) => option.label);
+    if (fieldId === 'evidence') return evidenceFieldSuggestions;
+    return [];
+  };
+
   const activeCapabilityLabel = appliedCapabilityFilters.length
     ? appliedCapabilityFilters.map(getCapabilityFilterLabel).join(', ')
     : 'None';
   const draftCapabilityLabel = draftCapabilityFilters.length
     ? draftCapabilityFilters.map(getCapabilityFilterLabel).join(', ')
     : 'None selected';
+  const appliedStructuredCriteria = normalizeDraftStructuredCriteria(structuredCriteria);
+  const normalizedDraftStructuredCriteria = normalizeDraftStructuredCriteria(draftStructuredCriteria);
+  const activeStructuredLabel = appliedStructuredCriteria.length ? `${appliedStructuredCriteria.length} active` : 'None';
+  const draftStructuredLabel = normalizedDraftStructuredCriteria.length ? `${normalizedDraftStructuredCriteria.length} ready` : 'None ready';
   const hiddenSearchResultCount = Math.max(0, (searchRows?.length || 0) - searchResultCards.length);
   const hasDraftChanges = (
     String(draftSearch ?? '') !== String(search ?? '')
@@ -449,6 +626,7 @@ export function PeridotSearchWorkspace({
     || String(draftStartYear ?? '') !== getAppliedStartYear()
     || String(draftEndYear ?? '') !== getAppliedEndYear()
     || JSON.stringify(draftCapabilityFilters) !== JSON.stringify(appliedCapabilityFilters)
+    || JSON.stringify(normalizedDraftStructuredCriteria) !== JSON.stringify(appliedStructuredCriteria)
   );
 
   const toggleDraftCapabilityFilter = (filterId) => {
@@ -457,6 +635,23 @@ export function PeridotSearchWorkspace({
         ? current.filter((id) => id !== filterId)
         : current.concat(filterId)
     ));
+  };
+
+
+  const updateDraftStructuredCriterion = (nextCriterion) => {
+    setDraftStructuredCriteria((current) => (
+      current.map((criterion) => (criterion.id === nextCriterion.id ? nextCriterion : criterion))
+    ));
+  };
+
+  const addDraftStructuredCriterion = () => {
+    setDraftStructuredCriteria((current) => (
+      current.length >= MAX_STRUCTURED_CRITERIA ? current : current.concat(createStructuredCriterion())
+    ));
+  };
+
+  const removeDraftStructuredCriterion = (criterionId) => {
+    setDraftStructuredCriteria((current) => current.filter((criterion) => criterion.id !== criterionId));
   };
 
   const chooseFacet = (group, item) => {
@@ -492,6 +687,7 @@ export function PeridotSearchWorkspace({
       setDraftRoutePlaceFilter('');
       setDraftRoutePeopleFilter('');
       setDraftCapabilityFilters([]);
+      setDraftStructuredCriteria([]);
       setDraftMinCount('1');
       setDraftStartYear(getDefaultStartYear());
       setDraftEndYear(getDefaultEndYear());
@@ -501,6 +697,7 @@ export function PeridotSearchWorkspace({
       setRoutePlaceFilter('');
       setRoutePeopleFilter('');
       setCapabilityFilters?.([]);
+      setStructuredCriteria?.([]);
       setMinCount(1);
       setTimelineMode('all');
       setRangeStart(0);
@@ -519,6 +716,7 @@ export function PeridotSearchWorkspace({
     const nextRoutePlaceFilter = String(draftRoutePlaceFilter ?? '').trim();
     const nextRoutePeopleFilter = String(draftRoutePeopleFilter ?? '').trim();
     const nextCapabilityFilters = Array.isArray(draftCapabilityFilters) ? draftCapabilityFilters : [];
+    const nextStructuredCriteria = normalizeDraftStructuredCriteria(draftStructuredCriteria);
     const nextStartIndex = resolveTimelineBoundaryIndexFromYear('start', draftStartYear);
     const nextEndIndex = resolveTimelineBoundaryIndexFromYear('end', draftEndYear);
 
@@ -530,6 +728,8 @@ export function PeridotSearchWorkspace({
       setRoutePlaceFilter(nextRoutePlaceFilter);
       setRoutePeopleFilter(nextRoutePeopleFilter);
       setCapabilityFilters?.(nextCapabilityFilters);
+      setStructuredCriteria?.(nextStructuredCriteria);
+      setDraftStructuredCriteria(nextStructuredCriteria);
       setMinCount(nextMinCount);
       setDraftMinCount(String(nextMinCount));
       if (nextStartIndex >= 0 && nextEndIndex >= 0) {
@@ -665,6 +865,53 @@ export function PeridotSearchWorkspace({
           </div>
         </div>
       </div>
+
+      <div className={PANEL_INSET_CLASS + ' p-4'}>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className={FIELD_LABEL_CLASS}>Structured criteria</div>
+            <p className="mt-1 text-xs leading-5 text-[#4f654d]">
+              Optional implicit-AND criteria. Add up to three fielded rules for narrower searches.
+            </p>
+          </div>
+          <div className="rounded-full border border-[#9db48e] bg-[#edf5e5] px-3 py-1 text-xs font-bold text-[#38553d]">
+            Draft: {draftStructuredLabel}
+          </div>
+        </div>
+        {draftStructuredCriteria.length ? (
+          <div className="mt-3 space-y-2">
+            {draftStructuredCriteria.map((criterion, index) => (
+              <StructuredCriterionRow
+                key={criterion.id}
+                criterion={criterion}
+                index={index}
+                onChange={updateDraftStructuredCriterion}
+                onRemove={removeDraftStructuredCriterion}
+                onKeyDown={handleDraftKeyDown}
+                suggestions={getStructuredCriterionSuggestions(criterion.field)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-xl border border-dashed border-[#9db48e] bg-[#edf5e5]/70 px-3 py-2 text-sm text-[#465d49]">
+            No structured criteria are active. Simple keyword, person, place, route, date, and capability filters still work normally.
+          </div>
+        )}
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-xs leading-5 text-[#4f654d]">
+            Applied: {activeStructuredLabel}. Criteria are combined with the existing fields when Apply Filters is pressed.
+          </p>
+          <button
+            type="button"
+            onClick={addDraftStructuredCriterion}
+            disabled={draftStructuredCriteria.length >= MAX_STRUCTURED_CRITERIA}
+            className={SECONDARY_BUTTON_CLASS + (draftStructuredCriteria.length >= MAX_STRUCTURED_CRITERIA ? ' opacity-55' : '')}
+          >
+            + Add criterion
+          </button>
+        </div>
+      </div>
+
 
       <div className={PANEL_INSET_CLASS + ' p-4'}>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -822,11 +1069,12 @@ export function PeridotSearchWorkspace({
               </div>
             </div>
 
-            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-5">
+            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-6">
               <AppliedScopeCard label="Records in scope" value={`${searchRows?.length || 0} records`} />
               <AppliedScopeCard label="Timeline" value={currentRangeLabel} />
               <AppliedScopeCard label="Minimum" value={currentMinCountLabel} />
               <AppliedScopeCard label="Capabilities" value={activeCapabilityLabel} />
+              <AppliedScopeCard label="Criteria" value={activeStructuredLabel} />
               <AppliedScopeCard label="Draft state" value={hasDraftChanges ? 'Draft changes pending' : 'Applied state current'} />
             </div>
           </header>
