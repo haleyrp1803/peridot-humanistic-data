@@ -4348,6 +4348,7 @@ export default function EuropeNetworkMapApp() {
     setIsPlaying,
     setPlaybackIndex,
     searchRows: filteredRowsByTime,
+    browseRows: normalizedRows,
     onInspectSearchResult: openInspectorSearchResult,
     onOpenVisualizations: openVisualizationsWorkspace,
   };

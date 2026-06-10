@@ -53,6 +53,11 @@
  *   or evidence-field values.
  * - Suggestions still update draft criteria only; Apply Filters remains the only
  *   global recomputation trigger.
+ *
+ * Browse indexes pass:
+ * - Adds a dataset-wide Browse tab for people, places, routes, and evidence fields.
+ * - Browse entries populate draft criteria and return to Build Search; Apply Filters
+ *   remains the only global recomputation trigger.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -90,6 +95,7 @@ const STRUCTURED_FIELD_OPTIONS = Object.freeze([
   { id: 'routePeople', label: 'Route people', placeholder: 'Sender, recipient, or Sender → Recipient' },
   { id: 'date', label: 'Date', placeholder: 'Year or date label' },
   { id: 'evidence', label: 'Evidence / custom field', placeholder: 'Topic, language, note, citation, custom value' },
+  { id: 'evidenceFieldPresent', label: 'Evidence field present', placeholder: 'Evidence/custom field label' },
   { id: 'capability', label: 'Capability', placeholder: 'Choose a capability' },
 ]);
 
@@ -102,6 +108,158 @@ const STRUCTURED_MATCH_MODE_OPTIONS = Object.freeze([
 ]);
 
 const MAX_STRUCTURED_CRITERIA = 3;
+
+const BROWSE_INDEX_LIMIT = 120;
+const BROWSE_SOURCE_PERSON_FIELDS = ['sourcePerson', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender'];
+const BROWSE_TARGET_PERSON_FIELDS = ['targetPerson', 'Target', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient'];
+const BROWSE_SOURCE_PLACE_FIELDS = ['sourcePlaceLabel', 'sourcePlace', 'sourceLoc', 'Source_Loc', 'Source_Place', 'sourceLocation'];
+const BROWSE_TARGET_PLACE_FIELDS = ['targetPlaceLabel', 'targetPlace', 'targetLoc', 'Target_Inferred_Loc', 'Target_Loc', 'Target_Place', 'targetLocation'];
+const BROWSE_CORE_FIELDS = new Set([
+  'id', 'recordId', 'parsedDate', 'date', 'Date', 'Date*', 'displayDate', 'dateDisplay', 'dateLabel',
+  'sourcePerson', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender',
+  'targetPerson', 'Target', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient',
+  'sourcePlaceLabel', 'sourcePlace', 'sourceLoc', 'Source_Loc', 'Source_Place', 'sourceLocation',
+  'targetPlaceLabel', 'targetPlace', 'targetLoc', 'Target_Inferred_Loc', 'Target_Loc', 'Target_Place', 'targetLocation',
+  'sourceLat', 'sourceLon', 'targetLat', 'targetLon', 'lat', 'lon', 'latitude', 'longitude',
+  'sourcePlaceId', 'targetPlaceId', 'mappable', 'personKey', 'recordTitle', 'title', 'label',
+]);
+const BROWSE_FIELD_LABELS = {
+  archivalCollection: 'Archival collection',
+  archivalPage: 'Archival page',
+  pdfPage: 'PDF page',
+  relationship: 'Relationship',
+  relationshipType: 'Relationship',
+  cipher: 'Cipher',
+  topic: 'Topic',
+  language: 'Language',
+  transcription: 'Transcription',
+  translation: 'Translation',
+  notes: 'Notes',
+  citation: 'Citation',
+  sourceTitle: 'Source title',
+  targetTitle: 'Target title',
+};
+
+function browseText(value) {
+  return String(value ?? '').trim();
+}
+
+function firstBrowseText(row, fields) {
+  for (const field of fields) {
+    const value = browseText(row?.[field]);
+    if (value) return value;
+  }
+  return '';
+}
+
+function browseFieldLabel(key) {
+  return BROWSE_FIELD_LABELS[key] || String(key || '').replace(/_/g, ' ');
+}
+
+function addBrowseCount(map, value, detail = {}) {
+  const label = browseText(value);
+  if (!label) return;
+  const existing = map.get(label) || {
+    value: label,
+    label,
+    count: 0,
+    sourceCount: 0,
+    targetCount: 0,
+    examples: [],
+  };
+  existing.count += 1;
+  if (detail.source) existing.sourceCount += 1;
+  if (detail.target) existing.targetCount += 1;
+  if (detail.example) {
+    const example = browseText(detail.example);
+    if (example && !existing.examples.includes(example) && existing.examples.length < 3) {
+      existing.examples.push(example);
+    }
+  }
+  map.set(label, existing);
+}
+
+function sortBrowseItems(map, limit = BROWSE_INDEX_LIMIT) {
+  return Array.from(map.values())
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .slice(0, limit);
+}
+
+function buildBrowseIndexGroups(rows = []) {
+  const people = new Map();
+  const places = new Map();
+  const routes = new Map();
+  const evidenceFields = new Map();
+
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const sourcePerson = firstBrowseText(row, BROWSE_SOURCE_PERSON_FIELDS);
+    const targetPerson = firstBrowseText(row, BROWSE_TARGET_PERSON_FIELDS);
+    const sourcePlace = firstBrowseText(row, BROWSE_SOURCE_PLACE_FIELDS);
+    const targetPlace = firstBrowseText(row, BROWSE_TARGET_PLACE_FIELDS);
+
+    addBrowseCount(people, sourcePerson, { source: true });
+    addBrowseCount(people, targetPerson, { target: true });
+    addBrowseCount(places, sourcePlace, { source: true });
+    addBrowseCount(places, targetPlace, { target: true });
+
+    if (sourcePlace || targetPlace) {
+      const routeLabel = `${sourcePlace || 'Unknown source'} → ${targetPlace || 'Unknown target'}`;
+      addBrowseCount(routes, routeLabel, { example: routeLabel });
+    }
+
+    Object.entries(row || {}).forEach(([key, value]) => {
+      if (BROWSE_CORE_FIELDS.has(key)) return;
+      const text = browseText(value);
+      if (!text) return;
+      addBrowseCount(evidenceFields, browseFieldLabel(key), { example: text });
+    });
+  });
+
+  return [
+    {
+      id: 'browse-people',
+      type: 'person',
+      label: 'People / Entities',
+      description: 'Dataset-wide index of source and target entities.',
+      items: sortBrowseItems(people),
+    },
+    {
+      id: 'browse-places',
+      type: 'place',
+      label: 'Places',
+      description: 'Dataset-wide index of source, target, and point-location places.',
+      items: sortBrowseItems(places),
+    },
+    {
+      id: 'browse-routes',
+      type: 'routePlace',
+      label: 'Routes',
+      description: 'Dataset-wide source → target place routes.',
+      items: sortBrowseItems(routes),
+    },
+    {
+      id: 'browse-evidence',
+      type: 'evidenceField',
+      label: 'Evidence Fields',
+      description: 'Custom and evidence/analysis fields with populated values.',
+      items: sortBrowseItems(evidenceFields),
+    },
+  ].filter((group) => group.items.length > 0);
+}
+
+function filterBrowseGroups(groups, query) {
+  const cleanQuery = browseText(query).toLowerCase();
+  if (!cleanQuery) return groups;
+  return groups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => (
+        item.label.toLowerCase().includes(cleanQuery)
+        || item.examples.some((example) => example.toLowerCase().includes(cleanQuery))
+      )),
+    }))
+    .filter((group) => group.items.length > 0);
+}
 
 function createStructuredCriterion() {
   return {
@@ -319,7 +477,7 @@ function SearchTabButton({ id, label, summary, active, onClick }) {
       }`}
     >
       <span className={`block text-[0.58rem] font-black uppercase tracking-[0.17em] ${active ? 'text-[#fff5d9]/82' : 'text-[#4b6a4b]'}`}>
-        {id === 'build' ? 'Step 1' : id === 'results' ? 'Step 2' : 'Step 3'}
+        {id === 'build' ? 'Step 1' : id === 'browse' ? 'Step 2' : id === 'results' ? 'Step 3' : 'Step 4'}
       </span>
       <span className="mt-0.5 block text-base font-black">{label}</span>
       <span className={`mt-0.5 block text-xs leading-4 ${active ? 'text-[#fffaf0]/82' : 'text-[#4f654d]'}`}>
@@ -382,6 +540,54 @@ function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
             </button>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+
+function BrowseIndexGroup({ group, onChooseBrowseItem }) {
+  return (
+    <section className="rounded-[1rem] border border-[#b8c8aa] bg-[#edf5e5] p-3 shadow-sm shadow-black/5">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h3 className="text-[0.7rem] font-black uppercase tracking-[0.15em] text-[#38553d]">
+            {group.label}
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-[#5a6659]">{group.description}</p>
+        </div>
+        <span className="rounded-full border border-[#9db48e] bg-[#d7e6cc] px-2 py-0.5 text-[0.62rem] font-black text-[#38553d]">
+          {group.items.length} shown
+        </span>
+      </div>
+      <div className="mt-3 grid max-h-[24rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
+        {group.items.map((item) => (
+          <article key={`${group.id}-${item.value}`} className="rounded-xl border border-[#b8c8aa] bg-[#f3f8ee] p-2.5 shadow-sm shadow-black/5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-black text-[#203729]" title={item.label}>{item.label}</div>
+                <div className="mt-1 flex flex-wrap gap-1.5 text-[0.62rem] font-black uppercase tracking-[0.08em] text-[#38553d]">
+                  <span className="rounded-full bg-[#d7e6cc] px-2 py-0.5">{item.count} records</span>
+                  {item.sourceCount ? <span className="rounded-full bg-[#e2eed8] px-2 py-0.5">source {item.sourceCount}</span> : null}
+                  {item.targetCount ? <span className="rounded-full bg-[#e2eed8] px-2 py-0.5">target {item.targetCount}</span> : null}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onChooseBrowseItem(group, item)}
+                className={DARK_BUTTON_CLASS + ' px-3 py-1.5'}
+              >
+                Search
+              </button>
+            </div>
+            {item.examples?.length ? (
+              <div className="mt-2 text-[0.68rem] leading-4 text-[#5a6659]">
+                <span className="font-black uppercase tracking-[0.08em] text-[#38553d]">Examples: </span>
+                {item.examples.join(' · ')}
+              </div>
+            ) : null}
+          </article>
+        ))}
       </div>
     </section>
   );
@@ -493,6 +699,7 @@ export function PeridotSearchWorkspace({
   graph,
   rowDiagnostics,
   searchRows = [],
+  browseRows = searchRows,
   onInspectSearchResult,
   viewMode,
   minCount,
@@ -526,6 +733,7 @@ export function PeridotSearchWorkspace({
   const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
   const [filterStatusMessage, setFilterStatusMessage] = useState('');
+  const [browseQuery, setBrowseQuery] = useState('');
 
   useEffect(() => {
     setDraftSearch(search ?? '');
@@ -583,6 +791,8 @@ export function PeridotSearchWorkspace({
   ), [searchRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, appliedCapabilityFilters, structuredCriteria]);
 
   const searchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 8 }), [searchRows]);
+  const browseIndexGroups = useMemo(() => buildBrowseIndexGroups(browseRows), [browseRows]);
+  const filteredBrowseIndexGroups = useMemo(() => filterBrowseGroups(browseIndexGroups, browseQuery), [browseIndexGroups, browseQuery]);
 
   const capabilityFacetCounts = useMemo(() => {
     const capabilityGroup = searchFacetGroups.find((group) => group.id === 'capabilities');
@@ -590,9 +800,9 @@ export function PeridotSearchWorkspace({
   }, [searchFacetGroups]);
 
   const evidenceFieldSuggestions = useMemo(() => {
-    const evidenceGroup = searchFacetGroups.find((group) => group.id === 'evidence-fields');
+    const evidenceGroup = browseIndexGroups.find((group) => group.id === 'browse-evidence');
     return (evidenceGroup?.items || []).map((item) => item.value || item.label).filter(Boolean);
-  }, [searchFacetGroups]);
+  }, [browseIndexGroups]);
 
   const getStructuredCriterionSuggestions = (fieldId) => {
     if (fieldId === 'person') return personSuggestions;
@@ -601,7 +811,7 @@ export function PeridotSearchWorkspace({
     if (fieldId === 'routePeople') return routePeopleSuggestions;
     if (fieldId === 'date') return timelineYearSuggestions;
     if (fieldId === 'capability') return CAPABILITY_FILTER_OPTIONS.map((option) => option.label);
-    if (fieldId === 'evidence') return evidenceFieldSuggestions;
+    if (fieldId === 'evidence' || fieldId === 'evidenceFieldPresent') return evidenceFieldSuggestions;
     return [];
   };
 
@@ -665,6 +875,30 @@ export function PeridotSearchWorkspace({
     }
     if (group.type === 'capability') toggleDraftCapabilityFilter(item.value);
     if (group.type === 'evidenceField') setDraftSearch(item.value);
+    setActiveTab('build');
+  };
+
+
+
+  const chooseBrowseIndexItem = (group, item) => {
+    if (!group || !item) return;
+    if (group.type === 'person') setDraftPersonFilter(item.value);
+    if (group.type === 'place') setDraftPlaceFilter(item.value);
+    if (group.type === 'routePlace') setDraftRoutePlaceFilter(item.value);
+    if (group.type === 'evidenceField') {
+      const nextCriterion = {
+        ...createStructuredCriterion(),
+        field: 'evidenceFieldPresent',
+        mode: 'contains',
+        value: item.value,
+      };
+      setDraftStructuredCriteria((current) => {
+        const safeCurrent = Array.isArray(current) ? current : [];
+        if (safeCurrent.length < MAX_STRUCTURED_CRITERIA) return safeCurrent.concat(nextCriterion);
+        return safeCurrent.slice(0, MAX_STRUCTURED_CRITERIA - 1).concat(nextCriterion);
+      });
+    }
+    setFilterStatusMessage('Browse item added to draft criteria. Apply Filters to update results.');
     setActiveTab('build');
   };
 
@@ -954,10 +1188,52 @@ export function PeridotSearchWorkspace({
     </div>
   );
 
+
+  const renderBrowse = () => (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <SectionHeader eyebrow="Step 2" title="Browse Indexes">
+          Browse uses the full loaded dataset, not just the current result set. Choose an item to seed draft search criteria, then apply filters.
+        </SectionHeader>
+        <div className="rounded-full border border-[#b8c8aa] bg-[#d7e6cc] px-3 py-1.5 text-xs font-black text-[#38553d] shadow-sm shadow-black/5">
+          {(browseRows?.length || 0)} loaded records indexed
+        </div>
+      </div>
+
+      <div className={PANEL_INSET_CLASS + ' p-3'}>
+        <AutocompleteTextInput
+          id="browse-index-search"
+          label="Search within browse indexes"
+          value={browseQuery}
+          onChange={setBrowseQuery}
+          onKeyDown={handleDraftKeyDown}
+          placeholder="Filter people, places, routes, evidence fields, or example values"
+          suggestions={personSuggestions.concat(placeSuggestions, routePlaceSuggestions, evidenceFieldSuggestions).slice(0, 200)}
+        />
+      </div>
+
+      {filteredBrowseIndexGroups.length ? (
+        <div className="grid gap-3">
+          {filteredBrowseIndexGroups.map((group) => (
+            <BrowseIndexGroup
+              key={group.id}
+              group={group}
+              onChooseBrowseItem={chooseBrowseIndexItem}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className={PANEL_INSET_CLASS + ' p-4 text-sm leading-6 text-[#465d49]'}>
+          No browse-index entries match the current browse search.
+        </div>
+      )}
+    </div>
+  );
+
   const renderResults = () => (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <SectionHeader eyebrow="Step 2" title="Search Results">
+        <SectionHeader eyebrow="Step 3" title="Search Results">
           Compact cards reflect the current applied dataset. Use Inspect to open a record in the full Inspector workspace.
         </SectionHeader>
         <div className="flex flex-wrap items-center gap-2 rounded-full border border-[#b8c8aa] bg-[#d7e6cc] px-3 py-1.5 text-xs font-black text-[#38553d] shadow-sm shadow-black/5">
@@ -994,7 +1270,7 @@ export function PeridotSearchWorkspace({
 
   const renderRefineInspect = () => (
     <div className="space-y-4">
-      <SectionHeader eyebrow="Step 3" title="Refine / Inspect">
+      <SectionHeader eyebrow="Step 4" title="Refine / Inspect">
         Facets summarize the applied result set. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>
 
@@ -1053,7 +1329,7 @@ export function PeridotSearchWorkspace({
                 <div className="text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#667960]">Search workspace</div>
                 <h1 className="mt-2 text-3xl font-black tracking-tight text-[#263d2e]">Advanced Search</h1>
                 <p className="mt-2 text-sm leading-6 text-[#5a6659]">
-                  Build a draft query, review the applied result set, refine with facets, and open individual records in Inspector.
+                  Build a draft query, browse dataset-wide indexes, review applied results, refine with facets, and open individual records in Inspector.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1085,12 +1361,19 @@ export function PeridotSearchWorkspace({
             </div>
           ) : null}
 
-          <nav className="grid gap-2 border-b border-[#b8c8aa] bg-[#c9ddba] p-4 lg:grid-cols-3" aria-label="Advanced Search workflow tabs">
+          <nav className="grid gap-2 border-b border-[#b8c8aa] bg-[#c9ddba] p-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Advanced Search workflow tabs">
             <SearchTabButton
               id="build"
               label="Build Search"
               summary="Draft criteria and capability filters"
               active={activeTab === 'build'}
+              onClick={setActiveTab}
+            />
+            <SearchTabButton
+              id="browse"
+              label="Browse"
+              summary="Dataset-wide people, places, routes, and evidence"
+              active={activeTab === 'browse'}
               onClick={setActiveTab}
             />
             <SearchTabButton
@@ -1112,6 +1395,7 @@ export function PeridotSearchWorkspace({
           <main className="bg-[#dfead2] p-4">
             <div className={CARD_CLASS + ' p-4'}>
               {activeTab === 'build' ? renderBuildSearch() : null}
+              {activeTab === 'browse' ? renderBrowse() : null}
               {activeTab === 'results' ? renderResults() : null}
               {activeTab === 'refine' ? renderRefineInspect() : null}
             </div>

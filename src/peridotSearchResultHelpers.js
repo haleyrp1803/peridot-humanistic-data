@@ -12,6 +12,10 @@
  *   active-row filtering pipeline;
  * - keep all helper functions pure and UI-agnostic so the Search workspace can
  *   remain a presentation/control surface rather than a second data pipeline.
+ *
+ * Phase 4 scope:
+ * - support a dataset-wide Browse index by allowing structured criteria to match
+ *   evidence/custom field labels, not only evidence field values.
  */
 const FIELD_LABELS = {
   date: 'Date',
@@ -286,6 +290,11 @@ function valuesForStructuredField(row, field) {
     return [compactRouteLabel(firstText(row, SOURCE_PERSON_FIELDS), firstText(row, TARGET_PERSON_FIELDS))];
   }
   if (field === 'date') return DATE_FIELDS.map((key) => row?.[key]).concat(row?.parsedDate?.year, row?.parsedDate?.monthKey);
+  if (field === 'evidenceFieldPresent') {
+    return Object.entries(row || {})
+      .filter(([key, value]) => !CORE_FIELDS.has(key) && asText(value))
+      .map(([key]) => FIELD_LABELS[key] || key.replace(/_/g, ' '));
+  }
   if (field === 'evidence') {
     const explicitEvidence = EVIDENCE_FIELDS.map((key) => row?.[key]);
     const customEvidence = Object.entries(row || {})
@@ -356,6 +365,7 @@ function describeStructuredCriterionMatch(row, criterion) {
     routePeople: 'Structured route people',
     date: 'Structured date',
     evidence: 'Structured evidence',
+    evidenceFieldPresent: 'Structured evidence field',
     capability: 'Structured capability',
   }[criterion.field] || 'Structured criterion';
 
