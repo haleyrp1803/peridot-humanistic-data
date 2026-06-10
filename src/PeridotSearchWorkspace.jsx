@@ -58,6 +58,12 @@
  * - Adds a dataset-wide Browse tab for people, places, routes, and evidence fields.
  * - Browse entries populate draft criteria and return to Build Search; Apply Filters
  *   remains the only global recomputation trigger.
+ *
+ * Moss contrast pass:
+ * - Uses the sampled moss green from the user's reference swatch as a mid-tone
+ *   card background for browse/facet sections.
+ * - Keeps light greens for the workspace shell, mid greens for section cards and
+ *   feedback chips, and dark greens for action/emphasis controls.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -68,17 +74,17 @@ import {
 } from './peridotSearchResultHelpers.js';
 
 const SHELL_CLASS =
-  'rounded-[1.6rem] border border-[#9db48e] bg-[#dfead2] text-[#203729] shadow-[0_24px_70px_rgba(0,0,0,0.22)]';
+  'rounded-[1.6rem] border border-[#8fa582] bg-[#cfdfc5] text-[#203729] shadow-[0_24px_70px_rgba(0,0,0,0.22)]';
 const CARD_CLASS =
-  'rounded-[1.25rem] border border-[#aec19d] bg-[#edf5e5] shadow-[0_12px_30px_rgba(39,50,36,0.10)]';
+  'rounded-[1.25rem] border border-[#8fa582] bg-[#d8e6cf] shadow-[0_12px_30px_rgba(39,50,36,0.12)]';
 const PANEL_INSET_CLASS =
-  'rounded-[1rem] border border-[#b8c8aa] bg-[#d7e6cc] shadow-inner shadow-white/25';
+  'rounded-[1rem] border border-[#9fb28f] bg-[#c7d9bc] shadow-inner shadow-white/20';
 const FIELD_LABEL_CLASS = 'block text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#38553d]';
 const MUTED_TEXT_CLASS = 'text-sm leading-5 text-[#465d49]';
 const PRIMARY_BUTTON_CLASS =
-  'rounded-full border border-[#b88734] bg-[#c89843] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#fffaf0] shadow-[0_8px_18px_rgba(68,49,20,0.16)] transition duration-150 hover:border-[#d7b462] hover:bg-[#d2a653] hover:shadow-[0_10px_22px_rgba(68,49,20,0.22)] active:translate-y-[1px] active:bg-[#a9782c] active:shadow-[0_4px_10px_rgba(68,49,20,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c89843]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#dfead2]';
+  'rounded-full border border-[#b88734] bg-[#c89843] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#fffaf0] shadow-[0_8px_18px_rgba(68,49,20,0.16)] transition duration-150 hover:border-[#d7b462] hover:bg-[#d2a653] hover:shadow-[0_10px_22px_rgba(68,49,20,0.22)] active:translate-y-[1px] active:bg-[#a9782c] active:shadow-[0_4px_10px_rgba(68,49,20,0.16)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#c89843]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#cfdfc5]';
 const SECONDARY_BUTTON_CLASS =
-  'rounded-full border border-[#7f9b70] bg-[#eaf3e1] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#274633] shadow-[0_7px_16px_rgba(39,50,36,0.08)] transition duration-150 hover:border-[#466d47] hover:bg-[#d2e4c4] hover:text-[#183524] hover:shadow-[0_9px_20px_rgba(39,50,36,0.13)] active:translate-y-[1px] active:bg-[#bdd4ad] active:shadow-[0_4px_10px_rgba(39,50,36,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#dfead2]';
+  'rounded-full border border-[#7f9b70] bg-[#eaf3e1] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#274633] shadow-[0_7px_16px_rgba(39,50,36,0.08)] transition duration-150 hover:border-[#466d47] hover:bg-[#d2e4c4] hover:text-[#183524] hover:shadow-[0_9px_20px_rgba(39,50,36,0.13)] active:translate-y-[1px] active:bg-[#bdd4ad] active:shadow-[0_4px_10px_rgba(39,50,36,0.10)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#cfdfc5]';
 const DARK_BUTTON_CLASS =
   'rounded-full border border-[#244c35]/20 bg-[#244c35] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-[#fffaf0] shadow-[0_8px_18px_rgba(32,55,40,0.16)] transition duration-150 hover:bg-[#315f43] hover:shadow-[0_10px_22px_rgba(32,55,40,0.22)] active:translate-y-[1px] active:bg-[#183826] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf5e5]';
 const CHIP_BUTTON_CLASS =
@@ -442,7 +448,7 @@ function AutocompleteTextInput({
 
 function AppliedScopeCard({ label, value }) {
   return (
-    <div className="rounded-xl border border-[#b8c8aa] bg-[#edf5e5] px-3 py-2 shadow-sm shadow-black/5">
+    <div className="rounded-xl border border-[#9fb28f] bg-[#dce9d2] px-3 py-2 shadow-sm shadow-black/5">
       <div className="text-[0.58rem] font-black uppercase tracking-[0.16em] text-[#4b6a4b]">
         {label}
       </div>
@@ -470,10 +476,10 @@ function SearchTabButton({ id, label, summary, active, onClick }) {
     <button
       type="button"
       onClick={() => onClick(id)}
-      className={`rounded-[1rem] border px-4 py-2.5 text-left shadow-sm transition duration-150 active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#dfead2] ${
+      className={`rounded-[1rem] border px-4 py-2.5 text-left shadow-sm transition duration-150 active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#cfdfc5] ${
         active
           ? 'border-[#6f8e62] bg-[#86a96f] text-[#fffaf0] shadow-[0_10px_20px_rgba(55,79,52,0.20)]'
-          : 'border-[#b8c8aa] bg-[#d7e6cc] text-[#274633] hover:border-[#7f9b70] hover:bg-[#c9ddba] hover:shadow-[0_7px_16px_rgba(39,50,36,0.10)] active:bg-[#b9d0a8]'
+          : 'border-[#9fb28f] bg-[#c6d9bb] text-[#274633] hover:border-[#74897a] hover:bg-[#b7cda9] hover:shadow-[0_7px_16px_rgba(39,50,36,0.10)] active:bg-[#a8c097]'
       }`}
     >
       <span className={`block text-[0.58rem] font-black uppercase tracking-[0.17em] ${active ? 'text-[#fff5d9]/82' : 'text-[#4b6a4b]'}`}>
@@ -495,8 +501,8 @@ function CapabilityFilterToggle({ option, checked, count, onToggle }) {
       title={option.description}
       className={`rounded-xl border px-3 py-2 text-left transition duration-150 active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78976a]/55 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf5e5] ${
         checked
-          ? 'border-[#6f8e62] bg-[#b9d6a7] text-[#203729] shadow-[0_7px_14px_rgba(55,79,52,0.14)]'
-          : 'border-[#b8c8aa] bg-[#eef6e8] text-[#3f5b42] hover:border-[#6f8e62] hover:bg-[#d2e4c4] hover:text-[#203729]'
+          ? 'border-[#4f6d50] bg-[#a9c498] text-[#1f3326] shadow-[0_7px_14px_rgba(55,79,52,0.14)]'
+          : 'border-[#9fb28f] bg-[#dce9d2] text-[#35513a] hover:border-[#74897a] hover:bg-[#c6d9bb] hover:text-[#203729]'
       }`}
     >
       <span className="flex items-center justify-between gap-2">
@@ -513,8 +519,8 @@ function CapabilityFilterToggle({ option, checked, count, onToggle }) {
 
 function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
   return (
-    <section className="rounded-[1rem] border border-[#b8c8aa] bg-[#edf5e5] p-3 shadow-sm shadow-black/5">
-      <h3 className="text-[0.62rem] font-black uppercase tracking-[0.15em] text-[#38553d]">
+    <section className="rounded-[1rem] border border-[#617665] bg-[#74897a] p-3 shadow-[0_10px_24px_rgba(34,51,38,0.16)]">
+      <h3 className="text-[0.62rem] font-black uppercase tracking-[0.15em] text-[#f4f8ef]">
         {group.label}
       </h3>
       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -528,8 +534,8 @@ function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
               onClick={() => onChooseFacet(group, item)}
               className={`${CHIP_BUTTON_CLASS} ${
                 isActive
-                  ? 'border-[#6f8e62] bg-[#b9d6a7] text-[#203729] hover:bg-[#a9c997] active:bg-[#99bd86]'
-                  : 'border-[#9db48e] bg-[#d7e6cc] text-[#274633] hover:border-[#466d47] hover:bg-[#c9ddba] active:bg-[#b9d0a8]'
+                  ? 'border-[#4f6d50] bg-[#a9c498] text-[#1f3326] hover:bg-[#a9c997] active:bg-[#99bd86]'
+                  : 'border-[#9db48e] bg-[#d7e6cc] text-[#274633] hover:border-[#466d47] hover:bg-[#c9ddba] active:bg-[#a8c097]'
               }`}
               title={isCapability ? `Toggle ${item.label}` : `Set draft filter to ${item.value}`}
             >
@@ -548,21 +554,21 @@ function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
 
 function BrowseIndexGroup({ group, onChooseBrowseItem }) {
   return (
-    <section className="rounded-[1rem] border border-[#b8c8aa] bg-[#edf5e5] p-3 shadow-sm shadow-black/5">
+    <section className="rounded-[1rem] border border-[#617665] bg-[#74897a] p-3 shadow-[0_12px_28px_rgba(34,51,38,0.18)]">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <h3 className="text-[0.7rem] font-black uppercase tracking-[0.15em] text-[#38553d]">
+          <h3 className="text-[0.7rem] font-black uppercase tracking-[0.15em] text-[#f4f8ef]">
             {group.label}
           </h3>
-          <p className="mt-1 text-xs leading-5 text-[#5a6659]">{group.description}</p>
+          <p className="mt-1 text-xs leading-5 text-[#e8f1e2]">{group.description}</p>
         </div>
-        <span className="rounded-full border border-[#9db48e] bg-[#d7e6cc] px-2 py-0.5 text-[0.62rem] font-black text-[#38553d]">
+        <span className="rounded-full border border-[#d9e6ce]/70 bg-[#dfead2] px-2 py-0.5 text-[0.62rem] font-black text-[#244c35]">
           {group.items.length} shown
         </span>
       </div>
       <div className="mt-3 grid max-h-[24rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
         {group.items.map((item) => (
-          <article key={`${group.id}-${item.value}`} className="rounded-xl border border-[#b8c8aa] bg-[#f3f8ee] p-2.5 shadow-sm shadow-black/5">
+          <article key={`${group.id}-${item.value}`} className="rounded-xl border border-[#d6e4cb] bg-[#eef6e8] p-2.5 shadow-sm shadow-[#203729]/10 transition duration-150 hover:border-[#f4f8ef] hover:bg-[#f6fbf1]">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-black text-[#203729]" title={item.label}>{item.label}</div>
@@ -600,7 +606,7 @@ function SearchResultCard({ result, onInspectSearchResult }) {
   const hiddenBadgeCount = Math.max(0, result.capabilityBadges.length - visibleBadges.length);
 
   return (
-    <article className="rounded-[1rem] border border-[#adc29d] bg-[#eef6e8] p-3 text-[#203729] shadow-[0_8px_18px_rgba(39,50,36,0.08)] transition duration-150 hover:-translate-y-0.5 hover:border-[#7f9b70] hover:bg-[#f3f8ee] hover:shadow-[0_12px_26px_rgba(39,50,36,0.13)]">
+    <article className="rounded-[1rem] border border-[#9fb28f] bg-[#d3e3c8] p-3 text-[#203729] shadow-[0_8px_18px_rgba(39,50,36,0.08)] transition duration-150 hover:-translate-y-0.5 hover:border-[#74897a] hover:bg-[#deebd5] hover:shadow-[0_12px_26px_rgba(39,50,36,0.13)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -621,11 +627,11 @@ function SearchResultCard({ result, onInspectSearchResult }) {
       </div>
 
       <dl className="mt-2 grid gap-1.5 text-xs sm:grid-cols-2">
-        <div className="min-w-0 rounded-lg bg-[#d7e6cc] px-2.5 py-1.5">
+        <div className="min-w-0 rounded-lg bg-[#edf5e5] px-2.5 py-1.5">
           <dt className="inline font-black uppercase tracking-[0.1em] text-[#38553d]">Entities: </dt>
           <dd className="inline font-semibold text-[#203729]">{result.peopleRoute}</dd>
         </div>
-        <div className="min-w-0 rounded-lg bg-[#d7e6cc] px-2.5 py-1.5">
+        <div className="min-w-0 rounded-lg bg-[#edf5e5] px-2.5 py-1.5">
           <dt className="inline font-black uppercase tracking-[0.1em] text-[#38553d]">Places: </dt>
           <dd className="inline font-semibold text-[#203729]">{result.placeRoute}</dd>
         </div>
@@ -1195,7 +1201,7 @@ export function PeridotSearchWorkspace({
         <SectionHeader eyebrow="Step 2" title="Browse Indexes">
           Browse uses the full loaded dataset, not just the current result set. Choose an item to seed draft search criteria, then apply filters.
         </SectionHeader>
-        <div className="rounded-full border border-[#b8c8aa] bg-[#d7e6cc] px-3 py-1.5 text-xs font-black text-[#38553d] shadow-sm shadow-black/5">
+        <div className="rounded-full border border-[#b8c8aa] bg-[#c7d9bc] px-3 py-1.5 text-xs font-black text-[#244c35] shadow-sm shadow-black/5">
           {(browseRows?.length || 0)} loaded records indexed
         </div>
       </div>
@@ -1236,7 +1242,7 @@ export function PeridotSearchWorkspace({
         <SectionHeader eyebrow="Step 3" title="Search Results">
           Compact cards reflect the current applied dataset. Use Inspect to open a record in the full Inspector workspace.
         </SectionHeader>
-        <div className="flex flex-wrap items-center gap-2 rounded-full border border-[#b8c8aa] bg-[#d7e6cc] px-3 py-1.5 text-xs font-black text-[#38553d] shadow-sm shadow-black/5">
+        <div className="flex flex-wrap items-center gap-2 rounded-full border border-[#b8c8aa] bg-[#c7d9bc] px-3 py-1.5 text-xs font-black text-[#244c35] shadow-sm shadow-black/5">
           <span>{searchRows?.length || 0} records</span>
           <span className="text-[#7f9b70]">/</span>
           <span>{searchResultCards.length} cards shown</span>
@@ -1254,7 +1260,7 @@ export function PeridotSearchWorkspace({
             />
           ))
         ) : (
-          <div className="rounded-[1.25rem] border border-[#b8c8aa] bg-[#edf5e5] p-6 text-center shadow-sm shadow-black/5 xl:col-span-2">
+          <div className="rounded-[1.25rem] border border-[#b8c8aa] bg-[#dce9d2] p-6 text-center shadow-sm shadow-black/5 xl:col-span-2">
             <div className="text-lg font-black text-[#263d2e]">No records are currently in scope.</div>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#5a6659]">
               Clear filters or broaden the date window to restore results.
@@ -1284,15 +1290,15 @@ export function PeridotSearchWorkspace({
         <div className={PANEL_INSET_CLASS + ' p-3 lg:col-span-2'}>
           <div className={FIELD_LABEL_CLASS}>Data context</div>
           <dl className="mt-2 grid gap-2 text-sm text-[#465d49] sm:grid-cols-3">
-            <div className="flex justify-between gap-3 rounded-xl bg-[#edf5e5] px-3 py-2">
+            <div className="flex justify-between gap-3 rounded-xl bg-[#dce9d2] px-3 py-2">
               <dt>Visible nodes</dt>
               <dd className="font-black text-[#203729]">{graph?.nodes?.length ?? 0}</dd>
             </div>
-            <div className="flex justify-between gap-3 rounded-xl bg-[#edf5e5] px-3 py-2">
+            <div className="flex justify-between gap-3 rounded-xl bg-[#dce9d2] px-3 py-2">
               <dt>Visible routes</dt>
               <dd className="font-black text-[#203729]">{graph?.edges?.length ?? 0}</dd>
             </div>
-            <div className="flex justify-between gap-3 rounded-xl bg-[#edf5e5] px-3 py-2">
+            <div className="flex justify-between gap-3 rounded-xl bg-[#dce9d2] px-3 py-2">
               <dt>Rows diagnosed</dt>
               <dd className="font-black text-[#203729]">{rowDiagnostics?.length ?? 0}</dd>
             </div>
@@ -1320,10 +1326,10 @@ export function PeridotSearchWorkspace({
   );
 
   return (
-    <section className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(212,232,194,0.24),transparent_28%),linear-gradient(135deg,#052015_0%,#08301f_50%,#123f29_100%)] px-6 py-5 text-[#203729]">
+    <section className="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(196,215,184,0.28),transparent_28%),linear-gradient(135deg,#052015_0%,#08301f_50%,#123f29_100%)] px-6 py-5 text-[#203729]">
       <div className="mx-auto max-w-[1380px]">
         <div className={SHELL_CLASS + ' overflow-hidden'}>
-          <header className="border-b border-[#b8c8aa] bg-[#dfead2] p-4">
+          <header className="border-b border-[#9fb28f] bg-[#cfdfc5] p-4">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-3xl">
                 <div className="text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#667960]">Search workspace</div>
@@ -1356,12 +1362,12 @@ export function PeridotSearchWorkspace({
           </header>
 
           {filterStatusMessage ? (
-            <div className="border-b border-[#b8c8aa] bg-[#d2e4c4] px-4 py-2 text-sm font-bold text-[#274633]">
+            <div className="border-b border-[#9fb28f] bg-[#b7cda9] px-4 py-2 text-sm font-bold text-[#203729]">
               {filterStatusMessage}
             </div>
           ) : null}
 
-          <nav className="grid gap-2 border-b border-[#b8c8aa] bg-[#c9ddba] p-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Advanced Search workflow tabs">
+          <nav className="grid gap-2 border-b border-[#9fb28f] bg-[#b7cda9] p-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Advanced Search workflow tabs">
             <SearchTabButton
               id="build"
               label="Build Search"
@@ -1392,7 +1398,7 @@ export function PeridotSearchWorkspace({
             />
           </nav>
 
-          <main className="bg-[#dfead2] p-4">
+          <main className="bg-[#cfdfc5] p-4">
             <div className={CARD_CLASS + ' p-4'}>
               {activeTab === 'build' ? renderBuildSearch() : null}
               {activeTab === 'browse' ? renderBrowse() : null}
