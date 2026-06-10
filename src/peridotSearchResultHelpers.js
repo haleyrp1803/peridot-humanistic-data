@@ -5,14 +5,14 @@
  * - derive lightweight result-card records from the already filtered active rows;
  * - explain which applied search terms and capability filters matched a row;
  * - expose capability predicates for App.jsx's global Search & Filter pipeline;
- * - derive result facets/counts for Search refinement without introducing a new
- *   Boolean query language or saved-search persistence model.
+ * - derive result facets/counts for Search refinement without introducing saved-search persistence.
  *
- * This helper remains pure and UI-agnostic. Search UI, Inspector routing, and
- * global App state stay separate so later phases can add browse indexes or a
- * structured criteria builder without crowding the workspace component.
+ * Phase 3 scope:
+ * - add a small implicit-AND structured-criteria evaluator for App.jsx's global
+ *   active-row filtering pipeline;
+ * - keep all helper functions pure and UI-agnostic so the Search workspace can
+ *   remain a presentation/control surface rather than a second data pipeline.
  */
-
 const FIELD_LABELS = {
   date: 'Date',
   displayDate: 'Display date',
@@ -56,6 +56,7 @@ const EVIDENCE_FIELDS = [
   'sourceTitle',
   'targetTitle',
 ];
+
 const CORE_FIELDS = new Set([
   'id',
   'recordId',
@@ -153,16 +154,6 @@ function hasAnyCoordinate(row) {
   return COORDINATE_FIELDS.some((field) => hasFiniteCoordinate(row?.[field]));
 }
 
-function hasAnyEvidenceField(row) {
-  if (!row || typeof row !== 'object') return false;
-  if (EVIDENCE_FIELDS.some((field) => asText(row[field]))) return true;
-  return Object.entries(row).some(([key, value]) => !CORE_FIELDS.has(key) && asText(value));
-}
-
-function hasAnySearchableContent(row) {
-  return collectSearchableFields(row).length > 0;
-}
-
 function collectSearchableFields(row) {
   return Object.entries(row || {})
     .filter(([, value]) => value !== null && value !== undefined && asText(value))
@@ -171,6 +162,16 @@ function collectSearchableFields(row) {
       label: FIELD_LABELS[key] || key.replace(/_/g, ' '),
       value: asText(value),
     }));
+}
+
+function hasAnyEvidenceField(row) {
+  if (!row || typeof row !== 'object') return false;
+  if (EVIDENCE_FIELDS.some((field) => asText(row[field]))) return true;
+  return Object.entries(row).some(([key, value]) => !CORE_FIELDS.has(key) && asText(value));
+}
+
+function hasAnySearchableContent(row) {
+  return collectSearchableFields(row).length > 0;
 }
 
 function findFirstFieldMatch(row, query, preferredKeys = []) {
@@ -207,15 +208,12 @@ function facetItemsFromMap(map, limit = 8) {
 function buildResultTitle(row, index) {
   const explicitTitle = firstText(row, TITLE_FIELDS);
   if (explicitTitle) return explicitTitle;
-
   const sourcePerson = firstText(row, SOURCE_PERSON_FIELDS);
   const targetPerson = firstText(row, TARGET_PERSON_FIELDS);
   if (sourcePerson || targetPerson) return compactRouteLabel(sourcePerson, targetPerson);
-
   const sourcePlace = firstText(row, SOURCE_PLACE_FIELDS);
   const targetPlace = firstText(row, TARGET_PLACE_FIELDS);
   if (sourcePlace || targetPlace) return compactRouteLabel(sourcePlace, targetPlace);
-
   return `Record ${index + 1}`;
 }
 
@@ -231,7 +229,6 @@ function getRowCapabilityState(row) {
   const hasDate = Boolean(firstText(row, DATE_FIELDS));
   const hasCoordinates = hasAnyCoordinate(row);
   const hasEvidence = hasAnyEvidenceField(row);
-
   return {
     hasPeople,
     hasEntityRoute,
@@ -279,6 +276,106 @@ export function getCapabilityFilterLabel(filterId) {
   return CAPABILITY_FILTER_OPTIONS.find((option) => option.id === filterId)?.label || filterId;
 }
 
+function valuesForStructuredField(row, field) {
+  if (field === 'person') return SOURCE_PERSON_FIELDS.concat(TARGET_PERSON_FIELDS).map((key) => row?.[key]);
+  if (field === 'place') return SOURCE_PLACE_FIELDS.concat(TARGET_PLACE_FIELDS).map((key) => row?.[key]);
+  if (field === 'routePlace') {
+    return [compactRouteLabel(firstText(row, SOURCE_PLACE_FIELDS), firstText(row, TARGET_PLACE_FIELDS))];
+  }
+  if (field === 'routePeople') {
+    return [compactRouteLabel(firstText(row, SOURCE_PERSON_FIELDS), firstText(row, TARGET_PERSON_FIELDS))];
+  }
+  if (field === 'date') return DATE_FIELDS.map((key) => row?.[key]).concat(row?.parsedDate?.year, row?.parsedDate?.monthKey);
+  if (field === 'evidence') {
+    const explicitEvidence = EVIDENCE_FIELDS.map((key) => row?.[key]);
+    const customEvidence = Object.entries(row || {})
+      .filter(([key, value]) => !CORE_FIELDS.has(key) && asText(value))
+      .map(([, value]) => value);
+    return explicitEvidence.concat(customEvidence);
+  }
+  return collectSearchableFields(row).map((fieldRecord) => fieldRecord.value);
+}
+
+function criterionNeedsValue(mode) {
+  return mode !== 'isEmpty' && mode !== 'isNotEmpty';
+}
+
+function valueMatchesMode(value, mode, query) {
+  const text = asText(value);
+  const q = asText(query);
+  if (mode === 'isEmpty') return !text;
+  if (mode === 'isNotEmpty') return Boolean(text);
+  if (!q) return true;
+  if (mode === 'exact') return text.toLowerCase() === q.toLowerCase();
+  if (mode === 'startsWith') return text.toLowerCase().startsWith(q.toLowerCase());
+  return text.toLowerCase().includes(q.toLowerCase());
+}
+
+function normalizeStructuredCriteria(criteria = []) {
+  return (Array.isArray(criteria) ? criteria : [])
+    .map((criterion) => ({
+      field: criterion?.field || 'any',
+      mode: criterion?.mode || 'contains',
+      value: asText(criterion?.value),
+    }))
+    .filter((criterion) => !criterionNeedsValue(criterion.mode) || criterion.value);
+}
+
+function rowMatchesStructuredCriterion(row, criterion) {
+  if (criterion.field === 'capability') {
+    if (!criterionNeedsValue(criterion.mode)) {
+      return criterion.mode === 'isNotEmpty';
+    }
+    const query = asText(criterion.value).toLowerCase();
+    const matchingOptions = CAPABILITY_FILTER_OPTIONS.filter((option) => (
+      option.id.toLowerCase().includes(query)
+      || option.label.toLowerCase().includes(query)
+      || option.shortLabel.toLowerCase().includes(query)
+    ));
+    return matchingOptions.some((option) => rowMatchesSearchCapabilityFilter(row, option.id));
+  }
+  const values = valuesForStructuredField(row, criterion.field);
+  if (criterion.mode === 'isEmpty') return values.every((value) => !asText(value));
+  if (criterion.mode === 'isNotEmpty') return values.some((value) => asText(value));
+  return values.some((value) => valueMatchesMode(value, criterion.mode, criterion.value));
+}
+
+export function rowMatchesStructuredCriteria(row, criteria = []) {
+  const normalizedCriteria = normalizeStructuredCriteria(criteria);
+  if (!normalizedCriteria.length) return true;
+  return normalizedCriteria.every((criterion) => rowMatchesStructuredCriterion(row, criterion));
+}
+
+function describeStructuredCriterionMatch(row, criterion) {
+  if (!rowMatchesStructuredCriterion(row, criterion)) return null;
+  const fieldLabel = {
+    any: 'Structured criterion',
+    person: 'Structured person',
+    place: 'Structured place',
+    routePlace: 'Structured route place',
+    routePeople: 'Structured route people',
+    date: 'Structured date',
+    evidence: 'Structured evidence',
+    capability: 'Structured capability',
+  }[criterion.field] || 'Structured criterion';
+
+  if (criterion.field === 'capability') {
+    const matched = CAPABILITY_FILTER_OPTIONS.find((option) => (
+      option.id === criterion.value || option.label.toLowerCase() === asText(criterion.value).toLowerCase()
+    ));
+    return { label: fieldLabel, value: matched?.label || criterion.value || criterion.mode };
+  }
+
+  const values = valuesForStructuredField(row, criterion.field);
+  if (criterion.mode === 'isEmpty') return { label: fieldLabel, value: 'is empty' };
+  if (criterion.mode === 'isNotEmpty') {
+    const firstValue = values.find((value) => asText(value));
+    return { label: fieldLabel, value: asText(firstValue) || 'is not empty' };
+  }
+  const matchedValue = values.find((value) => valueMatchesMode(value, criterion.mode, criterion.value));
+  return { label: fieldLabel, value: asText(matchedValue) || criterion.value };
+}
+
 function buildMatchedFields(row, appliedFilters) {
   const matches = [];
   const keywordMatch = findFirstFieldMatch(row, appliedFilters.search, []);
@@ -289,49 +386,51 @@ function buildMatchedFields(row, appliedFilters) {
     });
   }
 
-  const personMatch = findFirstFieldMatch(row, appliedFilters.personFilter, SOURCE_PERSON_FIELDS.concat(TARGET_PERSON_FIELDS));
-  if (personMatch) {
-    matches.push({ label: `Person in ${personMatch.label}`, value: personMatch.value });
-  }
+  const personMatch = findFirstFieldMatch(
+    row,
+    appliedFilters.personFilter,
+    SOURCE_PERSON_FIELDS.concat(TARGET_PERSON_FIELDS),
+  );
+  if (personMatch) matches.push({ label: `Person in ${personMatch.label}`, value: personMatch.value });
 
-  const placeMatch = findFirstFieldMatch(row, appliedFilters.placeFilter, SOURCE_PLACE_FIELDS.concat(TARGET_PLACE_FIELDS));
-  if (placeMatch) {
-    matches.push({ label: `Place in ${placeMatch.label}`, value: placeMatch.value });
-  }
+  const placeMatch = findFirstFieldMatch(
+    row,
+    appliedFilters.placeFilter,
+    SOURCE_PLACE_FIELDS.concat(TARGET_PLACE_FIELDS),
+  );
+  if (placeMatch) matches.push({ label: `Place in ${placeMatch.label}`, value: placeMatch.value });
 
   const routePlaceQuery = asText(appliedFilters.routePlaceFilter);
   if (routePlaceQuery) {
     const placeRoute = compactRouteLabel(firstText(row, SOURCE_PLACE_FIELDS), firstText(row, TARGET_PLACE_FIELDS));
-    if (includesNeedle(placeRoute, routePlaceQuery)) {
-      matches.push({ label: 'Route place', value: placeRoute });
-    }
+    if (includesNeedle(placeRoute, routePlaceQuery)) matches.push({ label: 'Route place', value: placeRoute });
   }
 
   const routePeopleQuery = asText(appliedFilters.routePeopleFilter);
   if (routePeopleQuery) {
     const peopleRoute = compactRouteLabel(firstText(row, SOURCE_PERSON_FIELDS), firstText(row, TARGET_PERSON_FIELDS));
-    if (includesNeedle(peopleRoute, routePeopleQuery)) {
-      matches.push({ label: 'Route entities', value: peopleRoute });
-    }
+    if (includesNeedle(peopleRoute, routePeopleQuery)) matches.push({ label: 'Route entities', value: peopleRoute });
   }
 
   const capabilityMatches = (appliedFilters.capabilityFilters || [])
     .filter((filterId) => rowMatchesSearchCapabilityFilter(row, filterId))
     .map((filterId) => ({ label: 'Capability', value: getCapabilityFilterLabel(filterId) }));
 
-  return matches.concat(capabilityMatches).slice(0, 5);
+  const structuredMatches = normalizeStructuredCriteria(appliedFilters.structuredCriteria)
+    .map((criterion) => describeStructuredCriterionMatch(row, criterion))
+    .filter(Boolean);
+
+  return matches.concat(capabilityMatches, structuredMatches).slice(0, 5);
 }
 
 function buildCapabilityBadges(row) {
   const state = getRowCapabilityState(row);
   const badges = [];
-
   if (state.inspectorReady) badges.push('Inspector-ready');
   if (state.mapReady) badges.push('Map-relevant');
   if (state.networkReady) badges.push('Network-ready');
   if (state.timelineReady) badges.push('Timeline-ready');
   if (state.evidenceReady) badges.push('Evidence-rich');
-
   return badges.slice(0, 5);
 }
 
@@ -349,14 +448,12 @@ export function buildPeridotSearchFacets(rows = [], options = {}) {
     const sourcePlace = firstText(row, SOURCE_PLACE_FIELDS);
     const targetPlace = firstText(row, TARGET_PLACE_FIELDS);
     const year = asText(firstText(row, DATE_FIELDS)).match(/\d{4}/)?.[0] || row?.parsedDate?.year || row?.parsedDate?.monthKey;
-
     addFacetCount(people, sourcePerson);
     addFacetCount(people, targetPerson);
     addFacetCount(places, sourcePlace);
     addFacetCount(places, targetPlace);
     if (sourcePlace || targetPlace) addFacetCount(placeRoutes, compactRouteLabel(sourcePlace, targetPlace));
     addFacetCount(years, year ? String(year).slice(0, 4) : '');
-
     Object.entries(row || {}).forEach(([key, value]) => {
       if (!CORE_FIELDS.has(key) && asText(value)) {
         addFacetCount(evidenceFields, FIELD_LABELS[key] || key.replace(/_/g, ' '));
@@ -389,7 +486,6 @@ export function buildPeridotSearchResults(rows = [], appliedFilters = {}, option
     const targetPlace = firstText(row, TARGET_PLACE_FIELDS);
     const displayDate = firstText(row, DATE_FIELDS) || 'Undated';
     const matchedFields = buildMatchedFields(row, appliedFilters);
-
     return {
       id: row?.id || row?.recordId || row?.Record_ID || row?.Letter_ID || `search-result-${index}`,
       index,
