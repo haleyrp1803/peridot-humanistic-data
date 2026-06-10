@@ -10,8 +10,8 @@
  * Phase 3 scope:
  * - add a small structured-criteria evaluator for App.jsx's global active-row
  *   filtering pipeline;
- * - support simple non-nested Boolean operators: Must match, Can also match, and
- *   Exclude;
+ * - support simple non-nested Boolean operators displayed to users as
+ *   Start with, AND, OR, and EXCLUDING;
  * - keep all helper functions pure and UI-agnostic so the Search workspace can
  *   remain a presentation/control surface rather than a second data pipeline.
  *
@@ -372,9 +372,9 @@ export function rowMatchesStructuredCriteria(row, criteria = []) {
 }
 
 function structuredOperatorLabel(operator) {
-  if (operator === 'should') return 'Can also match';
-  if (operator === 'exclude') return 'Exclude';
-  return 'Must match';
+  if (operator === 'should') return 'OR';
+  if (operator === 'exclude') return 'EXCLUDING';
+  return 'AND';
 }
 
 function describeStructuredCriterionMatch(row, criterion) {

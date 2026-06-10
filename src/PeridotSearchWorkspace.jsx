@@ -44,7 +44,7 @@
  * Structured criteria pass:
  * - Adds a small fielded criteria builder inside Build Search.
  * - Keeps criteria draft-only until Apply Filters commits them through App.jsx.
- * - Uses simple Boolean operators: Must match, Can also match, and Exclude.
+ * - Uses plain Boolean connectors: the first rule starts the structured search, and later rules use AND, OR, or EXCLUDING.
  * - Limits the builder to five rows so OR/Exclude searches have room without
  *   recreating the dense UI this workspace was simplified to avoid.
  *
@@ -66,10 +66,10 @@
  * - Keeps light greens for the workspace shell, mid greens for section cards and
  *   feedback chips, and dark greens for action/emphasis controls.
  *
- * Boolean structured criteria pass:
- * - Adds Must match, Can also match, and Exclude operators to structured criteria.
- * - Keeps the logic deliberately non-nested: all Must rows must match, at least one
- *   Can also match row must match when any are present, and Exclude rows remove
+ * Boolean structured criteria terminology pass:
+ * - Renames structured-criteria operators so the first rule starts the search and later rules read as AND, OR, and EXCLUDING.
+ * - Keeps the logic deliberately non-nested: all AND rows must match, at least one
+ *   OR row must match when any are present, and EXCLUDING rows remove
  *   matching records.
  */
 import React, { useEffect, useMemo, useState } from 'react';
@@ -113,9 +113,9 @@ const STRUCTURED_FIELD_OPTIONS = Object.freeze([
 ]);
 
 const STRUCTURED_OPERATOR_OPTIONS = Object.freeze([
-  { id: 'must', label: 'Must match', shortLabel: 'Must', description: 'Narrow results to records that match this rule.' },
-  { id: 'should', label: 'Can also match', shortLabel: 'OR', description: 'Keep records that match at least one Can also match rule when any are present.' },
-  { id: 'exclude', label: 'Exclude', shortLabel: 'NOT', description: 'Remove records that match this rule.' },
+  { id: 'must', label: 'AND', shortLabel: 'AND', description: 'Keep records that match the previous criteria and this rule.' },
+  { id: 'should', label: 'OR', shortLabel: 'OR', description: 'Keep records that match the previous criteria or this rule.' },
+  { id: 'exclude', label: 'EXCLUDING', shortLabel: 'EXCLUDING', description: 'Remove records that match this rule.' },
 ]);
 
 const STRUCTURED_MATCH_MODE_OPTIONS = Object.freeze([
@@ -319,22 +319,29 @@ function StructuredCriterionRow({
   const selectedMode = STRUCTURED_MATCH_MODE_OPTIONS.find((option) => option.id === criterion.mode) || STRUCTURED_MATCH_MODE_OPTIONS[0];
   const needsValue = selectedMode.needsValue !== false;
   const capabilityValue = CAPABILITY_FILTER_OPTIONS.some((option) => option.id === criterion.value) ? criterion.value : '';
+  const isFirstCriterion = index === 0;
 
   return (
-    <div className="grid gap-2 rounded-xl border border-[#aec19d] bg-[#edf5e5] p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[1.05fr_1.15fr_0.95fr_1.35fr_auto] lg:items-end">
+    <div className="grid gap-2 rounded-xl border border-[#aec19d] bg-[#edf5e5] p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[0.9fr_1.15fr_0.95fr_1.35fr_auto] lg:items-end">
       <div>
         <label className={FIELD_LABEL_CLASS} htmlFor={`structured-operator-${criterion.id}`}>Logic {index + 1}</label>
-        <select
-          id={`structured-operator-${criterion.id}`}
-          value={selectedOperator.id}
-          onChange={(event) => onChange({ ...criterion, operator: event.target.value })}
-          title={selectedOperator.description}
-          className={INPUT_CLASS}
-        >
-          {STRUCTURED_OPERATOR_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>{option.label}</option>
-          ))}
-        </select>
+        {isFirstCriterion ? (
+          <div className="mt-1.5 rounded-xl border border-[#98ad8c] bg-[#d8e6cf] px-3 py-2 text-sm font-black uppercase tracking-[0.12em] text-[#274633] shadow-inner shadow-white/25" title="The first rule starts the structured search. Add more rules below to search AND, OR, or EXCLUDING another value.">
+            Start with
+          </div>
+        ) : (
+          <select
+            id={`structured-operator-${criterion.id}`}
+            value={selectedOperator.id}
+            onChange={(event) => onChange({ ...criterion, operator: event.target.value })}
+            title={selectedOperator.description}
+            className={INPUT_CLASS}
+          >
+            {STRUCTURED_OPERATOR_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
+        )}
       </div>
       <div>
         <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field</label>
@@ -345,6 +352,7 @@ function StructuredCriterionRow({
             const nextField = event.target.value;
             onChange({
               ...criterion,
+              operator: isFirstCriterion ? 'must' : criterion.operator,
               field: nextField,
               value: nextField === 'capability' ? '' : criterion.value,
             });
@@ -361,7 +369,7 @@ function StructuredCriterionRow({
         <select
           id={`structured-mode-${criterion.id}`}
           value={criterion.mode}
-          onChange={(event) => onChange({ ...criterion, mode: event.target.value })}
+          onChange={(event) => onChange({ ...criterion, operator: isFirstCriterion ? 'must' : criterion.operator, mode: event.target.value })}
           className={INPUT_CLASS}
         >
           {STRUCTURED_MATCH_MODE_OPTIONS.map((option) => (
@@ -376,7 +384,7 @@ function StructuredCriterionRow({
             id={`structured-value-${criterion.id}`}
             value={capabilityValue}
             disabled={!needsValue}
-            onChange={(event) => onChange({ ...criterion, value: event.target.value })}
+            onChange={(event) => onChange({ ...criterion, operator: isFirstCriterion ? 'must' : criterion.operator, value: event.target.value })}
             onKeyDown={onKeyDown}
             className={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
           >
@@ -388,10 +396,10 @@ function StructuredCriterionRow({
         ) : (
           <AutocompleteTextInput
             id={`structured-value-${criterion.id}`}
-            label=""
+            label="Value"
             value={criterion.value}
             disabled={!needsValue}
-            onChange={(nextValue) => onChange({ ...criterion, value: nextValue })}
+            onChange={(nextValue) => onChange({ ...criterion, operator: isFirstCriterion ? 'must' : criterion.operator, value: nextValue })}
             onKeyDown={onKeyDown}
             placeholder={needsValue ? selectedField.placeholder : 'No value needed'}
             suggestions={needsValue ? suggestions : []}
@@ -1154,7 +1162,7 @@ export function PeridotSearchWorkspace({
           <div>
             <div className={FIELD_LABEL_CLASS}>Structured criteria</div>
             <p className="mt-1 text-xs leading-5 text-[#4f654d]">
-              Optional fielded rules. Must match rows narrow results, Can also match rows create a simple OR group, and Exclude rows remove matching records.
+              Optional fielded rules. The first row starts the structured search; later rows use AND, OR, or EXCLUDING to combine with what came before.
             </p>
           </div>
           <div className="rounded-full border border-[#9db48e] bg-[#edf5e5] px-3 py-1 text-xs font-bold text-[#38553d]">
@@ -1182,7 +1190,7 @@ export function PeridotSearchWorkspace({
         )}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs leading-5 text-[#4f654d]">
-            Applied: {activeStructuredLabel}. Base filters still apply first; Must match, Can also match, and Exclude rows are evaluated when Apply Filters is pressed.
+            Applied: {activeStructuredLabel}. Base filters still apply first; structured rows are evaluated in plain language as Start with, AND, OR, and EXCLUDING when Apply Filters is pressed.
           </p>
           <button
             type="button"
