@@ -8,8 +8,10 @@
  * - derive result facets/counts for Search refinement without introducing saved-search persistence.
  *
  * Phase 3 scope:
- * - add a small implicit-AND structured-criteria evaluator for App.jsx's global
- *   active-row filtering pipeline;
+ * - add a small structured-criteria evaluator for App.jsx's global active-row
+ *   filtering pipeline;
+ * - support simple non-nested Boolean operators: Must match, Can also match, and
+ *   Exclude;
  * - keep all helper functions pure and UI-agnostic so the Search workspace can
  *   remain a presentation/control surface rather than a second data pipeline.
  *
@@ -320,9 +322,14 @@ function valueMatchesMode(value, mode, query) {
   return text.toLowerCase().includes(q.toLowerCase());
 }
 
+function normalizeStructuredOperator(operator) {
+  return ['must', 'should', 'exclude'].includes(operator) ? operator : 'must';
+}
+
 function normalizeStructuredCriteria(criteria = []) {
   return (Array.isArray(criteria) ? criteria : [])
     .map((criterion) => ({
+      operator: normalizeStructuredOperator(criterion?.operator),
       field: criterion?.field || 'any',
       mode: criterion?.mode || 'contains',
       value: asText(criterion?.value),
@@ -352,10 +359,26 @@ function rowMatchesStructuredCriterion(row, criterion) {
 export function rowMatchesStructuredCriteria(row, criteria = []) {
   const normalizedCriteria = normalizeStructuredCriteria(criteria);
   if (!normalizedCriteria.length) return true;
-  return normalizedCriteria.every((criterion) => rowMatchesStructuredCriterion(row, criterion));
+
+  const mustCriteria = normalizedCriteria.filter((criterion) => criterion.operator === 'must');
+  const shouldCriteria = normalizedCriteria.filter((criterion) => criterion.operator === 'should');
+  const excludeCriteria = normalizedCriteria.filter((criterion) => criterion.operator === 'exclude');
+
+  const passesMust = mustCriteria.every((criterion) => rowMatchesStructuredCriterion(row, criterion));
+  const passesShould = shouldCriteria.length === 0 || shouldCriteria.some((criterion) => rowMatchesStructuredCriterion(row, criterion));
+  const passesExclude = excludeCriteria.every((criterion) => !rowMatchesStructuredCriterion(row, criterion));
+
+  return passesMust && passesShould && passesExclude;
+}
+
+function structuredOperatorLabel(operator) {
+  if (operator === 'should') return 'Can also match';
+  if (operator === 'exclude') return 'Exclude';
+  return 'Must match';
 }
 
 function describeStructuredCriterionMatch(row, criterion) {
+  if (criterion.operator === 'exclude') return null;
   if (!rowMatchesStructuredCriterion(row, criterion)) return null;
   const fieldLabel = {
     any: 'Structured criterion',
@@ -368,22 +391,23 @@ function describeStructuredCriterionMatch(row, criterion) {
     evidenceFieldPresent: 'Structured evidence field',
     capability: 'Structured capability',
   }[criterion.field] || 'Structured criterion';
+  const operatorPrefix = structuredOperatorLabel(criterion.operator);
 
   if (criterion.field === 'capability') {
     const matched = CAPABILITY_FILTER_OPTIONS.find((option) => (
       option.id === criterion.value || option.label.toLowerCase() === asText(criterion.value).toLowerCase()
     ));
-    return { label: fieldLabel, value: matched?.label || criterion.value || criterion.mode };
+    return { label: `${operatorPrefix}: ${fieldLabel}`, value: matched?.label || criterion.value || criterion.mode };
   }
 
   const values = valuesForStructuredField(row, criterion.field);
-  if (criterion.mode === 'isEmpty') return { label: fieldLabel, value: 'is empty' };
+  if (criterion.mode === 'isEmpty') return { label: `${operatorPrefix}: ${fieldLabel}`, value: 'is empty' };
   if (criterion.mode === 'isNotEmpty') {
     const firstValue = values.find((value) => asText(value));
-    return { label: fieldLabel, value: asText(firstValue) || 'is not empty' };
+    return { label: `${operatorPrefix}: ${fieldLabel}`, value: asText(firstValue) || 'is not empty' };
   }
   const matchedValue = values.find((value) => valueMatchesMode(value, criterion.mode, criterion.value));
-  return { label: fieldLabel, value: asText(matchedValue) || criterion.value };
+  return { label: `${operatorPrefix}: ${fieldLabel}`, value: asText(matchedValue) || criterion.value };
 }
 
 function buildMatchedFields(row, appliedFilters) {

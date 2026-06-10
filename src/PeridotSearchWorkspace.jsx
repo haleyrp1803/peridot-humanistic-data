@@ -42,10 +42,11 @@
  *   result derivation, or Inspector handoff semantics.
  *
  * Structured criteria pass:
- * - Adds a small implicit-AND criteria builder inside Build Search.
+ * - Adds a small fielded criteria builder inside Build Search.
  * - Keeps criteria draft-only until Apply Filters commits them through App.jsx.
- * - Limits the builder to three rows to avoid recreating the dense UI this workspace
- *   was just simplified to avoid.
+ * - Uses simple Boolean operators: Must match, Can also match, and Exclude.
+ * - Limits the builder to five rows so OR/Exclude searches have room without
+ *   recreating the dense UI this workspace was simplified to avoid.
  *
  * Structured criteria predictive suggestions pass:
  * - Reuses the existing predictive suggestion component for structured value inputs
@@ -64,6 +65,12 @@
  *   card background for browse/facet sections.
  * - Keeps light greens for the workspace shell, mid greens for section cards and
  *   feedback chips, and dark greens for action/emphasis controls.
+ *
+ * Boolean structured criteria pass:
+ * - Adds Must match, Can also match, and Exclude operators to structured criteria.
+ * - Keeps the logic deliberately non-nested: all Must rows must match, at least one
+ *   Can also match row must match when any are present, and Exclude rows remove
+ *   matching records.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -105,6 +112,12 @@ const STRUCTURED_FIELD_OPTIONS = Object.freeze([
   { id: 'capability', label: 'Capability', placeholder: 'Choose a capability' },
 ]);
 
+const STRUCTURED_OPERATOR_OPTIONS = Object.freeze([
+  { id: 'must', label: 'Must match', shortLabel: 'Must', description: 'Narrow results to records that match this rule.' },
+  { id: 'should', label: 'Can also match', shortLabel: 'OR', description: 'Keep records that match at least one Can also match rule when any are present.' },
+  { id: 'exclude', label: 'Exclude', shortLabel: 'NOT', description: 'Remove records that match this rule.' },
+]);
+
 const STRUCTURED_MATCH_MODE_OPTIONS = Object.freeze([
   { id: 'contains', label: 'contains', needsValue: true },
   { id: 'exact', label: 'exactly matches', needsValue: true },
@@ -113,7 +126,7 @@ const STRUCTURED_MATCH_MODE_OPTIONS = Object.freeze([
   { id: 'isNotEmpty', label: 'is not empty', needsValue: false },
 ]);
 
-const MAX_STRUCTURED_CRITERIA = 3;
+const MAX_STRUCTURED_CRITERIA = 5;
 
 const BROWSE_INDEX_LIMIT = 120;
 const BROWSE_SOURCE_PERSON_FIELDS = ['sourcePerson', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender'];
@@ -270,6 +283,7 @@ function filterBrowseGroups(groups, query) {
 function createStructuredCriterion() {
   return {
     id: `criterion-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    operator: 'must',
     field: 'any',
     mode: 'contains',
     value: '',
@@ -280,6 +294,7 @@ function normalizeDraftStructuredCriteria(criteria = []) {
   return (Array.isArray(criteria) ? criteria : [])
     .map((criterion) => ({
       id: criterion.id || `criterion-${Math.random().toString(16).slice(2)}`,
+      operator: STRUCTURED_OPERATOR_OPTIONS.some((option) => option.id === criterion.operator) ? criterion.operator : 'must',
       field: criterion.field || 'any',
       mode: criterion.mode || 'contains',
       value: String(criterion.value ?? '').trim(),
@@ -299,15 +314,30 @@ function StructuredCriterionRow({
   onKeyDown,
   suggestions = [],
 }) {
+  const selectedOperator = STRUCTURED_OPERATOR_OPTIONS.find((option) => option.id === criterion.operator) || STRUCTURED_OPERATOR_OPTIONS[0];
   const selectedField = STRUCTURED_FIELD_OPTIONS.find((option) => option.id === criterion.field) || STRUCTURED_FIELD_OPTIONS[0];
   const selectedMode = STRUCTURED_MATCH_MODE_OPTIONS.find((option) => option.id === criterion.mode) || STRUCTURED_MATCH_MODE_OPTIONS[0];
   const needsValue = selectedMode.needsValue !== false;
   const capabilityValue = CAPABILITY_FILTER_OPTIONS.some((option) => option.id === criterion.value) ? criterion.value : '';
 
   return (
-    <div className="grid gap-2 rounded-xl border border-[#aec19d] bg-[#edf5e5] p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[1.2fr_1fr_1.4fr_auto] lg:items-end">
+    <div className="grid gap-2 rounded-xl border border-[#aec19d] bg-[#edf5e5] p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[1.05fr_1.15fr_0.95fr_1.35fr_auto] lg:items-end">
       <div>
-        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field {index + 1}</label>
+        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-operator-${criterion.id}`}>Logic {index + 1}</label>
+        <select
+          id={`structured-operator-${criterion.id}`}
+          value={selectedOperator.id}
+          onChange={(event) => onChange({ ...criterion, operator: event.target.value })}
+          title={selectedOperator.description}
+          className={INPUT_CLASS}
+        >
+          {STRUCTURED_OPERATOR_OPTIONS.map((option) => (
+            <option key={option.id} value={option.id}>{option.label}</option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field</label>
         <select
           id={`structured-field-${criterion.id}`}
           value={criterion.field}
@@ -829,8 +859,20 @@ export function PeridotSearchWorkspace({
     : 'None selected';
   const appliedStructuredCriteria = normalizeDraftStructuredCriteria(structuredCriteria);
   const normalizedDraftStructuredCriteria = normalizeDraftStructuredCriteria(draftStructuredCriteria);
-  const activeStructuredLabel = appliedStructuredCriteria.length ? `${appliedStructuredCriteria.length} active` : 'None';
-  const draftStructuredLabel = normalizedDraftStructuredCriteria.length ? `${normalizedDraftStructuredCriteria.length} ready` : 'None ready';
+  const summarizeStructuredOperators = (criteria) => {
+    const counts = { must: 0, should: 0, exclude: 0 };
+    criteria.forEach((criterion) => {
+      const operator = STRUCTURED_OPERATOR_OPTIONS.some((option) => option.id === criterion.operator) ? criterion.operator : 'must';
+      counts[operator] += 1;
+    });
+    const parts = [];
+    if (counts.must) parts.push(`${counts.must} must`);
+    if (counts.should) parts.push(`${counts.should} OR`);
+    if (counts.exclude) parts.push(`${counts.exclude} exclude`);
+    return parts.join(' · ');
+  };
+  const activeStructuredLabel = appliedStructuredCriteria.length ? summarizeStructuredOperators(appliedStructuredCriteria) : 'None';
+  const draftStructuredLabel = normalizedDraftStructuredCriteria.length ? summarizeStructuredOperators(normalizedDraftStructuredCriteria) : 'None ready';
   const hiddenSearchResultCount = Math.max(0, (searchRows?.length || 0) - searchResultCards.length);
   const hasDraftChanges = (
     String(draftSearch ?? '') !== String(search ?? '')
@@ -894,6 +936,7 @@ export function PeridotSearchWorkspace({
     if (group.type === 'evidenceField') {
       const nextCriterion = {
         ...createStructuredCriterion(),
+        operator: 'must',
         field: 'evidenceFieldPresent',
         mode: 'contains',
         value: item.value,
@@ -1111,7 +1154,7 @@ export function PeridotSearchWorkspace({
           <div>
             <div className={FIELD_LABEL_CLASS}>Structured criteria</div>
             <p className="mt-1 text-xs leading-5 text-[#4f654d]">
-              Optional implicit-AND criteria. Add up to three fielded rules for narrower searches.
+              Optional fielded rules. Must match rows narrow results, Can also match rows create a simple OR group, and Exclude rows remove matching records.
             </p>
           </div>
           <div className="rounded-full border border-[#9db48e] bg-[#edf5e5] px-3 py-1 text-xs font-bold text-[#38553d]">
@@ -1139,7 +1182,7 @@ export function PeridotSearchWorkspace({
         )}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs leading-5 text-[#4f654d]">
-            Applied: {activeStructuredLabel}. Criteria are combined with the existing fields when Apply Filters is pressed.
+            Applied: {activeStructuredLabel}. Base filters still apply first; Must match, Can also match, and Exclude rows are evaluated when Apply Filters is pressed.
           </p>
           <button
             type="button"
