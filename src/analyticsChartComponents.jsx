@@ -14,21 +14,22 @@
  */
 
 import React, { useState } from 'react';
+import { PERIDOT_COLORS } from './peridotColorPalette.js';
 
 const CHART_COLORS = {
-  cardBg: '#fbf8f1',
-  chartBg: '#fbf8f1',
-  text: '#2f372f',
-  mutedText: '#6a7263',
-  grid: '#d8d0bf',
-  accent: '#6f8a4f',
-  accentDark: '#435b31',
-  accentLight: '#cfe0b6',
-  hoverFill: '#9aae75',
-  white: '#ffffff',
+  cardBg: PERIDOT_COLORS.HEX_FBF8F1,
+  chartBg: PERIDOT_COLORS.HEX_FBF8F1,
+  text: PERIDOT_COLORS.HEX_2F372F,
+  mutedText: PERIDOT_COLORS.HEX_6A7263,
+  grid: PERIDOT_COLORS.HEX_D8D0BF,
+  accent: PERIDOT_COLORS.HEX_6F8A4F,
+  accentDark: PERIDOT_COLORS.HEX_435B31,
+  accentLight: PERIDOT_COLORS.HEX_CFE0B6,
+  hoverFill: PERIDOT_COLORS.HEX_9AAE75,
+  white: PERIDOT_COLORS.HEX_FFFFFF,
 };
 
-const PALETTE = ['#6f8a4f', '#9aae75', '#435b31', '#c4a15a', '#8f6f4e', '#607d8b', '#8a6f9e', '#b7796b', '#4f8277', '#a8a05f'];
+const PALETTE = [PERIDOT_COLORS.HEX_6F8A4F, PERIDOT_COLORS.HEX_9AAE75, PERIDOT_COLORS.HEX_435B31, PERIDOT_COLORS.HEX_C4A15A, PERIDOT_COLORS.HEX_8F6F4E, PERIDOT_COLORS.HEX_607D8B, PERIDOT_COLORS.HEX_8A6F9E, PERIDOT_COLORS.HEX_B7796B, PERIDOT_COLORS.HEX_4F8277, PERIDOT_COLORS.HEX_A8A05F];
 
 function formatNumber(value) {
   return Number(value || 0).toLocaleString();

@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ANALYTICS_AGGREGATION_OPTIONS, ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
 import { buildAnalyticsChartData, getAnalyticsYearRange } from './analyticsDerivationHelpers';
+import { PERIDOT_COLORS } from './peridotColorPalette.js';
 
 function buttonClassName({ active = false } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
@@ -87,7 +88,7 @@ async function exportSvgElementToPng(svgElement, filename) {
 
     if (!context) throw new Error('Unable to create a canvas context for chart export.');
 
-    context.fillStyle = '#fbf8f1';
+    context.fillStyle = PERIDOT_COLORS.HEX_FBF8F1;
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(image, 0, 0, canvas.width, canvas.height);
 

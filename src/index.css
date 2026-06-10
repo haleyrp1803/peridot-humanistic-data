@@ -1,3 +1,60 @@
+/* Peridot generated color variables. */
+:root {
+  --peridot-color-hex-03160f: #03160f;
+  --peridot-color-hex-04160f: #04160f;
+  --peridot-color-hex-082417: #082417;
+  --peridot-color-hex-26352b: #26352b;
+  --peridot-color-hex-5c724d: #5c724d;
+  --peridot-color-hex-6d8b53: #6d8b53;
+  --peridot-color-hex-b58b42: #b58b42;
+  --peridot-color-hex-c4d79a: #c4d79a;
+  --peridot-color-hex-f4eedb: #f4eedb;
+  --peridot-color-hex-f5ecd2: #f5ecd2;
+  --peridot-color-hex-f7f2df: #f7f2df;
+  --peridot-color-hex-fbf7ea: #fbf7ea;
+  --peridot-color-hex-fff8e8: #fff8e8;
+  --peridot-color-rgba-rgba-0-0-0-0-24: rgba(0, 0, 0, 0.24);
+  --peridot-color-rgba-rgba-0-0-0-0-26: rgba(0, 0, 0, 0.26);
+  --peridot-color-rgba-rgba-0-0-0-0-32: rgba(0, 0, 0, 0.32);
+  --peridot-color-rgba-rgba-0-0-0-0-42: rgba(0, 0, 0, 0.42);
+  --peridot-color-rgba-rgba-119-154-92-0-12: rgba(119, 154, 92, 0.12);
+  --peridot-color-rgba-rgba-11-45-29-0-88: rgba(11, 45, 29, 0.88);
+  --peridot-color-rgba-rgba-181-139-66-0-22: rgba(181, 139, 66, 0.22);
+  --peridot-color-rgba-rgba-181-139-66-0-88: rgba(181, 139, 66, 0.88);
+  --peridot-color-rgba-rgba-196-224-239-0-82: rgba(196, 224, 239, 0.82);
+  --peridot-color-rgba-rgba-214-163-106-0-92: rgba(214, 163, 106, 0.92);
+  --peridot-color-rgba-rgba-223-233-200-0-10: rgba(223, 233, 200, 0.10);
+  --peridot-color-rgba-rgba-223-233-200-0-32: rgba(223, 233, 200, 0.32);
+  --peridot-color-rgba-rgba-223-233-200-0-48: rgba(223, 233, 200, 0.48);
+  --peridot-color-rgba-rgba-223-233-200-0-54: rgba(223, 233, 200, 0.54);
+  --peridot-color-rgba-rgba-223-233-200-0-55: rgba(223, 233, 200, 0.55);
+  --peridot-color-rgba-rgba-223-233-200-0-58: rgba(223, 233, 200, 0.58);
+  --peridot-color-rgba-rgba-223-233-200-0-78: rgba(223, 233, 200, 0.78);
+  --peridot-color-rgba-rgba-244-239-213-0-035: rgba(244, 239, 213, 0.035);
+  --peridot-color-rgba-rgba-245-236-210-0-82: rgba(245, 236, 210, 0.82);
+  --peridot-color-rgba-rgba-245-236-210-0-86: rgba(245, 236, 210, 0.86);
+  --peridot-color-rgba-rgba-245-236-210-0-88: rgba(245, 236, 210, 0.88);
+  --peridot-color-rgba-rgba-247-242-223-0-88: rgba(247, 242, 223, 0.88);
+  --peridot-color-rgba-rgba-248-243-225-0-94: rgba(248, 243, 225, 0.94);
+  --peridot-color-rgba-rgba-251-247-234-0-58: rgba(251, 247, 234, 0.58);
+  --peridot-color-rgba-rgba-255-252-241-0-72: rgba(255, 252, 241, 0.72);
+  --peridot-color-rgba-rgba-255-252-241-0-88: rgba(255, 252, 241, 0.88);
+  --peridot-color-rgba-rgba-255-255-255-0-04: rgba(255, 255, 255, 0.04);
+  --peridot-color-rgba-rgba-4-24-16-0-62: rgba(4, 24, 16, 0.62);
+  --peridot-color-rgba-rgba-5-29-19-0-96: rgba(5, 29, 19, 0.96);
+  --peridot-color-rgba-rgba-82-119-75-0-28: rgba(82, 119, 75, 0.28);
+  --peridot-color-rgba-rgba-86-52-22-0-24: rgba(86, 52, 22, 0.24);
+  --peridot-color-rgba-rgba-86-52-22-0-30: rgba(86, 52, 22, 0.30);
+  --peridot-color-rgba-rgba-86-52-22-0-32: rgba(86, 52, 22, 0.32);
+  --peridot-color-rgba-rgba-86-52-22-0-34: rgba(86, 52, 22, 0.34);
+  --peridot-color-rgba-rgba-8-39-25-0-95: rgba(8, 39, 25, 0.95);
+  --peridot-color-rgba-rgba-95-113-74-0-25: rgba(95, 113, 74, 0.25);
+  --peridot-color-rgba-rgba-95-113-74-0-28: rgba(95, 113, 74, 0.28);
+  --peridot-color-rgba-rgba-96-122-78-0-38: rgba(96, 122, 78, 0.38);
+  --peridot-color-rgba-rgba-97-132-77-0-88: rgba(97, 132, 77, 0.88);
+  --peridot-color-rgba-rgba-99-68-28-0-46: rgba(99, 68, 28, 0.46);
+}
+
 /*
  * Global CSS layer for Peridot.
  * 
@@ -38,11 +95,11 @@ textarea {
   height: 100%;
   min-height: 0;
   overflow: auto;
-  color: #f7f2df;
+  color: var(--peridot-color-hex-f7f2df);
   background:
-    radial-gradient(circle at 50% 18%, rgba(82, 119, 75, 0.28), transparent 34rem),
-    radial-gradient(circle at 12% 78%, rgba(119, 154, 92, 0.12), transparent 30rem),
-    linear-gradient(135deg, #03160f 0%, #082417 46%, #04160f 100%);
+    radial-gradient(circle at 50% 18%, var(--peridot-color-rgba-rgba-82-119-75-0-28), transparent 34rem),
+    radial-gradient(circle at 12% 78%, var(--peridot-color-rgba-rgba-119-154-92-0-12), transparent 30rem),
+    linear-gradient(135deg, var(--peridot-color-hex-03160f) 0%, var(--peridot-color-hex-082417) 46%, var(--peridot-color-hex-04160f) 100%);
   background-attachment: fixed;
 }
 
@@ -51,7 +108,7 @@ textarea {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image: repeating-linear-gradient(135deg, rgba(244, 239, 213, 0.035) 0 1px, transparent 1px 14px);
+  background-image: repeating-linear-gradient(135deg, var(--peridot-color-rgba-rgba-244-239-213-0-035) 0 1px, transparent 1px 14px);
   opacity: 0.48;
 }
 
@@ -72,16 +129,16 @@ textarea {
 }
 
 .peridot-hero-card {
-  border: 1px solid rgba(196, 224, 239, 0.82);
+  border: 1px solid var(--peridot-color-rgba-rgba-196-224-239-0-82);
   border-radius: 34px;
-  background: linear-gradient(135deg, rgba(8, 39, 25, 0.95), rgba(5, 29, 19, 0.96));
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: linear-gradient(135deg, var(--peridot-color-rgba-rgba-8-39-25-0-95), var(--peridot-color-rgba-rgba-5-29-19-0-96));
+  box-shadow: 0 24px 70px var(--peridot-color-rgba-rgba-0-0-0-0-42), inset 0 1px 0 var(--peridot-color-rgba-rgba-255-255-255-0-04);
   padding: clamp(1.6rem, 3vw, 2.8rem);
 }
 
 .peridot-kicker {
   margin: 0 0 0.65rem;
-  color: #c4d79a;
+  color: var(--peridot-color-hex-c4d79a);
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.28em;
@@ -90,17 +147,17 @@ textarea {
 
 .peridot-display-title {
   margin: 0;
-  color: #f5ecd2;
+  color: var(--peridot-color-hex-f5ecd2);
   font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
   font-size: clamp(2.35rem, 5vw, 4.6rem);
   line-height: 0.95;
   letter-spacing: -0.045em;
-  text-shadow: 0 8px 28px rgba(0, 0, 0, 0.32);
+  text-shadow: 0 8px 28px var(--peridot-color-rgba-rgba-0-0-0-0-32);
 }
 
 .peridot-title-medium {
   margin: 0;
-  color: #f5ecd2;
+  color: var(--peridot-color-hex-f5ecd2);
   font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
   font-size: clamp(2rem, 3.2vw, 3.4rem);
   line-height: 1;
@@ -110,7 +167,7 @@ textarea {
 .peridot-lede {
   max-width: 760px;
   margin-top: 1.2rem;
-  color: rgba(247, 242, 223, 0.88);
+  color: var(--peridot-color-rgba-rgba-247-242-223-0-88);
   font-size: 1rem;
   line-height: 1.75;
 }
@@ -137,23 +194,23 @@ textarea {
 
 .peridot-action-card,
 .peridot-surface-card {
-  border: 1px solid rgba(223, 233, 200, 0.32);
+  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-32);
   border-radius: 26px;
-  background: rgba(97, 132, 77, 0.88);
-  color: #fbf7ea;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26);
+  background: var(--peridot-color-rgba-rgba-97-132-77-0-88);
+  color: var(--peridot-color-hex-fbf7ea);
+  box-shadow: 0 18px 42px var(--peridot-color-rgba-rgba-0-0-0-0-26);
 }
 
 .peridot-surface-card {
-  background: rgba(11, 45, 29, 0.88);
+  background: var(--peridot-color-rgba-rgba-11-45-29-0-88);
 }
 
 .peridot-cream-card {
-  border: 1px solid rgba(223, 233, 200, 0.58);
+  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-58);
   border-radius: 26px;
-  background: rgba(248, 243, 225, 0.94);
-  color: #26352b;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.24);
+  background: var(--peridot-color-rgba-rgba-248-243-225-0-94);
+  color: var(--peridot-color-hex-26352b);
+  box-shadow: 0 18px 42px var(--peridot-color-rgba-rgba-0-0-0-0-24);
 }
 
 .peridot-card-inner {
@@ -161,7 +218,7 @@ textarea {
 }
 
 .peridot-section-label {
-  color: rgba(223, 233, 200, 0.78);
+  color: var(--peridot-color-rgba-rgba-223-233-200-0-78);
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.18em;
@@ -169,7 +226,7 @@ textarea {
 }
 
 .peridot-cream-card .peridot-section-label {
-  color: #5c724d;
+  color: var(--peridot-color-hex-5c724d);
 }
 
 .peridot-button-primary,
@@ -187,45 +244,45 @@ textarea {
 }
 
 .peridot-button-primary {
-  border: 1px solid rgba(223, 233, 200, 0.55);
-  background: #6d8b53;
-  color: #fbf7ea;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-55);
+  background: var(--peridot-color-hex-6d8b53);
+  color: var(--peridot-color-hex-fbf7ea);
+  box-shadow: 0 10px 22px var(--peridot-color-rgba-rgba-0-0-0-0-24);
 }
 
 .peridot-button-primary:hover {
-  background: #b58b42;
-  border-color: rgba(245, 236, 210, 0.88);
-  color: #fff8e8;
-  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.34);
+  background: var(--peridot-color-hex-b58b42);
+  border-color: var(--peridot-color-rgba-rgba-245-236-210-0-88);
+  color: var(--peridot-color-hex-fff8e8);
+  box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-34);
   transform: translateY(-1px);
 }
 
 .peridot-button-secondary {
-  border: 1px solid rgba(223, 233, 200, 0.48);
-  background: rgba(223, 233, 200, 0.10);
-  color: #fbf7ea;
+  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-48);
+  background: var(--peridot-color-rgba-rgba-223-233-200-0-10);
+  color: var(--peridot-color-hex-fbf7ea);
 }
 
 .peridot-button-secondary:hover {
-  background: rgba(181, 139, 66, 0.88);
-  border-color: rgba(245, 236, 210, 0.82);
-  color: #fff8e8;
-  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.30);
+  background: var(--peridot-color-rgba-rgba-181-139-66-0-88);
+  border-color: var(--peridot-color-rgba-rgba-245-236-210-0-82);
+  color: var(--peridot-color-hex-fff8e8);
+  box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-30);
   transform: translateY(-1px);
 }
 
 .peridot-button-cream {
-  border: 1px solid rgba(96, 122, 78, 0.38);
-  background: #f4eedb;
-  color: #26352b;
+  border: 1px solid var(--peridot-color-rgba-rgba-96-122-78-0-38);
+  background: var(--peridot-color-hex-f4eedb);
+  color: var(--peridot-color-hex-26352b);
 }
 
 .peridot-button-cream:hover {
-  background: #b58b42;
-  border-color: rgba(99, 68, 28, 0.46);
-  color: #fff8e8;
-  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.24);
+  background: var(--peridot-color-hex-b58b42);
+  border-color: var(--peridot-color-rgba-rgba-99-68-28-0-46);
+  color: var(--peridot-color-hex-fff8e8);
+  box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-24);
   transform: translateY(-1px);
 }
 
@@ -240,35 +297,35 @@ textarea {
 .peridot-form-input,
 .peridot-form-select {
   width: 100%;
-  border: 1px solid rgba(223, 233, 200, 0.54);
+  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-54);
   border-radius: 14px;
-  background: rgba(4, 24, 16, 0.62);
-  color: #fbf7ea;
+  background: var(--peridot-color-rgba-rgba-4-24-16-0-62);
+  color: var(--peridot-color-hex-fbf7ea);
   padding: 0.65rem 0.78rem;
   outline: none;
 }
 
-.peridot-form-input::placeholder { color: rgba(251, 247, 234, 0.58); }
+.peridot-form-input::placeholder { color: var(--peridot-color-rgba-rgba-251-247-234-0-58); }
 .peridot-form-input:focus,
 .peridot-form-select:focus {
-  border-color: rgba(214, 163, 106, 0.92);
-  box-shadow: 0 0 0 3px rgba(181, 139, 66, 0.22);
+  border-color: var(--peridot-color-rgba-rgba-214-163-106-0-92);
+  box-shadow: 0 0 0 3px var(--peridot-color-rgba-rgba-181-139-66-0-22);
 }
 
 .peridot-cream-card .peridot-form-input,
 .peridot-cream-card .peridot-form-select,
 .peridot-mapping-modal .peridot-form-input,
 .peridot-mapping-modal .peridot-form-select {
-  background: rgba(255, 252, 241, 0.88);
-  color: #26352b;
-  border-color: rgba(95, 113, 74, 0.28);
+  background: var(--peridot-color-rgba-rgba-255-252-241-0-88);
+  color: var(--peridot-color-hex-26352b);
+  border-color: var(--peridot-color-rgba-rgba-95-113-74-0-28);
 }
 
 .peridot-table-wrap {
   overflow-x: auto;
-  border: 1px solid rgba(95, 113, 74, 0.25);
+  border: 1px solid var(--peridot-color-rgba-rgba-95-113-74-0-25);
   border-radius: 20px;
-  background: rgba(255, 252, 241, 0.72);
+  background: var(--peridot-color-rgba-rgba-255-252-241-0-72);
 }
 
 .peridot-table-wrap table thead {
@@ -282,15 +339,15 @@ textarea {
 }
 
 .peridot-gold-hover:hover {
-  background: #b58b42 !important;
-  border-color: rgba(245, 236, 210, 0.82) !important;
-  color: #fff8e8 !important;
-  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.30);
+  background: var(--peridot-color-hex-b58b42) !important;
+  border-color: var(--peridot-color-rgba-rgba-245-236-210-0-82) !important;
+  color: var(--peridot-color-hex-fff8e8) !important;
+  box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-30);
 }
 
 .peridot-gold-active {
-  background: #b58b42 !important;
-  border-color: rgba(245, 236, 210, 0.86) !important;
-  color: #fff8e8 !important;
-  box-shadow: 0 12px 28px rgba(86, 52, 22, 0.32);
+  background: var(--peridot-color-hex-b58b42) !important;
+  border-color: var(--peridot-color-rgba-rgba-245-236-210-0-86) !important;
+  color: var(--peridot-color-hex-fff8e8) !important;
+  box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-32);
 }
