@@ -1,4 +1,6 @@
 /*
+ * Explore-direct routing pass.
+ *
  * Main visualization workspace.
  * 
  * This component coordinates the visualization header, visualization-category menus, map/network/chart stage, capability-unavailable states, header Export menu, collapsible header, and bottom Timeline scrubber.
@@ -618,8 +620,9 @@ export function PeridotVisualizationsWorkspace({
     },
     {
       label: 'Explore Your Data',
-      description: 'Capability and search tools',
+      description: 'Advanced search and capabilities',
       tools: [VISUALIZATION_TOOLS.CAPABILITY_SUMMARY],
+      directAction: onOpenExplore,
     },
   ];
 
@@ -713,19 +716,40 @@ export function PeridotVisualizationsWorkspace({
                 <div className="flex flex-col gap-2 xl:flex-row xl:items-stretch">
                   <div className="relative z-[70] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
                     {categories.map((category) => {
-                      const isOpen = openMenuCategory === category.label;
+                      const isDirectAction = typeof category.directAction === 'function';
+                      const isOpen = !isDirectAction && openMenuCategory === category.label;
+                      const handleCategoryClick = () => {
+                        if (isDirectAction) {
+                          closeMenu();
+                          category.directAction();
+                          return;
+                        }
+                        if (isOpen) {
+                          closeMenu();
+                        } else {
+                          openMenu(category.label);
+                        }
+                      };
                       return (
                         <div
                           key={category.label}
                           className={categoryClass(isOpen)}
-                          onMouseEnter={() => openMenu(category.label)}
-                          onMouseLeave={scheduleMenuClose}
-                          onFocus={() => openMenu(category.label)}
+                          onMouseEnter={() => {
+                            if (!isDirectAction) {
+                              openMenu(category.label);
+                            }
+                          }}
+                          onMouseLeave={isDirectAction ? undefined : scheduleMenuClose}
+                          onFocus={() => {
+                            if (!isDirectAction) {
+                              openMenu(category.label);
+                            }
+                          }}
                         >
                           <button
                             type="button"
                             className="w-full px-3 py-2 text-left focus:outline-none"
-                            onClick={() => (isOpen ? closeMenu() : openMenu(category.label))}
+                            onClick={handleCategoryClick}
                             aria-expanded={isOpen}
                           >
                             <span className="block text-sm font-bold">{category.label}</span>

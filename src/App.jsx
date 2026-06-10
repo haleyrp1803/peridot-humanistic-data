@@ -1,4 +1,6 @@
 /*
+ * Explore-direct routing pass.
+ *
  * Peridot application shell and orchestration boundary.
  * 
  * This file is intentionally the broadest file in the app. It owns the top-level React state that has to be shared across workspaces: loaded data, normalized rows, derived graph structures, timeline/playback state, Search & Filter draft/applied state, Inspector selection/history, theme tokens, export wiring, and workspace routing. Most visual surfaces are now delegated to extracted `Peridot*Workspace` and Inspector/map helper components, but this file remains the place where those surfaces are composed and where cross-workflow data dependencies are coordinated.
@@ -4298,7 +4300,8 @@ export default function EuropeNetworkMapApp() {
       setIsSidePanelOpen(false);
     },
     onOpenExplore: () => {
-      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.EXPLORE);
+      // Explore is now the product entry point for Advanced Search and dataset capabilities.
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
       setIsSidePanelOpen(false);
     },
     timelineControlsProps,
@@ -4359,7 +4362,8 @@ export default function EuropeNetworkMapApp() {
   };
 
   const openExploreWorkspaceFromMenu = () => {
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.EXPLORE);
+    // The hamburger Explore entry should open Advanced Search directly.
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
     setIsSidePanelOpen(false);
   };
   const openLearnMoreWorkspaceFromMenu = () => {
