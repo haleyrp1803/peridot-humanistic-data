@@ -882,6 +882,57 @@ export function PeridotSearchWorkspace({
   const activeStructuredLabel = appliedStructuredCriteria.length ? summarizeStructuredOperators(appliedStructuredCriteria) : 'None';
   const draftStructuredLabel = normalizedDraftStructuredCriteria.length ? summarizeStructuredOperators(normalizedDraftStructuredCriteria) : 'None ready';
   const hiddenSearchResultCount = Math.max(0, (searchRows?.length || 0) - searchResultCards.length);
+  const capabilityRows = useMemo(() => {
+    const loadedRecordCount = Array.isArray(browseRows) ? browseRows.length : 0;
+    const activeRecordCount = Array.isArray(searchRows) ? searchRows.length : 0;
+    const visibleNodeCount = graph?.nodes?.length ?? 0;
+    const visibleRouteCount = graph?.edges?.length ?? 0;
+    const diagnosedRowCount = Array.isArray(rowDiagnostics) ? rowDiagnostics.length : 0;
+    return [
+      {
+        label: 'Searchable records',
+        value: `${loadedRecordCount || activeRecordCount || 0} loaded`,
+        ready: (loadedRecordCount || activeRecordCount) > 0,
+        note: 'Records available to Advanced Search, Browse indexes, Inspector handoff, and export workflows.',
+      },
+      {
+        label: 'Current result scope',
+        value: `${activeRecordCount} records`,
+        ready: activeRecordCount > 0,
+        note: 'The currently applied search scope used by Results, facets, Inspector handoff, Visualizations, and Export.',
+      },
+      {
+        label: 'Map entities',
+        value: `${visibleNodeCount} visible nodes`,
+        ready: visibleNodeCount > 0,
+        note: visibleNodeCount > 0
+          ? 'The current scope can display mapped people, places, or point records.'
+          : 'No mapped nodes are available in the current scope.',
+      },
+      {
+        label: 'Routes / relationships',
+        value: `${visibleRouteCount} visible routes`,
+        ready: visibleRouteCount > 0,
+        note: visibleRouteCount > 0
+          ? 'The current scope can display route or relationship edges.'
+          : 'No source-target routes or relationships are available in the current scope.',
+      },
+      {
+        label: 'Capability diagnostics',
+        value: `${diagnosedRowCount} rows diagnosed`,
+        ready: diagnosedRowCount > 0,
+        note: 'Diagnostics summarize which records can support maps, networks, timelines, charts, Inspector, and export.',
+      },
+      {
+        label: 'Chart / export scope',
+        value: activeRecordCount > 0 ? 'Available' : 'Not available',
+        ready: activeRecordCount > 0,
+        note: activeRecordCount > 0
+          ? 'The current applied result scope can be sent to Visualizations and exported through Peridot export controls.'
+          : 'Apply or clear filters to restore records before charting or exporting.',
+      },
+    ];
+  }, [browseRows, graph, rowDiagnostics, searchRows]);
   const hasDraftChanges = (
     String(draftSearch ?? '') !== String(search ?? '')
     || String(draftPersonFilter ?? '') !== String(personFilter ?? '')
@@ -1325,36 +1376,53 @@ export function PeridotSearchWorkspace({
     </div>
   );
 
+  const renderCapabilities = () => (
+    <div className="space-y-4">
+      <SectionHeader eyebrow="Step 5" title="What this data can do">
+        Review the current dataset and applied search scope before moving into visualizations, export, or Inspector evidence review.
+      </SectionHeader>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        {capabilityRows.map((row) => (
+          <article
+            key={row.label}
+            className="rounded-[1.1rem] border border-[#6f836d] bg-[#74897a] p-4 text-[#f7fbf0] shadow-[0_10px_24px_rgba(32,55,40,0.14)]"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[#e8f1de]">Capability</div>
+                <h3 className="mt-1 text-base font-black text-white">{row.label}</h3>
+              </div>
+              <span className={[
+                'rounded-full border px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em]',
+                row.ready
+                  ? 'border-[#dce9d2]/70 bg-[#dce9d2] text-[#244c35]'
+                  : 'border-[#f0d7a8]/70 bg-[#f5e0b6] text-[#5d3d16]',
+              ].join(' ')}>
+                {row.ready ? 'Available' : 'Limited'}
+              </span>
+            </div>
+            <div className="mt-3 rounded-xl border border-[#dce9d2]/35 bg-[#506a57]/55 px-3 py-2 text-sm font-black text-white">
+              {row.value}
+            </div>
+            <p className="mt-3 text-sm leading-6 text-[#f0f6ea]">{row.note}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+
   const renderRefineInspect = () => (
     <div className="space-y-4">
       <SectionHeader eyebrow="Step 4" title="Refine / Inspect">
         Facets summarize the applied result set. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>
 
-      <div className="grid gap-3 lg:grid-cols-3">
-        <div className={PANEL_INSET_CLASS + ' p-3'}>
-          <div className={FIELD_LABEL_CLASS}>Inspector handoff</div>
-          <p className="mt-1 text-sm leading-5 text-[#465d49]">
-            Use <span className="font-black text-[#203729]">Inspect</span> on a result card to open the record in the full evidence workspace.
-          </p>
-        </div>
-        <div className={PANEL_INSET_CLASS + ' p-3 lg:col-span-2'}>
-          <div className={FIELD_LABEL_CLASS}>Data context</div>
-          <dl className="mt-2 grid gap-2 text-sm text-[#465d49] sm:grid-cols-3">
-            <div className="flex justify-between gap-3 rounded-xl bg-[#dce9d2] px-3 py-2">
-              <dt>Visible nodes</dt>
-              <dd className="font-black text-[#203729]">{graph?.nodes?.length ?? 0}</dd>
-            </div>
-            <div className="flex justify-between gap-3 rounded-xl bg-[#dce9d2] px-3 py-2">
-              <dt>Visible routes</dt>
-              <dd className="font-black text-[#203729]">{graph?.edges?.length ?? 0}</dd>
-            </div>
-            <div className="flex justify-between gap-3 rounded-xl bg-[#dce9d2] px-3 py-2">
-              <dt>Rows diagnosed</dt>
-              <dd className="font-black text-[#203729]">{rowDiagnostics?.length ?? 0}</dd>
-            </div>
-          </dl>
-        </div>
+      <div className={PANEL_INSET_CLASS + ' p-3'}>
+        <div className={FIELD_LABEL_CLASS}>Inspector handoff</div>
+        <p className="mt-1 text-sm leading-5 text-[#465d49]">
+          Use <span className="font-black text-[#203729]">Inspect</span> on a result card to open the record in the full evidence workspace. Dataset capability information now lives in the <span className="font-black text-[#203729]">Capabilities</span> tab.
+        </p>
       </div>
 
       {searchFacetGroups.length ? (
@@ -1386,7 +1454,7 @@ export function PeridotSearchWorkspace({
                 <div className="text-[0.66rem] font-black uppercase tracking-[0.22em] text-[#667960]">Search workspace</div>
                 <h1 className="mt-2 text-3xl font-black tracking-tight text-[#263d2e]">Advanced Search</h1>
                 <p className="mt-2 text-sm leading-6 text-[#5a6659]">
-                  Build a draft query, browse dataset-wide indexes, review applied results, refine with facets, and open individual records in Inspector.
+                  Build a draft query, browse dataset-wide indexes, review applied results, refine with facets, check what the data can support, and open records in Inspector.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1418,7 +1486,7 @@ export function PeridotSearchWorkspace({
             </div>
           ) : null}
 
-          <nav className="grid gap-2 border-b border-[#9fb28f] bg-[#b7cda9] p-4 md:grid-cols-2 xl:grid-cols-4" aria-label="Advanced Search workflow tabs">
+          <nav className="grid gap-2 border-b border-[#9fb28f] bg-[#b7cda9] p-4 md:grid-cols-2 xl:grid-cols-5" aria-label="Advanced Search workflow tabs">
             <SearchTabButton
               id="build"
               label="Build Search"
@@ -1447,6 +1515,13 @@ export function PeridotSearchWorkspace({
               active={activeTab === 'refine'}
               onClick={setActiveTab}
             />
+            <SearchTabButton
+              id="capabilities"
+              label="Capabilities"
+              summary="What this data can do"
+              active={activeTab === 'capabilities'}
+              onClick={setActiveTab}
+            />
           </nav>
 
           <main className="bg-[#cfdfc5] p-4">
@@ -1455,6 +1530,7 @@ export function PeridotSearchWorkspace({
               {activeTab === 'browse' ? renderBrowse() : null}
               {activeTab === 'results' ? renderResults() : null}
               {activeTab === 'refine' ? renderRefineInspect() : null}
+              {activeTab === 'capabilities' ? renderCapabilities() : null}
             </div>
           </main>
         </div>
