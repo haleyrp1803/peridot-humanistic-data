@@ -68,11 +68,11 @@ function CompatibilityStatusPill({ available, light = false }) {
         'shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold uppercase tracking-[0.16em]',
         light
           ? available
-            ? 'border-[#5f7f4f] bg-[#dfe9c8] text-[#173120]'
-            : 'border-[#9b6f2f] bg-[#f0d9a8] text-[#4c3216]'
+            ? 'border-[var(--peridot-color-hex-5f7f4f)] bg-[var(--peridot-color-hex-dfe9c8)] text-[var(--peridot-color-hex-173120)]'
+            : 'border-[var(--peridot-color-hex-9b6f2f)] bg-[var(--peridot-color-hex-f0d9a8)] text-[var(--peridot-color-hex-4c3216)]'
           : available
-            ? 'border-[#dfe9c8]/80 bg-[#dfe9c8]/30 text-[#fff8e8]'
-            : 'border-[#e7c27d] bg-[#b58b42]/35 text-[#fff2cf]',
+            ? 'border-[var(--peridot-color-hex-dfe9c8-a80)] bg-[var(--peridot-color-hex-dfe9c8-a30)] text-[var(--peridot-color-hex-fff8e8)]'
+            : 'border-[var(--peridot-color-hex-e7c27d)] bg-[var(--peridot-color-hex-b58b42-a35)] text-[var(--peridot-color-hex-fff2cf)]',
       ].join(' ')}
     >
       {available ? 'Available' : 'Not available'}
@@ -87,22 +87,22 @@ function UnavailableVisualizationState({
   counts = [],
 }) {
   return (
-    <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-[28px] border border-[#c4e0ef]/50 bg-[#071f16] p-5 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
-      <div className="w-full max-w-4xl rounded-[28px] border border-[#dfe9c8]/50 bg-[#f8f4e6] p-6 text-[#24382d] shadow-[0_18px_46px_rgba(0,0,0,0.22)]">
-        <p className="peridot-kicker text-[11px] text-[#66815b]">Visualization compatibility</p>
-        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[#132a20]">
+    <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--peridot-color-hex-071f16)] p-5 shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
+      <div className="w-full max-w-4xl rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a50)] bg-[var(--peridot-color-hex-f8f4e6)] p-6 text-[var(--peridot-color-hex-24382d)] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-22)]">
+        <p className="peridot-kicker text-[11px] text-[var(--peridot-color-hex-66815b)]">Visualization compatibility</p>
+        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-132a20)]">
           {title}
         </h2>
-        <div className="mt-4 rounded-2xl border border-[#d5c7a8] bg-[#f3ecd9] p-4">
-          <h3 className="text-sm font-bold text-[#25382d]">Why</h3>
-          <p className="mt-2 text-sm leading-relaxed text-[#4b5c50]">{why}</p>
+        <div className="mt-4 rounded-2xl border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-f3ecd9)] p-4">
+          <h3 className="text-sm font-bold text-[var(--peridot-color-hex-25382d)]">Why</h3>
+          <p className="mt-2 text-sm leading-relaxed text-[var(--peridot-color-hex-4b5c50)]">{why}</p>
         </div>
         {availableInstead.length ? (
-          <div className="mt-4 rounded-2xl border border-[#cbdab2] bg-[#edf4df] p-4">
-            <h3 className="text-sm font-bold text-[#25382d]">Available instead</h3>
+          <div className="mt-4 rounded-2xl border border-[var(--peridot-color-hex-cbdab2)] bg-[var(--peridot-color-hex-edf4df)] p-4">
+            <h3 className="text-sm font-bold text-[var(--peridot-color-hex-25382d)]">Available instead</h3>
             <div className="mt-3 flex flex-wrap gap-2">
               {availableInstead.map((item) => (
-                <span key={item} className="rounded-full border border-[#8aa36d]/50 bg-[#dfe9c8] px-3 py-1 text-sm font-semibold text-[#26382b]">
+                <span key={item} className="rounded-full border border-[var(--peridot-color-hex-8aa36d-a50)] bg-[var(--peridot-color-hex-dfe9c8)] px-3 py-1 text-sm font-semibold text-[var(--peridot-color-hex-26382b)]">
                   {item}
                 </span>
               ))}
@@ -112,9 +112,9 @@ function UnavailableVisualizationState({
         {counts.length ? (
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {counts.map((item) => (
-              <div key={item.label} className="rounded-2xl border border-[#d5c7a8] bg-[#fffdf6] p-3">
-                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#6a7b65]">{item.label}</div>
-                <div className="mt-1 text-xl font-bold text-[#172b20]">{item.value}</div>
+              <div key={item.label} className="rounded-2xl border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fffdf6)] p-3">
+                <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-6a7b65)]">{item.label}</div>
+                <div className="mt-1 text-xl font-bold text-[var(--peridot-color-hex-172b20)]">{item.value}</div>
               </div>
             ))}
           </div>
@@ -161,13 +161,13 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
   ];
 
   return (
-    <div className="min-h-0 flex-1 overflow-auto rounded-[28px] border border-[#c4e0ef]/50 bg-[#071f16] p-4 shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
-      <div className="rounded-[28px] border border-[#dfe9c8]/50 bg-[#f8f4e6] p-5 text-[#24382d]">
-        <p className="peridot-kicker text-[11px] text-[#66815b]">Explore your data</p>
-        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[#132a20]">
+    <div className="min-h-0 flex-1 overflow-auto rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--peridot-color-hex-071f16)] p-4 shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
+      <div className="rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a50)] bg-[var(--peridot-color-hex-f8f4e6)] p-5 text-[var(--peridot-color-hex-24382d)]">
+        <p className="peridot-kicker text-[11px] text-[var(--peridot-color-hex-66815b)]">Explore your data</p>
+        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-132a20)]">
           Dataset capability summary
         </h2>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#52675a]">
+        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--peridot-color-hex-52675a)]">
           Peridot now treats datasets as records with mapped roles. Some datasets support maps, some support networks, some support charts, and some are best explored as evidence records.
         </p>
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -177,16 +177,16 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
               className={[
                 'rounded-2xl border p-4',
                 row.ready
-                  ? 'border-[#8aa36d]/60 bg-[#dfe9c8]'
-                  : 'border-[#d5c7a8] bg-[#f3ecd9]',
+                  ? 'border-[var(--peridot-color-hex-8aa36d-a60)] bg-[var(--peridot-color-hex-dfe9c8)]'
+                  : 'border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-f3ecd9)]',
               ].join(' ')}
             >
               <div className="flex items-start justify-between gap-3">
-                <h3 className="font-bold text-[#172b20]">{row.label}</h3>
+                <h3 className="font-bold text-[var(--peridot-color-hex-172b20)]">{row.label}</h3>
                 <CompatibilityStatusPill available={row.ready} />
               </div>
-              <div className="mt-3 text-xl font-bold text-[#172b20]">{row.value}</div>
-              <p className="mt-2 text-sm leading-relaxed text-[#4e6255]">{row.note}</p>
+              <div className="mt-3 text-xl font-bold text-[var(--peridot-color-hex-172b20)]">{row.value}</div>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--peridot-color-hex-4e6255)]">{row.note}</p>
             </div>
           ))}
         </div>
@@ -194,7 +194,7 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
           <button
             type="button"
             onClick={onOpenSearch}
-            className="mt-5 rounded-full border border-[#8aa36d]/60 bg-[#edf4df] px-4 py-2 text-sm font-bold text-[#203429] transition hover:border-[#f5ecd2]/90 hover:bg-[#b58b42] hover:text-[#fff8e8] focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60"
+            className="mt-5 rounded-full border border-[var(--peridot-color-hex-8aa36d-a60)] bg-[var(--peridot-color-hex-edf4df)] px-4 py-2 text-sm font-bold text-[var(--peridot-color-hex-203429)] transition hover:border-[var(--peridot-color-hex-f5ecd2-a90)] hover:bg-[var(--peridot-color-hex-b58b42)] hover:text-[var(--peridot-color-hex-fff8e8)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
           >
             Open Search & Filter
           </button>
@@ -264,23 +264,23 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
 
   const buttonClass = compact
     ? [
-      'rounded-full border px-3 py-1 text-[11px] font-bold transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+      'rounded-full border px-3 py-1 text-[11px] font-bold transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
       isOpen
-        ? 'border-[#f5ecd2]/90 bg-[#b58b42] text-[#fff8e8]'
-        : 'border-[#dfe9c8]/45 bg-[#dfe9c8]/10 text-[#f5ecd2] hover:border-[#f5ecd2]/90 hover:bg-[#b58b42]',
+        ? 'border-[var(--peridot-color-hex-f5ecd2-a90)] bg-[var(--peridot-color-hex-b58b42)] text-[var(--peridot-color-hex-fff8e8)]'
+        : 'border-[var(--peridot-color-hex-dfe9c8-a45)] bg-[var(--peridot-color-hex-dfe9c8-a10)] text-[var(--peridot-color-hex-f5ecd2)] hover:border-[var(--peridot-color-hex-f5ecd2-a90)] hover:bg-[var(--peridot-color-hex-b58b42)]',
     ].join(' ')
     : [
-      'w-full rounded-2xl border px-3 py-2 text-left text-[#fbf7ea] transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+      'w-full rounded-2xl border px-3 py-2 text-left text-[var(--peridot-color-hex-fbf7ea)] transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
       isOpen
-        ? 'border-[#f5ecd2]/90 bg-[#b58b42]/75 shadow-[0_12px_28px_rgba(0,0,0,0.26)]'
-        : 'border-[#dfe9c8]/40 bg-[#dfe9c8]/10 hover:border-[#f5ecd2]/80 hover:bg-[#b58b42]/70',
+        ? 'border-[var(--peridot-color-hex-f5ecd2-a90)] bg-[var(--peridot-color-hex-b58b42-a75)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]'
+        : 'border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-dfe9c8-a10)] hover:border-[var(--peridot-color-hex-f5ecd2-a80)] hover:bg-[var(--peridot-color-hex-b58b42-a70)]',
     ].join(' ');
 
   const actionButtonClass = (enabled = true) => [
-    'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+    'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
     enabled
-      ? 'text-[#1d3326] hover:bg-[#dfe9c8]'
-      : 'cursor-not-allowed text-[#6f6554] hover:bg-[#f3e4bf]',
+      ? 'text-[var(--peridot-color-hex-1d3326)] hover:bg-[var(--peridot-color-hex-dfe9c8)]'
+      : 'cursor-not-allowed text-[var(--peridot-color-hex-6f6554)] hover:bg-[var(--peridot-color-hex-f3e4bf)]',
   ].join(' ');
 
   const runAction = (handler) => {
@@ -310,7 +310,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
         ) : (
           <>
             <span className="block text-sm font-bold">Export</span>
-            <span className="mt-1 block text-[11px] leading-snug text-[#dfe9c8]">
+            <span className="mt-1 block text-[11px] leading-snug text-[var(--peridot-color-hex-dfe9c8)]">
               {isChartExportMenu ? 'PNG export' : 'SVG, PNG, and CSV'}
             </span>
           </>
@@ -325,12 +325,12 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
             onMouseEnter={openMenu}
           />
           <div
-            className="absolute right-0 top-[calc(100%+10px)] z-[120] w-[300px] rounded-2xl border border-[#bfa46d] bg-[#fffaf0] p-2 text-[#203429] shadow-[0_18px_38px_rgba(0,0,0,0.36)]"
+            className="absolute right-0 top-[calc(100%+10px)] z-[120] w-[300px] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
             onMouseEnter={openMenu}
             onMouseLeave={scheduleClose}
             onFocus={openMenu}
           >
-            <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-[#6f6554]">
+            <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-6f6554)]">
               Export {activeVisualizationLabel}
             </div>
 
@@ -344,7 +344,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
                 >
                   <span>Export chart PNG</span>
                   {chartCount !== null ? (
-                    <span className="shrink-0 rounded-full border border-[#d8c79a] bg-[#f5ecd2] px-2 py-0.5 text-[10px] font-bold text-[#6f6554]">
+                    <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
                       {chartCount}
                     </span>
                   ) : null}
@@ -379,7 +379,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
                   disabled={!canExportNodes}
                 >
                   <span>Export nodes CSV</span>
-                  <span className="shrink-0 rounded-full border border-[#d8c79a] bg-[#f5ecd2] px-2 py-0.5 text-[10px] font-bold text-[#6f6554]">
+                  <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
                     {nodeCount}
                   </span>
                 </button>
@@ -392,7 +392,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
                   disabled={!canExportEdges}
                 >
                   <span>Export routes / edges CSV</span>
-                  <span className="shrink-0 rounded-full border border-[#d8c79a] bg-[#f5ecd2] px-2 py-0.5 text-[10px] font-bold text-[#6f6554]">
+                  <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
                     {edgeCount}
                   </span>
                 </button>
@@ -404,8 +404,8 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
                 className={[
                   'mx-1 mt-3 rounded-xl border p-3 text-xs leading-relaxed',
                   exportStatus.kind === 'error'
-                    ? 'border-red-300 bg-red-50 text-red-800'
-                    : 'border-[#cbdab2] bg-[#edf4df] text-[#26382b]',
+                    ? 'border-[var(--peridot-role-status-danger-border)] bg-[var(--peridot-role-status-danger-text)] text-[var(--peridot-role-status-danger-bg)]'
+                    : 'border-[var(--peridot-color-hex-cbdab2)] bg-[var(--peridot-color-hex-edf4df)] text-[var(--peridot-color-hex-26382b)]',
                 ].join(' ')}
               >
                 {exportStatus.message}
@@ -636,18 +636,18 @@ export function PeridotVisualizationsWorkspace({
   };
 
   const categoryClass = (active) => [
-    'relative rounded-2xl border text-[#fbf7ea] transition focus-within:ring-2 focus-within:ring-[#d6a36a]/60',
+    'relative rounded-2xl border text-[var(--peridot-color-hex-fbf7ea)] transition focus-within:ring-2 focus-within:ring-[var(--peridot-color-hex-d6a36a-a60)]',
     active
-      ? 'border-[#f5ecd2]/90 bg-[#b58b42]/75 shadow-[0_12px_28px_rgba(0,0,0,0.26)]'
-      : 'border-[#dfe9c8]/40 bg-[#dfe9c8]/10 hover:border-[#f5ecd2]/80 hover:bg-[#b58b42]/70',
+      ? 'border-[var(--peridot-color-hex-f5ecd2-a90)] bg-[var(--peridot-color-hex-b58b42-a75)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]'
+      : 'border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-dfe9c8-a10)] hover:border-[var(--peridot-color-hex-f5ecd2-a80)] hover:bg-[var(--peridot-color-hex-b58b42-a70)]',
   ].join(' ');
   const menuItemClass = (active, available) => [
-    'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/60',
+    'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
     active
-      ? 'bg-[#b58b42] font-bold text-[#fff8e8] shadow-inner'
+      ? 'bg-[var(--peridot-color-hex-b58b42)] font-bold text-[var(--peridot-color-hex-fff8e8)] shadow-inner'
       : available
-        ? 'text-[#1d3326] hover:bg-[#dfe9c8]'
-        : 'text-[#4f4330] hover:bg-[#f3e4bf]',
+        ? 'text-[var(--peridot-color-hex-1d3326)] hover:bg-[var(--peridot-color-hex-dfe9c8)]'
+        : 'text-[var(--peridot-color-hex-4f4330)] hover:bg-[var(--peridot-color-hex-f3e4bf)]',
   ].join(' ');
 
   const counts = [
@@ -678,7 +678,7 @@ export function PeridotVisualizationsWorkspace({
 
     if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
       return (
-        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[#c4e0ef]/50 bg-[rgba(8,39,25,0.9)] p-2 shadow-[0_20px_54px_rgba(0,0,0,0.34)] backdrop-blur-sm md:p-3">
+        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--peridot-color-rgba-rgba-8-39-25-0-9)] p-2 shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm md:p-3">
           <AnalyticsPanelContent
             analyticsState={analyticsWorkspaceProps.analyticsState}
             onChartExportControlsChange={setChartExportControls}
@@ -688,19 +688,19 @@ export function PeridotVisualizationsWorkspace({
     }
 
     return (
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[#c4e0ef]/50 bg-[var(--map-water)] shadow-[0_20px_54px_rgba(0,0,0,0.34)]">
+      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--map-water)] shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
         <MapStageComponent {...mapStageProps} />
       </div>
     );
   };
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[#04160f] text-[#fbf7ea]">
+    <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--peridot-color-hex-04160f)] text-[var(--peridot-color-hex-fbf7ea)]">
       <div className="peridot-workspace-field flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
           <div
             className={[
-              'relative z-50 shrink-0 rounded-[28px] border border-[#c4e0ef]/70 bg-[linear-gradient(135deg,rgba(8,39,25,0.95),rgba(5,29,19,0.96))] pl-[76px] shadow-[0_18px_46px_rgba(0,0,0,0.34)] backdrop-blur-sm sm:pl-[80px]',
+              'relative z-50 shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
               isHeaderExpanded ? 'px-4 pb-4 pt-3' : 'px-4 py-2',
             ].join(' ')}
           >
@@ -708,7 +708,7 @@ export function PeridotVisualizationsWorkspace({
               <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                 <div className="min-w-0">
                   <p className="peridot-kicker !mb-0 text-[10px]">Visualization workspace</p>
-                  <h1 className="mt-1 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#f5ecd2] md:text-3xl">
+                  <h1 className="mt-1 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-f5ecd2)] md:text-3xl">
                     {activeVisualizationLabel}
                   </h1>
                 </div>
@@ -753,7 +753,7 @@ export function PeridotVisualizationsWorkspace({
                             aria-expanded={isOpen}
                           >
                             <span className="block text-sm font-bold">{category.label}</span>
-                            <span className="mt-1 block text-[11px] leading-snug text-[#dfe9c8]">{category.description}</span>
+                            <span className="mt-1 block text-[11px] leading-snug text-[var(--peridot-color-hex-dfe9c8)]">{category.description}</span>
                           </button>
                           {isOpen ? (
                             <>
@@ -763,7 +763,7 @@ export function PeridotVisualizationsWorkspace({
                                 onMouseEnter={() => openMenu(category.label)}
                               />
                               <div
-                                className="absolute right-0 top-[calc(100%+10px)] z-[100] min-w-[280px] rounded-2xl border border-[#bfa46d] bg-[#fffaf0] p-2 text-[#203429] shadow-[0_18px_38px_rgba(0,0,0,0.36)]"
+                                className="absolute right-0 top-[calc(100%+10px)] z-[100] min-w-[280px] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
                                 onMouseEnter={() => openMenu(category.label)}
                                 onMouseLeave={scheduleMenuClose}
                                 onFocus={() => openMenu(category.label)}
@@ -798,8 +798,8 @@ export function PeridotVisualizationsWorkspace({
             ) : (
               <div className="flex h-8 items-center justify-between gap-3">
                 <div className="min-w-0">
-                  <span className="peridot-kicker !mb-0 mr-3 inline text-[9px] text-[#dfe9c8]">Visualization workspace</span>
-                  <span className="truncate text-sm font-bold text-[#f5ecd2]">{activeVisualizationLabel}</span>
+                  <span className="peridot-kicker !mb-0 mr-3 inline text-[9px] text-[var(--peridot-color-hex-dfe9c8)]">Visualization workspace</span>
+                  <span className="truncate text-sm font-bold text-[var(--peridot-color-hex-f5ecd2)]">{activeVisualizationLabel}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <VisualizationExportMenu
@@ -807,7 +807,7 @@ export function PeridotVisualizationsWorkspace({
                     activeVisualizationLabel={activeVisualizationLabel}
                     compact
                   />
-                  <span className="rounded-full border border-[#dfe9c8]/35 bg-[#dfe9c8]/10 px-3 py-1 text-[11px] font-semibold text-[#dfe9c8]">
+                  <span className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-1 text-[11px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]">
                     Navigation minimized
                   </span>
                 </div>
@@ -817,7 +817,7 @@ export function PeridotVisualizationsWorkspace({
             <button
               type="button"
               onClick={() => setIsHeaderExpanded((value) => !value)}
-              className="absolute bottom-0 left-1/2 z-[120] flex h-8 w-14 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full border border-[#dfe9c8]/70 bg-[#f5ecd2] text-lg font-bold leading-none text-[#173120] shadow-[0_8px_20px_rgba(0,0,0,0.28)] transition hover:bg-[#d6a36a] focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/70"
+              className="absolute bottom-0 left-1/2 z-[120] flex h-8 w-14 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5ecd2)] text-lg font-bold leading-none text-[var(--peridot-color-hex-173120)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]"
               aria-label={isHeaderExpanded ? 'Collapse visualization header' : 'Expand visualization header'}
               title={isHeaderExpanded ? 'Collapse visualization header' : 'Expand visualization header'}
             >
@@ -834,7 +834,7 @@ export function PeridotVisualizationsWorkspace({
                 <button
                   type="button"
                   onClick={() => setIsTimelineExpanded((value) => !value)}
-                  className="absolute left-1/2 top-2 z-30 flex h-8 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[#dfe9c8]/70 bg-[#f5ecd2] text-lg font-bold leading-none text-[#173120] shadow-[0_8px_20px_rgba(0,0,0,0.28)] transition hover:bg-[#d6a36a] focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/70"
+                  className="absolute left-1/2 top-2 z-30 flex h-8 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5ecd2)] text-lg font-bold leading-none text-[var(--peridot-color-hex-173120)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]"
                   aria-label={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
                   title={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
                 >
@@ -843,9 +843,9 @@ export function PeridotVisualizationsWorkspace({
                 {isTimelineExpanded ? (
                   <VisualizationTimelineScrubber {...timelineControlsProps} />
                 ) : (
-                  <div className="flex h-10 items-center justify-between rounded-[24px] border border-[#c4e0ef]/50 bg-[linear-gradient(135deg,rgba(8,39,25,0.96),rgba(5,29,19,0.98))] px-5 text-[#fbf7ea] shadow-[0_12px_32px_rgba(0,0,0,0.26)]">
-                    <span className="peridot-kicker !mb-0 text-[10px] text-[#dfe9c8]">Timeline</span>
-                    <span className="text-sm font-semibold text-[#f5ecd2]">{timelineControlsProps.currentRangeLabel}</span>
+                  <div className="flex h-10 items-center justify-between rounded-[24px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-96),var(--peridot-color-rgba-rgba-5-29-19-0-98))] px-5 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_12px_32px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]">
+                    <span className="peridot-kicker !mb-0 text-[10px] text-[var(--peridot-color-hex-dfe9c8)]">Timeline</span>
+                    <span className="text-sm font-semibold text-[var(--peridot-color-hex-f5ecd2)]">{timelineControlsProps.currentRangeLabel}</span>
                   </div>
                 )}
               </div>

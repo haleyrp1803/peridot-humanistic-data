@@ -1,14 +1,14 @@
 /*
- * Central Peridot color palette.
+ * Legacy Peridot color-token adapter.
  *
- * This file is the single inventory for explicit app-owned color values.
- * Edit colors here first, then let dependent components consume the named tokens.
- * Tailwind color utility classes are inventoried here for visibility; they are
- * not mechanically rewritten in this pass because className utility strings
- * participate in Tailwind generation and layout-specific styling.
+ * New palette work should happen in `peridotTheme.js`, where colors are grouped
+ * by tone and semantic role. This file keeps the older generated HEX/RGBA token
+ * names working while making them follow the active site-wide palette.
  */
 
-export const PERIDOT_COLORS = Object.freeze({
+import { resolvePeridotLegacyColor } from './peridotTheme.js';
+
+export const PERIDOT_LEGACY_COLORS = Object.freeze({
   HEX_03100A: "#03100a",
   HEX_03120C: "#03120c",
   HEX_03160F: "#03160f",
@@ -423,7 +423,6 @@ export const PERIDOT_COLORS = Object.freeze({
   RGBA_RGBA_47_73_47_0_94: "rgba(47,73,47,0.94)",
   RGBA_RGBA_4_20_13_0_95: "rgba(4,20,13,0.95)",
   RGBA_RGBA_4_24_16_0_62: "rgba(4, 24, 16, 0.62)",
-  RGBA_RGBA_5_29_19_0_96: "rgba(5, 29, 19, 0.96)",
   RGBA_RGBA_5_29_19_0_96: "rgba(5,29,19,0.96)",
   RGBA_RGBA_5_29_19_0_98: "rgba(5,29,19,0.98)",
   RGBA_RGBA_67_102_79_0_16: "rgba(67,102,79,0.16)",
@@ -436,7 +435,6 @@ export const PERIDOT_COLORS = Object.freeze({
   RGBA_RGBA_86_52_22_0_34: "rgba(86, 52, 22, 0.34)",
   RGBA_RGBA_8_31_22_0_96: "rgba(8,31,22,0.96)",
   RGBA_RGBA_8_39_25_0_9: "rgba(8,39,25,0.9)",
-  RGBA_RGBA_8_39_25_0_95: "rgba(8, 39, 25, 0.95)",
   RGBA_RGBA_8_39_25_0_95: "rgba(8,39,25,0.95)",
   RGBA_RGBA_8_39_25_0_96: "rgba(8,39,25,0.96)",
   RGBA_RGBA_95_113_74_0_25: "rgba(95, 113, 74, 0.25)",
@@ -445,7 +443,44 @@ export const PERIDOT_COLORS = Object.freeze({
   RGBA_RGBA_97_132_77_0_88: "rgba(97, 132, 77, 0.88)",
   RGBA_RGBA_99_136_99_0_18: "rgba(99,136,99,0.18)",
   RGBA_RGBA_99_68_28_0_46: "rgba(99, 68, 28, 0.46)",
+  RGBA_RGBA_0_0_0_0_16: "rgba(0,0,0,0.16)",
+  RGBA_RGBA_0_0_0_0_22: "rgba(0,0,0,0.22)",
+  RGBA_RGBA_0_0_0_0_28: "rgba(0,0,0,0.28)",
+  RGBA_RGBA_0_0_0_0_3: "rgba(0,0,0,0.3)",
+  RGBA_RGBA_0_0_0_0_30: "rgba(0,0,0,0.30)",
+  RGBA_RGBA_0_0_0_0_34: "rgba(0,0,0,0.34)",
+  RGBA_RGBA_0_0_0_0_35: "rgba(0,0,0,0.35)",
+  RGBA_RGBA_0_0_0_0_36: "rgba(0,0,0,0.36)",
+  RGBA_RGBA_0_0_0_0_38: "rgba(0,0,0,0.38)",
+  RGBA_RGBA_0_0_0_0_45: "rgba(0,0,0,0.45)",
+  RGBA_RGBA_0_0_0_0_5: "rgba(0,0,0,0.5)",
+  RGBA_RGBA_0_0_0_0_55: "rgba(0,0,0,0.55)",
+  RGBA_RGBA_0_0_0_0_58: "rgba(0,0,0,0.58)",
+  RGBA_RGBA_0_0_0_0_72: "rgba(0,0,0,0.72)",
+  RGBA_RGBA_32_55_40_0_14: "rgba(32,55,40,0.14)",
+  RGBA_RGBA_32_55_40_0_16: "rgba(32,55,40,0.16)",
+  RGBA_RGBA_32_55_40_0_22: "rgba(32,55,40,0.22)",
+  RGBA_RGBA_34_51_38_0_16: "rgba(34,51,38,0.16)",
+  RGBA_RGBA_34_51_38_0_18: "rgba(34,51,38,0.18)",
+  RGBA_RGBA_38_56_43_0_14: "rgba(38,56,43,0.14)",
+  RGBA_RGBA_39_50_36_0_08: "rgba(39,50,36,0.08)",
+  RGBA_RGBA_39_50_36_0_10: "rgba(39,50,36,0.10)",
+  RGBA_RGBA_39_50_36_0_12: "rgba(39,50,36,0.12)",
+  RGBA_RGBA_39_50_36_0_13: "rgba(39,50,36,0.13)",
+  RGBA_RGBA_47_61_38_0_12: "rgba(47,61,38,0.12)",
+  RGBA_RGBA_55_79_52_0_14: "rgba(55,79,52,0.14)",
+  RGBA_RGBA_55_79_52_0_20: "rgba(55,79,52,0.20)",
+  RGBA_RGBA_56_38_26_0_16: "rgba(56,38,26,0.16)",
+  RGBA_RGBA_68_49_20_0_16: "rgba(68,49,20,0.16)",
+  RGBA_RGBA_68_49_20_0_22: "rgba(68,49,20,0.22)",
+  RGBA_RGBA_87_58_46_0_06: "rgba(87,58,46,0.06)",
 });
+
+export const PERIDOT_COLORS = Object.freeze(
+  Object.fromEntries(
+    Object.entries(PERIDOT_LEGACY_COLORS).map(([name, value]) => [name, resolvePeridotLegacyColor(value)])
+  )
+);
 
 export const PERIDOT_CSS_COLOR_VARIABLES = Object.freeze({
   HEX_03100A: "--peridot-color-hex-03100a",
@@ -863,7 +898,6 @@ export const PERIDOT_CSS_COLOR_VARIABLES = Object.freeze({
   RGBA_RGBA_4_20_13_0_95: "--peridot-color-rgba-rgba-4-20-13-0-95",
   RGBA_RGBA_4_24_16_0_62: "--peridot-color-rgba-rgba-4-24-16-0-62",
   RGBA_RGBA_5_29_19_0_96: "--peridot-color-rgba-rgba-5-29-19-0-96",
-  RGBA_RGBA_5_29_19_0_96: "--peridot-color-rgba-rgba-5-29-19-0-96",
   RGBA_RGBA_5_29_19_0_98: "--peridot-color-rgba-rgba-5-29-19-0-98",
   RGBA_RGBA_67_102_79_0_16: "--peridot-color-rgba-rgba-67-102-79-0-16",
   RGBA_RGBA_82_119_75_0_28: "--peridot-color-rgba-rgba-82-119-75-0-28",
@@ -876,7 +910,6 @@ export const PERIDOT_CSS_COLOR_VARIABLES = Object.freeze({
   RGBA_RGBA_8_31_22_0_96: "--peridot-color-rgba-rgba-8-31-22-0-96",
   RGBA_RGBA_8_39_25_0_9: "--peridot-color-rgba-rgba-8-39-25-0-9",
   RGBA_RGBA_8_39_25_0_95: "--peridot-color-rgba-rgba-8-39-25-0-95",
-  RGBA_RGBA_8_39_25_0_95: "--peridot-color-rgba-rgba-8-39-25-0-95",
   RGBA_RGBA_8_39_25_0_96: "--peridot-color-rgba-rgba-8-39-25-0-96",
   RGBA_RGBA_95_113_74_0_25: "--peridot-color-rgba-rgba-95-113-74-0-25",
   RGBA_RGBA_95_113_74_0_28: "--peridot-color-rgba-rgba-95-113-74-0-28",
@@ -884,29 +917,58 @@ export const PERIDOT_CSS_COLOR_VARIABLES = Object.freeze({
   RGBA_RGBA_97_132_77_0_88: "--peridot-color-rgba-rgba-97-132-77-0-88",
   RGBA_RGBA_99_136_99_0_18: "--peridot-color-rgba-rgba-99-136-99-0-18",
   RGBA_RGBA_99_68_28_0_46: "--peridot-color-rgba-rgba-99-68-28-0-46",
+  RGBA_RGBA_0_0_0_0_16: "--peridot-color-rgba-rgba-0-0-0-0-16",
+  RGBA_RGBA_0_0_0_0_22: "--peridot-color-rgba-rgba-0-0-0-0-22",
+  RGBA_RGBA_0_0_0_0_28: "--peridot-color-rgba-rgba-0-0-0-0-28",
+  RGBA_RGBA_0_0_0_0_3: "--peridot-color-rgba-rgba-0-0-0-0-3",
+  RGBA_RGBA_0_0_0_0_30: "--peridot-color-rgba-rgba-0-0-0-0-30",
+  RGBA_RGBA_0_0_0_0_34: "--peridot-color-rgba-rgba-0-0-0-0-34",
+  RGBA_RGBA_0_0_0_0_35: "--peridot-color-rgba-rgba-0-0-0-0-35",
+  RGBA_RGBA_0_0_0_0_36: "--peridot-color-rgba-rgba-0-0-0-0-36",
+  RGBA_RGBA_0_0_0_0_38: "--peridot-color-rgba-rgba-0-0-0-0-38",
+  RGBA_RGBA_0_0_0_0_45: "--peridot-color-rgba-rgba-0-0-0-0-45",
+  RGBA_RGBA_0_0_0_0_5: "--peridot-color-rgba-rgba-0-0-0-0-5",
+  RGBA_RGBA_0_0_0_0_55: "--peridot-color-rgba-rgba-0-0-0-0-55",
+  RGBA_RGBA_0_0_0_0_58: "--peridot-color-rgba-rgba-0-0-0-0-58",
+  RGBA_RGBA_0_0_0_0_72: "--peridot-color-rgba-rgba-0-0-0-0-72",
+  RGBA_RGBA_32_55_40_0_14: "--peridot-color-rgba-rgba-32-55-40-0-14",
+  RGBA_RGBA_32_55_40_0_16: "--peridot-color-rgba-rgba-32-55-40-0-16",
+  RGBA_RGBA_32_55_40_0_22: "--peridot-color-rgba-rgba-32-55-40-0-22",
+  RGBA_RGBA_34_51_38_0_16: "--peridot-color-rgba-rgba-34-51-38-0-16",
+  RGBA_RGBA_34_51_38_0_18: "--peridot-color-rgba-rgba-34-51-38-0-18",
+  RGBA_RGBA_38_56_43_0_14: "--peridot-color-rgba-rgba-38-56-43-0-14",
+  RGBA_RGBA_39_50_36_0_08: "--peridot-color-rgba-rgba-39-50-36-0-08",
+  RGBA_RGBA_39_50_36_0_10: "--peridot-color-rgba-rgba-39-50-36-0-10",
+  RGBA_RGBA_39_50_36_0_12: "--peridot-color-rgba-rgba-39-50-36-0-12",
+  RGBA_RGBA_39_50_36_0_13: "--peridot-color-rgba-rgba-39-50-36-0-13",
+  RGBA_RGBA_47_61_38_0_12: "--peridot-color-rgba-rgba-47-61-38-0-12",
+  RGBA_RGBA_55_79_52_0_14: "--peridot-color-rgba-rgba-55-79-52-0-14",
+  RGBA_RGBA_55_79_52_0_20: "--peridot-color-rgba-rgba-55-79-52-0-20",
+  RGBA_RGBA_56_38_26_0_16: "--peridot-color-rgba-rgba-56-38-26-0-16",
+  RGBA_RGBA_68_49_20_0_16: "--peridot-color-rgba-rgba-68-49-20-0-16",
+  RGBA_RGBA_68_49_20_0_22: "--peridot-color-rgba-rgba-68-49-20-0-22",
+  RGBA_RGBA_87_58_46_0_06: "--peridot-color-rgba-rgba-87-58-46-0-06",
 });
 
-export const PERIDOT_TAILWIND_COLOR_CLASSES = Object.freeze([
-  "bg-amber-950/25",
-  "bg-amber-950/30",
-  "bg-black/50",
-  "bg-black/55",
-  "bg-red-50",
-  "bg-red-900/60",
-  "bg-red-950/25",
-  "bg-red-950/50",
-  "bg-transparent",
-  "border-amber-500/40",
-  "border-amber-500/50",
-  "border-red-300",
-  "border-red-400/60",
-  "border-red-500/50",
-  "text-amber-100",
-  "text-red-100",
-  "text-red-800",
-  "text-white",
-]);
+function withAlpha(color, alpha) {
+  if (/^rgba?\(/i.test(color)) {
+    const parts = color.slice(color.indexOf('(') + 1, color.lastIndexOf(')')).split(',').map((part) => part.trim());
+    return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+  }
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) return color;
+  const clean = color.slice(1);
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
-export function getPeridotColor(token) {
-  return PERIDOT_COLORS[token] ?? token;
+export function applyPeridotColorVariables(root = document.documentElement) {
+  Object.entries(PERIDOT_CSS_COLOR_VARIABLES).forEach(([name, variableName]) => {
+    const value = PERIDOT_COLORS[name];
+    root.style.setProperty(variableName, value);
+    for (const alpha of [5, 10, 12, 14, 16, 18, 20, 22, 24, 25, 28, 30, 32, 34, 36, 38, 40, 45, 48, 50, 54, 55, 58, 60, 62, 65, 72, 76, 78, 80, 82, 86, 88, 90, 92, 94, 95, 96, 98]) {
+      root.style.setProperty(`${variableName}-a${alpha}`, withAlpha(value, alpha / 100));
+    }
+  });
 }

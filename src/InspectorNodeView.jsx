@@ -231,7 +231,7 @@ function buildEntityProfile(selectedProps, selectedLetterMetadata = [], viewMode
 function CountListCard({ title, description, items, emptyMessage, onOpenItem }) {
   if (!items?.length) {
     return (
-      <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 text-sm text-[var(--panel-card-muted-text)] shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+      <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 text-sm text-[var(--panel-card-muted-text)] shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-87-58-46-0-06)]">
         <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">{title}</div>
         <div className="mt-2">{emptyMessage}</div>
       </div>
@@ -239,7 +239,7 @@ function CountListCard({ title, description, items, emptyMessage, onOpenItem }) 
   }
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-87-58-46-0-06)]">
       <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">{title}</div>
       {description ? <div className="mt-1 text-xs text-[var(--panel-card-muted-text)]">{description}</div> : null}
       <div className="mt-3 space-y-2">
@@ -282,7 +282,7 @@ function CountSectionCard({ title, description, sections, emptyMessage, onOpenIt
 
   if (!populatedSections.length) {
     return (
-      <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 text-sm text-[var(--panel-card-muted-text)] shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+      <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 text-sm text-[var(--panel-card-muted-text)] shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-87-58-46-0-06)]">
         <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">{title}</div>
         <div className="mt-2">{emptyMessage}</div>
       </div>
@@ -290,7 +290,7 @@ function CountSectionCard({ title, description, sections, emptyMessage, onOpenIt
   }
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-87-58-46-0-06)]">
       <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">{title}</div>
       {description ? <div className="mt-1 text-xs text-[var(--panel-card-muted-text)]">{description}</div> : null}
       <div className="mt-3 space-y-4">
@@ -341,7 +341,7 @@ function EntityProfileSummaryCard({ selectedProps, selectedLetterMetadata, viewM
   const profile = buildEntityProfile(selectedProps, selectedLetterMetadata, viewMode);
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-87-58-46-0-06)]">
       <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
         {profile.entityType === 'person' ? 'Person profile summary' : 'Place profile summary'}
       </div>
@@ -369,7 +369,7 @@ function EntityCustomFieldsCard({ selectedProps, selectedLetterMetadata, viewMod
     : 'Aggregated from linked records where this exact place name appears as source or target location.';
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_rgba(87,58,46,0.06)]">
+    <div className="rounded-2xl border border-[var(--panel-card-border)]/70 bg-[var(--utility-panel-bg)] p-4 shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-87-58-46-0-06)]">
       <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
         {title}
       </div>

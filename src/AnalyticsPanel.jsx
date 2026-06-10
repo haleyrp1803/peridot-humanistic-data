@@ -23,7 +23,7 @@ import { PERIDOT_COLORS } from './peridotColorPalette.js';
 function buttonClassName({ active = false } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
   if (active) {
-    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.3)] hover:bg-[var(--button-primary-active-hover)]`;
+    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_var(--peridot-color-rgba-rgba-0-0-0-0-3)] hover:bg-[var(--button-primary-active-hover)]`;
   }
   return `${base} border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]`;
 }
@@ -217,7 +217,7 @@ function ChartTypeButton({ option, active, onSelect }) {
         'aspect-square rounded-2xl border p-2 text-center transition-all',
         'flex flex-col items-center justify-center gap-1.5',
         active
-          ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.22)]'
+          ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_var(--peridot-color-rgba-rgba-0-0-0-0-22)]'
           : 'border-[var(--section-border)] bg-[var(--section-bg)] text-[var(--text-main)] hover:bg-[var(--button-secondary-hover)]',
       ].join(' ')}
       aria-pressed={active}
@@ -670,20 +670,20 @@ export function AnalyticsPanelContent({
   };
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[#dfe9c8]/45 bg-[#f8f4e6] text-[#203429] shadow-[0_22px_60px_rgba(0,0,0,0.34)] lg:flex-row">
-      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[#d7c8a6] bg-[#efe6d1] lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
-        <div className="shrink-0 border-b border-[#d7c8a6] px-5 py-4">
-          <p className="peridot-kicker !mb-0 text-[11px] text-[#6b7d55]">Chart controls</p>
-          <h2 className="mt-1 [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#172b20]">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a45)] bg-[var(--peridot-color-hex-f8f4e6)] text-[var(--peridot-color-hex-203429)] shadow-[0_22px_60px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] lg:flex-row">
+      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[var(--peridot-color-hex-d7c8a6)] bg-[var(--peridot-color-hex-efe6d1)] lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
+        <div className="shrink-0 border-b border-[var(--peridot-color-hex-d7c8a6)] px-5 py-4">
+          <p className="peridot-kicker !mb-0 text-[11px] text-[var(--peridot-color-hex-6b7d55)]">Chart controls</p>
+          <h2 className="mt-1 [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-172b20)]">
             Build chart
           </h2>
-          <p className="mt-2 text-xs leading-relaxed text-[#5b6b5f]">
+          <p className="mt-2 text-xs leading-relaxed text-[var(--peridot-color-hex-5b6b5f)]">
             Select a chart type and map the active dataset into axes, metrics, groups, and series. Changes update the chart stage immediately.
           </p>
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-auto px-5 py-4">
-          <section className="rounded-2xl border border-[#d7c8a6] bg-[#fffaf0] p-4 shadow-sm">
+          <section className="rounded-2xl border border-[var(--peridot-color-hex-d7c8a6)] bg-[var(--peridot-color-hex-fffaf0)] p-4 shadow-sm">
             <SelectControl
               label="Chart type"
               value={chartType}
@@ -691,24 +691,24 @@ export function AnalyticsPanelContent({
               options={Object.values(ANALYTICS_CHART_DEFINITIONS)}
               description={chartDefinition.descriptor}
             />
-            <div className="mt-3 rounded-xl bg-[#edf4df] p-3 text-xs leading-relaxed text-[#4d6254]">
+            <div className="mt-3 rounded-xl bg-[var(--peridot-color-hex-edf4df)] p-3 text-xs leading-relaxed text-[var(--peridot-color-hex-4d6254)]">
               {chartDefinition.variableSummary}
             </div>
           </section>
 
           {renderDateRangeControls()}
 
-          <section className="rounded-2xl border border-[#d7c8a6] bg-[#fffaf0] p-4 shadow-sm">
+          <section className="rounded-2xl border border-[var(--peridot-color-hex-d7c8a6)] bg-[var(--peridot-color-hex-fffaf0)] p-4 shadow-sm">
             {renderChartControls()}
           </section>
 
         </div>
       </aside>
 
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#fbf8f1]">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--peridot-color-hex-fbf8f1)]">
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
           <div className="mx-auto flex h-full min-h-0 w-full max-w-[1320px] items-stretch">
-            <div className="flex h-full min-h-0 w-full rounded-[26px] border border-[#d7c8a6] bg-[#fffdf8] p-3 shadow-[0_18px_42px_rgba(38,56,43,0.14)] md:p-4">
+            <div className="flex h-full min-h-0 w-full rounded-[26px] border border-[var(--peridot-color-hex-d7c8a6)] bg-[var(--peridot-color-hex-fffdf8)] p-3 shadow-[0_18px_42px_var(--peridot-color-rgba-rgba-38-56-43-0-14)] md:p-4">
               <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
             </div>
           </div>

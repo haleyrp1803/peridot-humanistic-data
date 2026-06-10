@@ -11,7 +11,7 @@ import React from 'react';
 
 export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
   return (
-    <section className="peridot-workspace-field text-[#fbf7ea]">
+    <section className="peridot-workspace-field text-[var(--peridot-color-hex-fbf7ea)]">
       <div className="peridot-workspace-frame">
         <div className="peridot-hero-card">
           <div className="peridot-workspace-header-row">
@@ -28,12 +28,12 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
           </div>
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-[#dfe9c8]/32 bg-[#dfe9c8]/10 p-8 text-[#f8f4e6] shadow-[0_18px_46px_rgba(0,0,0,0.24)]">
-          <p className="peridot-kicker text-[11px] text-[#dfe9c8]">Coming soon</p>
-          <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[#f5ecd2]">
+        <div className="mt-6 rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a32)] bg-[var(--peridot-color-hex-dfe9c8-a10)] p-8 text-[var(--peridot-color-hex-f8f4e6)] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-24)]">
+          <p className="peridot-kicker text-[11px] text-[var(--peridot-color-hex-dfe9c8)]">Coming soon</p>
+          <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-f5ecd2)]">
             Documentation, tutorials, and credits will live here.
           </h2>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#dfe9c8]">
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--peridot-color-hex-dfe9c8)]">
             The page is already wired into the hamburger menu so future informational content can be added without another routing redesign.
           </p>
         </div>

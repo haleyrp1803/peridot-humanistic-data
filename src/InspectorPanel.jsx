@@ -113,22 +113,22 @@ export function InspectorContent({
   };
 
   const rootClassName = isWorkspace
-    ? 'flex h-full min-h-0 flex-col rounded-[2.1rem] border border-[#91a276]/55 bg-[linear-gradient(145deg,rgba(3,17,11,0.98),rgba(10,35,25,0.96)_44%,rgba(36,55,38,0.94))] p-4 text-[#f6f3dc] shadow-2xl shadow-black/65 ring-1 ring-[#b7c884]/16'
-    : 'flex min-h-full flex-col rounded-[1.85rem] border border-[#91a276]/48 bg-[linear-gradient(160deg,rgba(4,20,13,0.95),rgba(13,39,28,0.92)_52%,rgba(45,66,45,0.88))] p-4 text-[#f6f3dc] shadow-xl shadow-black/40 backdrop-blur-md ring-1 ring-[#b7c884]/14';
+    ? 'flex h-full min-h-0 flex-col rounded-[2.1rem] border border-[var(--peridot-color-hex-91a276-a55)] bg-[linear-gradient(145deg,var(--peridot-color-rgba-rgba-3-17-11-0-98),var(--peridot-color-rgba-rgba-10-35-25-0-96)_44%,var(--peridot-color-rgba-rgba-36-55-38-0-94))] p-4 text-[var(--peridot-color-hex-f6f3dc)] shadow-2xl shadow-black/65 ring-1 ring-[var(--peridot-color-hex-b7c884-a16)]'
+    : 'flex min-h-full flex-col rounded-[1.85rem] border border-[var(--peridot-color-hex-91a276-a48)] bg-[linear-gradient(160deg,var(--peridot-color-rgba-rgba-4-20-13-0-95),var(--peridot-color-rgba-rgba-13-39-28-0-92)_52%,var(--peridot-color-rgba-rgba-45-66-45-0-88))] p-4 text-[var(--peridot-color-hex-f6f3dc)] shadow-xl shadow-black/40 backdrop-blur-md ring-1 ring-[var(--peridot-color-hex-b7c884-a14)]';
 
   const controlsClassName = 'mb-3 flex items-center justify-end gap-2';
 
   const headerClassName = isWorkspace
-    ? 'mb-4 rounded-[1.55rem] border border-[#c5d99b]/38 bg-[linear-gradient(135deg,rgba(18,50,35,0.98),rgba(47,73,47,0.94)_58%,rgba(83,92,55,0.82))] px-5 py-4 shadow-inner shadow-black/25'
-    : 'mb-4 rounded-[1.35rem] border border-[#c5d99b]/34 bg-[linear-gradient(135deg,rgba(18,50,35,0.96),rgba(47,73,47,0.9)_58%,rgba(83,92,55,0.76))] px-4 py-4 shadow-inner shadow-black/20';
+    ? 'mb-4 rounded-[1.55rem] border border-[var(--peridot-color-hex-c5d99b-a38)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-18-50-35-0-98),var(--peridot-color-rgba-rgba-47-73-47-0-94)_58%,var(--peridot-color-rgba-rgba-83-92-55-0-82))] px-5 py-4 shadow-inner shadow-black/25'
+    : 'mb-4 rounded-[1.35rem] border border-[var(--peridot-color-hex-c5d99b-a34)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-18-50-35-0-96),var(--peridot-color-rgba-rgba-47-73-47-0-9)_58%,var(--peridot-color-rgba-rgba-83-92-55-0-76))] px-4 py-4 shadow-inner shadow-black/20';
 
   const bodyClassName = isWorkspace
-    ? '[scrollbar-color:#7d8d68_#dce5c3] inspector-scroll min-h-0 flex-1 overflow-auto rounded-[1.55rem] border border-[#b4c29c]/65 bg-[linear-gradient(180deg,#dce5c3,#d3dfb7_38%,#c9d6aa_72%,#bdcc9b)] p-5 text-[#14261d] shadow-inner shadow-[#06190f]/25'
-    : '[scrollbar-color:#7d8d68_#dce5c3] inspector-scroll rounded-[1.35rem] border border-[#b4c29c]/60 bg-[linear-gradient(180deg,#dce5c3,#d4dfb8_38%,#cad7aa_72%,#bfce9d)] p-4 text-[#14261d] shadow-inner shadow-[#06190f]/20';
+    ? '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-color-hex-dce5c3)] inspector-scroll min-h-0 flex-1 overflow-auto rounded-[1.55rem] border border-[var(--peridot-color-hex-b4c29c-a65)] bg-[linear-gradient(180deg,var(--peridot-color-hex-dce5c3),var(--peridot-role-inspector-body-bg)_38%,var(--peridot-role-visualization-land-fill)_72%,var(--peridot-color-hex-bdcc9b))] p-5 text-[var(--peridot-color-hex-14261d)] shadow-inner shadow-[var(--peridot-color-hex-06190f-a25)]'
+    : '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-color-hex-dce5c3)] inspector-scroll rounded-[1.35rem] border border-[var(--peridot-color-hex-b4c29c-a60)] bg-[linear-gradient(180deg,var(--peridot-color-hex-dce5c3),var(--peridot-role-inspector-body-bg)_38%,var(--peridot-role-visualization-land-fill)_72%,var(--peridot-color-hex-bfce9d))] p-4 text-[var(--peridot-color-hex-14261d)] shadow-inner shadow-[var(--peridot-color-hex-06190f-a20)]';
 
-  const actionButtonClassName = 'rounded-full border border-[#c8bea0] bg-[#f4efd9] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#16271d] shadow-sm transition hover:border-[#7d6140] hover:bg-[#b99b63] hover:text-[#0d1c13] focus:outline-none focus:ring-2 focus:ring-[#f4efd9]/80';
+  const actionButtonClassName = 'rounded-full border border-[var(--peridot-color-hex-c8bea0)] bg-[var(--peridot-color-hex-f4efd9)] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-16271d)] shadow-sm transition hover:border-[var(--peridot-color-hex-7d6140)] hover:bg-[var(--peridot-color-hex-b99b63)] hover:text-[var(--peridot-color-hex-0d1c13)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f4efd9-a80)]';
 
-  const closeButtonClassName = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[#c8bea0] bg-[#f4efd9] text-lg font-bold leading-none text-[#11251b] shadow-sm transition hover:border-[#7d6140] hover:bg-[#b99b63] hover:text-[#0d1c13] focus:outline-none focus:ring-2 focus:ring-[#f4efd9]/80';
+  const closeButtonClassName = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--peridot-color-hex-c8bea0)] bg-[var(--peridot-color-hex-f4efd9)] text-lg font-bold leading-none text-[var(--peridot-color-hex-11251b)] shadow-sm transition hover:border-[var(--peridot-color-hex-7d6140)] hover:bg-[var(--peridot-color-hex-b99b63)] hover:text-[var(--peridot-color-hex-0d1c13)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f4efd9-a80)]';
 
   return (
     <div className={rootClassName} style={inspectorPaletteStyle} data-inspector-presentation={presentation}>
@@ -175,7 +175,7 @@ export function InspectorContent({
           ) : null}
 
           <div className={headerClassName}>
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#dfe9b2]">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--peridot-color-hex-dfe9b2)]">
               {isWorkspace ? 'Inspector workspace' : 'Inspector'}
             </div>
             <InspectorHeaderComponent
@@ -183,7 +183,7 @@ export function InspectorContent({
               setShowInspectorInfo={setShowInspectorInfo}
             />
             {isWorkspace ? (
-              <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#f6f3dc]">
+              <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--peridot-color-hex-f6f3dc)]">
                 Evidence dossier for the current selection. The visualization remains loaded underneath this workspace.
               </p>
             ) : null}

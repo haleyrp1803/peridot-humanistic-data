@@ -74,14 +74,14 @@ function normalizeAction(action) {
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
   const variants = {
-    primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_rgba(0,0,0,0.28)] disabled:cursor-not-allowed disabled:opacity-50',
+    primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] disabled:cursor-not-allowed disabled:opacity-50',
     secondary: 'border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)] disabled:cursor-not-allowed disabled:opacity-50',
-    ghost: 'bg-transparent text-[var(--muted-text)] hover:bg-[var(--ghost-hover)] hover:text-[var(--text-main)]',
-    danger: 'border border-red-400/60 bg-red-950/50 text-red-100 hover:bg-red-900/60',
+    ghost: 'bg-[transparent] text-[var(--muted-text)] hover:bg-[var(--ghost-hover)] hover:text-[var(--text-main)]',
+    danger: 'border border-[var(--peridot-role-status-danger-border)] bg-[var(--peridot-role-status-danger-bg)] text-[var(--peridot-role-status-danger-text)] hover:bg-[var(--peridot-role-status-danger-bg)]',
   };
 
   if (active) {
-    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.3)] hover:bg-[var(--button-primary-active-hover)]`;
+    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_var(--peridot-color-rgba-rgba-0-0-0-0-3)] hover:bg-[var(--button-primary-active-hover)]`;
   }
   return `${base} ${variants[variant] || variants.secondary}`;
 }
@@ -94,7 +94,7 @@ function StepButton({ active, label, index, onClick }) {
       className={[
         'rounded-2xl border px-4 py-3 text-left transition-all duration-150',
         active
-          ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.26)]'
+          ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]'
           : 'border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] text-[var(--panel-card-muted-text)] hover:bg-[var(--button-secondary-hover)] hover:text-[var(--panel-card-text)]',
       ].join(' ')}
     >
@@ -448,7 +448,7 @@ function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilit
       />
 
       {!validation?.isValid ? (
-        <div className="rounded-2xl border border-amber-500/50 bg-amber-950/30 p-4 text-sm text-amber-100">
+        <div className="rounded-2xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] p-4 text-sm text-[var(--peridot-role-status-warning-text)]">
           <div className="font-semibold">Mapping issues</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {(validation?.issues || []).map((issue) => (
@@ -527,7 +527,7 @@ function WorkbookOverviewStep({ staging, workbookModel, workbookSummary }) {
       </div>
 
       {workbookSummary?.warnings?.length ? (
-        <div className="rounded-2xl border border-amber-500/40 bg-amber-950/25 p-4 text-sm text-amber-100">
+        <div className="rounded-2xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] p-4 text-sm text-[var(--peridot-role-status-warning-text)]">
           <div className="font-semibold">Workbook notes</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {workbookSummary.warnings.slice(0, 8).map((warning, index) => (
@@ -877,7 +877,7 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
       />
 
       {errors.length ? (
-        <div className="rounded-2xl border border-red-500/50 bg-red-950/25 p-4 text-sm text-red-100">
+        <div className="rounded-2xl border border-[var(--peridot-role-status-danger-border)] bg-[var(--peridot-role-status-danger-bg)] p-4 text-sm text-[var(--peridot-role-status-danger-text)]">
           <div className="font-semibold">Blocking issues before import wiring</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {errors.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}
@@ -886,7 +886,7 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
       ) : null}
 
       {warnings.length ? (
-        <div className="rounded-2xl border border-amber-500/50 bg-amber-950/25 p-4 text-sm text-amber-100">
+        <div className="rounded-2xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] p-4 text-sm text-[var(--peridot-role-status-warning-text)]">
           <div className="font-semibold">Warnings and rules</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {warnings.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}
@@ -1467,8 +1467,8 @@ export function PeridotColumnMappingModal({
     : 'Closing keeps the staged file available in Data Inputs but does not change the active dataset. Confirm import replaces the active Peridot dataset with this mapped table.';
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_rgba(0,0,0,0.55)]">
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-sm">
+      <div className="flex max-h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
         <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-5">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
@@ -1690,8 +1690,8 @@ export function PeridotColumnMappingModal({
       </div>
 
       {showCancelConfirmation ? (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-3xl border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]">
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[var(--peridot-role-interface-scrim)] p-4">
+          <div className="w-full max-w-md rounded-3xl border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] p-5 shadow-[0_24px_60px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
             <h3 className="text-lg font-bold text-[var(--heading-text)]">Are you sure you want to cancel?</h3>
             <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
               The staged file will remain available in Data Inputs, but closing this workspace will not change the active dataset.

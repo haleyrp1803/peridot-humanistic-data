@@ -290,7 +290,7 @@ export function VisualizationTimelineScrubber({
   const statusLabel = isPlaying ? 'Playing' : playbackIndex >= 0 ? 'Paused' : 'Ready';
 
   return (
-    <div className="shrink-0 rounded-[24px] border border-[#c4e0ef]/50 bg-[linear-gradient(135deg,rgba(8,39,25,0.96),rgba(5,29,19,0.98))] px-4 py-3 text-[#fbf7ea] shadow-[0_14px_34px_rgba(0,0,0,0.28)]">
+    <div className="shrink-0 rounded-[24px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-96),var(--peridot-color-rgba-rgba-5-29-19-0-98))] px-4 py-3 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_14px_34px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]">
       <style>{`
         .peridot-dual-range input[type='range'] {
           -webkit-appearance: none;
@@ -313,10 +313,10 @@ export function VisualizationTimelineScrubber({
         .peridot-dual-range input[type='range']::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          background: #d6a36a;
-          border: 2px solid #fff8e8;
+          background: var(--peridot-color-hex-d6a36a);
+          border: 2px solid var(--peridot-color-hex-fff8e8);
           border-radius: 9999px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+          box-shadow: 0 4px 12px var(--peridot-color-rgba-rgba-0-0-0-0-32);
           cursor: grab;
           height: 18px;
           margin-top: -7px;
@@ -324,10 +324,10 @@ export function VisualizationTimelineScrubber({
           width: 18px;
         }
         .peridot-dual-range input[type='range']::-moz-range-thumb {
-          background: #d6a36a;
-          border: 2px solid #fff8e8;
+          background: var(--peridot-color-hex-d6a36a);
+          border: 2px solid var(--peridot-color-hex-fff8e8);
           border-radius: 9999px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32);
+          box-shadow: 0 4px 12px var(--peridot-color-rgba-rgba-0-0-0-0-32);
           cursor: grab;
           height: 18px;
           pointer-events: auto;
@@ -336,23 +336,23 @@ export function VisualizationTimelineScrubber({
       `}</style>
       <div className="grid gap-3 xl:grid-cols-[170px_minmax(260px,1fr)_minmax(410px,520px)] xl:items-center">
         <div className="min-w-0">
-          <p className="peridot-kicker !mb-0 text-[10px] text-[#dfe9c8]">Timeline</p>
-          <div className="mt-1 text-sm font-semibold text-[#f5ecd2]">
+          <p className="peridot-kicker !mb-0 text-[10px] text-[var(--peridot-color-hex-dfe9c8)]">Timeline</p>
+          <div className="mt-1 text-sm font-semibold text-[var(--peridot-color-hex-f5ecd2)]">
             {timelineMode === 'all' ? 'All dates' : `${startLabel}–${endLabel}`}
           </div>
-          <div className="mt-1 text-[11px] text-[#c8d7bd]">Applied: {currentRangeLabel}</div>
+          <div className="mt-1 text-[11px] text-[var(--peridot-color-hex-c8d7bd)]">Applied: {currentRangeLabel}</div>
         </div>
 
         {hasTimeline ? (
           <div className="min-w-0">
-            <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-[#dfe9c8]">
+            <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]">
               <span>{startLabel}</span>
               <span>{endLabel}</span>
             </div>
             <div className="peridot-dual-range relative h-9">
-              <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[#dfe9c8]/25" />
+              <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--peridot-color-hex-dfe9c8-a25)]" />
               <div
-                className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-[#d6a36a]"
+                className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--peridot-color-hex-d6a36a)]"
                 style={{ left: `${startPercent}%`, right: `${100 - endPercent}%` }}
               />
               <input
@@ -374,7 +374,7 @@ export function VisualizationTimelineScrubber({
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-[#dfe9c8]/25 bg-[#dfe9c8]/10 px-3 py-2 text-sm text-[#dfe9c8]">
+          <div className="rounded-2xl border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-2 text-sm text-[var(--peridot-color-hex-dfe9c8)]">
             No usable dates are available for timeline playback.
           </div>
         )}
@@ -385,39 +385,39 @@ export function VisualizationTimelineScrubber({
               type="button"
               onClick={playTimeline}
               disabled={!selectedRowsForPlayback?.length}
-              className="rounded-full border border-[#dfe9c8]/40 bg-[#edf4df] px-3 py-1.5 text-xs font-bold text-[#203429] transition hover:bg-[#d6a36a] disabled:cursor-not-allowed disabled:opacity-55"
+              className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-edf4df)] px-3 py-1.5 text-xs font-bold text-[var(--peridot-color-hex-203429)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] disabled:cursor-not-allowed disabled:opacity-55"
             >
               Play
             </button>
             <button
               type="button"
               onClick={() => setIsPlaying(false)}
-              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-xs font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
+              className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-102c20)] px-3 py-1.5 text-xs font-bold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-214332)]"
             >
               Pause
             </button>
             <button
               type="button"
               onClick={resetTimeline}
-              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-xs font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
+              className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-102c20)] px-3 py-1.5 text-xs font-bold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-214332)]"
             >
               Reset
             </button>
             <button
               type="button"
               onClick={showAllDates}
-              className="rounded-full border border-[#dfe9c8]/40 bg-[#102c20] px-3 py-1.5 text-xs font-bold text-[#f5ecd2] transition hover:bg-[#214332]"
+              className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-102c20)] px-3 py-1.5 text-xs font-bold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-214332)]"
             >
               All dates
             </button>
           </div>
 
-          <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#dfe9c8]">
+          <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-dfe9c8)]">
             Speed
             <select
               value={playbackSpeed}
               onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
-              className="mt-1 w-full rounded-xl border border-[#dfe9c8]/35 bg-[#fbf8f1] px-2 py-1.5 text-xs text-[#203429]"
+              className="mt-1 w-full rounded-xl border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-2 py-1.5 text-xs text-[var(--peridot-color-hex-203429)]"
             >
               {playbackSpeedOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
@@ -425,7 +425,7 @@ export function VisualizationTimelineScrubber({
             </select>
           </label>
 
-          <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[#dfe9c8]">
+          <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-dfe9c8)]">
             Playback
             <input
               type="range"
@@ -437,9 +437,9 @@ export function VisualizationTimelineScrubber({
                 setIsPlaying(false);
                 setPlaybackIndex(Number(event.target.value));
               }}
-              className="mt-1 w-full accent-[#d6a36a] disabled:opacity-50"
+              className="mt-1 w-full accent-[var(--peridot-color-hex-d6a36a)] disabled:opacity-50"
             />
-            <span className="mt-0.5 block normal-case tracking-normal text-[#f5ecd2]">
+            <span className="mt-0.5 block normal-case tracking-normal text-[var(--peridot-color-hex-f5ecd2)]">
               {statusLabel} • {currentPlaybackSpeedLabel} • {playbackProgress}%
             </span>
           </label>

@@ -84,7 +84,7 @@ import { applyPeridotColumnMapping, buildInitialPeridotColumnMappingState } from
 import { parsePeridotTableFile, summarizePeridotWorkbook } from './peridotWorkbookParsing.js';
 import { buildInitialPeridotWorkbookMappingState, buildPeridotRowsFromWorkbookMapping, validatePeridotWorkbookMapping } from './peridotWorkbookMapping.js';
 import { PeridotColumnMappingModal } from './PeridotColumnMappingModal.jsx';
-import { PERIDOT_COLORS } from './peridotColorPalette.js';
+import { PERIDOT_APP_THEME_DEFAULTS, PERIDOT_MAP_STYLE_PRESETS } from './peridotTheme.js';
 import {
   SAMPLE_GEOGRAPHY_CSV,
   SAMPLE_LETTERS_CSV,
@@ -1108,203 +1108,9 @@ function readFileText(file) {
 // -----------------------------
 // These defaults drive the major shared UI surfaces.
 // The temporary color controls in the left sidebar edit these values live.
-const THEME_DEFAULTS = {
-  shellBg: PERIDOT_COLORS.HEX_F5F1E7,
-  textMain: PERIDOT_COLORS.HEX_2F372F,
-  headingText: PERIDOT_COLORS.HEX_2F372F,
-  titleDisplayText: PERIDOT_COLORS.HEX_F8F6EF,
-  mutedText: PERIDOT_COLORS.HEX_6A7263,
-  detailLabelText: PERIDOT_COLORS.HEX_7A806F,
-  groupHeadingText: PERIDOT_COLORS.HEX_2F372F,
-  sectionTitleText: PERIDOT_COLORS.HEX_2F372F,
-  sidebarBg: PERIDOT_COLORS.HEX_FBF8F1,
-  sidebarBorder: PERIDOT_COLORS.HEX_D8D0BF,
-  groupBgTop: PERIDOT_COLORS.HEX_F7F3EA,
-  groupBgBottom: PERIDOT_COLORS.HEX_EEE7D7,
-  groupBorder: PERIDOT_COLORS.HEX_D9D1BE,
-  sectionBg: PERIDOT_COLORS.HEX_FFFDF8,
-  sectionBorder: PERIDOT_COLORS.HEX_D8D0BF,
-  floatingBg: PERIDOT_COLORS.HEX_FBF8F1,
-  floatingBorder: PERIDOT_COLORS.HEX_D6CFBF,
-  accent: PERIDOT_COLORS.HEX_86A66B,
-  accentHover: PERIDOT_COLORS.HEX_95B47A,
-  buttonPrimaryText: PERIDOT_COLORS.HEX_F8F6EF,
-  buttonPrimaryBg: PERIDOT_COLORS.HEX_5F7B4B,
-  buttonPrimaryHover: PERIDOT_COLORS.HEX_6F8B5B,
-  buttonPrimaryBorder: PERIDOT_COLORS.HEX_4F683F,
-  buttonPrimaryActiveBg: PERIDOT_COLORS.HEX_88A76D,
-  buttonPrimaryActiveHover: PERIDOT_COLORS.HEX_98B780,
-  buttonPrimaryActiveBorder: PERIDOT_COLORS.HEX_6F8B58,
-  buttonSecondaryBg: PERIDOT_COLORS.HEX_DFE8D6,
-  buttonSecondaryHover: PERIDOT_COLORS.HEX_D2DEC7,
-  buttonSecondaryBorder: PERIDOT_COLORS.HEX_AEBF9B,
-  buttonSecondaryText: PERIDOT_COLORS.HEX_33412F,
-  ghostHover: PERIDOT_COLORS.HEX_ECE7DA,
-  utilityPanelBg: PERIDOT_COLORS.HEX_F1ECE1,
-  utilityTintBg: PERIDOT_COLORS.HEX_E5EDDC,
-  studioCardBg: PERIDOT_COLORS.HEX_EEF2E6,
-  controlInputBg: PERIDOT_COLORS.HEX_FFFDF8,
-  titleBarBg: PERIDOT_COLORS.HEX_CFD8C5,
-  titleInputBg: PERIDOT_COLORS.HEX_6E8475,
-  titleInputBorder: PERIDOT_COLORS.HEX_97A68F,
-  titlePlaceholder: PERIDOT_COLORS.HEX_EEF3EA,
-  sliderTrackBg: PERIDOT_COLORS.HEX_CDD6C5,
-  sliderDotBg: PERIDOT_COLORS.HEX_FFFDF8,
-  sliderDotBorder: PERIDOT_COLORS.HEX_A6B097,
-  sliderLabelActive: PERIDOT_COLORS.HEX_3A4635,
-  sliderLabelInactive: PERIDOT_COLORS.HEX_7A806F,
-  toggleBgOpen: PERIDOT_COLORS.HEX_E6EDDC,
-  toggleBgClosed: PERIDOT_COLORS.HEX_DDE4D5,
-  toggleBorder: PERIDOT_COLORS.HEX_B2BEA6,
-  toggleAccent: PERIDOT_COLORS.HEX_88A36F,
-  toggleText: PERIDOT_COLORS.HEX_4B5C49,
-  toggleTextHover: PERIDOT_COLORS.HEX_2F372F,
-  mapCanvasBg: PERIDOT_COLORS.HEX_DBE5DA,
-  mapFrameBg: PERIDOT_COLORS.HEX_E6EAD8,
-  mapFrameBorder: PERIDOT_COLORS.HEX_7E846C,
-  mapLandFill: PERIDOT_COLORS.HEX_CFD7B8,
-  mapLandActiveFill: PERIDOT_COLORS.HEX_6E8475,
-  mapLandStroke: PERIDOT_COLORS.HEX_80876A,
-  mapGridStroke: PERIDOT_COLORS.HEX_C5D0C2,
-  mapEdge: PERIDOT_COLORS.HEX_857D5F,
-  mapEdgeHover: PERIDOT_COLORS.HEX_98906F,
-  mapEdgeActive: PERIDOT_COLORS.HEX_716A50,
-  mapEdgeSelected: PERIDOT_COLORS.HEX_5B553F,
-  mapNode: PERIDOT_COLORS.HEX_93AD7D,
-  mapNodeCluster: PERIDOT_COLORS.HEX_AE977A,
-  mapNodeAnimated: PERIDOT_COLORS.HEX_7C9962,
-  mapNodeHover: PERIDOT_COLORS.HEX_556944,
-  mapNodeSelected: PERIDOT_COLORS.HEX_3F5136,
-  mapNodeStroke: PERIDOT_COLORS.HEX_FFF9ED,
-  mapLabelText: PERIDOT_COLORS.HEX_4A4636,
-  mapLabelHalo: 'transparent',
-  mapLabelFontFamily: 'Avenir Next, Century Gothic, Montserrat, Jost, Manrope, Inter, Segoe UI, sans-serif',
-  mapLabelFontWeight: '600',
-  mapLabelFontStyle: 'normal',
-  mapLabelStroke: PERIDOT_COLORS.HEX_F7F2E8,
-  mapLabelStrokeWidth: '0.45',
-  mapWaterLabelFontFamily: 'Avenir Next, Century Gothic, Montserrat, Jost, Manrope, Inter, Segoe UI, sans-serif',
-  mapTextureSea: PERIDOT_COLORS.HEX_CAD7CB,
-  mapTextureSeaLine: PERIDOT_COLORS.HEX_B1C0B1,
-  mapTextureLandTint: PERIDOT_COLORS.HEX_BCC79F,
-  mapTextureLandLine: PERIDOT_COLORS.HEX_98A179,
-  mapTextureFrameWash: PERIDOT_COLORS.HEX_DDE3D1,
-  mapTextureCompass: PERIDOT_COLORS.HEX_79755E,
-  mapWarningBg: PERIDOT_COLORS.HEX_7E8B72,
-  mapWarningText: PERIDOT_COLORS.HEX_FFFFFF,
-  fileChipBg: PERIDOT_COLORS.HEX_E1EAD9,
-  fileChipBorder: PERIDOT_COLORS.HEX_B1C09F,
-  fileChipText: PERIDOT_COLORS.HEX_33412F,
-  textareaBg: PERIDOT_COLORS.HEX_FFFDF8,
-  textareaBorder: PERIDOT_COLORS.HEX_D8D0BF,
-  textareaText: PERIDOT_COLORS.HEX_33412F,
-  textareaMutedText: PERIDOT_COLORS.HEX_7A806F,
-  panelCardBg: PERIDOT_COLORS.HEX_FFFDF8,
-  panelCardBorder: PERIDOT_COLORS.HEX_D8D0BF,
-  panelCardText: PERIDOT_COLORS.HEX_33412F,
-  panelCardMutedText: PERIDOT_COLORS.HEX_6D7466,
-  panelCardHover: PERIDOT_COLORS.HEX_F5F1E7,
-  statCardBg: PERIDOT_COLORS.HEX_ECE9DC,
-  statCardText: PERIDOT_COLORS.HEX_33412F,
-  statCardMutedText: PERIDOT_COLORS.HEX_6F7469,
-  inputBg: PERIDOT_COLORS.HEX_FFFDF8,
-  inputBorder: PERIDOT_COLORS.HEX_D8D0BF,
-  inputText: PERIDOT_COLORS.HEX_33412F,
-  inputPlaceholder: PERIDOT_COLORS.HEX_848978,
-  emptyStateBg: PERIDOT_COLORS.HEX_F3EFE5,
-  emptyStateBorder: PERIDOT_COLORS.HEX_D8D0BF,
-  emptyStateText: PERIDOT_COLORS.HEX_6D7466,
-  emptyStateHeading: PERIDOT_COLORS.HEX_33412F,
-  overlayCardBg: PERIDOT_COLORS.HEX_FBF8F1,
-  overlayCardBorder: PERIDOT_COLORS.HEX_D8D0BF,
-  overlayCardText: PERIDOT_COLORS.HEX_33412F,
-  overlayCardMutedText: PERIDOT_COLORS.HEX_70776A,
-  pickerBg: PERIDOT_COLORS.HEX_FBF8F1,
-  pickerBorder: PERIDOT_COLORS.HEX_D8D0BF,
-  pickerText: PERIDOT_COLORS.HEX_33412F,
-  pickerMutedText: PERIDOT_COLORS.HEX_757C6E,
-  pickerHoverBg: PERIDOT_COLORS.HEX_EEF2E6,
-  iconButtonBg: PERIDOT_COLORS.HEX_E8EDE0,
-  iconButtonBorder: PERIDOT_COLORS.HEX_B4BEA7,
-  iconButtonText: PERIDOT_COLORS.HEX_55654E,
-  iconButtonHoverBg: PERIDOT_COLORS.HEX_DDE6D4,
-  iconButtonHoverText: PERIDOT_COLORS.HEX_33412F,
-  linkText: PERIDOT_COLORS.HEX_627F56,
-  linkHoverText: PERIDOT_COLORS.HEX_4D6743,
-};
+const THEME_DEFAULTS = PERIDOT_APP_THEME_DEFAULTS;
 
-const MAP_STYLE_PRESETS = {
-  preModern: {
-    mapCanvasBg: PERIDOT_COLORS.HEX_C5D7DF,
-    mapFrameBg: PERIDOT_COLORS.HEX_EFE3C7,
-    mapFrameBorder: PERIDOT_COLORS.HEX_8E7752,
-    mapLandFill: PERIDOT_COLORS.HEX_DFD3A5,
-    mapLandActiveFill: PERIDOT_COLORS.HEX_D2C087,
-    mapLandStroke: PERIDOT_COLORS.HEX_8F7A5A,
-    mapGridStroke: PERIDOT_COLORS.HEX_A7B8BF,
-    mapEdge: PERIDOT_COLORS.HEX_8A5B34,
-    mapEdgeHover: PERIDOT_COLORS.HEX_AB7648,
-    mapEdgeActive: PERIDOT_COLORS.HEX_6E4428,
-    mapEdgeSelected: PERIDOT_COLORS.HEX_51311D,
-    mapNode: PERIDOT_COLORS.HEX_728679,
-    mapNodeCluster: PERIDOT_COLORS.HEX_B56C5D,
-    mapNodeAnimated: PERIDOT_COLORS.HEX_86523B,
-    mapNodeHover: PERIDOT_COLORS.HEX_4F6F69,
-    mapNodeSelected: PERIDOT_COLORS.HEX_7A4A57,
-    mapNodeStroke: PERIDOT_COLORS.HEX_FBF5E8,
-    mapLabelText: PERIDOT_COLORS.HEX_4E3923,
-    mapLabelHalo: 'transparent',
-    mapLabelFontFamily: 'Georgia, Palatino Linotype, Book Antiqua, Palatino, serif',
-    mapLabelFontWeight: '400',
-    mapLabelFontStyle: 'italic',
-    mapLabelStroke: 'transparent',
-    mapLabelStrokeWidth: '0',
-    mapWaterLabelFontFamily: 'Georgia, Palatino Linotype, Book Antiqua, Palatino, serif',
-    mapTextureSea: PERIDOT_COLORS.HEX_A9C3C8,
-    mapTextureSeaLine: PERIDOT_COLORS.HEX_7E9DA4,
-    mapTextureLandTint: PERIDOT_COLORS.HEX_C8B97F,
-    mapTextureLandLine: PERIDOT_COLORS.HEX_A68F62,
-    mapTextureFrameWash: PERIDOT_COLORS.HEX_E4D1AB,
-    mapTextureCompass: PERIDOT_COLORS.HEX_8A6A42,
-    mapWarningBg: PERIDOT_COLORS.HEX_7F94A8,
-    mapWarningText: PERIDOT_COLORS.HEX_FFFFFF,
-  },
-  modern: {
-    mapCanvasBg: PERIDOT_COLORS.HEX_102544,
-    mapFrameBg: PERIDOT_COLORS.HEX_173154,
-    mapFrameBorder: PERIDOT_COLORS.HEX_3C5678,
-    mapLandFill: PERIDOT_COLORS.HEX_E8DDCB,
-    mapLandActiveFill: PERIDOT_COLORS.HEX_78545D,
-    mapLandStroke: PERIDOT_COLORS.HEX_9D8F7C,
-    mapGridStroke: PERIDOT_COLORS.HEX_3D5574,
-    mapEdge: PERIDOT_COLORS.HEX_84A8C8,
-    mapEdgeHover: PERIDOT_COLORS.HEX_A8C3DC,
-    mapEdgeActive: PERIDOT_COLORS.HEX_6F95B8,
-    mapEdgeSelected: PERIDOT_COLORS.HEX_5B748F,
-    mapNode: PERIDOT_COLORS.HEX_7EA1BA,
-    mapNodeCluster: PERIDOT_COLORS.HEX_B9818F,
-    mapNodeAnimated: PERIDOT_COLORS.HEX_96ADBF,
-    mapNodeHover: PERIDOT_COLORS.HEX_8E6A73,
-    mapNodeSelected: PERIDOT_COLORS.HEX_0D2140,
-    mapNodeStroke: PERIDOT_COLORS.HEX_F6F1E8,
-    mapLabelText: PERIDOT_COLORS.HEX_22364F,
-    mapLabelHalo: PERIDOT_COLORS.HEX_F3EDE4,
-    mapLabelFontFamily: 'Avenir Next, Century Gothic, Montserrat, Jost, Manrope, Inter, Segoe UI, sans-serif',
-    mapLabelFontWeight: '600',
-    mapLabelFontStyle: 'normal',
-    mapLabelStroke: PERIDOT_COLORS.HEX_FFFFFF,
-    mapLabelStrokeWidth: '0.65',
-    mapWaterLabelFontFamily: 'Avenir Next, Century Gothic, Montserrat, Jost, Manrope, Inter, Segoe UI, sans-serif',
-    mapTextureSea: PERIDOT_COLORS.HEX_173154,
-    mapTextureSeaLine: PERIDOT_COLORS.HEX_314D70,
-    mapTextureLandTint: PERIDOT_COLORS.HEX_F0E8DD,
-    mapTextureLandLine: PERIDOT_COLORS.HEX_C9BAA6,
-    mapTextureFrameWash: PERIDOT_COLORS.HEX_1E3B60,
-    mapTextureCompass: PERIDOT_COLORS.HEX_6A7D99,
-    mapWarningBg: PERIDOT_COLORS.HEX_5F7F9B,
-    mapWarningText: PERIDOT_COLORS.HEX_FFFFFF,
-  },
-};
+const MAP_STYLE_PRESETS = PERIDOT_MAP_STYLE_PRESETS;
 
 // ============================================================
 // SHARED STYLE HELPERS + SMALL UI BUILDING BLOCKS
@@ -1324,7 +1130,7 @@ function sidebarSurfaceClassName() {
 
 
 function floatingCardClassName() {
-  return 'rounded-2xl border border-[var(--floating-border)] bg-[var(--floating-bg)] text-[var(--text-main)] shadow-[0_18px_40px_rgba(0,0,0,0.5)] backdrop-blur';
+  return 'rounded-2xl border border-[var(--floating-border)] bg-[var(--floating-bg)] text-[var(--text-main)] shadow-[0_18px_40px_var(--peridot-color-rgba-rgba-0-0-0-0-5)] backdrop-blur';
 }
 
 function panelHeadingClassName() {
@@ -1490,7 +1296,7 @@ function LinkedLetterDetailPage({ letter, index, onBack, onOpenPersonDetail, onO
   const uniqueId = getLinkedLetterUniqueId(letter, index);
 
   return (
-    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
+    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-47-61-38-0-12)]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
@@ -1577,13 +1383,13 @@ function LinkedLetterCard({
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
   const variants = {
-    primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_rgba(0,0,0,0.28)]',
+    primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]',
     secondary: 'border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]',
-    ghost: 'bg-transparent text-[var(--muted-text)] hover:bg-[var(--ghost-hover)] hover:text-[var(--text-main)]',
+    ghost: 'bg-[transparent] text-[var(--muted-text)] hover:bg-[var(--ghost-hover)] hover:text-[var(--text-main)]',
   };
 
   if (active) {
-    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.3)] hover:bg-[var(--button-primary-active-hover)]`;
+    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_var(--peridot-color-rgba-rgba-0-0-0-0-3)] hover:bg-[var(--button-primary-active-hover)]`;
   }
   return `${base} ${variants[variant] || variants.secondary}`;
 }
@@ -1622,7 +1428,7 @@ function SidebarToggle({ side, open, onToggle }) {
       type="button"
       onClick={onToggle}
       className={[
-        'absolute top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-all duration-150 hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)]',
+        'absolute top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-16)] transition-all duration-150 hover:shadow-[0_12px_24px_var(--peridot-color-rgba-rgba-0-0-0-0-22)]',
         left ? 'right-3' : 'left-3',
         open
           ? 'border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]'
@@ -2570,7 +2376,7 @@ function SvgMap({
 
 function InspectorSummaryCard({ children }) {
   return (
-    <div className="rounded-2xl border border-[var(--summary-card-border)] bg-[var(--summary-card-bg)] p-4 text-[var(--summary-card-text)] shadow-[0_10px_28px_rgba(56,38,26,0.16)]">
+    <div className="rounded-2xl border border-[var(--summary-card-border)] bg-[var(--summary-card-bg)] p-4 text-[var(--summary-card-text)] shadow-[0_10px_28px_var(--peridot-color-rgba-rgba-56-38-26-0-16)]">
       {children}
     </div>
   );
@@ -2630,7 +2436,7 @@ function LinkedLettersPanel({
   onOpenLetterDetail,
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
+    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-47-61-38-0-12)]">
       <div className="mb-3 flex items-center justify-between gap-3 text-sm">
         <div>
           <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Linked records</div>
@@ -2735,13 +2541,13 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
   return (
     <div className="mb-0 w-full">
       <div className="flex min-w-0 items-center gap-2">
-        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[26px] font-bold leading-tight tracking-[-0.01em] text-[#f4f7e8] drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]">
+        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[26px] font-bold leading-tight tracking-[-0.01em] text-[var(--peridot-color-hex-f4f7e8)] drop-shadow-[0_1px_1px_var(--peridot-color-rgba-rgba-0-0-0-0-45)]">
           Inspector
         </h2>
         <button
           type="button"
           onClick={() => setShowInspectorInfo((v) => !v)}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#edf5dd]/70 bg-[#e7efd6] text-[13px] font-bold leading-none text-[#11251b] shadow-sm transition-colors hover:bg-[#f4f8e8] hover:text-[#07120d] focus:outline-none focus:ring-2 focus:ring-[#e7efd6]/80"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--peridot-color-hex-edf5dd-a70)] bg-[var(--peridot-color-hex-e7efd6)] text-[13px] font-bold leading-none text-[var(--peridot-color-hex-11251b)] shadow-sm transition-colors hover:bg-[var(--peridot-color-hex-f4f8e8)] hover:text-[var(--peridot-color-hex-07120d)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-e7efd6-a80)]"
           aria-label="Toggle inspector information"
           title="Inspector information"
         >
@@ -2749,7 +2555,7 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
         </button>
       </div>
       {showInspectorInfo ? (
-        <div className="mt-3 w-full rounded-2xl border border-[#d9e8bd]/70 bg-[#edf4df] p-3 text-sm leading-relaxed text-[#21372c] shadow-inner shadow-[#718763]/10">
+        <div className="mt-3 w-full rounded-2xl border border-[var(--peridot-color-hex-d9e8bd-a70)] bg-[var(--peridot-color-hex-edf4df)] p-3 text-sm leading-relaxed text-[var(--peridot-color-hex-21372c)] shadow-inner shadow-[var(--peridot-color-hex-718763-a10)]">
           Summary details in this panel reflect the currently selected view, date window, search filter, and minimum-weight threshold, not the full dataset.
         </div>
       ) : null}
@@ -2801,11 +2607,11 @@ function AppMainWorkspace({
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH ? (
         <PeridotSearchWorkspace {...searchWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR ? (
-        <div className="relative h-full overflow-hidden bg-[#04100b]" data-peridot-inspector-workspace="true">
+        <div className="relative h-full overflow-hidden bg-[var(--peridot-color-hex-04100b)]" data-peridot-inspector-workspace="true">
           <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
-          <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[#03100a]/84 p-4 backdrop-blur-[4px] sm:p-6">
+          <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[var(--peridot-color-hex-03100a-a84)] p-4 backdrop-blur-[4px] sm:p-6">
             <section
-              className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2.5rem] border border-[#b9d37d]/38 bg-[linear-gradient(145deg,rgba(2,14,9,0.98),rgba(8,31,22,0.96)_44%,rgba(25,55,43,0.92))] p-3 text-[#f7fbe9] shadow-[0_30px_100px_rgba(0,0,0,0.72)] ring-1 ring-[#d7e77f]/14 sm:p-4"
+              className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2.5rem] border border-[var(--peridot-color-hex-b9d37d-a38)] bg-[linear-gradient(145deg,var(--peridot-color-rgba-rgba-2-14-9-0-98),var(--peridot-color-rgba-rgba-8-31-22-0-96)_44%,var(--peridot-color-rgba-rgba-25-55-43-0-92))] p-3 text-[var(--peridot-color-hex-f7fbe9)] shadow-[0_30px_100px_var(--peridot-color-rgba-rgba-0-0-0-0-72)] ring-1 ring-[var(--peridot-color-hex-d7e77f-a14)] sm:p-4"
               aria-label="Inspector workspace"
             >
               {workspaceInspectorPanelProps ? (
@@ -4417,9 +4223,9 @@ export default function EuropeNetworkMapApp() {
             min-width: 0 !important;
           }
           .peridot-redesign-root aside[class*="w-[420px]"] {
-            background: rgba(3, 16, 10, 0.72) !important;
+            background: var(--peridot-color-rgba-rgba-3-16-10-0-72) !important;
             backdrop-filter: blur(10px) saturate(0.92) !important;
-            border-right-color: rgba(216, 232, 189, 0.25) !important;
+            border-right-color: var(--peridot-color-rgba-rgba-216-232-189-0-25) !important;
           }
           .peridot-redesign-root aside[class*="w-[420px]"] > div[class*="overflow-auto"] {
             padding-right: 1.25rem !important;

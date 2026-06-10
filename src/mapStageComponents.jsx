@@ -22,7 +22,7 @@ export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCar
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="absolute bottom-4 left-4 z-20 rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--button-secondary-text)] shadow-[0_12px_28px_rgba(0,0,0,0.22)] transition hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
+        className="absolute bottom-4 left-4 z-20 rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--button-secondary-text)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-22)] transition hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
         aria-label="Open map legend"
         title="Open map legend"
       >
@@ -77,7 +77,7 @@ export function MapControlsOverlay({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="absolute bottom-4 right-4 z-20 rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--button-secondary-text)] shadow-[0_12px_28px_rgba(0,0,0,0.22)] transition hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
+        className="absolute bottom-4 right-4 z-20 rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--button-secondary-text)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-22)] transition hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
         aria-label="Open map controls"
         title="Open map controls"
       >
@@ -124,7 +124,7 @@ export function HoverCardOverlay({ hoverCard, mapViewportSize }) {
 
   return (
     <div
-      className="pointer-events-none absolute z-20 max-w-[320px] rounded-2xl border border-[var(--overlay-card-border)] bg-[var(--overlay-card-bg)] px-4 py-3 text-sm shadow-[0_16px_36px_rgba(0,0,0,0.26)]"
+      className="pointer-events-none absolute z-20 max-w-[320px] rounded-2xl border border-[var(--overlay-card-border)] bg-[var(--overlay-card-bg)] px-4 py-3 text-sm shadow-[0_16px_36px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]"
       style={{
         left: Math.min(hoverCard.x + 18, Math.max(16, mapViewportSize.width - 340)),
         top: Math.max(16, hoverCard.y + 18),

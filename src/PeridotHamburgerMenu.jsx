@@ -78,7 +78,7 @@ export function PeridotHamburgerMenu({
       <button
         type="button"
         onClick={onToggle}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-[#dfe9c8]/70 bg-[#f5f1df] text-xl font-black text-[#173120] shadow-[0_12px_28px_rgba(0,0,0,0.38)] transition hover:bg-[#d6a36a] focus:outline-none focus:ring-2 focus:ring-[#f5ecd2]/80"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5f1df)] text-xl font-black text-[var(--peridot-color-hex-173120)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-38)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f5ecd2-a80)]"
         aria-label={open ? 'Close Peridot menu' : 'Open Peridot menu'}
         aria-expanded={open}
       >
@@ -87,13 +87,13 @@ export function PeridotHamburgerMenu({
 
       {open ? (
         <div
-          className="mt-3 w-[min(360px,calc(100vw-2.5rem))] overflow-hidden rounded-[28px] border border-[#dfe9c8]/55 bg-[linear-gradient(145deg,rgba(2,20,13,0.98),rgba(12,44,31,0.96))] p-3 text-[#fbf7ea] shadow-[0_24px_70px_rgba(0,0,0,0.58)] backdrop-blur-md"
+          className="mt-3 w-[min(360px,calc(100vw-2.5rem))] overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a55)] bg-[linear-gradient(145deg,var(--peridot-color-rgba-rgba-2-20-13-0-98),var(--peridot-color-rgba-rgba-12-44-31-0-96))] p-3 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_24px_70px_var(--peridot-color-rgba-rgba-0-0-0-0-58)] backdrop-blur-md"
           role="menu"
           aria-label="Peridot navigation"
         >
-          <div className="border-b border-[#dfe9c8]/20 px-3 pb-3 pt-2">
-            <p className="peridot-kicker !mb-0 text-[10px] text-[#dfe9c8]">Peridot menu</p>
-            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[#f5ecd2]">
+          <div className="border-b border-[var(--peridot-color-hex-dfe9c8-a20)] px-3 pb-3 pt-2">
+            <p className="peridot-kicker !mb-0 text-[10px] text-[var(--peridot-color-hex-dfe9c8)]">Peridot menu</p>
+            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-f5ecd2)]">
               Workspaces
             </h2>
           </div>
@@ -105,15 +105,15 @@ export function PeridotHamburgerMenu({
                 type="button"
                 onClick={() => handleItemClick(item)}
                 className={[
-                  'group rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-[#d6a36a]/70',
+                  'group rounded-2xl border px-4 py-3 text-left transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]',
                   item.active
-                    ? 'border-[#f5ecd2]/85 bg-[#b58b42]/72 text-[#fff8e8] shadow-[0_12px_28px_rgba(0,0,0,0.26)]'
-                    : 'border-[#dfe9c8]/22 bg-[#dfe9c8]/8 text-[#fbf7ea] hover:border-[#f5ecd2]/65 hover:bg-[#dfe9c8]/14',
+                    ? 'border-[var(--peridot-color-hex-f5ecd2-a85)] bg-[var(--peridot-color-hex-b58b42-a72)] text-[var(--peridot-color-hex-fff8e8)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]'
+                    : 'border-[var(--peridot-color-hex-dfe9c8-a22)] bg-[var(--peridot-color-hex-dfe9c8-a8)] text-[var(--peridot-color-hex-fbf7ea)] hover:border-[var(--peridot-color-hex-f5ecd2-a65)] hover:bg-[var(--peridot-color-hex-dfe9c8-a14)]',
                 ].join(' ')}
                 role="menuitem"
               >
                 <span className="block text-sm font-bold">{item.title}</span>
-                <span className={['mt-1 block text-xs leading-relaxed', item.active ? 'text-[#fff3d4]' : 'text-[#dfe9c8]'].join(' ')}>
+                <span className={['mt-1 block text-xs leading-relaxed', item.active ? 'text-[var(--peridot-color-hex-fff3d4)]' : 'text-[var(--peridot-color-hex-dfe9c8)]'].join(' ')}>
                   {item.description}
                 </span>
               </button>
