@@ -1,27 +1,33 @@
 /*
  * Search & Filter workspace.
- * 
+ *
  * This component renders the global active-dataset filtering surface. It separates draft filter input from applied filter state so expensive graph/data recomputation only happens when the user chooses Apply Filters.
- * 
+ *
  * Important relationships:
  * - `App.jsx` owns draft/applied filter state and recomputation status.
  * - Visualizations, Timeline, Analytics, Inspector, and Export should consume the active filtered dataset defined here.
- * 
+ *
  * Maintenance cautions:
  * - Do not make text inputs recompute data on every keystroke.
  * - Predictive suggestions should fill draft fields only; Apply Filters should commit global state.
  *
  * Scope contract:
  * - Text/entity inputs here update draft state only. They must not recompute
- *   graph data while the user is typing.
+ * graph data while the user is typing.
  * - Apply commits Search & Filter fields and resets playback so the next
- *   visual/export scope starts at the beginning of the newly filtered row set.
+ * visual/export scope starts at the beginning of the newly filtered row set.
  * - Clear resets Search & Filter fields and timeline boundaries together,
- *   because the global visible dataset is the intersection of timeline window
- *   and committed Search & Filter criteria.
+ * because the global visible dataset is the intersection of timeline window
+ * and committed Search & Filter criteria.
+ *
+ * Phase 1 Advanced Search rework:
+ * - This workspace now also renders a result-card list for the current applied
+ * active rows and hands individual records to the full Inspector workspace.
+ * - The result cards are intentionally downstream of Apply Filters. They do
+ * not create a new live-filtering path while the user is typing.
  */
-
 import React, { useEffect, useMemo, useState } from 'react';
+import { buildPeridotSearchResults } from './peridotSearchResultHelpers.js';
 
 function AutocompleteTextInput({
   id,
@@ -41,7 +47,6 @@ function AutocompleteTextInput({
       .slice(0, 20)
     : [];
   const showSuggestions = isFocused && matchingSuggestions.length > 0;
-
   const chooseSuggestion = (suggestion) => {
     onChange(suggestion);
     setIsFocused(false);
@@ -102,6 +107,65 @@ function CriteriaCard({ title, children }) {
   );
 }
 
+function SearchResultCard({ result, onInspectSearchResult }) {
+  return (
+    <article className="rounded-[22px] border border-[#dfe9c8]/24 bg-[#071f16]/55 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.18)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#dfe9c8]/64">Search result</p>
+          <h3 className="mt-1 text-base font-bold leading-6 text-[#fbf7ea]">{result.title}</h3>
+          <p className="mt-1 text-xs font-semibold text-[#f7f2df]/70">{result.displayDate}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => onInspectSearchResult?.(result)}
+          className="rounded-full border border-[#dfe9c8]/45 bg-[#dfe9c8]/12 px-3 py-1.5 text-xs font-bold text-[#fbf7ea] transition-colors hover:bg-[#b58b42] hover:text-[#fff8e8]"
+        >
+          Inspect
+        </button>
+      </div>
+
+      <dl className="mt-3 grid gap-2 text-xs text-[#f7f2df]/72 sm:grid-cols-2">
+        <div>
+          <dt className="font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/58">Entities</dt>
+          <dd className="mt-1 leading-5">{result.peopleRoute}</dd>
+        </div>
+        <div>
+          <dt className="font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/58">Places</dt>
+          <dd className="mt-1 leading-5">{result.placeRoute}</dd>
+        </div>
+      </dl>
+
+      {result.matchedFields.length ? (
+        <div className="mt-3 rounded-2xl border border-[#dfe9c8]/16 bg-[#dfe9c8]/8 p-3">
+          <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#dfe9c8]/64">Why this matched</p>
+          <ul className="mt-2 space-y-1 text-xs leading-5 text-[#f7f2df]/76">
+            {result.matchedFields.map((match) => (
+              <li key={`${match.label}:${match.value}`}>
+                <span className="font-semibold text-[#fbf7ea]">{match.label}:</span> {match.value}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p className="mt-3 text-xs leading-5 text-[#f7f2df]/60">
+          This row is in the current applied dataset. It may match through date, weight, or another active scope condition.
+        </p>
+      )}
+
+      {result.capabilityBadges.length ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {result.capabilityBadges.map((badge) => (
+            <span key={badge} className="rounded-full border border-[#dfe9c8]/24 bg-[#dfe9c8]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/76">
+              {badge}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </article>
+  );
+}
+
 export function PeridotSearchWorkspace({
   search,
   setSearch,
@@ -121,6 +185,8 @@ export function PeridotSearchWorkspace({
   currentRangeLabel,
   graph,
   rowDiagnostics,
+  searchRows = [],
+  onInspectSearchResult,
   viewMode,
   minCount,
   setMinCount,
@@ -183,6 +249,14 @@ export function PeridotSearchWorkspace({
       .sort((a, b) => Number(a) - Number(b))
   ), [timelineMonths]);
 
+  const searchResultCards = useMemo(() => buildPeridotSearchResults(
+    searchRows,
+    { search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter },
+    { limit: 50 },
+  ), [searchRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter]);
+
+  const hiddenSearchResultCount = Math.max(0, (searchRows?.length || 0) - searchResultCards.length);
+
   const resolveTimelineBoundaryIndexFromYear = (boundary, year) => {
     if (!timelineMonths.length || !year) return -1;
     if (boundary === 'start') return timelineMonths.findIndex((month) => String(month).slice(0, 4) === String(year));
@@ -228,7 +302,6 @@ export function PeridotSearchWorkspace({
     const nextRoutePeopleFilter = String(draftRoutePeopleFilter ?? '').trim();
     const nextStartIndex = resolveTimelineBoundaryIndexFromYear('start', draftStartYear);
     const nextEndIndex = resolveTimelineBoundaryIndexFromYear('end', draftEndYear);
-
     setFilterStatusMessage('Updating view…');
     window.requestAnimationFrame(() => {
       setSearch(nextSearch);
@@ -297,65 +370,98 @@ export function PeridotSearchWorkspace({
             </div>
           </aside>
 
-          <section className="peridot-surface-card peridot-card-inner">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h2 className="text-2xl font-bold text-[#fbf7ea]">Advanced search criteria</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[#f7f2df]/76">Press Enter in any field to apply the current draft.</p>
+          <section className="space-y-6">
+            <div className="peridot-surface-card peridot-card-inner">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#fbf7ea]">Advanced search criteria</h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#f7f2df]/76">Press Enter in any field to apply the current draft.</p>
+                </div>
+                {filterStatusMessage ? (
+                  <div className="rounded-full border border-[#dfe9c8]/40 bg-[#dfe9c8]/16 px-4 py-2 text-sm font-semibold text-[#fbf7ea]">{filterStatusMessage}</div>
+                ) : null}
               </div>
-              {filterStatusMessage ? (
-                <div className="rounded-full border border-[#dfe9c8]/40 bg-[#dfe9c8]/16 px-4 py-2 text-sm font-semibold text-[#fbf7ea]">{filterStatusMessage}</div>
-              ) : null}
-            </div>
 
-            <div className="mt-6 grid gap-5 xl:grid-cols-2">
-              <CriteriaCard title="Text search">
-                <div className="mt-4">
-                  <label htmlFor="workspace-keyword-search" className="block text-xs font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/72">Keyword search</label>
-                  <input
-                    id="workspace-keyword-search"
-                    value={draftSearch}
-                    onChange={(event) => setDraftSearch(event.target.value)}
-                    onKeyDown={handleDraftKeyDown}
-                    placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
-                    className="peridot-form-input mt-2 text-sm"
-                  />
-                </div>
-              </CriteriaCard>
-
-              <CriteriaCard title="People and places">
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <AutocompleteTextInput id="workspace-person-filter" label="Person filter" value={draftPersonFilter} onChange={setDraftPersonFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a person or entity" suggestions={personSuggestions} helperText="Matches source or target entity names." />
-                  <AutocompleteTextInput id="workspace-place-filter" label="Place filter" value={draftPlaceFilter} onChange={setDraftPlaceFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a place" suggestions={placeSuggestions} helperText="Matches source or target places." />
-                </div>
-              </CriteriaCard>
-
-              <CriteriaCard title="Routes">
-                <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  <AutocompleteTextInput id="workspace-route-place-filter" label="Route filter (place)" value={draftRoutePlaceFilter} onChange={setDraftRoutePlaceFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Florence → Siena" suggestions={routePlaceSuggestions} helperText="Matches directed source-place to target-place routes." />
-                  <AutocompleteTextInput id="workspace-route-people-filter" label="Route filter (entities)" value={draftRoutePeopleFilter} onChange={setDraftRoutePeopleFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Source entity → Target entity" suggestions={routePeopleSuggestions} helperText="Matches directed source-entity to target-entity routes." />
-                </div>
-              </CriteriaCard>
-
-              <CriteriaCard title="Threshold and date">
-                <div className="mt-4 grid gap-4 sm:grid-cols-3">
-                  <div>
-                    <label htmlFor="workspace-min-count" className="block text-xs font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/72">Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}</label>
-                    <input id="workspace-min-count" type="number" min="1" value={draftMinCount} onChange={(event) => setDraftMinCount(event.target.value)} onKeyDown={handleDraftKeyDown} className="peridot-form-input mt-2 text-sm" />
-                    <p className="mt-2 text-xs text-[#f7f2df]/68">Current applied minimum: {currentMinCountLabel}</p>
+              <div className="mt-6 grid gap-5 xl:grid-cols-2">
+                <CriteriaCard title="Text search">
+                  <div className="mt-4">
+                    <label htmlFor="workspace-keyword-search" className="block text-xs font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/72">Keyword search</label>
+                    <input
+                      id="workspace-keyword-search"
+                      value={draftSearch}
+                      onChange={(event) => setDraftSearch(event.target.value)}
+                      onKeyDown={handleDraftKeyDown}
+                      placeholder={viewMode === 'geographic' ? 'e.g. Siena, Maria Magdalena, 1613' : 'e.g. Caterina, Cosimo, Siena'}
+                      className="peridot-form-input mt-2 text-sm"
+                    />
                   </div>
-                  <AutocompleteTextInput id="workspace-start-year" label="Start year" value={draftStartYear} onChange={setDraftStartYear} onKeyDown={handleDraftKeyDown} placeholder="Start year" suggestions={timelineYearSuggestions} />
-                  <AutocompleteTextInput id="workspace-end-year" label="End year" value={draftEndYear} onChange={setDraftEndYear} onKeyDown={handleDraftKeyDown} placeholder="End year" suggestions={timelineYearSuggestions} />
-                </div>
-                <p className="mt-4 text-xs leading-5 text-[#f7f2df]/68">
-                  Available year range: {timelineMonths.length ? `${timelineMonths[0]} to ${timelineMonths[timelineMonths.length - 1]}` : 'none detected'}.
-                </p>
-              </CriteriaCard>
+                </CriteriaCard>
+
+                <CriteriaCard title="People and places">
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <AutocompleteTextInput id="workspace-person-filter" label="Person filter" value={draftPersonFilter} onChange={setDraftPersonFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a person or entity" suggestions={personSuggestions} helperText="Matches source or target entity names." />
+                    <AutocompleteTextInput id="workspace-place-filter" label="Place filter" value={draftPlaceFilter} onChange={setDraftPlaceFilter} onKeyDown={handleDraftKeyDown} placeholder="Type a place" suggestions={placeSuggestions} helperText="Matches source or target places." />
+                  </div>
+                </CriteriaCard>
+
+                <CriteriaCard title="Routes">
+                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                    <AutocompleteTextInput id="workspace-route-place-filter" label="Route filter (place)" value={draftRoutePlaceFilter} onChange={setDraftRoutePlaceFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Florence → Siena" suggestions={routePlaceSuggestions} helperText="Matches directed source-place to target-place routes." />
+                    <AutocompleteTextInput id="workspace-route-people-filter" label="Route filter (entities)" value={draftRoutePeopleFilter} onChange={setDraftRoutePeopleFilter} onKeyDown={handleDraftKeyDown} placeholder="e.g. Source entity → Target entity" suggestions={routePeopleSuggestions} helperText="Matches directed source-entity to target-entity routes." />
+                  </div>
+                </CriteriaCard>
+
+                <CriteriaCard title="Threshold and date">
+                  <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <label htmlFor="workspace-min-count" className="block text-xs font-bold uppercase tracking-[0.12em] text-[#dfe9c8]/72">Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}</label>
+                      <input id="workspace-min-count" type="number" min="1" value={draftMinCount} onChange={(event) => setDraftMinCount(event.target.value)} onKeyDown={handleDraftKeyDown} className="peridot-form-input mt-2 text-sm" />
+                      <p className="mt-2 text-xs text-[#f7f2df]/68">Current applied minimum: {currentMinCountLabel}</p>
+                    </div>
+                    <AutocompleteTextInput id="workspace-start-year" label="Start year" value={draftStartYear} onChange={setDraftStartYear} onKeyDown={handleDraftKeyDown} placeholder="Start year" suggestions={timelineYearSuggestions} />
+                    <AutocompleteTextInput id="workspace-end-year" label="End year" value={draftEndYear} onChange={setDraftEndYear} onKeyDown={handleDraftKeyDown} placeholder="End year" suggestions={timelineYearSuggestions} />
+                  </div>
+                  <p className="mt-4 text-xs leading-5 text-[#f7f2df]/68">
+                    Available year range: {timelineMonths.length ? `${timelineMonths[0]} to ${timelineMonths[timelineMonths.length - 1]}` : 'none detected'}.
+                  </p>
+                </CriteriaCard>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center justify-end gap-3 border-t border-[#dfe9c8]/22 pt-5">
+                <button type="button" onClick={clearFilters} className="peridot-button-secondary">Clear Filters</button>
+                <button type="button" onClick={applyDraftFilters} className="peridot-button-primary">Apply Filters</button>
+              </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap items-center justify-end gap-3 border-t border-[#dfe9c8]/22 pt-5">
-              <button type="button" onClick={clearFilters} className="peridot-button-secondary">Clear Filters</button>
-              <button type="button" onClick={applyDraftFilters} className="peridot-button-primary">Apply Filters</button>
+            <div className="peridot-surface-card peridot-card-inner">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#fbf7ea]">Search results</h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[#f7f2df]/76">
+                    Result cards reflect the current applied dataset. Use Inspect to open the selected record in the full Inspector workspace.
+                  </p>
+                </div>
+                <div className="rounded-full border border-[#dfe9c8]/35 bg-[#dfe9c8]/12 px-4 py-2 text-sm font-bold text-[#fbf7ea]">
+                  {searchRows?.length || 0} records
+                </div>
+              </div>
+
+              {searchResultCards.length ? (
+                <div className="mt-5 grid gap-4">
+                  {searchResultCards.map((result) => (
+                    <SearchResultCard key={result.id} result={result} onInspectSearchResult={onInspectSearchResult} />
+                  ))}
+                  {hiddenSearchResultCount > 0 ? (
+                    <p className="rounded-2xl border border-[#dfe9c8]/20 bg-[#dfe9c8]/8 px-4 py-3 text-sm leading-6 text-[#f7f2df]/72">
+                      Showing the first {searchResultCards.length} records. {hiddenSearchResultCount} additional records are in the active result set.
+                    </p>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="mt-5 rounded-[22px] border border-[#dfe9c8]/24 bg-[#071f16]/55 p-5 text-sm leading-6 text-[#f7f2df]/72">
+                  No records are currently in scope. Clear filters or broaden the date window to restore results.
+                </div>
+              )}
             </div>
           </section>
         </div>

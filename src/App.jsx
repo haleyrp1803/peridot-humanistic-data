@@ -2909,6 +2909,12 @@ export default function EuropeNetworkMapApp() {
     setShowAllLinkedLetters(false);
   };
 
+  const openInspectorSearchResult = (result) => {
+    const row = result?.row || result?.letter || null;
+    if (!row) return;
+    openInspectorLetterDetail(row, result?.index || 0);
+  };
+
   const goBackInspector = () => {
     setInspectorHistory((prev) => {
       if (!prev.length) return prev;
@@ -4320,6 +4326,8 @@ export default function EuropeNetworkMapApp() {
     setTimelineMode,
     setIsPlaying,
     setPlaybackIndex,
+    searchRows: filteredRowsByTime,
+    onInspectSearchResult: openInspectorSearchResult,
     onOpenVisualizations: openVisualizationsWorkspace,
   };
 
