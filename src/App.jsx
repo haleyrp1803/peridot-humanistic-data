@@ -63,6 +63,7 @@ import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace
 import { PeridotExploreWorkspace } from './PeridotExploreWorkspace';
 import { PeridotLearnMoreWorkspace } from './PeridotLearnMoreWorkspace';
 import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
+import { rowMatchesSearchCapabilityFilter } from './peridotSearchResultHelpers.js';
 import {
   DEFAULT_PERIDOT_WORKSPACE_MODE,
   PERIDOT_WORKSPACE_MODES,
@@ -975,14 +976,16 @@ function filterRowsBySearchAndEntity(rows, {
   placeQuery = '',
   routePlaceQuery = '',
   routePeopleQuery = '',
+    capabilityFilters = [],
 } = {}) {
   const q = normalizeFilterTerm(searchQuery);
   const personQ = normalizeFilterTerm(personQuery);
   const placeQ = normalizeFilterTerm(placeQuery);
   const routePlaceQ = normalizeFilterTerm(routePlaceQuery);
   const routePeopleQ = normalizeFilterTerm(routePeopleQuery);
+  const activeCapabilityFilters = Array.isArray(capabilityFilters) ? capabilityFilters.filter(Boolean) : [];
 
-  if (!q && !personQ && !placeQ && !routePlaceQ && !routePeopleQ) {
+  if (!q && !personQ && !placeQ && !routePlaceQ && !routePeopleQ && !activeCapabilityFilters.length) {
     return rows;
   }
 
@@ -1001,6 +1004,10 @@ function filterRowsBySearchAndEntity(rows, {
       row.sourcePerson,
       row.targetPerson,
     ];
+
+    if (activeCapabilityFilters.length && !activeCapabilityFilters.every((filterId) => rowMatchesSearchCapabilityFilter(row, filterId))) {
+      return false;
+    }
 
     if (personQ && !matchesFilterTerm([row.sourcePerson, row.targetPerson], personQ)) {
       return false;
@@ -2849,6 +2856,7 @@ export default function EuropeNetworkMapApp() {
   const [placeFilter, setPlaceFilter] = useState('');
   const [routePlaceFilter, setRoutePlaceFilter] = useState('');
   const [routePeopleFilter, setRoutePeopleFilter] = useState('');
+  const [capabilityFilters, setCapabilityFilters] = useState([]);
   const [selectedSelection, setSelectedSelection] = useState(null);
   const [inspectorPresentationMode, setInspectorPresentationMode] = useState(
     INSPECTOR_PRESENTATION_MODES.CLOSED,
@@ -3152,8 +3160,9 @@ export default function EuropeNetworkMapApp() {
       placeQuery: placeFilter,
       routePlaceQuery: routePlaceFilter,
       routePeopleQuery: routePeopleFilter,
+      capabilityFilters,
     });
-  }, [timelineWindowRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter]);
+  }, [timelineWindowRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters]);
 
   const selectedRowsForPlayback = useMemo(() => {
     return buildPlaybackRows(filteredRowsForActiveFilters);
@@ -4307,6 +4316,8 @@ export default function EuropeNetworkMapApp() {
     setRoutePlaceFilter,
     routePeopleFilter,
     setRoutePeopleFilter,
+    capabilityFilters,
+    setCapabilityFilters,
     personSuggestions: searchFilterSuggestions?.people || [],
     placeSuggestions: searchFilterSuggestions?.places || [],
     routePlaceSuggestions: searchFilterSuggestions?.placeRoutes || [],

@@ -20,14 +20,19 @@
  * because the global visible dataset is the intersection of timeline window
  * and committed Search & Filter criteria.
  *
- * Phase 1 Advanced Search rework:
- * - This workspace now also renders a result-card list for the current applied
- * active rows and hands individual records to the full Inspector workspace.
- * - The result cards are intentionally downstream of Apply Filters. They do
- * not create a new live-filtering path while the user is typing.
+ * Phase 2 Advanced Search rework:
+ * - The workspace now adds global capability filters and result facets/counts
+ *   on top of the Phase 1 result-card + Inspector handoff path.
+ * - Facet clicks refine draft criteria only; Apply Filters still commits the
+ *   active dataset so typing and exploratory clicks do not recompute data live.
  */
 import React, { useEffect, useMemo, useState } from 'react';
-import { buildPeridotSearchResults } from './peridotSearchResultHelpers.js';
+import {
+  CAPABILITY_FILTER_OPTIONS,
+  buildPeridotSearchFacets,
+  buildPeridotSearchResults,
+  getCapabilityFilterLabel,
+} from './peridotSearchResultHelpers.js';
 
 function AutocompleteTextInput({
   id,
@@ -107,6 +112,53 @@ function CriteriaCard({ title, children }) {
   );
 }
 
+
+function CapabilityFilterToggle({ option, checked, count, onToggle }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onToggle(option.id)}
+      className={`rounded-2xl border px-3 py-3 text-left transition-colors ${checked
+        ? 'border-[#b58b42] bg-[#b58b42]/24 text-[#fff8e8]'
+        : 'border-[#dfe9c8]/24 bg-[#dfe9c8]/8 text-[#f7f2df]/76 hover:border-[#dfe9c8]/50 hover:bg-[#dfe9c8]/14'}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <span className="text-xs font-bold uppercase tracking-[0.12em]">{option.label}</span>
+        {Number.isFinite(count) ? <span className="rounded-full bg-[#071f16]/55 px-2 py-0.5 text-[10px] font-bold">{count}</span> : null}
+      </div>
+      <p className="mt-2 text-xs leading-5 opacity-80">{option.description}</p>
+    </button>
+  );
+}
+
+function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
+  return (
+    <div className="rounded-[20px] border border-[#dfe9c8]/18 bg-[#dfe9c8]/7 p-3">
+      <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-[#dfe9c8]/70">{group.label}</h3>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {group.items.map((item) => {
+          const isCapability = group.type === 'capability';
+          const isActive = isCapability && activeCapabilityFilters.includes(item.value);
+          return (
+            <button
+              key={`${group.id}:${item.value}`}
+              type="button"
+              onClick={() => onChooseFacet(group, item)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${isActive
+                ? 'border-[#b58b42] bg-[#b58b42]/24 text-[#fff8e8]'
+                : 'border-[#dfe9c8]/26 bg-[#071f16]/45 text-[#f7f2df]/74 hover:border-[#dfe9c8]/50 hover:text-[#fbf7ea]'}`}
+              title={isCapability ? `Toggle ${item.label}` : `Set draft filter to ${item.value}`}
+            >
+              <span>{item.label || item.value}</span>
+              <span className="ml-2 text-[#dfe9c8]/62">{item.count}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SearchResultCard({ result, onInspectSearchResult }) {
   return (
     <article className="rounded-[22px] border border-[#dfe9c8]/24 bg-[#071f16]/55 p-4 shadow-[0_12px_26px_rgba(0,0,0,0.18)]">
@@ -181,6 +233,8 @@ export function PeridotSearchWorkspace({
   placeSuggestions = [],
   routePlaceSuggestions = [],
   routePeopleSuggestions = [],
+  capabilityFilters = [],
+  setCapabilityFilters,
   currentMinCountLabel,
   currentRangeLabel,
   graph,
@@ -210,6 +264,7 @@ export function PeridotSearchWorkspace({
   const [draftPlaceFilter, setDraftPlaceFilter] = useState(placeFilter ?? '');
   const [draftRoutePlaceFilter, setDraftRoutePlaceFilter] = useState(routePlaceFilter ?? '');
   const [draftRoutePeopleFilter, setDraftRoutePeopleFilter] = useState(routePeopleFilter ?? '');
+  const [draftCapabilityFilters, setDraftCapabilityFilters] = useState(Array.isArray(capabilityFilters) ? capabilityFilters : []);
   const [draftMinCount, setDraftMinCount] = useState(String(minCount ?? 1));
   const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
@@ -221,6 +276,7 @@ export function PeridotSearchWorkspace({
     setDraftPlaceFilter(placeFilter ?? '');
     setDraftRoutePlaceFilter(routePlaceFilter ?? '');
     setDraftRoutePeopleFilter(routePeopleFilter ?? '');
+    setDraftCapabilityFilters(Array.isArray(capabilityFilters) ? capabilityFilters : []);
     setDraftMinCount(String(minCount ?? 1));
     setDraftStartYear(getAppliedStartYear());
     setDraftEndYear(getAppliedEndYear());
@@ -230,6 +286,7 @@ export function PeridotSearchWorkspace({
     placeFilter,
     routePlaceFilter,
     routePeopleFilter,
+    capabilityFilters,
     minCount,
     rangeStart,
     rangeEnd,
@@ -249,13 +306,44 @@ export function PeridotSearchWorkspace({
       .sort((a, b) => Number(a) - Number(b))
   ), [timelineMonths]);
 
+  const appliedCapabilityFilters = Array.isArray(capabilityFilters) ? capabilityFilters : [];
+
   const searchResultCards = useMemo(() => buildPeridotSearchResults(
     searchRows,
-    { search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter },
+    { search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters: appliedCapabilityFilters },
     { limit: 50 },
-  ), [searchRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter]);
+  ), [searchRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, appliedCapabilityFilters]);
+
+  const searchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 8 }), [searchRows]);
+  const capabilityFacetCounts = useMemo(() => {
+    const capabilityGroup = searchFacetGroups.find((group) => group.id === 'capabilities');
+    return new Map((capabilityGroup?.items || []).map((item) => [item.value, item.count]));
+  }, [searchFacetGroups]);
+
+  const activeCapabilityLabel = appliedCapabilityFilters.length
+    ? appliedCapabilityFilters.map(getCapabilityFilterLabel).join(', ')
+    : 'None';
 
   const hiddenSearchResultCount = Math.max(0, (searchRows?.length || 0) - searchResultCards.length);
+
+  const toggleDraftCapabilityFilter = (filterId) => {
+    setDraftCapabilityFilters((current) => (current.includes(filterId)
+      ? current.filter((id) => id !== filterId)
+      : current.concat(filterId)));
+  };
+
+  const chooseFacet = (group, item) => {
+    if (!group || !item) return;
+    if (group.type === 'person') setDraftPersonFilter(item.value);
+    if (group.type === 'place') setDraftPlaceFilter(item.value);
+    if (group.type === 'routePlace') setDraftRoutePlaceFilter(item.value);
+    if (group.type === 'year') {
+      setDraftStartYear(item.value);
+      setDraftEndYear(item.value);
+    }
+    if (group.type === 'capability') toggleDraftCapabilityFilter(item.value);
+    if (group.type === 'evidenceField') setDraftSearch(item.value);
+  };
 
   const resolveTimelineBoundaryIndexFromYear = (boundary, year) => {
     if (!timelineMonths.length || !year) return -1;
@@ -275,6 +363,7 @@ export function PeridotSearchWorkspace({
       setDraftPlaceFilter('');
       setDraftRoutePlaceFilter('');
       setDraftRoutePeopleFilter('');
+      setDraftCapabilityFilters([]);
       setDraftMinCount('1');
       setDraftStartYear(getDefaultStartYear());
       setDraftEndYear(getDefaultEndYear());
@@ -283,6 +372,7 @@ export function PeridotSearchWorkspace({
       setPlaceFilter('');
       setRoutePlaceFilter('');
       setRoutePeopleFilter('');
+      setCapabilityFilters?.([]);
       setMinCount(1);
       setTimelineMode('all');
       setRangeStart(0);
@@ -300,6 +390,7 @@ export function PeridotSearchWorkspace({
     const nextPlaceFilter = String(draftPlaceFilter ?? '').trim();
     const nextRoutePlaceFilter = String(draftRoutePlaceFilter ?? '').trim();
     const nextRoutePeopleFilter = String(draftRoutePeopleFilter ?? '').trim();
+    const nextCapabilityFilters = Array.isArray(draftCapabilityFilters) ? draftCapabilityFilters : [];
     const nextStartIndex = resolveTimelineBoundaryIndexFromYear('start', draftStartYear);
     const nextEndIndex = resolveTimelineBoundaryIndexFromYear('end', draftEndYear);
     setFilterStatusMessage('Updating view…');
@@ -309,6 +400,7 @@ export function PeridotSearchWorkspace({
       setPlaceFilter(nextPlaceFilter);
       setRoutePlaceFilter(nextRoutePlaceFilter);
       setRoutePeopleFilter(nextRoutePeopleFilter);
+      setCapabilityFilters?.(nextCapabilityFilters);
       setMinCount(nextMinCount);
       setDraftMinCount(String(nextMinCount));
       if (nextStartIndex >= 0 && nextEndIndex >= 0) {
@@ -362,6 +454,7 @@ export function PeridotSearchWorkspace({
               <AppliedScopeCard label="Place" value={placeFilter?.trim() || 'None'} />
               <AppliedScopeCard label="Route place" value={routePlaceFilter?.trim() || 'None'} />
               <AppliedScopeCard label="Route entities" value={routePeopleFilter?.trim() || 'None'} />
+              <AppliedScopeCard label="Capabilities" value={activeCapabilityLabel} />
               <AppliedScopeCard label="Minimum weight" value={currentMinCountLabel} />
               <AppliedScopeCard label="Date window" value={currentRangeLabel} />
               <AppliedScopeCard label="Rows" value={rowDiagnostics?.filteredRows ?? 'Unknown'} />
@@ -411,6 +504,23 @@ export function PeridotSearchWorkspace({
                   </div>
                 </CriteriaCard>
 
+                <CriteriaCard title="Capability filters">
+                  <p className="mt-3 text-sm leading-6 text-[#f7f2df]/72">
+                    Capability filters are committed with Apply Filters. Use them to isolate rows that can support specific Peridot workflows or to find records missing key evidence.
+                  </p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {CAPABILITY_FILTER_OPTIONS.map((option) => (
+                      <CapabilityFilterToggle
+                        key={option.id}
+                        option={option}
+                        checked={draftCapabilityFilters.includes(option.id)}
+                        count={capabilityFacetCounts.get(option.id)}
+                        onToggle={toggleDraftCapabilityFilter}
+                      />
+                    ))}
+                  </div>
+                </CriteriaCard>
+
                 <CriteriaCard title="Threshold and date">
                   <div className="mt-4 grid gap-4 sm:grid-cols-3">
                     <div>
@@ -438,13 +548,26 @@ export function PeridotSearchWorkspace({
                 <div>
                   <h2 className="text-2xl font-bold text-[#fbf7ea]">Search results</h2>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-[#f7f2df]/76">
-                    Result cards reflect the current applied dataset. Use Inspect to open the selected record in the full Inspector workspace.
+                    Result cards reflect the current applied dataset. Facets summarize the active result set and fill draft criteria; choose Apply Filters to commit a refinement. Use Inspect to open the selected record in the full Inspector workspace.
                   </p>
                 </div>
                 <div className="rounded-full border border-[#dfe9c8]/35 bg-[#dfe9c8]/12 px-4 py-2 text-sm font-bold text-[#fbf7ea]">
                   {searchRows?.length || 0} records
                 </div>
               </div>
+
+              {searchFacetGroups.length ? (
+                <div className="mt-5 grid gap-3">
+                  {searchFacetGroups.map((group) => (
+                    <FacetGroup
+                      key={group.id}
+                      group={group}
+                      activeCapabilityFilters={draftCapabilityFilters}
+                      onChooseFacet={chooseFacet}
+                    />
+                  ))}
+                </div>
+              ) : null}
 
               {searchResultCards.length ? (
                 <div className="mt-5 grid gap-4">

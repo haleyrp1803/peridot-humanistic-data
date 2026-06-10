@@ -1,15 +1,16 @@
 /*
  * Search-result helpers for Peridot's Advanced Search workspace.
  *
- * Phase 1 scope:
+ * Phase 2 scope:
  * - derive lightweight result-card records from the already filtered active rows;
- * - explain which applied search terms appear to have matched a row;
- * - keep the helper pure so Search UI and Inspector routing remain separate.
+ * - explain which applied search terms and capability filters matched a row;
+ * - expose capability predicates for App.jsx's global Search & Filter pipeline;
+ * - derive result facets/counts for Search refinement without introducing a new
+ *   Boolean query language or saved-search persistence model.
  *
- * This helper deliberately does not introduce a new query language. The active
- * dataset is still defined by App.jsx's existing Search & Filter state and the
- * existing draft/apply workflow. Later phases can extend this file with facets,
- * capability filters, browse indexes, or a structured criteria builder.
+ * This helper remains pure and UI-agnostic. Search UI, Inspector routing, and
+ * global App state stay separate so later phases can add browse indexes or a
+ * structured criteria builder without crowding the workspace component.
  */
 
 const FIELD_LABELS = {
@@ -21,7 +22,10 @@ const FIELD_LABELS = {
   targetPlaceLabel: 'Target place',
   sourcePlace: 'Source place',
   targetPlace: 'Target place',
+  sourceLoc: 'Source place',
+  targetLoc: 'Target place',
   relationshipType: 'Relationship',
+  relationship: 'Relationship',
   topic: 'Topic',
   language: 'Language',
   title: 'Title',
@@ -33,8 +37,92 @@ const TITLE_FIELDS = ['title', 'recordTitle', 'Title', 'Record_Title', 'Letter_T
 const DATE_FIELDS = ['displayDate', 'date', 'Date', 'Date*', 'dateDisplay', 'dateLabel'];
 const SOURCE_PERSON_FIELDS = ['sourcePerson', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender'];
 const TARGET_PERSON_FIELDS = ['targetPerson', 'Target', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient'];
-const SOURCE_PLACE_FIELDS = ['sourcePlaceLabel', 'sourcePlace', 'Source_Loc', 'Source_Place', 'sourceLocation'];
-const TARGET_PLACE_FIELDS = ['targetPlaceLabel', 'targetPlace', 'Target_Inferred_Loc', 'Target_Loc', 'Target_Place', 'targetLocation'];
+const SOURCE_PLACE_FIELDS = ['sourcePlaceLabel', 'sourcePlace', 'sourceLoc', 'Source_Loc', 'Source_Place', 'sourceLocation'];
+const TARGET_PLACE_FIELDS = ['targetPlaceLabel', 'targetPlace', 'targetLoc', 'Target_Inferred_Loc', 'Target_Loc', 'Target_Place', 'targetLocation'];
+const COORDINATE_FIELDS = ['sourceLat', 'sourceLon', 'targetLat', 'targetLon', 'lat', 'lon', 'latitude', 'longitude'];
+const EVIDENCE_FIELDS = [
+  'archivalCollection',
+  'archivalPage',
+  'pdfPage',
+  'relationship',
+  'relationshipType',
+  'cipher',
+  'topic',
+  'language',
+  'transcription',
+  'translation',
+  'notes',
+  'citation',
+  'sourceTitle',
+  'targetTitle',
+];
+const CORE_FIELDS = new Set([
+  'id',
+  'recordId',
+  'parsedDate',
+  ...TITLE_FIELDS,
+  ...DATE_FIELDS,
+  ...SOURCE_PERSON_FIELDS,
+  ...TARGET_PERSON_FIELDS,
+  ...SOURCE_PLACE_FIELDS,
+  ...TARGET_PLACE_FIELDS,
+  ...COORDINATE_FIELDS,
+  'sourcePlaceId',
+  'targetPlaceId',
+  'mappable',
+  'personKey',
+]);
+
+export const CAPABILITY_FILTER_OPTIONS = Object.freeze([
+  {
+    id: 'inspector-ready',
+    label: 'Inspector-ready',
+    shortLabel: 'Inspector',
+    description: 'Rows with enough content to open as evidence records.',
+  },
+  {
+    id: 'map-ready',
+    label: 'Map-relevant',
+    shortLabel: 'Map',
+    description: 'Rows with place names or coordinate evidence.',
+  },
+  {
+    id: 'route-ready',
+    label: 'Route-ready',
+    shortLabel: 'Route',
+    description: 'Rows with source/target route evidence.',
+  },
+  {
+    id: 'network-ready',
+    label: 'Network-ready',
+    shortLabel: 'Network',
+    description: 'Rows with source and target people/entities.',
+  },
+  {
+    id: 'timeline-ready',
+    label: 'Timeline-ready',
+    shortLabel: 'Timeline',
+    description: 'Rows with a usable date/display-date value.',
+  },
+  {
+    id: 'evidence-ready',
+    label: 'Evidence-rich',
+    shortLabel: 'Evidence',
+    description: 'Rows with notes, topics, citations, transcription, or custom metadata.',
+  },
+  {
+    id: 'missing-date',
+    label: 'Missing date',
+    shortLabel: 'No date',
+    description: 'Rows without a date/display-date value.',
+  },
+  {
+    id: 'missing-coordinates',
+    label: 'Missing coordinates',
+    shortLabel: 'No coordinates',
+    description: 'Rows without detected route or point coordinates.',
+  },
+]);
 
 function asText(value) {
   return String(value ?? '').trim();
@@ -52,6 +140,27 @@ function includesNeedle(value, needle) {
   const cleanNeedle = asText(needle).toLowerCase();
   if (!cleanNeedle) return false;
   return asText(value).toLowerCase().includes(cleanNeedle);
+}
+
+function hasFiniteCoordinate(value) {
+  if (value === null || value === undefined || value === '') return false;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric !== 0;
+}
+
+function hasAnyCoordinate(row) {
+  if (row?.mappable) return true;
+  return COORDINATE_FIELDS.some((field) => hasFiniteCoordinate(row?.[field]));
+}
+
+function hasAnyEvidenceField(row) {
+  if (!row || typeof row !== 'object') return false;
+  if (EVIDENCE_FIELDS.some((field) => asText(row[field]))) return true;
+  return Object.entries(row).some(([key, value]) => !CORE_FIELDS.has(key) && asText(value));
+}
+
+function hasAnySearchableContent(row) {
+  return collectSearchableFields(row).length > 0;
 }
 
 function collectSearchableFields(row) {
@@ -79,6 +188,22 @@ function compactRouteLabel(source, target) {
   return `${cleanSource} → ${cleanTarget}`;
 }
 
+function addFacetCount(map, rawValue) {
+  const value = asText(rawValue);
+  if (!value) return;
+  map.set(value, (map.get(value) || 0) + 1);
+}
+
+function facetItemsFromMap(map, limit = 8) {
+  return Array.from(map.entries())
+    .map(([value, count]) => ({ value, count }))
+    .sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.value.localeCompare(b.value);
+    })
+    .slice(0, limit);
+}
+
 function buildResultTitle(row, index) {
   const explicitTitle = firstText(row, TITLE_FIELDS);
   if (explicitTitle) return explicitTitle;
@@ -92,6 +217,66 @@ function buildResultTitle(row, index) {
   if (sourcePlace || targetPlace) return compactRouteLabel(sourcePlace, targetPlace);
 
   return `Record ${index + 1}`;
+}
+
+function getRowCapabilityState(row) {
+  const sourcePerson = firstText(row, SOURCE_PERSON_FIELDS);
+  const targetPerson = firstText(row, TARGET_PERSON_FIELDS);
+  const sourcePlace = firstText(row, SOURCE_PLACE_FIELDS);
+  const targetPlace = firstText(row, TARGET_PLACE_FIELDS);
+  const hasPeople = Boolean(sourcePerson || targetPerson);
+  const hasEntityRoute = Boolean(sourcePerson && targetPerson);
+  const hasPlaces = Boolean(sourcePlace || targetPlace);
+  const hasPlaceRoute = Boolean(sourcePlace && targetPlace);
+  const hasDate = Boolean(firstText(row, DATE_FIELDS));
+  const hasCoordinates = hasAnyCoordinate(row);
+  const hasEvidence = hasAnyEvidenceField(row);
+
+  return {
+    hasPeople,
+    hasEntityRoute,
+    hasPlaces,
+    hasPlaceRoute,
+    hasDate,
+    hasCoordinates,
+    hasEvidence,
+    inspectorReady: hasAnySearchableContent(row),
+    mapReady: hasPlaces || hasCoordinates,
+    routeReady: hasPlaceRoute || Boolean(row?.mappable),
+    networkReady: hasEntityRoute,
+    timelineReady: hasDate,
+    evidenceReady: hasEvidence,
+    missingDate: !hasDate,
+    missingCoordinates: !hasCoordinates,
+  };
+}
+
+export function rowMatchesSearchCapabilityFilter(row, filterId) {
+  const state = getRowCapabilityState(row);
+  switch (filterId) {
+    case 'inspector-ready':
+      return state.inspectorReady;
+    case 'map-ready':
+      return state.mapReady;
+    case 'route-ready':
+      return state.routeReady;
+    case 'network-ready':
+      return state.networkReady;
+    case 'timeline-ready':
+      return state.timelineReady;
+    case 'evidence-ready':
+      return state.evidenceReady;
+    case 'missing-date':
+      return state.missingDate;
+    case 'missing-coordinates':
+      return state.missingCoordinates;
+    default:
+      return true;
+  }
+}
+
+export function getCapabilityFilterLabel(filterId) {
+  return CAPABILITY_FILTER_OPTIONS.find((option) => option.id === filterId)?.label || filterId;
 }
 
 function buildMatchedFields(row, appliedFilters) {
@@ -130,22 +315,69 @@ function buildMatchedFields(row, appliedFilters) {
     }
   }
 
-  return matches.slice(0, 4);
+  const capabilityMatches = (appliedFilters.capabilityFilters || [])
+    .filter((filterId) => rowMatchesSearchCapabilityFilter(row, filterId))
+    .map((filterId) => ({ label: 'Capability', value: getCapabilityFilterLabel(filterId) }));
+
+  return matches.concat(capabilityMatches).slice(0, 5);
 }
 
 function buildCapabilityBadges(row) {
+  const state = getRowCapabilityState(row);
   const badges = [];
-  const hasPeople = Boolean(firstText(row, SOURCE_PERSON_FIELDS) || firstText(row, TARGET_PERSON_FIELDS));
-  const hasPlaces = Boolean(firstText(row, SOURCE_PLACE_FIELDS) || firstText(row, TARGET_PLACE_FIELDS));
-  const hasDate = Boolean(firstText(row, DATE_FIELDS));
-  const hasCoordinates = Boolean(row?.mappable || row?.sourceLat || row?.targetLat || row?.lat || row?.latitude);
 
-  if (hasPeople || hasPlaces) badges.push('Inspector-ready');
-  if (hasPlaces || hasCoordinates) badges.push('Map-relevant');
-  if (hasPeople) badges.push('Entity-linked');
-  if (hasDate) badges.push('Timeline-ready');
+  if (state.inspectorReady) badges.push('Inspector-ready');
+  if (state.mapReady) badges.push('Map-relevant');
+  if (state.networkReady) badges.push('Network-ready');
+  if (state.timelineReady) badges.push('Timeline-ready');
+  if (state.evidenceReady) badges.push('Evidence-rich');
 
-  return badges.slice(0, 4);
+  return badges.slice(0, 5);
+}
+
+export function buildPeridotSearchFacets(rows = [], options = {}) {
+  const limit = Math.max(1, options.limit ?? 8);
+  const people = new Map();
+  const places = new Map();
+  const placeRoutes = new Map();
+  const years = new Map();
+  const evidenceFields = new Map();
+
+  rows.forEach((row) => {
+    const sourcePerson = firstText(row, SOURCE_PERSON_FIELDS);
+    const targetPerson = firstText(row, TARGET_PERSON_FIELDS);
+    const sourcePlace = firstText(row, SOURCE_PLACE_FIELDS);
+    const targetPlace = firstText(row, TARGET_PLACE_FIELDS);
+    const year = asText(firstText(row, DATE_FIELDS)).match(/\d{4}/)?.[0] || row?.parsedDate?.year || row?.parsedDate?.monthKey;
+
+    addFacetCount(people, sourcePerson);
+    addFacetCount(people, targetPerson);
+    addFacetCount(places, sourcePlace);
+    addFacetCount(places, targetPlace);
+    if (sourcePlace || targetPlace) addFacetCount(placeRoutes, compactRouteLabel(sourcePlace, targetPlace));
+    addFacetCount(years, year ? String(year).slice(0, 4) : '');
+
+    Object.entries(row || {}).forEach(([key, value]) => {
+      if (!CORE_FIELDS.has(key) && asText(value)) {
+        addFacetCount(evidenceFields, FIELD_LABELS[key] || key.replace(/_/g, ' '));
+      }
+    });
+  });
+
+  const capabilityItems = CAPABILITY_FILTER_OPTIONS.map((option) => ({
+    value: option.id,
+    label: option.label,
+    count: rows.filter((row) => rowMatchesSearchCapabilityFilter(row, option.id)).length,
+  })).filter((item) => item.count > 0);
+
+  return [
+    { id: 'people', label: 'People / entities', type: 'person', items: facetItemsFromMap(people, limit) },
+    { id: 'places', label: 'Places', type: 'place', items: facetItemsFromMap(places, limit) },
+    { id: 'placeRoutes', label: 'Place routes', type: 'routePlace', items: facetItemsFromMap(placeRoutes, limit) },
+    { id: 'years', label: 'Years', type: 'year', items: facetItemsFromMap(years, limit) },
+    { id: 'capabilities', label: 'Capabilities', type: 'capability', items: capabilityItems },
+    { id: 'evidenceFields', label: 'Evidence fields present', type: 'evidenceField', items: facetItemsFromMap(evidenceFields, limit) },
+  ].filter((group) => group.items.length > 0);
 }
 
 export function buildPeridotSearchResults(rows = [], appliedFilters = {}, options = {}) {
