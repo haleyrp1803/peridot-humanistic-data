@@ -35,6 +35,11 @@
  *   header, while retaining clear hover, active, and keyboard-focus feedback.
  * - This is a visual/UX-architecture pass. The green compact pass keeps the existing capability
  *   filters, facets, result cards, and Inspector handoff semantics intact.
+ *
+ * Results sizing/layout pass:
+ * - Condenses only the Results tab and result-card presentation.
+ * - Does not alter Apply/Clear handlers, tab state, App-level filtering, facet behavior,
+ *   result derivation, or Inspector handoff semantics.
  */
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -234,15 +239,22 @@ function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
 }
 
 function SearchResultCard({ result, onInspectSearchResult }) {
+  const visibleMatches = result.matchedFields.slice(0, 3);
+  const hiddenMatchCount = Math.max(0, result.matchedFields.length - visibleMatches.length);
+  const visibleBadges = result.capabilityBadges.slice(0, 4);
+  const hiddenBadgeCount = Math.max(0, result.capabilityBadges.length - visibleBadges.length);
+
   return (
-    <article className="rounded-[1.15rem] border border-[#b8c8aa] bg-[#edf5e5] p-3 text-[#203729] shadow-[0_10px_24px_rgba(39,50,36,0.10)] transition duration-150 hover:-translate-y-0.5 hover:border-[#7f9b70] hover:shadow-[0_14px_32px_rgba(39,50,36,0.15)]">
+    <article className="rounded-[1rem] border border-[#adc29d] bg-[#eef6e8] p-3 text-[#203729] shadow-[0_8px_18px_rgba(39,50,36,0.08)] transition duration-150 hover:-translate-y-0.5 hover:border-[#7f9b70] hover:bg-[#f3f8ee] hover:shadow-[0_12px_26px_rgba(39,50,36,0.13)]">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="text-[0.58rem] font-black uppercase tracking-[0.17em] text-[#4b6a4b]">
-            Search result
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-[#9db48e] bg-[#d7e6cc] px-2 py-0.5 text-[0.56rem] font-black uppercase tracking-[0.14em] text-[#38553d]">
+              Result
+            </span>
+            <span className="text-xs font-black text-[#7a622f]">{result.displayDate}</span>
           </div>
-          <h3 className="mt-0.5 truncate text-base font-black text-[#203729]">{result.title}</h3>
-          <p className="mt-0.5 text-sm font-bold text-[#7a622f]">{result.displayDate}</p>
+          <h3 className="mt-1 truncate text-sm font-black text-[#203729]">{result.title}</h3>
         </div>
         <button
           type="button"
@@ -253,48 +265,55 @@ function SearchResultCard({ result, onInspectSearchResult }) {
         </button>
       </div>
 
-      <dl className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
-        <div className="rounded-xl bg-[#d7e6cc] p-2.5">
-          <dt className="text-[0.58rem] font-black uppercase tracking-[0.13em] text-[#38553d]">Entities</dt>
-          <dd className="mt-1 font-semibold text-[#203729]">{result.peopleRoute}</dd>
+      <dl className="mt-2 grid gap-1.5 text-xs sm:grid-cols-2">
+        <div className="min-w-0 rounded-lg bg-[#d7e6cc] px-2.5 py-1.5">
+          <dt className="inline font-black uppercase tracking-[0.1em] text-[#38553d]">Entities: </dt>
+          <dd className="inline font-semibold text-[#203729]">{result.peopleRoute}</dd>
         </div>
-        <div className="rounded-xl bg-[#d7e6cc] p-2.5">
-          <dt className="text-[0.58rem] font-black uppercase tracking-[0.13em] text-[#38553d]">Places</dt>
-          <dd className="mt-1 font-semibold text-[#203729]">{result.placeRoute}</dd>
+        <div className="min-w-0 rounded-lg bg-[#d7e6cc] px-2.5 py-1.5">
+          <dt className="inline font-black uppercase tracking-[0.1em] text-[#38553d]">Places: </dt>
+          <dd className="inline font-semibold text-[#203729]">{result.placeRoute}</dd>
         </div>
       </dl>
 
-      <div className="mt-3 rounded-xl border border-[#b8c8aa] bg-[#eaf3e1] p-2.5">
-        {result.matchedFields.length ? (
-          <div>
-            <div className="text-[0.58rem] font-black uppercase tracking-[0.15em] text-[#38553d]">
-              Why this matched
-            </div>
-            <ul className="mt-1.5 space-y-1 text-xs leading-5 text-[#344a38]">
-              {result.matchedFields.map((match) => (
-                <li key={`${match.label}-${match.value}`}>
-                  <span className="font-black">{match.label}:</span> {match.value}
-                </li>
-              ))}
-            </ul>
-          </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {visibleMatches.length ? (
+          visibleMatches.map((match) => (
+            <span
+              key={`${match.label}-${match.value}`}
+              title={`${match.label}: ${match.value}`}
+              className="max-w-full truncate rounded-full border border-[#b8c8aa] bg-[#e2eed8] px-2 py-0.5 text-[0.68rem] font-semibold text-[#344a38]"
+            >
+              <span className="font-black">{match.label}:</span> {match.value}
+            </span>
+          ))
         ) : (
-          <p className="text-xs leading-5 text-[#465d49]">
-            This row is in the current applied dataset. It may match through date, weight, capability, or another active scope condition.
-          </p>
+          <span className="rounded-full border border-[#b8c8aa] bg-[#e2eed8] px-2 py-0.5 text-[0.68rem] font-semibold text-[#465d49]">
+            In current applied scope
+          </span>
         )}
+        {hiddenMatchCount > 0 ? (
+          <span className="rounded-full border border-[#b8c8aa] bg-[#d7e6cc] px-2 py-0.5 text-[0.68rem] font-black text-[#38553d]">
+            +{hiddenMatchCount} matches
+          </span>
+        ) : null}
       </div>
 
-      {result.capabilityBadges.length ? (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {result.capabilityBadges.map((badge) => (
+      {visibleBadges.length ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {visibleBadges.map((badge) => (
             <span
               key={badge}
-              className="rounded-full border border-[#9db48e] bg-[#d7e6cc] px-2 py-0.5 text-[0.62rem] font-black uppercase tracking-[0.09em] text-[#274633]"
+              className="rounded-full border border-[#9db48e] bg-[#d7e6cc] px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] text-[#274633]"
             >
               {badge}
             </span>
           ))}
+          {hiddenBadgeCount > 0 ? (
+            <span className="rounded-full border border-[#9db48e] bg-[#eaf3e1] px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] text-[#274633]">
+              +{hiddenBadgeCount}
+            </span>
+          ) : null}
         </div>
       ) : null}
     </article>
@@ -689,25 +708,20 @@ export function PeridotSearchWorkspace({
   );
 
   const renderResults = () => (
-    <div className="space-y-5">
-      <SectionHeader eyebrow="Step 2" title="Search Results">
-        Result cards reflect the current applied dataset. Use Inspect to open the selected record in the full Inspector workspace.
-      </SectionHeader>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1rem] border border-[#b8c8aa] bg-[#d7e6cc] px-4 py-3 shadow-inner shadow-white/25">
-        <div>
-          <div className="text-3xl font-black text-[#263d2e]">{searchRows?.length || 0}</div>
-          <div className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-[#667960]">records in applied scope</div>
-        </div>
-        <div className="text-right text-xs leading-5 text-[#5a6659]">
-          Showing up to <span className="font-black text-[#263d2e]">{searchResultCards.length}</span> result cards.
-          {hiddenSearchResultCount > 0 ? (
-            <><br /><span>{hiddenSearchResultCount} additional records remain in scope.</span></>
-          ) : null}
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <SectionHeader eyebrow="Step 2" title="Search Results">
+          Compact cards reflect the current applied dataset. Use Inspect to open a record in the full Inspector workspace.
+        </SectionHeader>
+        <div className="flex flex-wrap items-center gap-2 rounded-full border border-[#b8c8aa] bg-[#d7e6cc] px-3 py-1.5 text-xs font-black text-[#38553d] shadow-sm shadow-black/5">
+          <span>{searchRows?.length || 0} records</span>
+          <span className="text-[#7f9b70]">/</span>
+          <span>{searchResultCards.length} cards shown</span>
+          {hiddenSearchResultCount > 0 ? <span className="text-[#667960]">+{hiddenSearchResultCount} more</span> : null}
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid gap-3 xl:grid-cols-2">
         {searchResultCards.length ? (
           searchResultCards.map((result) => (
             <SearchResultCard
@@ -717,7 +731,7 @@ export function PeridotSearchWorkspace({
             />
           ))
         ) : (
-          <div className="rounded-[1.25rem] border border-[#b8c8aa] bg-[#edf5e5] p-6 text-center shadow-sm shadow-black/5">
+          <div className="rounded-[1.25rem] border border-[#b8c8aa] bg-[#edf5e5] p-6 text-center shadow-sm shadow-black/5 xl:col-span-2">
             <div className="text-lg font-black text-[#263d2e]">No records are currently in scope.</div>
             <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#5a6659]">
               Clear filters or broaden the date window to restore results.
