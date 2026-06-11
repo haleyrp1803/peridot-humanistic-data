@@ -111,6 +111,31 @@ The Theme workspace supports temporary role-level overrides without editing sour
 
 Arrays such as chart or visualization series are edited one color per line. Direct `appDefaults.*` rows are displayed for orientation but are derived from underlying semantic roles; edit the interface or visualization role that feeds them instead.
 
+
+## Built-in experimental palettes
+
+The Theme workspace includes two additional built-in palette presets for rapid testing:
+
+```js
+peridotArchiveBalanced: {
+  label: 'Peridot Archive Balanced',
+  dark: ['#020D07', '#072617', '#2C393F', '#344E41'],
+  mid: ['#456C51', '#588157', '#708961', '#91A67D'],
+  light: ['#C8D9AD', '#DAD7CD', '#EDE6D1', '#F2ECD6'],
+  highlight: ['#A68053', '#C5A479'],
+}
+
+peridotMapLegible: {
+  label: 'Peridot Map Legible',
+  dark: ['#1E2F23', '#273338', '#3B3B1A', '#4D4C2F'],
+  mid: ['#546B41', '#6B7959', '#8A784E', '#9CB080'],
+  light: ['#AEC8A4', '#DCCCAC', '#E7EFC7', '#FFF4D8'],
+  highlight: ['#BC6C25', '#DDA15E'],
+}
+```
+
+Use **Peridot Archive Balanced** as the safer general-purpose interface/map palette. Use **Peridot Map Legible** when evaluating cartographic readability, especially the lighter ocean/land assignment and darker route/node marks.
+
 ## Adding another palette
 
 Add another entry to `PERIDOT_SOURCE_PALETTES`:
@@ -133,6 +158,18 @@ myPalette: {
   highlight: ['#a68053'],
 },
 ```
+
+
+## Map/network imported palette behavior
+
+When applying an imported palette to **Map and network** or **Whole app**, Peridot uses a map-specific assignment rule instead of sending the darkest swatch to the ocean/canvas. The map should remain legible as a cartographic field:
+
+- lighter swatches become the map ocean/canvas, frame, and base land colors;
+- a mid-tone swatch becomes active/selected land;
+- darker or bolder swatches become nodes, edges, selected nodes, selected edges, and hover states;
+- labels use dark text with a light halo so they remain readable over light map surfaces.
+
+This keeps the darkest palette colors available for evidence marks rather than flooding the entire map background.
 
 ## Acceptance test
 
@@ -203,9 +240,10 @@ When applying an imported palette to **Whole app**, Peridot also overrides the f
 
 When applying an imported palette to **Whole app**, Peridot now treats the palette extremes as hard anchors:
 
-- the darkest detected swatch is assigned to the deepest shell, chrome, map canvas, tooltip, and foundation-dark roles;
+- the darkest detected swatch is assigned to the deepest shell, chrome, tooltip, and foundation-dark roles;
 - the lightest detected swatch is assigned to the palest card, chart, form, handle, and text-on-dark roles;
-- middle swatches are still distributed across panels, selected states, map marks, chart series, and accents;
+- map roles use a cartographic assignment: lighter swatches for ocean/canvas and base land, a mid-tone for selected/active land, and the darkest or boldest swatches for nodes, edges, and highlighted route/node states;
+- middle swatches are still distributed across panels, selected states, chart series, and accents;
 - chart and visualization series keep the original detected swatch order where possible, so categorical marks still resemble the uploaded palette.
 
 This makes dramatic palettes more predictable: the darkest and lightest colors in the source image should appear in Peridot's darkest and lightest jobs instead of being diluted into only mid-tone roles.

@@ -28,6 +28,20 @@ export const PERIDOT_SOURCE_PALETTES = Object.freeze({
     light: ['#dfe9c8', '#f5ecd2', '#fbf7ea', '#fff8e8'],
     highlight: ['#b58b42', '#d6a36a'],
   },
+  peridotArchiveBalanced: {
+    label: 'Peridot Archive Balanced',
+    dark: ['#020D07', '#072617', '#2C393F', '#344E41'],
+    mid: ['#456C51', '#588157', '#708961', '#91A67D'],
+    light: ['#C8D9AD', '#DAD7CD', '#EDE6D1', '#F2ECD6'],
+    highlight: ['#A68053', '#C5A479'],
+  },
+  peridotMapLegible: {
+    label: 'Peridot Map Legible',
+    dark: ['#1E2F23', '#273338', '#3B3B1A', '#4D4C2F'],
+    mid: ['#546B41', '#6B7959', '#8A784E', '#9CB080'],
+    light: ['#AEC8A4', '#DCCCAC', '#E7EFC7', '#FFF4D8'],
+    highlight: ['#BC6C25', '#DDA15E'],
+  },
   peridot4: {
     label: 'Peridot 4 reference',
     swatches: ["#6D8BA6", "#2C3A40", "#020D08", "#0D261A", "#6C8C54", "#587345", "#C7D9AD", "#9EA692", "#F2EBD5", "#A68053"],
@@ -244,8 +258,6 @@ function buildDarkLightAnchorPaletteOverrides(assignment) {
     ['workspaceChrome.headerBg', assignment.darkest],
     ['inspector.chromeBgStrong', assignment.darkest],
     ['analytics.tooltipBg', assignment.darkest],
-    ['visualization.canvasBg', assignment.darkest],
-    ['visualization.edgeSelected', assignment.darkest],
     ['timeline.trackBg', assignment.darkest],
 
     // Palest readable surfaces and text-on-dark roles.
@@ -261,7 +273,6 @@ function buildDarkLightAnchorPaletteOverrides(assignment) {
     ['search.panelBg', assignment.lightest],
     ['search.inputBg', assignment.lightest],
     ['timeline.handleBg', assignment.lightest],
-    ['visualization.labelText', assignment.lightest],
   ]);
 }
 
@@ -384,25 +395,28 @@ function buildSearchWorkspacePaletteOverrides(assignment) {
 
 function buildMapNetworkPaletteOverrides(assignment) {
   return assignPaths(assignment, [
-    ['visualization.canvasBg', assignment.darkest],
-    ['visualization.frameBg', assignment.deep],
+    // Map imports deliberately invert the whole-app dark/light instinct: the
+    // cartographic field should stay readable. Use lighter colors for ocean and
+    // land, then reserve the darkest or boldest swatches for visual evidence.
+    ['visualization.canvasBg', assignment.pale],
+    ['visualization.frameBg', assignment.cream],
     ['visualization.frameBorder', assignment.midAlt],
-    ['visualization.landFill', assignment.soft],
-    ['visualization.landActiveFill', assignment.secondary],
+    ['visualization.landFill', assignment.lightest],
+    ['visualization.landActiveFill', assignment.soft],
     ['visualization.landStroke', assignment.midAlt],
-    ['visualization.gridStroke', withAlpha(assignment.pale, 0.28)],
-    ['visualization.edge', assignment.highlight],
-    ['visualization.edgeHover', assignment.highlightLight],
-    ['visualization.edgeActive', assignment.primary],
-    ['visualization.edgeSelected', assignment.cream],
-    ['visualization.node', assignment.secondary],
-    ['visualization.nodeCluster', assignment.highlightLight],
+    ['visualization.gridStroke', withAlpha(assignment.midAlt, 0.28)],
+    ['visualization.edge', assignment.deep],
+    ['visualization.edgeHover', assignment.highlight],
+    ['visualization.edgeActive', assignment.darkest],
+    ['visualization.edgeSelected', assignment.darkest],
+    ['visualization.node', assignment.deep],
+    ['visualization.nodeCluster', assignment.highlight],
     ['visualization.nodeAnimated', assignment.primary],
     ['visualization.nodeHover', assignment.highlight],
-    ['visualization.nodeSelected', assignment.paper],
-    ['visualization.nodeStroke', assignment.darkest],
-    ['visualization.labelText', assignment.lightest],
-    ['visualization.labelStroke', assignment.darkest],
+    ['visualization.nodeSelected', assignment.darkest],
+    ['visualization.nodeStroke', assignment.lightest],
+    ['visualization.labelText', assignment.darkest],
+    ['visualization.labelStroke', assignment.lightest],
     ['visualization.series', assignment.series],
   ]);
 }
@@ -477,8 +491,6 @@ function buildTextBorderPaletteOverrides(assignment) {
     ['interface.focusRing', withAlpha(assignment.highlightLight, 0.45)],
     ['card.border', withAlpha(assignment.pale, 0.58)],
     ['form.border', withAlpha(assignment.pale, 0.54)],
-    ['visualization.labelText', assignment.lightest],
-    ['visualization.labelStroke', assignment.darkest],
   ]);
 }
 
