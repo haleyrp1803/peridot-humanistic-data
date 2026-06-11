@@ -162,7 +162,10 @@ function buildPaletteAssignment(colors) {
   const nonWhite = sorted.filter((value) => luminance(value) < 0.92);
   const warmCandidates = [...nonWhite].sort((a, b) => warmScore(b) - warmScore(a));
   const highSaturation = [...nonWhite].sort((a, b) => saturation(b) - saturation(a));
-  const series = [...mids, ...sorted]
+  // Preserve the incoming image/read order for categorical series so chart
+  // colors match the uploaded palette swatches instead of being reordered by
+  // luminance. Broad surface roles still use the luminance-sorted scale below.
+  const series = expanded
     .filter((value, index, array) => array.indexOf(value) === index)
     .slice(0, 10);
 

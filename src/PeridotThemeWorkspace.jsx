@@ -207,7 +207,7 @@ function quantizeColor(channel, step = 24) {
 
 function extractPaletteColorsFromImage(file, options = {}) {
   const maxColors = options.maxColors || 10;
-  const sampleSize = options.sampleSize || 180;
+  const sampleSize = options.sampleSize || 420;
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -230,51 +230,163 @@ function extractPaletteColorsFromImage(file, options = {}) {
 
         context.drawImage(image, 0, 0, width, height);
         const pixels = context.getImageData(0, 0, width, height).data;
-        const buckets = new Map();
+        const pixelCount = width * height;
+        const mask = new Uint8Array(pixelCount);
+        const visited = new Uint8Array(pixelCount);
 
-        for (let index = 0; index < pixels.length; index += 16) {
-          const alpha = pixels[index + 3];
+        for (let pixelIndex = 0; pixelIndex < pixelCount; pixelIndex += 1) {
+          const dataIndex = pixelIndex * 4;
+          const alpha = pixels[dataIndex + 3];
           if (alpha < 180) continue;
 
-          const raw = { r: pixels[index], g: pixels[index + 1], b: pixels[index + 2] };
+          const raw = { r: pixels[dataIndex], g: pixels[dataIndex + 1], b: pixels[dataIndex + 2] };
           const luminance = (0.2126 * raw.r + 0.7152 * raw.g + 0.0722 * raw.b) / 255;
           const saturation = imageColorSaturation(raw);
 
-          // Adobe palette exports include white page backgrounds and black label text.
-          // Suppress near-white page pixels and near-neutral dark text, but keep chromatic
-          // deep greens/blues because those are valid palette swatches.
-          if (luminance > 0.94 && saturation < 0.16) continue;
-          if (luminance < 0.08 && saturation < 0.18) continue;
-
-          const hex = normalizeImageHex({
-            r: quantizeColor(raw.r),
-            g: quantizeColor(raw.g),
-            b: quantizeColor(raw.b),
-          });
-          const bucket = buckets.get(hex) || { hex, count: 0, r: 0, g: 0, b: 0 };
-          bucket.count += 1;
-          bucket.r += raw.r;
-          bucket.g += raw.g;
-          bucket.b += raw.b;
-          buckets.set(hex, bucket);
+          // Prefer large colored swatch rectangles over generic frequency buckets.
+          // Adobe palette exports include white page margins and small dark labels;
+          // those pixels can be frequent after downsampling, but they are not palette
+          // swatches. A connected-component pass keeps muted swatches while rejecting
+          // small text, footer marks, and the surrounding page.
+          const nearWhitePage = luminance > 0.94 && saturation < 0.18;
+          const lightNeutralPage = luminance > 0.88 && saturation < 0.05;
+          const darkNeutralText = luminance < 0.12 && saturation < 0.10;
+          if (!nearWhitePage && !lightNeutralPage && !darkNeutralText) {
+            mask[pixelIndex] = 1;
+          }
         }
 
-        const ranked = Array.from(buckets.values())
-          .map((bucket) => ({
-            hex: normalizeImageHex({ r: bucket.r / bucket.count, g: bucket.g / bucket.count, b: bucket.b / bucket.count }),
-            count: bucket.count,
-          }))
-          .sort((a, b) => b.count - a.count);
+        const minimumComponentArea = Math.max(24, Math.floor(pixelCount * 0.0018));
+        const components = [];
+        const stack = [];
+
+        for (let seed = 0; seed < pixelCount; seed += 1) {
+          if (!mask[seed] || visited[seed]) continue;
+
+          stack.length = 0;
+          stack.push(seed);
+          visited[seed] = 1;
+
+          let area = 0;
+          let minX = width;
+          let maxX = 0;
+          let minY = height;
+          let maxY = 0;
+          let sumR = 0;
+          let sumG = 0;
+          let sumB = 0;
+
+          while (stack.length) {
+            const current = stack.pop();
+            const x = current % width;
+            const y = Math.floor(current / width);
+            const dataIndex = current * 4;
+
+            area += 1;
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+            sumR += pixels[dataIndex];
+            sumG += pixels[dataIndex + 1];
+            sumB += pixels[dataIndex + 2];
+
+            const left = current - 1;
+            const right = current + 1;
+            const up = current - width;
+            const down = current + width;
+
+            if (x > 0 && mask[left] && !visited[left]) {
+              visited[left] = 1;
+              stack.push(left);
+            }
+            if (x < width - 1 && mask[right] && !visited[right]) {
+              visited[right] = 1;
+              stack.push(right);
+            }
+            if (y > 0 && mask[up] && !visited[up]) {
+              visited[up] = 1;
+              stack.push(up);
+            }
+            if (y < height - 1 && mask[down] && !visited[down]) {
+              visited[down] = 1;
+              stack.push(down);
+            }
+          }
+
+          if (area < minimumComponentArea) continue;
+          const boxWidth = maxX - minX + 1;
+          const boxHeight = maxY - minY + 1;
+          if (boxWidth < 8 || boxHeight < 8) continue;
+
+          const density = area / (boxWidth * boxHeight);
+          if (density < 0.42) continue;
+
+          components.push({
+            area,
+            minX,
+            minY,
+            maxX,
+            maxY,
+            hex: normalizeImageHex({ r: sumR / area, g: sumG / area, b: sumB / area }),
+          });
+        }
+
+        const largeComponents = components
+          .sort((a, b) => b.area - a.area)
+          .slice(0, Math.max(maxColors * 2, maxColors));
 
         const selected = [];
-        ranked.forEach((candidate) => {
-          if (selected.length >= maxColors) return;
-          if (selected.every((existing) => imageColorDistance(existing, candidate.hex) >= 28)) {
-            selected.push(candidate.hex);
-          }
-        });
+        largeComponents
+          .sort((a, b) => (a.minY === b.minY ? a.minX - b.minX : a.minY - b.minY))
+          .forEach((candidate) => {
+            if (selected.length >= maxColors) return;
+            if (selected.every((existing) => imageColorDistance(existing, candidate.hex) >= 22)) {
+              selected.push(candidate.hex);
+            }
+          });
 
-        resolve(selected.sort((a, b) => imageColorLuminance(a) - imageColorLuminance(b)));
+        // Fallback for non-grid images: use a quantized histogram if the connected
+        // component detector cannot find enough large swatches.
+        if (selected.length < Math.min(3, maxColors)) {
+          const buckets = new Map();
+          for (let index = 0; index < pixels.length; index += 16) {
+            const alpha = pixels[index + 3];
+            if (alpha < 180) continue;
+            const raw = { r: pixels[index], g: pixels[index + 1], b: pixels[index + 2] };
+            const luminance = (0.2126 * raw.r + 0.7152 * raw.g + 0.0722 * raw.b) / 255;
+            const saturation = imageColorSaturation(raw);
+            if (luminance > 0.94 && saturation < 0.18) continue;
+            if (luminance < 0.08 && saturation < 0.18) continue;
+
+            const hex = normalizeImageHex({
+              r: quantizeColor(raw.r),
+              g: quantizeColor(raw.g),
+              b: quantizeColor(raw.b),
+            });
+            const bucket = buckets.get(hex) || { hex, count: 0, r: 0, g: 0, b: 0 };
+            bucket.count += 1;
+            bucket.r += raw.r;
+            bucket.g += raw.g;
+            bucket.b += raw.b;
+            buckets.set(hex, bucket);
+          }
+
+          Array.from(buckets.values())
+            .map((bucket) => ({
+              hex: normalizeImageHex({ r: bucket.r / bucket.count, g: bucket.g / bucket.count, b: bucket.b / bucket.count }),
+              count: bucket.count,
+            }))
+            .sort((a, b) => b.count - a.count)
+            .forEach((candidate) => {
+              if (selected.length >= maxColors) return;
+              if (selected.every((existing) => imageColorDistance(existing, candidate.hex) >= 28)) {
+                selected.push(candidate.hex);
+              }
+            });
+        }
+
+        resolve(selected);
       };
       image.src = String(reader.result || '');
     };

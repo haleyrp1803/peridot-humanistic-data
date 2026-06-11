@@ -187,3 +187,7 @@ PERIDOT_THEME.visualization.series
 ```
 
 That means palette image imports and role-level overrides should affect stacked bars, grouped bars, pie slices, multiline charts, and map/network marks through the same visible role groups shown in the Theme workspace.
+
+## Palette image detection notes
+
+Palette image import now prefers large connected swatch blocks instead of simple frequency buckets. This is intended for Adobe Color-style palette exports and similar grid images where the actual palette appears as large rectangles with labels below. The detector filters page whites and small label text, then reads the remaining large swatch regions in visual order. For chart imports, the detected swatch order is preserved for categorical series colors so chart bars follow the uploaded palette rather than being reordered by lightness.
