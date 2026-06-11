@@ -292,7 +292,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
 
   return (
     <div
-      className={compact ? 'relative z-[90]' : 'relative z-[70] min-w-[160px]'}
+      className={compact ? 'relative z-[950]' : 'relative z-[900] min-w-[160px]'}
       onMouseEnter={openMenu}
       onMouseLeave={scheduleClose}
       onFocus={openMenu}
@@ -321,11 +321,11 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
         <>
           <div
             aria-hidden="true"
-            className="absolute left-0 right-0 top-full z-[95] h-4"
+            className="absolute left-0 right-0 top-full z-[1100] h-4"
             onMouseEnter={openMenu}
           />
           <div
-            className="absolute right-0 top-[calc(100%+10px)] z-[120] w-[300px] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
+            className="absolute right-0 top-[calc(100%+10px)] z-[1250] w-[300px] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
             onMouseEnter={openMenu}
             onMouseLeave={scheduleClose}
             onFocus={openMenu}
@@ -700,7 +700,7 @@ export function PeridotVisualizationsWorkspace({
         <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
           <div
             className={[
-              'peridot-illuminated-panel relative z-50 shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
+              'peridot-illuminated-panel relative z-[850] shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
               isHeaderExpanded ? 'px-4 pb-4 pt-3' : 'px-4 py-2',
             ].join(' ')}
           >
@@ -714,7 +714,7 @@ export function PeridotVisualizationsWorkspace({
                 </div>
 
                 <div className="flex flex-col gap-2 xl:flex-row xl:items-stretch">
-                  <div className="relative z-[70] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
+                  <div className="relative z-[900] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
                     {categories.map((category) => {
                       const isDirectAction = typeof category.directAction === 'function';
                       const isOpen = !isDirectAction && openMenuCategory === category.label;
@@ -759,11 +759,11 @@ export function PeridotVisualizationsWorkspace({
                             <>
                               <div
                                 aria-hidden="true"
-                                className="absolute left-0 right-0 top-full z-[95] h-4"
+                                className="absolute left-0 right-0 top-full z-[1100] h-4"
                                 onMouseEnter={() => openMenu(category.label)}
                               />
                               <div
-                                className="absolute right-0 top-[calc(100%+10px)] z-[100] min-w-[280px] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
+                                className="absolute right-0 top-[calc(100%+10px)] z-[1200] min-w-[280px] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
                                 onMouseEnter={() => openMenu(category.label)}
                                 onMouseLeave={scheduleMenuClose}
                                 onFocus={() => openMenu(category.label)}
@@ -817,7 +817,7 @@ export function PeridotVisualizationsWorkspace({
             <button
               type="button"
               onClick={() => setIsHeaderExpanded((value) => !value)}
-              className="absolute bottom-0 left-1/2 z-[120] flex h-8 w-14 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5ecd2)] text-lg font-bold leading-none text-[var(--peridot-color-hex-173120)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]"
+              className="absolute bottom-0 left-1/2 z-[1250] flex h-8 w-14 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5ecd2)] text-lg font-bold leading-none text-[var(--peridot-color-hex-173120)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]"
               aria-label={isHeaderExpanded ? 'Collapse visualization header' : 'Expand visualization header'}
               title={isHeaderExpanded ? 'Collapse visualization header' : 'Expand visualization header'}
             >
@@ -825,7 +825,7 @@ export function PeridotVisualizationsWorkspace({
             </button>
           </div>
 
-          <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3" onMouseEnter={scheduleMenuClose}>
+          <div className="relative z-[20] flex min-h-0 flex-1 flex-col gap-3" onMouseEnter={scheduleMenuClose}>
             <div className="min-h-0 flex flex-1">
               {renderWorkspaceBody()}
             </div>
@@ -834,7 +834,7 @@ export function PeridotVisualizationsWorkspace({
                 <button
                   type="button"
                   onClick={() => setIsTimelineExpanded((value) => !value)}
-                  className="absolute left-1/2 top-2 z-30 flex h-8 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5ecd2)] text-lg font-bold leading-none text-[var(--peridot-color-hex-173120)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]"
+                  className="absolute left-1/2 top-2 z-[80] flex h-8 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5ecd2)] text-lg font-bold leading-none text-[var(--peridot-color-hex-173120)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]"
                   aria-label={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
                   title={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
                 >
