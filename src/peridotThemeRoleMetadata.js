@@ -35,6 +35,23 @@ export const PERIDOT_THEME_ROLE_GROUPS = Object.freeze([
       { path: 'tones.goldLight', label: 'Light highlight tone', usage: 'Hover edges, cluster nodes, focus rings, and brighter highlight contrast.' },
     ],
   },
+
+  {
+    id: 'ornament-roles',
+    label: 'Ornament and guide motifs',
+    description: 'Decorative rules, corner accents, gem marks, and illuminated-panel details inspired by the Peridot Palette Upload Guide.',
+    roles: [
+      { path: 'ornament.line', label: 'Ornament line', usage: 'Thin gold/sage rules, title dividers, and decorative separators.' },
+      { path: 'ornament.lineMuted', label: 'Muted ornament line', usage: 'Subtle low-contrast decorative rules and background flourishes.' },
+      { path: 'ornament.corner', label: 'Corner accent', usage: 'Illuminated panel corner brackets and stronger frame details.' },
+      { path: 'ornament.cornerMuted', label: 'Muted corner accent', usage: 'Low-contrast corner and frame details on large panels.' },
+      { path: 'ornament.gemFill', label: 'Gem fill', usage: 'Small peridot gem markers, bullets, and active decorative tabs.' },
+      { path: 'ornament.gemStroke', label: 'Gem stroke', usage: 'Gem outlines and small ornamental borders.' },
+      { path: 'ornament.sparkle', label: 'Sparkle accent', usage: 'Tiny star, diamond, and active-state highlights.' },
+      { path: 'ornament.paperRule', label: 'Paper rule', usage: 'Quiet rules and separators on cream or paper-like panels.' },
+      { path: 'ornament.panelGlow', label: 'Panel glow', usage: 'Soft decorative glow around major framed panels.' },
+    ],
+  },
   {
     id: 'interface-roles',
     label: 'Interface roles',

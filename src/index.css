@@ -294,3 +294,248 @@ textarea {
   color: var(--peridot-color-hex-fff8e8) !important;
   box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-32);
 }
+
+
+/* Peridot Upload Guide design layer
+ * ---------------------------------
+ * This layer translates the Palette Upload Guide's visual language into the app:
+ * cream paper surfaces, dark green folio fields, thin illuminated rules, small
+ * gem-like accents, and quiet corner ornaments. It is intentionally implemented
+ * through reusable selectors and semantic variables so future palette imports can
+ * still recolor the decoration instead of hard-coding the guide art.
+ */
+:root {
+  --peridot-guide-serif: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  --peridot-guide-radius-lg: 34px;
+  --peridot-guide-radius-md: 24px;
+}
+
+.peridot-workspace-field {
+  color: var(--peridot-role-interface-text-on-dark);
+  background:
+    radial-gradient(circle at 22% 16%, var(--peridot-role-ornament-panel-glow), transparent 32rem),
+    radial-gradient(circle at 82% 22%, var(--peridot-role-ornament-panel-glow), transparent 30rem),
+    linear-gradient(135deg, var(--peridot-role-interface-app-background) 0%, var(--peridot-role-interface-app-background-alt) 46%, var(--peridot-role-interface-app-background) 100%);
+  background-attachment: fixed;
+}
+
+.peridot-workspace-field::before {
+  opacity: 0.52;
+  background-image:
+    repeating-linear-gradient(135deg, var(--peridot-role-ornament-line-muted) 0 1px, transparent 1px 15px),
+    radial-gradient(circle at 50% 8%, var(--peridot-role-ornament-panel-glow), transparent 26rem);
+}
+
+.peridot-hero-card,
+.peridot-action-card,
+.peridot-surface-card,
+.peridot-cream-card,
+.peridot-analytics-workspace,
+.peridot-guide-panel,
+.peridot-illuminated-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.peridot-hero-card {
+  border-color: var(--peridot-role-ornament-corner-muted);
+  background:
+    linear-gradient(135deg, var(--peridot-role-interface-panel-background-strong), var(--peridot-role-interface-panel-background));
+  box-shadow:
+    0 24px 70px var(--peridot-role-card-shadow),
+    inset 0 0 0 1px var(--peridot-role-ornament-line-muted),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.peridot-hero-card::before,
+.peridot-hero-card::after,
+.peridot-action-card::before,
+.peridot-surface-card::before,
+.peridot-cream-card::before,
+.peridot-illuminated-panel::before,
+.peridot-map-plate::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-color: var(--peridot-role-ornament-corner);
+  opacity: 0.72;
+}
+
+.peridot-hero-card::before,
+.peridot-action-card::before,
+.peridot-surface-card::before,
+.peridot-cream-card::before,
+.peridot-illuminated-panel::before,
+.peridot-map-plate::before {
+  left: 1rem;
+  top: 1rem;
+  border-left: 2px solid;
+  border-top: 2px solid;
+  border-top-left-radius: 16px;
+}
+
+.peridot-hero-card::after,
+.peridot-illuminated-panel::after,
+.peridot-map-plate::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  right: 1rem;
+  bottom: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-right: 2px solid var(--peridot-role-ornament-corner);
+  border-bottom: 2px solid var(--peridot-role-ornament-corner);
+  border-bottom-right-radius: 16px;
+  opacity: 0.72;
+}
+
+.peridot-kicker {
+  color: var(--peridot-role-ornament-sparkle);
+  letter-spacing: 0.30em;
+}
+
+.peridot-kicker::before,
+.peridot-kicker::after {
+  content: '◆';
+  color: var(--peridot-role-ornament-line);
+  font-size: 0.62em;
+  vertical-align: 0.12em;
+  opacity: 0.82;
+}
+
+.peridot-kicker::before { margin-right: 0.65rem; }
+.peridot-kicker::after { margin-left: 0.65rem; }
+
+.peridot-display-title,
+.peridot-title-medium,
+.peridot-workspace-field h1,
+.peridot-workspace-field h2 {
+  text-shadow: 0 2px 18px var(--peridot-role-card-shadow);
+}
+
+.peridot-action-card {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--peridot-role-button-primary-bg) 88%, var(--peridot-role-interface-panel-background) 12%), var(--peridot-role-interface-card-background-dark));
+  border-color: var(--peridot-role-ornament-corner-muted);
+}
+
+.peridot-surface-card {
+  background:
+    linear-gradient(135deg, var(--peridot-role-interface-card-background-dark), var(--peridot-role-interface-panel-background-strong));
+  border-color: var(--peridot-role-ornament-corner-muted);
+}
+
+.peridot-cream-card {
+  background:
+    linear-gradient(135deg, var(--peridot-role-interface-card-background), var(--peridot-role-interface-card-background-warm));
+  border-color: var(--peridot-role-ornament-paper-rule);
+  color: var(--peridot-role-interface-text-on-light);
+}
+
+.peridot-button-primary,
+.peridot-button-secondary,
+.peridot-button-cream {
+  letter-spacing: -0.01em;
+  box-shadow:
+    0 10px 22px var(--peridot-role-card-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.peridot-button-primary::before,
+.peridot-button-secondary::before,
+.peridot-button-cream::before {
+  content: '◆';
+  margin-right: 0.45rem;
+  font-size: 0.72em;
+  opacity: 0.78;
+}
+
+.peridot-button-primary {
+  border-color: var(--peridot-role-button-primary-border);
+  background: linear-gradient(135deg, var(--peridot-role-button-primary-bg), var(--peridot-role-button-primary-hover-bg));
+  color: var(--peridot-role-button-primary-text);
+}
+
+.peridot-button-primary:hover,
+.peridot-button-secondary:hover,
+.peridot-button-cream:hover {
+  background: linear-gradient(135deg, var(--peridot-role-button-primary-hover-bg), var(--peridot-role-ornament-line));
+}
+
+.peridot-button-secondary {
+  border-color: var(--peridot-role-button-secondary-border);
+  background: var(--peridot-role-button-secondary-bg);
+  color: var(--peridot-role-button-secondary-text);
+}
+
+.peridot-button-cream {
+  border-color: var(--peridot-role-button-cream-border);
+  background: var(--peridot-role-button-cream-bg);
+  color: var(--peridot-role-button-cream-text);
+}
+
+.peridot-form-input,
+.peridot-form-select {
+  border-color: var(--peridot-role-form-border);
+  background: var(--peridot-role-form-bg-dark);
+  color: var(--peridot-role-form-text-dark);
+}
+
+.peridot-cream-card .peridot-form-input,
+.peridot-cream-card .peridot-form-select,
+.peridot-mapping-modal .peridot-form-input,
+.peridot-mapping-modal .peridot-form-select {
+  background: var(--peridot-role-form-bg-light);
+  color: var(--peridot-role-form-text-light);
+  border-color: var(--peridot-role-form-border);
+}
+
+.peridot-table-wrap {
+  border-color: var(--peridot-role-card-border);
+  background: color-mix(in srgb, var(--peridot-role-interface-card-background) 78%, transparent);
+}
+
+.peridot-gold-hover:hover,
+.peridot-gold-active {
+  background: var(--peridot-role-button-primary-hover-bg) !important;
+  border-color: var(--peridot-role-ornament-corner) !important;
+  color: var(--peridot-role-button-primary-text) !important;
+}
+
+.peridot-map-plate {
+  border-color: var(--peridot-role-ornament-corner-muted) !important;
+  box-shadow:
+    0 20px 54px var(--peridot-role-card-shadow),
+    inset 0 0 0 1px var(--peridot-role-ornament-paper-rule),
+    inset 0 0 0 8px color-mix(in srgb, var(--peridot-role-ornament-line) 10%, transparent);
+}
+
+.peridot-map-plate::before,
+.peridot-map-plate::after {
+  z-index: 10;
+}
+
+.peridot-gem-button {
+  box-shadow:
+    0 12px 28px var(--peridot-role-card-shadow),
+    inset 0 0 0 1px var(--peridot-role-ornament-corner);
+}
+
+.peridot-ornament-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--peridot-role-ornament-line);
+}
+
+.peridot-ornament-divider::before,
+.peridot-ornament-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, var(--peridot-role-ornament-line), transparent);
+  opacity: 0.78;
+}

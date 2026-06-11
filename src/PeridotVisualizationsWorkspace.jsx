@@ -678,7 +678,7 @@ export function PeridotVisualizationsWorkspace({
 
     if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
       return (
-        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--peridot-color-rgba-rgba-8-39-25-0-9)] p-2 shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm md:p-3">
+        <div className="peridot-analytics-workspace peridot-illuminated-panel min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--peridot-color-rgba-rgba-8-39-25-0-9)] p-2 shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm md:p-3">
           <AnalyticsPanelContent
             analyticsState={analyticsWorkspaceProps.analyticsState}
             onChartExportControlsChange={setChartExportControls}
@@ -688,7 +688,7 @@ export function PeridotVisualizationsWorkspace({
     }
 
     return (
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--map-water)] shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
+      <div className="peridot-map-plate flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--map-water)] shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
         <MapStageComponent {...mapStageProps} />
       </div>
     );
@@ -700,7 +700,7 @@ export function PeridotVisualizationsWorkspace({
         <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
           <div
             className={[
-              'relative z-50 shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
+              'peridot-illuminated-panel relative z-50 shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
               isHeaderExpanded ? 'px-4 pb-4 pt-3' : 'px-4 py-2',
             ].join(' ')}
           >

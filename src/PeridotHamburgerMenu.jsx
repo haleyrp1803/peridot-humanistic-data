@@ -78,7 +78,7 @@ export function PeridotHamburgerMenu({
       <button
         type="button"
         onClick={onToggle}
-        className="flex h-11 w-11 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5f1df)] text-xl font-black text-[var(--peridot-color-hex-173120)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-38)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f5ecd2-a80)]"
+        className="peridot-gem-button flex h-11 w-11 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5f1df)] text-xl font-black text-[var(--peridot-color-hex-173120)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-38)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f5ecd2-a80)]"
         aria-label={open ? 'Close Peridot menu' : 'Open Peridot menu'}
         aria-expanded={open}
       >
@@ -87,7 +87,7 @@ export function PeridotHamburgerMenu({
 
       {open ? (
         <div
-          className="mt-3 w-[min(360px,calc(100vw-2.5rem))] overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a55)] bg-[linear-gradient(145deg,var(--peridot-color-rgba-rgba-2-20-13-0-98),var(--peridot-color-rgba-rgba-12-44-31-0-96))] p-3 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_24px_70px_var(--peridot-color-rgba-rgba-0-0-0-0-58)] backdrop-blur-md"
+          className="peridot-illuminated-panel mt-3 w-[min(360px,calc(100vw-2.5rem))] overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a55)] bg-[linear-gradient(145deg,var(--peridot-color-rgba-rgba-2-20-13-0-98),var(--peridot-color-rgba-rgba-12-44-31-0-96))] p-3 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_24px_70px_var(--peridot-color-rgba-rgba-0-0-0-0-58)] backdrop-blur-md"
           role="menu"
           aria-label="Peridot navigation"
         >
