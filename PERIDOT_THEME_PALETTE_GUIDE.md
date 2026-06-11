@@ -198,3 +198,14 @@ The image palette importer now includes additional target areas for navigation/w
 ## Whole-app imported palette behavior
 
 When applying an imported palette to **Whole app**, Peridot also overrides the foundation `tones.*` roles. This prevents the active base palette from leaking through older compatibility variables or role rows that are keyed directly to foundation tones.
+
+## Dark/light anchor behavior for imported palettes
+
+When applying an imported palette to **Whole app**, Peridot now treats the palette extremes as hard anchors:
+
+- the darkest detected swatch is assigned to the deepest shell, chrome, map canvas, tooltip, and foundation-dark roles;
+- the lightest detected swatch is assigned to the palest card, chart, form, handle, and text-on-dark roles;
+- middle swatches are still distributed across panels, selected states, map marks, chart series, and accents;
+- chart and visualization series keep the original detected swatch order where possible, so categorical marks still resemble the uploaded palette.
+
+This makes dramatic palettes more predictable: the darkest and lightest colors in the source image should appear in Peridot's darkest and lightest jobs instead of being diluted into only mid-tone roles.

@@ -177,29 +177,40 @@ function buildPaletteAssignment(colors) {
   const nonWhite = sorted.filter((value) => luminance(value) < 0.92);
   const warmCandidates = [...nonWhite].sort((a, b) => warmScore(b) - warmScore(a));
   const highSaturation = [...nonWhite].sort((a, b) => saturation(b) - saturation(a));
+  const pickByPosition = (position, fallback) => {
+    const index = Math.max(0, Math.min(sorted.length - 1, Math.round((sorted.length - 1) * position)));
+    return sorted[index] || fallback;
+  };
+
   // Preserve the incoming image/read order for categorical series so chart
   // colors match the uploaded palette swatches instead of being reordered by
-  // luminance. Broad surface roles still use the luminance-sorted scale below.
+  // luminance. Broad surface roles use the luminance-sorted scale below.
   const series = expanded
     .filter((value, index, array) => array.indexOf(value) === index)
     .slice(0, 10);
 
+  // Hard anchors: these are intentionally the literal darkest and lightest
+  // detected colors. Whole-app imports use them for Peridot's deepest shells
+  // and palest/readable surfaces so palette extremes are represented directly.
   const darkest = sorted[0];
+  const lightest = sorted[sorted.length - 1] || shade(darkest, 0.78);
+
   const dark = sorted[1] || shade(darkest, 0.12);
-  const deep = sorted[2] || shade(dark, 0.12);
-  const mid = mids[0] || sorted[Math.floor(sorted.length * 0.35)] || deep;
-  const midAlt = mids[1] || sorted[Math.floor(sorted.length * 0.48)] || mid;
-  const primary = mids[2] || highSaturation[0] || mid;
-  const secondary = mids[3] || highSaturation[1] || midAlt;
-  const soft = sorted[Math.max(0, sorted.length - 4)] || shade(secondary, 0.35);
-  const pale = sorted[Math.max(0, sorted.length - 3)] || shade(soft, 0.2);
-  const cream = sorted[Math.max(0, sorted.length - 2)] || shade(pale, 0.2);
-  const paper = sorted[sorted.length - 1] || shade(cream, 0.12);
+  const deep = sorted[2] || pickByPosition(0.22, dark);
+  const mid = mids[0] || pickByPosition(0.35, deep);
+  const midAlt = mids[1] || pickByPosition(0.48, mid);
+  const primary = mids[2] || highSaturation[0] || pickByPosition(0.55, midAlt);
+  const secondary = mids[3] || highSaturation[1] || pickByPosition(0.62, primary);
+  const soft = pickByPosition(0.70, shade(secondary, 0.35));
+  const pale = pickByPosition(0.82, shade(soft, 0.2));
+  const cream = pickByPosition(0.92, shade(pale, 0.2));
+  const paper = lightest;
   const highlight = warmCandidates[0] || primary;
   const highlightLight = warmCandidates[1] || shade(highlight, 0.22);
 
   return {
     darkest,
+    lightest,
     dark,
     deep,
     mid,
@@ -218,6 +229,40 @@ function buildPaletteAssignment(colors) {
 
 function assignPaths(colors, pathValues) {
   return pathValues.reduce((overrides, [path, value]) => writeOverridePath(overrides, path, value), {});
+}
+
+function buildDarkLightAnchorPaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    // Foundation tone anchors.
+    ['tones.ink', assignment.darkest],
+    ['tones.paper', assignment.lightest],
+
+    // Deepest app shells and high-contrast chrome.
+    ['interface.appBackground', assignment.darkest],
+    ['interface.panelBackgroundStrong', assignment.darkest],
+    ['navigation.menuBg', assignment.darkest],
+    ['workspaceChrome.headerBg', assignment.darkest],
+    ['inspector.chromeBgStrong', assignment.darkest],
+    ['analytics.tooltipBg', assignment.darkest],
+    ['visualization.canvasBg', assignment.darkest],
+    ['visualization.edgeSelected', assignment.darkest],
+    ['timeline.trackBg', assignment.darkest],
+
+    // Palest readable surfaces and text-on-dark roles.
+    ['interface.cardBackground', assignment.lightest],
+    ['interface.textOnDark', assignment.lightest],
+    ['interface.textInverse', assignment.lightest],
+    ['button.primaryText', assignment.lightest],
+    ['button.secondaryText', assignment.lightest],
+    ['analytics.chartBg', assignment.lightest],
+    ['analytics.tooltipText', assignment.lightest],
+    ['form.bgLight', assignment.lightest],
+    ['form.textDark', assignment.lightest],
+    ['search.panelBg', assignment.lightest],
+    ['search.inputBg', assignment.lightest],
+    ['timeline.handleBg', assignment.lightest],
+    ['visualization.labelText', assignment.lightest],
+  ]);
 }
 
 function buildFoundationTonePaletteOverrides(assignment) {
@@ -246,25 +291,25 @@ function buildInterfacePaletteOverrides(assignment) {
     ['interface.workspaceBackground', assignment.deep],
     ['interface.panelBackground', assignment.dark],
     ['interface.panelBackgroundStrong', assignment.darkest],
-    ['interface.cardBackground', assignment.paper],
+    ['interface.cardBackground', assignment.lightest],
     ['interface.cardBackgroundWarm', assignment.cream],
     ['interface.cardBackgroundMuted', assignment.pale],
     ['interface.cardBackgroundDark', assignment.deep],
     ['interface.borderSubtle', withAlpha(assignment.midAlt, 0.32)],
     ['interface.borderStrong', withAlpha(assignment.soft, 0.62)],
-    ['interface.textOnDark', assignment.cream],
+    ['interface.textOnDark', assignment.lightest],
     ['interface.textMutedOnDark', assignment.pale],
     ['interface.textOnLight', assignment.deep],
     ['interface.textMutedOnLight', assignment.midAlt],
     ['interface.focusRing', withAlpha(assignment.highlightLight, 0.45)],
     ['card.darkBg', withAlpha(assignment.dark, 0.88)],
     ['card.darkSurfaceBg', withAlpha(assignment.deep, 0.88)],
-    ['card.creamBg', withAlpha(assignment.paper, 0.94)],
+    ['card.creamBg', withAlpha(assignment.lightest, 0.94)],
     ['card.creamText', assignment.deep],
     ['card.border', withAlpha(assignment.pale, 0.58)],
     ['card.shadow', withAlpha(assignment.darkest, 0.28)],
     ['form.bgDark', withAlpha(assignment.dark, 0.62)],
-    ['form.bgLight', withAlpha(assignment.paper, 0.88)],
+    ['form.bgLight', withAlpha(assignment.lightest, 0.88)],
     ['form.border', withAlpha(assignment.pale, 0.54)],
     ['form.textDark', assignment.paper],
     ['form.textLight', assignment.deep],
@@ -306,9 +351,9 @@ function buildTimelinePaletteOverrides(assignment) {
     ['timeline.panelBorder', withAlpha(assignment.pale, 0.40)],
     ['timeline.panelText', assignment.paper],
     ['timeline.panelMutedText', assignment.pale],
-    ['timeline.trackBg', assignment.deep],
+    ['timeline.trackBg', assignment.darkest],
     ['timeline.activeTrackBg', assignment.highlight],
-    ['timeline.handleBg', assignment.paper],
+    ['timeline.handleBg', assignment.lightest],
     ['timeline.handleBorder', assignment.highlightLight],
     ['timeline.buttonBg', assignment.cream],
     ['timeline.buttonText', assignment.deep],
@@ -320,13 +365,13 @@ function buildTimelinePaletteOverrides(assignment) {
 function buildSearchWorkspacePaletteOverrides(assignment) {
   return assignPaths(assignment, [
     ['search.shellBg', assignment.dark],
-    ['search.panelBg', assignment.paper],
+    ['search.panelBg', assignment.lightest],
     ['search.panelBorder', withAlpha(assignment.midAlt, 0.36)],
     ['search.cardBg', assignment.cream],
     ['search.cardActiveBg', assignment.highlightLight],
     ['search.cardText', assignment.deep],
     ['search.cardMutedText', assignment.midAlt],
-    ['search.inputBg', assignment.paper],
+    ['search.inputBg', assignment.lightest],
     ['search.inputBorder', withAlpha(assignment.midAlt, 0.54)],
     ['search.criterionBg', assignment.pale],
     ['search.criterionActiveBg', assignment.highlight],
@@ -356,7 +401,7 @@ function buildMapNetworkPaletteOverrides(assignment) {
     ['visualization.nodeHover', assignment.highlight],
     ['visualization.nodeSelected', assignment.paper],
     ['visualization.nodeStroke', assignment.darkest],
-    ['visualization.labelText', assignment.paper],
+    ['visualization.labelText', assignment.lightest],
     ['visualization.labelStroke', assignment.darkest],
     ['visualization.series', assignment.series],
   ]);
@@ -366,15 +411,15 @@ function buildChartsPaletteOverrides(assignment) {
   return assignPaths(assignment, [
     ['analytics.shellBg', assignment.cream],
     ['analytics.sidebarBg', assignment.pale],
-    ['analytics.chartBg', assignment.paper],
+    ['analytics.chartBg', assignment.lightest],
     ['analytics.chartText', assignment.deep],
     ['analytics.chartMutedText', assignment.midAlt],
     ['analytics.grid', withAlpha(assignment.midAlt, 0.32)],
     ['analytics.accent', assignment.primary],
     ['analytics.accentDark', assignment.deep],
     ['analytics.accentLight', assignment.soft],
-    ['analytics.tooltipBg', assignment.deep],
-    ['analytics.tooltipText', assignment.paper],
+    ['analytics.tooltipBg', assignment.darkest],
+    ['analytics.tooltipText', assignment.lightest],
     ['analytics.series', assignment.series],
   ]);
 }
@@ -422,17 +467,17 @@ function buildInspectorSearchPaletteOverrides(assignment) {
 
 function buildTextBorderPaletteOverrides(assignment) {
   return assignPaths(assignment, [
-    ['interface.textOnDark', assignment.cream],
+    ['interface.textOnDark', assignment.lightest],
     ['interface.textMutedOnDark', assignment.pale],
     ['interface.textOnLight', assignment.deep],
     ['interface.textMutedOnLight', assignment.midAlt],
-    ['interface.textInverse', assignment.paper],
+    ['interface.textInverse', assignment.lightest],
     ['interface.borderSubtle', withAlpha(assignment.midAlt, 0.32)],
     ['interface.borderStrong', withAlpha(assignment.soft, 0.62)],
     ['interface.focusRing', withAlpha(assignment.highlightLight, 0.45)],
     ['card.border', withAlpha(assignment.pale, 0.58)],
     ['form.border', withAlpha(assignment.pale, 0.54)],
-    ['visualization.labelText', assignment.paper],
+    ['visualization.labelText', assignment.lightest],
     ['visualization.labelStroke', assignment.darkest],
   ]);
 }
@@ -453,10 +498,11 @@ export function buildPeridotPaletteImportOverrides(rawColors, targetId = 'wholeA
   };
 
   if (target === 'wholeApp') {
-    return Object.values(builders).reduce(
+    const broadOverrides = Object.values(builders).reduce(
       (merged, builder) => deepMerge(merged, builder(assignment)),
       buildFoundationTonePaletteOverrides(assignment)
     );
+    return deepMerge(broadOverrides, buildDarkLightAnchorPaletteOverrides(assignment));
   }
 
   return builders[target] ? builders[target](assignment) : buildChartsPaletteOverrides(assignment);
