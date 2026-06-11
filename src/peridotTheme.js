@@ -90,6 +90,21 @@ export const PERIDOT_PALETTE_IMPORT_TARGETS = Object.freeze([
     description: 'Apply the palette to primary actions, hover states, focus accents, warnings, and highlighted UI states.',
   },
   {
+    id: 'navigationChrome',
+    label: 'Navigation and workspace chrome',
+    description: 'Apply the palette to hamburger menus, workspace headers, tabs, dropdowns, and high-level navigation chrome.',
+  },
+  {
+    id: 'timeline',
+    label: 'Timeline controls',
+    description: 'Apply the palette to timeline panels, tracks, handles, scrubbers, and playback controls.',
+  },
+  {
+    id: 'searchWorkspace',
+    label: 'Search workspace',
+    description: 'Apply the palette to advanced-search panels, criterion cards, form controls, and result surfaces.',
+  },
+  {
     id: 'inspectorSearch',
     label: 'Inspector and search',
     description: 'Apply the palette to Inspector chrome, Inspector cards, clickable chips, search result surfaces, and status callouts.',
@@ -205,6 +220,25 @@ function assignPaths(colors, pathValues) {
   return pathValues.reduce((overrides, [path, value]) => writeOverridePath(overrides, path, value), {});
 }
 
+function buildFoundationTonePaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['tones.ink', assignment.darkest],
+    ['tones.night', assignment.dark],
+    ['tones.deep', assignment.deep],
+    ['tones.forest', assignment.mid],
+    ['tones.mid', assignment.midAlt],
+    ['tones.midAlt', assignment.secondary],
+    ['tones.leaf', assignment.primary],
+    ['tones.sage', assignment.secondary],
+    ['tones.soft', assignment.soft],
+    ['tones.pale', assignment.pale],
+    ['tones.cream', assignment.cream],
+    ['tones.paper', assignment.paper],
+    ['tones.gold', assignment.highlight],
+    ['tones.goldLight', assignment.highlightLight],
+  ]);
+}
+
 function buildInterfacePaletteOverrides(assignment) {
   return assignPaths(assignment, [
     ['interface.appBackground', assignment.darkest],
@@ -235,6 +269,71 @@ function buildInterfacePaletteOverrides(assignment) {
     ['form.textDark', assignment.paper],
     ['form.textLight', assignment.deep],
     ['form.placeholder', withAlpha(assignment.paper, 0.58)],
+  ]);
+}
+
+
+function buildNavigationChromePaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['navigation.menuBg', assignment.darkest],
+    ['navigation.menuBorder', withAlpha(assignment.pale, 0.32)],
+    ['navigation.menuText', assignment.paper],
+    ['navigation.menuMutedText', assignment.pale],
+    ['navigation.itemBg', withAlpha(assignment.pale, 0.08)],
+    ['navigation.itemHoverBg', withAlpha(assignment.highlight, 0.72)],
+    ['navigation.itemActiveBg', assignment.highlight],
+    ['navigation.itemActiveText', assignment.paper],
+    ['navigation.itemBorder', withAlpha(assignment.pale, 0.38)],
+    ['navigation.itemActiveBorder', withAlpha(assignment.cream, 0.82)],
+    ['workspaceChrome.headerBg', assignment.dark],
+    ['workspaceChrome.headerText', assignment.paper],
+    ['workspaceChrome.headerMutedText', assignment.pale],
+    ['workspaceChrome.headerBorder', withAlpha(assignment.pale, 0.32)],
+    ['workspaceChrome.tabBg', withAlpha(assignment.pale, 0.10)],
+    ['workspaceChrome.tabHoverBg', withAlpha(assignment.highlight, 0.35)],
+    ['workspaceChrome.tabActiveBg', assignment.highlight],
+    ['workspaceChrome.tabText', assignment.paper],
+    ['workspaceChrome.dropdownBg', assignment.cream],
+    ['workspaceChrome.dropdownText', assignment.deep],
+    ['workspaceChrome.dropdownActiveBg', assignment.highlight],
+    ['workspaceChrome.dropdownActiveText', assignment.paper],
+  ]);
+}
+
+function buildTimelinePaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['timeline.panelBg', assignment.dark],
+    ['timeline.panelBorder', withAlpha(assignment.pale, 0.40)],
+    ['timeline.panelText', assignment.paper],
+    ['timeline.panelMutedText', assignment.pale],
+    ['timeline.trackBg', assignment.deep],
+    ['timeline.activeTrackBg', assignment.highlight],
+    ['timeline.handleBg', assignment.paper],
+    ['timeline.handleBorder', assignment.highlightLight],
+    ['timeline.buttonBg', assignment.cream],
+    ['timeline.buttonText', assignment.deep],
+    ['timeline.buttonActiveBg', assignment.highlight],
+    ['timeline.buttonActiveText', assignment.paper],
+  ]);
+}
+
+function buildSearchWorkspacePaletteOverrides(assignment) {
+  return assignPaths(assignment, [
+    ['search.shellBg', assignment.dark],
+    ['search.panelBg', assignment.paper],
+    ['search.panelBorder', withAlpha(assignment.midAlt, 0.36)],
+    ['search.cardBg', assignment.cream],
+    ['search.cardActiveBg', assignment.highlightLight],
+    ['search.cardText', assignment.deep],
+    ['search.cardMutedText', assignment.midAlt],
+    ['search.inputBg', assignment.paper],
+    ['search.inputBorder', withAlpha(assignment.midAlt, 0.54)],
+    ['search.criterionBg', assignment.pale],
+    ['search.criterionActiveBg', assignment.highlight],
+    ['search.resultBg', assignment.paper],
+    ['search.resultBorder', withAlpha(assignment.midAlt, 0.38)],
+    ['search.badgeBg', assignment.primary],
+    ['search.badgeText', assignment.paper],
   ]);
 }
 
@@ -343,6 +442,9 @@ export function buildPeridotPaletteImportOverrides(rawColors, targetId = 'wholeA
   const target = String(targetId || 'wholeApp');
   const builders = {
     interface: buildInterfacePaletteOverrides,
+    navigationChrome: buildNavigationChromePaletteOverrides,
+    timeline: buildTimelinePaletteOverrides,
+    searchWorkspace: buildSearchWorkspacePaletteOverrides,
     mapNetwork: buildMapNetworkPaletteOverrides,
     charts: buildChartsPaletteOverrides,
     buttonsHighlights: buildButtonHighlightPaletteOverrides,
@@ -351,7 +453,10 @@ export function buildPeridotPaletteImportOverrides(rawColors, targetId = 'wholeA
   };
 
   if (target === 'wholeApp') {
-    return Object.values(builders).reduce((merged, builder) => deepMerge(merged, builder(assignment)), {});
+    return Object.values(builders).reduce(
+      (merged, builder) => deepMerge(merged, builder(assignment)),
+      buildFoundationTonePaletteOverrides(assignment)
+    );
   }
 
   return builders[target] ? builders[target](assignment) : buildChartsPaletteOverrides(assignment);
@@ -518,8 +623,14 @@ function colorDistance(hexA, hexB) {
   return Math.hypot(a.r - b.r, a.g - b.g, a.b - b.b);
 }
 
-function withAlpha(hex, alpha) {
-  const { r, g, b } = hexToRgb(hex);
+function withAlpha(color, alpha) {
+  const text = String(color || '').trim();
+  const rgbaMatch = text.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgbaMatch) {
+    const parts = rgbaMatch[1].split(',').map((part) => part.trim());
+    return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+  }
+  const { r, g, b } = hexToRgb(text);
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
@@ -577,38 +688,27 @@ export const PERIDOT_TONES = Object.freeze(buildToneScale(ACTIVE_PERIDOT_SOURCE_
 
 export function resolvePeridotLegacyColor(value) {
   const source = String(value || '').trim();
-  if (ACTIVE_PERIDOT_PALETTE_ID === 'legacyCurrent') return source;
 
   const rgbaMatch = source.match(/^rgba?\(([^)]+)\)$/i);
   if (rgbaMatch) {
     const parts = rgbaMatch[1].split(',').map((part) => part.trim());
     const alpha = parts.length >= 4 ? parts[3] : '1';
     const asHex = rgbToHex({ r: Number(parts[0]), g: Number(parts[1]), b: Number(parts[2]) });
-    return withAlpha(resolvePeridotLegacyColor(asHex), alpha);
+    const resolved = resolvePeridotLegacyColor(asHex);
+    return withAlpha(resolved, alpha);
   }
 
   if (!/^#[0-9a-fA-F]{6}$/.test(source)) return source;
 
-  const tones = PERIDOT_TONES;
-  const candidates = [
-    tones.ink,
-    tones.night,
-    tones.deep,
-    tones.forest,
-    tones.mid,
-    tones.midAlt,
-    tones.leaf,
-    tones.sage,
-    tones.soft,
-    tones.pale,
-    tones.cream,
-    tones.paper,
-    tones.gold,
-    tones.goldLight,
-  ];
+  const hasCustomOverrides = Boolean(PERIDOT_CUSTOM_THEME_OVERRIDES && Object.keys(PERIDOT_CUSTOM_THEME_OVERRIDES).length);
+  if (ACTIVE_PERIDOT_PALETTE_ID === 'legacyCurrent' && !hasCustomOverrides) return source;
+
+  const candidates = getLegacyThemeCandidatePairs();
+  if (!candidates.length) return source;
+
   return candidates.reduce((best, candidate) => (
-    colorDistance(source, candidate) < colorDistance(source, best) ? candidate : best
-  ), candidates[0]);
+    colorDistance(source, candidate.anchor) < colorDistance(source, best.anchor) ? candidate : best
+  ), candidates[0]).value;
 }
 
 export function buildSemanticTheme(tones = PERIDOT_TONES) {
@@ -647,6 +747,63 @@ export function buildSemanticTheme(tones = PERIDOT_TONES) {
       creamBg: tones.cream,
       creamText: tones.deep,
       creamBorder: withAlpha(tones.midAlt, 0.38),
+    },
+    navigation: {
+      menuBg: tones.ink,
+      menuBorder: withAlpha(tones.pale, 0.32),
+      menuText: tones.paper,
+      menuMutedText: tones.pale,
+      itemBg: withAlpha(tones.pale, 0.08),
+      itemHoverBg: withAlpha(tones.gold, 0.72),
+      itemActiveBg: tones.gold,
+      itemActiveText: tones.paper,
+      itemBorder: withAlpha(tones.pale, 0.38),
+      itemActiveBorder: withAlpha(tones.cream, 0.82),
+    },
+    workspaceChrome: {
+      headerBg: tones.forest,
+      headerText: tones.paper,
+      headerMutedText: tones.pale,
+      headerBorder: withAlpha(tones.pale, 0.32),
+      tabBg: withAlpha(tones.pale, 0.10),
+      tabHoverBg: withAlpha(tones.gold, 0.35),
+      tabActiveBg: tones.gold,
+      tabText: tones.paper,
+      dropdownBg: tones.cream,
+      dropdownText: tones.deep,
+      dropdownActiveBg: tones.gold,
+      dropdownActiveText: tones.paper,
+    },
+    timeline: {
+      panelBg: tones.forest,
+      panelBorder: withAlpha(tones.pale, 0.40),
+      panelText: tones.paper,
+      panelMutedText: tones.pale,
+      trackBg: tones.deep,
+      activeTrackBg: tones.gold,
+      handleBg: tones.paper,
+      handleBorder: tones.goldLight,
+      buttonBg: tones.cream,
+      buttonText: tones.deep,
+      buttonActiveBg: tones.gold,
+      buttonActiveText: tones.paper,
+    },
+    search: {
+      shellBg: tones.forest,
+      panelBg: tones.paper,
+      panelBorder: withAlpha(tones.midAlt, 0.36),
+      cardBg: tones.cream,
+      cardActiveBg: tones.goldLight,
+      cardText: tones.deep,
+      cardMutedText: tones.midAlt,
+      inputBg: tones.paper,
+      inputBorder: withAlpha(tones.midAlt, 0.54),
+      criterionBg: tones.pale,
+      criterionActiveBg: tones.gold,
+      resultBg: tones.paper,
+      resultBorder: withAlpha(tones.midAlt, 0.38),
+      badgeBg: tones.leaf,
+      badgeText: tones.paper,
     },
     card: {
       darkBg: withAlpha(tones.forest, 0.88),
@@ -721,6 +878,52 @@ export function buildSemanticTheme(tones = PERIDOT_TONES) {
       series: [tones.leaf, tones.sage, tones.forest, tones.gold, tones.goldLight, tones.midAlt, tones.soft, tones.deep],
     },
   });
+}
+
+
+const LEGACY_REFERENCE_THEME = Object.freeze(buildSemanticTheme(buildToneScale(PERIDOT_SOURCE_PALETTES.legacyCurrent)));
+
+function comparableHexFromColor(value) {
+  const text = String(value || '').trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(text)) return text.toLowerCase();
+  const rgbaMatch = text.match(/^rgba?\(([^)]+)\)$/i);
+  if (rgbaMatch) {
+    const parts = rgbaMatch[1].split(',').map((part) => Number(part.trim()));
+    if (parts.length >= 3 && parts.slice(0, 3).every((part) => Number.isFinite(part))) {
+      return rgbToHex({ r: parts[0], g: parts[1], b: parts[2] });
+    }
+  }
+  return null;
+}
+
+function flattenThemeColorLeaves(value, path = '', output = []) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => flattenThemeColorLeaves(item, `${path}.${index}`, output));
+    return output;
+  }
+
+  if (value && typeof value === 'object') {
+    Object.entries(value).forEach(([key, nested]) => {
+      flattenThemeColorLeaves(nested, path ? `${path}.${key}` : key, output);
+    });
+    return output;
+  }
+
+  const comparable = comparableHexFromColor(value);
+  if (comparable) {
+    output.push({ path, value, comparable });
+  }
+  return output;
+}
+
+function getLegacyThemeCandidatePairs() {
+  const currentByPath = new Map(flattenThemeColorLeaves(PERIDOT_THEME).map((entry) => [entry.path, entry.value]));
+  return flattenThemeColorLeaves(LEGACY_REFERENCE_THEME)
+    .map((entry) => ({
+      anchor: entry.comparable,
+      value: currentByPath.get(entry.path) || entry.value,
+    }))
+    .filter((entry) => comparableHexFromColor(entry.value));
 }
 
 export const PERIDOT_BASE_THEME = Object.freeze(buildSemanticTheme(PERIDOT_TONES));
@@ -873,6 +1076,33 @@ export const PERIDOT_APP_THEME_DEFAULTS = Object.freeze({
   iconButtonHoverText: PERIDOT_THEME.interface.textOnLight,
   linkText: PERIDOT_THEME.visualization.nodeAnimated,
   linkHoverText: PERIDOT_THEME.visualization.nodeHover,
+  navigationMenuBg: PERIDOT_THEME.navigation.menuBg,
+  navigationMenuBorder: PERIDOT_THEME.navigation.menuBorder,
+  navigationMenuText: PERIDOT_THEME.navigation.menuText,
+  navigationMenuMutedText: PERIDOT_THEME.navigation.menuMutedText,
+  navigationItemBg: PERIDOT_THEME.navigation.itemBg,
+  navigationItemHoverBg: PERIDOT_THEME.navigation.itemHoverBg,
+  navigationItemActiveBg: PERIDOT_THEME.navigation.itemActiveBg,
+  navigationItemActiveText: PERIDOT_THEME.navigation.itemActiveText,
+  workspaceHeaderBg: PERIDOT_THEME.workspaceChrome.headerBg,
+  workspaceHeaderText: PERIDOT_THEME.workspaceChrome.headerText,
+  workspaceTabBg: PERIDOT_THEME.workspaceChrome.tabBg,
+  workspaceTabActiveBg: PERIDOT_THEME.workspaceChrome.tabActiveBg,
+  workspaceDropdownBg: PERIDOT_THEME.workspaceChrome.dropdownBg,
+  workspaceDropdownActiveBg: PERIDOT_THEME.workspaceChrome.dropdownActiveBg,
+  timelinePanelBg: PERIDOT_THEME.timeline.panelBg,
+  timelinePanelBorder: PERIDOT_THEME.timeline.panelBorder,
+  timelineTrackBg: PERIDOT_THEME.timeline.trackBg,
+  timelineActiveTrackBg: PERIDOT_THEME.timeline.activeTrackBg,
+  timelineHandleBg: PERIDOT_THEME.timeline.handleBg,
+  timelineButtonBg: PERIDOT_THEME.timeline.buttonBg,
+  timelineButtonText: PERIDOT_THEME.timeline.buttonText,
+  searchShellBg: PERIDOT_THEME.search.shellBg,
+  searchPanelBg: PERIDOT_THEME.search.panelBg,
+  searchCardBg: PERIDOT_THEME.search.cardBg,
+  searchCardActiveBg: PERIDOT_THEME.search.cardActiveBg,
+  searchInputBg: PERIDOT_THEME.search.inputBg,
+  searchCriterionBg: PERIDOT_THEME.search.criterionBg,
 });
 
 export const PERIDOT_MAP_STYLE_PRESETS = Object.freeze({

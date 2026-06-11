@@ -322,6 +322,13 @@ function extractPaletteColorsFromImage(file, options = {}) {
           const density = area / (boxWidth * boxHeight);
           if (density < 0.42) continue;
 
+          const touchesAllImageEdges = minX <= 2 && minY <= 2 && maxX >= width - 3 && maxY >= height - 3;
+          const componentCoverage = area / pixelCount;
+          const componentAverage = { r: sumR / area, g: sumG / area, b: sumB / area };
+          const componentSaturation = imageColorSaturation(componentAverage);
+          const likelyPageBackground = touchesAllImageEdges || (componentCoverage > 0.18 && componentSaturation < 0.16);
+          if (likelyPageBackground) continue;
+
           components.push({
             area,
             minX,

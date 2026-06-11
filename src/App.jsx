@@ -1130,7 +1130,7 @@ function sidebarSurfaceClassName() {
 
 
 function floatingCardClassName() {
-  return 'rounded-2xl border border-[var(--floating-border)] bg-[var(--floating-bg)] text-[var(--text-main)] shadow-[0_18px_40px_rgba(0,0,0,0.5)] backdrop-blur';
+  return 'rounded-2xl border border-[var(--floating-border)] bg-[var(--floating-bg)] text-[var(--text-main)] shadow-[0_18px_40px_var(--peridot-role-card-shadow)] backdrop-blur';
 }
 
 function panelHeadingClassName() {
@@ -1296,7 +1296,7 @@ function LinkedLetterDetailPage({ letter, index, onBack, onOpenPersonDetail, onO
   const uniqueId = getLinkedLetterUniqueId(letter, index);
 
   return (
-    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
+    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_var(--peridot-role-card-shadow)]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div>
           <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
@@ -1383,13 +1383,13 @@ function LinkedLetterCard({
 function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
   const variants = {
-    primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_rgba(0,0,0,0.28)]',
+    primary: 'border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)] shadow-[0_8px_18px_var(--peridot-role-card-shadow)]',
     secondary: 'border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]',
     ghost: 'bg-transparent text-[var(--muted-text)] hover:bg-[var(--ghost-hover)] hover:text-[var(--text-main)]',
   };
 
   if (active) {
-    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.3)] hover:bg-[var(--button-primary-active-hover)]`;
+    return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_var(--peridot-role-card-shadow)] hover:bg-[var(--button-primary-active-hover)]`;
   }
   return `${base} ${variants[variant] || variants.secondary}`;
 }
@@ -1428,7 +1428,7 @@ function SidebarToggle({ side, open, onToggle }) {
       type="button"
       onClick={onToggle}
       className={[
-        'absolute top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_8px_20px_rgba(0,0,0,0.16)] transition-all duration-150 hover:shadow-[0_12px_24px_rgba(0,0,0,0.22)]',
+        'absolute top-3 z-20 flex h-10 w-10 items-center justify-center rounded-full border shadow-[0_8px_20px_var(--peridot-role-card-shadow)] transition-all duration-150 hover:shadow-[0_12px_24px_var(--peridot-role-card-shadow)]',
         left ? 'right-3' : 'left-3',
         open
           ? 'border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]'
@@ -2376,7 +2376,7 @@ function SvgMap({
 
 function InspectorSummaryCard({ children }) {
   return (
-    <div className="rounded-2xl border border-[var(--summary-card-border)] bg-[var(--summary-card-bg)] p-4 text-[var(--summary-card-text)] shadow-[0_10px_28px_rgba(56,38,26,0.16)]">
+    <div className="rounded-2xl border border-[var(--summary-card-border)] bg-[var(--summary-card-bg)] p-4 text-[var(--summary-card-text)] shadow-[0_10px_28px_var(--peridot-role-card-shadow)]">
       {children}
     </div>
   );
@@ -2436,7 +2436,7 @@ function LinkedLettersPanel({
   onOpenLetterDetail,
 }) {
   return (
-    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_rgba(47,61,38,0.12)]">
+    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_var(--peridot-role-card-shadow)]">
       <div className="mb-3 flex items-center justify-between gap-3 text-sm">
         <div>
           <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Linked records</div>
@@ -2541,13 +2541,13 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
   return (
     <div className="mb-0 w-full">
       <div className="flex min-w-0 items-center gap-2">
-        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[26px] font-bold leading-tight tracking-[-0.01em] text-[#f4f7e8] drop-shadow-[0_1px_1px_rgba(0,0,0,0.45)]">
+        <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[26px] font-bold leading-tight tracking-[-0.01em] text-[var(--peridot-role-inspector-heading-text)] drop-shadow-[0_1px_1px_var(--peridot-role-card-shadow)]">
           Inspector
         </h2>
         <button
           type="button"
           onClick={() => setShowInspectorInfo((v) => !v)}
-          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#edf5dd]/70 bg-[#e7efd6] text-[13px] font-bold leading-none text-[#11251b] shadow-sm transition-colors hover:bg-[#f4f8e8] hover:text-[#07120d] focus:outline-none focus:ring-2 focus:ring-[#e7efd6]/80"
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--peridot-role-inspector-card-border)] bg-[var(--peridot-role-inspector-clickable-bg)] text-[13px] font-bold leading-none text-[var(--peridot-role-inspector-clickable-text)] shadow-sm transition-colors hover:bg-[var(--peridot-role-inspector-clickable-hover-bg)] hover:text-[var(--peridot-role-inspector-clickable-text)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
           aria-label="Toggle inspector information"
           title="Inspector information"
         >
@@ -2555,7 +2555,7 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
         </button>
       </div>
       {showInspectorInfo ? (
-        <div className="mt-3 w-full rounded-2xl border border-[#d9e8bd]/70 bg-[#edf4df] p-3 text-sm leading-relaxed text-[#21372c] shadow-inner shadow-[#718763]/10">
+        <div className="mt-3 w-full rounded-2xl border border-[var(--peridot-role-inspector-card-border)] bg-[var(--peridot-role-inspector-card-bg)] p-3 text-sm leading-relaxed text-[var(--peridot-role-inspector-body-text)] shadow-inner shadow-[var(--peridot-role-card-shadow)]">
           Summary details in this panel reflect the currently selected view, date window, search filter, and minimum-weight threshold, not the full dataset.
         </div>
       ) : null}
@@ -2607,11 +2607,11 @@ function AppMainWorkspace({
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH ? (
         <PeridotSearchWorkspace {...searchWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR ? (
-        <div className="relative h-full overflow-hidden bg-[#04100b]" data-peridot-inspector-workspace="true">
+        <div className="relative h-full overflow-hidden bg-[var(--peridot-role-interface-app-background)]" data-peridot-inspector-workspace="true">
           <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
-          <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[#03100a]/84 p-4 backdrop-blur-[4px] sm:p-6">
+          <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-[4px] sm:p-6">
             <section
-              className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2.5rem] border border-[#b9d37d]/38 bg-[linear-gradient(145deg,rgba(2,14,9,0.98),rgba(8,31,22,0.96)_44%,rgba(25,55,43,0.92))] p-3 text-[#f7fbe9] shadow-[0_30px_100px_rgba(0,0,0,0.72)] ring-1 ring-[#d7e77f]/14 sm:p-4"
+              className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2.5rem] border border-[var(--peridot-role-inspector-card-border)] bg-[linear-gradient(145deg,var(--peridot-role-inspector-chrome-bg-strong),var(--peridot-role-inspector-chrome-bg)_44%,var(--peridot-role-inspector-body-bg))] p-3 text-[var(--peridot-role-inspector-heading-text)] shadow-[0_30px_100px_var(--peridot-role-card-shadow)] ring-1 ring-[var(--peridot-role-interface-focus-ring)] sm:p-4"
               aria-label="Inspector workspace"
             >
               {workspaceInspectorPanelProps ? (
@@ -4223,9 +4223,9 @@ export default function EuropeNetworkMapApp() {
             min-width: 0 !important;
           }
           .peridot-redesign-root aside[class*="w-[420px]"] {
-            background: rgba(3, 16, 10, 0.72) !important;
+            background: var(--peridot-role-inspector-chrome-bg) !important;
             backdrop-filter: blur(10px) saturate(0.92) !important;
-            border-right-color: rgba(216, 232, 189, 0.25) !important;
+            border-right-color: var(--peridot-role-inspector-card-border) !important;
           }
           .peridot-redesign-root aside[class*="w-[420px]"] > div[class*="overflow-auto"] {
             padding-right: 1.25rem !important;

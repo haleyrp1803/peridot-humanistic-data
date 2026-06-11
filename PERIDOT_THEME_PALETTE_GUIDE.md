@@ -148,46 +148,53 @@ Then open Themes and Accessibility, switch palettes, and confirm that:
 3. the Palette roles dashboard updates,
 4. Home, Visualizations, Explore/Search, Inspector, Analytics, map/network marks, and exports still render.
 
-## Importing a palette from an image
 
-The Theme workspace now includes **Palette image import** inside the palette edit/export section.
+## Theme-control enforcement notes
 
-Use this workflow when you have an Adobe Color screenshot or another palette reference image:
+The theme system now has a stricter compatibility layer for older component styling.
 
-1. Open **Themes and Accessibility**.
-2. In **Palette edit and export**, choose an image file.
-3. Choose the target group to apply it to:
-   - Whole app
-   - Interface
-   - Map and network
-   - Charts
-   - Buttons and highlights
-   - Inspector and search
-   - Text and borders
-4. Review the detected swatches and the draft assignment preview.
-5. Click **Apply detected palette to draft roles**.
-6. Fine-tune any role values manually in the Palette roles dashboard.
-7. Click **Apply edited roles** to reload and test the changes site-wide.
-8. Use **Download override JSON** or **Copy override JSON** to save the experiment.
+Some components still contain legacy CSS variables named `--peridot-color-*`. Those variables are no longer treated as fixed green/gold/cream colors when a non-default palette or custom role override is active. At runtime, `peridotColorPalette.js` asks `peridotTheme.js` to map each legacy variable to the closest semantic role in the active theme. This keeps older component classes working while allowing image-import overrides and role edits to reach more of the app without replacing layout code.
 
-Image import is intentionally scoped. Applying a palette to **Charts** should update chart backgrounds, chart text/grid/tooltip colors, and categorical series colors without changing the global interface. Applying a palette to **Map and network** should update canvas/ocean, land, nodes, edges, labels, and visualization series colors without changing chart cards.
-
-## Visualization color enforcement
-
-Chart-rendering primitives now read categorical chart colors from:
+Additional broad role groups are available in the Theme workspace:
 
 ```js
-PERIDOT_THEME.analytics.series
+navigation: {
+  menuBg,
+  menuText,
+  itemHoverBg,
+  itemActiveBg,
+}
+
+workspaceChrome: {
+  headerBg,
+  tabBg,
+  tabActiveBg,
+  dropdownBg,
+  dropdownActiveBg,
+}
+
+timeline: {
+  panelBg,
+  trackBg,
+  activeTrackBg,
+  handleBg,
+  buttonBg,
+}
+
+search: {
+  shellBg,
+  panelBg,
+  cardBg,
+  cardActiveBg,
+  inputBg,
+  criterionBg,
+  resultBg,
+}
 ```
 
-Map/network and non-analytics visualization marks read from:
+The image palette importer now includes additional target areas for navigation/workspace chrome, timeline controls, and the search workspace. For whole-app tests, these groups are included with the interface, map/network, charts, buttons/highlights, Inspector/search, and text/border groups.
 
-```js
-PERIDOT_THEME.visualization.series
-```
 
-That means palette image imports and role-level overrides should affect stacked bars, grouped bars, pie slices, multiline charts, and map/network marks through the same visible role groups shown in the Theme workspace.
+## Whole-app imported palette behavior
 
-## Palette image detection notes
-
-Palette image import now prefers large connected swatch blocks instead of simple frequency buckets. This is intended for Adobe Color-style palette exports and similar grid images where the actual palette appears as large rectangles with labels below. The detector filters page whites and small label text, then reads the remaining large swatch regions in visual order. For chart imports, the detected swatch order is preserved for categorical series colors so chart bars follow the uploaded palette rather than being reordered by lightness.
+When applying an imported palette to **Whole app**, Peridot also overrides the foundation `tones.*` roles. This prevents the active base palette from leaking through older compatibility variables or role rows that are keyed directly to foundation tones.
