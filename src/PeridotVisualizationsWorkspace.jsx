@@ -27,6 +27,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 import { VisualizationTimelineScrubber } from './timelinePlaybackComponents.jsx';
@@ -59,6 +60,135 @@ function chartTypeFromToolKey(toolKey) {
 
 function numberLabel(value) {
   return Number.isFinite(value) ? String(value) : '0';
+}
+
+
+
+
+function FloatingOrnamentArrowToggle({
+  anchorRef,
+  placement = 'bottom',
+  expanded,
+  onClick,
+  expandedLabel,
+  collapsedLabel,
+  expandedArrow,
+  collapsedArrow,
+}) {
+  const [anchorRect, setAnchorRect] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    let frameId = null;
+    const updateRect = () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        const node = anchorRef?.current;
+        setAnchorRect(node ? node.getBoundingClientRect() : null);
+      });
+    };
+
+    updateRect();
+    window.addEventListener('resize', updateRect);
+    window.addEventListener('scroll', updateRect, true);
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      window.removeEventListener('resize', updateRect);
+      window.removeEventListener('scroll', updateRect, true);
+    };
+  }, [anchorRef, expanded]);
+
+  if (typeof document === 'undefined' || !anchorRect) return null;
+
+  const top = placement === 'top' ? anchorRect.top : anchorRect.bottom;
+  const left = anchorRect.left + anchorRect.width / 2;
+  const label = expanded ? expandedLabel : collapsedLabel;
+  const arrow = expanded ? expandedArrow : collapsedArrow;
+  const arrowDirection = arrow === '⌃' || arrow === '^' || String(arrow).toLowerCase() === 'up';
+
+  return createPortal(
+    <button
+      type="button"
+      onClick={onClick}
+      className="fixed z-[2147483647] flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-b58b42-a70)] bg-[linear-gradient(145deg,var(--peridot-color-hex-f5ecd2),var(--peridot-color-hex-e8d8b5))] text-[var(--peridot-color-hex-173120)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-32),inset_0_1px_0_var(--peridot-color-hex-ffffff-a45),inset_0_-1px_0_var(--peridot-color-hex-b58b42-a35)] ring-1 ring-[var(--peridot-color-hex-173120-a18)] transition hover:scale-[1.03] hover:bg-[linear-gradient(145deg,var(--peridot-color-hex-f9f1df),var(--peridot-color-hex-e3c277))] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f5ecd2)] pointer-events-auto"
+      style={{ left, top }}
+      aria-label={label}
+      title={label}
+    >
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 24 24"
+        className={`h-5 w-5 ${arrowDirection ? '' : 'rotate-180'}`}
+        fill="none"
+      >
+        <path
+          d="M12 4.35C10.9 6.82 9.12 8.78 7.05 10.45C8.57 10.26 10.25 10.95 12 12.62C13.75 10.95 15.43 10.26 16.95 10.45C14.88 8.78 13.1 6.82 12 4.35Z"
+          fill="currentColor"
+        />
+        <path
+          d="M12 12.45V18"
+          stroke="currentColor"
+          strokeWidth="1.55"
+          strokeLinecap="round"
+        />
+        <path
+          d="M9.55 15.4C10.2 16.05 11.02 16.52 12 16.88C12.98 16.52 13.8 16.05 14.45 15.4"
+          stroke="currentColor"
+          strokeWidth="1.35"
+          strokeLinecap="round"
+        />
+      </svg>
+    </button>,
+    document.body
+  );
+}
+
+function FloatingVisualizationMenu({
+  anchorRect,
+  isOpen,
+  children,
+  width = 300,
+  onMouseEnter,
+  onMouseLeave,
+  onFocus,
+}) {
+  if (!isOpen || typeof document === 'undefined' || !anchorRect) return null;
+
+  const margin = 12;
+  const top = Math.max(margin, anchorRect.bottom + 10);
+  const left = Math.max(
+    margin,
+    Math.min(window.innerWidth - width - margin, anchorRect.right - width)
+  );
+  const bridgeLeft = Math.max(margin, anchorRect.left);
+  const bridgeWidth = Math.max(32, Math.min(anchorRect.width, window.innerWidth - bridgeLeft - margin));
+
+  return createPortal(
+    <>
+      <div
+        aria-hidden="true"
+        className="fixed z-[9998]"
+        style={{
+          left: bridgeLeft,
+          top: anchorRect.bottom,
+          width: bridgeWidth,
+          height: 14,
+        }}
+        onMouseEnter={onMouseEnter}
+      />
+      <div
+        className="fixed z-[9999] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
+        style={{ left, top, width }}
+        onMouseEnter={onMouseEnter}
+        onMouseLeave={onMouseLeave}
+        onFocus={onFocus}
+      >
+        {children}
+      </div>
+    </>,
+    document.body
+  );
 }
 
 function CompatibilityStatusPill({ available, light = false }) {
@@ -206,6 +336,8 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
 
 function VisualizationExportMenu({ exportControls, activeVisualizationLabel, compact = false }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [menuAnchorRect, setMenuAnchorRect] = useState(null);
+  const menuAnchorRef = useRef(null);
   const closeTimerRef = useRef(null);
 
   useEffect(() => () => {
@@ -246,12 +378,16 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
 
   const openMenu = () => {
     clearCloseTimer();
+    if (menuAnchorRef.current) {
+      setMenuAnchorRect(menuAnchorRef.current.getBoundingClientRect());
+    }
     setIsOpen(true);
   };
 
   const closeMenu = () => {
     clearCloseTimer();
     setIsOpen(false);
+    setMenuAnchorRect(null);
   };
 
   const scheduleClose = () => {
@@ -292,6 +428,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
 
   return (
     <div
+      ref={menuAnchorRef}
       className={compact ? 'relative z-[950]' : 'relative z-[900] min-w-[160px]'}
       onMouseEnter={openMenu}
       onMouseLeave={scheduleClose}
@@ -318,18 +455,14 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
       </button>
 
       {isOpen ? (
-        <>
-          <div
-            aria-hidden="true"
-            className="absolute left-0 right-0 top-full z-[1100] h-4"
-            onMouseEnter={openMenu}
-          />
-          <div
-            className="absolute right-0 top-[calc(100%+10px)] z-[1250] w-[300px] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
-            onMouseEnter={openMenu}
-            onMouseLeave={scheduleClose}
-            onFocus={openMenu}
-          >
+        <FloatingVisualizationMenu
+          anchorRect={menuAnchorRect}
+          isOpen={isOpen}
+          width={300}
+          onMouseEnter={openMenu}
+          onMouseLeave={scheduleClose}
+          onFocus={openMenu}
+        >
             <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-6f6554)]">
               Export {activeVisualizationLabel}
             </div>
@@ -414,8 +547,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
                 ) : null}
               </div>
             ) : null}
-          </div>
-        </>
+        </FloatingVisualizationMenu>
       ) : null}
     </div>
   );
@@ -468,8 +600,11 @@ export function PeridotVisualizationsWorkspace({
 
   const [selectedTool, setSelectedTool] = useState(initialTool);
   const [openMenuCategory, setOpenMenuCategory] = useState(null);
+  const [openMenuAnchorRect, setOpenMenuAnchorRect] = useState(null);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
   const [isTimelineExpanded, setIsTimelineExpanded] = useState(true);
+  const headerToggleAnchorRef = useRef(null);
+  const timelineToggleAnchorRef = useRef(null);
   const [chartExportControls, setChartExportControls] = useState(null);
   const menuCloseTimerRef = useRef(null);
 
@@ -492,20 +627,25 @@ export function PeridotVisualizationsWorkspace({
     }
   };
 
-  const openMenu = (categoryLabel) => {
+  const openMenu = (categoryLabel, anchorElement = null) => {
     cancelMenuClose();
+    if (anchorElement && typeof anchorElement.getBoundingClientRect === 'function') {
+      setOpenMenuAnchorRect(anchorElement.getBoundingClientRect());
+    }
     setOpenMenuCategory(categoryLabel);
   };
 
   const closeMenu = () => {
     cancelMenuClose();
     setOpenMenuCategory(null);
+    setOpenMenuAnchorRect(null);
   };
 
   const scheduleMenuClose = () => {
     cancelMenuClose();
     menuCloseTimerRef.current = window.setTimeout(() => {
       setOpenMenuCategory(null);
+      setOpenMenuAnchorRect(null);
       menuCloseTimerRef.current = null;
     }, 260);
   };
@@ -699,6 +839,7 @@ export function PeridotVisualizationsWorkspace({
       <div className="peridot-workspace-field flex min-h-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
           <div
+            ref={headerToggleAnchorRef}
             className={[
               'peridot-illuminated-panel relative z-[850] shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
               isHeaderExpanded ? 'px-4 pb-4 pt-3' : 'px-4 py-2',
@@ -718,7 +859,7 @@ export function PeridotVisualizationsWorkspace({
                     {categories.map((category) => {
                       const isDirectAction = typeof category.directAction === 'function';
                       const isOpen = !isDirectAction && openMenuCategory === category.label;
-                      const handleCategoryClick = () => {
+                      const handleCategoryClick = (event) => {
                         if (isDirectAction) {
                           closeMenu();
                           category.directAction();
@@ -727,22 +868,23 @@ export function PeridotVisualizationsWorkspace({
                         if (isOpen) {
                           closeMenu();
                         } else {
-                          openMenu(category.label);
+                          openMenu(category.label, event.currentTarget.closest('[data-visualization-menu-anchor]'));
                         }
                       };
                       return (
                         <div
                           key={category.label}
+                          data-visualization-menu-anchor="true"
                           className={categoryClass(isOpen)}
-                          onMouseEnter={() => {
+                          onMouseEnter={(event) => {
                             if (!isDirectAction) {
-                              openMenu(category.label);
+                              openMenu(category.label, event.currentTarget);
                             }
                           }}
                           onMouseLeave={isDirectAction ? undefined : scheduleMenuClose}
-                          onFocus={() => {
+                          onFocus={(event) => {
                             if (!isDirectAction) {
-                              openMenu(category.label);
+                              openMenu(category.label, event.currentTarget);
                             }
                           }}
                         >
@@ -756,34 +898,29 @@ export function PeridotVisualizationsWorkspace({
                             <span className="mt-1 block text-[11px] leading-snug text-[var(--peridot-color-hex-dfe9c8)]">{category.description}</span>
                           </button>
                           {isOpen ? (
-                            <>
-                              <div
-                                aria-hidden="true"
-                                className="absolute left-0 right-0 top-full z-[1100] h-4"
-                                onMouseEnter={() => openMenu(category.label)}
-                              />
-                              <div
-                                className="absolute right-0 top-[calc(100%+10px)] z-[1200] min-w-[280px] rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2 text-[var(--peridot-color-hex-203429)] shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-36)]"
-                                onMouseEnter={() => openMenu(category.label)}
-                                onMouseLeave={scheduleMenuClose}
-                                onFocus={() => openMenu(category.label)}
-                              >
-                                {category.tools.map((toolKey) => {
-                                  const tool = toolDefinitions[toolKey];
-                                  return (
-                                    <button
-                                      key={toolKey}
-                                      type="button"
-                                      onClick={() => selectTool(toolKey)}
-                                      className={menuItemClass(selectedTool === toolKey, tool.available)}
-                                    >
-                                      <span className="pr-2 leading-snug">{tool.label}</span>
-                                      <CompatibilityStatusPill available={tool.available} light />
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </>
+                            <FloatingVisualizationMenu
+                              anchorRect={openMenuAnchorRect}
+                              isOpen={isOpen}
+                              width={280}
+                              onMouseEnter={() => openMenu(category.label)}
+                              onMouseLeave={scheduleMenuClose}
+                              onFocus={() => openMenu(category.label)}
+                            >
+                              {category.tools.map((toolKey) => {
+                                const tool = toolDefinitions[toolKey];
+                                return (
+                                  <button
+                                    key={toolKey}
+                                    type="button"
+                                    onClick={() => selectTool(toolKey)}
+                                    className={menuItemClass(selectedTool === toolKey, tool.available)}
+                                  >
+                                    <span className="pr-2 leading-snug">{tool.label}</span>
+                                    <CompatibilityStatusPill available={tool.available} light />
+                                  </button>
+                                );
+                              })}
+                            </FloatingVisualizationMenu>
                           ) : null}
                         </div>
                       );
@@ -813,16 +950,16 @@ export function PeridotVisualizationsWorkspace({
                 </div>
               </div>
             )}
-
-            <button
-              type="button"
+            <FloatingOrnamentArrowToggle
+              anchorRef={headerToggleAnchorRef}
+              placement="bottom"
+              expanded={isHeaderExpanded}
               onClick={() => setIsHeaderExpanded((value) => !value)}
-              className="absolute bottom-0 left-1/2 z-[1250] flex h-8 w-14 -translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5ecd2)] text-lg font-bold leading-none text-[var(--peridot-color-hex-173120)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]"
-              aria-label={isHeaderExpanded ? 'Collapse visualization header' : 'Expand visualization header'}
-              title={isHeaderExpanded ? 'Collapse visualization header' : 'Expand visualization header'}
-            >
-              {isHeaderExpanded ? '⌃' : '⌄'}
-            </button>
+              expandedLabel="Hide visualization header"
+              collapsedLabel="Show visualization header"
+              expandedArrow="⌃"
+              collapsedArrow="⌄"
+            />
           </div>
 
           <div className="relative z-[20] flex min-h-0 flex-1 flex-col gap-3" onMouseEnter={scheduleMenuClose}>
@@ -830,16 +967,17 @@ export function PeridotVisualizationsWorkspace({
               {renderWorkspaceBody()}
             </div>
             {timelineControlsProps ? (
-              <div className="relative shrink-0 pt-2">
-                <button
-                  type="button"
+              <div ref={timelineToggleAnchorRef} className="relative shrink-0 pt-2">
+                <FloatingOrnamentArrowToggle
+                  anchorRef={timelineToggleAnchorRef}
+                  placement="top"
+                  expanded={isTimelineExpanded}
                   onClick={() => setIsTimelineExpanded((value) => !value)}
-                  className="absolute left-1/2 top-2 z-[80] flex h-8 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5ecd2)] text-lg font-bold leading-none text-[var(--peridot-color-hex-173120)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a70)]"
-                  aria-label={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
-                  title={isTimelineExpanded ? 'Collapse timeline' : 'Expand timeline'}
-                >
-                  {isTimelineExpanded ? '⌄' : '⌃'}
-                </button>
+                  expandedLabel="Hide timeline"
+                  collapsedLabel="Show timeline"
+                  expandedArrow="⌄"
+                  collapsedArrow="⌃"
+                />
                 {isTimelineExpanded ? (
                   <VisualizationTimelineScrubber {...timelineControlsProps} />
                 ) : (
