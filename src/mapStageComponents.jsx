@@ -14,6 +14,36 @@
 
 import React, { useState } from 'react';
 
+function mapUtilityButtonClassName(position = 'left') {
+  const attachedSide = position === 'right' ? 'rounded-r-[18px]' : 'rounded-l-[18px]';
+  return [
+    'absolute bottom-4 z-20 inline-flex items-center gap-2 border border-[var(--peridot-role-ornament-line-muted)]',
+    'bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_84%,transparent)] px-3.5 py-2 text-[11px] font-bold uppercase tracking-[0.14em]',
+    'text-[var(--peridot-role-interface-text-on-dark)] shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-[1px]',
+    'transition duration-150 hover:border-[var(--peridot-role-ornament-line)] hover:text-[var(--peridot-role-ornament-sparkle)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-text-on-dark)]',
+    attachedSide,
+    position === 'right' ? 'right-4' : 'left-4',
+  ].join(' ');
+}
+
+function MapUtilityLegendIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 18 18" className="h-4 w-4 text-[var(--peridot-role-ornament-line)]" fill="none">
+      <path d="M9 2.5C7.7 5.1 5.7 7.1 3.1 8.5C5.7 9.9 7.7 11.9 9 15.5C10.3 11.9 12.3 9.9 14.9 8.5C12.3 7.1 10.3 5.1 9 2.5Z" fill="currentColor" />
+      <path d="M9 5.8V11.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.15" strokeLinecap="round" opacity="0.65" />
+    </svg>
+  );
+}
+
+function MapUtilityControlsIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 18 18" className="h-4 w-4 text-[var(--peridot-role-ornament-line)]" fill="none">
+      <circle cx="9" cy="9" r="3.2" stroke="currentColor" strokeWidth="1.7" />
+      <path d="M9 1.9V4.1M9 13.9V16.1M1.9 9H4.1M13.9 9H16.1M4 4L5.5 5.5M12.5 12.5L14 14M14 4L12.5 5.5M5.5 12.5L4 14" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCardClassName }) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -22,11 +52,11 @@ export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCar
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="absolute bottom-4 left-4 z-20 rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--button-secondary-text)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-22)] transition hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
+        className={mapUtilityButtonClassName('left')}
         aria-label="Open map legend"
-        title="Open map legend"
       >
-        Legend
+        <MapUtilityLegendIcon />
+        <span>Legend</span>
       </button>
     );
   }
@@ -77,11 +107,11 @@ export function MapControlsOverlay({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="absolute bottom-4 right-4 z-20 rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--button-secondary-text)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-22)] transition hover:bg-[var(--button-secondary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
+        className={mapUtilityButtonClassName('right')}
         aria-label="Open map controls"
-        title="Open map controls"
       >
-        Controls
+        <MapUtilityControlsIcon />
+        <span>Controls</span>
       </button>
     );
   }

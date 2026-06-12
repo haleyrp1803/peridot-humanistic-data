@@ -104,44 +104,23 @@ function FloatingOrnamentArrowToggle({
   const top = placement === 'top' ? anchorRect.top : anchorRect.bottom;
   const left = anchorRect.left + anchorRect.width / 2;
   const label = expanded ? expandedLabel : collapsedLabel;
-  const arrow = expanded ? expandedArrow : collapsedArrow;
-  const arrowDirection = arrow === '⌃' || arrow === '^' || String(arrow).toLowerCase() === 'up';
+  const displayLabel = label
+    .replace('visualization header', 'header')
+    .replace('Visualization header', 'Header');
 
   return createPortal(
     <button
       type="button"
       onClick={onClick}
-      className="pointer-events-auto fixed z-[25] flex h-9 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_78%,transparent)] text-[var(--peridot-role-ornament-line)] shadow-[0_6px_18px_rgba(0,0,0,0.34)] backdrop-blur-[1px] transition duration-150 hover:scale-[1.04] hover:border-[var(--peridot-role-ornament-line)] hover:text-[var(--peridot-role-ornament-sparkle)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-text-on-dark)]"
+      className="pointer-events-auto fixed z-[25] flex h-7 min-w-[8.5rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 rounded-full border border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_78%,transparent)] px-3 text-[var(--peridot-role-interface-text-on-dark)] shadow-[0_7px_16px_rgba(0,0,0,0.28)] backdrop-blur-[1px] transition duration-150 hover:scale-[1.02] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_88%,transparent)] hover:text-[var(--peridot-role-ornament-sparkle)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-text-on-dark)]"
       style={{ left, top }}
       aria-label={label}
     >
-      <svg
-        aria-hidden="true"
-        viewBox="0 0 72 42"
-        className={`h-6 w-10 ${arrowDirection ? '' : 'rotate-180'}`}
-        fill="none"
-      >
-        <path
-          d="M36 7L42.4 17.8L36 27.2L29.6 17.8L36 7Z"
-          fill="currentColor"
-        />
-        <path
-          d="M29.8 17.8C23.6 18.2 18.8 20.3 15.3 24.2C12.8 27 9.7 28.8 6 29.6C10.1 26.9 12.8 23.6 14.1 19.7C18.8 17.2 24.1 16.6 29.8 17.8Z"
-          fill="currentColor"
-          opacity="0.92"
-        />
-        <path
-          d="M42.2 17.8C48.4 18.2 53.2 20.3 56.7 24.2C59.2 27 62.3 28.8 66 29.6C61.9 26.9 59.2 23.6 57.9 19.7C53.2 17.2 47.9 16.6 42.2 17.8Z"
-          fill="currentColor"
-          opacity="0.92"
-        />
-        <path
-          d="M36 27V35"
-          stroke="currentColor"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-      </svg>
+      <span aria-hidden="true" className="h-px w-5 bg-gradient-to-r from-transparent to-[var(--peridot-role-ornament-line)] opacity-80" />
+      <span className="text-[10px] font-extrabold uppercase tracking-[0.18em]">
+        {displayLabel}
+      </span>
+      <span aria-hidden="true" className="h-px w-5 bg-gradient-to-l from-transparent to-[var(--peridot-role-ornament-line)] opacity-80" />
     </button>,
     document.body
   );
