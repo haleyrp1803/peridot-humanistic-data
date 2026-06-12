@@ -254,22 +254,14 @@ function ChartTypeButton({ option, active, onSelect }) {
 
 function ChartUseDescription({ chartDefinition }) {
   return (
-    <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-sm">
+    <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] px-3 py-2 text-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="font-semibold text-[var(--panel-card-text)]">{chartDefinition.label}</div>
-        <div className="rounded-full border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--panel-card-muted-text)]">
+        <div className="rounded-full border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--panel-card-muted-text)]">
           {chartDefinition.variableCountLabel}
         </div>
       </div>
-      <div className="mt-1 text-[var(--panel-card-muted-text)]">{chartDefinition.descriptor}</div>
-      <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">{chartDefinition.variableSummary}</div>
-      <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">{chartDefinition.defaultUseCase}</div>
-      <div className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--panel-card-muted-text)]">Example questions</div>
-      <div className="mt-2 space-y-1 text-xs text-[var(--panel-card-muted-text)]">
-        {chartDefinition.exampleQuestions.map((question) => (
-          <div key={question}>{question}</div>
-        ))}
-      </div>
+      <div className="mt-1 text-xs leading-snug text-[var(--panel-card-muted-text)]">{chartDefinition.descriptor}</div>
     </div>
   );
 }
@@ -294,8 +286,8 @@ function SelectControl({ label, value, onChange, options, description, disabled 
           type="button"
           disabled={disabled}
           className={[
-            'flex w-full items-center justify-between rounded-xl border border-[var(--peridot-role-ornament-line)]',
-            'bg-[var(--peridot-role-button-primary-bg)] px-3 py-2.5 text-left text-sm font-bold',
+            'flex w-full items-center justify-between rounded-[10px] border border-[var(--peridot-role-ornament-line)]',
+            'bg-[var(--peridot-role-button-primary-bg)] px-3 py-2 text-left text-sm font-bold',
             'text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.14),inset_0_1px_0_rgba(255,255,255,0.18)]',
             'transition duration-150 hover:border-[var(--peridot-role-ornament-corner)] hover:bg-[var(--peridot-role-button-primary-hover-bg)]',
             'focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] disabled:cursor-not-allowed disabled:opacity-70',
@@ -334,7 +326,7 @@ function SelectControl({ label, value, onChange, options, description, disabled 
                   role="option"
                   aria-selected={isSelected}
                   className={[
-                    'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition',
+                    'flex w-full items-center justify-between rounded-[10px] px-3 py-1.5 text-left text-sm transition',
                     isSelected
                       ? 'bg-[color-mix(in_srgb,var(--peridot-role-button-primary-bg)_58%,var(--peridot-role-workspace-chrome-dropdown-bg)_42%)] font-extrabold text-[var(--peridot-role-interface-text-on-light)] shadow-[inset_4px_0_0_var(--peridot-role-ornament-line)]'
                       : 'text-[var(--peridot-role-workspace-chrome-dropdown-text)] hover:bg-[color-mix(in_srgb,var(--peridot-role-button-primary-bg)_42%,var(--peridot-role-workspace-chrome-dropdown-bg)_58%)] hover:text-[var(--peridot-role-interface-text-on-light)] hover:shadow-[inset_4px_0_0_var(--peridot-role-ornament-line)]',
@@ -370,7 +362,7 @@ function SelectControl({ label, value, onChange, options, description, disabled 
           onChange={(event) => onChange(event.target.value)}
           disabled={disabled}
           className={[
-            'w-full appearance-none rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)]',
+            'w-full appearance-none rounded-[10px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)]',
             'px-3 py-2 pr-10 text-sm font-semibold text-[var(--peridot-role-form-text-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]',
             'transition hover:border-[var(--peridot-role-ornament-line-muted)] hover:bg-[var(--peridot-role-interface-card-background-warm)]',
             'focus:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]',
@@ -403,7 +395,7 @@ function NumberStepperControl({ label, value, onChange, min = 1, max = 100, desc
   return (
     <label className="block text-sm">
       <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">{label}</span>
-      <span className="grid grid-cols-[2.4rem_minmax(0,1fr)_2.4rem] overflow-hidden rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] focus-within:border-[var(--peridot-role-ornament-line)] focus-within:ring-2 focus-within:ring-[var(--peridot-role-interface-focus-ring)]">
+      <span className="grid grid-cols-[2.4rem_minmax(0,1fr)_2.4rem] overflow-hidden rounded-[10px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] focus-within:border-[var(--peridot-role-ornament-line)] focus-within:ring-2 focus-within:ring-[var(--peridot-role-interface-focus-ring)]">
         <button
           type="button"
           className="flex items-center justify-center border-r border-[var(--peridot-role-form-border)] bg-[color-mix(in_srgb,var(--peridot-role-interface-card-background-warm)_82%,transparent)] text-lg font-bold text-[var(--peridot-role-analytics-chart-text)] transition hover:bg-[var(--peridot-role-button-primary-bg)] hover:text-[var(--peridot-role-button-primary-text)] focus:outline-none"
@@ -461,7 +453,7 @@ function ManualCategorySelectionControls({
   };
 
   return (
-    <div className="rounded-xl border border-[var(--panel-card-border)] bg-[color-mix(in_srgb,var(--peridot-role-interface-card-background-warm)_78%,transparent)] p-3">
+    <div className="rounded-[14px] border border-[var(--panel-card-border)] bg-[color-mix(in_srgb,var(--peridot-role-interface-card-background-warm)_78%,transparent)] p-2.5">
       <SelectControl
         label="Selection mode"
         value={selectionMode}
@@ -474,7 +466,7 @@ function ManualCategorySelectionControls({
       />
 
       {selectionMode === 'manual' ? (
-        <div className="mt-3 space-y-3">
+        <div className="mt-2 space-y-2">
           <SelectControl
             label="Comparison total"
             value={comparisonMode}
@@ -494,16 +486,16 @@ function ManualCategorySelectionControls({
               value={searchValue}
               onChange={(event) => onSearchValueChange(event.target.value)}
               placeholder={`Search ${noun}…`}
-              className="w-full rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3 py-2 text-sm font-semibold text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
+              className="w-full rounded-[10px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3 py-1.5 text-sm font-semibold text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
             />
           </label>
 
-          <div className="max-h-[28rem] space-y-1 overflow-y-auto pr-1">
+          <div className="max-h-[32rem] space-y-1 overflow-y-auto pr-1">
             {visibleOptions.length ? visibleOptions.map((option) => (
               <label
                 key={option.key}
                 className={[
-                  'flex items-start gap-2 rounded-lg border px-2.5 py-2 text-sm transition',
+                  'flex items-start gap-2 rounded-lg border px-2.5 py-1.5 text-sm transition',
                   selectedSet.has(option.key)
                     ? 'border-[var(--peridot-role-ornament-line)] bg-[color-mix(in_srgb,var(--peridot-role-button-primary-bg)_28%,var(--peridot-role-interface-card-background-warm)_72%)] text-[var(--panel-card-text)]'
                     : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)] hover:bg-[color-mix(in_srgb,var(--peridot-role-button-primary-bg)_18%,var(--peridot-role-interface-card-background-warm)_82%)]',
@@ -555,10 +547,10 @@ function ControlSection({ eyebrow, title, description, children, compact = false
   return (
     <section
       className={[
-        'rounded-[20px] border border-[var(--peridot-role-ornament-paper-rule)]',
+        'rounded-[16px] border border-[var(--peridot-role-ornament-paper-rule)]',
         'bg-[linear-gradient(135deg,var(--peridot-role-analytics-chart-bg),var(--peridot-role-interface-card-background-warm))]',
-        'shadow-[0_8px_20px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.50)]',
-        compact ? 'p-3' : 'p-3.5',
+        'shadow-[0_5px_14px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.42)]',
+        compact ? 'p-2.5' : 'p-3',
       ].join(' ')}
     >
       {eyebrow ? (
@@ -569,16 +561,16 @@ function ControlSection({ eyebrow, title, description, children, compact = false
         </div>
       ) : null}
       {title ? (
-        <h3 className="text-[15px] font-extrabold leading-tight text-[var(--peridot-role-analytics-chart-text)]">
+        <h3 className="text-[14px] font-extrabold leading-tight text-[var(--peridot-role-analytics-chart-text)]">
           {title}
         </h3>
       ) : null}
       {description ? (
-        <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">
+        <p className="mt-0.5 text-[10.5px] leading-snug text-[var(--peridot-role-analytics-chart-muted-text)]">
           {description}
         </p>
       ) : null}
-      <div className={title || description || eyebrow ? 'mt-2.5 space-y-2.5' : 'space-y-2.5'}>
+      <div className={title || description || eyebrow ? 'mt-2 space-y-2' : 'space-y-2'}>
         {children}
       </div>
     </section>
@@ -587,7 +579,7 @@ function ControlSection({ eyebrow, title, description, children, compact = false
 
 function VariableControlsShell({ children }) {
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       {children}
     </div>
   );
@@ -600,7 +592,7 @@ function ChartBuilderTabButton({ tab, active, onSelect }) {
       type="button"
       onClick={() => onSelect(tab.key)}
       className={[
-        'rounded-full border px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] transition',
+        'rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] transition',
         active
           ? 'border-[var(--peridot-role-ornament-corner)] bg-[var(--peridot-role-button-primary-bg)] text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.20)]'
           : 'border-[var(--peridot-role-button-secondary-border)] bg-[var(--peridot-role-button-secondary-bg)] text-[var(--peridot-role-button-secondary-text)] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-role-button-secondary-hover)]',
@@ -939,7 +931,7 @@ export function AnalyticsPanelContent({
     <>
       <SelectControl label="Y-axis / metric" value={yField} onChange={setYField} options={yMetricOptions} description={yField === 'recordCount' ? 'Count records in each group.' : 'Use numeric values from the selected uploaded column.'} />
       {yField !== 'recordCount' ? (
-        <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+        <div className="rounded-[14px] bg-[var(--utility-tint-bg)] p-2.5 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
           Part-to-whole charts use <strong>Sum</strong> for numeric metrics so slices and stacked segments represent additive totals.
         </div>
       ) : null}
@@ -981,7 +973,7 @@ export function AnalyticsPanelContent({
               {renderMetricControls()}
               <SelectControl label="Orientation" value={barOrientation} onChange={setBarOrientation} options={[{ key: 'vertical', label: 'Vertical' }, { key: 'horizontal', label: 'Horizontal' }]} />
             </>
-          ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported categorical fields are available in the current data.</div>}
+          ) : <div className="rounded-[14px] border border-dashed border-[var(--panel-card-border)] p-2.5 text-sm text-[var(--panel-card-muted-text)]">No supported categorical fields are available in the current data.</div>}
         </VariableControlsShell>
       );
     }
@@ -991,7 +983,7 @@ export function AnalyticsPanelContent({
           {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Use Year by default, or choose Full date / numeric fields for more granular ordered charts." /> : null}
           {availableBarFields.length ? <SelectControl label="Focus category field" value={selectedLineFilterField?.key || ''} onChange={setLineFilterBy} options={availableBarFields} description="Optionally filter this trend to exact people, places, routes, or categories." /> : null}
           {renderMetricControls()}
-          {!activeXAxisFields.length ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No date/time or numeric x-axis fields are available for a line chart in the current data.</div> : null}
+          {!activeXAxisFields.length ? <div className="rounded-[14px] border border-dashed border-[var(--panel-card-border)] p-2.5 text-sm text-[var(--panel-card-muted-text)]">No date/time or numeric x-axis fields are available for a line chart in the current data.</div> : null}
         </VariableControlsShell>
       );
     }
@@ -1035,12 +1027,12 @@ export function AnalyticsPanelContent({
                   <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">Selected: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none'}.</div>
                 </div>
               ) : null}
-              {wideSeriesPreset === 'all' ? <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-series: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none available'}.</div> : null}
+              {wideSeriesPreset === 'all' ? <div className="rounded-[14px] bg-[var(--utility-tint-bg)] p-2.5 text-xs text-[var(--panel-card-muted-text)]">Y-series: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none available'}.</div> : null}
             </>
           ) : (
             <>
               {multiLineMode === 'groupedMetric' ? renderMetricControls({ allowRecordCount: false }) : null}
-              {multiLineMode === 'recordCount' ? <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-axis / metric: Record count.</div> : null}
+              {multiLineMode === 'recordCount' ? <div className="rounded-[14px] bg-[var(--utility-tint-bg)] p-2.5 text-xs text-[var(--panel-card-muted-text)]">Y-axis / metric: Record count.</div> : null}
               {multiLineGroupFields.length ? (
                 <SelectControl
                   label="Series / grouping field"
@@ -1050,14 +1042,14 @@ export function AnalyticsPanelContent({
                   description={selectedMultiLineField?.description}
                 />
               ) : (
-                <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">
+                <div className="rounded-[14px] border border-dashed border-[var(--panel-card-border)] p-2.5 text-sm text-[var(--panel-card-muted-text)]">
                   Multi-line grouped mode needs a categorical series field that is not the selected x-axis, not a date field, and not a numeric measure.
                 </div>
               )}
             </>
           )}
-          {!availableMeasureFields.length && multiLineMode === 'wide' ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">This mode needs at least one numeric measure field.</div> : null}
-          {!availableMeasureFields.length && multiLineMode === 'groupedMetric' ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">Numeric metric mode needs at least one numeric measure field. Use Record count by grouping field instead.</div> : null}
+          {!availableMeasureFields.length && multiLineMode === 'wide' ? <div className="rounded-[14px] border border-dashed border-[var(--panel-card-border)] p-2.5 text-sm text-[var(--panel-card-muted-text)]">This mode needs at least one numeric measure field.</div> : null}
+          {!availableMeasureFields.length && multiLineMode === 'groupedMetric' ? <div className="rounded-[14px] border border-dashed border-[var(--panel-card-border)] p-2.5 text-sm text-[var(--panel-card-muted-text)]">Numeric metric mode needs at least one numeric measure field. Use Record count by grouping field instead.</div> : null}
         </VariableControlsShell>
       );
     }
@@ -1090,7 +1082,7 @@ export function AnalyticsPanelContent({
                 description={selectedHistogramGroupField?.description || 'Choose the category whose record-count distribution should be binned.'}
               />
             ) : (
-              <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">Record-count histograms need at least one categorical field to group records before binning the counts.</div>
+              <div className="rounded-[14px] border border-dashed border-[var(--panel-card-border)] p-2.5 text-sm text-[var(--panel-card-muted-text)]">Record-count histograms need at least one categorical field to group records before binning the counts.</div>
             )
           ) : null}
         </VariableControlsShell>
@@ -1167,12 +1159,12 @@ export function AnalyticsPanelContent({
           <NumberStepperControl label={limitControlLabel} value={topN} onChange={setTopN} />
         ) : null}
         {manualSelectionSupported ? renderCategorySelectionControls(categoryNoun) : (
-          <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+          <div className="rounded-[14px] border border-dashed border-[var(--panel-card-border)] p-2.5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
             This chart type does not need a separate manual category picker for the current field configuration.
           </div>
         )}
         {manualSelectionSupported && categorySelectionMode === 'manual' ? (
-          <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+          <div className="rounded-[14px] bg-[var(--utility-tint-bg)] p-2.5 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
             Category choices apply to <strong>{manualSelectionField?.label || 'the active category field'}</strong> in the current date window.
           </div>
         ) : null}
@@ -1237,7 +1229,7 @@ export function AnalyticsPanelContent({
         <ControlSection
           eyebrow="Categories"
           title="Choose visible categories"
-          description="Rank automatically or manually choose the categories used by the active chart."
+          description="Rank automatically or choose exact categories."
         >
           {renderCategoryTabControls()}
         </ControlSection>
@@ -1249,22 +1241,22 @@ export function AnalyticsPanelContent({
         <ControlSection
           eyebrow="Present"
           title="Prepare for presentation"
-          description="Set an optional title for screenshots and chart export. Leave blank to use the generated analytical title."
+          description="Optional title for screenshots and chart export."
         >
           <label className="block text-sm">
-            <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">Presentation title</span>
-            <textarea
+            <span className="mb-1 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">Presentation title</span>
+            <input
+              type="text"
               value={presentationTitle}
               onChange={(event) => setPresentationTitle(event.target.value)}
               placeholder={chartData?.title || 'Use the generated chart title'}
-              rows={3}
-              className="w-full resize-none rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3 py-2 text-sm font-semibold leading-relaxed text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
+              className="w-full rounded-[10px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3 py-1.5 text-sm font-semibold text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
             />
           </label>
-          <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-            Generated title: <strong>{chartData?.title || 'Chart'}</strong>
+          <div className="rounded-[12px] bg-[var(--utility-tint-bg)] px-2.5 py-2 text-[11px] leading-snug text-[var(--panel-card-muted-text)]">
+            Generated: <strong>{chartData?.title || 'Chart'}</strong>
           </div>
-          <div className="grid gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               className={buttonClassName()}
@@ -1277,7 +1269,7 @@ export function AnalyticsPanelContent({
               className={buttonClassName()}
               onClick={resetChartSettings}
             >
-              Reset chart settings
+              Reset chart
             </button>
           </div>
         </ControlSection>
@@ -1302,25 +1294,24 @@ export function AnalyticsPanelContent({
 
         {renderDateRangeControls()}
 
-        <ChartUseDescription chartDefinition={chartDefinition} />
       </>
     );
   };
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-shell-bg)] text-[var(--peridot-role-analytics-chart-text)] shadow-[0_22px_60px_var(--peridot-role-card-shadow)] lg:flex-row">
-      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_78%,var(--peridot-role-interface-panel-background)_22%),var(--peridot-role-interface-card-background-muted))] lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
-        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(135deg,var(--peridot-role-interface-panel-background),var(--peridot-role-interface-panel-background-strong))] px-5 py-3 text-[var(--peridot-role-interface-text-on-dark)] shadow-[inset_0_-1px_0_rgba(255,255,255,0.04)]">
-          <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[25px] font-bold leading-none tracking-[-0.035em] text-[var(--peridot-role-interface-text-on-dark)]">
+      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_78%,var(--peridot-role-interface-panel-background)_22%),var(--peridot-role-interface-card-background-muted))] lg:max-h-none lg:w-[348px] lg:border-b-0 lg:border-r">
+        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(135deg,var(--peridot-role-interface-panel-background),var(--peridot-role-interface-panel-background-strong))] px-4 py-2 text-[var(--peridot-role-interface-text-on-dark)] shadow-[inset_0_-1px_0_rgba(255,255,255,0.04)]">
+          <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[21px] font-bold leading-none tracking-[-0.035em] text-[var(--peridot-role-interface-text-on-dark)]">
             Build Your Chart
           </h2>
-          <p className="mt-1.5 text-[11px] leading-snug text-[var(--peridot-role-interface-text-muted-on-dark)]">
+          <p className="mt-1 text-[10.5px] leading-snug text-[var(--peridot-role-interface-text-muted-on-dark)]">
             Choose a view, set dates, and map fields.
           </p>
         </div>
 
-        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_72%,var(--peridot-role-interface-panel-background)_28%)] px-5 py-3">
-          <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Chart builder sections">
+        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_72%,var(--peridot-role-interface-panel-background)_28%)] px-4 py-2">
+          <div className="grid grid-cols-2 gap-1.5" role="tablist" aria-label="Chart builder sections">
             {chartBuilderTabs.map((tab) => (
               <ChartBuilderTabButton
                 key={tab.key}
@@ -1332,7 +1323,7 @@ export function AnalyticsPanelContent({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-auto px-5 py-3.5">
+        <div className="min-h-0 flex-1 space-y-2 overflow-auto px-3 py-2.5">
           {renderActiveBuilderTab()}
         </div>
       </aside>
