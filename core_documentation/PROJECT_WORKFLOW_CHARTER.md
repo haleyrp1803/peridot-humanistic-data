@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
 Current clean baseline:
 
 ```text
-d52392a — Add capabilities tab to advanced search
+10f6e19 — Polish analytics chart axes and summary panels
 ```
 
 Current branch note:
@@ -82,6 +82,9 @@ Current fragile zones include:
 - Analytics dynamic variable detection
 - Analytics flexible chart-variable controls, record-count metrics, wide numeric-series selection, and chart availability routing
 - Analytics SVG-to-PNG export rendering
+- Analytics summary panels, axis ticks/gridlines, manual category/series selection, date-axis defaults, and chart color-series handling
+- semantic theme roles, finite chart color library, and map/chrome palette assignments
+- ornamental header/timeline collapse controls, dropdown/portal z-index, and other controls that must remain above map/chart layers
 - stale or insufficient code comments around fragile compatibility and cross-file wiring
 - Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, generic chart/evidence record admission, evidence-field include/ignore checkbox behavior, coordinate-pair parsing, date-range/display-date handling, and legacy upload cleanup
 
@@ -317,6 +320,20 @@ Current notable decisions:
 - Record count is a chart metric, not an implicit hidden default; it should be selectable where aggregate charts use record aggregation.
 - Generic chart/evidence records should be accepted into the active dataset when they contain useful temporal, numeric, categorical, citation, link, note, or selected metadata content, even when they are not map-ready or network-ready.
 - Evidence and analysis field inclusion should use explicit Include and Ignore choices, defaulting to Include, so users understand what metadata will be preserved for Inspector, charts, search, and export.
+- Color changes should flow through `peridotTheme.js`, `peridotThemeRoleMetadata.js`, and semantic role targets whenever possible. Component-local hardcoded colors should be treated as compatibility exceptions or temporary defects to centralize later.
+- Theme palette import should remain role-targeted so users can apply a detected palette to the whole app or to narrower scopes such as charts, map/network, navigation, timeline, search, Inspector/search, or text/borders.
+- The finite Analytics chart color library should remain a curated 30-color set with greens/golds dominant and blues/pinks reserved for supporting contrast; do not let arbitrary imported palettes silently replace this library unless the user explicitly applies a chart palette.
+- Visualization header and Timeline collapse/expand controls should stay as high-layer ornamental edge controls. They must remain in front of visualization layers and communicate expansion direction pictorially rather than relying on large text labels.
+- Dropdowns and palette/control menus that open over the chart/map stage must be layered above visualization surfaces; treat dropdown portal/z-index regressions as visual bugs, not cosmetic preferences.
+- Planning and audit documents from color/theming work belong in `planning_documents/` and should stay tracked there when they describe active design decisions or implementation constraints.
+- Chart date axes should default to **Year** because most historical users care primarily about yearly patterns; **Full date** should remain available when month/day specificity matters.
+- Partial dates should follow chart settings: month/day should not affect a Year chart, while Full date charts should use the most specific parseable date label available.
+- Chart users should be able to manually choose the people, places, routes, categories, or comparable values they want to visualize instead of relying only on automatic Top N.
+- Compatible chart settings should persist across chart-type switches where possible, especially date windows, selected fields, selected manual categories, selection mode, comparison-total mode, and display limits.
+- Chart summary panels should make key values visible persistently rather than hiding them only in hover tooltips; panels should be included in SVG/PNG chart export.
+- Axis-based charts should use readable major and minor ticks/gridlines with adequate contrast against the parchment chart surface.
+- Chart colors should come from the finite Peridot chart color library and semantic theme roles; do not scatter one-off chart series colors through chart renderers.
+- Map and visualization chrome colors should be routed through semantic theme roles where possible.
 
 ---
 
@@ -462,7 +479,7 @@ For a new chat, start with:
 
 ```text
 Source of truth folder: C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
-Current documented clean baseline: `fcd2e1f` — Document timeline scope and clamp chart date range. See `CHANGELOG.md` for the most recent documented safe baseline.
+Current documented clean baseline: `10f6e19` — Polish analytics chart axes and summary panels. See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 The new chat should be told:
@@ -485,5 +502,5 @@ The new chat should be told:
 - When the user uploads source files after being asked for current files, treat the most recent uploads as authoritative for that pass unless told otherwise.
 - Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout, and is reached through Explore/workflow actions rather than the top-level hamburger.
 - Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, workbook import with unique-ID joins, validation popup, and persistent latest-upload summary.
-- Analytics expanded chart views currently use a dark translucent green backdrop with cool off-white text/borders and a white/cream chart card.
+- Analytics chart views currently use a left-control/right-chart workspace with manual series/category selection, year-default date axes, summary panels, major/minor ticks, finite chart colors, and header-based chart PNG export.
 - Inspector person/place profiles currently show profile summaries, compact summary buttons, role-grouped related people/places, directed route summaries, selected uploaded fields, shared linked-letter detail navigation, clickable linked people/places, and route-row dossier navigation.

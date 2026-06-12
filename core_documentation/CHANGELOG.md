@@ -2,10 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`d52392a` — `Add capabilities tab to advanced search`** on branch **`main`**
+- **`10f6e19` — `Polish analytics chart axes and summary panels`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, and the Advanced Search / Explore consolidation milestone. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. The standalone Export workspace route has been removed from the active app path. Explore Your Data now opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Recent milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, capability-summary integration inside Advanced Search, capability-aware visualization menus, flexible chart-variable controls, record-count support across aggregate charts, generalized user-facing language, generic chart/evidence row admission, and include/ignore checkbox handling for evidence fields. Earlier milestones include Search & Filter implementation, Analytics feature and visual-polish work, standardized Peridot CSV workflow, arbitrary CSV/TSV mapping, full workbook/Excel import support, Inspector profile/navigation refinement, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
-
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, and the current Analytics chart-usability milestone. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Recent milestones include centralized theme roles and chart color palettes, light navy sea map treatment, visualization header/tab/edge-handle polish, chart sidebar and dropdown refinement, finite chart series color cycling, year-default date handling with Full date as an explicit chart option, hardened chart derivation logic, corrected grouped/multi-line count buckets, manual category/series selection across chart types, persistent compatible chart settings, and chart summary panels with stronger axis ticks. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 The current Data Inputs / import workflow now provides:
 
 - downloadable Peridot CSV template plus one unified CSV/TSV/XLSX/XLS table-workbook upload path;
@@ -75,6 +74,24 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Theme, visualization chrome, map palette, and Analytics chart polish milestone
+
+- Routed Inspector and related evidence surfaces through semantic theme roles so color changes are controlled from the central theme system rather than scattered component constants.
+- Preserved the Peridot ornamental folio language while tightening visualization chrome, including header tabs, edge handles, map utility buttons, collapse/expand affordances, and chart control surfaces.
+- Reworked the Visualizations header and Timeline collapse/expand controls as ornamental, high-layer edge controls so the buttons remain in front of map/chart surfaces and communicate direction without relying on text-heavy labels.
+- Added dropdown/portal layering safeguards for chart and workspace menus so expanded menus do not fall behind visualization layers.
+- Added a light navy sea map treatment, dark map frame, muted green land treatment, active-land olive emphasis, and label-density/collision polish.
+- Added a finite 30-color Analytics chart series library sourced from the approved green, gold, blue, and pink palettes, with greens/golds dominant and blues/pinks used as supporting contrast.
+- Documented the color/theming audit trail in `planning_documents`, including color centralization, theme palette, built-in palette, classic itch palette, theme-control, map-assignment, upload-guide, dropdown-portal, and ornamental-toggle audits.
+- Refined the Chart Visualizations control rail, dropdown hover treatment, series contrast, and chart workspace surface colors.
+- Defaulted Analytics ordered date charts to **Year**, with **Full date** available as an explicit higher-granularity option.
+- Hardened chart derivation logic for record counts, part-to-whole charts, grouped bars, stacked bars, multi-line charts, histograms, heatmaps, and year/full-date handling.
+- Fixed grouped bar and multi-line count buckets so grouped yearly values use real counts rather than presence/absence.
+- Added manual category/series selection across chart types, with compatible settings preserved as users switch between charts.
+- Added persistent chart summary panels for ranked values, segment totals, line totals, trend summaries, bin ranges, matrix combinations, slices/shares, and sunburst parent totals.
+- Added stronger major and minor axis ticks/gridlines for axis-based charts and kept chart PNG export using the rendered SVG panel/axis system.
+- Current implemented Analytics/theme baseline: **`10f6e19` — `Polish analytics chart axes and summary panels`**.
 
 ### Advanced Search / Explore consolidation milestone
 
@@ -252,7 +269,13 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
-- **`d52392a` — `Add capabilities tab to advanced search`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`880cfff` — `Add manual analytics series selection`** adds manual category/series selection across chart types and preserves compatible settings while switching chart views.
+- **`cd7dfff` — `Fix grouped chart count buckets`** corrects grouped bar and multi-line record-count buckets.
+- **`699e33a` — `Default chart date axis to year`** makes Year the default ordered date axis while keeping Full date available.
+- **`805f770` — `Harden analytics chart logic`** hardens chart derivation for grouped, stacked, part-to-whole, histogram, heatmap, and line/multi-line cases.
+- **`8f55a47` — `Add finite chart color library`** adds the fixed Peridot chart series palette.
+- **`7396864` — `Add light navy sea map treatment`** and the preceding theme/chrome commits rebalance map palette, visualization chrome, and theme-role routing.
+- **`10f6e19` — `Polish analytics chart axes and summary panels`** is the current documented `main` baseline and current head in the provided sync ritual.
 - **`3d296cb` — `Route Explore directly to advanced search`** routes Explore entry points from the hamburger menu and Visualizations header directly to Advanced Search.
 - **`37f2755` — `Clarify structured search Boolean labels`** updates structured-search terminology to first criterion plus AND / OR / EXCLUDING connectors.
 - **`13fd533` — `Add Boolean structured search criteria`** adds Boolean structured criteria logic.
@@ -314,10 +337,27 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `d52392a`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `10f6e19`.
 
 | Date | Commit | Branch/tag decoration | Message |
 |---|---|---|---|
+| 2026-06-12 | `10f6e19` | (HEAD -> main, origin/main, origin/HEAD) | Polish analytics chart axes and summary panels |
+| 2026-06-12 | `880cfff` |  | Add manual analytics series selection |
+| 2026-06-12 | `cd7dfff` |  | Fix grouped chart count buckets |
+| 2026-06-12 | `699e33a` |  | Default chart date axis to year |
+| 2026-06-12 | `805f770` |  | Harden analytics chart logic |
+| 2026-06-12 | `8f55a47` |  | Add finite chart color library |
+| 2026-06-12 | `5e895ad` |  | Refine chart dropdown and series contrast |
+| 2026-06-12 | `ab6dc8b` |  | Refine chart workspace controls and colors |
+| 2026-06-12 | `2e57f42` |  | Compact chart controls sidebar |
+| 2026-06-12 | `c5ff6c6` |  | Polish chart controls sidebar |
+| 2026-06-11 | `7396864` |  | Add light navy sea map treatment |
+| 2026-06-11 | `aba420e` |  | Rebalance map palette and label density |
+| 2026-06-11 | `cc21008` |  | Polish visualization header tabs |
+| 2026-06-11 | `15985bf` |  | Improve visualization edge handles and map utility buttons |
+| 2026-06-11 | `cb26bdf` |  | Refine visualization bar toggle ornament |
+| 2026-06-11 | `e643a16` |  | Route Inspector colors through theme roles |
+| 2026-06-11 | `790ec66` |  | Clean up theming design audit files |
 | 2026-06-10 | `d52392a` | (HEAD -> main, origin/main, origin/HEAD) | Add capabilities tab to advanced search |
 | 2026-06-10 | `3d296cb` |  | Route Explore directly to advanced search |
 | 2026-06-10 | `37f2755` |  | Clarify structured search Boolean labels |

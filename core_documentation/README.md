@@ -16,9 +16,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`d52392a` — `Add capabilities tab to advanced search`** on branch **`main`**
+- **`10f6e19` — `Polish analytics chart axes and summary panels`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, and the June 2026 structural cleanup/commenting pass, and the Advanced Search / Explore consolidation milestone. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, and the current Analytics chart-usability milestone. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -54,6 +54,11 @@ The current state of the active `main` project includes:
 - chart-first and generic evidence records that can enter the active dataset without map or network roles
 - capability-aware Visualizations menus for mapping, network, chart, and data-exploration views
 - chart-type selection inside the Chart Visualizations control rail for Bar, Grouped Bar, Stacked Bar, Line, Multi-Line, Histogram, Pie, Sunburst, and Heatmap
+- Year as the default chart date axis, with Full date available for finer granularity
+- manual category/series selection across chart types, with compatible settings preserved while switching chart views
+- chart summary panels for ranked values, segment totals, line totals, trend summaries, bin ranges, matrix combinations, slices/shares, and sunburst parent totals
+- readable major/minor axis ticks and gridlines for axis-based charts
+- finite 30-color chart series library coordinated with the Peridot green/gold/blue/pink palette
 - flexible Analytics controls for x-axis/category, y-axis/metric, aggregation, grouping/series, heatmap axes, histogram distributions, and selected wide numeric series
 - Record count available as an explicit metric across aggregate charts
 - Evidence and analysis field inclusion using explicit Include and Ignore checkboxes that default to Include
@@ -65,6 +70,9 @@ The current state of the active `main` project includes:
 - dynamic node radius contrast based on active data
 - volume-based zoom-responsive cluster sizing
 - theme preset support in a **Themes and Accessibility** workspace
+- centralized semantic color roles for interface, map/network, charts, Inspector/search, navigation chrome, timeline, buttons/highlights, and ornaments
+- custom palette import targets and a finite 30-color Analytics chart series library using approved green, gold, blue, and pink palettes
+- visualization chrome polish for header tabs, ornamental edge controls, map utility buttons, dropdown layering, map palette, chart controls, chart summary panels, and axis ticks
 - in-place Visualizations header Export menu for SVG, PNG, nodes CSV, routes/edges CSV, and chart PNG export
 - extracted sample data, mapping UI config, mapping field controls, and evidence field controls that reduce pressure on `App.jsx` and `PeridotColumnMappingModal.jsx`
 - source-wide developer-orientation comments and a tracked code-structure audit planning document
@@ -161,14 +169,20 @@ The codebase is functional, but it is still under active maintenance. The larges
 - flexible x-axis/category, y-axis/metric, aggregation, grouping/series, heatmap row/column, histogram distribution, and selected wide numeric-series controls
 - Record count available as an explicit metric for aggregate charts, alongside numeric field aggregation where applicable
 - explicit **Route (Place)** and **Route (Person)** variables
-- Analytics-local date-range controls for time-based charts
-- automatic period granularity for time charts:
-  - more than 5 years = yearly
-  - 5 years or less = half-year periods
-  - 3 years or less = quarter periods
-  - 1 year or less = monthly periods
+- **Year** as the default ordered date axis, with **Full date** available for more granular date labels
+- manual category/series selection so users can choose exact people, places, routes, categories, or comparable values
+- compatible chart settings persist where possible when switching chart types
+- selected-only, selected + Other, and selected + dataset-total comparison behavior where the chart type can support it safely
+- summary panels for ranked values, grouped/stacked segment totals, line totals, trend summaries, histogram bin ranges, heatmap top combinations, pie slices/shares, and sunburst parent totals
+- major and minor ticks/gridlines for axis-based charts
+- finite 30-color chart series library coordinated with the Peridot palette
 - large chart workspace inside Visualizations with a left controls rail and right chart canvas
 - chart rendering scaled to fit the available workspace without internal scrolling
+- year-default ordered date charts, with Full date available as the explicit higher-granularity option
+- manual category/series selection across compatible chart types, with settings preserved where possible while switching charts
+- persistent chart summary panels for ranked values, totals, shares, trends, bins, matrix combinations, and sunburst parents
+- stronger major/minor axis ticks and gridlines for axis-based charts
+- finite 30-color chart series library with greens/golds dominant and blues/pinks as supporting contrast
 - PNG export through the shared Visualizations header Export menu
 
 ### Visual encoding
@@ -181,8 +195,12 @@ The codebase is functional, but it is still under active maintenance. The larges
 ### Visual customization
 
 - full Theme workspace with Peridot default, Early modern map, and Modern map presets
-- theme token system with presets
+- semantic theme role system in `peridotTheme.js`
+- finite 30-color chart series palette used by Analytics charts
+- centralized chart background/text/grid/series roles
 - map and interface chroming controlled primarily through theme values rather than a large global stylesheet
+- light navy sea treatment, muted green land, active olive land emphasis, dark map frame, and map-label density/collision polish
+- visualization header, tab, edge-handle, and map utility-button polish coordinated with the ornamental Peridot folio style
 - mode-sensitive stage rendering so the **Force-Directed** view uses a clean themed background while geographic modes retain the map backdrop
 
 ### Export tools
@@ -298,6 +316,9 @@ src/
   analyticsDerivationHelpers.js
   AnalyticsPanel.jsx
   App.jsx
+  peridotColorPalette.js
+  peridotTheme.js
+  peridotThemeRoleMetadata.js
   exportHelpers.js
   index.css
   InspectorBackButton.jsx
@@ -331,6 +352,9 @@ src/
   peridotCsvNormalizer.js
   peridotCsvSchema.js
   peridotCsvValidation.js
+  peridotDataCapabilityAudit.js
+  peridotTheme.js
+  peridotThemeRoleMetadata.js
   peridotWorkbookMapping.js
   peridotWorkbookParsing.js
   peridotSampleData.js
@@ -380,7 +404,19 @@ Full-window Advanced Search workspace and primary Explore surface. It renders th
 
 #### `src/PeridotThemeWorkspace.jsx`
 
-Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, and future appearance/accessibility settings.
+Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, custom palette import, role-targeted theme application, and future appearance/accessibility settings.
+
+#### `src/peridotTheme.js`
+
+Semantic theme system for Peridot. It defines source palettes, palette import targets, custom overrides, semantic role assignments, chart colors, map/network colors, Inspector/search colors, navigation/timeline/button roles, ornament roles, and CSS-variable export. New color work should generally start here.
+
+#### `src/peridotThemeRoleMetadata.js`
+
+Human-facing theme-role metadata used by the Themes and Accessibility workspace so users can understand and target palette changes.
+
+#### `src/peridotColorPalette.js`
+
+Legacy color compatibility adapter for older component paths. New work should prefer semantic roles from `peridotTheme.js`.
 
 #### `src/PeridotExploreWorkspace.jsx`
 
@@ -440,15 +476,15 @@ Analytics / Chart Visualizations UI boundary. It owns chart type selection, char
 
 #### `src/analyticsConfig.js`
 
-Analytics configuration module. It defines chart metadata, chart labels, descriptions, example questions, default Analytics state, top-N display options, curated variable definitions, and the explicit **Route (Place)** / **Route (Person)** variable distinction.
+Analytics configuration module. It defines chart metadata, chart labels, descriptions, example questions, default Analytics state, top-N display options, manual-selection defaults, curated variable definitions, and the explicit **Route (Place)** / **Route (Person)** variable distinction.
 
 #### `src/analyticsDerivationHelpers.js`
 
-Analytics data-derivation module. It derives available variable options from current row data, filters unsuitable dynamic metadata fields, builds chart data, handles time-period bucketing, and prepares chart-specific data structures.
+Analytics data-derivation module. It derives available variable options from current row data, filters unsuitable dynamic metadata fields, builds chart data, handles Year and Full date bucketing, applies manual selected-category filters, builds selected-only/Other/dataset-total comparisons where appropriate, and prepares chart-specific data structures.
 
 #### `src/analyticsChartComponents.jsx`
 
-SVG chart-rendering module for Analytics. It renders compact and expanded chart previews for bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap chart types.
+SVG chart-rendering module for Analytics. It renders chart previews for bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap chart types. It also owns chart frames, summary panels, visible values, major/minor axis ticks, gridline styling, and the SVG content used for chart PNG export.
 
 #### `src/InspectorPanel.jsx`
 
@@ -505,6 +541,14 @@ Export subsystem utilities for CSV, SVG, and PNG output.
 #### `src/peridotSampleData.js`
 
 Bundled sample CSV constants used by the **Use sample data** path.
+
+#### `src/peridotTheme.js`
+
+Semantic theme and palette control surface. It owns the active Peridot palette, custom theme overrides, CSS variables, chart roles, map/network roles, legacy-token compatibility, and the finite Analytics chart series color library.
+
+#### `src/peridotThemeRoleMetadata.js`
+
+Theme-role metadata used by the Themes and Accessibility workspace and palette tooling.
 
 #### `src/personForceLayoutHelpers.js`
 
@@ -760,11 +804,11 @@ Likely near-term priorities include:
 - test the one-file Peridot CSV workflow, arbitrary role-based mapping, point/site imports, generic chart/evidence imports, route coordinate pairs, flexible Analytics charts, and workbook importer against larger and messier datasets
 - refine upload validation/capability wording if user testing shows confusion
 - treat the legacy three-file upload workflow as superseded by the one-file and mapped-import workflows
-- continue improving Chart Visualizations usability and data-scope clarity inside Visualizations
+- continue improving Chart Visualizations usability, manual comparison workflows, visible value summaries, axis readability, and data-scope clarity inside Visualizations
 - consider future safe metadata filters after the upload/mapping model settles
 - continue safe reduction of orchestration pressure inside `src/App.jsx`, using the code-structure audit as the planning reference
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
-- refresh screenshots after the dual-mode Inspector and current workspace/hamburger interface stabilize
+- refresh screenshots after the dual-mode Inspector, current workspace/hamburger interface, chart summary panels, and theme/color work stabilize
 - standardize visual export dimensions later if needed
 - preserve full commit history in `CHANGELOG.md`
 
