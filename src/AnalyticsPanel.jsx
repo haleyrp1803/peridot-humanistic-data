@@ -615,7 +615,7 @@ export function AnalyticsPanelContent({
   // disagree with the visible chart.
   const chartSvgRef = useRef(null);
   const [exportStatus, setExportStatus] = useState(null);
-  const [barOrientation, setBarOrientation] = useState('horizontal');
+  const [barOrientation, setBarOrientation] = useState('vertical');
   const [xField, setXField] = useState('year');
   const [yField, setYField] = useState('recordCount');
   const [aggregation, setAggregation] = useState('count');
