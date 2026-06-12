@@ -17,7 +17,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ANALYTICS_AGGREGATION_OPTIONS, ANALYTICS_CHART_DEFINITIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
-import { buildAnalyticsChartData, getAnalyticsYearRange } from './analyticsDerivationHelpers';
+import { buildAnalyticsChartData, getAnalyticsCategoryValues, getAnalyticsYearRange } from './analyticsDerivationHelpers';
 import { PERIDOT_THEME } from './peridotTheme.js';
 
 function buttonClassName({ active = false } = {}) {
@@ -435,6 +435,122 @@ function NumberStepperControl({ label, value, onChange, min = 1, max = 100, desc
   );
 }
 
+function ManualCategorySelectionControls({
+  enabled,
+  selectionMode,
+  onSelectionModeChange,
+  comparisonMode,
+  onComparisonModeChange,
+  options = [],
+  selectedValues = [],
+  onSelectedValuesChange,
+  searchValue,
+  onSearchValueChange,
+  noun = 'categories',
+}) {
+  if (!enabled) return null;
+
+  const selectedSet = new Set(selectedValues);
+  const filteredOptions = options.filter((option) => option.label.toLowerCase().includes(String(searchValue || '').toLowerCase()));
+  const visibleOptions = filteredOptions.slice(0, 80);
+  const toggleValue = (value) => {
+    const nextSet = new Set(selectedValues);
+    if (nextSet.has(value)) nextSet.delete(value);
+    else nextSet.add(value);
+    onSelectedValuesChange(Array.from(nextSet));
+  };
+
+  return (
+    <div className="rounded-xl border border-[var(--panel-card-border)] bg-[color-mix(in_srgb,var(--peridot-role-interface-card-background-warm)_78%,transparent)] p-3">
+      <SelectControl
+        label="Selection mode"
+        value={selectionMode}
+        onChange={onSelectionModeChange}
+        options={[
+          { key: 'topN', label: 'Top N automatically' },
+          { key: 'manual', label: 'Manually choose categories' },
+        ]}
+        description={selectionMode === 'manual' ? `Choose exact ${noun} to compare.` : `Automatically rank and show the top ${noun}.`}
+      />
+
+      {selectionMode === 'manual' ? (
+        <div className="mt-3 space-y-3">
+          <SelectControl
+            label="Comparison total"
+            value={comparisonMode}
+            onChange={onComparisonModeChange}
+            options={[
+              { key: 'selectedOnly', label: 'Selected categories only' },
+              { key: 'selectedPlusOther', label: 'Selected categories + Other' },
+              { key: 'selectedPlusTotal', label: 'Selected categories + dataset total' },
+            ]}
+            description="Use Other to preserve the selected range total without choosing every category."
+          />
+
+          <label className="block text-sm">
+            <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">Find categories</span>
+            <input
+              type="search"
+              value={searchValue}
+              onChange={(event) => onSearchValueChange(event.target.value)}
+              placeholder={`Search ${noun}…`}
+              className="w-full rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3 py-2 text-sm font-semibold text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
+            />
+          </label>
+
+          <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
+            {visibleOptions.length ? visibleOptions.map((option) => (
+              <label
+                key={option.key}
+                className={[
+                  'flex items-start gap-2 rounded-lg border px-2.5 py-2 text-sm transition',
+                  selectedSet.has(option.key)
+                    ? 'border-[var(--peridot-role-ornament-line)] bg-[color-mix(in_srgb,var(--peridot-role-button-primary-bg)_28%,var(--peridot-role-interface-card-background-warm)_72%)] text-[var(--panel-card-text)]'
+                    : 'border-[var(--panel-card-border)] bg-[var(--utility-tint-bg)] text-[var(--panel-card-text)] hover:bg-[color-mix(in_srgb,var(--peridot-role-button-primary-bg)_18%,var(--peridot-role-interface-card-background-warm)_82%)]',
+                ].join(' ')}
+              >
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={selectedSet.has(option.key)}
+                  onChange={() => toggleValue(option.key)}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold">{option.label}</span>
+                  <span className="block text-[11px] text-[var(--panel-card-muted-text)]">{option.count} records in current date window</span>
+                </span>
+              </label>
+            )) : (
+              <div className="rounded-lg border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">
+                No matching categories in the current date window.
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--panel-card-muted-text)]">
+            <button
+              type="button"
+              className="rounded-full border border-[var(--panel-card-border)] px-2.5 py-1 font-bold transition hover:bg-[var(--peridot-role-button-primary-bg)] hover:text-[var(--peridot-role-button-primary-text)]"
+              onClick={() => onSelectedValuesChange(visibleOptions.map((option) => option.key))}
+            >
+              Select visible
+            </button>
+            <button
+              type="button"
+              className="rounded-full border border-[var(--panel-card-border)] px-2.5 py-1 font-bold transition hover:bg-[var(--peridot-role-button-primary-bg)] hover:text-[var(--peridot-role-button-primary-text)]"
+              onClick={() => onSelectedValuesChange([])}
+            >
+              Clear
+            </button>
+            <span>{selectedValues.length} selected</span>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+
 function ControlSection({ eyebrow, title, description, children, compact = false }) {
   return (
     <section
@@ -498,12 +614,17 @@ export function AnalyticsPanelContent({
   const [groupedBarGroupBy, setGroupedBarGroupBy] = useState('sourcePerson');
   const [multiLineMode, setMultiLineMode] = useState('recordCount');
   const [multiLineGroupBy, setMultiLineGroupBy] = useState('sourcePerson');
+  const [lineFilterBy, setLineFilterBy] = useState('sourcePerson');
   const [wideSeriesPreset, setWideSeriesPreset] = useState('selected');
   const [selectedWideSeriesKeys, setSelectedWideSeriesKeys] = useState([]);
   const [heatmapRowBy, setHeatmapRowBy] = useState('sourcePerson');
   const [heatmapColumnBy, setHeatmapColumnBy] = useState('targetPerson');
   const [sunburstParentBy, setSunburstParentBy] = useState('sourceLoc');
   const [sunburstChildBy, setSunburstChildBy] = useState('sourcePerson');
+  const [categorySelectionMode, setCategorySelectionMode] = useState('topN');
+  const [manualCategoryValuesByField, setManualCategoryValuesByField] = useState({});
+  const [manualComparisonMode, setManualComparisonMode] = useState('selectedPlusOther');
+  const [manualCategorySearch, setManualCategorySearch] = useState('');
 
   const {
     chartType,
@@ -596,6 +717,7 @@ export function AnalyticsPanelContent({
   }, [aggregation, chartType, yField]);
 
   const selectedBarField = useMemo(() => availableBarFields.find((field) => field.key === barGroupBy) || availableBarFields[0], [availableBarFields, barGroupBy]);
+  const selectedLineFilterField = useMemo(() => availableBarFields.find((field) => field.key === lineFilterBy) || availableBarFields[0], [availableBarFields, lineFilterBy]);
   const selectedPieField = useMemo(() => availablePieFields.find((field) => field.key === pieGroupBy) || availablePieFields[0], [availablePieFields, pieGroupBy]);
   const histogramFieldOptions = yMetricOptions;
   const selectedHistogramField = useMemo(() => histogramFieldOptions.find((field) => field.key === histogramValueField) || histogramFieldOptions[0], [histogramFieldOptions, histogramValueField]);
@@ -607,6 +729,57 @@ export function AnalyticsPanelContent({
   const selectedHeatmapColumnField = useMemo(() => availableHeatmapColumns.find((field) => field.key === heatmapColumnBy) || availableHeatmapColumns[1] || availableHeatmapColumns[0], [availableHeatmapColumns, heatmapColumnBy]);
   const selectedSunburstParentField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstParentBy) || availableSegmentFields[0], [availableSegmentFields, sunburstParentBy]);
   const selectedSunburstChildField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstChildBy) || availableSegmentFields[1] || availableSegmentFields[0], [availableSegmentFields, sunburstChildBy]);
+  const manualSelectionField = useMemo(() => {
+    if (chartType === 'bar') return selectedBarField;
+    if (chartType === 'line') return selectedLineFilterField;
+    if (chartType === 'histogram') return selectedHistogramGroupField;
+    if (chartType === 'groupedBar') return selectedGroupedBarField;
+    if (chartType === 'stackedBar') return selectedStackField;
+    if (chartType === 'pie') return selectedPieField;
+    if (chartType === 'multiLine' && multiLineMode !== 'wide') return selectedMultiLineField;
+    if (chartType === 'heatmap') return selectedHeatmapRowField;
+    if (chartType === 'sunburst') return selectedSunburstParentField;
+    return null;
+  }, [chartType, multiLineMode, selectedBarField, selectedGroupedBarField, selectedHeatmapRowField, selectedHistogramGroupField, selectedLineFilterField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstParentField]);
+
+  const manualSelectionSupported = Boolean(manualSelectionField);
+  const manualCategoryOptions = useMemo(
+    () => manualSelectionField
+      ? getAnalyticsCategoryValues(rows, manualSelectionField.key, startYear || yearRange.minYear, endYear || yearRange.maxYear)
+      : [],
+    [endYear, manualSelectionField, rows, startYear, yearRange.maxYear, yearRange.minYear]
+  );
+  const manualSelectionFieldKey = manualSelectionField?.key || '';
+  const validManualCategoryKeys = useMemo(() => new Set(manualCategoryOptions.map((option) => option.key)), [manualCategoryOptions]);
+  const activeManualCategoryValues = manualSelectionFieldKey ? (manualCategoryValuesByField[manualSelectionFieldKey] || []) : [];
+  const selectedManualCategoryValues = useMemo(
+    () => activeManualCategoryValues.filter((value) => validManualCategoryKeys.has(value)),
+    [activeManualCategoryValues, validManualCategoryKeys]
+  );
+  const updateManualCategoryValuesForActiveField = useCallback((nextValues) => {
+    if (!manualSelectionFieldKey) return;
+    setManualCategoryValuesByField((current) => ({
+      ...current,
+      [manualSelectionFieldKey]: Array.isArray(nextValues) ? nextValues : [],
+    }));
+  }, [manualSelectionFieldKey]);
+  const categorySelection = useMemo(() => ({
+    mode: manualSelectionSupported ? categorySelectionMode : 'topN',
+    fieldKey: manualSelectionFieldKey,
+    values: selectedManualCategoryValues,
+    comparisonMode: manualComparisonMode,
+  }), [categorySelectionMode, manualComparisonMode, manualSelectionFieldKey, manualSelectionSupported, selectedManualCategoryValues]);
+
+  useEffect(() => {
+    if (!manualSelectionFieldKey) return;
+    setManualCategoryValuesByField((current) => {
+      const currentValues = current[manualSelectionFieldKey] || [];
+      const retainedValues = currentValues.filter((value) => validManualCategoryKeys.has(value));
+      if (retainedValues.length === currentValues.length) return current;
+      return { ...current, [manualSelectionFieldKey]: retainedValues };
+    });
+  }, [manualSelectionFieldKey, validManualCategoryKeys]);
+
   useEffect(() => {
     if (!availableMeasureFields.length) {
       setSelectedWideSeriesKeys([]);
@@ -651,6 +824,7 @@ export function AnalyticsPanelContent({
       chartType,
       xField,
       yField: chartType === 'multiLine' ? resolvedMultiLineMetricField : yField,
+      lineFilterBy: selectedLineFilterField?.key || lineFilterBy,
       aggregation: chartType === 'multiLine' ? resolvedMultiLineAggregation : aggregation,
       barGroupBy: selectedBarField?.key || barGroupBy,
       barOrientation,
@@ -667,10 +841,11 @@ export function AnalyticsPanelContent({
       sunburstParentBy: selectedSunburstParentField?.key || sunburstParentBy,
       sunburstChildBy: selectedSunburstChildField?.key || sunburstChildBy,
       topN,
+      categorySelection,
       startYear: startYear || yearRange.minYear,
       endYear: endYear || yearRange.maxYear,
     }),
-    [aggregation, barGroupBy, barOrientation, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, resolvedMultiLineMetricField, resolvedMultiLineAggregation, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
+    [aggregation, barGroupBy, barOrientation, categorySelection, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, lineFilterBy, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedLineFilterField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, resolvedMultiLineMetricField, resolvedMultiLineAggregation, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
   );
 
   const handleExportPng = useCallback(async () => {
@@ -739,6 +914,22 @@ export function AnalyticsPanelContent({
     </>
   );
 
+  const renderCategorySelectionControls = (noun = 'categories') => (
+    <ManualCategorySelectionControls
+      enabled={manualSelectionSupported}
+      selectionMode={categorySelectionMode}
+      onSelectionModeChange={setCategorySelectionMode}
+      comparisonMode={manualComparisonMode}
+      onComparisonModeChange={setManualComparisonMode}
+      options={manualCategoryOptions}
+      selectedValues={selectedManualCategoryValues}
+      onSelectedValuesChange={updateManualCategoryValuesForActiveField}
+      searchValue={manualCategorySearch}
+      onSearchValueChange={setManualCategorySearch}
+      noun={noun}
+    />
+  );
+
   /*
    * Render the control surface for the active chart type.
    *
@@ -757,7 +948,8 @@ export function AnalyticsPanelContent({
               <SelectControl label="X-axis / category" value={selectedBarField?.key || ''} onChange={setBarGroupBy} options={availableBarFields} description={selectedBarField?.description} />
               {renderMetricControls()}
               <SelectControl label="Orientation" value={barOrientation} onChange={setBarOrientation} options={[{ key: 'vertical', label: 'Vertical' }, { key: 'horizontal', label: 'Horizontal' }]} />
-              <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} />
+              {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} /> : null}
+              {renderCategorySelectionControls('categories')}
             </>
           ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported categorical fields are available in the current data.</div>}
         </VariableControlsShell>
@@ -767,6 +959,8 @@ export function AnalyticsPanelContent({
       return (
         <VariableControlsShell>
           {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Use Year by default, or choose Full date / numeric fields for more granular ordered charts." /> : null}
+          {availableBarFields.length ? <SelectControl label="Focus category field" value={selectedLineFilterField?.key || ''} onChange={setLineFilterBy} options={availableBarFields} description="Optionally filter this trend to exact people, places, routes, or categories." /> : null}
+          {renderCategorySelectionControls('records')}
           {renderMetricControls()}
           {!activeXAxisFields.length ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No date/time or numeric x-axis fields are available for a line chart in the current data.</div> : null}
         </VariableControlsShell>
@@ -832,7 +1026,8 @@ export function AnalyticsPanelContent({
                   Multi-line grouped mode needs a categorical series field that is not the selected x-axis, not a date field, and not a numeric measure.
                 </div>
               )}
-              <NumberStepperControl label="Limit displayed lines" value={topN} onChange={setTopN} />
+              {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed lines" value={topN} onChange={setTopN} /> : null}
+              {renderCategorySelectionControls('lines')}
             </>
           )}
           {!availableMeasureFields.length && multiLineMode === 'wide' ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">This mode needs at least one numeric measure field.</div> : null}
@@ -845,7 +1040,8 @@ export function AnalyticsPanelContent({
         <VariableControlsShell>
           {availablePieFields.length ? <SelectControl label="Slice category" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} /> : null}
           {renderAdditiveMetricControls()}
-          <NumberStepperControl label="Limit displayed slices" value={topN} onChange={setTopN} />
+          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed slices" value={topN} onChange={setTopN} /> : null}
+          {renderCategorySelectionControls('slices')}
         </VariableControlsShell>
       );
     }
@@ -873,6 +1069,7 @@ export function AnalyticsPanelContent({
               <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">Record-count histograms need at least one categorical field to group records before binning the counts.</div>
             )
           ) : null}
+          {histogramUsesRecordCount ? renderCategorySelectionControls('categories') : null}
         </VariableControlsShell>
       );
     }
@@ -882,7 +1079,8 @@ export function AnalyticsPanelContent({
           {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
           <SelectControl label="Side-by-side grouping field" value={selectedGroupedBarField?.key || ''} onChange={setGroupedBarGroupBy} options={availableSegmentFields} description={selectedGroupedBarField?.description} />
           {renderMetricControls()}
-          <NumberStepperControl label="Limit displayed groups" value={topN} onChange={setTopN} />
+          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed groups" value={topN} onChange={setTopN} /> : null}
+          {renderCategorySelectionControls('groups')}
         </VariableControlsShell>
       );
     }
@@ -892,7 +1090,8 @@ export function AnalyticsPanelContent({
           {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
           <SelectControl label="Segment field" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
           {renderAdditiveMetricControls()}
-          <NumberStepperControl label="Limit displayed segments" value={topN} onChange={setTopN} />
+          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed segments" value={topN} onChange={setTopN} /> : null}
+          {renderCategorySelectionControls('segments')}
         </VariableControlsShell>
       );
     }
@@ -902,7 +1101,8 @@ export function AnalyticsPanelContent({
           <SelectControl label="Rows" value={selectedHeatmapRowField?.key || ''} onChange={setHeatmapRowBy} options={availableHeatmapRows} description={selectedHeatmapRowField?.description} />
           <SelectControl label="Columns" value={selectedHeatmapColumnField?.key || ''} onChange={setHeatmapColumnBy} options={availableHeatmapColumns} description={selectedHeatmapColumnField?.description} />
           {renderMetricControls()}
-          <NumberStepperControl label="Limit displayed rows/columns" value={topN} onChange={setTopN} />
+          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed rows/columns" value={topN} onChange={setTopN} /> : null}
+          {renderCategorySelectionControls('rows')}
         </VariableControlsShell>
       );
     }
@@ -912,7 +1112,8 @@ export function AnalyticsPanelContent({
           <SelectControl label="Parent category" value={selectedSunburstParentField?.key || ''} onChange={setSunburstParentBy} options={availableSegmentFields} description={selectedSunburstParentField?.description} />
           <SelectControl label="Child category" value={selectedSunburstChildField?.key || ''} onChange={setSunburstChildBy} options={availableSegmentFields} description={selectedSunburstChildField?.description} />
           {renderAdditiveMetricControls()}
-          <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} />
+          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} /> : null}
+          {renderCategorySelectionControls('parent categories')}
         </VariableControlsShell>
       );
     }
