@@ -71,6 +71,7 @@ The current state of the active `main` project includes:
 - volume-based zoom-responsive cluster sizing
 - theme preset support in a **Themes and Accessibility** workspace
 - centralized semantic color roles for interface, map/network, charts, Inspector/search, navigation chrome, timeline, buttons/highlights, and ornaments
+- documented palette-system sequence from explicit palette centralization through built-in presets, image palette import, upload-guide color/design direction, and dropdown layering
 - custom palette import targets and a finite 30-color Analytics chart series library using approved green, gold, blue, and pink palettes
 - visualization chrome polish for header tabs, ornamental edge controls, map utility buttons, dropdown layering, map palette, chart controls, chart summary panels, and axis ticks
 - in-place Visualizations header Export menu for SVG, PNG, nodes CSV, routes/edges CSV, and chart PNG export

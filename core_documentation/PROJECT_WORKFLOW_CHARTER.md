@@ -84,7 +84,6 @@ Current fragile zones include:
 - Analytics SVG-to-PNG export rendering
 - Analytics summary panels, axis ticks/gridlines, manual category/series selection, date-axis defaults, and chart color-series handling
 - semantic theme roles, finite chart color library, and map/chrome palette assignments
-- ornamental header/timeline collapse controls, dropdown/portal z-index, and other controls that must remain above map/chart layers
 - stale or insufficient code comments around fragile compatibility and cross-file wiring
 - Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, generic chart/evidence record admission, evidence-field include/ignore checkbox behavior, coordinate-pair parsing, date-range/display-date handling, and legacy upload cleanup
 
@@ -326,6 +325,7 @@ Current notable decisions:
 - Visualization header and Timeline collapse/expand controls should stay as high-layer ornamental edge controls. They must remain in front of visualization layers and communicate expansion direction pictorially rather than relying on large text labels.
 - Dropdowns and palette/control menus that open over the chart/map stage must be layered above visualization surfaces; treat dropdown portal/z-index regressions as visual bugs, not cosmetic preferences.
 - Planning and audit documents from color/theming work belong in `planning_documents/` and should stay tracked there when they describe active design decisions or implementation constraints.
+- The palette-system commits from `034ec67` through `81dd7af` establish the current theme-editing direction: central palette values, semantic roles, role dashboards, image palette import by theme area, foundation-tone routing, darkest/lightest role anchoring, built-in Peridot presets, and upload-guide/dropdown-layering behavior.
 - Chart date axes should default to **Year** because most historical users care primarily about yearly patterns; **Full date** should remain available when month/day specificity matters.
 - Partial dates should follow chart settings: month/day should not affect a Year chart, while Full date charts should use the most specific parseable date label available.
 - Chart users should be able to manually choose the people, places, routes, categories, or comparable values they want to visualize instead of relying only on automatic Top N.

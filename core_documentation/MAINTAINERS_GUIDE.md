@@ -217,7 +217,6 @@ Maintainer/workflow documents are currently organized under `core_documentation/
 - `planning_documents/PERIDOT_ROUTING_CONTRACT_AUDIT.md`
 - `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md`
 - `planning_documents/PERIDOT_CODE_STRUCTURE_AUDIT.md`
-- color/theming planning and audit records, including color centralization, theme palette, built-in palette, classic itch palette, theme-control, map-assignment, upload-guide, dropdown portal, and ornamental toggle audits
 
 ## Architectural summary
 
@@ -800,19 +799,18 @@ The default full-app theme remains **Peridot-inspired** and is now controlled pr
 
 Recent color/theme work centralized the chart color library, routed Inspector colors through theme roles, rebalanced map land/sea roles, and polished the Visualization header/chrome without reintroducing scattered one-off color constants where a theme role exists.
 
-Current color/theming behavior includes:
+The preceding color/theming conversation produced the following committed palette-system sequence and should be treated as part of the documented theme baseline:
 
-- built-in Peridot Upload Guide palette baseline;
-- custom theme override storage in browser local storage;
-- role-targeted palette import scopes for whole app, interface, map/network, charts, buttons/highlights, navigation chrome, timeline, search workspace, Inspector/search, and text/borders;
-- chart-specific semantic roles for chart paper, text, muted text, grid, accents, tooltip colors, and categorical series;
-- a finite 30-color chart series library using the approved green, gold, blue, and pink palettes;
-- map/network color roles for sea/canvas, frame, land, active land, strokes, edges, nodes, clusters, labels, and series;
-- Inspector/search roles that keep compact/full evidence surfaces synchronized with theme changes;
-- ornamental roles for folio rules, corners, gem accents, sparkles, and panel glow;
-- visualization chrome polish for header tabs, edge handles, map utility buttons, chart controls, dropdown layering, and collapse/expand affordances.
-
-The theme-polish pass also produced planning/audit documents under `planning_documents`. Those audits record color centralization, palette decisions, built-in palette behavior, classic itch palette checks, theme-control behavior, map assignment, upload-guide color application, dropdown portal/layering, and ornamental toggle decisions. Keep those planning files tracked with the project rather than leaving them in the repository root.
+- `034ec67` — Centralize explicit color palette values
+- `fed7d2e` — Add semantic palette system and theme toggle
+- `6e8dfa6` — Add palette role dashboard
+- `e35ab68` — Add image palette import by theme area
+- `1ba1682` — Improve palette image swatch detection
+- `ee4f75e` — Route whole-app palette imports through foundation tones
+- `4747639` — Anchor imported palettes to darkest and lightest roles
+- `0a686fe` — Add built-in Peridot palette presets
+- `aa00efb` — Apply upload guide design direction
+- `81dd7af` — Apply upload guide color direction and dropdown layering
 
 
 Other retained presets still function as map-focused alternatives:

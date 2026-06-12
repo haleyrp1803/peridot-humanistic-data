@@ -339,309 +339,319 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `10f6e19`.
 
-| Date | Commit | Branch/tag decoration | Message |
+| Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
-| 2026-06-12 | `10f6e19` | (HEAD -> main, origin/main, origin/HEAD) | Polish analytics chart axes and summary panels |
-| 2026-06-12 | `880cfff` |  | Add manual analytics series selection |
-| 2026-06-12 | `cd7dfff` |  | Fix grouped chart count buckets |
-| 2026-06-12 | `699e33a` |  | Default chart date axis to year |
-| 2026-06-12 | `805f770` |  | Harden analytics chart logic |
-| 2026-06-12 | `8f55a47` |  | Add finite chart color library |
-| 2026-06-12 | `5e895ad` |  | Refine chart dropdown and series contrast |
-| 2026-06-12 | `ab6dc8b` |  | Refine chart workspace controls and colors |
-| 2026-06-12 | `2e57f42` |  | Compact chart controls sidebar |
-| 2026-06-12 | `c5ff6c6` |  | Polish chart controls sidebar |
-| 2026-06-11 | `7396864` |  | Add light navy sea map treatment |
-| 2026-06-11 | `aba420e` |  | Rebalance map palette and label density |
-| 2026-06-11 | `cc21008` |  | Polish visualization header tabs |
-| 2026-06-11 | `15985bf` |  | Improve visualization edge handles and map utility buttons |
-| 2026-06-11 | `cb26bdf` |  | Refine visualization bar toggle ornament |
-| 2026-06-11 | `e643a16` |  | Route Inspector colors through theme roles |
-| 2026-06-11 | `790ec66` |  | Clean up theming design audit files |
-| 2026-06-10 | `d52392a` | (HEAD -> main, origin/main, origin/HEAD) | Add capabilities tab to advanced search |
-| 2026-06-10 | `3d296cb` |  | Route Explore directly to advanced search |
-| 2026-06-10 | `37f2755` |  | Clarify structured search Boolean labels |
-| 2026-06-10 | `13fd533` |  | Add Boolean structured search criteria |
-| 2026-06-10 | `86952c8` |  | Improve advanced search moss contrast |
-| 2026-06-10 | `d7b0e2f` |  | Add dataset-wide advanced search browse indexes |
-| 2026-06-10 | `8104739` |  | Wire structured criteria filtering |
-| 2026-06-10 | `c8cbd5e` |  | Add structured search suggestions |
-| 2026-06-10 | `e3c36e1` |  | Condense advanced search results layout |
-| 2026-06-10 | `a21bbd9` |  | Refine advanced search layout and palette |
-| 2026-06-10 | `e12ed84` |  | Add search facets and capability filters |
-| 2026-06-10 | `4dc1bdf` |  | Add search result Inspector handoff |
-| 2026-06-10 | `2135c1b` |  | Refresh documentation for structural cleanup milestone |
-| 2026-06-06 | `fcd2e1f` |  | Document timeline scope and clamp chart date range |
-| 2026-06-06 | `84e6a4f` |  | Add code structure audit planning document |
-| 2026-06-06 | `55a368c` |  | Remove dormant MapLibre preview code |
-| 2026-06-06 | `876eb1d` |  | Document Analytics chart extension contract |
-| 2026-06-06 | `0f712b5` |  | Add extracted evidence field controls |
-| 2026-06-06 | `338f204` |  | Restore evidence action normalization helper |
-| 2026-06-06 | `1fe9f82` |  | Extract column mapping field controls |
-| 2026-06-06 | `ce7c092` |  | Extract column mapping modal UI config |
-| 2026-06-06 | `5e8e022` |  | Reduce left control panel to compact Inspector shell |
-| 2026-06-06 | `e8ec660` |  | Extract embedded sample data from App |
-| 2026-06-06 | `133fd91` |  | Add developer orientation comments across source |
-| 2026-06-06 | `cfe8207` |  | Refresh documentation for visualization workspace consolidation |
-| 2026-06-06 | `43fa09d` | (HEAD -> main, origin/main, origin/HEAD) | Remove obsolete export workspace route |
-| 2026-06-06 | `aca8f1f` |  | Update visualization export wiring |
-| 2026-06-06 | `b6eb7c0` |  | Move chart export into visualization header |
-| 2026-06-06 | `0b0cacd` |  | Simplify hamburger menu and add Explore workspace |
-| 2026-06-06 | `47aaa03` |  | Remove redundant chart workspace header |
-| 2026-06-06 | `675a655` |  | Fit charts to workspace and minimize map overlays |
-| 2026-06-06 | `b10a68b` |  | Compact visualization header and timeline controls |
-| 2026-06-06 | `b0d83fb` |  | Simplify chart workspace and add bottom timeline scrubber |
-| 2026-06-06 | `7fcb348` |  | Document flexible data and chart capability milestone |
-| 2026-06-06 | `08b628b` | (HEAD -> main, origin/main, origin/HEAD) | Use include and ignore checkboxes for evidence fields |
-| 2026-06-06 | `231ccde` |  | Accept generic chart records |
-| 2026-06-06 | `b19019e` |  | Generalize user-facing language beyond correspondence |
-| 2026-06-06 | `ab7affa` |  | Clean up flexible Analytics chart controls |
-| 2026-06-06 | `ec6a70e` |  | Support record-count sunburst charts |
-| 2026-06-06 | `596b958` |  | Support record-count histograms |
-| 2026-06-06 | `b2dcde5` |  | Add flexible Analytics chart variables |
-| 2026-06-06 | `6d0b37c` |  | Wire visualization availability state |
-| 2026-06-06 | `b273a27` |  | Make visualization menu hover more forgiving |
-| 2026-06-06 | `aae209a` |  | Document data capability mapping milestone |
-| 2026-06-06 | `e7c3b57` |  | Add point-location role mapping |
-| 2026-06-06 | `85f3d46` |  | Move data capability audit to mapping review |
-| 2026-06-06 | `eef9cfe` |  | Show read-only data capability summaries |
-| 2026-06-06 | `1889b95` |  | Add data capability audit helper |
-| 2026-06-06 | `bfc8872` |  | Add Peridot data capability model plan |
-| 2026-06-05 | `4f280a0` |  | Use gold accent for workspace button hover states |
-| 2026-06-05 | `737a970` |  | Apply Home-style visual system to full workspaces |
-| 2026-06-05 | `c0ea2ab` |  | Refine Home workspace layout and menu access |
-| 2026-06-05 | `a9a25f1` |  | Remove Home navigation from active workspaces |
-| 2026-06-05 | `88ab302` |  | Refine Home workspace card styling |
-| 2026-06-04 | `b24e19a` |  | Link Inspector directed route rows |
-| 2026-06-04 | `ed0f2c7` |  | Make compact Inspector summary tiles open workspace |
-| 2026-06-04 | `ace7f52` |  | Fix linked letter person and place navigation |
-| 2026-06-04 | `0a1b57a` |  | Link letter detail people and places |
-| 2026-06-04 | `6f67ac7` |  | Move linked letters into Inspector history |
-| 2026-06-04 | `6c38fac` |  | Open Inspector person and place links in workspace |
-| 2026-06-04 | `6994b35` |  | Reduce compact Inspector content |
-| 2026-06-04 | `f2336f8` |  | Apply Inspector shell palette refinements |
-| 2026-06-04 | `45d1c8b` |  | Adjust Inspector clickable object palette |
-| 2026-06-04 | `e02a4a3` |  | Refine dual-mode Inspector visual treatment |
-| 2026-06-04 | `224bf5d` |  | Refine dual-mode Inspector close and expand behavior |
-| 2026-06-04 | `7a9e310` |  | Route menu Inspector away from compact panel |
-| 2026-06-04 | `99c0b99` |  | Track compact Inspector presentation mode |
-| 2026-06-04 | `c2808ce` |  | Add inert Inspector presentation mode state |
-| 2026-06-04 | `aa90665` |  | Organize project documentation |
-| 2026-06-04 | `3377274` |  | Prepare shared Inspector content boundary |
-| 2026-06-04 | `b7e3edd` |  | Add Inspector workspace design contract |
-| 2026-06-04 | `b47fda2` |  | Refresh documentation for workspace routing milestone |
-| 2026-06-02 | `55fae50` |  | Update routing contract after workspace promotions |
-| 2026-06-02 | `82178c5` |  | Promote Search to full workspace |
-| 2026-06-02 | `2c53796` |  | Promote Export to full workspace |
-| 2026-06-02 | `8fc96b3` |  | Extract Peridot workspace config |
-| 2026-06-02 | `9cd3f3f` |  | Clean workspace routing comments |
-| 2026-06-02 | `9240745` |  | Fix Visualizations workspace export |
-| 2026-06-02 | `25fc046` |  | Extract Peridot visualizations workspace |
-| 2026-06-02 | `fcf6bb6` |  | Extract Peridot data workspace |
-| 2026-06-02 | `9428766` |  | Extract Peridot theme workspace |
-| 2026-06-02 | `18c2912` |  | Extract Peridot home workspace |
-| 2026-06-02 | `6c16403` |  | Extract Peridot hamburger menu |
-| 2026-06-02 | `30b114b` |  | Add Peridot routing contract audit |
-| 2026-06-02 | `8384dee` |  | Fit Analytics workspace preview |
-| 2026-06-02 | `7a8ed7d` |  | Compact Visualizations workspace controls |
-| 2026-06-02 | `9b67d28` |  | Move Theme to full workspace |
-| 2026-06-02 | `bb0c0ed` |  | Refine hamburger menu visual layout |
-| 2026-06-02 | `2336915` |  | Route mapped imports to visualization workspace |
-| 2026-06-02 | `576bb72` |  | Fix visualization workspace viewport initialization |
-| 2026-06-02 | `56f2a49` |  | Add internal workspace state model |
-| 2026-06-02 | `b42f6fd` |  | Add Peridot interface redesign plan |
-| 2026-06-02 | `10017ec` |  | Document workbook import and Inspector profile milestone |
-| 2026-06-02 | `0f72182` |  | Remove redundant Inspector correspondents summary row |
-| 2026-06-02 | `8564e33` |  | Fix place profiles and split directed route summaries |
-| 2026-06-02 | `b1ef30a` |  | Refine Inspector profile relationship sections |
-| 2026-06-02 | `d9f0090` |  | Improve Inspector person place profiles and linked letter navigation |
-| 2026-06-02 | `9c8971b` |  | Display custom Inspector fields in linked letters |
-| 2026-06-02 | `5f25322` |  | Select custom Inspector fields from joined workbook sheets |
-| 2026-06-02 | `964ce57` |  | Import multi-sheet workbooks by unique ID joins |
-| 2026-06-02 | `ac31c38` |  | Configure workbook sheet joins by unique ID |
-| 2026-06-02 | `77b1575` |  | Preview multi-sheet workbook mapping |
-| 2026-06-02 | `2a800b3` |  | Add Peridot workbook mapping model helper |
-| 2026-06-02 | `dd22abc` |  | Stabilize multi-sheet workbook staging |
-| 2026-06-02 | `f503df6` |  | Refresh documentation with full commit history |
-| 2026-06-02 | `4d11cb3` |  | Add Peridot workbook parsing helper |
-| 2026-06-02 | `212d689` |  | Clarify column mapping cancel and import actions |
-| 2026-06-02 | `d270c9d` |  | Import mapped arbitrary CSV and TSV data |
-| 2026-06-02 | `a058730` |  | Add Peridot column mapping workspace |
-| 2026-06-02 | `a4062ba` |  | Stage arbitrary CSV and TSV column mapping uploads |
-| 2026-06-02 | `bba50e1` |  | Add Peridot column mapping helper |
-| 2026-06-02 | `f432ccc` |  | Remove legacy three-file upload workflow |
-| 2026-06-02 | `44d2042` |  | Document single Peridot CSV upload workflow |
-| 2026-06-02 | `930c807` |  | Persist Peridot upload summary in Data Inputs |
-| 2026-06-02 | `cbc35d0` |  | Add single Peridot CSV upload workflow |
-| 2026-06-01 | `61f3c4b` |  | Add Peridot CSV validation summary helper |
-| 2026-06-01 | `3d5fb79` |  | Add Peridot CSV template normalizer |
-| 2026-06-01 | `8e7a8a4` |  | Add Peridot CSV schema contract |
-| 2026-05-23 | `9453232` |  | Document Search and Filter layout and Analytics polish |
-| 2026-05-23 | `bdd0843` |  | Refine expanded analytics backdrop contrast |
-| 2026-05-23 | `64d44f2` |  | Improve analytics tooltip contrast |
-| 2026-05-23 | `e02c1de` |  | Move filter status above action buttons |
-| 2026-05-23 | `8bfd422` |  | Refine compact Search and Filter layout |
-| 2026-05-23 | `b2147bb` |  | Consolidate Search and Filter layout |
-| 2026-05-23 | `1ae3f03` |  | Document Search and Filter milestone |
-| 2026-05-23 | `01de3d8` |  | Show filter update status before applying changes |
-| 2026-05-23 | `c98c242` |  | Split route filters by place and people |
-| 2026-05-23 | `1578d10` |  | Add route filter |
-| 2026-05-23 | `ea19fc8` |  | Improve predictive suggestion menu scrolling |
-| 2026-05-23 | `9c179f7` |  | Add predictive suggestions for person and place filters |
-| 2026-05-23 | `cc26530` |  | Add person and place filters |
-| 2026-05-23 | `019acef` |  | Add clear filters and reset playback on apply |
-| 2026-05-23 | `d5e7667` |  | Apply Search and Filter changes on request |
-| 2026-05-23 | `8912b8f` |  | Strengthen full-file review workflow rule |
-| 2026-05-23 | `b348f12` |  | Move date range controls into Search and Filter |
-| 2026-05-23 | `a890b13` |  | Move minimum weight filter into Search and Filter |
-| 2026-05-23 | `e6b477d` |  | Add Search and Filter panel shell |
-| 2026-05-23 | `2eb3461` |  | Document Search and Filter panel contract |
-| 2026-05-23 | `9d24fbf` |  | Document Analytics feature milestone |
-| 2026-05-23 | `3352403` |  | Fix Analytics expanded overlay and variable options |
-| 2026-05-23 | `4b631be` |  | Refine Analytics variables and expanded chart overlay |
-| 2026-05-23 | `416dced` |  | Refine Analytics chart icons and expanded view |
-| 2026-05-23 | `2320bfe` |  | Expand Analytics chart controls |
-| 2026-05-23 | `961bf45` |  | Clarify Analytics chart variable controls |
-| 2026-05-23 | `4b90e4e` |  | Add additional Analytics chart types |
-| 2026-05-23 | `caddd3c` |  | Refine Analytics chart panel interactions |
-| 2026-05-23 | `04d95a7` |  | Add Analytics side panel charts |
-| 2026-05-14 | `b5dc2b5` |  | Document legacy continuation after pausing MapLibre work |
-| 2026-05-14 | `2d76839` | (tag: checkpoint-maplibre-migrated-overlay-paused, origin/maplibre-native-geographic-view, maplibre-native-geographic-view) | Fix linked letter encoding display |
-| 2026-05-14 | `2c0be03` |  | Make MapLibre people view and force-directed fallback work |
-| 2026-05-14 | `5762d0e` |  | Refresh documentation for MapLibre migrated overlay milestone |
-| 2026-05-14 | `268b18c` |  | Add MapLibre hover feedback |
-| 2026-05-14 | `8137db7` |  | Curve MapLibre aggregated routes |
-| 2026-05-13 | `c0a4b8a` |  | Restore MapLibre migrated overlay after extraction regression |
-| 2026-05-13 | `dd148e1` |  | Extract MapLibre cluster and aggregate IDs |
-| 2026-05-13 | `57d3cc1` |  | Add MapLibre cluster count labels |
-| 2026-05-13 | `c7da28c` |  | Add MapLibre cluster selection feedback |
-| 2026-05-13 | `2ccaaeb` |  | Show MapLibre aggregated route details in inspector |
-| 2026-05-13 | `084ce9d` |  | Enrich MapLibre aggregated route inspector payload |
-| 2026-05-13 | `526534a` |  | Aggregate MapLibre routes between visible endpoints |
-| 2026-05-13 | `8a563cc` |  | Hide MapLibre cluster member nodes |
-| 2026-05-13 | `be7d9ae` |  | Route MapLibre cluster clicks to inspector |
-| 2026-05-13 | `1e8456f` |  | Add dynamic MapLibre cluster diagnostic |
-| 2026-05-13 | `bb11f6a` |  | Add static MapLibre cluster lifecycle diagnostic |
-| 2026-05-13 | `3f26cc2` |  | Broaden MapLibre lifecycle diagnostics |
-| 2026-05-13 | `3646cc6` |  | Refresh documentation for MapLibre native branch handoff |
-| 2026-05-13 | `4c9ed6f` |  | Extract MapLibre layer configuration |
-| 2026-05-13 | `c420a5d` |  | Extract MapLibre feature builders |
-| 2026-05-13 | `b7fb244` |  | Add MapLibre native geographic view plan |
-| 2026-05-13 | `10051c0` | (tag: checkpoint-maplibre-preview-prototype) | Add MapLibre selected filter layers |
-| 2026-05-13 | `b7c61a2` |  | Add MapLibre route hit layer |
-| 2026-05-13 | `f2fdcf9` |  | Add cursor-only MapLibre hover detection |
-| 2026-05-13 | `5f3f053` |  | Route MapLibre feature clicks to inspector |
-| 2026-05-13 | `2597462` |  | Remove MapLibre SVG node probe overlay |
-| 2026-05-13 | `7eebdee` |  | Add simple MapLibre node layer probe |
-| 2026-05-13 | `1f0d322` |  | Render MapLibre route probes as GeoJSON layer |
-| 2026-05-13 | `443d7ac` |  | Add MapLibre route projection probe |
-| 2026-05-12 | `6096069` |  | Add MapLibre projection probe |
-| 2026-05-12 | `33afaae` |  | Add MapLibre preview diagnostics |
-| 2026-05-12 | `da1463f` |  | Add MapLibre workspace preview path |
-| 2026-05-12 | `93f0961` |  | Add isolated MapLibre map stage |
-| 2026-05-12 | `1d816a5` |  | Add MapLibre hybrid map-system audit |
-| 2026-05-12 | `4e08720` |  | Direct workflow charter baseline reference to changelog |
-| 2026-05-12 | `d893050` |  | Refresh documentation for side panel rail tabs |
-| 2026-05-12 | `8539c68` |  | Clarify timeline rail icon |
-| 2026-05-12 | `def4265` |  | Add timeline side panel tab |
-| 2026-05-12 | `6a672d9` |  | Add export side panel tab |
-| 2026-05-12 | `f1394c6` |  | Add data inputs side panel tab |
-| 2026-05-12 | `5b38c4e` |  | Update shared panel rail icons |
-| 2026-05-04 | `dcce703` |  | Style shared panel icon rail |
-| 2026-05-04 | `2acdb91` |  | Remove obsolete side panel top tabs |
-| 2026-05-04 | `6142817` |  | Anchor shared panel icon rail to panel shell |
-| 2026-05-04 | `4653f20` |  | Remove obsolete audit documentation listings |
-| 2026-05-04 | `8882b69` |  | Remove obsolete audit documentation references |
-| 2026-05-04 | `06c1843` |  | Clean shared side panel source comments |
-| 2026-05-04 | `f7407eb` |  | Refresh documentation for shared panel baseline |
-| 2026-05-04 | `4a17d1c` |  | Make inspector panel content-only |
-| 2026-05-04 | `b62c74b` |  | Use shared side panel shell |
-| 2026-05-04 | `e41d8bc` |  | Split side panel open state from active tab |
-| 2026-05-04 | `88b0c19` |  | Rename inspector panel shell for left dock |
-| 2026-05-04 | `2126c9b` |  | Open inspector in left panel dock |
-| 2026-05-04 | `f98b3e5` |  | Add panel mode switcher tabs |
-| 2026-05-04 | `df4075a` |  | Move side panel toggles to left rail |
-| 2026-05-04 | `17cf020` |  | Enforce single active side panel |
-| 2026-05-04 | `0063145` |  | Use menu icon for inspector toggle |
-| 2026-05-02 | `63003c1` |  | Group cluster inspector members by place |
-| 2026-05-02 | `fed4b5b` |  | Use volume-based zoom-responsive cluster sizing |
-| 2026-05-02 | `3187d05` |  | Increase dynamic node radius contrast |
-| 2026-05-02 | `ed39e55` |  | Make cluster nodes open actionable inspector views |
-| 2026-05-02 | `04eb8b5` |  | Refresh documentation for safe year-based baseline |
-| 2026-05-02 | `57b946e` |  | Make timeline year-based |
-| 2026-04-30 | `79d5ae1` |  | Remove show all dates shortcut |
-| 2026-04-30 | `3fedd97` |  | Tighten minimum weight helper text |
-| 2026-04-30 | `96064e2` |  | Set people as default view and simplify view buttons |
-| 2026-04-30 | `fa486b8` |  | Remove orphaned panel helper functions |
-| 2026-04-30 | `2d627e2` |  | Remove legacy inspector bodies from App |
-| 2026-04-30 | `149315a` |  | Extract inspector node view |
-| 2026-04-30 | `003fae1` |  | Split empty cluster and edge inspector views |
-| 2026-04-30 | `c0a15fd` |  | Extract inspector shell and router |
-| 2026-04-30 | `6a32004` |  | Harden inspector contract in place |
-| 2026-04-30 | `86ad35f` |  | Extract left control panel component |
-| 2026-04-30 | `113fb84` |  | Harden control panel contract in place |
-| 2026-04-22 | `4236952` |  | Append full development history to changelog |
-| 2026-04-22 | `391174a` |  | Refresh Peridot documentation for publication baseline |
-| 2026-04-22 | `951b450` |  | Replace embedded sample data with current publication dataset |
-| 2026-04-22 | `f859595` |  | Add itch.io HTML5 build packaging support |
-| 2026-04-22 | `f959fac` |  | Use countries50m as the fixed basemap |
-| 2026-04-21 | `b1fdbd5` |  | Update maintainer handoff documentation |
-| 2026-04-21 | `dd12281` |  | Normalize summary panel spacing |
-| 2026-04-21 | `4fdaf73` |  | Rename timeline panel heading |
-| 2026-04-21 | `db5bb1f` |  | Tighten left panel organization |
-| 2026-04-21 | `ba746b1` |  | Simplify theme panel text |
-| 2026-04-21 | `c0fc600` | (tag: checkpoint-map-theme-c0fc600) | Retune active country fills for peridot and modern maps |
-| 2026-04-21 | `56f0080` |  | Highlight countries containing visible nodes |
-| 2026-04-21 | `5cbe9c3` |  | Refine early modern node hover and selected colors |
-| 2026-04-21 | `850176f` |  | Refine hovered and selected node states |
-| 2026-04-21 | `3e43dc9` |  | Add hovered node color feedback |
-| 2026-04-21 | `919ea5f` |  | Increase green layering in peridot map theme |
-| 2026-04-21 | `c666d29` |  | Add peridot default app theme |
-| 2026-04-20 | `9be5f4a` |  | Tighten maintainer docs audit fixes |
-| 2026-04-20 | `43403c3` |  | Restore detail to maintainer documentation |
-| 2026-04-20 | `02ecb11` |  | Document inspector navigation feature set |
-| 2026-04-20 | `5af819b` |  | Add inspector back navigation |
-| 2026-04-20 | `b3e6fe8` |  | Add place navigation sections to person inspector |
-| 2026-04-20 | `6772c1d` |  | Clarify connected correspondents count label |
-| 2026-04-20 | `ab0e1fe` |  | Show relationship counts in connected correspondents buttons |
-| 2026-04-20 | `06e0b3b` |  | Sort connected correspondents by relationship weight |
-| 2026-04-20 | `17be829` |  | Add connected correspondents inspector navigation section |
-| 2026-04-20 | `cfa6d63` |  | Add inspector selection plumbing for person and place detail targets |
-| 2026-04-20 | `2b3c265` |  | Document person force layout and force-view background behavior |
-| 2026-04-20 | `ffb5a30` |  | Hide map backdrop in force-directed person view |
-| 2026-04-20 | `225c7e4` |  | Wire person force layout into App graph builder |
-| 2026-04-20 | `3480858` |  | Add pre-settled d3-force person network layout |
-| 2026-04-20 | `81a75d0` |  | Add d3-force dependency for person-network layout work |
-| 2026-04-20 | `5a17721` |  | Replace README with current repository overview |
-| 2026-04-20 | `8241ae1` |  | Add screenshots and standardize image paths |
-| 2026-04-20 | `99584a9` |  | Document completed export behavior fixes |
-| 2026-04-20 | `5575007` |  | Reflect visible date range in export metadata |
-| 2026-04-20 | `c9f010e` |  | Fix PNG export color rendering |
-| 2026-04-20 | `248833a` |  | Document completed timeline behavior fixes |
-| 2026-04-20 | `1b2655e` |  | Preserve viewport during timeline playback interactions |
-| 2026-04-20 | `fd0d77a` |  | Add viewport timeline reset audit |
-| 2026-04-20 | `6c41fce` |  | Constrain timeline end date to selected start date |
-| 2026-04-20 | `099882a` |  | Add control panel dependency map |
-| 2026-04-20 | `a53ccbf` |  | Add maintainer comments for control panel architecture |
-| 2026-04-20 | `c526e6c` |  | Document deferred export panel extraction |
-| 2026-04-20 | `4ddf444` |  | Document deferred PNG export issue |
-| 2026-04-20 | `5bbdad8` |  | Extract export helpers from App |
-| 2026-04-20 | `897e06a` |  | Document step 2 timeline work and deferred follow-ups |
-| 2026-04-20 | `383ecc0` | (tag: checkpoint-pre-step-2c) | Extract timeline playback panel from App |
-| 2026-04-20 | `b2dbe35` |  | Extract timeline playback helpers from App |
-| 2026-04-17 | `dad15a4` | (tag: checkpoint-between-step-1-and-step-2) | Update maintainer guide and add changelog |
-| 2026-04-17 | `145cfc2` |  | Extract map interaction handlers from App |
-| 2026-04-17 | `30e5b1b` |  | Extract interaction resolution helpers from App |
-| 2026-04-17 | `181a63e` | (tag: checkpoint-pre-step-1c) | Extract map stage components from App |
-| 2026-04-17 | `02dcfc4` |  | Extract pure map layout helpers from App |
-| 2026-04-17 | `7742149` |  | Update README to reflect current app and workflow |
-| 2026-04-17 | `c3f856f` |  | Add maintainer guide and project workflow charter |
-| 2026-04-17 | `8e07339` |  | Use dark navy modern node labels with white outline |
-| 2026-04-17 | `0791ffd` |  | Strengthen modern node label typography |
-| 2026-04-17 | `100d3fb` |  | Refine modern theme colors and label contrast |
-| 2026-04-17 | `b7e4749` |  | Use clean themed canvas for force-directed person view |
-| 2026-04-17 | `f207a37` |  | Implement true force-directed person layout |
-| 2026-04-17 | `e4f64c6` |  | Remove stray project folders from repo root |
-| 2026-04-17 | `80bbb97` |  | Adjust shared edge multiplier to 5 |
-| 2026-04-17 | `db38072` |  | Checkpoint before applying person scaling update |
-| 2026-04-17 | `eb3ba4b` |  | Initial rebuilt app baseline |
+| 2026-06-12 | `10f6e19` | Polish analytics chart axes and summary panels | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-12 | `880cfff` | Add manual analytics series selection |  |
+| 2026-06-12 | `cd7dfff` | Fix grouped chart count buckets |  |
+| 2026-06-12 | `699e33a` | Default chart date axis to year |  |
+| 2026-06-12 | `805f770` | Harden analytics chart logic |  |
+| 2026-06-12 | `8f55a47` | Add finite chart color library |  |
+| 2026-06-12 | `5e895ad` | Refine chart dropdown and series contrast |  |
+| 2026-06-12 | `ab6dc8b` | Refine chart workspace controls and colors |  |
+| 2026-06-12 | `2e57f42` | Compact chart controls sidebar |  |
+| 2026-06-12 | `c5ff6c6` | Polish chart controls sidebar |  |
+| 2026-06-11 | `7396864` | Add light navy sea map treatment |  |
+| 2026-06-11 | `aba420e` | Rebalance map palette and label density |  |
+| 2026-06-11 | `cc21008` | Polish visualization header tabs |  |
+| 2026-06-11 | `15985bf` | Improve visualization edge handles and map utility buttons |  |
+| 2026-06-11 | `cb26bdf` | Refine visualization bar toggle ornament |  |
+| 2026-06-11 | `e643a16` | Route Inspector colors through theme roles |  |
+| 2026-06-11 | `790ec66` | Clean up theming design audit files |  |
+| 2026-06-11 | `81dd7af` | Apply upload guide color direction and dropdown layering |  |
+| 2026-06-11 | `aa00efb` | Apply upload guide design direction |  |
+| 2026-06-11 | `0a686fe` | Add built-in Peridot palette presets |  |
+| 2026-06-11 | `4747639` | Anchor imported palettes to darkest and lightest roles |  |
+| 2026-06-11 | `ee4f75e` | Route whole-app palette imports through foundation tones |  |
+| 2026-06-11 | `1ba1682` | Improve palette image swatch detection |  |
+| 2026-06-11 | `e35ab68` | Add image palette import by theme area |  |
+| 2026-06-11 | `6e8dfa6` | Add palette role dashboard |  |
+| 2026-06-11 | `fed7d2e` | Add semantic palette system and theme toggle |  |
+| 2026-06-11 | `034ec67` | Centralize explicit color palette values |  |
+| 2026-06-10 | `d52392a` | Add capabilities tab to advanced search | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-10 | `3d296cb` | Route Explore directly to advanced search |  |
+| 2026-06-10 | `37f2755` | Clarify structured search Boolean labels |  |
+| 2026-06-10 | `13fd533` | Add Boolean structured search criteria |  |
+| 2026-06-10 | `86952c8` | Improve advanced search moss contrast |  |
+| 2026-06-10 | `d7b0e2f` | Add dataset-wide advanced search browse indexes |  |
+| 2026-06-10 | `8104739` | Wire structured criteria filtering |  |
+| 2026-06-10 | `c8cbd5e` | Add structured search suggestions |  |
+| 2026-06-10 | `e3c36e1` | Condense advanced search results layout |  |
+| 2026-06-10 | `a21bbd9` | Refine advanced search layout and palette |  |
+| 2026-06-10 | `e12ed84` | Add search facets and capability filters |  |
+| 2026-06-10 | `4dc1bdf` | Add search result Inspector handoff |  |
+| 2026-06-10 | `2135c1b` | Refresh documentation for structural cleanup milestone |  |
+| 2026-06-06 | `fcd2e1f` | Document timeline scope and clamp chart date range |  |
+| 2026-06-06 | `84e6a4f` | Add code structure audit planning document |  |
+| 2026-06-06 | `55a368c` | Remove dormant MapLibre preview code |  |
+| 2026-06-06 | `876eb1d` | Document Analytics chart extension contract |  |
+| 2026-06-06 | `0f712b5` | Add extracted evidence field controls |  |
+| 2026-06-06 | `338f204` | Restore evidence action normalization helper |  |
+| 2026-06-06 | `1fe9f82` | Extract column mapping field controls |  |
+| 2026-06-06 | `ce7c092` | Extract column mapping modal UI config |  |
+| 2026-06-06 | `5e8e022` | Reduce left control panel to compact Inspector shell |  |
+| 2026-06-06 | `e8ec660` | Extract embedded sample data from App |  |
+| 2026-06-06 | `133fd91` | Add developer orientation comments across source |  |
+| 2026-06-06 | `cfe8207` | Refresh documentation for visualization workspace consolidation |  |
+| 2026-06-06 | `43fa09d` | Remove obsolete export workspace route | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-06 | `aca8f1f` | Update visualization export wiring |  |
+| 2026-06-06 | `b6eb7c0` | Move chart export into visualization header |  |
+| 2026-06-06 | `0b0cacd` | Simplify hamburger menu and add Explore workspace |  |
+| 2026-06-06 | `47aaa03` | Remove redundant chart workspace header |  |
+| 2026-06-06 | `675a655` | Fit charts to workspace and minimize map overlays |  |
+| 2026-06-06 | `b10a68b` | Compact visualization header and timeline controls |  |
+| 2026-06-06 | `b0d83fb` | Simplify chart workspace and add bottom timeline scrubber |  |
+| 2026-06-06 | `7fcb348` | Document flexible data and chart capability milestone |  |
+| 2026-06-06 | `08b628b` | Use include and ignore checkboxes for evidence fields | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-06 | `231ccde` | Accept generic chart records |  |
+| 2026-06-06 | `b19019e` | Generalize user-facing language beyond correspondence |  |
+| 2026-06-06 | `ab7affa` | Clean up flexible Analytics chart controls |  |
+| 2026-06-06 | `ec6a70e` | Support record-count sunburst charts |  |
+| 2026-06-06 | `596b958` | Support record-count histograms |  |
+| 2026-06-06 | `b2dcde5` | Add flexible Analytics chart variables |  |
+| 2026-06-06 | `6d0b37c` | Wire visualization availability state |  |
+| 2026-06-06 | `b273a27` | Make visualization menu hover more forgiving |  |
+| 2026-06-06 | `aae209a` | Document data capability mapping milestone |  |
+| 2026-06-06 | `e7c3b57` | Add point-location role mapping |  |
+| 2026-06-06 | `85f3d46` | Move data capability audit to mapping review |  |
+| 2026-06-06 | `eef9cfe` | Show read-only data capability summaries |  |
+| 2026-06-06 | `1889b95` | Add data capability audit helper |  |
+| 2026-06-06 | `bfc8872` | Add Peridot data capability model plan |  |
+| 2026-06-05 | `4f280a0` | Use gold accent for workspace button hover states |  |
+| 2026-06-05 | `737a970` | Apply Home-style visual system to full workspaces |  |
+| 2026-06-05 | `c0ea2ab` | Refine Home workspace layout and menu access |  |
+| 2026-06-05 | `a9a25f1` | Remove Home navigation from active workspaces |  |
+| 2026-06-05 | `88ab302` | Refine Home workspace card styling |  |
+| 2026-06-04 | `b24e19a` | Link Inspector directed route rows |  |
+| 2026-06-04 | `ed0f2c7` | Make compact Inspector summary tiles open workspace |  |
+| 2026-06-04 | `ace7f52` | Fix linked letter person and place navigation |  |
+| 2026-06-04 | `0a1b57a` | Link letter detail people and places |  |
+| 2026-06-04 | `6f67ac7` | Move linked letters into Inspector history |  |
+| 2026-06-04 | `6c38fac` | Open Inspector person and place links in workspace |  |
+| 2026-06-04 | `6994b35` | Reduce compact Inspector content |  |
+| 2026-06-04 | `f2336f8` | Apply Inspector shell palette refinements |  |
+| 2026-06-04 | `45d1c8b` | Adjust Inspector clickable object palette |  |
+| 2026-06-04 | `e02a4a3` | Refine dual-mode Inspector visual treatment |  |
+| 2026-06-04 | `224bf5d` | Refine dual-mode Inspector close and expand behavior |  |
+| 2026-06-04 | `7a9e310` | Route menu Inspector away from compact panel |  |
+| 2026-06-04 | `99c0b99` | Track compact Inspector presentation mode |  |
+| 2026-06-04 | `c2808ce` | Add inert Inspector presentation mode state |  |
+| 2026-06-04 | `aa90665` | Organize project documentation |  |
+| 2026-06-04 | `3377274` | Prepare shared Inspector content boundary |  |
+| 2026-06-04 | `b7e3edd` | Add Inspector workspace design contract |  |
+| 2026-06-04 | `b47fda2` | Refresh documentation for workspace routing milestone |  |
+| 2026-06-02 | `55fae50` | Update routing contract after workspace promotions |  |
+| 2026-06-02 | `82178c5` | Promote Search to full workspace |  |
+| 2026-06-02 | `2c53796` | Promote Export to full workspace |  |
+| 2026-06-02 | `8fc96b3` | Extract Peridot workspace config |  |
+| 2026-06-02 | `9cd3f3f` | Clean workspace routing comments |  |
+| 2026-06-02 | `9240745` | Fix Visualizations workspace export |  |
+| 2026-06-02 | `25fc046` | Extract Peridot visualizations workspace |  |
+| 2026-06-02 | `fcf6bb6` | Extract Peridot data workspace |  |
+| 2026-06-02 | `9428766` | Extract Peridot theme workspace |  |
+| 2026-06-02 | `18c2912` | Extract Peridot home workspace |  |
+| 2026-06-02 | `6c16403` | Extract Peridot hamburger menu |  |
+| 2026-06-02 | `30b114b` | Add Peridot routing contract audit |  |
+| 2026-06-02 | `8384dee` | Fit Analytics workspace preview |  |
+| 2026-06-02 | `7a8ed7d` | Compact Visualizations workspace controls |  |
+| 2026-06-02 | `9b67d28` | Move Theme to full workspace |  |
+| 2026-06-02 | `bb0c0ed` | Refine hamburger menu visual layout |  |
+| 2026-06-02 | `2336915` | Route mapped imports to visualization workspace |  |
+| 2026-06-02 | `576bb72` | Fix visualization workspace viewport initialization |  |
+| 2026-06-02 | `56f2a49` | Add internal workspace state model |  |
+| 2026-06-02 | `b42f6fd` | Add Peridot interface redesign plan |  |
+| 2026-06-02 | `10017ec` | Document workbook import and Inspector profile milestone |  |
+| 2026-06-02 | `0f72182` | Remove redundant Inspector correspondents summary row |  |
+| 2026-06-02 | `8564e33` | Fix place profiles and split directed route summaries |  |
+| 2026-06-02 | `b1ef30a` | Refine Inspector profile relationship sections |  |
+| 2026-06-02 | `d9f0090` | Improve Inspector person place profiles and linked letter navigation |  |
+| 2026-06-02 | `9c8971b` | Display custom Inspector fields in linked letters |  |
+| 2026-06-02 | `5f25322` | Select custom Inspector fields from joined workbook sheets |  |
+| 2026-06-02 | `964ce57` | Import multi-sheet workbooks by unique ID joins |  |
+| 2026-06-02 | `ac31c38` | Configure workbook sheet joins by unique ID |  |
+| 2026-06-02 | `77b1575` | Preview multi-sheet workbook mapping |  |
+| 2026-06-02 | `2a800b3` | Add Peridot workbook mapping model helper |  |
+| 2026-06-02 | `dd22abc` | Stabilize multi-sheet workbook staging |  |
+| 2026-06-02 | `f503df6` | Refresh documentation with full commit history |  |
+| 2026-06-02 | `4d11cb3` | Add Peridot workbook parsing helper |  |
+| 2026-06-02 | `212d689` | Clarify column mapping cancel and import actions |  |
+| 2026-06-02 | `d270c9d` | Import mapped arbitrary CSV and TSV data |  |
+| 2026-06-02 | `a058730` | Add Peridot column mapping workspace |  |
+| 2026-06-02 | `a4062ba` | Stage arbitrary CSV and TSV column mapping uploads |  |
+| 2026-06-02 | `bba50e1` | Add Peridot column mapping helper |  |
+| 2026-06-02 | `f432ccc` | Remove legacy three-file upload workflow |  |
+| 2026-06-02 | `44d2042` | Document single Peridot CSV upload workflow |  |
+| 2026-06-02 | `930c807` | Persist Peridot upload summary in Data Inputs |  |
+| 2026-06-02 | `cbc35d0` | Add single Peridot CSV upload workflow |  |
+| 2026-06-01 | `61f3c4b` | Add Peridot CSV validation summary helper |  |
+| 2026-06-01 | `3d5fb79` | Add Peridot CSV template normalizer |  |
+| 2026-06-01 | `8e7a8a4` | Add Peridot CSV schema contract |  |
+| 2026-05-23 | `9453232` | Document Search and Filter layout and Analytics polish |  |
+| 2026-05-23 | `bdd0843` | Refine expanded analytics backdrop contrast |  |
+| 2026-05-23 | `64d44f2` | Improve analytics tooltip contrast |  |
+| 2026-05-23 | `e02c1de` | Move filter status above action buttons |  |
+| 2026-05-23 | `8bfd422` | Refine compact Search and Filter layout |  |
+| 2026-05-23 | `b2147bb` | Consolidate Search and Filter layout |  |
+| 2026-05-23 | `1ae3f03` | Document Search and Filter milestone |  |
+| 2026-05-23 | `01de3d8` | Show filter update status before applying changes |  |
+| 2026-05-23 | `c98c242` | Split route filters by place and people |  |
+| 2026-05-23 | `1578d10` | Add route filter |  |
+| 2026-05-23 | `ea19fc8` | Improve predictive suggestion menu scrolling |  |
+| 2026-05-23 | `9c179f7` | Add predictive suggestions for person and place filters |  |
+| 2026-05-23 | `cc26530` | Add person and place filters |  |
+| 2026-05-23 | `019acef` | Add clear filters and reset playback on apply |  |
+| 2026-05-23 | `d5e7667` | Apply Search and Filter changes on request |  |
+| 2026-05-23 | `8912b8f` | Strengthen full-file review workflow rule |  |
+| 2026-05-23 | `b348f12` | Move date range controls into Search and Filter |  |
+| 2026-05-23 | `a890b13` | Move minimum weight filter into Search and Filter |  |
+| 2026-05-23 | `e6b477d` | Add Search and Filter panel shell |  |
+| 2026-05-23 | `2eb3461` | Document Search and Filter panel contract |  |
+| 2026-05-23 | `9d24fbf` | Document Analytics feature milestone |  |
+| 2026-05-23 | `3352403` | Fix Analytics expanded overlay and variable options |  |
+| 2026-05-23 | `4b631be` | Refine Analytics variables and expanded chart overlay |  |
+| 2026-05-23 | `416dced` | Refine Analytics chart icons and expanded view |  |
+| 2026-05-23 | `2320bfe` | Expand Analytics chart controls |  |
+| 2026-05-23 | `961bf45` | Clarify Analytics chart variable controls |  |
+| 2026-05-23 | `4b90e4e` | Add additional Analytics chart types |  |
+| 2026-05-23 | `caddd3c` | Refine Analytics chart panel interactions |  |
+| 2026-05-23 | `04d95a7` | Add Analytics side panel charts |  |
+| 2026-05-14 | `b5dc2b5` | Document legacy continuation after pausing MapLibre work |  |
+| 2026-05-14 | `2d76839` | Fix linked letter encoding display | (tag: checkpoint-maplibre-migrated-overlay-paused, origin/maplibre-native-geographic-view, maplibre-native-geographic-view) |
+| 2026-05-14 | `2c0be03` | Make MapLibre people view and force-directed fallback work |  |
+| 2026-05-14 | `5762d0e` | Refresh documentation for MapLibre migrated overlay milestone |  |
+| 2026-05-14 | `268b18c` | Add MapLibre hover feedback |  |
+| 2026-05-14 | `8137db7` | Curve MapLibre aggregated routes |  |
+| 2026-05-13 | `c0a4b8a` | Restore MapLibre migrated overlay after extraction regression |  |
+| 2026-05-13 | `dd148e1` | Extract MapLibre cluster and aggregate IDs |  |
+| 2026-05-13 | `57d3cc1` | Add MapLibre cluster count labels |  |
+| 2026-05-13 | `c7da28c` | Add MapLibre cluster selection feedback |  |
+| 2026-05-13 | `2ccaaeb` | Show MapLibre aggregated route details in inspector |  |
+| 2026-05-13 | `084ce9d` | Enrich MapLibre aggregated route inspector payload |  |
+| 2026-05-13 | `526534a` | Aggregate MapLibre routes between visible endpoints |  |
+| 2026-05-13 | `8a563cc` | Hide MapLibre cluster member nodes |  |
+| 2026-05-13 | `be7d9ae` | Route MapLibre cluster clicks to inspector |  |
+| 2026-05-13 | `1e8456f` | Add dynamic MapLibre cluster diagnostic |  |
+| 2026-05-13 | `bb11f6a` | Add static MapLibre cluster lifecycle diagnostic |  |
+| 2026-05-13 | `3f26cc2` | Broaden MapLibre lifecycle diagnostics |  |
+| 2026-05-13 | `3646cc6` | Refresh documentation for MapLibre native branch handoff |  |
+| 2026-05-13 | `4c9ed6f` | Extract MapLibre layer configuration |  |
+| 2026-05-13 | `c420a5d` | Extract MapLibre feature builders |  |
+| 2026-05-13 | `b7fb244` | Add MapLibre native geographic view plan |  |
+| 2026-05-13 | `10051c0` | Add MapLibre selected filter layers | (tag: checkpoint-maplibre-preview-prototype) |
+| 2026-05-13 | `b7c61a2` | Add MapLibre route hit layer |  |
+| 2026-05-13 | `f2fdcf9` | Add cursor-only MapLibre hover detection |  |
+| 2026-05-13 | `5f3f053` | Route MapLibre feature clicks to inspector |  |
+| 2026-05-13 | `2597462` | Remove MapLibre SVG node probe overlay |  |
+| 2026-05-13 | `7eebdee` | Add simple MapLibre node layer probe |  |
+| 2026-05-13 | `1f0d322` | Render MapLibre route probes as GeoJSON layer |  |
+| 2026-05-13 | `443d7ac` | Add MapLibre route projection probe |  |
+| 2026-05-12 | `6096069` | Add MapLibre projection probe |  |
+| 2026-05-12 | `33afaae` | Add MapLibre preview diagnostics |  |
+| 2026-05-12 | `da1463f` | Add MapLibre workspace preview path |  |
+| 2026-05-12 | `93f0961` | Add isolated MapLibre map stage |  |
+| 2026-05-12 | `1d816a5` | Add MapLibre hybrid map-system audit |  |
+| 2026-05-12 | `4e08720` | Direct workflow charter baseline reference to changelog |  |
+| 2026-05-12 | `d893050` | Refresh documentation for side panel rail tabs |  |
+| 2026-05-12 | `8539c68` | Clarify timeline rail icon |  |
+| 2026-05-12 | `def4265` | Add timeline side panel tab |  |
+| 2026-05-12 | `6a672d9` | Add export side panel tab |  |
+| 2026-05-12 | `f1394c6` | Add data inputs side panel tab |  |
+| 2026-05-12 | `5b38c4e` | Update shared panel rail icons |  |
+| 2026-05-04 | `dcce703` | Style shared panel icon rail |  |
+| 2026-05-04 | `2acdb91` | Remove obsolete side panel top tabs |  |
+| 2026-05-04 | `6142817` | Anchor shared panel icon rail to panel shell |  |
+| 2026-05-04 | `4653f20` | Remove obsolete audit documentation listings |  |
+| 2026-05-04 | `8882b69` | Remove obsolete audit documentation references |  |
+| 2026-05-04 | `06c1843` | Clean shared side panel source comments |  |
+| 2026-05-04 | `f7407eb` | Refresh documentation for shared panel baseline |  |
+| 2026-05-04 | `4a17d1c` | Make inspector panel content-only |  |
+| 2026-05-04 | `b62c74b` | Use shared side panel shell |  |
+| 2026-05-04 | `e41d8bc` | Split side panel open state from active tab |  |
+| 2026-05-04 | `88b0c19` | Rename inspector panel shell for left dock |  |
+| 2026-05-04 | `2126c9b` | Open inspector in left panel dock |  |
+| 2026-05-04 | `f98b3e5` | Add panel mode switcher tabs |  |
+| 2026-05-04 | `df4075a` | Move side panel toggles to left rail |  |
+| 2026-05-04 | `17cf020` | Enforce single active side panel |  |
+| 2026-05-04 | `0063145` | Use menu icon for inspector toggle |  |
+| 2026-05-02 | `63003c1` | Group cluster inspector members by place |  |
+| 2026-05-02 | `fed4b5b` | Use volume-based zoom-responsive cluster sizing |  |
+| 2026-05-02 | `3187d05` | Increase dynamic node radius contrast |  |
+| 2026-05-02 | `ed39e55` | Make cluster nodes open actionable inspector views |  |
+| 2026-05-02 | `04eb8b5` | Refresh documentation for safe year-based baseline |  |
+| 2026-05-02 | `57b946e` | Make timeline year-based |  |
+| 2026-04-30 | `79d5ae1` | Remove show all dates shortcut |  |
+| 2026-04-30 | `3fedd97` | Tighten minimum weight helper text |  |
+| 2026-04-30 | `96064e2` | Set people as default view and simplify view buttons |  |
+| 2026-04-30 | `fa486b8` | Remove orphaned panel helper functions |  |
+| 2026-04-30 | `2d627e2` | Remove legacy inspector bodies from App |  |
+| 2026-04-30 | `149315a` | Extract inspector node view |  |
+| 2026-04-30 | `003fae1` | Split empty cluster and edge inspector views |  |
+| 2026-04-30 | `c0a15fd` | Extract inspector shell and router |  |
+| 2026-04-30 | `6a32004` | Harden inspector contract in place |  |
+| 2026-04-30 | `86ad35f` | Extract left control panel component |  |
+| 2026-04-30 | `113fb84` | Harden control panel contract in place |  |
+| 2026-04-22 | `4236952` | Append full development history to changelog |  |
+| 2026-04-22 | `391174a` | Refresh Peridot documentation for publication baseline |  |
+| 2026-04-22 | `951b450` | Replace embedded sample data with current publication dataset |  |
+| 2026-04-22 | `f859595` | Add itch.io HTML5 build packaging support |  |
+| 2026-04-22 | `f959fac` | Use countries50m as the fixed basemap |  |
+| 2026-04-21 | `b1fdbd5` | Update maintainer handoff documentation |  |
+| 2026-04-21 | `dd12281` | Normalize summary panel spacing |  |
+| 2026-04-21 | `4fdaf73` | Rename timeline panel heading |  |
+| 2026-04-21 | `db5bb1f` | Tighten left panel organization |  |
+| 2026-04-21 | `ba746b1` | Simplify theme panel text |  |
+| 2026-04-21 | `c0fc600` | Retune active country fills for peridot and modern maps | (tag: checkpoint-map-theme-c0fc600) |
+| 2026-04-21 | `56f0080` | Highlight countries containing visible nodes |  |
+| 2026-04-21 | `5cbe9c3` | Refine early modern node hover and selected colors |  |
+| 2026-04-21 | `850176f` | Refine hovered and selected node states |  |
+| 2026-04-21 | `3e43dc9` | Add hovered node color feedback |  |
+| 2026-04-21 | `919ea5f` | Increase green layering in peridot map theme |  |
+| 2026-04-21 | `c666d29` | Add peridot default app theme |  |
+| 2026-04-20 | `9be5f4a` | Tighten maintainer docs audit fixes |  |
+| 2026-04-20 | `43403c3` | Restore detail to maintainer documentation |  |
+| 2026-04-20 | `02ecb11` | Document inspector navigation feature set |  |
+| 2026-04-20 | `5af819b` | Add inspector back navigation |  |
+| 2026-04-20 | `b3e6fe8` | Add place navigation sections to person inspector |  |
+| 2026-04-20 | `6772c1d` | Clarify connected correspondents count label |  |
+| 2026-04-20 | `ab0e1fe` | Show relationship counts in connected correspondents buttons |  |
+| 2026-04-20 | `06e0b3b` | Sort connected correspondents by relationship weight |  |
+| 2026-04-20 | `17be829` | Add connected correspondents inspector navigation section |  |
+| 2026-04-20 | `cfa6d63` | Add inspector selection plumbing for person and place detail targets |  |
+| 2026-04-20 | `2b3c265` | Document person force layout and force-view background behavior |  |
+| 2026-04-20 | `ffb5a30` | Hide map backdrop in force-directed person view |  |
+| 2026-04-20 | `225c7e4` | Wire person force layout into App graph builder |  |
+| 2026-04-20 | `3480858` | Add pre-settled d3-force person network layout |  |
+| 2026-04-20 | `81a75d0` | Add d3-force dependency for person-network layout work |  |
+| 2026-04-20 | `5a17721` | Replace README with current repository overview |  |
+| 2026-04-20 | `8241ae1` | Add screenshots and standardize image paths |  |
+| 2026-04-20 | `99584a9` | Document completed export behavior fixes |  |
+| 2026-04-20 | `5575007` | Reflect visible date range in export metadata |  |
+| 2026-04-20 | `c9f010e` | Fix PNG export color rendering |  |
+| 2026-04-20 | `248833a` | Document completed timeline behavior fixes |  |
+| 2026-04-20 | `1b2655e` | Preserve viewport during timeline playback interactions |  |
+| 2026-04-20 | `fd0d77a` | Add viewport timeline reset audit |  |
+| 2026-04-20 | `6c41fce` | Constrain timeline end date to selected start date |  |
+| 2026-04-20 | `099882a` | Add control panel dependency map |  |
+| 2026-04-20 | `a53ccbf` | Add maintainer comments for control panel architecture |  |
+| 2026-04-20 | `c526e6c` | Document deferred export panel extraction |  |
+| 2026-04-20 | `4ddf444` | Document deferred PNG export issue |  |
+| 2026-04-20 | `5bbdad8` | Extract export helpers from App |  |
+| 2026-04-20 | `897e06a` | Document step 2 timeline work and deferred follow-ups |  |
+| 2026-04-20 | `383ecc0` | Extract timeline playback panel from App | (tag: checkpoint-pre-step-2c) |
+| 2026-04-20 | `b2dbe35` | Extract timeline playback helpers from App |  |
+| 2026-04-17 | `dad15a4` | Update maintainer guide and add changelog | (tag: checkpoint-between-step-1-and-step-2) |
+| 2026-04-17 | `145cfc2` | Extract map interaction handlers from App |  |
+| 2026-04-17 | `30e5b1b` | Extract interaction resolution helpers from App |  |
+| 2026-04-17 | `181a63e` | Extract map stage components from App | (tag: checkpoint-pre-step-1c) |
+| 2026-04-17 | `02dcfc4` | Extract pure map layout helpers from App |  |
+| 2026-04-17 | `7742149` | Update README to reflect current app and workflow |  |
+| 2026-04-17 | `c3f856f` | Add maintainer guide and project workflow charter |  |
+| 2026-04-17 | `8e07339` | Use dark navy modern node labels with white outline |  |
+| 2026-04-17 | `0791ffd` | Strengthen modern node label typography |  |
+| 2026-04-17 | `100d3fb` | Refine modern theme colors and label contrast |  |
+| 2026-04-17 | `b7e4749` | Use clean themed canvas for force-directed person view |  |
+| 2026-04-17 | `f207a37` | Implement true force-directed person layout |  |
+| 2026-04-17 | `e4f64c6` | Remove stray project folders from repo root |  |
+| 2026-04-17 | `80bbb97` | Adjust shared edge multiplier to 5 |  |
+| 2026-04-17 | `db38072` | Checkpoint before applying person scaling update |  |
+| 2026-04-17 | `eb3ba4b` | Initial rebuilt app baseline |  |
