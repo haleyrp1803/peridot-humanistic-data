@@ -111,31 +111,34 @@ function FloatingOrnamentArrowToggle({
     <button
       type="button"
       onClick={onClick}
-      className="fixed z-[2147483647] flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-color-hex-b58b42-a70)] bg-[linear-gradient(145deg,var(--peridot-color-hex-f5ecd2),var(--peridot-color-hex-e8d8b5))] text-[var(--peridot-color-hex-173120)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-32),inset_0_1px_0_var(--peridot-color-hex-ffffff-a45),inset_0_-1px_0_var(--peridot-color-hex-b58b42-a35)] ring-1 ring-[var(--peridot-color-hex-173120-a18)] transition hover:scale-[1.03] hover:bg-[linear-gradient(145deg,var(--peridot-color-hex-f9f1df),var(--peridot-color-hex-e3c277))] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f5ecd2)] pointer-events-auto"
+      className="pointer-events-auto fixed z-[25] flex h-9 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_78%,transparent)] text-[var(--peridot-role-ornament-line)] shadow-[0_6px_18px_rgba(0,0,0,0.34)] backdrop-blur-[1px] transition duration-150 hover:scale-[1.04] hover:border-[var(--peridot-role-ornament-line)] hover:text-[var(--peridot-role-ornament-sparkle)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-text-on-dark)]"
       style={{ left, top }}
       aria-label={label}
-      title={label}
     >
       <svg
         aria-hidden="true"
-        viewBox="0 0 24 24"
-        className={`h-5 w-5 ${arrowDirection ? '' : 'rotate-180'}`}
+        viewBox="0 0 72 42"
+        className={`h-6 w-10 ${arrowDirection ? '' : 'rotate-180'}`}
         fill="none"
       >
         <path
-          d="M12 4.35C10.9 6.82 9.12 8.78 7.05 10.45C8.57 10.26 10.25 10.95 12 12.62C13.75 10.95 15.43 10.26 16.95 10.45C14.88 8.78 13.1 6.82 12 4.35Z"
+          d="M36 7L42.4 17.8L36 27.2L29.6 17.8L36 7Z"
           fill="currentColor"
         />
         <path
-          d="M12 12.45V18"
-          stroke="currentColor"
-          strokeWidth="1.55"
-          strokeLinecap="round"
+          d="M29.8 17.8C23.6 18.2 18.8 20.3 15.3 24.2C12.8 27 9.7 28.8 6 29.6C10.1 26.9 12.8 23.6 14.1 19.7C18.8 17.2 24.1 16.6 29.8 17.8Z"
+          fill="currentColor"
+          opacity="0.92"
         />
         <path
-          d="M9.55 15.4C10.2 16.05 11.02 16.52 12 16.88C12.98 16.52 13.8 16.05 14.45 15.4"
+          d="M42.2 17.8C48.4 18.2 53.2 20.3 56.7 24.2C59.2 27 62.3 28.8 66 29.6C61.9 26.9 59.2 23.6 57.9 19.7C53.2 17.2 47.9 16.6 42.2 17.8Z"
+          fill="currentColor"
+          opacity="0.92"
+        />
+        <path
+          d="M36 27V35"
           stroke="currentColor"
-          strokeWidth="1.35"
+          strokeWidth="3"
           strokeLinecap="round"
         />
       </svg>
