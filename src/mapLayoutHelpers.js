@@ -199,11 +199,27 @@ export function buildClusteredNodes(nodes, thresholdPx, clusterSingularLabel, cl
   });
 }
 
+function boxesOverlap(a, b) {
+  return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+}
+
+function buildNodeAvoidanceBox(node, padding = 2) {
+  const radius = Math.max(0, node.screenRadius || 0) + padding;
+  return {
+    id: node.id,
+    left: node.screenX - radius,
+    right: node.screenX + radius,
+    top: node.screenY - radius,
+    bottom: node.screenY + radius,
+  };
+}
+
 export function buildVisibleLabelIds(labelCandidates, showLabels, labelDensityThreshold, labelFontSize, labelOffset) {
   if (!showLabels) return new Set();
 
   const accepted = [];
   const acceptedIds = new Set();
+  const nodeAvoidanceBoxes = labelCandidates.map((node) => buildNodeAvoidanceBox(node, node.isCluster ? 4 : 2));
 
   for (const node of labelCandidates) {
     if ((node.degree || 0) < labelDensityThreshold) continue;
@@ -218,11 +234,10 @@ export function buildVisibleLabelIds(labelCandidates, showLabels, labelDensityTh
       bottom: node.screenY + (node.screenRadius || 0) + labelOffset + textHeight,
     };
 
-    const overlaps = accepted.some(
-      (placed) => !(box.right < placed.left || box.left > placed.right || box.bottom < placed.top || box.top > placed.bottom)
-    );
+    const overlapsAcceptedLabel = accepted.some((placed) => boxesOverlap(box, placed));
+    const overlapsOtherNode = nodeAvoidanceBoxes.some((placed) => placed.id !== node.id && boxesOverlap(box, placed));
 
-    if (!overlaps) {
+    if (!overlapsAcceptedLabel && !overlapsOtherNode) {
       accepted.push(box);
       acceptedIds.add(node.id);
     }

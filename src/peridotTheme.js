@@ -367,30 +367,38 @@ function buildSearchWorkspacePaletteOverrides(assignment) {
 }
 
 function buildMapNetworkPaletteOverrides(assignment) {
+  const mapMutedGreen = assignment.secondary || assignment.midAlt || assignment.primary;
+  const mapActiveGreen = assignment.midAlt || assignment.mid || shade(mapMutedGreen, -0.18);
+  const mapMutedGold = shade(assignment.highlight, -0.14);
+  const mapMutedGoldLight = shade(assignment.highlightLight || assignment.highlight, -0.10);
+
   return assignPaths(assignment, [
     // Map imports deliberately invert the whole-app dark/light instinct: the
-    // cartographic field should stay readable. Use lighter colors for ocean and
-    // land, then reserve the darkest or boldest swatches for visual evidence.
-    ['visualization.canvasBg', assignment.pale],
+    // cartographic field should stay readable. Use the previous light land tone
+    // as the sea/canvas wash, use a muted green for default land, and reserve a
+    // deeper green between land and node/edge colors for active countries.
+    // High-attention gold marks also use muted variants so imported palettes do
+    // not make clusters or hover routes look neon against the parchment plate.
+    ['visualization.canvasBg', assignment.lightest],
     ['visualization.frameBg', assignment.cream],
     ['visualization.frameBorder', assignment.midAlt],
-    ['visualization.landFill', assignment.lightest],
-    ['visualization.landActiveFill', assignment.soft],
-    ['visualization.landStroke', assignment.midAlt],
-    ['visualization.gridStroke', withAlpha(assignment.midAlt, 0.28)],
+    ['visualization.landFill', withAlpha(mapMutedGreen, 0.48)],
+    ['visualization.landActiveFill', withAlpha(mapActiveGreen, 0.82)],
+    ['visualization.landStroke', withAlpha(mapActiveGreen, 0.58)],
+    ['visualization.gridStroke', withAlpha(assignment.midAlt, 0.22)],
     ['visualization.edge', assignment.deep],
-    ['visualization.edgeHover', assignment.highlight],
+    ['visualization.edgeHover', mapMutedGold],
     ['visualization.edgeActive', assignment.darkest],
     ['visualization.edgeSelected', assignment.darkest],
     ['visualization.node', assignment.deep],
-    ['visualization.nodeCluster', assignment.highlight],
-    ['visualization.nodeAnimated', assignment.primary],
-    ['visualization.nodeHover', assignment.highlight],
+    ['visualization.nodeCluster', mapMutedGold],
+    ['visualization.nodeAnimated', mapMutedGreen],
+    ['visualization.nodeHover', mapMutedGoldLight],
     ['visualization.nodeSelected', assignment.darkest],
     ['visualization.nodeStroke', assignment.lightest],
     ['visualization.labelText', assignment.darkest],
     ['visualization.labelStroke', assignment.lightest],
-    ['visualization.series', assignment.series],
+    ['visualization.series', [mapMutedGreen, assignment.midAlt, assignment.mid, mapMutedGold, mapMutedGoldLight, assignment.soft, assignment.secondary, assignment.deep].filter(Boolean)],
   ]);
 }
 
@@ -789,6 +797,11 @@ export function resolvePeridotLegacyColor(value) {
 }
 
 export function buildSemanticTheme(tones = PERIDOT_TONES) {
+  const mapMutedGreen = tones.sage || tones.midAlt || tones.leaf;
+  const mapActiveGreen = tones.midAlt || tones.mid || shade(mapMutedGreen, -0.18);
+  const mapMutedGold = shade(tones.gold, -0.14);
+  const mapMutedGoldLight = shade(tones.goldLight || tones.gold, -0.10);
+
   return Object.freeze({
     tones,
     interface: {
@@ -907,26 +920,26 @@ export function buildSemanticTheme(tones = PERIDOT_TONES) {
       dangerText: '#fff5f2',
     },
     visualization: {
-      canvasBg: tones.soft,
+      canvasBg: tones.pale,
       frameBg: tones.cream,
       frameBorder: withAlpha(tones.gold, 0.46),
-      landFill: tones.pale,
-      landActiveFill: tones.leaf,
-      landStroke: withAlpha(tones.forest, 0.48),
-      gridStroke: withAlpha(tones.pale, 0.72),
+      landFill: withAlpha(mapMutedGreen, 0.48),
+      landActiveFill: withAlpha(mapActiveGreen, 0.82),
+      landStroke: withAlpha(mapActiveGreen, 0.58),
+      gridStroke: withAlpha(tones.midAlt, 0.22),
       edge: tones.night,
-      edgeHover: tones.gold,
+      edgeHover: mapMutedGold,
       edgeActive: tones.deep,
       edgeSelected: tones.ink,
       node: tones.night,
-      nodeCluster: tones.gold,
-      nodeAnimated: tones.leaf,
-      nodeHover: tones.goldLight,
+      nodeCluster: mapMutedGold,
+      nodeAnimated: mapMutedGreen,
+      nodeHover: mapMutedGoldLight,
       nodeSelected: tones.ink,
       nodeStroke: tones.paper,
       labelText: tones.ink,
       labelStroke: tones.paper,
-      series: [tones.leaf, tones.sage, tones.mid, tones.gold, tones.goldLight, tones.soft, tones.midAlt, tones.forest],
+      series: [mapMutedGreen, tones.sage, tones.mid, mapMutedGold, mapMutedGoldLight, tones.soft, tones.midAlt, tones.forest],
     },
     inspector: {
       chromeBg: tones.forest,
