@@ -145,33 +145,33 @@ function SummaryPanel({ x, y, width = 280, height = 300, title = 'Details', rows
   const panelY = Number(y);
   const panelWidth = Number(width);
   const panelHeight = Number(height);
-  const labelX = panelX + 14;
-  const valueX = panelX + panelWidth - 14;
-  const headerHeight = 48;
-  const footerHeight = note ? 24 : 12;
+  const labelX = panelX + 10;
+  const valueX = panelX + panelWidth - 10;
+  const headerHeight = 38;
+  const footerHeight = note ? 18 : 8;
   const shownRows = Array.isArray(rows) ? rows : [];
   const availableRowHeight = Math.max(1, panelHeight - headerHeight - footerHeight);
   const rowHeight = shownRows.length
-    ? Math.max(11, Math.min(25, availableRowHeight / shownRows.length))
+    ? Math.max(10, Math.min(28, availableRowHeight / shownRows.length))
     : 22;
-  const denseRows = rowHeight < 15;
-  const compactRows = rowHeight < 19;
-  const labelMaxLength = denseRows ? 24 : compactRows ? 30 : 38;
+  const denseRows = rowHeight < 14;
+  const compactRows = rowHeight < 18;
+  const labelMaxLength = denseRows ? 26 : compactRows ? 32 : 42;
 
   return (
     <g>
-      <rect x={panelX} y={panelY} width={panelWidth} height={panelHeight} rx="18" fill={CHART_COLORS.accentLight} opacity="0.30" stroke={CHART_COLORS.grid} />
-      <text x={labelX} y={panelY + 27} fontSize="15" fontWeight="850" fill={CHART_COLORS.text}>{title}</text>
-      <line x1={labelX} x2={valueX} y1={panelY + 42} y2={panelY + 42} stroke={CHART_COLORS.grid} opacity="0.78" />
+      <rect x={panelX} y={panelY} width={panelWidth} height={panelHeight} rx="16" fill={CHART_COLORS.accentLight} opacity="0.30" stroke={CHART_COLORS.grid} />
+      <text x={labelX} y={panelY + 23} fontSize="14" fontWeight="850" fill={CHART_COLORS.text}>{title}</text>
+      <line x1={labelX} x2={valueX} y1={panelY + 32} y2={panelY + 32} stroke={CHART_COLORS.grid} opacity="0.78" />
       {shownRows.map((row, index) => {
         const rowTop = panelY + headerHeight + index * rowHeight;
-        const textX = labelX + (row.color ? 18 : 0);
-        const labelY = rowTop + Math.max(9, Math.min(16, rowHeight * 0.68));
+        const textX = labelX + (row.color ? 16 : 0);
+        const labelY = rowTop + Math.max(8, Math.min(17, rowHeight * 0.68));
         const fullTitle = [row.label, row.value, row.meta].filter(Boolean).join(' — ');
         return (
           <g key={`${row.label}-${index}`}>
             <title>{fullTitle}</title>
-            {row.color ? <rect x={labelX} y={rowTop + Math.max(2, (rowHeight - 11) / 2)} width="11" height="11" rx="4" fill={row.color} /> : null}
+            {row.color ? <rect x={labelX} y={rowTop + Math.max(2, (rowHeight - 10) / 2)} width="10" height="10" rx="3.5" fill={row.color} /> : null}
             <text x={textX} y={labelY} fontSize={denseRows ? '8.6' : compactRows ? '9.8' : '11'} fontWeight="760" fill={CHART_COLORS.text}>{truncateLabel(row.label, row.color ? labelMaxLength - 3 : labelMaxLength)}</text>
             <text x={valueX} y={labelY} textAnchor="end" fontSize={denseRows ? '8.8' : compactRows ? '10' : '11.5'} fontWeight="850" fill={CHART_COLORS.text}>{row.value}</text>
           </g>
@@ -179,8 +179,8 @@ function SummaryPanel({ x, y, width = 280, height = 300, title = 'Details', rows
       })}
       {note ? (
         <>
-          <line x1={labelX} x2={valueX} y1={panelY + panelHeight - 24} y2={panelY + panelHeight - 24} stroke={CHART_COLORS.grid} opacity="0.44" />
-          <text x={labelX} y={panelY + panelHeight - 9} fontSize="9.75" fill={CHART_COLORS.mutedText}>{truncateLabel(note, 54)}</text>
+          <line x1={labelX} x2={valueX} y1={panelY + panelHeight - 18} y2={panelY + panelHeight - 18} stroke={CHART_COLORS.grid} opacity="0.44" />
+          <text x={labelX} y={panelY + panelHeight - 6} fontSize="9.25" fill={CHART_COLORS.mutedText}>{truncateLabel(note, 58)}</text>
         </>
       ) : null}
     </g>
@@ -294,13 +294,13 @@ function renderXAxisMinorTicks({ positions = [], y, top = null, showGuides = fal
 }
 
 const CHART_LAYOUT = Object.freeze({
-  width: 1000,
-  defaultHeight: 460,
-  top: 72,
-  bottom: 46,
+  width: 1080,
+  defaultHeight: 420,
+  top: 52,
+  bottom: 28,
   legendFraction: 0.25,
-  legendGutter: 24,
-  legendPaddingX: 14,
+  legendGutter: 14,
+  legendPaddingX: 8,
 });
 
 function getChartCardLayout({
@@ -339,7 +339,7 @@ function getChartCardLayout({
 
 function getRadialChartGeometry(layout, { maxRadius = 140, centerYOffset = 6 } = {}) {
   const chartWidth = layout.chartRight - layout.left;
-  const radius = Math.max(76, Math.min(maxRadius, chartWidth / 2 - 18, layout.plotHeight / 2 - 12));
+  const radius = Math.max(82, Math.min(maxRadius, chartWidth / 2 - 10, layout.plotHeight / 2 - 6));
   return {
     cx: layout.left + chartWidth / 2,
     cy: layout.top + layout.plotHeight / 2 + centerYOffset,
@@ -430,8 +430,8 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
 
   if (orientation === 'horizontal') {
     const rowHeight = 38;
-    const height = Math.max(380, CHART_LAYOUT.top + 50 + data.length * rowHeight);
-    const layout = getChartCardLayout({ height, left: 276, top: 78, bottom: 46 });
+    const height = Math.max(360, CHART_LAYOUT.top + 32 + data.length * rowHeight);
+    const layout = getChartCardLayout({ height, left: 264, top: 56, bottom: 30 });
     const { width, top, bottom, left, plotWidth } = layout;
     const maxValue = Math.max(...data.map((row) => row.count), 1);
     const panelLayout = layout.legend;
@@ -468,7 +468,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
     );
   }
 
-  const layout = getChartCardLayout({ height: 430, left: 58, top: 68, bottom: 74 });
+  const layout = getChartCardLayout({ height: 410, left: 54, top: 54, bottom: 42 });
   const { width, height, left, top, bottom, plotWidth, plotHeight } = layout;
   const yTicks = getNiceTicks(Math.max(...data.map((row) => row.count), 1));
   const scaleMax = yTicks[yTicks.length - 1] || 1;
@@ -520,7 +520,7 @@ export function AnalyticsLineChart({ data = [], title, subtitle, svgRef }) {
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState message="No time data is available for the current selection." />;
 
-  const layout = getChartCardLayout({ height: 430, left: 58, top: 68, bottom: 74 });
+  const layout = getChartCardLayout({ height: 410, left: 54, top: 54, bottom: 42 });
   const { width, height, left, top, bottom, plotWidth, plotHeight } = layout;
   const finiteValues = data.map((row) => row.count).filter(isFiniteChartValue);
   const yTicks = getNiceTicks(Math.max(...finiteValues, 1));
@@ -581,9 +581,9 @@ export function AnalyticsPieChart({ data = [], title, subtitle, svgRef }) {
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState />;
 
-  const layout = getChartCardLayout({ height: 430, left: 70, top: 72, bottom: 46 });
+  const layout = getChartCardLayout({ height: 410, left: 54, top: 54, bottom: 30 });
   const { width, height } = layout;
-  const { cx, cy, radius } = getRadialChartGeometry(layout, { maxRadius: 132, centerYOffset: 10 });
+  const { cx, cy, radius } = getRadialChartGeometry(layout, { maxRadius: 170, centerYOffset: 4 });
   const total = data.reduce((sum, row) => sum + row.count, 0) || 1;
   let currentAngle = 0;
 
@@ -636,7 +636,7 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
   const [tooltip, setTooltip] = useState(null);
   if (!data.length || !series.length) return <EmptyChartState message="No period and category data is available for the current selection." />;
 
-  const layout = getChartCardLayout({ height: 450, left: 58, top: 68, bottom: 72 });
+  const layout = getChartCardLayout({ height: 420, left: 54, top: 54, bottom: 44 });
   const { width, height, left, top, bottom, plotWidth, plotHeight } = layout;
   const yTicks = getNiceTicks(Math.max(...data.flatMap((row) => row.groups.map((group) => group.count)), 1));
   const scaleMax = yTicks[yTicks.length - 1] || 1;
@@ -698,7 +698,7 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
   const [tooltip, setTooltip] = useState(null);
   if (!data.length || !series.length) return <EmptyChartState message="No period and category data is available for the current selection." />;
 
-  const layout = getChartCardLayout({ height: 450, left: 60, top: 68, bottom: 70 });
+  const layout = getChartCardLayout({ height: 420, left: 56, top: 54, bottom: 42 });
   const { width, height, left, top, bottom, plotWidth, plotHeight } = layout;
   const yTicks = getNiceTicks(Math.max(...data.map((row) => row.total), 1));
   const scaleMax = yTicks[yTicks.length - 1] || 1;
@@ -760,7 +760,7 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
   const xLabels = periods?.length ? periods : years;
   if (!series.length || !xLabels.length) return <EmptyChartState message="No period and category data is available for the current selection." />;
 
-  const layout = getChartCardLayout({ height: 450, left: 58, top: 68, bottom: 70 });
+  const layout = getChartCardLayout({ height: 420, left: 54, top: 54, bottom: 42 });
   const { width, height, left, top, bottom, plotWidth, plotHeight } = layout;
   const finiteValues = series.flatMap((item) => item.points.map((point) => point.count)).filter(isFiniteChartValue);
   const yTicks = getNiceTicks(Math.max(...finiteValues, 1));
@@ -847,7 +847,7 @@ export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, s
   const left = 190;
   const top = 88;
   const bottom = 116;
-  const baseLayout = getChartCardLayout({ height: 460, left, top, bottom });
+  const baseLayout = getChartCardLayout({ height: 420, left, top, bottom });
   const cellSize = Math.max(18, Math.min(36, Math.floor(baseLayout.plotWidth / Math.max(columns.length, 1))));
   const height = Math.max(420, top + rows.length * cellSize + bottom);
   const layout = getChartCardLayout({ height, left, top, bottom });
@@ -895,7 +895,7 @@ export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState />;
 
-  const layout = getChartCardLayout({ height: 430, left: 58, top: 68, bottom: 74 });
+  const layout = getChartCardLayout({ height: 410, left: 54, top: 54, bottom: 42 });
   const { width, height, left, top, bottom, plotWidth, plotHeight } = layout;
   const yTicks = getNiceTicks(Math.max(...data.map((row) => row.count), 1));
   const scaleMax = yTicks[yTicks.length - 1] || 1;
@@ -947,9 +947,9 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
   const [tooltip, setTooltip] = useState(null);
   if (!parents.length || !total) return <EmptyChartState message="No hierarchical data is available for the current selection." />;
 
-  const layout = getChartCardLayout({ height: 460, left: 70, top: 76, bottom: 46 });
+  const layout = getChartCardLayout({ height: 420, left: 54, top: 56, bottom: 30 });
   const { width, height } = layout;
-  const radial = getRadialChartGeometry(layout, { maxRadius: 146, centerYOffset: 8 });
+  const radial = getRadialChartGeometry(layout, { maxRadius: 180, centerYOffset: 4 });
   const { cx, cy } = radial;
   const outerRadius = radial.radius;
   const outerInnerRadius = Math.round(outerRadius * 0.64);
