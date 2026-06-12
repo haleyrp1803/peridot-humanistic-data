@@ -21,7 +21,7 @@ import { buildAnalyticsChartData, getAnalyticsCategoryValues, getAnalyticsYearRa
 import { PERIDOT_THEME } from './peridotTheme.js';
 
 function buttonClassName({ active = false } = {}) {
-  const base = 'rounded-xl px-3 py-2 text-sm font-medium transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
+  const base = 'rounded-xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:ring-offset-2 focus:ring-offset-[var(--shell-bg)]';
   if (active) {
     return `${base} border border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_rgba(0,0,0,0.3)] hover:bg-[var(--button-primary-active-hover)]`;
   }
@@ -279,15 +279,15 @@ function SelectControl({ label, value, onChange, options, description, disabled 
           if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false);
         }}
       >
-        <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-ornament-line)]">
+        <span className="mb-1.5 block text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-ornament-line)]">
           {label}
         </span>
         <button
           type="button"
           disabled={disabled}
           className={[
-            'flex w-full items-center justify-between rounded-[10px] border border-[var(--peridot-role-ornament-line)]',
-            'bg-[var(--peridot-role-button-primary-bg)] px-3 py-2 text-left text-sm font-bold',
+            'flex w-full items-center justify-between rounded-[12px] border border-[var(--peridot-role-ornament-line)]',
+            'bg-[var(--peridot-role-button-primary-bg)] px-3.5 py-2.5 text-left text-[15px] font-bold',
             'text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.14),inset_0_1px_0_rgba(255,255,255,0.18)]',
             'transition duration-150 hover:border-[var(--peridot-role-ornament-corner)] hover:bg-[var(--peridot-role-button-primary-hover-bg)]',
             'focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] disabled:cursor-not-allowed disabled:opacity-70',
@@ -353,7 +353,7 @@ function SelectControl({ label, value, onChange, options, description, disabled 
 
   return (
     <label className="block text-sm">
-      <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">
+      <span className="mb-1.5 block text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">
         {label}
       </span>
       <span className="relative block">
@@ -362,8 +362,8 @@ function SelectControl({ label, value, onChange, options, description, disabled 
           onChange={(event) => onChange(event.target.value)}
           disabled={disabled}
           className={[
-            'w-full appearance-none rounded-[10px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)]',
-            'px-3 py-2 pr-10 text-sm font-semibold text-[var(--peridot-role-form-text-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]',
+            'w-full appearance-none rounded-[12px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)]',
+            'px-3.5 py-2.5 pr-10 text-[15px] font-semibold text-[var(--peridot-role-form-text-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]',
             'transition hover:border-[var(--peridot-role-ornament-line-muted)] hover:bg-[var(--peridot-role-interface-card-background-warm)]',
             'focus:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]',
             'disabled:cursor-not-allowed disabled:opacity-70',
@@ -394,8 +394,8 @@ function NumberStepperControl({ label, value, onChange, min = 1, max = 100, desc
 
   return (
     <label className="block text-sm">
-      <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">{label}</span>
-      <span className="grid grid-cols-[2.4rem_minmax(0,1fr)_2.4rem] overflow-hidden rounded-[10px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] focus-within:border-[var(--peridot-role-ornament-line)] focus-within:ring-2 focus-within:ring-[var(--peridot-role-interface-focus-ring)]">
+      <span className="mb-1.5 block text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">{label}</span>
+      <span className="grid grid-cols-[2.7rem_minmax(0,1fr)_2.7rem] overflow-hidden rounded-[12px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] focus-within:border-[var(--peridot-role-ornament-line)] focus-within:ring-2 focus-within:ring-[var(--peridot-role-interface-focus-ring)]">
         <button
           type="button"
           className="flex items-center justify-center border-r border-[var(--peridot-role-form-border)] bg-[color-mix(in_srgb,var(--peridot-role-interface-card-background-warm)_82%,transparent)] text-lg font-bold text-[var(--peridot-role-analytics-chart-text)] transition hover:bg-[var(--peridot-role-button-primary-bg)] hover:text-[var(--peridot-role-button-primary-text)] focus:outline-none"
@@ -411,7 +411,7 @@ function NumberStepperControl({ label, value, onChange, min = 1, max = 100, desc
           step="1"
           value={String(numericValue)}
           onChange={(event) => commit(event.target.value)}
-          className="min-w-0 bg-transparent px-3 py-2 text-center text-sm font-bold text-[var(--peridot-role-form-text-light)] outline-none"
+          className="min-w-0 bg-transparent px-3 py-2.5 text-center text-[15px] font-bold text-[var(--peridot-role-form-text-light)] outline-none"
         />
         <button
           type="button"
@@ -480,13 +480,13 @@ function ManualCategorySelectionControls({
           />
 
           <label className="block text-sm">
-            <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">Find categories</span>
+            <span className="mb-1.5 block text-[10.5px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">Find categories</span>
             <input
               type="search"
               value={searchValue}
               onChange={(event) => onSearchValueChange(event.target.value)}
               placeholder={`Search ${noun}…`}
-              className="w-full rounded-[10px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3 py-1.5 text-sm font-semibold text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
+              className="w-full rounded-[12px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3.5 py-2.5 text-sm font-semibold text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
             />
           </label>
 
@@ -547,30 +547,30 @@ function ControlSection({ eyebrow, title, description, children, compact = false
   return (
     <section
       className={[
-        'rounded-[16px] border border-[var(--peridot-role-ornament-paper-rule)]',
+        'rounded-[20px] border border-[var(--peridot-role-ornament-paper-rule)]',
         'bg-[linear-gradient(135deg,var(--peridot-role-analytics-chart-bg),var(--peridot-role-interface-card-background-warm))]',
-        'shadow-[0_5px_14px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.42)]',
-        compact ? 'p-2.5' : 'p-3',
+        'shadow-[0_8px_22px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.42)]',
+        compact ? 'p-3' : 'p-4',
       ].join(' ')}
     >
       {eyebrow ? (
-        <div className="mb-0.5 flex items-center gap-2 text-[9px] font-extrabold uppercase tracking-[0.18em] text-[var(--peridot-role-ornament-line)]">
+        <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--peridot-role-ornament-line)]">
           <span aria-hidden="true">◆</span>
           <span>{eyebrow}</span>
           <span aria-hidden="true">◆</span>
         </div>
       ) : null}
       {title ? (
-        <h3 className="text-[14px] font-extrabold leading-tight text-[var(--peridot-role-analytics-chart-text)]">
+        <h3 className="text-[16px] font-extrabold leading-tight text-[var(--peridot-role-analytics-chart-text)]">
           {title}
         </h3>
       ) : null}
       {description ? (
-        <p className="mt-0.5 text-[10.5px] leading-snug text-[var(--peridot-role-analytics-chart-muted-text)]">
+        <p className="mt-1 text-[11.5px] leading-snug text-[var(--peridot-role-analytics-chart-muted-text)]">
           {description}
         </p>
       ) : null}
-      <div className={title || description || eyebrow ? 'mt-2 space-y-2' : 'space-y-2'}>
+      <div className={title || description || eyebrow ? 'mt-3 space-y-3' : 'space-y-3'}>
         {children}
       </div>
     </section>
@@ -579,7 +579,7 @@ function ControlSection({ eyebrow, title, description, children, compact = false
 
 function VariableControlsShell({ children }) {
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {children}
     </div>
   );
@@ -592,7 +592,7 @@ function ChartBuilderTabButton({ tab, active, onSelect }) {
       type="button"
       onClick={() => onSelect(tab.key)}
       className={[
-        'rounded-full border px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-[0.12em] transition',
+        'rounded-full border px-3.5 py-1.5 text-[10.5px] font-extrabold uppercase tracking-[0.13em] transition',
         active
           ? 'border-[var(--peridot-role-ornament-corner)] bg-[var(--peridot-role-button-primary-bg)] text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.20)]'
           : 'border-[var(--peridot-role-button-secondary-border)] bg-[var(--peridot-role-button-secondary-bg)] text-[var(--peridot-role-button-secondary-text)] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-role-button-secondary-hover)]',
@@ -1250,10 +1250,10 @@ export function AnalyticsPanelContent({
               value={presentationTitle}
               onChange={(event) => setPresentationTitle(event.target.value)}
               placeholder={chartData?.title || 'Use the generated chart title'}
-              className="w-full rounded-[10px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3 py-1.5 text-sm font-semibold text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
+              className="w-full rounded-[12px] border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3.5 py-2.5 text-sm font-semibold text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
             />
           </label>
-          <div className="rounded-[12px] bg-[var(--utility-tint-bg)] px-2.5 py-2 text-[11px] leading-snug text-[var(--panel-card-muted-text)]">
+          <div className="rounded-[14px] bg-[var(--utility-tint-bg)] px-3 py-2.5 text-[11.5px] leading-snug text-[var(--panel-card-muted-text)]">
             Generated: <strong>{chartData?.title || 'Chart'}</strong>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -1300,18 +1300,18 @@ export function AnalyticsPanelContent({
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-shell-bg)] text-[var(--peridot-role-analytics-chart-text)] shadow-[0_22px_60px_var(--peridot-role-card-shadow)] lg:flex-row">
-      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_78%,var(--peridot-role-interface-panel-background)_22%),var(--peridot-role-interface-card-background-muted))] lg:max-h-none lg:w-[348px] lg:border-b-0 lg:border-r">
-        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(135deg,var(--peridot-role-interface-panel-background),var(--peridot-role-interface-panel-background-strong))] px-4 py-2 text-[var(--peridot-role-interface-text-on-dark)] shadow-[inset_0_-1px_0_rgba(255,255,255,0.04)]">
-          <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[21px] font-bold leading-none tracking-[-0.035em] text-[var(--peridot-role-interface-text-on-dark)]">
+      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_78%,var(--peridot-role-interface-panel-background)_22%),var(--peridot-role-interface-card-background-muted))] lg:max-h-none lg:w-1/4 lg:border-b-0 lg:border-r">
+        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(135deg,var(--peridot-role-interface-panel-background),var(--peridot-role-interface-panel-background-strong))] px-4 py-3 text-[var(--peridot-role-interface-text-on-dark)] shadow-[inset_0_-1px_0_rgba(255,255,255,0.04)]">
+          <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[26px] font-bold leading-none tracking-[-0.035em] text-[var(--peridot-role-interface-text-on-dark)]">
             Build Your Chart
           </h2>
-          <p className="mt-1 text-[10.5px] leading-snug text-[var(--peridot-role-interface-text-muted-on-dark)]">
+          <p className="mt-1.5 text-[11px] leading-snug text-[var(--peridot-role-interface-text-muted-on-dark)]">
             Choose a view, set dates, and map fields.
           </p>
         </div>
 
-        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_72%,var(--peridot-role-interface-panel-background)_28%)] px-4 py-2">
-          <div className="grid grid-cols-2 gap-1.5" role="tablist" aria-label="Chart builder sections">
+        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_72%,var(--peridot-role-interface-panel-background)_28%)] px-4 py-2.5">
+          <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Chart builder sections">
             {chartBuilderTabs.map((tab) => (
               <ChartBuilderTabButton
                 key={tab.key}
@@ -1323,14 +1323,14 @@ export function AnalyticsPanelContent({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-2 overflow-auto px-3 py-2.5">
+        <div className="min-h-0 flex-1 space-y-3 overflow-auto px-4 py-3.5">
           {renderActiveBuilderTab()}
         </div>
       </aside>
 
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--peridot-role-analytics-shell-bg)]">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--peridot-role-analytics-shell-bg)] lg:w-3/4">
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
-          <div className="mx-auto flex h-full min-h-0 w-full max-w-[1320px] items-stretch">
+          <div className="flex h-full min-h-0 w-full items-stretch">
             <div className="flex h-full min-h-0 w-full rounded-[28px] border border-[var(--peridot-role-ornament-paper-rule)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 shadow-[0_22px_54px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.48)] md:p-4">
               <AnalyticsChartPreview chartData={displayChartData} svgRef={chartSvgRef} />
             </div>
