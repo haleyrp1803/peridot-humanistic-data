@@ -498,7 +498,7 @@ function ManualCategorySelectionControls({
             />
           </label>
 
-          <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
+          <div className="max-h-[28rem] space-y-1 overflow-y-auto pr-1">
             {visibleOptions.length ? visibleOptions.map((option) => (
               <label
                 key={option.key}
@@ -593,6 +593,26 @@ function VariableControlsShell({ children }) {
   );
 }
 
+
+function ChartBuilderTabButton({ tab, active, onSelect }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(tab.key)}
+      className={[
+        'rounded-full border px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-[0.12em] transition',
+        active
+          ? 'border-[var(--peridot-role-ornament-corner)] bg-[var(--peridot-role-button-primary-bg)] text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.20)]'
+          : 'border-[var(--peridot-role-button-secondary-border)] bg-[var(--peridot-role-button-secondary-bg)] text-[var(--peridot-role-button-secondary-text)] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-role-button-secondary-hover)]',
+      ].join(' ')}
+      aria-pressed={active}
+    >
+      <span>{tab.label}</span>
+      {tab.badge ? <span className="ml-1.5 rounded-full bg-[rgba(255,248,232,0.24)] px-1.5 py-0.5 text-[10px]">{tab.badge}</span> : null}
+    </button>
+  );
+}
+
 export function AnalyticsPanelContent({
   analyticsState,
   onChartExportControlsChange,
@@ -625,6 +645,8 @@ export function AnalyticsPanelContent({
   const [manualCategoryValuesByField, setManualCategoryValuesByField] = useState({});
   const [manualComparisonMode, setManualComparisonMode] = useState('selectedPlusOther');
   const [manualCategorySearch, setManualCategorySearch] = useState('');
+  const [activeBuilderTab, setActiveBuilderTab] = useState('chart');
+  const [presentationTitle, setPresentationTitle] = useState('');
 
   const {
     chartType,
@@ -848,16 +870,26 @@ export function AnalyticsPanelContent({
     [aggregation, barGroupBy, barOrientation, categorySelection, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, lineFilterBy, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedLineFilterField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, resolvedMultiLineMetricField, resolvedMultiLineAggregation, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
   );
 
+  const displayChartData = useMemo(() => {
+    const customTitle = presentationTitle.trim();
+    if (!customTitle) return chartData;
+    return {
+      ...chartData,
+      generatedTitle: chartData?.title,
+      title: customTitle,
+    };
+  }, [chartData, presentationTitle]);
+
   const handleExportPng = useCallback(async () => {
     setExportStatus(null);
     try {
-      const filename = `${slugifyFilenamePart(chartData?.title, 'peridot-analytics-chart')}.png`;
+      const filename = `${slugifyFilenamePart(displayChartData?.title, 'peridot-analytics-chart')}.png`;
       await exportSvgElementToPng(chartSvgRef.current, filename);
       setExportStatus({ type: 'success', message: `Exported ${filename}` });
     } catch (error) {
       setExportStatus({ type: 'error', message: error.message || 'Unable to export chart PNG.' });
     }
-  }, [chartData?.title]);
+  }, [displayChartData?.title]);
 
   useEffect(() => {
     if (typeof onChartExportControlsChange !== 'function') return undefined;
@@ -870,14 +902,14 @@ export function AnalyticsPanelContent({
         }
         : null,
       handleExportChartPng: handleExportPng,
-      chartTitle: chartData?.title || 'Chart',
-      chartRowCount: Number.isFinite(chartData?.rowCount) ? chartData.rowCount : null,
+      chartTitle: displayChartData?.title || 'Chart',
+      chartRowCount: Number.isFinite(displayChartData?.rowCount) ? displayChartData.rowCount : null,
     });
 
     return () => {
       onChartExportControlsChange(null);
     };
-  }, [chartData?.rowCount, chartData?.title, exportStatus, handleExportPng, onChartExportControlsChange]);
+  }, [displayChartData?.rowCount, displayChartData?.title, exportStatus, handleExportPng, onChartExportControlsChange]);
 
   const renderDateRangeControls = () => {
     if (!yearRange.years.length) return null;
@@ -948,8 +980,6 @@ export function AnalyticsPanelContent({
               <SelectControl label="X-axis / category" value={selectedBarField?.key || ''} onChange={setBarGroupBy} options={availableBarFields} description={selectedBarField?.description} />
               {renderMetricControls()}
               <SelectControl label="Orientation" value={barOrientation} onChange={setBarOrientation} options={[{ key: 'vertical', label: 'Vertical' }, { key: 'horizontal', label: 'Horizontal' }]} />
-              {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} /> : null}
-              {renderCategorySelectionControls('categories')}
             </>
           ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported categorical fields are available in the current data.</div>}
         </VariableControlsShell>
@@ -960,7 +990,6 @@ export function AnalyticsPanelContent({
         <VariableControlsShell>
           {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Use Year by default, or choose Full date / numeric fields for more granular ordered charts." /> : null}
           {availableBarFields.length ? <SelectControl label="Focus category field" value={selectedLineFilterField?.key || ''} onChange={setLineFilterBy} options={availableBarFields} description="Optionally filter this trend to exact people, places, routes, or categories." /> : null}
-          {renderCategorySelectionControls('records')}
           {renderMetricControls()}
           {!activeXAxisFields.length ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No date/time or numeric x-axis fields are available for a line chart in the current data.</div> : null}
         </VariableControlsShell>
@@ -1007,7 +1036,6 @@ export function AnalyticsPanelContent({
                 </div>
               ) : null}
               {wideSeriesPreset === 'all' ? <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-series: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none available'}.</div> : null}
-              <NumberStepperControl label="Limit displayed series" value={topN} onChange={setTopN} />
             </>
           ) : (
             <>
@@ -1026,8 +1054,6 @@ export function AnalyticsPanelContent({
                   Multi-line grouped mode needs a categorical series field that is not the selected x-axis, not a date field, and not a numeric measure.
                 </div>
               )}
-              {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed lines" value={topN} onChange={setTopN} /> : null}
-              {renderCategorySelectionControls('lines')}
             </>
           )}
           {!availableMeasureFields.length && multiLineMode === 'wide' ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">This mode needs at least one numeric measure field.</div> : null}
@@ -1040,8 +1066,6 @@ export function AnalyticsPanelContent({
         <VariableControlsShell>
           {availablePieFields.length ? <SelectControl label="Slice category" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} /> : null}
           {renderAdditiveMetricControls()}
-          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed slices" value={topN} onChange={setTopN} /> : null}
-          {renderCategorySelectionControls('slices')}
         </VariableControlsShell>
       );
     }
@@ -1069,7 +1093,6 @@ export function AnalyticsPanelContent({
               <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">Record-count histograms need at least one categorical field to group records before binning the counts.</div>
             )
           ) : null}
-          {histogramUsesRecordCount ? renderCategorySelectionControls('categories') : null}
         </VariableControlsShell>
       );
     }
@@ -1079,8 +1102,6 @@ export function AnalyticsPanelContent({
           {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
           <SelectControl label="Side-by-side grouping field" value={selectedGroupedBarField?.key || ''} onChange={setGroupedBarGroupBy} options={availableSegmentFields} description={selectedGroupedBarField?.description} />
           {renderMetricControls()}
-          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed groups" value={topN} onChange={setTopN} /> : null}
-          {renderCategorySelectionControls('groups')}
         </VariableControlsShell>
       );
     }
@@ -1090,8 +1111,6 @@ export function AnalyticsPanelContent({
           {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
           <SelectControl label="Segment field" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
           {renderAdditiveMetricControls()}
-          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed segments" value={topN} onChange={setTopN} /> : null}
-          {renderCategorySelectionControls('segments')}
         </VariableControlsShell>
       );
     }
@@ -1101,8 +1120,6 @@ export function AnalyticsPanelContent({
           <SelectControl label="Rows" value={selectedHeatmapRowField?.key || ''} onChange={setHeatmapRowBy} options={availableHeatmapRows} description={selectedHeatmapRowField?.description} />
           <SelectControl label="Columns" value={selectedHeatmapColumnField?.key || ''} onChange={setHeatmapColumnBy} options={availableHeatmapColumns} description={selectedHeatmapColumnField?.description} />
           {renderMetricControls()}
-          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed rows/columns" value={topN} onChange={setTopN} /> : null}
-          {renderCategorySelectionControls('rows')}
         </VariableControlsShell>
       );
     }
@@ -1112,12 +1129,182 @@ export function AnalyticsPanelContent({
           <SelectControl label="Parent category" value={selectedSunburstParentField?.key || ''} onChange={setSunburstParentBy} options={availableSegmentFields} description={selectedSunburstParentField?.description} />
           <SelectControl label="Child category" value={selectedSunburstChildField?.key || ''} onChange={setSunburstChildBy} options={availableSegmentFields} description={selectedSunburstChildField?.description} />
           {renderAdditiveMetricControls()}
-          {categorySelectionMode === 'topN' ? <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} /> : null}
-          {renderCategorySelectionControls('parent categories')}
         </VariableControlsShell>
       );
     }
     return null;
+  };
+
+
+  const limitControlLabel = useMemo(() => {
+    if (chartType === 'multiLine') return multiLineMode === 'wide' ? 'Limit displayed series' : 'Limit displayed lines';
+    if (chartType === 'pie') return 'Limit displayed slices';
+    if (chartType === 'groupedBar') return 'Limit displayed groups';
+    if (chartType === 'stackedBar') return 'Limit displayed segments';
+    if (chartType === 'heatmap') return 'Limit displayed rows/columns';
+    return 'Limit displayed categories';
+  }, [chartType, multiLineMode]);
+
+  const categoryNoun = useMemo(() => {
+    if (chartType === 'line') return 'records';
+    if (chartType === 'multiLine') return 'lines';
+    if (chartType === 'pie') return 'slices';
+    if (chartType === 'groupedBar') return 'groups';
+    if (chartType === 'stackedBar') return 'segments';
+    if (chartType === 'heatmap') return 'rows';
+    if (chartType === 'sunburst') return 'parent categories';
+    return 'categories';
+  }, [chartType]);
+
+  const renderCategoryTabControls = () => {
+    const showTopNControl = chartType !== 'histogram' || selectedHistogramField?.key === 'recordCount';
+    const showTopNForSelection = categorySelectionMode === 'topN' && showTopNControl;
+    const showWideSeriesLimit = chartType === 'multiLine' && multiLineMode === 'wide';
+
+    return (
+      <VariableControlsShell>
+        {showWideSeriesLimit || showTopNForSelection ? (
+          <NumberStepperControl label={limitControlLabel} value={topN} onChange={setTopN} />
+        ) : null}
+        {manualSelectionSupported ? renderCategorySelectionControls(categoryNoun) : (
+          <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            This chart type does not need a separate manual category picker for the current field configuration.
+          </div>
+        )}
+        {manualSelectionSupported && categorySelectionMode === 'manual' ? (
+          <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+            Category choices apply to <strong>{manualSelectionField?.label || 'the active category field'}</strong> in the current date window.
+          </div>
+        ) : null}
+      </VariableControlsShell>
+    );
+  };
+
+  const resetChartSettings = () => {
+    setChartType('bar');
+    setBarGroupBy(availableBarFields[0]?.key || 'sourcePerson');
+    setTopN(10);
+    setBarOrientation('vertical');
+    setXField(availableDateFields[0]?.key || availableXAxisFields[0]?.key || 'year');
+    setYField('recordCount');
+    setAggregation('count');
+    setPieGroupBy(availablePieFields[0]?.key || 'language');
+    setHistogramValueField('recordCount');
+    setHistogramGroupBy(availableBarFields[0]?.key || 'sourcePerson');
+    setStackSegmentBy(availableSegmentFields[0]?.key || 'sourcePerson');
+    setGroupedBarGroupBy(availableSegmentFields[0]?.key || 'sourcePerson');
+    setMultiLineMode('recordCount');
+    setMultiLineGroupBy(multiLineGroupFields[0]?.key || 'sourcePerson');
+    setLineFilterBy(availableBarFields[0]?.key || 'sourcePerson');
+    setWideSeriesPreset('selected');
+    setSelectedWideSeriesKeys(availableMeasureFields.slice(0, Math.min(5, availableMeasureFields.length)).map((field) => field.key));
+    setHeatmapRowBy(availableHeatmapRows[0]?.key || 'sourcePerson');
+    setHeatmapColumnBy(availableHeatmapColumns[1]?.key || availableHeatmapColumns[0]?.key || 'targetPerson');
+    setSunburstParentBy(availableSegmentFields[0]?.key || 'sourceLoc');
+    setSunburstChildBy(availableSegmentFields[1]?.key || availableSegmentFields[0]?.key || 'sourcePerson');
+    setCategorySelectionMode('topN');
+    setManualCategoryValuesByField({});
+    setManualComparisonMode('selectedPlusOther');
+    setManualCategorySearch('');
+    setPresentationTitle('');
+    setStartYear(yearRange.minYear ? String(yearRange.minYear) : '');
+    setEndYear(yearRange.maxYear ? String(yearRange.maxYear) : '');
+    setActiveBuilderTab('chart');
+  };
+
+  const chartBuilderTabs = [
+    { key: 'chart', label: 'Chart' },
+    { key: 'fields', label: 'Fields' },
+    { key: 'categories', label: 'Categories', badge: selectedManualCategoryValues.length ? selectedManualCategoryValues.length : '' },
+    { key: 'present', label: 'Present', badge: presentationTitle.trim() ? 'Title' : '' },
+  ];
+
+  const renderActiveBuilderTab = () => {
+    if (activeBuilderTab === 'fields') {
+      return (
+        <ControlSection
+          eyebrow="Fields"
+          title="Choose variables"
+          description={chartDefinition.variableCountLabel}
+        >
+          {renderChartControls()}
+        </ControlSection>
+      );
+    }
+
+    if (activeBuilderTab === 'categories') {
+      return (
+        <ControlSection
+          eyebrow="Categories"
+          title="Choose visible categories"
+          description="Rank automatically or manually choose the categories used by the active chart."
+        >
+          {renderCategoryTabControls()}
+        </ControlSection>
+      );
+    }
+
+    if (activeBuilderTab === 'present') {
+      return (
+        <ControlSection
+          eyebrow="Present"
+          title="Prepare for presentation"
+          description="Set an optional title for screenshots and chart export. Leave blank to use the generated analytical title."
+        >
+          <label className="block text-sm">
+            <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">Presentation title</span>
+            <textarea
+              value={presentationTitle}
+              onChange={(event) => setPresentationTitle(event.target.value)}
+              placeholder={chartData?.title || 'Use the generated chart title'}
+              rows={3}
+              className="w-full resize-none rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] px-3 py-2 text-sm font-semibold leading-relaxed text-[var(--peridot-role-form-text-light)] outline-none transition focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
+            />
+          </label>
+          <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+            Generated title: <strong>{chartData?.title || 'Chart'}</strong>
+          </div>
+          <div className="grid gap-2">
+            <button
+              type="button"
+              className={buttonClassName()}
+              onClick={() => setPresentationTitle('')}
+            >
+              Reset title
+            </button>
+            <button
+              type="button"
+              className={buttonClassName()}
+              onClick={resetChartSettings}
+            >
+              Reset chart settings
+            </button>
+          </div>
+        </ControlSection>
+      );
+    }
+
+    return (
+      <>
+        <ControlSection
+          eyebrow="Chart"
+          title="Choose a view"
+          description={chartDefinition.descriptor}
+        >
+          <SelectControl
+            label="Chart type"
+            value={chartType}
+            onChange={setChartType}
+            options={Object.values(ANALYTICS_CHART_DEFINITIONS)}
+            emphasis
+          />
+        </ControlSection>
+
+        {renderDateRangeControls()}
+
+        <ChartUseDescription chartDefinition={chartDefinition} />
+      </>
+    );
   };
 
   return (
@@ -1132,31 +1319,21 @@ export function AnalyticsPanelContent({
           </p>
         </div>
 
+        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_72%,var(--peridot-role-interface-panel-background)_28%)] px-5 py-3">
+          <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Chart builder sections">
+            {chartBuilderTabs.map((tab) => (
+              <ChartBuilderTabButton
+                key={tab.key}
+                tab={tab}
+                active={activeBuilderTab === tab.key}
+                onSelect={setActiveBuilderTab}
+              />
+            ))}
+          </div>
+        </div>
+
         <div className="min-h-0 flex-1 space-y-3 overflow-auto px-5 py-3.5">
-          <ControlSection
-            eyebrow="Step 1"
-            title="Choose a view"
-            description={chartDefinition.descriptor}
-          >
-            <SelectControl
-              label="Chart type"
-              value={chartType}
-              onChange={setChartType}
-              options={Object.values(ANALYTICS_CHART_DEFINITIONS)}
-              emphasis
-            />
-          </ControlSection>
-
-          {renderDateRangeControls()}
-
-          <ControlSection
-            eyebrow="Step 3"
-            title="Choose variables"
-            description={chartDefinition.variableCountLabel}
-          >
-            {renderChartControls()}
-          </ControlSection>
-
+          {renderActiveBuilderTab()}
         </div>
       </aside>
 
@@ -1164,7 +1341,7 @@ export function AnalyticsPanelContent({
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
           <div className="mx-auto flex h-full min-h-0 w-full max-w-[1320px] items-stretch">
             <div className="flex h-full min-h-0 w-full rounded-[28px] border border-[var(--peridot-role-ornament-paper-rule)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 shadow-[0_22px_54px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.48)] md:p-4">
-              <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
+              <AnalyticsChartPreview chartData={displayChartData} svgRef={chartSvgRef} />
             </div>
           </div>
         </div>
