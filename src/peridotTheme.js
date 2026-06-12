@@ -42,6 +42,87 @@ export const PERIDOT_PALETTE_OPTIONS = Object.freeze(
 );
 
 
+export const PERIDOT_CHART_COLOR_LIBRARY = Object.freeze({
+  // Finite chart palette requested during the chart UI polish pass.
+  // Use only these 30 colors for chart series. They come from the user's
+  // Base, Pale, and Dark chart palettes and are grouped by color family.
+  greens: Object.freeze([
+    '#96A65D',
+    '#082615',
+    '#B6C18E',
+    '#285E3F',
+    '#565B33',
+    '#698E79',
+    '#15311F',
+    '#52675B',
+    '#04150C',
+  ]),
+  golds: Object.freeze([
+    '#D9A74A',
+    '#FFDDA3',
+    '#775429',
+    '#E4C180',
+    '#857055',
+    '#FFE7BF',
+  ]),
+  blues: Object.freeze([
+    '#356685',
+    '#A7CEE7',
+    '#092F47',
+    '#7294AA',
+    '#20404D',
+    '#C1DDEE',
+    '#536D7E',
+    '#051A23',
+    '#627B85',
+  ]),
+  pinks: Object.freeze([
+    '#A6756A',
+    '#6E3D32',
+    '#C19E97',
+    '#9A7770',
+    '#3F231D',
+    '#5B403A',
+  ]),
+});
+
+export const PERIDOT_CHART_SERIES_COLORS = Object.freeze([
+  // Full 30-color cycle. It keeps greens/golds dominant, uses blues/pinks as
+  // supporting contrast, avoids adjacent same-family colors where possible, and
+  // returns to each family with a visibly different value.
+  '#96A65D', // green, base mid
+  '#D9A74A', // gold, base mid
+  '#082615', // green, base dark
+  '#356685', // blue, base mid
+  '#B6C18E', // green, pale light
+  '#A6756A', // pink, base mid
+  '#285E3F', // green, base deep
+  '#FFDDA3', // gold, base pale
+  '#565B33', // green, dark olive
+  '#A7CEE7', // blue, base pale
+  '#698E79', // green, pale muted
+  '#6E3D32', // pink, base dark
+  '#775429', // gold, dark brown
+  '#15311F', // green, dark forest
+  '#7294AA', // blue, pale mid
+  '#52675B', // green, pale dark sage
+  '#E4C180', // gold, pale muted
+  '#04150C', // green, darkest
+  '#C19E97', // pink, pale dusty
+  '#20404D', // blue, dark teal
+  '#D9A74A', // gold, repeated dominant anchor after long gap
+  '#B6C18E', // green, light return
+  '#857055', // gold, dark muted
+  '#C1DDEE', // blue, pale cool
+  '#9A7770', // pink, pale dark
+  '#285E3F', // green, deep return
+  '#FFE7BF', // gold, lightest
+  '#536D7E', // blue, slate
+  '#3F231D', // pink, darkest
+  '#627B85', // blue, dark muted
+]);
+
+
 export const PERIDOT_PALETTE_IMPORT_TARGETS = Object.freeze([
   {
     id: 'wholeApp',
@@ -403,26 +484,6 @@ function buildMapNetworkPaletteOverrides(assignment) {
 }
 
 function buildChartsPaletteOverrides(assignment) {
-  const chartSeries = [
-    assignment.secondary,
-    assignment.highlight,
-    assignment.darkest,
-    shade(assignment.deep, 0.24),
-    shade(assignment.highlight, -0.24),
-    assignment.primary,
-    assignment.lightest,
-    assignment.deep,
-    assignment.soft,
-    shade(assignment.secondary, -0.24),
-    shade(assignment.highlight, 0.24),
-    assignment.dark,
-    assignment.midAlt,
-    assignment.cream,
-    assignment.mid,
-    assignment.pale,
-    ...assignment.series,
-  ].filter(Boolean).filter((value, index, array) => array.indexOf(value) === index).slice(0, 16);
-
   return assignPaths(assignment, [
     ['analytics.shellBg', shade(assignment.deep, -0.18)],
     ['analytics.sidebarBg', assignment.pale],
@@ -435,7 +496,7 @@ function buildChartsPaletteOverrides(assignment) {
     ['analytics.accentLight', assignment.soft],
     ['analytics.tooltipBg', assignment.darkest],
     ['analytics.tooltipText', assignment.lightest],
-    ['analytics.series', chartSeries],
+    ['analytics.series', PERIDOT_CHART_SERIES_COLORS],
   ]);
 }
 
@@ -1028,24 +1089,7 @@ export function buildSemanticTheme(tones = PERIDOT_TONES) {
       accentLight: tones.soft,
       tooltipBg: tones.ink,
       tooltipText: tones.paper,
-      series: [
-        '#96A65D',
-        '#D9A74A',
-        '#082615',
-        '#356685',
-        '#A6756A',
-        '#285E3F',
-        '#FFDDA3',
-        '#6E3D32',
-        '#A7CEE7',
-        '#5F7540',
-        '#A8782F',
-        '#092F47',
-        '#C79A8F',
-        '#173118',
-        '#E0B85A',
-        '#5B777D',
-      ],
+      series: PERIDOT_CHART_SERIES_COLORS,
     },
     ornament: {
       line: tones.gold,
