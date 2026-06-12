@@ -253,26 +253,76 @@ function ChartUseDescription({ chartDefinition }) {
 function SelectControl({ label, value, onChange, options, description, disabled = false }) {
   return (
     <label className="block text-sm">
-      <span className="mb-1 block font-medium text-[var(--panel-card-text)]">{label}</span>
+      <span className="mb-1.5 block text-[11px] font-extrabold uppercase tracking-[0.12em] text-[var(--peridot-role-analytics-chart-text)]">{label}</span>
       <select
         value={value || ''}
         onChange={(event) => onChange(event.target.value)}
         disabled={disabled}
-        className="w-full rounded-xl border border-[var(--input-border)]/80 bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:cursor-not-allowed disabled:opacity-70"
+        className={[
+          'w-full rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)]',
+          'px-3 py-2 text-sm font-semibold text-[var(--peridot-role-form-text-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]',
+          'transition focus:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]',
+          'disabled:cursor-not-allowed disabled:opacity-70',
+        ].join(' ')}
       >
         {options.map((field) => (
           <option key={field.key ?? field} value={field.key ?? field}>{field.label ?? field}</option>
         ))}
       </select>
-      {description ? <span className="mt-1 block text-xs text-[var(--panel-card-muted-text)]">{description}</span> : null}
+      {description ? <span className="mt-1.5 block text-xs leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">{description}</span> : null}
     </label>
+  );
+}
+
+function ControlSection({ eyebrow, title, description, children, compact = false }) {
+  return (
+    <section
+      className={[
+        'rounded-[22px] border border-[var(--peridot-role-ornament-paper-rule)]',
+        'bg-[linear-gradient(135deg,var(--peridot-role-analytics-chart-bg),var(--peridot-role-interface-card-background-warm))]',
+        'shadow-[0_10px_26px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.50)]',
+        compact ? 'p-3' : 'p-4',
+      ].join(' ')}
+    >
+      {eyebrow ? (
+        <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--peridot-role-ornament-line)]">
+          <span aria-hidden="true">◆</span>
+          <span>{eyebrow}</span>
+          <span aria-hidden="true">◆</span>
+        </div>
+      ) : null}
+      {title ? (
+        <h3 className="text-base font-extrabold leading-tight text-[var(--peridot-role-analytics-chart-text)]">
+          {title}
+        </h3>
+      ) : null}
+      {description ? (
+        <p className="mt-1 text-xs leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">
+          {description}
+        </p>
+      ) : null}
+      <div className={title || description || eyebrow ? 'mt-3 space-y-3' : 'space-y-3'}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
+function CurrentChartSummary({ chartData, chartDefinition }) {
+  const title = chartData?.title || chartDefinition?.label || 'Chart';
+  const subtitle = chartData?.subtitle || chartDefinition?.descriptor || '';
+  return (
+    <div className="rounded-2xl border border-[var(--peridot-role-ornament-paper-rule)] bg-[color-mix(in_srgb,var(--peridot-role-interface-card-background-muted)_72%,transparent)] px-3 py-2.5">
+      <div className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--peridot-role-analytics-chart-muted-text)]">Current view</div>
+      <div className="mt-1 text-sm font-bold leading-snug text-[var(--peridot-role-analytics-chart-text)]">{title}</div>
+      {subtitle ? <div className="mt-1 text-xs leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">{subtitle}</div> : null}
+    </div>
   );
 }
 
 function VariableControlsShell({ children }) {
   return (
-    <div className="mt-4 space-y-3">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--panel-card-muted-text)]">Variables</div>
+    <div className="space-y-3">
       {children}
     </div>
   );
@@ -483,14 +533,17 @@ export function AnalyticsPanelContent({
   const renderDateRangeControls = () => {
     if (!yearRange.years.length) return null;
     return (
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] p-3">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--panel-card-muted-text)]">Date range</div>
+      <ControlSection
+        eyebrow="Step 2"
+        title="Set the date window"
+        description="Filter the chart rows when Peridot can derive years from the active dataset."
+        compact
+      >
         <div className="grid grid-cols-2 gap-3">
           <SelectControl label="Start year" value={startYear || String(yearRange.minYear)} onChange={setStartYear} options={yearRange.years.map((year) => ({ key: String(year), label: String(year) }))} />
           <SelectControl label="End year" value={endYear || String(yearRange.maxYear)} onChange={setEndYear} options={yearRange.years.map((year) => ({ key: String(year), label: String(year) }))} />
         </div>
-        <div className="mt-2 text-xs text-[var(--panel-card-muted-text)]">The date range filters chart rows when Peridot can derive a year from the data.</div>
-      </div>
+      </ControlSection>
     );
   };
 
@@ -671,36 +724,41 @@ export function AnalyticsPanelContent({
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-shell-bg)] text-[var(--peridot-role-analytics-chart-text)] shadow-[0_22px_60px_var(--peridot-role-card-shadow)] lg:flex-row">
-      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-sidebar-bg)] lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
-        <div className="shrink-0 border-b border-[var(--peridot-role-interface-border-subtle)] px-5 py-4">
-          <p className="peridot-kicker !mb-0 text-[11px] text-[var(--peridot-role-analytics-accent)]">Chart controls</p>
+      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[var(--peridot-role-interface-border-subtle)] bg-[linear-gradient(180deg,var(--peridot-role-analytics-sidebar-bg),var(--peridot-role-interface-card-background-muted))] lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
+        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-paper-rule)] px-5 py-4">
+          <p className="peridot-kicker !mb-0 text-[11px] text-[var(--peridot-role-analytics-accent)]">Chart recipe</p>
           <h2 className="mt-1 [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[var(--peridot-role-analytics-chart-text)]">
             Build chart
           </h2>
           <p className="mt-2 text-xs leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">
-            Select a chart type and map the active dataset into axes, metrics, groups, and series. Changes update the chart stage immediately.
+            Compose a visualization from the active dataset. Choose a view, set the date window, then map fields into the chart.
           </p>
         </div>
 
         <div className="min-h-0 flex-1 space-y-4 overflow-auto px-5 py-4">
-          <section className="rounded-2xl border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-chart-bg)] p-4 shadow-sm">
+          <ControlSection
+            eyebrow="Step 1"
+            title="Choose a view"
+            description={chartDefinition.descriptor}
+          >
             <SelectControl
               label="Chart type"
               value={chartType}
               onChange={setChartType}
               options={Object.values(ANALYTICS_CHART_DEFINITIONS)}
-              description={chartDefinition.descriptor}
             />
-            <div className="mt-3 rounded-xl bg-[var(--peridot-role-interface-card-background-muted)] p-3 text-xs leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">
-              {chartDefinition.variableSummary}
-            </div>
-          </section>
+            <CurrentChartSummary chartData={chartData} chartDefinition={chartDefinition} />
+          </ControlSection>
 
           {renderDateRangeControls()}
 
-          <section className="rounded-2xl border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-chart-bg)] p-4 shadow-sm">
+          <ControlSection
+            eyebrow="Step 3"
+            title="Choose variables"
+            description={chartDefinition.variableSummary}
+          >
             {renderChartControls()}
-          </section>
+          </ControlSection>
 
         </div>
       </aside>
