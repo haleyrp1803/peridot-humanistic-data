@@ -247,3 +247,21 @@ When applying an imported palette to **Whole app**, Peridot now treats the palet
 - chart and visualization series keep the original detected swatch order where possible, so categorical marks still resemble the uploaded palette.
 
 This makes dramatic palettes more predictable: the darkest and lightest colors in the source image should appear in Peridot's darkest and lightest jobs instead of being diluted into only mid-tone roles.
+
+## Peridot Classic Itch palette
+
+`Peridot Classic Itch` reconstructs the favored earlier itch.io build palette from the packaged production assets. It keeps the older dark green shell, cream paper surfaces, sage/olive map tones, and warm gold highlights while still using the current role-based theme system.
+
+Extracted source colors:
+
+```js
+peridotClassicItch: {
+  label: 'Peridot Classic Itch',
+  dark: ['#02110B', '#04160F', '#082719', '#173120'],
+  mid: ['#33412F', '#52624D', '#6E8475', '#8AA36D'],
+  light: ['#DFE9C8', '#F5ECD2', '#FBF7EA', '#FFF8E8'],
+  highlight: ['#B58B42', '#D6A36A', '#B99B63'],
+}
+```
+
+Use this preset when you want the older Peridot atmosphere without reverting the newer theme editor, image-import workflow, chart wiring, or semantic role controls.
