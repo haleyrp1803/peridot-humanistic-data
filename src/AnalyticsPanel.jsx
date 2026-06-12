@@ -251,29 +251,93 @@ function ChartUseDescription({ chartDefinition }) {
 }
 
 function SelectControl({ label, value, onChange, options, description, disabled = false, emphasis = false }) {
-  const selectClasses = [
-    'w-full appearance-none rounded-xl border px-3 pr-10 text-sm font-semibold transition duration-150',
-    emphasis
-      ? [
-        'border-[var(--peridot-role-ornament-line)] bg-[linear-gradient(180deg,var(--peridot-role-button-primary-bg),color-mix(in_srgb,var(--peridot-role-button-primary-bg)_76%,var(--peridot-role-interface-panel-background)_24%))]',
-        'py-2.5 text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.20),inset_0_1px_0_rgba(255,255,255,0.32)]',
-        'hover:border-[var(--peridot-role-ornament-corner)] hover:bg-[linear-gradient(180deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-button-primary-bg))]',
-      ].join(' ')
-      : [
-        'border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] py-2 text-[var(--peridot-role-form-text-light)]',
-        'shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] hover:border-[var(--peridot-role-ornament-line-muted)] hover:bg-[var(--peridot-role-interface-card-background-warm)]',
-      ].join(' '),
-    'focus:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]',
-    'disabled:cursor-not-allowed disabled:opacity-70',
-  ].join(' ');
+  const [isOpen, setIsOpen] = useState(false);
+  const selectedOption = options.find((field) => String(field.key ?? field) === String(value || '')) || options[0];
+  const selectedLabel = selectedOption?.label ?? selectedOption ?? '';
+
+  if (emphasis) {
+    return (
+      <div
+        className="relative block text-sm"
+        onBlur={(event) => {
+          if (!event.currentTarget.contains(event.relatedTarget)) setIsOpen(false);
+        }}
+      >
+        <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-ornament-line)]">
+          {label}
+        </span>
+        <button
+          type="button"
+          disabled={disabled}
+          className={[
+            'flex w-full items-center justify-between rounded-xl border border-[var(--peridot-role-ornament-line)]',
+            'bg-[var(--peridot-role-button-primary-bg)] px-3 py-2.5 text-left text-sm font-bold',
+            'text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.14),inset_0_1px_0_rgba(255,255,255,0.18)]',
+            'transition duration-150 hover:border-[var(--peridot-role-ornament-corner)] hover:bg-[var(--peridot-role-button-primary-hover-bg)]',
+            'focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] disabled:cursor-not-allowed disabled:opacity-70',
+          ].join(' ')}
+          onClick={() => setIsOpen((current) => !current)}
+          aria-haspopup="listbox"
+          aria-expanded={isOpen}
+        >
+          <span>{selectedLabel}</span>
+          <span
+            aria-hidden="true"
+            className="ml-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[rgba(255,248,232,0.22)] text-[var(--peridot-role-button-primary-text)]"
+          >
+            <svg viewBox="0 0 12 12" className={`h-3 w-3 transition ${isOpen ? 'rotate-180' : ''}`}>
+              <path d="M3 4.5L6 7.5L9 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </span>
+        </button>
+        {isOpen ? (
+          <div
+            className={[
+              'absolute left-0 top-[calc(100%+0.45rem)] z-[1200] w-full overflow-hidden rounded-[18px]',
+              'border border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-role-workspace-chrome-dropdown-bg)]',
+              'p-1.5 text-[var(--peridot-role-workspace-chrome-dropdown-text)] shadow-[0_16px_34px_rgba(0,0,0,0.24)]',
+            ].join(' ')}
+            role="listbox"
+          >
+            {options.map((field) => {
+              const optionValue = field.key ?? field;
+              const optionLabel = field.label ?? field;
+              const isSelected = String(optionValue) === String(value || '');
+              return (
+                <button
+                  key={optionValue}
+                  type="button"
+                  role="option"
+                  aria-selected={isSelected}
+                  className={[
+                    'flex w-full items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition',
+                    isSelected
+                      ? 'bg-[color-mix(in_srgb,var(--peridot-role-button-primary-bg)_58%,var(--peridot-role-workspace-chrome-dropdown-bg)_42%)] font-extrabold text-[var(--peridot-role-interface-text-on-light)] shadow-[inset_4px_0_0_var(--peridot-role-ornament-line)]'
+                      : 'text-[var(--peridot-role-workspace-chrome-dropdown-text)] hover:bg-[color-mix(in_srgb,var(--peridot-role-button-primary-bg)_42%,var(--peridot-role-workspace-chrome-dropdown-bg)_58%)] hover:text-[var(--peridot-role-interface-text-on-light)] hover:shadow-[inset_4px_0_0_var(--peridot-role-ornament-line)]',
+                  ].join(' ')}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    onChange(optionValue);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span>{optionLabel}</span>
+                  {isSelected ? (
+                    <span aria-hidden="true" className="ml-3 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[var(--peridot-role-ornament-line)]">Selected</span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+        {description ? <span className="mt-1 block text-[11px] leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">{description}</span> : null}
+      </div>
+    );
+  }
 
   return (
     <label className="block text-sm">
-      <span className={[
-        'mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em]',
-        emphasis ? 'text-[var(--peridot-role-ornament-line)]' : 'text-[var(--peridot-role-analytics-chart-text)]',
-      ].join(' ')}
-      >
+      <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">
         {label}
       </span>
       <span className="relative block">
@@ -281,7 +345,13 @@ function SelectControl({ label, value, onChange, options, description, disabled 
           value={value || ''}
           onChange={(event) => onChange(event.target.value)}
           disabled={disabled}
-          className={selectClasses}
+          className={[
+            'w-full appearance-none rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)]',
+            'px-3 py-2 pr-10 text-sm font-semibold text-[var(--peridot-role-form-text-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]',
+            'transition hover:border-[var(--peridot-role-ornament-line-muted)] hover:bg-[var(--peridot-role-interface-card-background-warm)]',
+            'focus:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]',
+            'disabled:cursor-not-allowed disabled:opacity-70',
+          ].join(' ')}
         >
           {options.map((field) => (
             <option key={field.key ?? field} value={field.key ?? field}>{field.label ?? field}</option>
@@ -289,15 +359,10 @@ function SelectControl({ label, value, onChange, options, description, disabled 
         </select>
         <span
           aria-hidden="true"
-          className={[
-            'pointer-events-none absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full',
-            emphasis
-              ? 'bg-[rgba(255,248,232,0.22)] text-[var(--peridot-role-button-primary-text)]'
-              : 'bg-[rgba(10,38,22,0.05)] text-[var(--peridot-role-analytics-chart-text)]',
-          ].join(' ')}
+          className="pointer-events-none absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-[rgba(10,38,22,0.05)] text-[var(--peridot-role-analytics-chart-text)]"
         >
-          <svg viewBox="0 0 12 8" className="h-2.5 w-2.5" fill="none">
-            <path d="M1.5 1.5L6 6L10.5 1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <svg viewBox="0 0 12 12" className="h-3 w-3">
+            <path d="M3 4.5L6 7.5L9 4.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </span>
       </span>
@@ -822,7 +887,7 @@ export function AnalyticsPanelContent({
         </div>
       </aside>
 
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[linear-gradient(135deg,var(--peridot-role-analytics-shell-bg),color-mix(in_srgb,var(--peridot-role-analytics-shell-bg)_78%,var(--peridot-role-interface-panel-background-strong)_22%))]">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--peridot-role-analytics-shell-bg)]">
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
           <div className="mx-auto flex h-full min-h-0 w-full max-w-[1320px] items-stretch">
             <div className="flex h-full min-h-0 w-full rounded-[28px] border border-[var(--peridot-role-ornament-paper-rule)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 shadow-[0_22px_54px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.48)] md:p-4">
