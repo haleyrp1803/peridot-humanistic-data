@@ -36,7 +36,12 @@ const PALETTE = Array.isArray(PERIDOT_THEME.analytics.series) && PERIDOT_THEME.a
   : PERIDOT_THEME.visualization.series;
 
 function formatNumber(value) {
-  return Number(value || 0).toLocaleString();
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return '—';
+  return Number(value).toLocaleString();
+}
+
+function isFiniteChartValue(value) {
+  return Number.isFinite(Number(value));
 }
 
 function truncateLabel(label, maxLength = 18) {
@@ -207,13 +212,17 @@ export function AnalyticsLineChart({ data = [], title, subtitle, svgRef }) {
   const bottom = 74;
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
-  const maxValue = Math.max(...data.map((row) => row.count), 1);
+  const finiteValues = data.map((row) => row.count).filter(isFiniteChartValue);
+  const maxValue = Math.max(...finiteValues, 1);
   const points = data.map((row, index) => {
     const x = data.length === 1 ? left + plotWidth / 2 : left + (index / (data.length - 1)) * plotWidth;
-    const y = top + plotHeight - (row.count / maxValue) * plotHeight;
+    const y = isFiniteChartValue(row.count) ? top + plotHeight - (Number(row.count) / maxValue) * plotHeight : null;
     return { ...row, x, y };
   });
-  const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ');
+  const path = points
+    .filter((point) => point.y !== null)
+    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
+    .join(' ');
   const labelEvery = Math.max(1, Math.ceil(data.length / 7));
 
   return (
@@ -227,7 +236,7 @@ export function AnalyticsLineChart({ data = [], title, subtitle, svgRef }) {
             <path d={path} fill="none" stroke={CHART_COLORS.accent} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             {points.map((point, index) => (
               <g key={point.label}>
-                <circle cx={point.x} cy={point.y} r={tooltip?.label === point.label ? 7 : 4.8} fill={tooltip?.label === point.label ? CHART_COLORS.hoverFill : CHART_COLORS.accent} stroke={CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, point))} onMouseLeave={() => setTooltip(null)} />
+                {point.y !== null ? <circle cx={point.x} cy={point.y} r={tooltip?.label === point.label ? 7 : 4.8} fill={tooltip?.label === point.label ? CHART_COLORS.hoverFill : CHART_COLORS.accent} stroke={CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, point))} onMouseLeave={() => setTooltip(null)} /> : null}
                 {index % labelEvery === 0 || index === points.length - 1 ? <text x={point.x} y={top + plotHeight + 22} textAnchor="middle" fontSize="11" fill={CHART_COLORS.mutedText}>{point.label}</text> : null}
               </g>
             ))}
@@ -411,7 +420,8 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
   const bottom = 74;
   const plotWidth = width - left - right;
   const plotHeight = height - top - bottom;
-  const maxValue = Math.max(...series.flatMap((item) => item.points.map((point) => point.count)), 1);
+  const finiteValues = series.flatMap((item) => item.points.map((point) => point.count)).filter(isFiniteChartValue);
+  const maxValue = Math.max(...finiteValues, 1);
   const labelEvery = Math.max(1, Math.ceil(xLabels.length / 7));
 
   return (
@@ -425,14 +435,34 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
             {series.map((item, seriesIndex) => {
               const points = item.points.map((point, index) => {
                 const x = xLabels.length === 1 ? left + plotWidth / 2 : left + (index / (xLabels.length - 1)) * plotWidth;
-                const y = top + plotHeight - (point.count / maxValue) * plotHeight;
+                const y = isFiniteChartValue(point.count) ? top + plotHeight - (Number(point.count) / maxValue) * plotHeight : null;
                 return { ...point, x, y };
               });
-              const path = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ');
+              const pathSegments = [];
+              let currentSegment = [];
+              points.forEach((point) => {
+                if (point.y === null) {
+                  if (currentSegment.length) pathSegments.push(currentSegment);
+                  currentSegment = [];
+                  return;
+                }
+                currentSegment.push(point);
+              });
+              if (currentSegment.length) pathSegments.push(currentSegment);
               return (
                 <g key={item.label}>
-                  <path d={path} fill="none" stroke={PALETTE[seriesIndex % PALETTE.length]} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                  {points.map((point) => <circle key={`${item.label}-${point.label}`} cx={point.x} cy={point.y} r={tooltip?.label === item.label && tooltip?.secondary === point.label ? 6 : 3.6} fill={PALETTE[seriesIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="1.6" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: item.label, secondary: point.label, count: point.count, unit: point.unit }))} onMouseLeave={() => setTooltip(null)} />)}
+                  {pathSegments.map((segment, segmentIndex) => (
+                    <path
+                      key={`${item.label}-segment-${segmentIndex}`}
+                      d={segment.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')}
+                      fill="none"
+                      stroke={PALETTE[seriesIndex % PALETTE.length]}
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  ))}
+                  {points.filter((point) => point.y !== null).map((point) => <circle key={`${item.label}-${point.label}`} cx={point.x} cy={point.y} r={tooltip?.label === item.label && tooltip?.secondary === point.label ? 6 : 3.6} fill={PALETTE[seriesIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="1.6" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: item.label, secondary: point.label, count: point.count, unit: point.unit }))} onMouseLeave={() => setTooltip(null)} />)}
                 </g>
               );
             })}

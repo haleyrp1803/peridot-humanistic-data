@@ -37,6 +37,30 @@ function slugifyFilenamePart(value, fallback = 'analytics-chart') {
   return cleaned || fallback;
 }
 
+function normalizeFieldKeyForControls(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/["'’‘“”]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function isDateLikeFieldForControls(field) {
+  const key = normalizeFieldKeyForControls(field?.key);
+  const label = normalizeFieldKeyForControls(field?.label);
+  return key === 'timeperiod'
+    || key === 'time period'
+    || key === 'date'
+    || key === 'date start'
+    || key === 'date end'
+    || key === 'date display'
+    || /\b(date|year|period|time)\b/.test(key)
+    || /\b(date|year|period|time)\b/.test(label);
+}
+
+
 function withResolvedSvgStyles(svgElement) {
   const clone = svgElement.cloneNode(true);
   const sourceNodes = [svgElement, ...svgElement.querySelectorAll('*')];
@@ -524,17 +548,37 @@ export function AnalyticsPanelContent({
   const availableHeatmapRows = availableFields?.heatmapRowOptions || [];
   const availableHeatmapColumns = availableFields?.heatmapColumnOptions || [];
   const availableXAxisFields = availableFields?.xAxisOptions || [];
+  const availableOrderedXAxisFields = availableFields?.orderedXAxisOptions || [];
   const availableDateFields = availableFields?.dateFieldOptions || [];
   const availableMeasureFields = availableFields?.numericMeasureOptions || [];
   const yMetricOptions = availableFields?.yMetricOptions || [{ key: 'recordCount', label: 'Record count', description: 'Count records in each group.' }];
   const aggregationOptions = ANALYTICS_AGGREGATION_OPTIONS.filter((option) => yField !== 'recordCount' || option.key === 'count');
+  const lineChartTypes = ['line', 'multiLine'];
+  const activeXAxisFields = lineChartTypes.includes(chartType) ? availableOrderedXAxisFields : availableXAxisFields;
+  const numericMeasureKeys = useMemo(() => new Set(availableMeasureFields.map((field) => field.key)), [availableMeasureFields]);
+  const multiLineGroupFields = useMemo(
+    () => availableSegmentFields.filter((field) => (
+      field.key !== xField
+      && !isDateLikeFieldForControls(field)
+      && !numericMeasureKeys.has(field.key)
+    )),
+    [availableSegmentFields, numericMeasureKeys, xField]
+  );
 
   useEffect(() => {
-    if (!availableXAxisFields.length) return;
-    if (!availableXAxisFields.some((field) => field.key === xField)) {
-      setXField(availableDateFields[0]?.key || availableXAxisFields[0].key);
+    if (!activeXAxisFields.length) return;
+    if (!activeXAxisFields.some((field) => field.key === xField)) {
+      setXField(availableDateFields.find((field) => activeXAxisFields.some((candidate) => candidate.key === field.key))?.key || activeXAxisFields[0].key);
     }
-  }, [availableDateFields, availableXAxisFields, xField]);
+  }, [activeXAxisFields, availableDateFields, xField]);
+
+  useEffect(() => {
+    if (chartType !== 'multiLine' || multiLineMode === 'wide') return;
+    if (!multiLineGroupFields.length) return;
+    if (!multiLineGroupFields.some((field) => field.key === multiLineGroupBy)) {
+      setMultiLineGroupBy(multiLineGroupFields[0].key);
+    }
+  }, [chartType, multiLineGroupBy, multiLineGroupFields, multiLineMode]);
 
   useEffect(() => {
     if (!yMetricOptions.some((field) => field.key === yField)) {
@@ -546,6 +590,11 @@ export function AnalyticsPanelContent({
     if (yField === 'recordCount') setAggregation('count');
   }, [yField]);
 
+  useEffect(() => {
+    if (!['pie', 'stackedBar', 'sunburst'].includes(chartType)) return;
+    if (yField !== 'recordCount' && aggregation !== 'sum') setAggregation('sum');
+  }, [aggregation, chartType, yField]);
+
   const selectedBarField = useMemo(() => availableBarFields.find((field) => field.key === barGroupBy) || availableBarFields[0], [availableBarFields, barGroupBy]);
   const selectedPieField = useMemo(() => availablePieFields.find((field) => field.key === pieGroupBy) || availablePieFields[0], [availablePieFields, pieGroupBy]);
   const histogramFieldOptions = yMetricOptions;
@@ -553,7 +602,7 @@ export function AnalyticsPanelContent({
   const selectedHistogramGroupField = useMemo(() => availableBarFields.find((field) => field.key === histogramGroupBy) || availableBarFields[0], [availableBarFields, histogramGroupBy]);
   const selectedStackField = useMemo(() => availableSegmentFields.find((field) => field.key === stackSegmentBy) || availableSegmentFields[0], [availableSegmentFields, stackSegmentBy]);
   const selectedGroupedBarField = useMemo(() => availableSegmentFields.find((field) => field.key === groupedBarGroupBy) || availableSegmentFields[0], [availableSegmentFields, groupedBarGroupBy]);
-  const selectedMultiLineField = useMemo(() => availableSegmentFields.find((field) => field.key === multiLineGroupBy) || availableSegmentFields[0], [availableSegmentFields, multiLineGroupBy]);
+  const selectedMultiLineField = useMemo(() => multiLineGroupFields.find((field) => field.key === multiLineGroupBy) || multiLineGroupFields[0], [multiLineGroupFields, multiLineGroupBy]);
   const selectedHeatmapRowField = useMemo(() => availableHeatmapRows.find((field) => field.key === heatmapRowBy) || availableHeatmapRows[0], [availableHeatmapRows, heatmapRowBy]);
   const selectedHeatmapColumnField = useMemo(() => availableHeatmapColumns.find((field) => field.key === heatmapColumnBy) || availableHeatmapColumns[1] || availableHeatmapColumns[0], [availableHeatmapColumns, heatmapColumnBy]);
   const selectedSunburstParentField = useMemo(() => availableSegmentFields.find((field) => field.key === sunburstParentBy) || availableSegmentFields[0], [availableSegmentFields, sunburstParentBy]);
@@ -679,6 +728,17 @@ export function AnalyticsPanelContent({
     </>
   );
 
+  const renderAdditiveMetricControls = () => (
+    <>
+      <SelectControl label="Y-axis / metric" value={yField} onChange={setYField} options={yMetricOptions} description={yField === 'recordCount' ? 'Count records in each group.' : 'Use numeric values from the selected uploaded column.'} />
+      {yField !== 'recordCount' ? (
+        <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+          Part-to-whole charts use <strong>Sum</strong> for numeric metrics so slices and stacked segments represent additive totals.
+        </div>
+      ) : null}
+    </>
+  );
+
   /*
    * Render the control surface for the active chart type.
    *
@@ -706,16 +766,16 @@ export function AnalyticsPanelContent({
     if (chartType === 'line') {
       return (
         <VariableControlsShell>
-          {availableXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
+          {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Line charts use date/time or numeric x-axes so connected points represent an ordered sequence." /> : null}
           {renderMetricControls()}
-          {!availableXAxisFields.length ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No x-axis fields are available in the current data.</div> : null}
+          {!activeXAxisFields.length ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No date/time or numeric x-axis fields are available for a line chart in the current data.</div> : null}
         </VariableControlsShell>
       );
     }
     if (chartType === 'multiLine') {
       return (
         <VariableControlsShell>
-          {availableXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
+          {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Line charts use date/time or numeric x-axes so connected points represent an ordered sequence." /> : null}
           <SelectControl
             label="Series mode"
             value={multiLineMode}
@@ -759,7 +819,19 @@ export function AnalyticsPanelContent({
             <>
               {multiLineMode === 'groupedMetric' ? renderMetricControls({ allowRecordCount: false }) : null}
               {multiLineMode === 'recordCount' ? <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-axis / metric: Record count.</div> : null}
-              <SelectControl label="Series / grouping field" value={selectedMultiLineField?.key || ''} onChange={setMultiLineGroupBy} options={availableSegmentFields} description={selectedMultiLineField?.description} />
+              {multiLineGroupFields.length ? (
+                <SelectControl
+                  label="Series / grouping field"
+                  value={selectedMultiLineField?.key || ''}
+                  onChange={setMultiLineGroupBy}
+                  options={multiLineGroupFields}
+                  description={selectedMultiLineField?.description}
+                />
+              ) : (
+                <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">
+                  Multi-line grouped mode needs a categorical series field that is not the selected x-axis, not a date field, and not a numeric measure.
+                </div>
+              )}
               <NumberStepperControl label="Limit displayed lines" value={topN} onChange={setTopN} />
             </>
           )}
@@ -772,7 +844,7 @@ export function AnalyticsPanelContent({
       return (
         <VariableControlsShell>
           {availablePieFields.length ? <SelectControl label="Slice category" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} /> : null}
-          {renderMetricControls()}
+          {renderAdditiveMetricControls()}
           <NumberStepperControl label="Limit displayed slices" value={topN} onChange={setTopN} />
         </VariableControlsShell>
       );
@@ -819,7 +891,7 @@ export function AnalyticsPanelContent({
         <VariableControlsShell>
           {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
           <SelectControl label="Segment field" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
-          {renderMetricControls()}
+          {renderAdditiveMetricControls()}
           <NumberStepperControl label="Limit displayed segments" value={topN} onChange={setTopN} />
         </VariableControlsShell>
       );
@@ -839,7 +911,7 @@ export function AnalyticsPanelContent({
         <VariableControlsShell>
           <SelectControl label="Parent category" value={selectedSunburstParentField?.key || ''} onChange={setSunburstParentBy} options={availableSegmentFields} description={selectedSunburstParentField?.description} />
           <SelectControl label="Child category" value={selectedSunburstChildField?.key || ''} onChange={setSunburstChildBy} options={availableSegmentFields} description={selectedSunburstChildField?.description} />
-          {renderMetricControls()}
+          {renderAdditiveMetricControls()}
           <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} />
         </VariableControlsShell>
       );

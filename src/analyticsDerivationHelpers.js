@@ -199,6 +199,50 @@ function aggregateValues(values, aggregation = 'count') {
   return numericValues.reduce((sum, value) => sum + value, 0) / numericValues.length;
 }
 
+function additiveAggregationFor(metricField) {
+  return metricField === 'recordCount' ? 'count' : 'sum';
+}
+
+function effectiveAggregationForChart(chartType, metricField, aggregation = 'count') {
+  if (!metricField || metricField === 'recordCount') return 'count';
+  if (['pie', 'stackedBar', 'sunburst'].includes(chartType)) return 'sum';
+  if (['sum', 'average', 'min', 'max'].includes(aggregation)) return aggregation;
+  return 'sum';
+}
+
+function clampLimit(value, fallback = 10) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.max(1, Math.min(100000, Math.floor(number)));
+}
+
+function aggregateForRanking(values = [], metricField = 'recordCount', aggregation = 'count') {
+  if (metricField === 'recordCount') return aggregateValues(values, 'count');
+  return aggregateValues(values, aggregation);
+}
+
+function aggregatePoint(values = [], metricField = 'recordCount', aggregation = 'count', missingValue = 0) {
+  if (metricField === 'recordCount') return aggregateValues(values, 'count');
+  if (!values.some((value) => parseNumber(value) !== null)) return missingValue;
+  return aggregateValues(values, aggregation);
+}
+
+function addAllValues(target, source = []) {
+  source.forEach((value) => target.push(value));
+  return target;
+}
+
+function getRemainingCategoryLabel(existingLabels = []) {
+  const labels = new Set(Array.from(existingLabels).map((label) => String(label)));
+  if (!labels.has('Other')) return 'Other';
+  if (!labels.has('Other categories')) return 'Other categories';
+  return 'Remaining categories';
+}
+
+function metricLabelFor(fieldKey, aggregation = 'count') {
+  return fieldKey === 'recordCount' ? 'record count' : `${aggregation} ${humanizeFieldLabel(fieldKey)}`;
+}
+
 function metricValue(row, metricField) {
   if (!metricField || metricField === 'recordCount') return 1;
   return parseNumber(row?.[metricField]);
@@ -212,7 +256,7 @@ function topKeysByTotal(counts, topN) {
   return Array.from(counts.entries())
     .map(([label, count]) => ({ label, count }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
-    .slice(0, Math.max(1, Number(topN) || 10))
+    .slice(0, clampLimit(topN))
     .map((item) => item.label);
 }
 
@@ -425,6 +469,30 @@ function mergeFieldDefinitions(baseDefinitions, dynamicDefinitions, { allowRoute
   return Array.from(byKey.values());
 }
 
+function isUsableSeriesGroupingField(rows = [], fieldKey, xField) {
+  if (!fieldKey || fieldKey === xField) return false;
+  if (isDateLikeFieldKey(fieldKey)) return false;
+  if (numericFieldStats(rows, fieldKey).ratio >= 0.65) return false;
+  return rows.some((row) => Boolean(fieldValue(row, fieldKey)));
+}
+
+function resolveSeriesGroupingField(rows = [], preferredField, xField) {
+  if (isUsableSeriesGroupingField(rows, preferredField, xField)) return preferredField;
+
+  const fallbackFields = [
+    'sourcePerson',
+    'targetPerson',
+    'sourceLoc',
+    'targetLoc',
+    'language',
+    'relationship',
+    'archivalCollection',
+  ];
+
+  return fallbackFields.find((fieldKey) => isUsableSeriesGroupingField(rows, fieldKey, xField)) || preferredField;
+}
+
+
 export function getAnalyticsYearRange(rows = []) {
   const years = Array.from(new Set(rows.map((row) => getDatePartsFromRow(row)?.year).filter((year) => Number.isFinite(year) && year > 0))).sort((a, b) => a - b);
   return { years, minYear: years[0] || null, maxYear: years[years.length - 1] || null };
@@ -451,6 +519,11 @@ export function getAvailableAnalyticsFields(rows = []) {
     ...barGroupOptions.filter((definition) => !dateFieldOptions.some((dateDefinition) => dateDefinition.key === definition.key)),
   ];
 
+  const orderedXAxisOptions = [
+    ...dateFieldOptions,
+    ...numericMeasureOptions.filter((definition) => !dateFieldOptions.some((dateDefinition) => dateDefinition.key === definition.key)),
+  ];
+
   return {
     barGroupOptions,
     pieGroupOptions: barGroupOptions,
@@ -458,11 +531,12 @@ export function getAvailableAnalyticsFields(rows = []) {
     heatmapRowOptions: heatmapOptions,
     heatmapColumnOptions: heatmapOptions,
     xAxisOptions: genericXAxisOptions,
+    orderedXAxisOptions,
     dateFieldOptions,
     numericMeasureOptions,
     yMetricOptions: [{ key: 'recordCount', label: 'Record count', description: 'Count records in each group.' }, ...numericMeasureOptions],
     hasYearData: rows.some((row) => Boolean(getYearFromRow(row))),
-    hasMeasureTimeSeries: dateFieldOptions.length > 0 && numericMeasureOptions.length > 0,
+    hasMeasureTimeSeries: orderedXAxisOptions.length > 0 && numericMeasureOptions.length > 0,
   };
 }
 
@@ -477,7 +551,46 @@ export function buildBarChartData(rows = [], groupBy = 'sourcePerson', topN = 10
   return Array.from(grouped.entries())
     .map(([label, values]) => ({ label, count: aggregateValues(values, metricField === 'recordCount' ? 'count' : aggregation), unit: metricField === 'recordCount' ? 'records' : 'value' }))
     .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
-    .slice(0, Math.max(1, Number(topN) || 10));
+    .slice(0, clampLimit(topN));
+}
+
+export function buildPartToWholeChartData(rows = [], groupBy = 'sourcePerson', topN = 10, metricField = 'recordCount') {
+  const aggregation = additiveAggregationFor(metricField);
+  const grouped = new Map();
+
+  rows.forEach((row) => {
+    const label = fieldValue(row, groupBy);
+    if (!label) return;
+    if (!grouped.has(label)) grouped.set(label, []);
+    grouped.get(label).push(metricField === 'recordCount' ? 1 : row?.[metricField]);
+  });
+
+  const totals = new Map(
+    Array.from(grouped.entries()).map(([label, values]) => [label, aggregateValues(values, aggregation)]),
+  );
+  const selectedLabels = topKeysByTotal(totals, topN);
+  const selectedSet = new Set(selectedLabels);
+  const data = selectedLabels.map((label) => ({
+    label,
+    count: totals.get(label) || 0,
+    unit: unitForMetric(metricField),
+  }));
+
+  const omittedLabels = Array.from(grouped.keys()).filter((label) => !selectedSet.has(label));
+  if (omittedLabels.length) {
+    const otherValues = [];
+    omittedLabels.forEach((label) => addAllValues(otherValues, grouped.get(label)));
+    const otherCount = aggregateValues(otherValues, aggregation);
+    if (otherCount) {
+      data.push({
+        label: getRemainingCategoryLabel(grouped.keys()),
+        count: otherCount,
+        unit: unitForMetric(metricField),
+      });
+    }
+  }
+
+  return data;
 }
 
 export function buildLineChartData(rows = [], xField = 'timePeriod', metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
@@ -498,7 +611,7 @@ export function buildLineChartData(rows = [], xField = 'timePeriod', metricField
 
 export function buildGroupedBarChartData(rows = [], xField = 'timePeriod', groupBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
   const granularity = getPeriodGranularity(startYear, endYear);
-  const groupTotals = new Map();
+  const groupValues = new Map();
   const groupedValues = new Map();
   const xLabels = new Set();
   rows.forEach((row) => {
@@ -507,12 +620,19 @@ export function buildGroupedBarChartData(rows = [], xField = 'timePeriod', group
     if (!xLabel || !group) return;
     const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
     xLabels.add(xLabel);
-    groupTotals.set(group, (groupTotals.get(group) || 0) + (metricField === 'recordCount' ? 1 : (parseNumber(rawValue) || 0)));
+    if (!groupValues.has(group)) groupValues.set(group, []);
+    groupValues.get(group).push(rawValue);
     incrementNestedMap(groupedValues, xLabel, group, 0);
     const inner = groupedValues.get(xLabel);
     if (!Array.isArray(inner.get(group))) inner.set(group, []);
     inner.get(group).push(rawValue);
   });
+  const groupTotals = new Map(
+    Array.from(groupValues.entries()).map(([label, values]) => [
+      label,
+      aggregateForRanking(values, metricField, metricField === 'recordCount' ? 'count' : aggregation),
+    ]),
+  );
   const series = topKeysByTotal(groupTotals, topN);
   const data = sortAxisLabels(Array.from(xLabels), rows, xField).map((label) => ({
     label,
@@ -526,24 +646,70 @@ export function buildGroupedBarChartData(rows = [], xField = 'timePeriod', group
 }
 
 export function buildStackedBarChartData(rows = [], xField = 'timePeriod', segmentBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
-  const grouped = buildGroupedBarChartData(rows, xField, segmentBy, topN, metricField, aggregation, startYear, endYear);
-  return {
-    ...grouped,
-    data: grouped.data.map((row) => ({
-      label: row.label,
-      segments: row.groups,
-      total: row.groups.reduce((sum, group) => sum + group.count, 0),
-    })),
-  };
+  const additiveAggregation = additiveAggregationFor(metricField);
+  const granularity = getPeriodGranularity(startYear, endYear);
+  const segmentTotals = new Map();
+  const groupedValues = new Map();
+  const xLabels = new Set();
+
+  rows.forEach((row) => {
+    const xLabel = xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
+    const segment = fieldValue(row, segmentBy);
+    if (!xLabel || !segment) return;
+
+    const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
+    xLabels.add(xLabel);
+    segmentTotals.set(segment, (segmentTotals.get(segment) || 0) + aggregateValues([rawValue], additiveAggregation));
+
+    if (!groupedValues.has(xLabel)) groupedValues.set(xLabel, new Map());
+    const inner = groupedValues.get(xLabel);
+    if (!Array.isArray(inner.get(segment))) inner.set(segment, []);
+    inner.get(segment).push(rawValue);
+  });
+
+  const selectedSegments = topKeysByTotal(segmentTotals, topN);
+  const selectedSet = new Set(selectedSegments);
+  const omittedSegments = Array.from(segmentTotals.keys()).filter((label) => !selectedSet.has(label));
+  const otherLabel = omittedSegments.length ? getRemainingCategoryLabel(segmentTotals.keys()) : null;
+  const series = otherLabel ? [...selectedSegments, otherLabel] : selectedSegments;
+
+  const data = sortAxisLabels(Array.from(xLabels), rows, xField).map((label) => {
+    const rowSegmentValues = groupedValues.get(label) || new Map();
+    const segments = selectedSegments.map((segmentLabel) => ({
+      label: segmentLabel,
+      count: aggregateValues(rowSegmentValues.get(segmentLabel) || [], additiveAggregation),
+      unit: unitForMetric(metricField),
+    }));
+
+    if (otherLabel) {
+      const otherValues = [];
+      omittedSegments.forEach((segmentLabel) => addAllValues(otherValues, rowSegmentValues.get(segmentLabel) || []));
+      segments.push({
+        label: otherLabel,
+        count: aggregateValues(otherValues, additiveAggregation),
+        unit: unitForMetric(metricField),
+      });
+    }
+
+    return {
+      label,
+      segments,
+      total: segments.reduce((sum, segment) => sum + segment.count, 0),
+    };
+  });
+
+  return { granularity, series, data };
 }
+
 
 export function buildMultiLineChartData(rows = [], xField = 'timePeriod', seriesMode = 'wide', seriesFields = [], groupBy = 'sourcePerson', metricField = 'recordCount', aggregation = 'average', topN = 10, startYear, endYear) {
   const granularity = getPeriodGranularity(startYear, endYear);
   const xLabels = new Set();
+  const resolvedGroupBy = seriesMode === 'wide' ? groupBy : resolveSeriesGroupingField(rows, groupBy, xField);
   const xLabelForRow = (row) => xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
 
   if (seriesMode === 'wide') {
-    const series = seriesFields.slice(0, Math.max(1, Number(topN) || 10)).map((field) => {
+    const series = seriesFields.slice(0, clampLimit(topN)).map((field) => {
       const grouped = new Map();
       rows.forEach((row) => {
         const label = xLabelForRow(row);
@@ -561,25 +727,32 @@ export function buildMultiLineChartData(rows = [], xField = 'timePeriod', series
       periods: sortedLabels,
       series: series.map((item) => ({
         label: item.label,
-        points: sortedLabels.map((label) => ({ label, count: aggregateValues(item.grouped.get(label) || [], aggregation), unit: 'value' })),
+        points: sortedLabels.map((label) => ({ label, count: aggregatePoint(item.grouped.get(label) || [], 'value', aggregation, null), unit: 'value' })),
       })),
     };
   }
 
-  const totals = new Map();
+  const groupValues = new Map();
   const groupedValues = new Map();
   rows.forEach((row) => {
     const xLabel = xLabelForRow(row);
-    const group = fieldValue(row, groupBy);
+    const group = fieldValue(row, resolvedGroupBy);
     if (!xLabel || !group) return;
     const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
     xLabels.add(xLabel);
-    totals.set(group, (totals.get(group) || 0) + (metricField === 'recordCount' ? 1 : (parseNumber(rawValue) || 0)));
+    if (!groupValues.has(group)) groupValues.set(group, []);
+    groupValues.get(group).push(rawValue);
     incrementNestedMap(groupedValues, group, xLabel, 0);
     const inner = groupedValues.get(group);
     if (!Array.isArray(inner.get(xLabel))) inner.set(xLabel, []);
     inner.get(xLabel).push(rawValue);
   });
+  const totals = new Map(
+    Array.from(groupValues.entries()).map(([label, values]) => [
+      label,
+      aggregateForRanking(values, metricField, metricField === 'recordCount' ? 'count' : aggregation),
+    ]),
+  );
   const selectedGroups = topKeysByTotal(totals, topN);
   const sortedLabels = sortAxisLabels(Array.from(xLabels), rows, xField);
   return {
@@ -587,33 +760,47 @@ export function buildMultiLineChartData(rows = [], xField = 'timePeriod', series
     periods: sortedLabels,
     series: selectedGroups.map((label) => ({
       label,
-      points: sortedLabels.map((xLabel) => ({ label: xLabel, count: aggregateValues(groupedValues.get(label)?.get(xLabel) || [], metricField === 'recordCount' ? 'count' : aggregation), unit: unitForMetric(metricField) })),
+      points: sortedLabels.map((xLabel) => ({ label: xLabel, count: aggregatePoint(groupedValues.get(label)?.get(xLabel) || [], metricField, metricField === 'recordCount' ? 'count' : aggregation, metricField === 'recordCount' ? 0 : null), unit: unitForMetric(metricField) })),
     })),
   };
 }
 
 export function buildHeatmapChartData(rows = [], rowField = 'sourcePerson', columnField = 'targetPerson', topN = 10, metricField = 'recordCount', aggregation = 'count') {
-  const rowTotals = new Map();
-  const columnTotals = new Map();
+  const rowValues = new Map();
+  const columnValues = new Map();
   const matrix = new Map();
   rows.forEach((row) => {
     const rowLabel = fieldValue(row, rowField);
     const columnLabel = fieldValue(row, columnField);
     if (!rowLabel || !columnLabel) return;
     const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
-    rowTotals.set(rowLabel, (rowTotals.get(rowLabel) || 0) + (metricField === 'recordCount' ? 1 : (parseNumber(rawValue) || 0)));
-    columnTotals.set(columnLabel, (columnTotals.get(columnLabel) || 0) + (metricField === 'recordCount' ? 1 : (parseNumber(rawValue) || 0)));
+    if (!rowValues.has(rowLabel)) rowValues.set(rowLabel, []);
+    if (!columnValues.has(columnLabel)) columnValues.set(columnLabel, []);
+    rowValues.get(rowLabel).push(rawValue);
+    columnValues.get(columnLabel).push(rawValue);
     if (!matrix.has(rowLabel)) matrix.set(rowLabel, new Map());
     const inner = matrix.get(rowLabel);
     if (!Array.isArray(inner.get(columnLabel))) inner.set(columnLabel, []);
     inner.get(columnLabel).push(rawValue);
   });
+  const rowTotals = new Map(
+    Array.from(rowValues.entries()).map(([label, values]) => [
+      label,
+      aggregateForRanking(values, metricField, metricField === 'recordCount' ? 'count' : aggregation),
+    ]),
+  );
+  const columnTotals = new Map(
+    Array.from(columnValues.entries()).map(([label, values]) => [
+      label,
+      aggregateForRanking(values, metricField, metricField === 'recordCount' ? 'count' : aggregation),
+    ]),
+  );
   const rowLabels = topKeysByTotal(rowTotals, topN);
   const columnLabels = topKeysByTotal(columnTotals, topN);
   const cells = [];
   rowLabels.forEach((rowLabel) => {
     columnLabels.forEach((columnLabel) => {
-      cells.push({ rowLabel, columnLabel, count: aggregateValues(matrix.get(rowLabel)?.get(columnLabel) || [], metricField === 'recordCount' ? 'count' : aggregation), unit: unitForMetric(metricField) });
+      cells.push({ rowLabel, columnLabel, count: aggregatePoint(matrix.get(rowLabel)?.get(columnLabel) || [], metricField, metricField === 'recordCount' ? 'count' : aggregation, 0), unit: unitForMetric(metricField) });
     });
   });
   return { rows: rowLabels, columns: columnLabels, cells };
@@ -623,26 +810,46 @@ export function buildHistogramChartData(rows = [], valueField = 'recordCount', g
   const values = valueField === 'recordCount'
     ? buildBarChartData(rows, groupBy, 100000, 'recordCount', 'count').map((item) => item.count).filter((value) => Number.isFinite(value))
     : rows.map((row) => parseNumber(row?.[valueField])).filter((value) => value !== null);
+
   if (!values.length) return [];
+
   const min = Math.min(...values);
   const max = Math.max(...values);
+
+  if (min === max) {
+    return [{
+      label: String(Math.round(min * 100) / 100),
+      count: values.length,
+      unit: valueField === 'recordCount' ? 'categories' : 'records',
+    }];
+  }
+
   const binCount = Math.min(8, Math.max(4, Math.ceil(Math.sqrt(values.length))));
-  const width = max === min ? 1 : (max - min) / binCount;
+  const width = (max - min) / binCount;
   const bins = Array.from({ length: binCount }, (_, index) => {
     const start = min + width * index;
     const end = index === binCount - 1 ? max : min + width * (index + 1);
-    return { label: `${Math.round(start * 100) / 100}–${Math.round(end * 100) / 100}`, min: start, max: end, count: 0 };
+    return {
+      label: `${Math.round(start * 100) / 100}–${Math.round(end * 100) / 100}`,
+      min: start,
+      max: end,
+      count: 0,
+    };
   });
+
   values.forEach((value) => {
-    const index = Math.min(binCount - 1, Math.max(0, Math.floor((value - min) / width)));
+    const index = value === max ? binCount - 1 : Math.min(binCount - 1, Math.max(0, Math.floor((value - min) / width)));
     bins[index].count += 1;
   });
+
   return bins.map(({ label, count }) => ({ label, count, unit: valueField === 'recordCount' ? 'categories' : 'records' }));
 }
 
 export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count') {
+  const additiveAggregation = additiveAggregationFor(metricField);
   const parentValues = new Map();
   const childValues = new Map();
+
   rows.forEach((row) => {
     const parent = fieldValue(row, parentBy);
     const child = fieldValue(row, childBy);
@@ -661,22 +868,57 @@ export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childB
   const parentTotals = new Map(
     Array.from(parentValues.entries()).map(([label, values]) => [
       label,
-      aggregateValues(values, metricField === 'recordCount' ? 'count' : aggregation),
+      aggregateValues(values, additiveAggregation),
     ]),
   );
 
-  const parents = topKeysByTotal(parentTotals, topN).map((parentLabel) => {
-    const children = Array.from((childValues.get(parentLabel) || new Map()).entries())
-      .map(([label, values]) => ({
-        label,
-        count: aggregateValues(values, metricField === 'recordCount' ? 'count' : aggregation),
-        unit: unitForMetric(metricField),
-      }))
-      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label))
-      .slice(0, Math.max(1, Number(topN) || 10));
+  const selectedParentLabels = topKeysByTotal(parentTotals, topN);
+  const selectedParentSet = new Set(selectedParentLabels);
+  const omittedParentLabels = Array.from(parentTotals.keys()).filter((label) => !selectedParentSet.has(label));
+
+  const parents = selectedParentLabels.map((parentLabel) => {
+    const childMap = childValues.get(parentLabel) || new Map();
+    const childTotals = new Map(
+      Array.from(childMap.entries()).map(([label, values]) => [label, aggregateValues(values, additiveAggregation)]),
+    );
+    const selectedChildLabels = topKeysByTotal(childTotals, topN);
+    const selectedChildSet = new Set(selectedChildLabels);
+    const omittedChildLabels = Array.from(childMap.keys()).filter((label) => !selectedChildSet.has(label));
+    const children = selectedChildLabels.map((label) => ({
+      label,
+      count: childTotals.get(label) || 0,
+      unit: unitForMetric(metricField),
+    }));
+
+    if (omittedChildLabels.length) {
+      const otherValues = [];
+      omittedChildLabels.forEach((label) => addAllValues(otherValues, childMap.get(label) || []));
+      const otherCount = aggregateValues(otherValues, additiveAggregation);
+      if (otherCount) {
+        children.push({
+          label: getRemainingCategoryLabel(childMap.keys()),
+          count: otherCount,
+          unit: unitForMetric(metricField),
+        });
+      }
+    }
+
     return { label: parentLabel, count: parentTotals.get(parentLabel) || 0, unit: unitForMetric(metricField), children };
   });
-  return { total: parents.reduce((sum, parent) => sum + parent.count, 0), parents };
+
+  if (omittedParentLabels.length) {
+    const omittedCount = omittedParentLabels.reduce((sum, label) => sum + (parentTotals.get(label) || 0), 0);
+    if (omittedCount) {
+      parents.push({
+        label: getRemainingCategoryLabel(parentTotals.keys()),
+        count: omittedCount,
+        unit: unitForMetric(metricField),
+        children: [{ label: 'Other', count: omittedCount, unit: unitForMetric(metricField) }],
+      });
+    }
+  }
+
+  return { total: Array.from(parentTotals.values()).reduce((sum, count) => sum + count, 0), parents };
 }
 
 /**
@@ -717,15 +959,18 @@ export function buildAnalyticsChartData({
 } = {}) {
   const filteredRows = filterRowsByAnalyticsDateRange(rows, startYear, endYear);
   const rangeSuffix = startYear && endYear ? ` Selected range: ${Math.min(startYear, endYear)}–${Math.max(startYear, endYear)}.` : '';
-  const metricLabel = yField === 'recordCount' ? 'record count' : `${aggregation} ${humanizeFieldLabel(yField)}`;
+  const effectiveAggregation = effectiveAggregationForChart(chartType, yField, aggregation);
+  const metricLabel = metricLabelFor(yField, effectiveAggregation);
+  const additiveAggregation = additiveAggregationFor(yField);
+  const additiveMetricLabel = metricLabelFor(yField, additiveAggregation);
 
   if (chartType === 'line') {
-    const data = buildLineChartData(filteredRows, xField, yField, aggregation, startYear, endYear);
+    const data = buildLineChartData(filteredRows, xField, yField, effectiveAggregation, startYear, endYear);
     return { chartType: 'line', title: `${humanizeFieldLabel(yField)} by ${humanizeFieldLabel(xField)}`, subtitle: `${metricLabel} by selected x-axis.${rangeSuffix}`, xLabel: humanizeFieldLabel(xField), yLabel: humanizeFieldLabel(yField), data };
   }
   if (chartType === 'pie') {
-    const data = buildBarChartData(filteredRows, pieGroupBy, topN, yField, aggregation);
-    return { chartType: 'pie', title: `${humanizeFieldLabel(pieGroupBy)} share`, subtitle: `${metricLabel} grouped by selected category.${rangeSuffix}`, data };
+    const data = buildPartToWholeChartData(filteredRows, pieGroupBy, topN, yField);
+    return { chartType: 'pie', title: `${humanizeFieldLabel(pieGroupBy)} share`, subtitle: `${additiveMetricLabel} grouped by selected category.${rangeSuffix}`, data };
   }
   if (chartType === 'histogram') {
     const valueField = histogramValueField || yField || 'recordCount';
@@ -741,15 +986,15 @@ export function buildAnalyticsChartData({
     return { chartType: 'histogram', title: `Distribution of ${humanizeFieldLabel(valueField)}`, subtitle: `Binned numeric values from the selected field.${rangeSuffix}`, data };
   }
   if (chartType === 'groupedBar') {
-    const { series, data } = buildGroupedBarChartData(filteredRows, xField, groupedBarGroupBy, topN, yField, aggregation, startYear, endYear);
+    const { series, data } = buildGroupedBarChartData(filteredRows, xField, groupedBarGroupBy, topN, yField, effectiveAggregation, startYear, endYear);
     return { chartType: 'groupedBar', title: `${humanizeFieldLabel(groupedBarGroupBy)} by ${humanizeFieldLabel(xField)}`, subtitle: `Side-by-side groups using ${metricLabel}.${rangeSuffix}`, series, data };
   }
   if (chartType === 'stackedBar') {
-    const { series, data } = buildStackedBarChartData(filteredRows, xField, stackSegmentBy, topN, yField, aggregation, startYear, endYear);
-    return { chartType: 'stackedBar', title: `${humanizeFieldLabel(xField)} split by ${humanizeFieldLabel(stackSegmentBy)}`, subtitle: `Stacked segments using ${metricLabel}.${rangeSuffix}`, series, data };
+    const { series, data } = buildStackedBarChartData(filteredRows, xField, stackSegmentBy, topN, yField, additiveAggregation, startYear, endYear);
+    return { chartType: 'stackedBar', title: `${humanizeFieldLabel(xField)} split by ${humanizeFieldLabel(stackSegmentBy)}`, subtitle: `Stacked segments using ${additiveMetricLabel}.${rangeSuffix}`, series, data };
   }
   if (chartType === 'multiLine') {
-    const data = buildMultiLineChartData(filteredRows, xField, multiLineMode, multiLineSeriesFields, multiLineGroupBy, yField, aggregation, topN, startYear, endYear);
+    const data = buildMultiLineChartData(filteredRows, xField, multiLineMode, multiLineSeriesFields, multiLineGroupBy, yField, effectiveAggregation, topN, startYear, endYear);
     return {
       chartType: 'multiLine',
       title: `Trends by ${humanizeFieldLabel(xField)}`,
@@ -760,13 +1005,13 @@ export function buildAnalyticsChartData({
     };
   }
   if (chartType === 'heatmap') {
-    const data = buildHeatmapChartData(filteredRows, heatmapRowBy, heatmapColumnBy, topN, yField, aggregation);
+    const data = buildHeatmapChartData(filteredRows, heatmapRowBy, heatmapColumnBy, topN, yField, effectiveAggregation);
     return { chartType: 'heatmap', title: `${humanizeFieldLabel(heatmapRowBy)} × ${humanizeFieldLabel(heatmapColumnBy)}`, subtitle: `Matrix cells use ${metricLabel}.${rangeSuffix}`, ...data };
   }
   if (chartType === 'sunburst') {
-    const data = buildSunburstChartData(filteredRows, sunburstParentBy, sunburstChildBy, topN, yField, aggregation);
-    return { chartType: 'sunburst', title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`, subtitle: `Hierarchical part-to-whole view using ${metricLabel}.${rangeSuffix}`, ...data };
+    const data = buildSunburstChartData(filteredRows, sunburstParentBy, sunburstChildBy, topN, yField, additiveAggregation);
+    return { chartType: 'sunburst', title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`, subtitle: `Hierarchical part-to-whole view using ${additiveMetricLabel}.${rangeSuffix}`, ...data };
   }
-  const data = buildBarChartData(filteredRows, barGroupBy, topN, yField, aggregation);
+  const data = buildBarChartData(filteredRows, barGroupBy, topN, yField, effectiveAggregation);
   return { chartType: 'bar', orientation: barOrientation, title: `${humanizeFieldLabel(yField)} by ${humanizeFieldLabel(barGroupBy)}`, subtitle: `${metricLabel} grouped by selected category.${rangeSuffix}`, xLabel: humanizeFieldLabel(barGroupBy), yLabel: humanizeFieldLabel(yField), data };
 }
