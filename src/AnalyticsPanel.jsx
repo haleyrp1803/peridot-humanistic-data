@@ -15,7 +15,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ANALYTICS_AGGREGATION_OPTIONS, ANALYTICS_CHART_DEFINITIONS, ANALYTICS_TOP_N_OPTIONS, getAnalyticsChartDefinition } from './analyticsConfig';
+import { ANALYTICS_AGGREGATION_OPTIONS, ANALYTICS_CHART_DEFINITIONS, getAnalyticsChartDefinition } from './analyticsConfig';
 import { AnalyticsChartPreview } from './analyticsChartComponents';
 import { buildAnalyticsChartData, getAnalyticsYearRange } from './analyticsDerivationHelpers';
 import { PERIDOT_THEME } from './peridotTheme.js';
@@ -251,6 +251,22 @@ function ChartUseDescription({ chartDefinition }) {
 }
 
 function SelectControl({ label, value, onChange, options, description, disabled = false, emphasis = false }) {
+  const selectClasses = [
+    'w-full appearance-none rounded-xl border px-3 pr-10 text-sm font-semibold transition duration-150',
+    emphasis
+      ? [
+        'border-[var(--peridot-role-ornament-line)] bg-[linear-gradient(180deg,var(--peridot-role-button-primary-bg),color-mix(in_srgb,var(--peridot-role-button-primary-bg)_76%,var(--peridot-role-interface-panel-background)_24%))]',
+        'py-2.5 text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.20),inset_0_1px_0_rgba(255,255,255,0.32)]',
+        'hover:border-[var(--peridot-role-ornament-corner)] hover:bg-[linear-gradient(180deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-button-primary-bg))]',
+      ].join(' ')
+      : [
+        'border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] py-2 text-[var(--peridot-role-form-text-light)]',
+        'shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] hover:border-[var(--peridot-role-ornament-line-muted)] hover:bg-[var(--peridot-role-interface-card-background-warm)]',
+      ].join(' '),
+    'focus:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]',
+    'disabled:cursor-not-allowed disabled:opacity-70',
+  ].join(' ');
+
   return (
     <label className="block text-sm">
       <span className={[
@@ -260,23 +276,71 @@ function SelectControl({ label, value, onChange, options, description, disabled 
       >
         {label}
       </span>
-      <select
-        value={value || ''}
-        onChange={(event) => onChange(event.target.value)}
-        disabled={disabled}
-        className={[
-          'w-full rounded-xl border px-3 text-sm font-semibold transition',
-          emphasis
-            ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-role-button-primary-bg)] py-2.5 text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.18),inset_0_1px_0_rgba(255,255,255,0.28)]'
-            : 'border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] py-2 text-[var(--peridot-role-form-text-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)]',
-          'focus:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]',
-          'disabled:cursor-not-allowed disabled:opacity-70',
-        ].join(' ')}
-      >
-        {options.map((field) => (
-          <option key={field.key ?? field} value={field.key ?? field}>{field.label ?? field}</option>
-        ))}
-      </select>
+      <span className="relative block">
+        <select
+          value={value || ''}
+          onChange={(event) => onChange(event.target.value)}
+          disabled={disabled}
+          className={selectClasses}
+        >
+          {options.map((field) => (
+            <option key={field.key ?? field} value={field.key ?? field}>{field.label ?? field}</option>
+          ))}
+        </select>
+        <span
+          aria-hidden="true"
+          className={[
+            'pointer-events-none absolute right-3 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full',
+            emphasis
+              ? 'bg-[rgba(255,248,232,0.22)] text-[var(--peridot-role-button-primary-text)]'
+              : 'bg-[rgba(10,38,22,0.05)] text-[var(--peridot-role-analytics-chart-text)]',
+          ].join(' ')}
+        >
+          <svg viewBox="0 0 12 8" className="h-2.5 w-2.5" fill="none">
+            <path d="M1.5 1.5L6 6L10.5 1.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      </span>
+      {description ? <span className="mt-1 block text-[11px] leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">{description}</span> : null}
+    </label>
+  );
+}
+
+function NumberStepperControl({ label, value, onChange, min = 1, max = 100, description }) {
+  const numericValue = Number.isFinite(Number(value)) ? Number(value) : min;
+  const clamp = (nextValue) => Math.max(min, Math.min(max, Number.isFinite(Number(nextValue)) ? Number(nextValue) : min));
+  const commit = (nextValue) => onChange(clamp(nextValue));
+
+  return (
+    <label className="block text-sm">
+      <span className="mb-1.5 block text-[10px] font-extrabold uppercase tracking-[0.14em] text-[var(--peridot-role-analytics-chart-text)]">{label}</span>
+      <span className="grid grid-cols-[2.4rem_minmax(0,1fr)_2.4rem] overflow-hidden rounded-xl border border-[var(--peridot-role-form-border)] bg-[var(--peridot-role-form-bg-light)] shadow-[inset_0_1px_0_rgba(255,255,255,0.45)] focus-within:border-[var(--peridot-role-ornament-line)] focus-within:ring-2 focus-within:ring-[var(--peridot-role-interface-focus-ring)]">
+        <button
+          type="button"
+          className="flex items-center justify-center border-r border-[var(--peridot-role-form-border)] bg-[color-mix(in_srgb,var(--peridot-role-interface-card-background-warm)_82%,transparent)] text-lg font-bold text-[var(--peridot-role-analytics-chart-text)] transition hover:bg-[var(--peridot-role-button-primary-bg)] hover:text-[var(--peridot-role-button-primary-text)] focus:outline-none"
+          onClick={() => commit(numericValue - 1)}
+          aria-label={`Decrease ${label}`}
+        >
+          −
+        </button>
+        <input
+          type="number"
+          min={min}
+          max={max}
+          step="1"
+          value={String(numericValue)}
+          onChange={(event) => commit(event.target.value)}
+          className="min-w-0 bg-transparent px-3 py-2 text-center text-sm font-bold text-[var(--peridot-role-form-text-light)] outline-none"
+        />
+        <button
+          type="button"
+          className="flex items-center justify-center border-l border-[var(--peridot-role-form-border)] bg-[color-mix(in_srgb,var(--peridot-role-interface-card-background-warm)_82%,transparent)] text-lg font-bold text-[var(--peridot-role-analytics-chart-text)] transition hover:bg-[var(--peridot-role-button-primary-bg)] hover:text-[var(--peridot-role-button-primary-text)] focus:outline-none"
+          onClick={() => commit(numericValue + 1)}
+          aria-label={`Increase ${label}`}
+        >
+          +
+        </button>
+      </span>
       {description ? <span className="mt-1 block text-[11px] leading-relaxed text-[var(--peridot-role-analytics-chart-muted-text)]">{description}</span> : null}
     </label>
   );
@@ -568,7 +632,7 @@ export function AnalyticsPanelContent({
               <SelectControl label="X-axis / category" value={selectedBarField?.key || ''} onChange={setBarGroupBy} options={availableBarFields} description={selectedBarField?.description} />
               {renderMetricControls()}
               <SelectControl label="Orientation" value={barOrientation} onChange={setBarOrientation} options={[{ key: 'vertical', label: 'Vertical' }, { key: 'horizontal', label: 'Horizontal' }]} />
-              <SelectControl label="Limit displayed categories" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+              <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} />
             </>
           ) : <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No supported categorical fields are available in the current data.</div>}
         </VariableControlsShell>
@@ -624,14 +688,14 @@ export function AnalyticsPanelContent({
                 </div>
               ) : null}
               {wideSeriesPreset === 'all' ? <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-series: {selectedWideSeriesFields.map((field) => field.label).join(', ') || 'none available'}.</div> : null}
-              <SelectControl label="Limit displayed series" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+              <NumberStepperControl label="Limit displayed series" value={topN} onChange={setTopN} />
             </>
           ) : (
             <>
               {multiLineMode === 'groupedMetric' ? renderMetricControls({ allowRecordCount: false }) : null}
               {multiLineMode === 'recordCount' ? <div className="rounded-xl bg-[var(--utility-tint-bg)] p-3 text-xs text-[var(--panel-card-muted-text)]">Y-axis / metric: Record count.</div> : null}
               <SelectControl label="Series / grouping field" value={selectedMultiLineField?.key || ''} onChange={setMultiLineGroupBy} options={availableSegmentFields} description={selectedMultiLineField?.description} />
-              <SelectControl label="Limit displayed lines" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+              <NumberStepperControl label="Limit displayed lines" value={topN} onChange={setTopN} />
             </>
           )}
           {!availableMeasureFields.length && multiLineMode === 'wide' ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">This mode needs at least one numeric measure field.</div> : null}
@@ -644,7 +708,7 @@ export function AnalyticsPanelContent({
         <VariableControlsShell>
           {availablePieFields.length ? <SelectControl label="Slice category" value={selectedPieField?.key || ''} onChange={setPieGroupBy} options={availablePieFields} description={selectedPieField?.description} /> : null}
           {renderMetricControls()}
-          <SelectControl label="Limit displayed slices" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+          <NumberStepperControl label="Limit displayed slices" value={topN} onChange={setTopN} />
         </VariableControlsShell>
       );
     }
@@ -681,7 +745,7 @@ export function AnalyticsPanelContent({
           {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
           <SelectControl label="Side-by-side grouping field" value={selectedGroupedBarField?.key || ''} onChange={setGroupedBarGroupBy} options={availableSegmentFields} description={selectedGroupedBarField?.description} />
           {renderMetricControls()}
-          <SelectControl label="Limit displayed groups" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+          <NumberStepperControl label="Limit displayed groups" value={topN} onChange={setTopN} />
         </VariableControlsShell>
       );
     }
@@ -691,7 +755,7 @@ export function AnalyticsPanelContent({
           {availableXAxisFields.length ? <SelectControl label="X-axis / category" value={xField} onChange={setXField} options={availableXAxisFields} /> : null}
           <SelectControl label="Segment field" value={selectedStackField?.key || ''} onChange={setStackSegmentBy} options={availableSegmentFields} description={selectedStackField?.description} />
           {renderMetricControls()}
-          <SelectControl label="Limit displayed segments" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+          <NumberStepperControl label="Limit displayed segments" value={topN} onChange={setTopN} />
         </VariableControlsShell>
       );
     }
@@ -701,7 +765,7 @@ export function AnalyticsPanelContent({
           <SelectControl label="Rows" value={selectedHeatmapRowField?.key || ''} onChange={setHeatmapRowBy} options={availableHeatmapRows} description={selectedHeatmapRowField?.description} />
           <SelectControl label="Columns" value={selectedHeatmapColumnField?.key || ''} onChange={setHeatmapColumnBy} options={availableHeatmapColumns} description={selectedHeatmapColumnField?.description} />
           {renderMetricControls()}
-          <SelectControl label="Limit displayed rows/columns" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+          <NumberStepperControl label="Limit displayed rows/columns" value={topN} onChange={setTopN} />
         </VariableControlsShell>
       );
     }
@@ -711,7 +775,7 @@ export function AnalyticsPanelContent({
           <SelectControl label="Parent category" value={selectedSunburstParentField?.key || ''} onChange={setSunburstParentBy} options={availableSegmentFields} description={selectedSunburstParentField?.description} />
           <SelectControl label="Child category" value={selectedSunburstChildField?.key || ''} onChange={setSunburstChildBy} options={availableSegmentFields} description={selectedSunburstChildField?.description} />
           {renderMetricControls()}
-          <SelectControl label="Limit displayed categories" value={topN} onChange={(value) => setTopN(Number(value))} options={ANALYTICS_TOP_N_OPTIONS} />
+          <NumberStepperControl label="Limit displayed categories" value={topN} onChange={setTopN} />
         </VariableControlsShell>
       );
     }
@@ -758,10 +822,10 @@ export function AnalyticsPanelContent({
         </div>
       </aside>
 
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--peridot-role-analytics-chart-bg)]">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[linear-gradient(135deg,var(--peridot-role-analytics-shell-bg),color-mix(in_srgb,var(--peridot-role-analytics-shell-bg)_78%,var(--peridot-role-interface-panel-background-strong)_22%))]">
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
           <div className="mx-auto flex h-full min-h-0 w-full max-w-[1320px] items-stretch">
-            <div className="flex h-full min-h-0 w-full rounded-[26px] border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 shadow-[0_18px_42px_var(--peridot-role-card-shadow)] md:p-4">
+            <div className="flex h-full min-h-0 w-full rounded-[28px] border border-[var(--peridot-role-ornament-paper-rule)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 shadow-[0_22px_54px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.48)] md:p-4">
               <AnalyticsChartPreview chartData={chartData} svgRef={chartSvgRef} />
             </div>
           </div>

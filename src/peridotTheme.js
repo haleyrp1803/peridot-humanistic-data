@@ -403,8 +403,23 @@ function buildMapNetworkPaletteOverrides(assignment) {
 }
 
 function buildChartsPaletteOverrides(assignment) {
+  const chartSeries = [
+    assignment.secondary,
+    shade(assignment.highlight, -0.12),
+    assignment.deep,
+    '#6f8f95',
+    assignment.primary,
+    '#a87968',
+    assignment.highlightLight,
+    assignment.midAlt,
+    '#4f6f76',
+    assignment.mid,
+    shade(assignment.highlight, 0.12),
+    assignment.dark,
+  ].filter(Boolean);
+
   return assignPaths(assignment, [
-    ['analytics.shellBg', assignment.cream],
+    ['analytics.shellBg', withAlpha(assignment.dark, 0.86)],
     ['analytics.sidebarBg', assignment.pale],
     ['analytics.chartBg', assignment.lightest],
     ['analytics.chartText', assignment.deep],
@@ -415,7 +430,7 @@ function buildChartsPaletteOverrides(assignment) {
     ['analytics.accentLight', assignment.soft],
     ['analytics.tooltipBg', assignment.darkest],
     ['analytics.tooltipText', assignment.lightest],
-    ['analytics.series', assignment.series],
+    ['analytics.series', chartSeries],
   ]);
 }
 
@@ -997,7 +1012,7 @@ export function buildSemanticTheme(tones = PERIDOT_TONES) {
       clickableBadgeText: tones.forest,
     },
     analytics: {
-      shellBg: tones.cream,
+      shellBg: withAlpha(tones.night, 0.88),
       sidebarBg: tones.pale,
       chartBg: tones.paper,
       chartText: tones.ink,
@@ -1008,7 +1023,20 @@ export function buildSemanticTheme(tones = PERIDOT_TONES) {
       accentLight: tones.soft,
       tooltipBg: tones.ink,
       tooltipText: tones.paper,
-      series: [tones.leaf, tones.sage, tones.forest, tones.gold, tones.goldLight, tones.midAlt, tones.soft, tones.deep],
+      series: [
+        tones.sage,
+        shade(tones.gold, -0.12),
+        tones.forest,
+        '#6f8f95',
+        tones.leaf,
+        '#a87968',
+        tones.goldLight,
+        tones.midAlt,
+        '#4f6f76',
+        tones.mid,
+        shade(tones.gold, 0.12),
+        tones.deep,
+      ],
     },
     ornament: {
       line: tones.gold,
