@@ -299,6 +299,11 @@ function metricLabelFor(fieldKey, aggregation = 'count') {
   return fieldKey === 'recordCount' ? 'record count' : `${aggregation} ${humanizeFieldLabel(fieldKey)}`;
 }
 
+function methodMetricLabelFor(fieldKey, aggregation = 'count') {
+  const label = metricLabelFor(fieldKey, aggregation);
+  return label.replace(/^./, (first) => first.toUpperCase());
+}
+
 function metricValue(row, metricField) {
   if (!metricField || metricField === 'recordCount') return 1;
   return parseNumber(row?.[metricField]);
@@ -1244,7 +1249,13 @@ export function buildAnalyticsChartData({
   }
   if (chartType === 'pie') {
     const data = buildPartToWholeChartData(filteredRows, pieGroupBy, topN, yField, categorySelection);
-    return { chartType: 'pie', title: `${humanizeFieldLabel(pieGroupBy)} share`, subtitle: `${additiveMetricLabel} grouped by selected category.${rangeSuffix}`, data };
+    return {
+      chartType: 'pie',
+      title: `${humanizeFieldLabel(pieGroupBy)} share`,
+      subtitle: `${additiveMetricLabel} grouped by selected category.${rangeSuffix}`,
+      methodNote: `Measure: ${methodMetricLabelFor(yField, additiveAggregation)}`,
+      data,
+    };
   }
   if (chartType === 'histogram') {
     const valueField = histogramValueField || yField || 'recordCount';
@@ -1254,18 +1265,43 @@ export function buildAnalyticsChartData({
         chartType: 'histogram',
         title: `Distribution of record counts by ${humanizeFieldLabel(histogramGroupBy)}`,
         subtitle: `Binned counts of records per selected category.${rangeSuffix}`,
+        xLabel: 'Record-count bin',
+        yLabel: 'Category count',
         data,
       };
     }
-    return { chartType: 'histogram', title: `Distribution of ${humanizeFieldLabel(valueField)}`, subtitle: `Binned numeric values from the selected field.${rangeSuffix}`, data };
+    return {
+      chartType: 'histogram',
+      title: `Distribution of ${humanizeFieldLabel(valueField)}`,
+      subtitle: `Binned numeric values from the selected field.${rangeSuffix}`,
+      xLabel: humanizeFieldLabel(valueField),
+      yLabel: 'Record count',
+      data,
+    };
   }
   if (chartType === 'groupedBar') {
     const { series, data } = buildGroupedBarChartData(filteredRows, xField, groupedBarGroupBy, topN, yField, effectiveAggregation, startYear, endYear, categorySelection);
-    return { chartType: 'groupedBar', title: `${humanizeFieldLabel(groupedBarGroupBy)} by ${humanizeFieldLabel(xField)}`, subtitle: `Side-by-side groups using ${metricLabel}.${rangeSuffix}`, series, data };
+    return {
+      chartType: 'groupedBar',
+      title: `${humanizeFieldLabel(groupedBarGroupBy)} by ${humanizeFieldLabel(xField)}`,
+      subtitle: `Side-by-side groups using ${metricLabel}.${rangeSuffix}`,
+      xLabel: humanizeFieldLabel(xField),
+      yLabel: methodMetricLabelFor(yField, effectiveAggregation),
+      series,
+      data,
+    };
   }
   if (chartType === 'stackedBar') {
     const { series, data } = buildStackedBarChartData(filteredRows, xField, stackSegmentBy, topN, yField, additiveAggregation, startYear, endYear, categorySelection);
-    return { chartType: 'stackedBar', title: `${humanizeFieldLabel(xField)} split by ${humanizeFieldLabel(stackSegmentBy)}`, subtitle: `Stacked segments using ${additiveMetricLabel}.${rangeSuffix}`, series, data };
+    return {
+      chartType: 'stackedBar',
+      title: `${humanizeFieldLabel(xField)} split by ${humanizeFieldLabel(stackSegmentBy)}`,
+      subtitle: `Stacked segments using ${additiveMetricLabel}.${rangeSuffix}`,
+      xLabel: humanizeFieldLabel(xField),
+      yLabel: methodMetricLabelFor(yField, additiveAggregation),
+      series,
+      data,
+    };
   }
   if (chartType === 'multiLine') {
     const data = buildMultiLineChartData(filteredRows, xField, multiLineMode, multiLineSeriesFields, multiLineGroupBy, yField, effectiveAggregation, topN, startYear, endYear, categorySelection);
@@ -1275,6 +1311,8 @@ export function buildAnalyticsChartData({
       subtitle: multiLineMode === 'wide'
         ? `Selected numeric columns shown as separate series.${rangeSuffix}`
         : `One line per ${humanizeFieldLabel(multiLineGroupBy)} using ${metricLabel}.${rangeSuffix}`,
+      xLabel: humanizeFieldLabel(xField),
+      yLabel: methodMetricLabelFor(yField, effectiveAggregation),
       ...data,
     };
   }
@@ -1284,8 +1322,22 @@ export function buildAnalyticsChartData({
   }
   if (chartType === 'sunburst') {
     const data = buildSunburstChartData(filteredRows, sunburstParentBy, sunburstChildBy, topN, yField, additiveAggregation, categorySelection);
-    return { chartType: 'sunburst', title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`, subtitle: `Hierarchical part-to-whole view using ${additiveMetricLabel}.${rangeSuffix}`, ...data };
+    return {
+      chartType: 'sunburst',
+      title: `${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)}`,
+      subtitle: `Hierarchical part-to-whole view using ${additiveMetricLabel}.${rangeSuffix}`,
+      methodNote: `Hierarchy: ${humanizeFieldLabel(sunburstParentBy)} → ${humanizeFieldLabel(sunburstChildBy)} · Measure: ${methodMetricLabelFor(yField, additiveAggregation)}`,
+      ...data,
+    };
   }
   const data = buildBarChartData(filteredRows, barGroupBy, topN, yField, effectiveAggregation, categorySelection);
-  return { chartType: 'bar', orientation: barOrientation, title: `${humanizeFieldLabel(yField)} by ${humanizeFieldLabel(barGroupBy)}`, subtitle: `${metricLabel} grouped by selected category.${rangeSuffix}`, xLabel: humanizeFieldLabel(barGroupBy), yLabel: humanizeFieldLabel(yField), data };
+  return {
+    chartType: 'bar',
+    orientation: barOrientation,
+    title: `${humanizeFieldLabel(yField)} by ${humanizeFieldLabel(barGroupBy)}`,
+    subtitle: `${metricLabel} grouped by selected category.${rangeSuffix}`,
+    xLabel: humanizeFieldLabel(barGroupBy),
+    yLabel: methodMetricLabelFor(yField, effectiveAggregation),
+    data,
+  };
 }
