@@ -461,6 +461,7 @@ function humanizeFieldLabel(key) {
 function isTechnicalFieldKey(key) {
   const normalized = normalizeKey(key);
   if (!normalized) return true;
+  const compactNormalized = normalized.replace(/\s+/g, '');
 
   const exactExclusions = new Set([
     'id', 'row id', 'parsed date', 'mappable', 'map able', 'source place id', 'target place id',
@@ -469,7 +470,15 @@ function isTechnicalFieldKey(key) {
     'source latitude', 'source longitude', 'target latitude', 'target longitude',
   ]);
 
+  const compactExclusions = new Set([
+    'sourcelat', 'sourcelng', 'sourcelong', 'sourcelatitude', 'sourcelongitude',
+    'targetlat', 'targetlng', 'targetlong', 'targetlatitude', 'targetlongitude',
+    'lat', 'lng', 'long', 'latitude', 'longitude',
+  ]);
+
   if (exactExclusions.has(normalized)) return true;
+  if (compactExclusions.has(compactNormalized)) return true;
+  if (/^(source|target)?(lat|lng|long|latitude|longitude)$/.test(compactNormalized)) return true;
   if (normalized.startsWith('__')) return true;
   if (/\b(id|uuid|guid)\b/.test(normalized)) return true;
   if (/\b(lat|lng|long|latitude|longitude)\b/.test(normalized)) return true;

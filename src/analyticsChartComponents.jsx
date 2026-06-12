@@ -59,6 +59,44 @@ function truncateLabel(label, maxLength = 18) {
   return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
 }
 
+function splitLabelLines(label, maxLineLength = 28, maxLines = 2) {
+  const words = String(label || '').split(/\s+/).filter(Boolean);
+  if (!words.length) return [''];
+
+  const lines = [];
+  let currentLine = '';
+
+  words.forEach((word) => {
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    if (candidate.length <= maxLineLength || !currentLine) {
+      currentLine = candidate;
+      return;
+    }
+    lines.push(currentLine);
+    currentLine = word;
+  });
+
+  if (currentLine) lines.push(currentLine);
+
+  if (lines.length <= maxLines) return lines;
+  const visibleLines = lines.slice(0, maxLines);
+  visibleLines[maxLines - 1] = truncateLabel(visibleLines[maxLines - 1], maxLineLength);
+  return visibleLines;
+}
+
+function WrappedAxisLabel({ x, y, label, maxLineLength = 30 }) {
+  const lines = splitLabelLines(label, maxLineLength, 2);
+  const firstDy = lines.length > 1 ? -4 : 0;
+
+  return (
+    <text x={x} y={y + firstDy} textAnchor="end" fontSize="11.2" fontWeight="650" fill={CHART_COLORS.text}>
+      {lines.map((line, index) => (
+        <tspan key={`${label}-${index}`} x={x} dy={index === 0 ? 0 : 12}>{line}</tspan>
+      ))}
+    </text>
+  );
+}
+
 function percentLabel(value, total) {
   if (!Number.isFinite(Number(value)) || !Number.isFinite(Number(total)) || Number(total) <= 0) return '0%';
   const percent = (Number(value) / Number(total)) * 100;
@@ -334,12 +372,12 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
   const total = sumCounts(data);
 
   if (orientation === 'horizontal') {
-    const width = 940;
-    const rowHeight = 34;
+    const width = 980;
+    const rowHeight = 38;
     const top = 72;
     const right = 300;
     const bottom = 42;
-    const left = 220;
+    const left = 282;
     const height = Math.max(340, top + bottom + data.length * rowHeight);
     const maxValue = Math.max(...data.map((row) => row.count), 1);
     const plotWidth = width - left - right;
@@ -357,7 +395,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
                 const barWidth = Math.max(2, (row.count / maxValue) * plotWidth);
                 return (
                   <g key={row.label}>
-                    <text x={left - 12} y={y + 17} textAnchor="end" fontSize="12" fill={CHART_COLORS.text}>{truncateLabel(row.label, 30)}</text>
+                    <WrappedAxisLabel x={left - 12} y={y + 13} label={row.label} />
                     <rect x={left} y={y} width={barWidth} height="22" rx="8" fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : CHART_COLORS.accent} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} style={{ cursor: 'default' }} />
                     <text x={Math.min(left + barWidth + 8, width - right - 10)} y={y + 16} fontSize="12" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>
                   </g>
