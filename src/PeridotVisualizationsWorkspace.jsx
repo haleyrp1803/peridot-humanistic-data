@@ -382,10 +382,10 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
 
   const buttonClass = compact
     ? [
-      'rounded-full border px-3 py-1 text-[11px] font-bold transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
+      'inline-flex h-10 w-[144px] items-center justify-center rounded-full border px-3 text-center text-[11px] font-extrabold uppercase tracking-[0.15em] transition duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
       isOpen
-        ? 'border-[var(--peridot-color-hex-f5ecd2-a90)] bg-[var(--peridot-color-hex-b58b42)] text-[var(--peridot-color-hex-fff8e8)]'
-        : 'border-[var(--peridot-color-hex-dfe9c8-a45)] bg-[var(--peridot-color-hex-dfe9c8-a10)] text-[var(--peridot-color-hex-f5ecd2)] hover:border-[var(--peridot-color-hex-f5ecd2-a90)] hover:bg-[var(--peridot-color-hex-b58b42)]',
+        ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-b58b42-a55)] text-[var(--peridot-color-hex-fff8e8)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a24),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-20)]'
+        : 'border-[var(--peridot-color-hex-dfe9c8-a36)] bg-[var(--peridot-color-hex-dfe9c8-a08)] text-[var(--peridot-color-hex-f5ecd2)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a10)] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-b58b42-a30)] hover:text-[var(--peridot-color-hex-fff8e8)] hover:shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a20),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-18)]',
     ].join(' ')
     : [
       'w-full rounded-2xl border px-3 py-2 text-left text-[var(--peridot-color-hex-fbf7ea)] transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
@@ -422,7 +422,6 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
         className={buttonClass}
         aria-expanded={isOpen}
         aria-label={`Export ${activeVisualizationLabel}`}
-        title={`Export ${activeVisualizationLabel}`}
       >
         {compact ? (
           'Export'
@@ -757,12 +756,38 @@ export function PeridotVisualizationsWorkspace({
     }
   };
 
-  const categoryClass = (active) => [
-    'relative rounded-2xl border text-[var(--peridot-color-hex-fbf7ea)] transition focus-within:ring-2 focus-within:ring-[var(--peridot-color-hex-d6a36a-a60)]',
-    active
-      ? 'border-[var(--peridot-color-hex-f5ecd2-a90)] bg-[var(--peridot-color-hex-b58b42-a75)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]'
-      : 'border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-dfe9c8-a10)] hover:border-[var(--peridot-color-hex-f5ecd2-a80)] hover:bg-[var(--peridot-color-hex-b58b42-a70)]',
+  const isCategorySelected = (category) => category.tools.some((toolKey) => {
+    if (toolKey === VISUALIZATION_TOOLS.CHART_WORKSPACE) {
+      return selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || Boolean(chartTypeFromToolKey(selectedTool));
+    }
+    return selectedTool === toolKey;
+  });
+
+  const headerTabBaseClass = [
+    'inline-flex h-10 w-[144px] items-center justify-center rounded-full border px-3 text-center',
+    'text-[11px] font-extrabold uppercase tracking-[0.15em] transition duration-150',
+    'focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
   ].join(' ');
+
+  const categoryClass = () => 'relative rounded-full';
+
+  const headerTabStateClass = (open, selected) => [
+    selected
+      ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-b58b42)] text-[var(--peridot-color-hex-fff8e8)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a40),0_10px_24px_var(--peridot-color-rgba-rgba-0-0-0-0-28),0_0_0_1px_var(--peridot-color-hex-d6a36a-a35)]'
+      : open
+        ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-b58b42-a55)] text-[var(--peridot-color-hex-fff8e8)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a24),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-20)]'
+        : 'border-[var(--peridot-color-hex-dfe9c8-a36)] bg-[var(--peridot-color-hex-dfe9c8-a08)] text-[var(--peridot-color-hex-f5ecd2)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a10)] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-b58b42-a30)] hover:text-[var(--peridot-color-hex-fff8e8)] hover:shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a20),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-18)]',
+  ].join(' ');
+
+  const headerActionClass = [
+    headerTabBaseClass,
+    'border-[var(--peridot-color-hex-dfe9c8-a36)] bg-[var(--peridot-color-hex-dfe9c8-a08)]',
+    'text-[var(--peridot-color-hex-f5ecd2)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a10)]',
+    'hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-b58b42-a30)] hover:text-[var(--peridot-color-hex-fff8e8)] hover:shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a20),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-18)]',
+  ].join(' ');
+
+  const headerRowDecalClass = 'hidden h-5 w-5 shrink-0 text-[var(--peridot-role-ornament-line)] opacity-80 xl:block';
+
   const menuItemClass = (active, available) => [
     'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
     active
@@ -836,82 +861,90 @@ export function PeridotVisualizationsWorkspace({
                   </h1>
                 </div>
 
-                <div className="flex flex-col gap-2 xl:flex-row xl:items-stretch">
-                  <div className="relative z-[900] grid gap-2 sm:grid-cols-2 xl:min-w-[660px] xl:grid-cols-4">
-                    {categories.map((category) => {
-                      const isDirectAction = typeof category.directAction === 'function';
-                      const isOpen = !isDirectAction && openMenuCategory === category.label;
-                      const handleCategoryClick = (event) => {
-                        if (isDirectAction) {
-                          closeMenu();
-                          category.directAction();
-                          return;
-                        }
-                        if (isOpen) {
-                          closeMenu();
-                        } else {
-                          openMenu(category.label, event.currentTarget.closest('[data-visualization-menu-anchor]'));
-                        }
-                      };
-                      return (
-                        <div
-                          key={category.label}
-                          data-visualization-menu-anchor="true"
-                          className={categoryClass(isOpen)}
-                          onMouseEnter={(event) => {
-                            if (!isDirectAction) {
-                              openMenu(category.label, event.currentTarget);
-                            }
-                          }}
-                          onMouseLeave={isDirectAction ? undefined : scheduleMenuClose}
-                          onFocus={(event) => {
-                            if (!isDirectAction) {
-                              openMenu(category.label, event.currentTarget);
-                            }
-                          }}
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={headerRowDecalClass} fill="none">
+                    <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
+                    <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+                  </svg>
+                  {categories.filter((category) => !category.directAction).map((category) => {
+                    const isOpen = openMenuCategory === category.label;
+                    const selected = isCategorySelected(category);
+                    const handleCategoryClick = (event) => {
+                      if (isOpen) {
+                        closeMenu();
+                      } else {
+                        openMenu(category.label, event.currentTarget.closest('[data-visualization-menu-anchor]'));
+                      }
+                    };
+                    return (
+                      <div
+                        key={category.label}
+                        data-visualization-menu-anchor="true"
+                        className={categoryClass(isOpen, selected)}
+                        onMouseEnter={(event) => openMenu(category.label, event.currentTarget)}
+                        onMouseLeave={scheduleMenuClose}
+                        onFocus={(event) => openMenu(category.label, event.currentTarget)}
+                      >
+                        <button
+                          type="button"
+                          className={`${headerTabBaseClass} ${headerTabStateClass(isOpen, selected)} focus:outline-none`}
+                          onClick={handleCategoryClick}
+                          aria-expanded={isOpen}
+                          aria-current={selected ? 'page' : undefined}
                         >
-                          <button
-                            type="button"
-                            className="w-full px-3 py-2 text-left focus:outline-none"
-                            onClick={handleCategoryClick}
-                            aria-expanded={isOpen}
+                          {category.label.replace(' Visualizations', '').replace('Chart', 'Charts')}
+                        </button>
+                        {isOpen ? (
+                          <FloatingVisualizationMenu
+                            anchorRect={openMenuAnchorRect}
+                            isOpen={isOpen}
+                            width={280}
+                            onMouseEnter={() => openMenu(category.label)}
+                            onMouseLeave={scheduleMenuClose}
+                            onFocus={() => openMenu(category.label)}
                           >
-                            <span className="block text-sm font-bold">{category.label}</span>
-                            <span className="mt-1 block text-[11px] leading-snug text-[var(--peridot-color-hex-dfe9c8)]">{category.description}</span>
-                          </button>
-                          {isOpen ? (
-                            <FloatingVisualizationMenu
-                              anchorRect={openMenuAnchorRect}
-                              isOpen={isOpen}
-                              width={280}
-                              onMouseEnter={() => openMenu(category.label)}
-                              onMouseLeave={scheduleMenuClose}
-                              onFocus={() => openMenu(category.label)}
-                            >
-                              {category.tools.map((toolKey) => {
-                                const tool = toolDefinitions[toolKey];
-                                return (
-                                  <button
-                                    key={toolKey}
-                                    type="button"
-                                    onClick={() => selectTool(toolKey)}
-                                    className={menuItemClass(selectedTool === toolKey, tool.available)}
-                                  >
-                                    <span className="pr-2 leading-snug">{tool.label}</span>
-                                    <CompatibilityStatusPill available={tool.available} light />
-                                  </button>
-                                );
-                              })}
-                            </FloatingVisualizationMenu>
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                  </div>
+                            {category.tools.map((toolKey) => {
+                              const tool = toolDefinitions[toolKey];
+                              const isActiveTool = selectedTool === toolKey || (toolKey === VISUALIZATION_TOOLS.CHART_WORKSPACE && Boolean(chartTypeFromToolKey(selectedTool)));
+                              return (
+                                <button
+                                  key={toolKey}
+                                  type="button"
+                                  onClick={() => selectTool(toolKey)}
+                                  className={menuItemClass(isActiveTool, tool.available)}
+                                >
+                                  <span className="pr-2 leading-snug">{tool.label}</span>
+                                  <CompatibilityStatusPill available={tool.available} light />
+                                </button>
+                              );
+                            })}
+                          </FloatingVisualizationMenu>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                  {categories.filter((category) => category.directAction).map((category) => (
+                    <button
+                      key={category.label}
+                      type="button"
+                      className={headerActionClass}
+                      onClick={() => {
+                        closeMenu();
+                        category.directAction();
+                      }}
+                    >
+                      Explore
+                    </button>
+                  ))}
                   <VisualizationExportMenu
                     exportControls={activeExportControls}
                     activeVisualizationLabel={activeVisualizationLabel}
+                    compact
                   />
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={`${headerRowDecalClass} scale-x-[-1]`} fill="none">
+                    <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
+                    <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
+                  </svg>
                 </div>
               </div>
             ) : (
