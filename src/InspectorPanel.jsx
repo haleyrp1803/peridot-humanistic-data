@@ -13,7 +13,6 @@
 
 import React from 'react';
 import { InspectorBodyRouter } from './InspectorBodyRouter.jsx';
-import { PERIDOT_COLORS } from './peridotColorPalette.js';
 
 /**
  * Shared Inspector content boundary.
@@ -57,78 +56,78 @@ export function InspectorContent({
   const isWorkspace = presentation === 'workspace';
 
   const inspectorPaletteStyle = {
-    '--summary-card-bg': PERIDOT_COLORS.HEX_BDA77A,
-    '--summary-card-border': PERIDOT_COLORS.HEX_F4EFD9,
-    '--summary-card-text': PERIDOT_COLORS.HEX_11231A,
-    '--panel-card-bg': PERIDOT_COLORS.HEX_E1E8CC,
-    '--panel-card-border': PERIDOT_COLORS.HEX_B4C29C,
-    '--panel-card-text': PERIDOT_COLORS.HEX_14261D,
-    '--panel-card-muted-text': PERIDOT_COLORS.HEX_52624D,
-    '--panel-card-hover': PERIDOT_COLORS.HEX_D7DFBC,
-    '--utility-panel-bg': PERIDOT_COLORS.HEX_D7E0BD,
-    '--section-bg': PERIDOT_COLORS.HEX_C4D0A8,
-    '--section-border': PERIDOT_COLORS.HEX_91A276,
-    '--panel-bg': PERIDOT_COLORS.HEX_9FB088,
-    '--card-bg': PERIDOT_COLORS.HEX_DBE4C3,
-    '--stat-card-bg': PERIDOT_COLORS.HEX_F4EFD9,
-    '--button-bg': PERIDOT_COLORS.HEX_F4EFD9,
-    '--button-border': PERIDOT_COLORS.HEX_C8BEA0,
-    '--button-text': PERIDOT_COLORS.HEX_16271D,
-    '--button-hover-bg': PERIDOT_COLORS.HEX_B99B63,
-    '--button-hover-border': PERIDOT_COLORS.HEX_7D6140,
-    '--button-hover-text': PERIDOT_COLORS.HEX_0D1C13,
-    '--button-secondary-bg': PERIDOT_COLORS.HEX_F4EFD9,
-    '--button-secondary-border': PERIDOT_COLORS.HEX_C8BEA0,
-    '--button-secondary-text': PERIDOT_COLORS.HEX_16271D,
-    '--button-secondary-hover': PERIDOT_COLORS.HEX_B99B63,
-    '--button-primary-bg': PERIDOT_COLORS.HEX_F4EFD9,
-    '--button-primary-border': PERIDOT_COLORS.HEX_C8BEA0,
-    '--button-primary-text': PERIDOT_COLORS.HEX_16271D,
-    '--button-primary-hover': PERIDOT_COLORS.HEX_B99B63,
-    '--button-primary-active-bg': PERIDOT_COLORS.HEX_B99B63,
-    '--button-primary-active-border': PERIDOT_COLORS.HEX_7D6140,
-    '--button-primary-active-hover': PERIDOT_COLORS.HEX_A98954,
-    '--badge-bg': PERIDOT_COLORS.HEX_F4EFD9,
-    '--badge-text': PERIDOT_COLORS.HEX_3B4F2E,
-    '--empty-state-bg': PERIDOT_COLORS.HEX_DBE4C3,
-    '--empty-state-border': PERIDOT_COLORS.HEX_91A276,
-    '--empty-state-text': PERIDOT_COLORS.HEX_52624D,
-    '--detail-label-text': PERIDOT_COLORS.HEX_54694D,
-    '--text-main': PERIDOT_COLORS.HEX_14261D,
-    '--text-muted': PERIDOT_COLORS.HEX_52624D,
-    '--text-strong': PERIDOT_COLORS.HEX_102117,
-    '--heading-text': PERIDOT_COLORS.HEX_F6F3DC,
-    '--link-text': PERIDOT_COLORS.HEX_4C6E35,
-    '--link-hover-text': PERIDOT_COLORS.HEX_7D6140,
-    '--accent': PERIDOT_COLORS.HEX_F4EFD9,
-    '--inspector-clickable-bg': PERIDOT_COLORS.HEX_5F724C,
-    '--inspector-clickable-border': PERIDOT_COLORS.HEX_87966A,
-    '--inspector-clickable-text': PERIDOT_COLORS.HEX_F7F2DD,
-    '--inspector-clickable-muted-text': PERIDOT_COLORS.HEX_E8E0BD,
-    '--inspector-clickable-hover-bg': PERIDOT_COLORS.HEX_B99B63,
-    '--inspector-clickable-hover-border': PERIDOT_COLORS.HEX_7D6140,
-    '--inspector-clickable-hover-text': PERIDOT_COLORS.HEX_0D1C13,
-    '--inspector-clickable-badge-bg': PERIDOT_COLORS.HEX_F4EFD9,
-    '--inspector-clickable-badge-text': PERIDOT_COLORS.HEX_3B4F2E,
+    '--summary-card-bg': 'var(--peridot-role-inspector-summary-card-bg)',
+    '--summary-card-border': 'var(--peridot-role-inspector-summary-card-border)',
+    '--summary-card-text': 'var(--peridot-role-inspector-summary-card-text)',
+    '--panel-card-bg': 'var(--peridot-role-inspector-card-bg)',
+    '--panel-card-border': 'var(--peridot-role-inspector-card-border)',
+    '--panel-card-text': 'var(--peridot-role-inspector-card-text)',
+    '--panel-card-muted-text': 'var(--peridot-role-inspector-card-muted-text)',
+    '--panel-card-hover': 'var(--peridot-role-inspector-card-hover-bg)',
+    '--utility-panel-bg': 'var(--peridot-role-inspector-section-bg)',
+    '--section-bg': 'var(--peridot-role-inspector-section-bg)',
+    '--section-border': 'var(--peridot-role-inspector-section-border)',
+    '--panel-bg': 'var(--peridot-role-inspector-panel-bg)',
+    '--card-bg': 'var(--peridot-role-inspector-card-bg)',
+    '--stat-card-bg': 'var(--peridot-role-inspector-stat-card-bg)',
+    '--button-bg': 'var(--peridot-role-inspector-button-bg)',
+    '--button-border': 'var(--peridot-role-inspector-button-border)',
+    '--button-text': 'var(--peridot-role-inspector-button-text)',
+    '--button-hover-bg': 'var(--peridot-role-inspector-button-hover-bg)',
+    '--button-hover-border': 'var(--peridot-role-inspector-button-hover-border)',
+    '--button-hover-text': 'var(--peridot-role-inspector-button-hover-text)',
+    '--button-secondary-bg': 'var(--peridot-role-inspector-button-bg)',
+    '--button-secondary-border': 'var(--peridot-role-inspector-button-border)',
+    '--button-secondary-text': 'var(--peridot-role-inspector-button-text)',
+    '--button-secondary-hover': 'var(--peridot-role-inspector-button-hover-bg)',
+    '--button-primary-bg': 'var(--peridot-role-inspector-button-bg)',
+    '--button-primary-border': 'var(--peridot-role-inspector-button-border)',
+    '--button-primary-text': 'var(--peridot-role-inspector-button-text)',
+    '--button-primary-hover': 'var(--peridot-role-inspector-button-hover-bg)',
+    '--button-primary-active-bg': 'var(--peridot-role-inspector-button-active-bg)',
+    '--button-primary-active-border': 'var(--peridot-role-inspector-button-active-border)',
+    '--button-primary-active-hover': 'var(--peridot-role-inspector-button-active-hover-bg)',
+    '--badge-bg': 'var(--peridot-role-inspector-badge-bg)',
+    '--badge-text': 'var(--peridot-role-inspector-badge-text)',
+    '--empty-state-bg': 'var(--peridot-role-inspector-empty-state-bg)',
+    '--empty-state-border': 'var(--peridot-role-inspector-empty-state-border)',
+    '--empty-state-text': 'var(--peridot-role-inspector-empty-state-text)',
+    '--detail-label-text': 'var(--peridot-role-inspector-detail-label-text)',
+    '--text-main': 'var(--peridot-role-inspector-body-text)',
+    '--text-muted': 'var(--peridot-role-inspector-body-muted-text)',
+    '--text-strong': 'var(--peridot-role-inspector-card-text)',
+    '--heading-text': 'var(--peridot-role-inspector-heading-text)',
+    '--link-text': 'var(--peridot-role-inspector-link-text)',
+    '--link-hover-text': 'var(--peridot-role-inspector-link-hover-text)',
+    '--accent': 'var(--peridot-role-inspector-accent)',
+    '--inspector-clickable-bg': 'var(--peridot-role-inspector-clickable-bg)',
+    '--inspector-clickable-border': 'var(--peridot-role-inspector-clickable-border)',
+    '--inspector-clickable-text': 'var(--peridot-role-inspector-clickable-text)',
+    '--inspector-clickable-muted-text': 'var(--peridot-role-inspector-clickable-muted-text)',
+    '--inspector-clickable-hover-bg': 'var(--peridot-role-inspector-clickable-hover-bg)',
+    '--inspector-clickable-hover-border': 'var(--peridot-role-inspector-clickable-hover-border)',
+    '--inspector-clickable-hover-text': 'var(--peridot-role-inspector-clickable-hover-text)',
+    '--inspector-clickable-badge-bg': 'var(--peridot-role-inspector-clickable-badge-bg)',
+    '--inspector-clickable-badge-text': 'var(--peridot-role-inspector-clickable-badge-text)',
   };
 
   const rootClassName = isWorkspace
-    ? 'flex h-full min-h-0 flex-col rounded-[2.1rem] border border-[var(--peridot-color-hex-91a276-a55)] bg-[linear-gradient(145deg,var(--peridot-color-rgba-rgba-3-17-11-0-98),var(--peridot-color-rgba-rgba-10-35-25-0-96)_44%,var(--peridot-color-rgba-rgba-36-55-38-0-94))] p-4 text-[var(--peridot-color-hex-f6f3dc)] shadow-2xl shadow-black/65 ring-1 ring-[var(--peridot-color-hex-b7c884-a16)]'
-    : 'flex min-h-full flex-col rounded-[1.85rem] border border-[var(--peridot-color-hex-91a276-a48)] bg-[linear-gradient(160deg,var(--peridot-color-rgba-rgba-4-20-13-0-95),var(--peridot-color-rgba-rgba-13-39-28-0-92)_52%,var(--peridot-color-rgba-rgba-45-66-45-0-88))] p-4 text-[var(--peridot-color-hex-f6f3dc)] shadow-xl shadow-black/40 backdrop-blur-md ring-1 ring-[var(--peridot-color-hex-b7c884-a14)]';
+    ? 'flex h-full min-h-0 flex-col rounded-[2.1rem] border border-[var(--peridot-role-inspector-chrome-border)] bg-[linear-gradient(145deg,var(--peridot-role-inspector-chrome-bg-strong),var(--peridot-role-inspector-chrome-bg)_44%,var(--peridot-role-interface-panel-background))] p-4 text-[var(--peridot-role-inspector-chrome-text)] shadow-2xl shadow-black/65 ring-1 ring-[var(--peridot-role-interface-focus-ring)]'
+    : 'flex min-h-full flex-col rounded-[1.85rem] border border-[var(--peridot-role-inspector-chrome-border)] bg-[linear-gradient(160deg,var(--peridot-role-inspector-chrome-bg-strong),var(--peridot-role-inspector-chrome-bg)_52%,var(--peridot-role-interface-panel-background))] p-4 text-[var(--peridot-role-inspector-chrome-text)] shadow-xl shadow-black/40 backdrop-blur-md ring-1 ring-[var(--peridot-role-interface-focus-ring)]';
 
   const controlsClassName = 'mb-3 flex items-center justify-end gap-2';
 
   const headerClassName = isWorkspace
-    ? 'mb-4 rounded-[1.55rem] border border-[var(--peridot-color-hex-c5d99b-a38)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-18-50-35-0-98),var(--peridot-color-rgba-rgba-47-73-47-0-94)_58%,var(--peridot-color-rgba-rgba-83-92-55-0-82))] px-5 py-4 shadow-inner shadow-black/25'
-    : 'mb-4 rounded-[1.35rem] border border-[var(--peridot-color-hex-c5d99b-a34)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-18-50-35-0-96),var(--peridot-color-rgba-rgba-47-73-47-0-9)_58%,var(--peridot-color-rgba-rgba-83-92-55-0-76))] px-4 py-4 shadow-inner shadow-black/20';
+    ? 'mb-4 rounded-[1.55rem] border border-[var(--peridot-role-inspector-header-border)] bg-[linear-gradient(135deg,var(--peridot-role-inspector-header-bg),var(--peridot-role-inspector-chrome-bg)_58%,var(--peridot-role-interface-card-background-dark))] px-5 py-4 shadow-inner shadow-black/25'
+    : 'mb-4 rounded-[1.35rem] border border-[var(--peridot-role-inspector-header-border)] bg-[linear-gradient(135deg,var(--peridot-role-inspector-header-bg),var(--peridot-role-inspector-chrome-bg)_58%,var(--peridot-role-interface-card-background-dark))] px-4 py-4 shadow-inner shadow-black/20';
 
   const bodyClassName = isWorkspace
-    ? '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-color-hex-dce5c3)] inspector-scroll min-h-0 flex-1 overflow-auto rounded-[1.55rem] border border-[var(--peridot-color-hex-b4c29c-a65)] bg-[linear-gradient(180deg,var(--peridot-color-hex-dce5c3),var(--peridot-role-inspector-body-bg)_38%,var(--peridot-role-visualization-land-fill)_72%,var(--peridot-color-hex-bdcc9b))] p-5 text-[var(--peridot-color-hex-14261d)] shadow-inner shadow-[var(--peridot-color-hex-06190f-a25)]'
-    : '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-color-hex-dce5c3)] inspector-scroll rounded-[1.35rem] border border-[var(--peridot-color-hex-b4c29c-a60)] bg-[linear-gradient(180deg,var(--peridot-color-hex-dce5c3),var(--peridot-role-inspector-body-bg)_38%,var(--peridot-role-visualization-land-fill)_72%,var(--peridot-color-hex-bfce9d))] p-4 text-[var(--peridot-color-hex-14261d)] shadow-inner shadow-[var(--peridot-color-hex-06190f-a20)]';
+    ? '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-role-inspector-body-bg)] inspector-scroll min-h-0 flex-1 overflow-auto rounded-[1.55rem] border border-[var(--peridot-role-inspector-body-border)] bg-[linear-gradient(180deg,var(--peridot-role-inspector-card-bg),var(--peridot-role-inspector-body-bg)_38%,var(--peridot-role-inspector-section-bg)_72%,var(--peridot-role-inspector-card-bg))] p-5 text-[var(--peridot-role-inspector-body-text)] shadow-inner shadow-[var(--peridot-role-inspector-body-shadow)]'
+    : '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-role-inspector-body-bg)] inspector-scroll rounded-[1.35rem] border border-[var(--peridot-role-inspector-body-border)] bg-[linear-gradient(180deg,var(--peridot-role-inspector-card-bg),var(--peridot-role-inspector-body-bg)_38%,var(--peridot-role-inspector-section-bg)_72%,var(--peridot-role-inspector-card-bg))] p-4 text-[var(--peridot-role-inspector-body-text)] shadow-inner shadow-[var(--peridot-role-inspector-body-shadow)]';
 
-  const actionButtonClassName = 'rounded-full border border-[var(--peridot-color-hex-c8bea0)] bg-[var(--peridot-color-hex-f4efd9)] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-16271d)] shadow-sm transition hover:border-[var(--peridot-color-hex-7d6140)] hover:bg-[var(--peridot-color-hex-b99b63)] hover:text-[var(--peridot-color-hex-0d1c13)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f4efd9-a80)]';
+  const actionButtonClassName = 'rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35';
 
-  const closeButtonClassName = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--peridot-color-hex-c8bea0)] bg-[var(--peridot-color-hex-f4efd9)] text-lg font-bold leading-none text-[var(--peridot-color-hex-11251b)] shadow-sm transition hover:border-[var(--peridot-color-hex-7d6140)] hover:bg-[var(--peridot-color-hex-b99b63)] hover:text-[var(--peridot-color-hex-0d1c13)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f4efd9-a80)]';
+  const closeButtonClassName = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] text-lg font-bold leading-none text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35';
 
   return (
     <div className={rootClassName} style={inspectorPaletteStyle} data-inspector-presentation={presentation}>
@@ -175,7 +174,7 @@ export function InspectorContent({
           ) : null}
 
           <div className={headerClassName}>
-            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--peridot-color-hex-dfe9b2)]">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-[var(--peridot-role-inspector-chrome-muted-text)]">
               {isWorkspace ? 'Inspector workspace' : 'Inspector'}
             </div>
             <InspectorHeaderComponent
@@ -183,7 +182,7 @@ export function InspectorContent({
               setShowInspectorInfo={setShowInspectorInfo}
             />
             {isWorkspace ? (
-              <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--peridot-color-hex-f6f3dc)]">
+              <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--peridot-role-inspector-chrome-text)]">
                 Evidence dossier for the current selection. The visualization remains loaded underneath this workspace.
               </p>
             ) : null}
