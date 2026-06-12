@@ -2132,12 +2132,21 @@ function SvgMap({
             <rect x="0" y="0" width={width} height={height} fill="url(#map-sea-lines)" opacity="0.78" />
           </>
         ) : null}
-        <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-frame-bg)" stroke="var(--map-frame-border)" strokeWidth="1.4" rx="16" />
+        <rect
+          x={frame.x}
+          y={frame.y}
+          width={frame.w}
+          height={frame.h}
+          fill={showGeographicBackdrop ? 'var(--map-texture-sea)' : 'var(--map-frame-bg)'}
+          stroke="var(--map-frame-border)"
+          strokeWidth="1.4"
+          rx="16"
+        />
         {showGeographicBackdrop ? (
           <>
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-sea)" opacity="0.26" rx="16" />
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="url(#map-sea-lines)" opacity="0.55" rx="16" />
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.18" filter="url(#map-paper-grain)" rx="16" />
+            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-sea)" opacity="0.24" filter="url(#map-paper-grain)" rx="16" />
+            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="url(#map-sea-lines)" opacity="0.34" rx="16" />
+            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.06" filter="url(#map-paper-grain)" rx="16" />
           </>
         ) : (
           <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.26" filter="url(#map-paper-grain)" rx="16" />

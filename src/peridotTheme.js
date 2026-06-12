@@ -799,6 +799,7 @@ export function resolvePeridotLegacyColor(value) {
 export function buildSemanticTheme(tones = PERIDOT_TONES) {
   const mapMutedGreen = tones.sage || tones.midAlt || tones.leaf;
   const mapActiveGreen = tones.midAlt || tones.mid || shade(mapMutedGreen, -0.18);
+  const mapSeaBlue = '#dbe3ec';
   const mapMutedGold = shade(tones.gold, -0.14);
   const mapMutedGoldLight = shade(tones.goldLight || tones.gold, -0.10);
 
@@ -920,13 +921,13 @@ export function buildSemanticTheme(tones = PERIDOT_TONES) {
       dangerText: '#fff5f2',
     },
     visualization: {
-      canvasBg: tones.pale,
+      canvasBg: mapSeaBlue,
       frameBg: tones.cream,
-      frameBorder: withAlpha(tones.gold, 0.46),
+      frameBorder: '#0A2616',
       landFill: withAlpha(mapMutedGreen, 0.48),
       landActiveFill: withAlpha(mapActiveGreen, 0.82),
       landStroke: withAlpha(mapActiveGreen, 0.58),
-      gridStroke: withAlpha(tones.midAlt, 0.22),
+      gridStroke: 'rgba(82, 100, 112, 0.22)',
       edge: tones.night,
       edgeHover: mapMutedGold,
       edgeActive: tones.deep,
