@@ -238,6 +238,8 @@ function hasRequiredField(rows, definition) {
 }
 
 function incrementNestedMap(map, outerKey, innerKey, increment = 1) {
+  // Numeric-counter helper only. Do not use this for grouped chart buckets that
+  // store arrays of raw values; adding to an array coerces it and destroys counts.
   if (!map.has(outerKey)) map.set(outerKey, new Map());
   const inner = map.get(outerKey);
   inner.set(innerKey, (inner.get(innerKey) || 0) + increment);
@@ -682,7 +684,7 @@ export function buildGroupedBarChartData(rows = [], xField = 'year', groupBy = '
     xLabels.add(xLabel);
     if (!groupValues.has(group)) groupValues.set(group, []);
     groupValues.get(group).push(rawValue);
-    incrementNestedMap(groupedValues, xLabel, group, 0);
+    if (!groupedValues.has(xLabel)) groupedValues.set(xLabel, new Map());
     const inner = groupedValues.get(xLabel);
     if (!Array.isArray(inner.get(group))) inner.set(group, []);
     inner.get(group).push(rawValue);
@@ -802,7 +804,7 @@ export function buildMultiLineChartData(rows = [], xField = 'year', seriesMode =
     xLabels.add(xLabel);
     if (!groupValues.has(group)) groupValues.set(group, []);
     groupValues.get(group).push(rawValue);
-    incrementNestedMap(groupedValues, group, xLabel, 0);
+    if (!groupedValues.has(group)) groupedValues.set(group, new Map());
     const inner = groupedValues.get(group);
     if (!Array.isArray(inner.get(xLabel))) inner.set(xLabel, []);
     inner.get(xLabel).push(rawValue);
