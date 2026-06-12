@@ -74,7 +74,7 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     key: 'line',
     label: 'Line Chart',
     descriptor: 'One trend over an ordered x-axis',
-    variableSummary: 'Choose a date, year, period, or numeric x-axis and a y-axis metric.',
+    variableSummary: 'Choose Year by default, or switch to Full date / numeric x-axis for more granular ordered charts.',
     variableCountLabel: 'x + y',
     defaultUseCase: 'Good for one numeric measure or record count over time.',
     exampleQuestions: [
@@ -86,7 +86,7 @@ export const ANALYTICS_CHART_DEFINITIONS = {
     key: 'multiLine',
     label: 'Multi-Line Chart',
     descriptor: 'Several trends on the same x-axis',
-    variableSummary: 'Choose an x-axis and compare record counts by group, one numeric metric by group, or selected numeric columns.',
+    variableSummary: 'Choose Year by default, or switch to Full date / numeric x-axis, then compare record counts by group, one numeric metric by group, or selected numeric columns.',
     variableCountLabel: 'x + lines',
     defaultUseCase: 'Good for comparing record counts across groups or several numeric series over the same x-axis.',
     exampleQuestions: [
@@ -156,6 +156,7 @@ export const ANALYTICS_AGGREGATION_OPTIONS = [
 
 export const DEFAULT_ANALYTICS_STATE = {
   chartType: 'bar',
+  xField: 'year',
   barGroupBy: 'sourcePerson',
   topN: 10,
 };

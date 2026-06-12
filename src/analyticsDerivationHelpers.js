@@ -77,24 +77,50 @@ function parseNumber(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+function parseDatePartsFromText(value) {
+  const dateText = String(value ?? '').trim();
+  const match = dateText.match(/^(\d{3,4})(?:[-/](\d{1,4}))?(?:[-/](\d{1,2}))?/);
+  if (!match || match[1] === '0000') return null;
+
+  const year = Number(match[1]);
+  const monthToken = match[2];
+  const dayToken = match[3];
+  const possibleMonth = monthToken ? Number(monthToken) : null;
+  const month = possibleMonth && possibleMonth >= 1 && possibleMonth <= 12 ? possibleMonth : null;
+  const possibleDay = dayToken ? Number(dayToken) : null;
+  const day = month && possibleDay && possibleDay >= 1 && possibleDay <= 31 ? possibleDay : null;
+
+  return {
+    year,
+    month: month || 1,
+    day: day || 1,
+    precision: day ? 'day' : month ? 'month' : 'year',
+    sort: year * 372 + ((month || 1) - 1) * 31 + ((day || 1) - 1),
+  };
+}
+
 function getDatePartsFromRow(row) {
-  const parsedYear = row?.parsedDate?.year;
-  const parsedMonth = row?.parsedDate?.month;
-  const yearFromParsed = Number.isFinite(parsedYear) && parsedYear > 0 ? parsedYear : null;
-  const monthFromParsed = Number.isFinite(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12 ? parsedMonth : null;
-
-  if (yearFromParsed) {
-    return { year: yearFromParsed, month: monthFromParsed || 1, sort: yearFromParsed * 12 + ((monthFromParsed || 1) - 1) };
-  }
-
   const candidateValues = [row?.date, row?.Date, row?.Date_Start, row?.Date_End, row?.Date_Display];
   for (const candidate of candidateValues) {
-    const dateText = String(candidate ?? '').trim();
-    const match = dateText.match(/^(\d{3,4})(?:[-/](\d{1,2}))?/);
-    if (!match || match[1] === '0000') continue;
-    const year = Number(match[1]);
-    const month = match[2] ? Math.min(12, Math.max(1, Number(match[2]))) : 1;
-    return { year, month, sort: year * 12 + (month - 1) };
+    const parts = parseDatePartsFromText(candidate);
+    if (parts) return parts;
+  }
+
+  const parsedYear = row?.parsedDate?.year;
+  const parsedMonth = row?.parsedDate?.month;
+  const parsedDay = row?.parsedDate?.day;
+  const yearFromParsed = Number.isFinite(parsedYear) && parsedYear > 0 ? parsedYear : null;
+  const monthFromParsed = Number.isFinite(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12 ? parsedMonth : null;
+  const dayFromParsed = Number.isFinite(parsedDay) && parsedDay >= 1 && parsedDay <= 31 ? parsedDay : null;
+
+  if (yearFromParsed) {
+    return {
+      year: yearFromParsed,
+      month: monthFromParsed || 1,
+      day: dayFromParsed || 1,
+      precision: dayFromParsed ? 'day' : monthFromParsed ? 'month' : 'year',
+      sort: yearFromParsed * 372 + ((monthFromParsed || 1) - 1) * 31 + ((dayFromParsed || 1) - 1),
+    };
   }
 
   return null;
@@ -135,26 +161,54 @@ function formatPeriod({ year, month }, granularity) {
   return String(year);
 }
 
+function formatFullDate(parts) {
+  if (!parts) return '';
+  const monthLabel = String(parts.month).padStart(2, '0');
+  const dayLabel = String(parts.day).padStart(2, '0');
+
+  if (parts.precision === 'day') return `${parts.year}-${monthLabel}-${dayLabel}`;
+  if (parts.precision === 'month') return `${parts.year}-${monthLabel}`;
+  return String(parts.year);
+}
+
+function dateLabelForRow(row, fieldKey = 'year', granularity = 'year') {
+  const parts = getDatePartsFromRow(row);
+  if (!parts) return '';
+
+  if (fieldKey === 'fullDate') return formatFullDate(parts);
+  if (fieldKey === 'timePeriod') return formatPeriod(parts, granularity);
+  return String(parts.year);
+}
+
+function isDerivedDateAxisField(fieldKey) {
+  return fieldKey === 'year' || fieldKey === 'fullDate' || fieldKey === 'timePeriod';
+}
+
 function periodSortValue(label) {
-  const yearMatch = String(label).match(/^(\d{3,4})/);
+  const text = String(label || '');
+  const yearMatch = text.match(/^(\d{3,4})/);
   const year = yearMatch ? Number(yearMatch[1]) : 0;
 
-  if (label.includes('Q')) {
-    const quarter = Number(label.match(/Q(\d)/)?.[1] || 1);
-    return year * 12 + (quarter - 1) * 3;
+  const fullDateMatch = text.match(/^(\d{3,4})(?:-(\d{2}))?(?:-(\d{2}))?$/);
+  if (fullDateMatch) {
+    const month = fullDateMatch[2] ? Number(fullDateMatch[2]) : 1;
+    const day = fullDateMatch[3] ? Number(fullDateMatch[3]) : 1;
+    return year * 372 + (month - 1) * 31 + (day - 1);
   }
 
-  if (label.includes('H2')) return year * 12 + 6;
-  if (label.includes('H1')) return year * 12;
+  if (text.includes('Q')) {
+    const quarter = Number(text.match(/Q(\d)/)?.[1] || 1);
+    return year * 372 + (quarter - 1) * 93;
+  }
 
-  const monthMatch = String(label).match(/^\d{3,4}-(\d{2})$/);
-  if (monthMatch) return year * 12 + Number(monthMatch[1]) - 1;
+  if (text.includes('H2')) return year * 372 + 186;
+  if (text.includes('H1')) return year * 372;
 
-  return year * 12;
+  return year * 372;
 }
 
 function fieldValue(row, fieldKey) {
-  if (fieldKey === 'timePeriod') return periodLabelForRow(row, 'year');
+  if (isDerivedDateAxisField(fieldKey)) return dateLabelForRow(row, fieldKey, 'year');
   if (fieldKey === 'recordCount') return 'Record count';
 
   if (fieldKey === 'routePlace') {
@@ -282,7 +336,7 @@ function periodLabelForRow(row, granularity) {
 }
 
 function sortAxisLabels(labels, rows, fieldKey) {
-  if (fieldKey === 'timePeriod') return labels.sort((a, b) => periodSortValue(a) - periodSortValue(b));
+  if (isDerivedDateAxisField(fieldKey)) return labels.sort((a, b) => periodSortValue(a) - periodSortValue(b));
   const numericValues = new Map();
   rows.forEach((row) => {
     const label = fieldValue(row, fieldKey);
@@ -304,6 +358,8 @@ function humanizeFieldLabel(key) {
     routePlace: 'Route (Place)',
     routePerson: 'Route (Person)',
     archivalCollection: 'Archival collection',
+    year: 'Year',
+    fullDate: 'Full date',
     timePeriod: 'Time period',
     recordCount: 'Record count',
   };
@@ -437,9 +493,13 @@ function buildNumericMeasureDefinitions(rows = []) {
 function buildDateFieldDefinitions(rows = []) {
   const keys = Array.from(new Set(rows.flatMap((row) => Object.keys(row || {}))));
   const definitions = [];
+  const hasDerivedDateParts = rows.some((row) => Boolean(getDatePartsFromRow(row)));
 
-  if (rows.some((row) => Boolean(getDatePartsFromRow(row)))) {
-    definitions.push({ key: 'timePeriod', label: 'Time period', description: 'Derived from the mapped date/date-start/date-end values.' });
+  if (hasDerivedDateParts) {
+    definitions.push(
+      { key: 'year', label: 'Year', description: 'Group records by year. Month and day are ignored.' },
+      { key: 'fullDate', label: 'Full date', description: 'Group records by the most specific available date: year, year-month, or year-month-day.' },
+    );
   }
 
   keys.forEach((key) => {
@@ -593,11 +653,11 @@ export function buildPartToWholeChartData(rows = [], groupBy = 'sourcePerson', t
   return data;
 }
 
-export function buildLineChartData(rows = [], xField = 'timePeriod', metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
+export function buildLineChartData(rows = [], xField = 'year', metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
   const granularity = getPeriodGranularity(startYear, endYear);
   const grouped = new Map();
   rows.forEach((row) => {
-    const label = xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
+    const label = isDerivedDateAxisField(xField) ? dateLabelForRow(row, xField, granularity) : fieldValue(row, xField);
     if (!label) return;
     if (!grouped.has(label)) grouped.set(label, []);
     grouped.get(label).push(metricField === 'recordCount' ? 1 : row?.[metricField]);
@@ -609,13 +669,13 @@ export function buildLineChartData(rows = [], xField = 'timePeriod', metricField
   }));
 }
 
-export function buildGroupedBarChartData(rows = [], xField = 'timePeriod', groupBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
+export function buildGroupedBarChartData(rows = [], xField = 'year', groupBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
   const granularity = getPeriodGranularity(startYear, endYear);
   const groupValues = new Map();
   const groupedValues = new Map();
   const xLabels = new Set();
   rows.forEach((row) => {
-    const xLabel = xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
+    const xLabel = isDerivedDateAxisField(xField) ? dateLabelForRow(row, xField, granularity) : fieldValue(row, xField);
     const group = fieldValue(row, groupBy);
     if (!xLabel || !group) return;
     const rawValue = metricField === 'recordCount' ? 1 : row?.[metricField];
@@ -645,7 +705,7 @@ export function buildGroupedBarChartData(rows = [], xField = 'timePeriod', group
   return { granularity, series, data };
 }
 
-export function buildStackedBarChartData(rows = [], xField = 'timePeriod', segmentBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
+export function buildStackedBarChartData(rows = [], xField = 'year', segmentBy = 'sourcePerson', topN = 10, metricField = 'recordCount', aggregation = 'count', startYear, endYear) {
   const additiveAggregation = additiveAggregationFor(metricField);
   const granularity = getPeriodGranularity(startYear, endYear);
   const segmentTotals = new Map();
@@ -653,7 +713,7 @@ export function buildStackedBarChartData(rows = [], xField = 'timePeriod', segme
   const xLabels = new Set();
 
   rows.forEach((row) => {
-    const xLabel = xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
+    const xLabel = isDerivedDateAxisField(xField) ? dateLabelForRow(row, xField, granularity) : fieldValue(row, xField);
     const segment = fieldValue(row, segmentBy);
     if (!xLabel || !segment) return;
 
@@ -702,11 +762,11 @@ export function buildStackedBarChartData(rows = [], xField = 'timePeriod', segme
 }
 
 
-export function buildMultiLineChartData(rows = [], xField = 'timePeriod', seriesMode = 'wide', seriesFields = [], groupBy = 'sourcePerson', metricField = 'recordCount', aggregation = 'average', topN = 10, startYear, endYear) {
+export function buildMultiLineChartData(rows = [], xField = 'year', seriesMode = 'wide', seriesFields = [], groupBy = 'sourcePerson', metricField = 'recordCount', aggregation = 'average', topN = 10, startYear, endYear) {
   const granularity = getPeriodGranularity(startYear, endYear);
   const xLabels = new Set();
   const resolvedGroupBy = seriesMode === 'wide' ? groupBy : resolveSeriesGroupingField(rows, groupBy, xField);
-  const xLabelForRow = (row) => xField === 'timePeriod' ? periodLabelForRow(row, granularity) : fieldValue(row, xField);
+  const xLabelForRow = (row) => isDerivedDateAxisField(xField) ? dateLabelForRow(row, xField, granularity) : fieldValue(row, xField);
 
   if (seriesMode === 'wide') {
     const series = seriesFields.slice(0, clampLimit(topN)).map((field) => {
@@ -936,7 +996,7 @@ export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childB
 export function buildAnalyticsChartData({
   rows = [],
   chartType = 'bar',
-  xField = 'timePeriod',
+  xField = 'year',
   yField = 'recordCount',
   aggregation = 'count',
   barGroupBy = 'sourcePerson',

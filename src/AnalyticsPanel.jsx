@@ -488,7 +488,7 @@ export function AnalyticsPanelContent({
   const chartSvgRef = useRef(null);
   const [exportStatus, setExportStatus] = useState(null);
   const [barOrientation, setBarOrientation] = useState('vertical');
-  const [xField, setXField] = useState('timePeriod');
+  const [xField, setXField] = useState('year');
   const [yField, setYField] = useState('recordCount');
   const [aggregation, setAggregation] = useState('count');
   const [pieGroupBy, setPieGroupBy] = useState('language');
@@ -766,7 +766,7 @@ export function AnalyticsPanelContent({
     if (chartType === 'line') {
       return (
         <VariableControlsShell>
-          {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Line charts use date/time or numeric x-axes so connected points represent an ordered sequence." /> : null}
+          {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Use Year by default, or choose Full date / numeric fields for more granular ordered charts." /> : null}
           {renderMetricControls()}
           {!activeXAxisFields.length ? <div className="rounded-xl border border-dashed border-[var(--panel-card-border)] p-3 text-sm text-[var(--panel-card-muted-text)]">No date/time or numeric x-axis fields are available for a line chart in the current data.</div> : null}
         </VariableControlsShell>
@@ -775,7 +775,7 @@ export function AnalyticsPanelContent({
     if (chartType === 'multiLine') {
       return (
         <VariableControlsShell>
-          {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Line charts use date/time or numeric x-axes so connected points represent an ordered sequence." /> : null}
+          {activeXAxisFields.length ? <SelectControl label="X-axis" value={xField} onChange={setXField} options={activeXAxisFields} description="Use Year by default, or choose Full date / numeric fields for more granular ordered charts." /> : null}
           <SelectControl
             label="Series mode"
             value={multiLineMode}
