@@ -1,5 +1,9 @@
 # Peridot (Correspondence Visualizer)
 
+<p align="center">
+  <img src="../assets/Peridot%20Logo.png" alt="Peridot logo" width="360" />
+</p>
+
 ## 1. Project title
 
 **Peridot** is the current app identity for the repository **Correspondence Visualizer**. It is a research-oriented interactive web app for exploring humanistic tabular datasets through maps, networks, timelines, charts, search/filter workflows, exports, and evidence dossiers. Correspondence networks remain the mature first case, but Peridot now also supports point/site datasets, chart-first time-series datasets, and generic evidence records that do not require people or network relationships.
@@ -23,6 +27,7 @@ This baseline records the active D3/SVG Peridot path after the workspace-routing
 The current state of the active `main` project includes:
 
 - a Home / welcome workspace with **Upload my data** and **Use sample data** start paths
+- user-designed Peridot logo assets in `assets/`, with the transparent logo integrated into the Home workspace hero
 - a hamburger-triggered menu as the primary visible navigation surface
 - simplified hamburger menu entries for:
   - **Manage Your Data**
@@ -254,6 +259,12 @@ Screenshots in the repository likely need refresh because the interface has chan
 
 ## 6. Screenshots
 
+### Peridot logo assets
+
+![Peridot logo](../assets/Peridot%20Logo.png)
+
+The transparent-background variant used by the Home workspace is stored at `assets/Peridot Logo Transparent.png`.
+
 The screenshots in `docs/images/` may need refresh because the side-panel architecture, Advanced Search layout, Analytics overlay, Data Inputs workflow, and cluster inspector behavior have changed materially since the earlier documentation baseline.
 
 Existing screenshot references:
@@ -314,6 +325,14 @@ MapLibre is no longer a dependency of active `main`; any future MapLibre work sh
 ---
 
 ## 8. Project structure
+
+Brand image assets are stored in `assets/`:
+
+```text
+assets/
+  Peridot Logo.png
+  Peridot Logo Transparent.png
+```
 
 The current `src/` structure is:
 
@@ -396,7 +415,7 @@ Primary visible navigation component. It renders the hamburger button and labele
 
 #### `src/PeridotHomeWorkspace.jsx`
 
-Home / welcome workspace with introductory copy, **Upload my data**, **Use sample data**, and feature summary cards.
+Home / welcome workspace with introductory copy, the transparent Peridot logo lockup, **Upload my data**, **Use sample data**, and feature summary cards. The Home workspace imports the transparent logo from `assets/Peridot Logo Transparent.png` so the same documented brand asset is used in the live app.
 
 #### `src/PeridotDataWorkspace.jsx`
 
@@ -816,7 +835,8 @@ Likely near-term priorities include:
 - consider future safe metadata filters after the upload/mapping model settles
 - continue safe reduction of orchestration pressure inside `src/App.jsx`, using the code-structure audit as the planning reference
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
-- refresh screenshots after the dual-mode Inspector, current workspace/hamburger interface, chart summary panels, and theme/color work stabilize
+- refresh screenshots after the dual-mode Inspector, current workspace/hamburger interface, chart summary panels, logo integration, and theme/color work stabilize
+- keep the logo assets in `assets/` synchronized with the Home workspace branding
 - standardize visual export dimensions later if needed
 - preserve full commit history in `CHANGELOG.md`
 

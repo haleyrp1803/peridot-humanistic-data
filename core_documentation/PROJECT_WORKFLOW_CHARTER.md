@@ -38,6 +38,13 @@ Current branch note:
 The current active continuation branch may intentionally differ from experimental branches. MapLibre preview code has been removed from active `main`; the later MapLibre migrated-overlay branch remains archived and should not be treated as the active source of truth unless explicitly resumed.
 ```
 
+Current brand assets:
+
+```text
+assets/Peridot Logo.png
+assets/Peridot Logo Transparent.png
+```
+
 ---
 
 ## 2. Bounded-pass rule
@@ -161,7 +168,7 @@ Preferred modes:
 
 When delivering files, default to individual `.txt` replacements and direct `Copy-Item` commands from `$HOME\Downloads` into the source-of-truth project folder. Do not deliver ZIP packages or apply scripts unless the user explicitly asks for them.
 
-When delivering files, include exact Windows PowerShell copy commands.
+When delivering files, include exact Windows PowerShell copy commands. Image/brand asset passes should provide exact copy commands for the image files as well as source/documentation replacements.
 
 Do not use `git add .` while `itch_upload/` or other generated artifacts are untracked.
 
@@ -337,6 +344,7 @@ Current notable decisions:
 - Axis-based charts should use readable major and minor ticks/gridlines with adequate contrast against the parchment chart surface.
 - Chart colors should come from the finite Peridot chart color library by default and from active semantic chart-series roles when the user explicitly applies a chart palette; do not scatter one-off chart series colors through chart renderers.
 - Map and visualization chrome colors should be routed through semantic theme roles where possible.
+- Peridot’s logo assets should live in `assets/`; the solid-background logo is used for documentation display, and the transparent-background logo is used by the Home workspace hero.
 
 ---
 
@@ -506,4 +514,5 @@ The new chat should be told:
 - Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout, and is reached through Explore/workflow actions rather than the top-level hamburger.
 - Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, workbook import with unique-ID joins, validation popup, and persistent latest-upload summary.
 - Analytics chart views currently use a left-control/right-chart workspace with tabbed builder controls, manual series/category selection, year-default date axes, complete simplified summary/legend panels, shared three-quarter chart / one-quarter legend card layout, anchored titles, method labels, major/minor ticks, default finite chart colors with explicit chart-targeted palette overrides, and header-based chart PNG export.
+- Logo assets live in `assets/`; the Home workspace imports the transparent logo variant.
 - Inspector person/place profiles currently show profile summaries, compact summary buttons, role-grouped related people/places, directed route summaries, selected uploaded fields, shared linked-letter detail navigation, clickable linked people/places, and route-row dossier navigation.

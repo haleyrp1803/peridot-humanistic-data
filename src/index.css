@@ -107,6 +107,32 @@ textarea {
   letter-spacing: -0.035em;
 }
 
+/* Reusable brand-logo treatment.
+ * The Home workspace uses the transparent Peridot logo as a lockup rather than
+ * reconstructing the wordmark in live text. Keep sizing and filtering here so
+ * future brand placements can share one restrained, theme-aware treatment.
+ */
+.peridot-home-logo-lockup {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  max-width: min(100%, 31rem);
+}
+
+.peridot-home-logo {
+  display: block;
+  width: clamp(17rem, 38vw, 30rem);
+  max-width: 100%;
+  height: auto;
+  filter: drop-shadow(0 14px 26px var(--peridot-color-rgba-rgba-0-0-0-0-38));
+}
+
+@media (max-width: 700px) {
+  .peridot-home-logo {
+    width: min(100%, 22rem);
+  }
+}
+
 .peridot-lede {
   max-width: 760px;
   margin-top: 1.2rem;

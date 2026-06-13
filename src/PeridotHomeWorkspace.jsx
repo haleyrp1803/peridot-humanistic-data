@@ -13,6 +13,8 @@
 
 import React from 'react';
 
+import peridotLogoTransparent from '../assets/Peridot Logo Transparent.png';
+
 function HomeTextureBackdrop() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
@@ -39,13 +41,18 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
 
       <div className="relative z-10 w-full max-w-5xl rounded-[36px] border border-[var(--peridot-color-hex-d8e4d7-a68)] bg-[var(--peridot-color-hex-082016-a74)] p-8 text-[var(--peridot-color-hex-f4f6df)] shadow-[0_34px_90px_var(--peridot-color-rgba-rgba-0-0-0-0-58)] ring-1 ring-[var(--peridot-color-hex-d8e8b2-a18)] backdrop-blur-[7px] md:p-12">
         <div className="max-w-3xl">
-          <p className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--peridot-color-hex-c8dc8d)]">
+          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--peridot-color-hex-c8dc8d)]">
             Humanistic data exploration
           </p>
-          <h1 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-5xl font-bold leading-tight tracking-[-0.04em] text-[var(--peridot-color-hex-f7f2d8)] drop-shadow-[0_2px_12px_var(--peridot-color-rgba-rgba-0-0-0-0-45)] md:text-7xl">
-            Peridot
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--peridot-color-hex-e8edcf)] drop-shadow-[0_1px_8px_var(--peridot-color-rgba-rgba-0-0-0-0-35)] md:text-xl">
+          <div className="peridot-home-logo-lockup" aria-label="Peridot">
+            <img
+              src={peridotLogoTransparent}
+              alt="Peridot"
+              className="peridot-home-logo"
+            />
+          </div>
+          <h1 className="sr-only">Peridot</h1>
+          <p className="mt-7 max-w-2xl text-lg leading-8 text-[var(--peridot-color-hex-e8edcf)] drop-shadow-[0_1px_8px_var(--peridot-color-rgba-rgba-0-0-0-0-35)] md:text-xl">
             Explore historical and humanistic records as maps, networks, timelines, charts, searchable data, and evidence dossiers. Start with your own dataset or open the built-in sample correspondence dataset.
           </p>
         </div>

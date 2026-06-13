@@ -47,6 +47,8 @@ The current Advanced Search workflow is the main Explore Your Data surface. It u
 
 The current interface/workspace workflow now provides:
 
+- user-designed Peridot logo assets in `assets/`;
+- the Home workspace uses the transparent Peridot logo variant as its visible hero lockup;
 - Home / welcome workspace with Upload my data and Use sample data start paths;
 - hamburger-triggered labeled menu replacing the persistent icon rail as the primary visible navigation surface;
 - simplified hamburger stack: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**;
@@ -77,6 +79,12 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Peridot logo and home-workspace branding milestone
+
+- Added the user-designed Peridot logo assets to `assets/` as `Peridot Logo.png` and `Peridot Logo Transparent.png`.
+- Integrated the transparent-background logo into the Home workspace hero while preserving an accessible hidden `h1` for the app name.
+- Documented the logo asset locations in README, Maintainer Guide, and Workflow Charter so future branding passes keep the app and documentation synchronized.
 
 ### Theme, visualization chrome, map palette, and Analytics chart layout/theme milestone
 

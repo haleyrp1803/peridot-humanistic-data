@@ -230,6 +230,11 @@ Maintainer/workflow documents are currently organized under `core_documentation/
 - `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md`
 - `planning_documents/PERIDOT_CODE_STRUCTURE_AUDIT.md`
 
+Brand assets:
+
+- `assets/Peridot Logo.png`
+- `assets/Peridot Logo Transparent.png`
+
 ## Architectural summary
 
 Peridot is a Vite/React/Tailwind correspondence visualizer that has moved from a map-first side-panel interface toward a workspace-first multimodal exploration environment.
@@ -298,7 +303,7 @@ Primary visible navigation component. It renders the hamburger button and the si
 
 ### `src/PeridotHomeWorkspace.jsx`
 
-Full Home / welcome workspace with introductory copy, **Upload my data**, **Use sample data**, and feature summary cards.
+Full Home / welcome workspace with introductory copy, the transparent Peridot logo lockup, **Upload my data**, **Use sample data**, and feature summary cards.
 
 ### `src/PeridotDataWorkspace.jsx`
 
@@ -808,6 +813,15 @@ Do not reintroduce the legacy three-file workflow unless there is a specific rec
 
 ---
 
+## Current brand asset state
+
+The user-designed Peridot logo assets live in `assets/`:
+
+- `assets/Peridot Logo.png` — solid-background logo for README/documentation display.
+- `assets/Peridot Logo Transparent.png` — transparent-background logo used by the Home workspace hero.
+
+`src/PeridotHomeWorkspace.jsx` imports the transparent logo directly from `../assets/Peridot Logo Transparent.png`. Keep these files under version control and avoid replacing the Home logo with a separate duplicate asset unless there is a deliberate branding pass. If the logo is revised later, update both image files and the README display together.
+
 ## Current theme and routing state
 
 The default full-app theme remains **Peridot-inspired** and is now controlled primarily through the semantic theme role system in `peridotTheme.js`.
@@ -958,6 +972,7 @@ A future chat should start from:
 A future chat should also be told that:
 
 - the app identity is **Peridot**
+- the user-designed Peridot logo assets are stored in `assets/`, and the Home workspace uses `assets/Peridot Logo Transparent.png`
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
 - the simplified hamburger/workspace structure is committed; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge
