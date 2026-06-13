@@ -22,13 +22,25 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`10f6e19` — `Polish analytics chart axes and summary panels`**
+- **`e50ebf6` — `Scope chart palette imports to chart series`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, and the current Analytics chart-usability milestone. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large chart workspace; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, and the current Analytics chart-layout/theme milestone. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
 
 
 Recent theme, visualization chrome, map palette, and Analytics milestones include:
 
+- **`e50ebf6` — `Scope chart palette imports to chart series`**
+- **`6334840` — `Route remaining analytics chart marks through theme series`**
+- **`db2bea6` — `Anchor analytics chart titles and restore vertical bar default`**
+- **`a1ce00a` — `Tighten analytics chart canvas spacing`**
+- **`69ea23a` — `Simplify analytics legend rows`**
+- **`b868bb3` — `Add analytics chart method labels`**
+- **`b0a4b65` — `Improve analytics bar labels and metric options`**
+- **`8b3ead9` — `Resize analytics builder for quarter-panel layout`**
+- **`f9a74fd` — `Refine tabbed analytics builder proportions`**
+- **`d7f10c9` — `Add tabbed analytics chart builder`**
+- **`e712102` — `Refresh documentation for chart and theme milestones`**
+- **`f143de6` — `Refresh documentation for chart and theme milestones`**
 - **`10f6e19` — `Polish analytics chart axes and summary panels`**
 - **`880cfff` — `Add manual analytics series selection`**
 - **`cd7dfff` — `Fix grouped chart count buckets`**
@@ -302,11 +314,11 @@ Full Advanced Search workspace and primary Explore surface. It renders active-sc
 
 ### `src/PeridotThemeWorkspace.jsx`
 
-Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, custom palette import, role-targeted palette application, and future accessibility/appearance controls. Theme controls should continue to operate through semantic role targets rather than one-off component overrides.
+Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, custom palette import, role-targeted palette application, and future accessibility/appearance controls. Theme controls should continue to operate through semantic role targets rather than one-off component overrides. Explicit chart-targeted imports should alter chart series colors without recoloring unrelated app chrome.
 
 ### `src/peridotTheme.js`
 
-Semantic theme control surface for the whole app. It defines source palettes, custom theme override storage, palette import targets, the finite 30-color chart series library, semantic role construction, legacy color adaptation, map/network roles, chart roles, navigation chrome roles, timeline roles, search roles, Inspector/search roles, and CSS-variable export.
+Semantic theme control surface for the whole app. It defines source palettes, custom theme override storage, palette import targets, the finite 30-color default chart series library, semantic role construction, legacy color adaptation, map/network roles, chart roles, navigation chrome roles, timeline roles, search roles, Inspector/search roles, and CSS-variable export. Chart-targeted palette imports should override only `analytics.series`, while the legacy compatibility adapter should not use chart-only overrides to recolor unrelated chrome.
 
 Future color work should start here unless a component genuinely lacks a theme role. Do not scatter new hardcoded colors through chart, Inspector, map, or workspace components when the correct fix is to extend the semantic theme roles.
 
@@ -401,7 +413,7 @@ Owns workbook parsing helper logic for CSV, TSV, XLSX, and XLS inputs. It isolat
 
 ### `src/AnalyticsPanel.jsx`
 
-Owns the Analytics / Chart Visualizations control UI. It renders chart type selection, chart descriptions/example questions, date controls, variable controls, manual category/series selection controls, selection-mode and comparison-total controls, and the large chart workspace. It preserves compatible chart settings as users switch chart types where possible and registers chart PNG export with the Visualizations header Export menu rather than rendering a separate export control in the chart rail.
+Owns the Analytics / Chart Visualizations control UI. It renders chart type selection, tabbed Chart/Fields/Categories/Present controls, chart descriptions/example questions, date controls, variable controls, manual category/series selection controls, selection-mode and comparison-total controls, optional presentation-title editing, and the large chart workspace. It preserves compatible chart settings as users switch chart types where possible, defaults Bar Chart orientation to Vertical, and registers chart PNG export with the Visualizations header Export menu rather than rendering a separate export control in the chart rail.
 
 ### `src/analyticsConfig.js`
 
@@ -415,9 +427,9 @@ Dynamic variable detection should exclude technical or non-categorical fields su
 
 ### `src/analyticsChartComponents.jsx`
 
-Owns SVG chart rendering and shared chart hover tooltip styling for Bar Chart, Grouped Bar Chart, Stacked Bar Chart, Line Chart, Multi-Line Chart, Histogram, Pie Chart, Sunburst Chart, and Heatmap. It also owns shared chart frames, summary panels, ranked/segment/line/trend/bin/matrix/slice/sunburst annotation panels, major/minor axis ticks, gridline styling, and the rendered SVG surface used for chart PNG export.
+Owns SVG chart rendering and shared chart hover tooltip styling for Bar Chart, Grouped Bar Chart, Stacked Bar Chart, Line Chart, Multi-Line Chart, Histogram, Pie Chart, Sunburst Chart, and Heatmap. It also owns shared chart frames, the shared three-quarter chart / one-quarter legend layout, complete simplified summary/legend panels, ranked/segment/line/trend/bin/matrix/slice/sunburst annotation panels, major/minor axis ticks, gridline styling, active theme-series mark colors for every chart type, and the rendered SVG surface used for chart PNG export.
 
-The shared chart tooltip uses a mossy/title-green background with light text for legibility over dense charts such as heatmaps. Axis and panel styling should stay legible against the warm chart-paper background and should not depend on hover-only disclosure for core values.
+The shared chart tooltip uses a mossy/title-green background with light text for legibility over dense charts such as heatmaps. Axis and panel styling should stay legible against the warm chart-paper background and should not depend on hover-only disclosure for core values. Keep chart-card geometry centralized through the shared layout helper rather than reintroducing unrelated per-chart spacing constants.
 
 ### `src/InspectorPanel.jsx`
 
@@ -649,7 +661,7 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - explicit **Route (Place)** and **Route (Person)** variables
 - Analytics-local date-range controls for time-based charts
 - **Year** is the default ordered date axis; **Full date** is available when the user wants finer date granularity
-- large chart workspace with controls on the left and the full chart canvas on the right
+- large chart workspace with tabbed controls on the left and the full chart canvas on the right
 - chart rendering scaled to fit without internal workspace scrolling
 - higher-contrast shared chart hover tooltips
 - manual category/series selection across chart types
@@ -659,6 +671,9 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - summary panels for ranked values, segment totals, line totals, trend summaries, bin ranges, matrix combinations, slices/shares, and sunburst parent totals
 - major and minor axis ticks/gridlines for axis-based charts
 - finite 30-color chart series library sourced from the approved Peridot chart palettes
+- shared chart-card layout with left three-fourths for chart marks and right one-fourth for complete simplified legend/summary rows
+- anchored title/subtitle placement, tighter internal chart-card spacing, method labels, and vertical Bar Chart default orientation
+- default finite 30-color chart series library with explicit chart-targeted palette imports scoped to Analytics series colors
 - chart PNG export through the shared Visualizations header Export menu
 
 ## Workbook import contract
@@ -811,6 +826,9 @@ The preceding color/theming conversation produced the following committed palett
 - `0a686fe` — Add built-in Peridot palette presets
 - `aa00efb` — Apply upload guide design direction
 - `81dd7af` — Apply upload guide color direction and dropdown layering
+- `d7f10c9` through `db2bea6` — Rework the Analytics builder and chart card around tabs, quarter-panel controls, shared legend layout, simplified complete legends, tightened spacing, anchored titles, and vertical Bar Chart defaults
+- `6334840` — Route remaining analytics chart marks through theme series
+- `e50ebf6` — Scope chart palette imports to chart series
 
 
 Other retained presets still function as map-focused alternatives:
@@ -935,7 +953,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
 - active branch: `main`
-- current documented baseline: **`10f6e19` — `Polish analytics chart axes and summary panels`**
+- current documented baseline: **`e50ebf6` — `Scope chart palette imports to chart series`**
 
 A future chat should also be told that:
 
