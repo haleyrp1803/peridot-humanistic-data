@@ -43,9 +43,12 @@ export const PERIDOT_PALETTE_OPTIONS = Object.freeze(
 
 
 export const PERIDOT_CHART_COLOR_LIBRARY = Object.freeze({
-  // Finite chart palette requested during the chart UI polish pass.
-  // Use only these 30 colors for chart series. They come from the user's
-  // Base, Pale, and Dark chart palettes and are grouped by color family.
+  // Finite default chart palette requested during the chart UI polish pass.
+  // These 30 colors are the default Analytics series cycle. Theme imports can
+  // still override `analytics.series` when the user explicitly applies a
+  // detected/uploaded palette to Charts or Whole app. The default colors come
+  // from the user's Base, Pale, and Dark chart palettes and are grouped by color
+  // family.
   greens: Object.freeze([
     '#96A65D',
     '#082615',
@@ -142,7 +145,7 @@ export const PERIDOT_PALETTE_IMPORT_TARGETS = Object.freeze([
   {
     id: 'charts',
     label: 'Charts',
-    description: 'Apply the palette to analytics chart backgrounds, text, gridlines, tooltips, and categorical chart series colors only.',
+    description: 'Apply the palette to Analytics chart series colors only. Chart paper, text, gridlines, tooltips, and surrounding app chrome remain controlled by their existing theme roles.',
   },
   {
     id: 'buttonsHighlights',
@@ -289,6 +292,42 @@ function buildPaletteAssignment(colors) {
 
 function assignPaths(colors, pathValues) {
   return pathValues.reduce((overrides, [path, value]) => writeOverridePath(overrides, path, value), {});
+}
+
+function buildImportedChartSeries(assignment) {
+  // Imported chart palettes should replace the default series cycle only when
+  // the user explicitly applies an uploaded palette to Charts or Whole app. The
+  // curated 30-color Peridot library remains the base/default series cycle in
+  // `buildSemanticTheme`; this helper expands detected chart swatches into an
+  // equally long cycle so dense Analytics legends and exports stay stable after
+  // a custom chart palette is applied.
+  const detectedSeries = normalizeDetectedPaletteColors(assignment?.series || []);
+  const fallbackSeries = PERIDOT_CHART_SERIES_COLORS;
+  const seed = detectedSeries.length ? detectedSeries : fallbackSeries;
+  const series = [];
+
+  seed.forEach((color) => {
+    if (!series.includes(color)) series.push(color);
+  });
+
+  let variantIndex = 0;
+  while (series.length < fallbackSeries.length && variantIndex < fallbackSeries.length * 8) {
+    const base = seed[variantIndex % seed.length] || fallbackSeries[variantIndex % fallbackSeries.length] || '#6d8b53';
+    const cycle = Math.floor(variantIndex / seed.length);
+    const variant = [
+      shade(base, -0.16),
+      shade(base, 0.18),
+      shade(base, -0.30),
+      shade(base, 0.32),
+      shade(base, -0.08),
+      shade(base, 0.10),
+    ][cycle % 6];
+
+    if (!series.includes(variant)) series.push(variant);
+    variantIndex += 1;
+  }
+
+  return series.slice(0, fallbackSeries.length);
 }
 
 function buildDarkLightAnchorPaletteOverrides(assignment) {
@@ -484,19 +523,15 @@ function buildMapNetworkPaletteOverrides(assignment) {
 }
 
 function buildChartsPaletteOverrides(assignment) {
+  const importedChartSeries = buildImportedChartSeries(assignment);
+
   return assignPaths(assignment, [
-    ['analytics.shellBg', shade(assignment.deep, -0.18)],
-    ['analytics.sidebarBg', assignment.pale],
-    ['analytics.chartBg', assignment.lightest],
-    ['analytics.chartText', assignment.deep],
-    ['analytics.chartMutedText', assignment.midAlt],
-    ['analytics.grid', withAlpha(assignment.midAlt, 0.32)],
-    ['analytics.accent', assignment.primary],
-    ['analytics.accentDark', assignment.deep],
-    ['analytics.accentLight', assignment.soft],
-    ['analytics.tooltipBg', assignment.darkest],
-    ['analytics.tooltipText', assignment.lightest],
-    ['analytics.series', PERIDOT_CHART_SERIES_COLORS],
+    // Chart-targeted palette imports are intentionally scoped to categorical
+    // series colors. Chart paper, text, gridlines, tooltips, the Analytics
+    // shell, and global app chrome remain governed by their existing theme
+    // roles so an experimental graph palette cannot leak into the rest of the
+    // interface.
+    ['analytics.series', importedChartSeries],
   ]);
 }
 
@@ -852,6 +887,18 @@ function buildToneScale(palette) {
 export const ACTIVE_PERIDOT_SOURCE_PALETTE = PERIDOT_SOURCE_PALETTES[ACTIVE_PERIDOT_PALETTE_ID] || PERIDOT_SOURCE_PALETTES.legacyCurrent;
 export const PERIDOT_TONES = Object.freeze(buildToneScale(ACTIVE_PERIDOT_SOURCE_PALETTE));
 
+function customOverridesAffectLegacyColorTokens(overrides = PERIDOT_CUSTOM_THEME_OVERRIDES) {
+  const topLevelKeys = Object.keys(overrides || {});
+  if (!topLevelKeys.length) return false;
+
+  // Analytics-only custom overrides should affect components that explicitly
+  // consume `PERIDOT_THEME.analytics`, not the legacy fuzzy token adapter used
+  // by older app chrome. Without this guard, chart-series imports can be chosen
+  // as nearest-neighbor replacements for unrelated legacy colors elsewhere in
+  // the app.
+  return topLevelKeys.some((key) => key !== 'analytics');
+}
+
 export function resolvePeridotLegacyColor(value) {
   const source = String(value || '').trim();
 
@@ -866,8 +913,8 @@ export function resolvePeridotLegacyColor(value) {
 
   if (!/^#[0-9a-fA-F]{6}$/.test(source)) return source;
 
-  const hasCustomOverrides = Boolean(PERIDOT_CUSTOM_THEME_OVERRIDES && Object.keys(PERIDOT_CUSTOM_THEME_OVERRIDES).length);
-  if (ACTIVE_PERIDOT_PALETTE_ID === 'legacyCurrent' && !hasCustomOverrides) return source;
+  const hasLegacyRelevantCustomOverrides = customOverridesAffectLegacyColorTokens();
+  if (ACTIVE_PERIDOT_PALETTE_ID === 'legacyCurrent' && !hasLegacyRelevantCustomOverrides) return source;
 
   const candidates = getLegacyThemeCandidatePairs();
   if (!candidates.length) return source;
