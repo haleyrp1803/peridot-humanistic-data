@@ -35,6 +35,22 @@ const PALETTE = Array.isArray(PERIDOT_THEME.analytics.series) && PERIDOT_THEME.a
   ? PERIDOT_THEME.analytics.series
   : PERIDOT_THEME.visualization.series;
 
+function getSeriesColor(index = 0) {
+  if (!Array.isArray(PALETTE) || !PALETTE.length) return CHART_COLORS.accent;
+  return PALETTE[Math.abs(index) % PALETTE.length] || CHART_COLORS.accent;
+}
+
+function getHeatmapCellColor(value = 0, maxValue = 1) {
+  if (!Array.isArray(PALETTE) || !PALETTE.length) return CHART_COLORS.accent;
+  const numericValue = Number(value || 0);
+  const numericMax = Math.max(Number(maxValue || 1), 1);
+  if (!Number.isFinite(numericValue) || numericValue <= 0) return getSeriesColor(0);
+  const ratio = Math.max(0, Math.min(1, numericValue / numericMax));
+  const index = Math.min(PALETTE.length - 1, Math.floor(ratio * PALETTE.length));
+  return getSeriesColor(index);
+}
+
+
 // Axis lines need stronger contrast than decorative panel borders. The values
 // below intentionally use chart text/muted text roles with opacity rather than
 // the very pale grid role alone, because SVG scaling made the previous ticks
@@ -449,7 +465,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
                 return (
                   <g key={row.label}>
                     <WrappedAxisLabel x={left - 12} y={y + 13} label={row.label} />
-                    <rect x={left} y={y} width={barWidth} height="22" rx="8" fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : CHART_COLORS.accent} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} style={{ cursor: 'default' }} />
+                    <rect x={left} y={y} width={barWidth} height="22" rx="8" fill={getSeriesColor(index)} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} style={{ cursor: 'default' }} />
                     <text x={Math.min(left + barWidth + 8, layout.chartRight - 10)} y={y + 16} fontSize="12" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>
                   </g>
                 );
@@ -458,7 +474,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
               <SummaryPanel
                 {...panelLayout}
                 title="Ranked values"
-                rows={rankedRows.map((row) => ({ label: row.label, value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of shown total` }))}
+                rows={rankedRows.map((row, index) => ({ label: row.label, color: getSeriesColor(index), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of shown total` }))}
                 note={`Shown total: ${formatNumber(total)} ${data[0]?.unit || 'records'}`}
               />
             </>
@@ -496,7 +512,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
               const y = top + plotHeight - barHeight;
               return (
                 <g key={row.label}>
-                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx="8" fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : CHART_COLORS.accent} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} />
+                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx="8" fill={getSeriesColor(index)} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} />
                   <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>
                   {xLabelIndexes.has(index) ? renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: truncateLabel(row.label, 16), rotate: true }) : null}
                 </g>
@@ -505,7 +521,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
             <SummaryPanel
               {...panelLayout}
               title="Ranked values"
-              rows={rankedRows.map((row) => ({ label: row.label, value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of shown total` }))}
+              rows={rankedRows.map((row, index) => ({ label: row.label, color: getSeriesColor(index), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of shown total` }))}
               note={`Shown total: ${formatNumber(total)} ${data[0]?.unit || 'records'}`}
             />
           </>
@@ -878,7 +894,7 @@ export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, s
                 {columns.map((column, columnIndex) => {
                   const cell = cellMap.get(`${row}__${column}`) || { rowLabel: row, columnLabel: column, count: 0 };
                   const opacity = cell.count ? 0.2 + (cell.count / maxValue) * 0.75 : 0.08;
-                  return <rect key={`${row}-${column}`} x={left + columnIndex * cellSize} y={top + rowIndex * cellSize} width={cellSize - 2} height={cellSize - 2} rx="7" fill={CHART_COLORS.accent} opacity={opacity} stroke={tooltip?.label === row && tooltip?.secondary === column ? CHART_COLORS.accentDark : CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: row, secondary: column, count: cell.count, unit: cell.unit }))} onMouseLeave={() => setTooltip(null)} />;
+                  return <rect key={`${row}-${column}`} x={left + columnIndex * cellSize} y={top + rowIndex * cellSize} width={cellSize - 2} height={cellSize - 2} rx="7" fill={getHeatmapCellColor(cell.count, maxValue)} opacity={opacity} stroke={tooltip?.label === row && tooltip?.secondary === column ? CHART_COLORS.accentDark : CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: row, secondary: column, count: cell.count, unit: cell.unit }))} onMouseLeave={() => setTooltip(null)} />;
                 })}
               </g>
             ))}
@@ -923,7 +939,7 @@ export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
               const y = top + plotHeight - barHeight;
               return (
                 <g key={row.label}>
-                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx="8" fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : CHART_COLORS.accent} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of binned values` }))} onMouseLeave={() => setTooltip(null)} />
+                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx="8" fill={getSeriesColor(index)} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of binned values` }))} onMouseLeave={() => setTooltip(null)} />
                   <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>
                   {renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: truncateLabel(row.label, 16), rotate: true })}
                 </g>
@@ -932,7 +948,7 @@ export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
             <SummaryPanel
               {...panelLayout}
               title="Bin ranges"
-              rows={data.map((row) => ({ label: row.label, value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of binned values` }))}
+              rows={data.map((row, index) => ({ label: row.label, color: getSeriesColor(index), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of binned values` }))}
               note={`Binned total: ${formatNumber(total)} ${data[0]?.unit || 'items'}`}
             />
           </>
