@@ -53,14 +53,14 @@ export const RECORD_SHAPE_LABELS = Object.freeze({
 });
 
 export const CAPABILITY_LABELS = Object.freeze({
-  inspectorReady: 'Inspector-ready',
-  searchReady: 'Search-ready',
-  pointMapReady: 'Point-map-ready',
-  routeMapReady: 'Route-map-ready',
-  networkReady: 'Network-ready',
-  timelineReady: 'Timeline-ready',
-  chartReady: 'Chart-ready',
-  exportReady: 'Export-ready',
+  inspectorReady: 'Available in Inspector',
+  searchReady: 'Searchable',
+  pointMapReady: 'Point Map available',
+  routeMapReady: 'Route Map available',
+  networkReady: 'Network available',
+  timelineReady: 'Timeline available',
+  chartReady: 'Charts available',
+  exportReady: 'Export available',
 });
 
 export function definitionsForFields(definitions = [], fields = []) {

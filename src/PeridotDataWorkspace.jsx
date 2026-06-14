@@ -96,7 +96,7 @@ export function PeridotDataWorkspace({
           <div className="peridot-surface-card peridot-card-inner">
             <p className="peridot-section-label">Step 3</p>
             <h3 className="mt-2 text-lg font-bold text-[var(--peridot-color-hex-fbf7ea)]">Validate and explore</h3>
-            <p className="mt-2 text-sm leading-6 text-[var(--peridot-color-hex-f7f2df-a78)]">Review capability reporting before moving into maps, networks, charts, and dossiers.</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--peridot-color-hex-f7f2df-a78)]">Review which tools the mapped records can support before moving into maps, networks, charts, and dossiers.</p>
           </div>
         </div>
 
@@ -129,7 +129,7 @@ export function PeridotDataWorkspace({
             {popup.intro ? <p className="mt-3 text-sm leading-6 text-[var(--peridot-color-hex-42533f)]">{popup.intro}</p> : null}
             {capabilityLines.length ? (
               <div className="mt-4 rounded-2xl border border-[var(--peridot-color-hex-5f714a-a25)] bg-[var(--peridot-color-hex-eef3dd)] p-4">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-5c724d)]">Visualization compatibility</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-5c724d)]">Tool availability</h3>
                 <ul className="mt-2 space-y-1 text-sm leading-6 text-[var(--peridot-color-hex-42533f)]">
                   {capabilityLines.map((line) => <li key={line}>• {line}</li>)}
                 </ul>
@@ -137,7 +137,7 @@ export function PeridotDataWorkspace({
             ) : null}
             {warningLines.length ? (
               <div className="mt-4 rounded-2xl border border-[var(--peridot-color-hex-b58b42-a40)] bg-[var(--peridot-color-hex-fff4d8)] p-4">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-735726)]">Warnings</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-735726)]">Limits to review</h3>
                 <ul className="mt-2 space-y-1 text-sm leading-6 text-[var(--peridot-color-hex-51422a)]">
                   {warningLines.map((line) => <li key={line}>• {line}</li>)}
                 </ul>

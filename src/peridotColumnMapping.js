@@ -100,7 +100,7 @@ export const PERIDOT_FIELD_CAPABILITIES = Object.freeze({
   timeline: 'Timeline',
   inspector: 'Inspector',
   searchFilter: 'Search & Filter',
-  analytics: 'Analytics',
+  analytics: 'Chart Visualizations',
   export: 'Export',
 });
 
@@ -109,7 +109,7 @@ export const PERIDOT_CORE_FIELD_DEFINITIONS = Object.freeze([
     key: 'Date',
     label: 'Date',
     description:
-      'Date of the correspondence record. Peridot preserves the entered value and uses machine-readable dates for timeline playback and date-based filtering.',
+      'Date of the correspondence record. Peridot preserves the entered value and uses parseable dates for timeline playback and date-based filtering.',
     usedFor: Object.freeze([
       PERIDOT_FIELD_CAPABILITIES.timeline,
       PERIDOT_FIELD_CAPABILITIES.searchFilter,
@@ -118,7 +118,7 @@ export const PERIDOT_CORE_FIELD_DEFINITIONS = Object.freeze([
       PERIDOT_FIELD_CAPABILITIES.export,
     ]),
     acceptedFormat:
-      'YYYY, YYYY/MM, YYYY-MM, YYYY/MM/DD, or YYYY-MM-DD. Ambiguous scholarly dates are preserved but may not be timeline-ready.',
+      'YYYY, YYYY/MM, YYYY-MM, YYYY/MM/DD, or YYYY-MM-DD. Ambiguous scholarly dates are preserved for evidence but may not be available for timeline playback.',
     commonNames: Object.freeze([
       'date',
       'year',
@@ -223,7 +223,7 @@ export const PERIDOT_CORE_FIELD_DEFINITIONS = Object.freeze([
     key: 'Source_Latitude',
     label: 'Source latitude',
     description:
-      'Decimal latitude for the source location. This is required, with source longitude, for a source point to be map-ready.',
+      'Decimal latitude for the source location. This is required, with source longitude, for source-side map placement.',
     usedFor: Object.freeze([
       PERIDOT_FIELD_CAPABILITIES.geographicMap,
       PERIDOT_FIELD_CAPABILITIES.export,
@@ -250,7 +250,7 @@ export const PERIDOT_CORE_FIELD_DEFINITIONS = Object.freeze([
     key: 'Source_Longitude',
     label: 'Source longitude',
     description:
-      'Decimal longitude for the source location. This is required, with source latitude, for a source point to be map-ready.',
+      'Decimal longitude for the source location. This is required, with source latitude, for source-side map placement.',
     usedFor: Object.freeze([
       PERIDOT_FIELD_CAPABILITIES.geographicMap,
       PERIDOT_FIELD_CAPABILITIES.export,
@@ -316,7 +316,7 @@ export const PERIDOT_CORE_FIELD_DEFINITIONS = Object.freeze([
     key: 'Target_Latitude',
     label: 'Target latitude',
     description:
-      'Decimal latitude for the target location. This is required, with target longitude, for a target point to be map-ready.',
+      'Decimal latitude for the target location. This is required, with target longitude, for target-side map placement.',
     usedFor: Object.freeze([
       PERIDOT_FIELD_CAPABILITIES.geographicMap,
       PERIDOT_FIELD_CAPABILITIES.export,
@@ -343,7 +343,7 @@ export const PERIDOT_CORE_FIELD_DEFINITIONS = Object.freeze([
     key: 'Target_Longitude',
     label: 'Target longitude',
     description:
-      'Decimal longitude for the target location. This is required, with target latitude, for a target point to be map-ready.',
+      'Decimal longitude for the target location. This is required, with target latitude, for target-side map placement.',
     usedFor: Object.freeze([
       PERIDOT_FIELD_CAPABILITIES.geographicMap,
       PERIDOT_FIELD_CAPABILITIES.export,
@@ -394,7 +394,7 @@ export const PERIDOT_TEMPORAL_FIELD_DEFINITIONS = Object.freeze([
       PERIDOT_FIELD_CAPABILITIES.export,
     ]),
     acceptedFormat:
-      'YYYY, YYYY/MM, YYYY-MM, YYYY/MM/DD, YYYY-MM-DD, or a simple year range. Other date text is preserved but may not be timeline-ready.',
+      'YYYY, YYYY/MM, YYYY-MM, YYYY/MM/DD, YYYY-MM-DD, or a simple year range. Other date text is preserved for evidence but may not be available for timeline playback.',
     commonNames: Object.freeze([
       'date',
       'year',

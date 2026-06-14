@@ -180,9 +180,9 @@ function CapabilityAuditCard({ audit, note }) {
     <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Data capability audit</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Tool availability audit</div>
           <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">
-            Read-only summary of what this mapped data appears able to support.
+            Descriptive summary of which Peridot tools the mapped records appear able to support.
           </div>
         </div>
         <div className="rounded-full border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-1 text-xs font-semibold text-[var(--panel-card-muted-text)]">
@@ -194,9 +194,9 @@ function CapabilityAuditCard({ audit, note }) {
 
       <div className="mt-4 grid gap-3 lg:grid-cols-3">
         <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Detected shape(s)</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Detected record shape(s)</div>
           <div className="mt-2 text-sm font-semibold text-[var(--panel-card-text)]">
-            {shapes.length ? shapes.join(', ') : 'No clear shape detected'}
+            {shapes.length ? shapes.join(', ') : 'No dominant shape detected'}
           </div>
         </div>
         <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3">
@@ -211,7 +211,7 @@ function CapabilityAuditCard({ audit, note }) {
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Temporal intervals</div>
           <div className="mt-2 space-y-1 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
             <div><span className="font-semibold text-[var(--panel-card-text)]">Fields:</span> {temporalRoleFields.length ? temporalRoleFields.slice(0, 5).join(', ') : 'none detected'}</div>
-            <div><span className="font-semibold text-[var(--panel-card-text)]">Timeline-ready:</span> {counts.timelineReady ?? 0} of {totalRows}</div>
+            <div><span className="font-semibold text-[var(--panel-card-text)]">Timeline available:</span> {counts.timelineReady ?? 0} of {totalRows}</div>
             <div><span className="font-semibold text-[var(--panel-card-text)]">Intervals:</span> {intervalRows} of {totalRows}</div>
             <div className="text-[11px]">{closedRangeRows} closed range{closedRangeRows === 1 ? '' : 's'} · {openStartRows} start-only · {openEndRows} end-only</div>
           </div>
@@ -425,15 +425,15 @@ function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilit
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-4">
         <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Accepted</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Accepted records</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.acceptedRecordCount ?? 0}</div>
         </div>
         <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Map-ready</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Map available</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.capabilityCounts?.mapReady ?? 0}</div>
         </div>
         <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Timeline-ready</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Timeline available</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.capabilityCounts?.timelineReady ?? 0}</div>
         </div>
         <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
@@ -444,7 +444,7 @@ function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilit
 
       <CapabilityAuditCard
         audit={capabilityAudit}
-        note="This audit is based on the mapped rows Peridot will import if you confirm this table. It does not change import rules."
+        note="This audit is based on the mapped rows Peridot will import if you confirm this table. It explains tool availability but does not block otherwise accepted records."
       />
 
       {!validation?.isValid ? (
@@ -868,17 +868,17 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
       </div>
 
       <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
-        Review the workbook import before confirming. Peridot will assemble rows from the primary sheet and configured unique-ID joins, then include selected evidence and analysis fields from the primary sheet and joined sheets.
+        Review the workbook import before confirming. Peridot will assemble records from the primary sheet and configured unique-ID joins, then include selected evidence and analysis fields from the primary sheet and joined sheets.
       </div>
 
       <CapabilityAuditCard
         audit={capabilityAudit}
-        note="This audit is based on the assembled workbook rows Peridot will import if you confirm this mapping. It is descriptive only and does not block import."
+        note="This audit is based on the assembled workbook records Peridot will import if you confirm this mapping. It explains tool availability but does not block otherwise accepted records."
       />
 
       {errors.length ? (
         <div className="rounded-2xl border border-[var(--peridot-role-status-danger-border)] bg-[var(--peridot-role-status-danger-bg)] p-4 text-sm text-[var(--peridot-role-status-danger-text)]">
-          <div className="font-semibold">Blocking issues before import wiring</div>
+          <div className="font-semibold">Blocking issues before import</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {errors.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}
           </ul>
@@ -887,7 +887,7 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
 
       {warnings.length ? (
         <div className="rounded-2xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] p-4 text-sm text-[var(--peridot-role-status-warning-text)]">
-          <div className="font-semibold">Warnings and rules</div>
+          <div className="font-semibold">Limits and rules to review</div>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             {warnings.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}
           </ul>
@@ -1096,7 +1096,7 @@ export function PeridotColumnMappingModal({
     places: 'Places',
     relationships: 'Relationships',
     evidence: 'Evidence and analysis',
-    review: 'Review capabilities',
+    review: 'Review tool availability',
   };
 
   const workbookStepLabels = {
@@ -1107,7 +1107,7 @@ export function PeridotColumnMappingModal({
     'workbook-places': 'Places',
     'workbook-relationships': 'Relationships',
     'workbook-evidence': 'Evidence and analysis',
-    'workbook-review': 'Review capabilities',
+    'workbook-review': 'Review tool availability',
   };
 
   const stepLabels = isWorkbookMode ? workbookStepLabels : singleStepLabels;

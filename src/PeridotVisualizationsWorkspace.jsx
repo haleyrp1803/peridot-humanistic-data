@@ -201,17 +201,17 @@ function UnavailableVisualizationState({
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--peridot-color-hex-071f16)] p-5 shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
       <div className="w-full max-w-4xl rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a50)] bg-[var(--peridot-color-hex-f8f4e6)] p-6 text-[var(--peridot-color-hex-24382d)] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-22)]">
-        <p className="peridot-kicker text-[11px] text-[var(--peridot-color-hex-66815b)]">Visualization compatibility</p>
+        <p className="peridot-kicker text-[11px] text-[var(--peridot-color-hex-66815b)]">Tool availability</p>
         <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-132a20)]">
           {title}
         </h2>
         <div className="mt-4 rounded-2xl border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-f3ecd9)] p-4">
-          <h3 className="text-sm font-bold text-[var(--peridot-color-hex-25382d)]">Why</h3>
+          <h3 className="text-sm font-bold text-[var(--peridot-color-hex-25382d)]">What is missing</h3>
           <p className="mt-2 text-sm leading-relaxed text-[var(--peridot-color-hex-4b5c50)]">{why}</p>
         </div>
         {availableInstead.length ? (
           <div className="mt-4 rounded-2xl border border-[var(--peridot-color-hex-cbdab2)] bg-[var(--peridot-color-hex-edf4df)] p-4">
-            <h3 className="text-sm font-bold text-[var(--peridot-color-hex-25382d)]">Available instead</h3>
+            <h3 className="text-sm font-bold text-[var(--peridot-color-hex-25382d)]">Still available</h3>
             <div className="mt-3 flex flex-wrap gap-2">
               {availableInstead.map((item) => (
                 <span key={item} className="rounded-full border border-[var(--peridot-color-hex-8aa36d-a50)] bg-[var(--peridot-color-hex-dfe9c8)] px-3 py-1 text-sm font-semibold text-[var(--peridot-color-hex-26382b)]">
@@ -243,32 +243,32 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
       value: availability.hasPointMap ? `${numberLabel(availability.pointCount)} mapped places` : 'Not available',
       ready: availability.hasPointMap,
       note: availability.hasPointMap
-        ? 'One-location records can be explored through the map.'
-        : 'No point-place or point-coordinate records are available.',
+        ? 'One-location records have mapped point-place or point-coordinate roles and can be explored through the map.'
+        : 'No point-place or point-coordinate roles are available in the current scope.',
     },
     {
       label: 'Route map',
       value: availability.hasRouteMap ? `${numberLabel(availability.routeCount)} routes` : 'Not available',
       ready: availability.hasRouteMap,
       note: availability.hasRouteMap
-        ? 'Source-target place records can be explored as routes.'
-        : 'No mapped source-target place routes are available.',
+        ? 'Source-target place records have route/place roles and can be explored as routes.'
+        : 'No mapped source-target place or coordinate-pair routes are available in the current scope.',
     },
     {
       label: 'Network views',
       value: availability.hasNetwork ? `${numberLabel(availability.networkEdgeCount)} relationships` : 'Not available',
       ready: availability.hasNetwork,
       note: availability.hasNetwork
-        ? 'Source-target entity records can be explored as networks.'
-        : 'No mapped source-target entity relationships are available.',
+        ? 'Source-target entity records have relationship roles and can be explored as networks.'
+        : 'No mapped source-target entity relationships are available in the current scope.',
     },
     {
       label: 'Charts',
       value: availability.hasCharts ? `${numberLabel(availability.rowCount)} records` : 'Not available',
       ready: availability.hasCharts,
       note: availability.hasCharts
-        ? 'The active dataset can be sent to Chart Visualizations, where chart types expose x-axis, y-axis, grouping, series, and aggregation controls.'
-        : 'No active records are available for charting.',
+        ? 'The active records can be sent to Chart Visualizations where usable categorical, numeric, date, or evidence fields are available.'
+        : 'No active records or chartable fields are available for charting in the current scope.',
     },
   ];
 
@@ -277,10 +277,10 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
       <div className="rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a50)] bg-[var(--peridot-color-hex-f8f4e6)] p-5 text-[var(--peridot-color-hex-24382d)]">
         <p className="peridot-kicker text-[11px] text-[var(--peridot-color-hex-66815b)]">Explore your data</p>
         <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-132a20)]">
-          Dataset capability summary
+          Dataset tool availability
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--peridot-color-hex-52675a)]">
-          Peridot now treats datasets as records with mapped roles. Some datasets support maps, some support networks, some support charts, and some are best explored as evidence records.
+          Peridot preserves useful records first, then reports which tools the mapped fields can support. Some datasets support maps, some support networks, some support charts, and some are best explored as searchable evidence records.
         </p>
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {rows.map((row) => (
@@ -647,7 +647,7 @@ export function PeridotVisualizationsWorkspace({
       available: availability.hasPointMap,
       action: onSelectPlaceMap,
       unavailableTitle: 'Point Map is not available for this dataset.',
-      why: 'This dataset does not contain mapped point-place or point-coordinate roles.',
+      why: 'This dataset does not contain mapped point-place or point-coordinate roles in the current scope. Records may still be valid for routes, networks, charts, search, Inspector, or export.',
       availableInstead: [
         availability.hasRouteMap ? 'Route Map' : null,
         availability.hasCharts ? 'Chart Visualizations' : null,
@@ -660,7 +660,7 @@ export function PeridotVisualizationsWorkspace({
       available: availability.hasRouteMap,
       action: onSelectPlaceMap,
       unavailableTitle: 'Route Map is not available for this dataset.',
-      why: 'This dataset does not contain mapped source and target place roles or source-target coordinate pairs.',
+      why: 'This dataset does not contain mapped source and target place roles or source-target coordinate pairs in the current scope. Records may still be valid for point maps, networks, charts, search, Inspector, or export.',
       availableInstead: [
         availability.hasPointMap ? 'Point Map' : null,
         availability.hasCharts ? 'Chart Visualizations' : null,
@@ -673,7 +673,7 @@ export function PeridotVisualizationsWorkspace({
       available: availability.hasNetwork,
       action: onSelectPeopleNetwork,
       unavailableTitle: 'Network visualizations are not available for this dataset.',
-      why: 'This dataset does not contain mapped source-target entity relationship fields. That is expected for point/site, catalogue, and time-series datasets.',
+      why: 'This dataset does not contain mapped source-target entity relationship fields in the current scope. That is expected for point/site, catalogue, and time-series datasets, which may still be valid for maps, charts, search, Inspector, and export.',
       availableInstead: [
         availability.hasPointMap ? 'Point Map' : null,
         availability.hasRouteMap ? 'Route Map' : null,
@@ -687,7 +687,7 @@ export function PeridotVisualizationsWorkspace({
       available: availability.hasNetwork,
       action: onSelectForceDirected,
       unavailableTitle: 'Force-Directed Network is not available for this dataset.',
-      why: 'Force-directed layouts require mapped source-target entity relationships. This dataset can still be valid even when it does not contain network data.',
+      why: 'Force-directed layouts require mapped source-target entity relationships. This dataset can still be valid for maps, charts, search, Inspector, and export even when it does not contain network data.',
       availableInstead: [
         availability.hasPointMap ? 'Point Map' : null,
         availability.hasRouteMap ? 'Route Map' : null,
@@ -701,7 +701,7 @@ export function PeridotVisualizationsWorkspace({
       available: availability.hasCharts,
       action: onOpenAnalytics,
       unavailableTitle: 'Chart Visualizations are not available for this dataset.',
-      why: 'No active records or chartable fields are available for charting.',
+      why: 'No active records or chartable fields are available for charting in the current scope.',
       availableInstead: [
         availability.hasPointMap ? 'Point Map' : null,
         availability.hasRouteMap ? 'Route Map' : null,
@@ -710,7 +710,7 @@ export function PeridotVisualizationsWorkspace({
       ].filter(Boolean),
     },
     [VISUALIZATION_TOOLS.CAPABILITY_SUMMARY]: {
-      label: 'Capability Summary',
+      label: 'Tool Availability',
       category: 'Explore Your Data',
       available: true,
       action: onOpenExplore,

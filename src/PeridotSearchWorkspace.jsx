@@ -1444,7 +1444,7 @@ export function PeridotSearchWorkspace({
                   ? 'border-[var(--peridot-color-hex-dce9d2-a70)] bg-[var(--peridot-color-hex-dce9d2)] text-[var(--peridot-color-hex-244c35)]'
                   : 'border-[var(--peridot-color-hex-f0d7a8-a70)] bg-[var(--peridot-color-hex-f5e0b6)] text-[var(--peridot-color-hex-5d3d16)]',
               ].join(' ')}>
-                {row.statusLabel || (row.ready ? 'Available' : 'Limited')}
+                {row.statusLabel || (row.ready ? 'Available' : 'Not available')}
               </span>
             </div>
             <div className="mt-3 rounded-xl border border-[var(--peridot-color-hex-dce9d2-a35)] bg-[var(--peridot-color-hex-506a57-a55)] px-3 py-2 text-sm font-black text-[var(--peridot-role-interface-text-inverse)]">

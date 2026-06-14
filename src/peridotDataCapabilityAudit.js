@@ -850,16 +850,16 @@ function buildDatasetWarnings(totalRows, capabilityCounts, fieldSummaries) {
   const warnings = [];
   if (!totalRows) warnings.push('No rows were available for capability auditing.');
   if (totalRows && capabilityCounts.pointMapReady === 0 && capabilityCounts.routeMapReady === 0) {
-    warnings.push('No map-ready point or route records were detected.');
+    warnings.push('No point-map or route-map records were detected. Records may still be searchable, inspectable, chartable, or exportable.');
   }
   if (totalRows && capabilityCounts.networkReady === 0) {
-    warnings.push('No source-target entity relationships were detected for network views.');
+    warnings.push('No source-target entity relationships were detected for network views. Point/site, catalogue, and time-series datasets can still be valid without network data.');
   }
   if (totalRows && capabilityCounts.timelineReady === 0) {
-    warnings.push('No sortable temporal values were detected for timeline or time-based filters.');
+    warnings.push('No sortable temporal values were detected for timeline playback or date-range filters. Date text may still be preserved as evidence.');
   }
   if (!fieldSummaries.some((field) => field.numeric.appearsNumeric && !isCoordinateOrDateRole(field.roles))) {
-    warnings.push('No numeric measure fields were detected for quantitative charts.');
+    warnings.push('No numeric measure fields were detected for quantitative charts. Categorical, temporal, or evidence fields may still support other chart types.');
   }
   return warnings;
 }
@@ -897,15 +897,15 @@ export function createPeridotCapabilitySummary(audit) {
   const total = dataset.totalRows || 0;
   const counts = dataset.capabilityCounts || {};
   return [
-    `Rows audited: ${total}`,
-    `Inspector-ready: ${counts.inspectorReady ?? 0} of ${total}`,
-    `Search-ready: ${counts.searchReady ?? 0} of ${total}`,
-    `Point-map-ready: ${counts.pointMapReady ?? 0} of ${total}`,
-    `Route-map-ready: ${counts.routeMapReady ?? 0} of ${total}`,
-    `Network-ready: ${counts.networkReady ?? 0} of ${total}`,
-    `Timeline-ready: ${counts.timelineReady ?? 0} of ${total}`,
+    `Rows reviewed: ${total}`,
+    `Available in Inspector: ${counts.inspectorReady ?? 0} of ${total}`,
+    `Searchable: ${counts.searchReady ?? 0} of ${total}`,
+    `Point Map available: ${counts.pointMapReady ?? 0} of ${total}`,
+    `Route Map available: ${counts.routeMapReady ?? 0} of ${total}`,
+    `Network available: ${counts.networkReady ?? 0} of ${total}`,
+    `Timeline available: ${counts.timelineReady ?? 0} of ${total}`,
     `Temporal intervals: ${dataset.temporal?.intervalRows ?? 0} of ${total} (${dataset.temporal?.closedRangeRows ?? 0} closed ranges, ${dataset.temporal?.openStartRows ?? 0} start-only, ${dataset.temporal?.openEndRows ?? 0} end-only)`,
-    `Chart-ready: ${counts.chartReady ?? 0} of ${total}`,
+    `Charts available: ${counts.chartReady ?? 0} of ${total}`,
     `Numeric measure fields: ${dataset.analytics?.numericMeasureFields?.join(', ') || 'none detected'}`,
     `Categorical fields: ${dataset.analytics?.categoricalFields?.join(', ') || 'none detected'}`,
     `Temporal fields: ${dataset.analytics?.temporalFields?.join(', ') || 'none detected'}`,
