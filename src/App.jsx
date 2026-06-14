@@ -3203,17 +3203,56 @@ export default function EuropeNetworkMapApp() {
   }, [filteredRowsByTime, timelineMode, currentRangeLabel, hasActivePlayback]);
 
   const exportSubtitleLines = useMemo(() => {
+    const activeFilterLabels = [
+      search.trim() ? `Keyword: ${search.trim()}` : '',
+      personFilter.trim() ? `Person: ${personFilter.trim()}` : '',
+      placeFilter.trim() ? `Place: ${placeFilter.trim()}` : '',
+      routePlaceFilter.trim() ? `Route place: ${routePlaceFilter.trim()}` : '',
+      routePeopleFilter.trim() ? `Route people: ${routePeopleFilter.trim()}` : '',
+      minCount > 1 ? `Minimum weight: ${currentMinCountLabel}` : '',
+    ].filter(Boolean);
+
     return [
       `View: ${viewMode === 'geographic' ? 'Geographic routes' : 'Person network'}`,
-      `Keyword search: ${search.trim() || 'None'}`,
-      `Person filter: ${personFilter.trim() || 'None'}`,
-      `Place filter: ${placeFilter.trim() || 'None'}`,
-      `Route filter (place): ${routePlaceFilter.trim() || 'None'}`,
-      `Route filter (people): ${routePeopleFilter.trim() || 'None'}`,
-      `Minimum weight: ${currentMinCountLabel}`,
       `Visible dates: ${exportVisibleDateLabel}`,
-    ];
-  }, [viewMode, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, currentMinCountLabel, exportVisibleDateLabel]);
+      activeFilterLabels.length ? `Filters: ${activeFilterLabels.join(' · ')}` : '',
+    ].filter(Boolean);
+  }, [viewMode, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, minCount, currentMinCountLabel, exportVisibleDateLabel]);
+
+  const buildMapPngExportFooterLines = (exportOptions = {}) => {
+    const footerLines = [];
+
+    if (exportOptions.includeDateRange) {
+      footerLines.push(`Visible dates: ${exportVisibleDateLabel}`);
+    }
+
+    if (exportOptions.includeActiveFilters) {
+      const activeFilterLabels = [
+        search.trim() ? `Keyword: ${search.trim()}` : '',
+        personFilter.trim() ? `Person: ${personFilter.trim()}` : '',
+        placeFilter.trim() ? `Place: ${placeFilter.trim()}` : '',
+        routePlaceFilter.trim() ? `Route place: ${routePlaceFilter.trim()}` : '',
+        routePeopleFilter.trim() ? `Route people: ${routePeopleFilter.trim()}` : '',
+        minCount > 1 ? `Minimum weight: ${currentMinCountLabel}` : '',
+      ].filter(Boolean);
+
+      if (activeFilterLabels.length) {
+        footerLines.push(`Filters: ${activeFilterLabels.join(' · ')}`);
+      }
+    }
+
+    if (exportOptions.includeResultCounts) {
+      const nodeCount = graph.nodes.length;
+      const edgeCount = graph.edges.length;
+      footerLines.push(
+        viewMode === 'geographic'
+          ? `${nodeCount} visible map ${nodeCount === 1 ? 'item' : 'items'}${edgeCount ? ` · ${edgeCount} ${edgeCount === 1 ? 'route' : 'routes'}` : ''}`
+          : `${nodeCount} visible ${nodeCount === 1 ? 'node' : 'nodes'} · ${edgeCount} ${edgeCount === 1 ? 'relationship' : 'relationships'}`
+      );
+    }
+
+    return footerLines;
+  };
 
   // Export rows are intentionally built from the current `graph`, not directly
   // from `normalizedRows`. `graph` has already absorbed the active timeline
@@ -3663,20 +3702,24 @@ export default function EuropeNetworkMapApp() {
     }
   };
 
-  const handleExportPng = async () => {
+  const handleExportPng = async (exportOptions = {}) => {
     try {
       const svgElement = getMapSvgElement();
       if (!svgElement) {
         setExportStatus({ kind: 'error', message: 'PNG export failed: map not found.' });
         return;
       }
+
+      const includeTitle = Boolean(exportOptions.includeTitle);
+      const title = includeTitle ? String(exportOptions.title || pageTitle || '').trim() : '';
+      const footerLines = buildMapPngExportFooterLines(exportOptions);
       const pngBlob = await renderSvgElementToPngBlob(svgElement, {
-        title: pageTitle,
-        subtitleLines: exportSubtitleLines,
+        title,
+        footerLines,
       });
       const result = triggerDownload(
         pngBlob,
-        `${slugifyFilenamePart(pageTitle, 'correspondence-visualizer')}-${viewMode}-map.png`
+        `${slugifyFilenamePart(title || pageTitle, 'correspondence-visualizer')}-${viewMode}-map.png`
       );
       setExportStatus({ kind: 'success', message: 'PNG export triggered.', ...result });
     } catch (error) {
@@ -4128,6 +4171,7 @@ export default function EuropeNetworkMapApp() {
       handleExportEdgesCsv,
       handleExportNodesCsv,
       graph,
+      defaultExportTitle: pageTitle,
     },
     visualizationAvailability,
   };

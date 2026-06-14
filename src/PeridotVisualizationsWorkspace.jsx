@@ -187,7 +187,7 @@ function CompatibilityStatusPill({ available, light = false }) {
             : 'border-[var(--peridot-color-hex-e7c27d)] bg-[var(--peridot-color-hex-b58b42-a35)] text-[var(--peridot-color-hex-fff2cf)]',
       ].join(' ')}
     >
-      {available ? 'Available' : 'Not available'}
+      {available ? 'Available' : 'Limited'}
     </span>
   );
 }
@@ -317,10 +317,20 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
 }
 
 function VisualizationExportMenu({ exportControls, activeVisualizationLabel, compact = false }) {
+  const defaultPngExportTitle = exportControls?.defaultExportTitle || activeVisualizationLabel || '';
   const [isOpen, setIsOpen] = useState(false);
   const [menuAnchorRect, setMenuAnchorRect] = useState(null);
+  const [pngExportTitle, setPngExportTitle] = useState(defaultPngExportTitle);
+  const [includePngTitle, setIncludePngTitle] = useState(false);
+  const [includePngDateRange, setIncludePngDateRange] = useState(false);
+  const [includePngActiveFilters, setIncludePngActiveFilters] = useState(false);
+  const [includePngResultCounts, setIncludePngResultCounts] = useState(false);
   const menuAnchorRef = useRef(null);
   const closeTimerRef = useRef(null);
+
+  useEffect(() => {
+    setPngExportTitle((currentTitle) => currentTitle || defaultPngExportTitle);
+  }, [defaultPngExportTitle]);
 
   useEffect(() => () => {
     if (closeTimerRef.current) {
@@ -401,6 +411,14 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
       : 'cursor-not-allowed text-[var(--peridot-color-hex-6f6554)] hover:bg-[var(--peridot-color-hex-f3e4bf)]',
   ].join(' ');
 
+  const buildPngExportOptions = () => ({
+    title: pngExportTitle,
+    includeTitle: includePngTitle,
+    includeDateRange: includePngDateRange,
+    includeActiveFilters: includePngActiveFilters,
+    includeResultCounts: includePngResultCounts,
+  });
+
   const runAction = (handler) => {
     closeMenu();
     if (typeof handler === 'function') {
@@ -439,7 +457,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
         <FloatingVisualizationMenu
           anchorRect={menuAnchorRect}
           isOpen={isOpen}
-          width={300}
+          width={360}
           onMouseEnter={openMenu}
           onMouseLeave={scheduleClose}
           onFocus={openMenu}
@@ -476,9 +494,48 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
                 </button>
               ) : null}
               {canExportPng ? (
+                <div className="mx-1 mb-2 rounded-2xl border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-fbf7ea)] p-3 text-[var(--peridot-color-hex-26382b)]">
+                  <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-6f6554)]">
+                    PNG export options
+                  </div>
+                  <label className="mt-2 block text-xs font-bold text-[var(--peridot-color-hex-1d3326)]">
+                    Optional title
+                    <input
+                      type="text"
+                      value={pngExportTitle}
+                      onChange={(event) => setPngExportTitle(event.target.value)}
+                      className="mt-1 w-full rounded-xl border border-[var(--peridot-color-hex-cbdab2)] bg-[var(--peridot-color-hex-f8f5e8)] px-3 py-2 text-sm font-semibold text-[var(--peridot-color-hex-1d3326)] outline-none focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a35)]"
+                      placeholder={defaultPngExportTitle || 'Map title'}
+                    />
+                  </label>
+                  <div className="mt-3 grid gap-2 text-xs font-semibold text-[var(--peridot-color-hex-26382b)]">
+                    {[
+                      ['include-title', 'Show title at top', includePngTitle, setIncludePngTitle],
+                      ['include-date-range', 'Show visible date range at bottom', includePngDateRange, setIncludePngDateRange],
+                      ['include-active-filters', 'Show active filters at bottom', includePngActiveFilters, setIncludePngActiveFilters],
+                      ['include-result-counts', 'Show result counts at bottom', includePngResultCounts, setIncludePngResultCounts],
+                    ].map(([id, label, checked, setChecked]) => (
+                      <label key={id} className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={(event) => setChecked(event.target.checked)}
+                          className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
+                        />
+                        <span>{label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  <div className="mt-2 text-[11px] leading-relaxed text-[var(--peridot-color-hex-6f6554)]">
+                    With all options unchecked, the PNG export contains only the visualization.
+                  </div>
+                </div>
+              ) : null}
+
+              {canExportPng ? (
                 <button
                   type="button"
-                  onClick={() => runAction(handleExportPng)}
+                  onClick={() => runAction(() => handleExportPng(buildPngExportOptions()))}
                   className={actionButtonClass(canExportPng)}
                   disabled={!canExportPng}
                 >
@@ -646,7 +703,7 @@ export function PeridotVisualizationsWorkspace({
       category: 'Mapping Visualizations',
       available: availability.hasPointMap,
       action: onSelectPlaceMap,
-      unavailableTitle: 'Point Map is not available for this dataset.',
+      unavailableTitle: 'Point Map is limited for this dataset.',
       why: 'This dataset does not contain mapped point-place or point-coordinate roles in the current scope. Records may still be valid for routes, networks, charts, search, Inspector, or export.',
       availableInstead: [
         availability.hasRouteMap ? 'Route Map' : null,
@@ -659,7 +716,7 @@ export function PeridotVisualizationsWorkspace({
       category: 'Mapping Visualizations',
       available: availability.hasRouteMap,
       action: onSelectPlaceMap,
-      unavailableTitle: 'Route Map is not available for this dataset.',
+      unavailableTitle: 'Route Map is limited for this dataset.',
       why: 'This dataset does not contain mapped source and target place roles or source-target coordinate pairs in the current scope. Records may still be valid for point maps, networks, charts, search, Inspector, or export.',
       availableInstead: [
         availability.hasPointMap ? 'Point Map' : null,
@@ -672,7 +729,7 @@ export function PeridotVisualizationsWorkspace({
       category: 'Network Visualizations',
       available: availability.hasNetwork,
       action: onSelectPeopleNetwork,
-      unavailableTitle: 'Network visualizations are not available for this dataset.',
+      unavailableTitle: 'Network visualizations are limited for this dataset.',
       why: 'This dataset does not contain mapped source-target entity relationship fields in the current scope. That is expected for point/site, catalogue, and time-series datasets, which may still be valid for maps, charts, search, Inspector, and export.',
       availableInstead: [
         availability.hasPointMap ? 'Point Map' : null,
@@ -686,7 +743,7 @@ export function PeridotVisualizationsWorkspace({
       category: 'Network Visualizations',
       available: availability.hasNetwork,
       action: onSelectForceDirected,
-      unavailableTitle: 'Force-Directed Network is not available for this dataset.',
+      unavailableTitle: 'Force-Directed Network is limited for this dataset.',
       why: 'Force-directed layouts require mapped source-target entity relationships. This dataset can still be valid for maps, charts, search, Inspector, and export even when it does not contain network data.',
       availableInstead: [
         availability.hasPointMap ? 'Point Map' : null,
@@ -700,7 +757,7 @@ export function PeridotVisualizationsWorkspace({
       category: 'Chart Visualizations',
       available: availability.hasCharts,
       action: onOpenAnalytics,
-      unavailableTitle: 'Chart Visualizations are not available for this dataset.',
+      unavailableTitle: 'Chart Visualizations are limited for this dataset.',
       why: 'No active records or chartable fields are available for charting in the current scope.',
       availableInstead: [
         availability.hasPointMap ? 'Point Map' : null,

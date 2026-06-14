@@ -11,3 +11,6 @@ npm-debug.log*
 ChatGPT Conversation Archive/
 itch_upload/
 *.bak
+
+# Local/source design working files
+*.psd
