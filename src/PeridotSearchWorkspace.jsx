@@ -880,59 +880,104 @@ export function PeridotSearchWorkspace({
     return parts.join(' · ');
   };
   const activeStructuredLabel = appliedStructuredCriteria.length ? summarizeStructuredOperators(appliedStructuredCriteria) : 'None';
-  const draftStructuredLabel = normalizedDraftStructuredCriteria.length ? summarizeStructuredOperators(normalizedDraftStructuredCriteria) : 'None ready';
+  const draftStructuredLabel = normalizedDraftStructuredCriteria.length ? summarizeStructuredOperators(normalizedDraftStructuredCriteria) : 'None';
   const hiddenSearchResultCount = Math.max(0, (searchRows?.length || 0) - searchResultCards.length);
   const capabilityRows = useMemo(() => {
     const loadedRecordCount = Array.isArray(browseRows) ? browseRows.length : 0;
     const activeRecordCount = Array.isArray(searchRows) ? searchRows.length : 0;
     const visibleNodeCount = graph?.nodes?.length ?? 0;
-    const visibleRouteCount = graph?.edges?.length ?? 0;
-    const diagnosedRowCount = Array.isArray(rowDiagnostics) ? rowDiagnostics.length : 0;
+    const hasTextValue = (value) => String(value ?? '').trim() !== '';
+    const normalizePairValue = (value) => String(value ?? '').trim().toLowerCase();
+    const firstTextValue = (row, fields) => fields
+      .map((field) => row?.[field])
+      .find(hasTextValue) || '';
+
+    const hasCapabilityFlag = (row, flags) => {
+      const capabilityBlock = row?.peridotCapabilities || row?.capabilities || row?.capabilityFlags || null;
+      if (!capabilityBlock || typeof capabilityBlock !== 'object') return null;
+
+      const presentFlags = flags.filter((flag) => Object.prototype.hasOwnProperty.call(capabilityBlock, flag));
+      if (!presentFlags.length) return null;
+      return presentFlags.some((flag) => Boolean(capabilityBlock[flag]));
+    };
+
+    const hasMeaningfulSourceTargetPair = (row, sourceFields, targetFields) => {
+      const sourceValue = firstTextValue(row, sourceFields);
+      const targetValue = firstTextValue(row, targetFields);
+      if (!sourceValue || !targetValue) return false;
+
+      // Point/site imports may use compatibility rows that put the same mapped
+      // point into both source-like and target-like display fields so the legacy
+      // map stage can render them. Those compatibility values should not make
+      // the Capabilities tab report route or relationship availability.
+      return normalizePairValue(sourceValue) !== normalizePairValue(targetValue);
+    };
+
+    const hasRouteOrRelationshipRecord = (row) => {
+      const auditedCapability = hasCapabilityFlag(row, [
+        'networkReady',
+        'peopleNetworkReady',
+        'placeNetworkReady',
+        'routeMapReady',
+      ]);
+      if (auditedCapability !== null) return auditedCapability;
+
+      const hasEntityPair = hasMeaningfulSourceTargetPair(
+        row,
+        ['sourcePerson', 'Source', 'Source_Name', 'Source_Person', 'Source_Entity', 'sender', 'Sender'],
+        ['targetPerson', 'Target', 'Target_Name', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient'],
+      );
+      const hasPlacePair = hasMeaningfulSourceTargetPair(
+        row,
+        ['Source_Location', 'Source_Loc', 'Source_Place', 'Source_Coordinates'],
+        ['Target_Location', 'Target_Inferred_Loc', 'Target_Loc', 'Target_Place', 'Target_Coordinates'],
+      );
+
+      return hasEntityPair || hasPlacePair;
+    };
+    const routeRelationshipCount = (Array.isArray(searchRows) ? searchRows : []).filter(hasRouteOrRelationshipRecord).length;
     return [
       {
         label: 'Searchable records',
         value: `${loadedRecordCount || activeRecordCount || 0} loaded`,
         ready: (loadedRecordCount || activeRecordCount) > 0,
-        note: 'Records available to Advanced Search, Browse indexes, Inspector handoff, and export workflows.',
+        note: 'Loaded records will be available to Advanced Search, Browse indexes, Inspector handoff, charts, and export where their mapped fields support those tools.',
       },
       {
         label: 'Current result scope',
         value: `${activeRecordCount} records`,
         ready: activeRecordCount > 0,
-        note: 'The currently applied search scope used by Results, facets, Inspector handoff, Visualizations, and Export.',
+        note: 'The currently applied search scope used by Results, facets, Inspector handoff, Visualizations, charts, and Export.',
       },
       {
-        label: 'Map entities',
-        value: `${visibleNodeCount} visible nodes`,
+        label: 'Map visualizations',
+        value: visibleNodeCount > 0 ? `${visibleNodeCount} visible map ${visibleNodeCount === 1 ? 'item' : 'items'}` : 'Not available',
         ready: visibleNodeCount > 0,
+        statusLabel: visibleNodeCount > 0 ? 'Available' : 'Not available',
         note: visibleNodeCount > 0
-          ? 'The current scope can display mapped people, places, or point records.'
-          : 'No mapped nodes are available in the current scope.',
+          ? 'The current scope has mapped places, point records, or route endpoints available for map visualizations.'
+          : 'No mapped places, point records, or route endpoints are available in the current scope.',
       },
       {
         label: 'Routes / relationships',
-        value: `${visibleRouteCount} visible routes`,
-        ready: visibleRouteCount > 0,
-        note: visibleRouteCount > 0
-          ? 'The current scope can display route or relationship edges.'
-          : 'No source-target routes or relationships are available in the current scope.',
-      },
-      {
-        label: 'Capability diagnostics',
-        value: `${diagnosedRowCount} rows diagnosed`,
-        ready: diagnosedRowCount > 0,
-        note: 'Diagnostics summarize which records can support maps, networks, timelines, charts, Inspector, and export.',
+        value: routeRelationshipCount > 0 ? `${routeRelationshipCount} source-target ${routeRelationshipCount === 1 ? 'record' : 'records'}` : 'Not available',
+        ready: routeRelationshipCount > 0,
+        statusLabel: routeRelationshipCount > 0 ? 'Available' : 'Not available',
+        note: routeRelationshipCount > 0
+          ? 'The current scope has source-target routes or entity relationships available for route and network views.'
+          : 'No source-target routes or entity relationships were mapped for this dataset.',
       },
       {
         label: 'Chart / export scope',
         value: activeRecordCount > 0 ? 'Available' : 'Not available',
         ready: activeRecordCount > 0,
+        statusLabel: activeRecordCount > 0 ? 'Available' : 'Not available',
         note: activeRecordCount > 0
-          ? 'The current applied result scope can be sent to Visualizations and exported through Peridot export controls.'
-          : 'Apply or clear filters to restore records before charting or exporting.',
+          ? 'The current applied result scope will be available for charting, visualization, and export through Peridot controls where the mapped fields support those tools.'
+          : 'Apply or clear filters to restore an active result scope before charting, visualizing, or exporting.',
       },
     ];
-  }, [browseRows, graph, rowDiagnostics, searchRows]);
+  }, [browseRows, graph, searchRows]);
   const hasDraftChanges = (
     String(draftSearch ?? '') !== String(search ?? '')
     || String(draftPersonFilter ?? '') !== String(personFilter ?? '')
@@ -1378,8 +1423,8 @@ export function PeridotSearchWorkspace({
 
   const renderCapabilities = () => (
     <div className="space-y-4">
-      <SectionHeader eyebrow="Step 5" title="What this data can do">
-        Review the current dataset and applied search scope before moving into visualizations, export, or Inspector evidence review.
+      <SectionHeader eyebrow="Step 5" title="What this data can support">
+        Review the loaded records and current applied search scope before moving into visualizations, charts, export, or Inspector evidence review.
       </SectionHeader>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -1390,7 +1435,7 @@ export function PeridotSearchWorkspace({
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--peridot-color-hex-e8f1de)]">Capability</div>
+                <div className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--peridot-color-hex-e8f1de)]">Tool check</div>
                 <h3 className="mt-1 text-base font-black text-[var(--peridot-role-interface-text-inverse)]">{row.label}</h3>
               </div>
               <span className={[
@@ -1399,7 +1444,7 @@ export function PeridotSearchWorkspace({
                   ? 'border-[var(--peridot-color-hex-dce9d2-a70)] bg-[var(--peridot-color-hex-dce9d2)] text-[var(--peridot-color-hex-244c35)]'
                   : 'border-[var(--peridot-color-hex-f0d7a8-a70)] bg-[var(--peridot-color-hex-f5e0b6)] text-[var(--peridot-color-hex-5d3d16)]',
               ].join(' ')}>
-                {row.ready ? 'Available' : 'Limited'}
+                {row.statusLabel || (row.ready ? 'Available' : 'Limited')}
               </span>
             </div>
             <div className="mt-3 rounded-xl border border-[var(--peridot-color-hex-dce9d2-a35)] bg-[var(--peridot-color-hex-506a57-a55)] px-3 py-2 text-sm font-black text-[var(--peridot-role-interface-text-inverse)]">
