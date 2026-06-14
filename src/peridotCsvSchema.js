@@ -79,7 +79,7 @@ export const PERIDOT_FIELD_GROUPS = Object.freeze({
     label: "Network logic",
     fields: Object.freeze(["Date", "Source_Name", "Target_Name"]),
     note:
-      "These fields help Peridot build entity relationships, timelines, and network edges when available.",
+      "These fields help Peridot build entity relationships, timelines, filters, and network edges when the mapped values are present.",
   }),
 
   mapping: Object.freeze({
@@ -93,7 +93,7 @@ export const PERIDOT_FIELD_GROUPS = Object.freeze({
       "Target_Longitude",
     ]),
     note:
-      "Coordinates are not required for upload, but rows need usable source and target coordinates to appear as mappable geographic routes.",
+      "Coordinates are not required for upload. Rows need usable point coordinates or usable source and target coordinates to appear on map visualizations.",
   }),
 
   recommendedResearchMetadata: Object.freeze({
@@ -109,14 +109,14 @@ export const PERIDOT_FIELD_GROUPS = Object.freeze({
       "Language",
     ]),
     note:
-      "These fields make Inspector views, Analytics charts, Search & Filter, and exports more useful.",
+      "These fields make Inspector views, charts, Advanced Search, and exports more useful.",
   }),
 
   optionalRichMetadata: Object.freeze({
     label: "Optional rich metadata",
     fields: Object.freeze(["Transcription", "Notes", "Link(s)"]),
     note:
-      "These fields support close reading, citation, documentation, and external-reference workflows.",
+      "These fields support close reading, citation, documentation, search, and external-reference workflows.",
   }),
 });
 
@@ -151,7 +151,7 @@ export const PERIDOT_MINIMUM_RECORD_RULES = Object.freeze({
     "Target_Longitude",
   ]),
   genericEvidence:
-    "Any non-empty uploaded row can be preserved as a database record for evidence, search, charts, and export.",
+    "Any non-empty uploaded row will be available as a database record for evidence, search, charts, and export when it is accepted.",
 });
 
 /**
@@ -162,57 +162,57 @@ export const PERIDOT_MINIMUM_RECORD_RULES = Object.freeze({
  */
 export const PERIDOT_ROW_CAPABILITIES = Object.freeze({
   inspectorReady: Object.freeze({
-    label: "Inspector-ready",
+    label: "Available in Inspector",
     note:
-      "The row is accepted as a Peridot record and should remain available in Inspector and Export where possible.",
+      "The record has enough evidence content to remain available in Inspector and Export where possible."
   }),
 
   peopleNetworkReady: Object.freeze({
-    label: "People-network-ready",
+    label: "Available for People/Entity Network",
     note:
-      "The row has source and target names and can contribute to person-based graph views.",
+      "The record has source and target names and can contribute to person/entity graph views."
   }),
 
   placeNetworkReady: Object.freeze({
-    label: "Place-network-ready",
+    label: "Available for route/place relationships",
     note:
-      "The row has source-side and target-side place information and can contribute to place-based relationship views.",
+      "The record has source-side and target-side place information and can contribute to route or place-relationship views."
   }),
 
   pointMapReady: Object.freeze({
-    label: "Point-map-ready",
+    label: "Available for Point Map",
     note:
-      "The row has one valid point coordinate pair and can render as a point-location record.",
+      "The record has one valid point coordinate pair and can render as a point-location record."
   }),
 
   routeMapReady: Object.freeze({
-    label: "Route-map-ready",
+    label: "Available for Route Map",
     note:
-      "The row has valid source and target coordinate pairs and can render as a geographic route.",
+      "The record has valid source and target coordinate pairs and can render as a geographic route."
   }),
 
   mapReady: Object.freeze({
-    label: "Map-ready",
+    label: "Available for map visualizations",
     note:
-      "The row has valid point coordinates or valid source and target coordinates for map rendering.",
+      "The record has valid point coordinates or valid source and target coordinates for map rendering."
   }),
 
   timelineReady: Object.freeze({
-    label: "Timeline-ready",
+    label: "Available for Timeline",
     note:
-      "The row has a date value or date range Peridot can parse for sorting, filtering, or playback.",
+      "The record has a date value or date range Peridot can parse for sorting, filtering, or playback."
   }),
 
   analyticsReady: Object.freeze({
-    label: "Analytics-ready",
+    label: "Available for charts",
     note:
-      "The row has accepted metadata that Analytics may summarize exactly as entered.",
+      "The record has accepted metadata that Chart Visualizations may summarize exactly as entered."
   }),
 
   exportReady: Object.freeze({
-    label: "Export-ready",
+    label: "Available for export",
     note:
-      "The accepted uploaded row can be included in export workflows.",
+      "The accepted uploaded record can be included in export workflows."
   }),
 });
 
@@ -248,20 +248,20 @@ export const PERIDOT_TEMPLATE_TO_INTERNAL_MEANING = Object.freeze({
  * panel, with longer guidance deferred to documentation if needed.
  */
 export const PERIDOT_UPLOAD_TIPS = Object.freeze([
-  "Each row should represent one record, document, site, event, observation, relationship, or correspondence item.",
-  "Peridot accepts incomplete research data, but some rows may not appear in every visualization.",
-  "Coordinates are not required, but rows need valid point coordinates or valid source/target coordinates to appear on the geographic map.",
-  "Peridot treats names, places, topics, relationships, and languages exactly as entered.",
-  "For cleaner networks, maps, filters, and charts, standardize names and categories before upload.",
-  "Rows with unparseable or missing dates can still be preserved, but they may not participate in timeline playback; simple year ranges are recognized as temporal intervals.",
+  "Each row should represent one record, document, site, event, observation, measurement, relationship, or correspondence item.",
+  "Peridot accepts useful records first, then reports which tools the mapped fields can support.",
+  "Coordinates are not required for upload. Records need valid point coordinates or valid source/target coordinates to appear on map visualizations.",
+  "Peridot treats names, places, topics, relationships, languages, and other labels exactly as entered.",
+  "For cleaner networks, filters, maps, and charts, standardize names, places, and categories before upload.",
+  "Records with unparseable or missing dates will be available for search, Inspector, charts, or export when they contain other useful evidence. They may not participate in timeline playback.",
 ]);
 
 export const PERIDOT_VALIDATION_SUMMARY_COPY = Object.freeze({
-  uploadAcceptedHeading: "Upload complete.",
+  uploadAcceptedHeading: "Upload accepted. Tool availability depends on mapped fields.",
   preservedRecordsNotice:
-    "Records that are incomplete or incompatible with a visualization are still preserved where possible and remain available in Inspector and Export.",
+    "Accepted records will be available for search, Inspector, charts, and export where their mapped fields support those tools, even when they are not ready for every visualization. Tool availability depends on the mapped fields each record contains.",
   noCleaningNotice:
-    "Peridot does not clean or standardize uploaded values. Charts and filters use the values exactly as entered.",
+    "Peridot does not clean, merge, or standardize uploaded values. Charts, filters, labels, and networks use values exactly as entered.",
 });
 
 /**

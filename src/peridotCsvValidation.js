@@ -219,9 +219,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'unsupported_rows',
-        'Rows lacking usable record content',
+        'Rows not accepted',
         unsupportedRows,
-        `${describeRows(unsupportedRows)} do not contain usable relationship, place, point/site, temporal, chart, citation, evidence, or metadata content to be accepted as Peridot records.`
+        `${describeRows(unsupportedRows)} do not contain enough relationship, place, point/site, temporal, chart, citation, evidence, or metadata content to be accepted as Peridot records.`
       )
     );
   }
@@ -230,9 +230,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'missing_person_pairs',
-        'Rows missing source/target names',
+        'Records without source/target names',
         missingPersonPairRows,
-        `${describeRows(missingPersonPairRows)} are missing Source_Name and/or Target_Name and will not contribute to People/Entity Network relationships.`
+        `${describeRows(missingPersonPairRows)} are missing Source_Name and/or Target_Name. They will be available for search, Inspector, charts, and export if otherwise accepted, but they will not contribute to People/Entity Network relationships.`
       )
     );
   }
@@ -241,9 +241,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'missing_place_pairs',
-        'Rows missing source/target place information',
+        'Records without source/target place information',
         missingPlacePairRows,
-        `${describeRows(missingPlacePairRows)} are missing source-side and/or target-side place information and will not contribute to route or place-relationship visualizations.`
+        `${describeRows(missingPlacePairRows)} are missing source-side and/or target-side place information. They will be available for search, Inspector, charts, and export if otherwise accepted, but they will not contribute to route or place-relationship visualizations.`
       )
     );
   }
@@ -252,9 +252,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'not_map_ready',
-        'Rows not mappable',
+        'Records not available for maps',
         notMapReadyRows,
-        `${describeRows(notMapReadyRows)} do not have valid point coordinates or valid source and target coordinate pairs and will not appear in map visualizations.`
+        `${describeRows(notMapReadyRows)} do not have valid point coordinates or valid source and target coordinate pairs. They will be available for Inspector, Advanced Search, charts, and export when otherwise accepted.`
       )
     );
   }
@@ -263,9 +263,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'missing_coordinates',
-        'Rows missing one or more coordinates',
+        'Records missing one or more coordinates',
         missingCoordinatesRows,
-        `${describeRows(missingCoordinatesRows)} are missing one or more coordinates required for map rendering.`
+        `${describeRows(missingCoordinatesRows)} are missing one or more coordinates required for map rendering. This limits map availability only.`
       )
     );
   }
@@ -274,9 +274,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'invalid_coordinates',
-        'Rows with invalid coordinates',
+        'Records with invalid coordinates',
         invalidCoordinateRows,
-        `${describeRows(invalidCoordinateRows)} include coordinate values outside valid latitude/longitude ranges or incomplete coordinate pairs.`
+        `${describeRows(invalidCoordinateRows)} include coordinate values outside valid latitude/longitude ranges or incomplete coordinate pairs. Those values are preserved for review but cannot drive map placement.`
       )
     );
   }
@@ -285,9 +285,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'no_coordinates',
-        'Rows with no coordinates',
+        'Records with no coordinates',
         noCoordinateRows,
-        `${describeRows(noCoordinateRows)} include no coordinate values. They can still be preserved where otherwise accepted, but they cannot be mapped.`
+        `${describeRows(noCoordinateRows)} include no coordinate values. They will be available for search, Inspector, charts, and export where otherwise accepted, but they cannot be mapped.`
       )
     );
   }
@@ -296,9 +296,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'missing_dates',
-        'Rows missing dates',
+        'Records missing dates',
         missingDateRows,
-        `${describeRows(missingDateRows)} are missing Date values and will not participate in timeline playback.`
+        `${describeRows(missingDateRows)} are missing Date values. They will be available for search, Inspector, charts, and export where otherwise accepted, but they will not participate in timeline playback.`
       )
     );
   }
@@ -307,9 +307,9 @@ function buildWarnings(rowReports) {
     warnings.push(
       makeWarning(
         'unparseable_dates',
-        'Rows with unparseable dates',
+        'Records with unparseable dates',
         unparseableDateRows,
-        `${describeRows(unparseableDateRows)} have Date values that Peridot will preserve as entered but cannot use for timeline playback.`
+        `${describeRows(unparseableDateRows)} have Date values that Peridot will preserve as entered but cannot use for timeline playback or date-range filtering.`
       )
     );
   }
@@ -320,13 +320,13 @@ function buildWarnings(rowReports) {
 function buildSummaryLines({ totalRows, acceptedRecordCount, unsupportedRowCount, capabilityCounts, temporalCounts }) {
   return Object.freeze([
     `${PERIDOT_VALIDATION_SUMMARY_COPY.uploadAcceptedHeading}`,
-    `Peridot reviewed ${totalRows} uploaded ${totalRows === 1 ? 'row' : 'rows'} and accepted ${acceptedRecordCount} ${acceptedRecordCount === 1 ? 'record' : 'records'}.`,
+    `Peridot reviewed ${totalRows} uploaded ${totalRows === 1 ? 'row' : 'rows'} and accepted ${acceptedRecordCount} ${acceptedRecordCount === 1 ? 'record' : 'records'} for preservation, search, inspection, charting, or export where possible.`,
     `${capabilityCounts.inspectorReady} ${capabilityCounts.inspectorReady === 1 ? 'record is' : 'records are'} available in Inspector and Export where possible.`,
-    `${capabilityCounts.peopleNetworkReady} ${capabilityCounts.peopleNetworkReady === 1 ? 'record can' : 'records can'} contribute to People/Entity Network relationships.`,
-    `${capabilityCounts.placeNetworkReady} ${capabilityCounts.placeNetworkReady === 1 ? 'record can' : 'records can'} contribute to route or place-relationship visualizations.`,
-    `${capabilityCounts.mapReady} ${capabilityCounts.mapReady === 1 ? 'record is' : 'records are'} mappable with valid point coordinates or valid source/target route coordinates.`,
-    `${capabilityCounts.timelineReady} ${capabilityCounts.timelineReady === 1 ? 'record is' : 'records are'} timeline-ready as sortable dates or intervals${temporalCounts?.intervalReady ? `; ${temporalCounts.intervalReady} ${temporalCounts.intervalReady === 1 ? 'includes' : 'include'} temporal interval information` : ''}.`,
-    `${capabilityCounts.analyticsReady} ${capabilityCounts.analyticsReady === 1 ? 'record is' : 'records are'} available to Analytics where fields are usable.`,
+    `${capabilityCounts.peopleNetworkReady} ${capabilityCounts.peopleNetworkReady === 1 ? 'record has' : 'records have'} source-target names for People/Entity Network relationships.`,
+    `${capabilityCounts.placeNetworkReady} ${capabilityCounts.placeNetworkReady === 1 ? 'record has' : 'records have'} source-target place information for route or place-relationship views.`,
+    `${capabilityCounts.mapReady} ${capabilityCounts.mapReady === 1 ? 'record has' : 'records have'} valid point coordinates or valid source/target route coordinates for map visualizations.`,
+    `${capabilityCounts.timelineReady} ${capabilityCounts.timelineReady === 1 ? 'record has' : 'records have'} sortable dates or intervals for timeline playback and date filtering${temporalCounts?.intervalReady ? `; ${temporalCounts.intervalReady} ${temporalCounts.intervalReady === 1 ? 'includes' : 'include'} temporal interval information` : ''}.`,
+    `${capabilityCounts.analyticsReady} ${capabilityCounts.analyticsReady === 1 ? 'record is' : 'records are'} available to Chart Visualizations where fields are usable.`,
     unsupportedRowCount
       ? `${unsupportedRowCount} ${unsupportedRowCount === 1 ? 'row was' : 'rows were'} not accepted because no usable record content was detected.`
       : 'No rows were rejected by the minimum Peridot record rule.',
