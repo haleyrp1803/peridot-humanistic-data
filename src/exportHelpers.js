@@ -127,12 +127,40 @@ export function serializeSvgForExport(svgElement, options = {}) {
   const viewBox = svgElement.viewBox?.baseVal;
   const baseWidth = Math.max(1, Math.round(viewBox?.width || svgElement.clientWidth || 1100));
   const baseHeight = Math.max(1, Math.round(viewBox?.height || svgElement.clientHeight || 760));
-  const padding = 28;
-  const subtitleLines = Array.isArray(options.subtitleLines) ? options.subtitleLines.filter(Boolean) : [];
   const titleText = String(options.title || '').trim();
-  const headerHeight = titleText || subtitleLines.length ? 86 : 0;
-  const width = baseWidth + padding * 2;
-  const height = baseHeight + padding * 2 + headerHeight;
+  const subtitleLines = Array.isArray(options.subtitleLines) ? options.subtitleLines.map((line) => String(line).trim()).filter(Boolean) : [];
+  const footerLines = Array.isArray(options.footerLines) ? options.footerLines.map((line) => String(line).trim()).filter(Boolean) : [];
+
+  /*
+   * Export composition is opt-in. With no title or metadata selected, PNG/SVG
+   * exports should be the visualization itself rather than a branded page
+   * capture. When users opt into title/metadata, the annotation bands stay
+   * attached to the visualization frame: the optional title sits directly above
+   * the image and optional metadata sits directly below it. This avoids the
+   * page-like white-space problem that made early map exports feel detached
+   * from the rendered map.
+   */
+  const hasHeaderContent = Boolean(titleText || subtitleLines.length);
+  const hasFooterContent = footerLines.length > 0;
+  const annotationInset = hasHeaderContent || hasFooterContent ? 24 : 0;
+  const titleFontSize = 34;
+  const subtitleFontSize = 18;
+  const footerFontSize = 18;
+  const titleLineHeight = 40;
+  const subtitleLineHeight = 24;
+  const footerLineHeight = 24;
+  const headerTopInset = hasHeaderContent ? 10 : 0;
+  const headerBottomGap = hasHeaderContent ? 12 : 0;
+  const titleBandHeight = titleText ? titleLineHeight : 0;
+  const subtitleBandHeight = subtitleLines.length ? subtitleLines.length * subtitleLineHeight : 0;
+  const headerHeight = hasHeaderContent ? headerTopInset + titleBandHeight + subtitleBandHeight + headerBottomGap : 0;
+  const footerTopGap = hasFooterContent ? 12 : 0;
+  const footerBottomInset = hasFooterContent ? 12 : 0;
+  const footerHeight = hasFooterContent ? footerTopGap + footerLines.length * footerLineHeight + footerBottomInset : 0;
+  const width = baseWidth;
+  const height = baseHeight + headerHeight + footerHeight;
+  const serifFont = "Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif";
+  const uiFont = "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
@@ -144,7 +172,7 @@ export function serializeSvgForExport(svgElement, options = {}) {
   while (clone.firstChild) {
     movedContent.appendChild(clone.firstChild);
   }
-  movedContent.setAttribute('transform', `translate(${padding} ${padding + headerHeight})`);
+  movedContent.setAttribute('transform', `translate(0 ${headerHeight})`);
   clone.appendChild(movedContent);
 
   const background = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -155,27 +183,53 @@ export function serializeSvgForExport(svgElement, options = {}) {
   background.setAttribute('fill', PERIDOT_COLORS.HEX_F8FAFC);
   clone.insertBefore(background, clone.firstChild);
 
-  if (headerHeight) {
-    const titleNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-    titleNode.setAttribute('x', String(padding));
-    titleNode.setAttribute('y', '38');
-    titleNode.setAttribute('fill', PERIDOT_COLORS.HEX_0F172A);
-    titleNode.setAttribute('font-size', '24');
-    titleNode.setAttribute('font-weight', '700');
-    titleNode.setAttribute('font-family', 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif');
-    titleNode.textContent = titleText || 'Network map export';
-    clone.appendChild(titleNode);
+  if (hasHeaderContent) {
+    let currentY = headerTopInset;
 
-    subtitleLines.forEach((line, index) => {
+    if (titleText) {
+      const titleNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      titleNode.setAttribute('x', String(annotationInset));
+      titleNode.setAttribute('y', String(currentY + titleFontSize));
+      titleNode.setAttribute('fill', PERIDOT_COLORS.HEX_0A2616 || PERIDOT_COLORS.HEX_0F172A);
+      titleNode.setAttribute('font-size', String(titleFontSize));
+      titleNode.setAttribute('font-weight', '700');
+      titleNode.setAttribute('font-family', serifFont);
+      titleNode.setAttribute('text-anchor', 'start');
+      titleNode.textContent = titleText;
+      clone.appendChild(titleNode);
+      currentY += titleLineHeight;
+    }
+
+    subtitleLines.forEach((line) => {
       const subtitleNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      subtitleNode.setAttribute('x', String(padding));
-      subtitleNode.setAttribute('y', String(62 + index * 16));
+      subtitleNode.setAttribute('x', String(annotationInset));
+      subtitleNode.setAttribute('y', String(currentY + subtitleFontSize));
       subtitleNode.setAttribute('fill', PERIDOT_COLORS.HEX_475569);
-      subtitleNode.setAttribute('font-size', '12');
-      subtitleNode.setAttribute('font-weight', '500');
-      subtitleNode.setAttribute('font-family', 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif');
+      subtitleNode.setAttribute('font-size', String(subtitleFontSize));
+      subtitleNode.setAttribute('font-weight', '600');
+      subtitleNode.setAttribute('font-family', uiFont);
+      subtitleNode.setAttribute('text-anchor', 'start');
       subtitleNode.textContent = line;
       clone.appendChild(subtitleNode);
+      currentY += subtitleLineHeight;
+    });
+  }
+
+  if (hasFooterContent) {
+    let currentY = headerHeight + baseHeight + footerTopGap;
+
+    footerLines.forEach((line) => {
+      const footerNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      footerNode.setAttribute('x', String(annotationInset));
+      footerNode.setAttribute('y', String(currentY + footerFontSize));
+      footerNode.setAttribute('fill', PERIDOT_COLORS.HEX_475569);
+      footerNode.setAttribute('font-size', String(footerFontSize));
+      footerNode.setAttribute('font-weight', '600');
+      footerNode.setAttribute('font-family', uiFont);
+      footerNode.setAttribute('text-anchor', 'start');
+      footerNode.textContent = line;
+      clone.appendChild(footerNode);
+      currentY += footerLineHeight;
     });
   }
 
