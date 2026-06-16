@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import dataDividerFiligree from '../assets/Adobe Stock Filagree 3.png';
 
 export function PeridotDataWorkspace({
   peridotFileLabel,
@@ -28,80 +29,78 @@ export function PeridotDataWorkspace({
   const warningLines = popup?.warningLines || [];
 
   return (
-    <section className="peridot-workspace-field text-[var(--peridot-color-hex-fbf7ea)]">
-      <div className="peridot-workspace-frame">
+    <section className="peridot-workspace-field flex min-h-full items-center text-[var(--peridot-color-hex-fbf7ea)]">
+      <div className="peridot-workspace-frame w-full">
         <div className="peridot-hero-card">
-          <div className="peridot-workspace-header-row">
-            <div>
-              <p className="peridot-kicker">Data workspace</p>
-              <h1 className="peridot-title-medium">Start with your records</h1>
-              <p className="peridot-lede">
-                Upload a CSV, TSV, XLSX, or XLS table or workbook, then map your columns by data role. Peridot accepts incomplete historical data and reports which records can support Inspector, mapping, timeline, Analytics, and export workflows.
+          <div>
+            <p className="peridot-kicker">Data workspace</p>
+            <h1 className="peridot-title-medium">Choose what data to use.</h1>
+            <div className="mt-6 w-full space-y-5 text-base leading-8 text-[var(--peridot-role-interface-text-on-dark)]/90">
+              <p>
+                To use your own data in Peridot, please upload it as a CSV, TSV, XLS, or XLSX file. We'll help you assign variable roles that work best for your project, whether you are working with qualitative or quantitative information.
+              </p>
+              <p>
+                Not sure where to start? Feel free to download a sample spreadsheet and adapt it to your data, or explore what Peridot can do with our sample data.
               </p>
             </div>
-            <button type="button" onClick={onOpenVisualizations} className="peridot-button-secondary shrink-0">
-              Open visualizations
-            </button>
           </div>
         </div>
 
-        <div className="mt-6 peridot-card-grid peridot-card-grid-2">
-          <div className="peridot-action-card peridot-card-inner">
-            <p className="peridot-section-label">Template workflow</p>
-            <h2 className="mt-3 text-2xl font-bold text-[var(--peridot-color-hex-fbf7ea)]">Peridot template</h2>
-            <p className="mt-3 text-sm leading-7 text-[var(--peridot-color-hex-f7f2df-a82)]">
-              Download the standard Peridot CSV template when each row represents a correspondence-style record. For other humanistic datasets, upload your existing table or workbook and map its columns by role before entering the main workspace.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button type="button" onClick={handleDownloadPeridotTemplate} className="peridot-button-cream">
-                Download CSV template
-              </button>
-            </div>
-            <p className="mt-5 text-sm text-[var(--peridot-color-hex-f7f2df-a82)]">
-              Current source: <strong className="text-[var(--peridot-color-hex-fbf7ea)]">{peridotFileLabel}</strong>
-            </p>
-          </div>
-
-          <div className="peridot-action-card peridot-card-inner">
-            <p className="peridot-section-label">Flexible import</p>
-            <h2 className="mt-3 text-2xl font-bold text-[var(--peridot-color-hex-fbf7ea)]">Map your own table</h2>
-            <p className="mt-3 text-sm leading-7 text-[var(--peridot-color-hex-f7f2df-a82)]">
-              Stage an arbitrary CSV, TSV, XLSX, or XLS file, then map its columns to record, time, place, relationship, evidence, and analysis roles.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <label className="peridot-button-primary cursor-pointer">
-                Upload table or workbook
-                <input type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values" onChange={handleColumnMappingTableUpload} className="sr-only" />
-              </label>
-              {columnMappingStaging ? (
-                <button type="button" onClick={clearColumnMappingStaging} className="peridot-button-secondary">
-                  Clear staged table
-                </button>
-              ) : null}
-            </div>
-          </div>
+        {/* The Data landing page now mirrors the Home workspace's minimal title-card logic:
+            one orientation card followed by one decorative divider and three equal actions.
+            The detailed workflow guidance remains inside the template/download, upload, and
+            mapping flows instead of being repeated as explanatory cards on the landing surface. */}
+        <div className="relative left-1/2 mt-10 mb-10 w-[calc(100%+4rem)] max-w-[calc(100vw-3rem)] -translate-x-1/2" aria-hidden="true">
+          <img
+            src={dataDividerFiligree}
+            alt=""
+            className="block h-auto w-full select-none object-contain opacity-95 drop-shadow-[0_12px_22px_var(--peridot-role-card-shadow)]"
+            draggable="false"
+          />
         </div>
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
-          <div className="peridot-surface-card peridot-card-inner">
-            <p className="peridot-section-label">Step 1</p>
-            <h3 className="mt-2 text-lg font-bold text-[var(--peridot-color-hex-fbf7ea)]">Upload or stage</h3>
-            <p className="mt-2 text-sm leading-6 text-[var(--peridot-color-hex-f7f2df-a78)]">Start with the standard template or bring an existing research table.</p>
-          </div>
-          <div className="peridot-surface-card peridot-card-inner">
-            <p className="peridot-section-label">Step 2</p>
-            <h3 className="mt-2 text-lg font-bold text-[var(--peridot-color-hex-fbf7ea)]">Map columns</h3>
-            <p className="mt-2 text-sm leading-6 text-[var(--peridot-color-hex-f7f2df-a78)]">Match your columns to the roles Peridot uses for records, time, places, relationships, evidence, and analysis.</p>
-          </div>
-          <div className="peridot-surface-card peridot-card-inner">
-            <p className="peridot-section-label">Step 3</p>
-            <h3 className="mt-2 text-lg font-bold text-[var(--peridot-color-hex-fbf7ea)]">Validate and explore</h3>
-            <p className="mt-2 text-sm leading-6 text-[var(--peridot-color-hex-f7f2df-a78)]">Review which tools the mapped records can support before moving into maps, networks, charts, and dossiers.</p>
-          </div>
+        <div className="flex flex-wrap items-center justify-center gap-8">
+          <button
+            type="button"
+            onClick={handleDownloadPeridotTemplate}
+            className="peridot-button-cream min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+            style={{
+              '--peridot-data-button-bg': '#0f2912',
+              '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
+              '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
+            }}
+          >
+            Start with a Template
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenVisualizations}
+            className="peridot-button-cream min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+            style={{
+              '--peridot-data-button-bg': '#0f2912',
+              '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
+              '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
+            }}
+          >
+            Start with Sample Data
+          </button>
+
+          <label
+            className="peridot-button-cream min-w-[18rem] cursor-pointer whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+            style={{
+              '--peridot-data-button-bg': '#0f2912',
+              '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
+              '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
+            }}
+          >
+            Upload Your Data
+            <input type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values" onChange={handleColumnMappingTableUpload} className="sr-only" />
+          </label>
         </div>
 
         {columnMappingStaging ? (
-          <div className="mt-6 peridot-cream-card peridot-card-inner">
+          <div className="mx-auto mt-8 max-w-3xl peridot-cream-card peridot-card-inner">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <p className="peridot-section-label">Staged table</p>
@@ -110,20 +109,25 @@ export function PeridotDataWorkspace({
                   {columnMappingStaging.fileLabel} is staged as {columnMappingStaging.fileType || 'a table'} with {columnMappingStaging.rowCount || 0} rows and {columnMappingStaging.columnCount || 0} columns.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={openColumnMappingModal}
-                disabled={columnMappingStaging.status !== 'ready'}
-                className="peridot-button-primary disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Open mapping workspace
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={openColumnMappingModal}
+                  disabled={columnMappingStaging.status !== 'ready'}
+                  className="peridot-button-primary disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Open mapping workspace
+                </button>
+                <button type="button" onClick={clearColumnMappingStaging} className="peridot-button-cream">
+                  Clear staged table
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
 
         {popup ? (
-          <div className="mt-6 peridot-cream-card peridot-card-inner">
+          <div className="mx-auto mt-8 max-w-3xl peridot-cream-card peridot-card-inner">
             <p className="peridot-section-label">Latest upload</p>
             <h2 className="mt-2 text-2xl font-bold text-[var(--peridot-color-hex-26352b)]">{popup.title || 'Latest upload summary'}</h2>
             {popup.intro ? <p className="mt-3 text-sm leading-6 text-[var(--peridot-color-hex-42533f)]">{popup.intro}</p> : null}
@@ -144,6 +148,12 @@ export function PeridotDataWorkspace({
               </div>
             ) : null}
           </div>
+        ) : null}
+
+        {!columnMappingStaging && !popup ? (
+          <p className="mt-6 text-center text-sm text-[var(--peridot-color-hex-f7f2df-a70)]">
+            Current source: <strong className="text-[var(--peridot-color-hex-fbf7ea)]">{peridotFileLabel}</strong>
+          </p>
         ) : null}
       </div>
     </section>
