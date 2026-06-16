@@ -1,19 +1,31 @@
 /*
  * Home / welcome workspace.
- * 
- * This component provides the first-run entry point for Peridot. It introduces the app and routes users toward either uploading their own data or opening the embedded sample dataset.
- * 
+ *
+ * This component provides Peridot's first orientation surface. The home page is
+ * intentionally sparse: it establishes the tool's identity, gives a one-sentence
+ * description, and routes users toward either the embedded sample dataset or
+ * their own uploaded data.
+ *
  * Important relationships:
- * - Data upload routes to `PeridotDataWorkspace`.
- * - Sample-data entry routes to `PeridotVisualizationsWorkspace` while relying on embedded fallback data managed by `App.jsx`.
- * 
+ * - `onUseSampleData` opens Visualizations with the embedded sample data managed
+ *   by `App.jsx`.
+ * - `onUploadData` opens the Data workspace for CSV/TSV/XLSX/XLS upload and
+ *   mapping.
+ *
  * Maintenance cautions:
- * - Keep this page lightweight; it should orient users without duplicating detailed documentation that belongs in Learn More.
+ * - Keep detailed onboarding out of this component. Longer explanations belong
+ *   in Learn More about Peridot so returning users can move past the homepage
+ *   quickly.
+ * - The desktop homepage is implemented as a fixed-ratio title-card stage. The
+ *   logo and text/action group are the primary content. The filigree ornaments
+ *   are decorative frame objects anchored outside the neighboring content
+ *   groups, not layout columns that can drift into the content.
  */
 
 import React from 'react';
 
-import peridotLogoTransparent from '../assets/Peridot Logo Transparent.png';
+import peridotLogoTransparent from '../assets/Peridot Logo Gilded Transparent.png';
+import homepageFiligree from '../assets/Adobe Stock Filagree 1.png';
 
 function HomeTextureBackdrop() {
   return (
@@ -27,84 +39,77 @@ function HomeTextureBackdrop() {
   );
 }
 
-const primaryActionCardClass = [
-  'group rounded-[28px] border border-[var(--peridot-color-hex-4f7440)] bg-[var(--peridot-color-hex-5f814c)] p-6 text-left text-[var(--peridot-color-hex-fbf9ec)]',
-  'shadow-[0_18px_38px_var(--peridot-color-rgba-rgba-0-0-0-0-30)] transition-all duration-150',
-  'hover:-translate-y-0.5 hover:border-[var(--peridot-color-hex-b69665)] hover:bg-[var(--peridot-color-hex-9a7b4b)] hover:text-[var(--peridot-color-hex-fff7df)]',
-  'focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d7bd7a-a70)]',
+function StageOrnament({ side = 'left' }) {
+  const isRight = side === 'right';
+  const xPosition = isRight ? 'left-[92.2%]' : 'left-[7.8%]';
+  const rotationClass = isRight ? '-rotate-90' : 'rotate-90';
+
+  return (
+    <img
+      src={homepageFiligree}
+      alt=""
+      aria-hidden="true"
+      className={`pointer-events-none absolute top-1/2 z-[1] block w-[73cqh] max-w-none -translate-x-1/2 -translate-y-1/2 ${xPosition} ${rotationClass} opacity-100 drop-shadow-[0_0_18px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]`}
+      draggable="false"
+    />
+  );
+}
+
+const homeActionClass = [
+  'group inline-flex h-[4.05cqw] w-[17.2cqw] shrink-0 items-center justify-center whitespace-nowrap rounded-full border text-center',
+  'px-[1.6cqw] text-[0.82cqw] font-black uppercase tracking-[0.18em] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]',
+  'border-[var(--peridot-color-rgba-rgba-223-233-200-0-48)] bg-[var(--peridot-color-rgba-rgba-223-233-200-0-10)] text-[var(--peridot-color-hex-fbf7ea)]',
+  'transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-rgba-rgba-245-236-210-0-68)] focus:ring-offset-2 focus:ring-offset-[var(--peridot-color-hex-03120c)]',
+  'hover:-translate-y-0.5 hover:border-[var(--peridot-color-rgba-rgba-245-236-210-0-88)] hover:bg-[var(--peridot-role-button-primary-hover-bg)] hover:text-[var(--peridot-color-hex-fff8e8)] hover:shadow-[0_22px_58px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]',
 ].join(' ');
 
 export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
   return (
-    <section className="relative flex h-full min-h-0 items-center justify-center overflow-hidden bg-[var(--peridot-color-hex-03120c)] px-6 py-10 text-[var(--text-main)]">
+    <section className="relative h-full min-h-0 overflow-hidden bg-[var(--peridot-color-hex-03120c)] text-[var(--peridot-color-hex-f4f6df)]">
       <HomeTextureBackdrop />
 
-      <div className="relative z-10 w-full max-w-5xl rounded-[36px] border border-[var(--peridot-color-hex-d8e4d7-a68)] bg-[var(--peridot-color-hex-082016-a74)] p-8 text-[var(--peridot-color-hex-f4f6df)] shadow-[0_34px_90px_var(--peridot-color-rgba-rgba-0-0-0-0-58)] ring-1 ring-[var(--peridot-color-hex-d8e8b2-a18)] backdrop-blur-[7px] md:p-12">
-        <div className="max-w-3xl">
-          <p className="mb-5 text-sm font-semibold uppercase tracking-[0.24em] text-[var(--peridot-color-hex-c8dc8d)]">
-            Humanistic data exploration
-          </p>
-          <div className="peridot-home-logo-lockup" aria-label="Peridot">
-            <img
-              src={peridotLogoTransparent}
-              alt="Peridot"
-              className="peridot-home-logo"
-            />
-          </div>
-          <h1 className="sr-only">Peridot</h1>
-          <p className="mt-7 max-w-2xl text-lg leading-8 text-[var(--peridot-color-hex-e8edcf)] drop-shadow-[0_1px_8px_var(--peridot-color-rgba-rgba-0-0-0-0-35)] md:text-xl">
-            Explore historical and humanistic records as maps, networks, timelines, charts, searchable data, and evidence dossiers. Start with your own dataset or open the built-in sample correspondence dataset.
-          </p>
-        </div>
+      <div className="relative z-10 flex h-full w-full items-center justify-center px-[clamp(1rem,3vw,3rem)] py-[clamp(1rem,3vh,2.5rem)]">
+        <div
+          className="relative w-full max-w-[94rem] [container-type:size]"
+          style={{
+            aspectRatio: '2.22 / 1',
+            width: 'min(92vw, calc((100vh - 4rem) * 2.22), 94rem)',
+          }}
+        >
+          <StageOrnament side="left" />
+          <StageOrnament side="right" />
 
-        <div className="mt-10 grid gap-5 md:grid-cols-2">
-          <button
-            type="button"
-            onClick={onUploadData}
-            className={primaryActionCardClass}
-          >
-            <span className="block text-sm font-semibold uppercase tracking-[0.18em] text-[var(--peridot-color-hex-dfeec2)] transition-colors group-hover:text-[var(--peridot-color-hex-fff1bd)]">
-              Start with your dataset
-            </span>
-            <span className="mt-3 block text-xl font-bold">Upload my data</span>
-            <span className="mt-3 block text-sm leading-6 text-[var(--peridot-color-hex-f4f4df)] transition-colors group-hover:text-[var(--peridot-color-hex-fff8df)]">
-              Open the Data workspace to download the template, upload a completed Peridot CSV, or map columns from CSV, TSV, XLSX, and XLS files.
-            </span>
-          </button>
+          <img
+            src={peridotLogoTransparent}
+            alt="Peridot"
+            className="absolute left-[30%] top-1/2 block h-auto w-[30%] max-w-none -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_14px_26px_var(--peridot-color-rgba-rgba-0-0-0-0-38)]"
+            draggable="false"
+          />
 
-          <button
-            type="button"
-            onClick={onUseSampleData}
-            className={primaryActionCardClass}
-          >
-            <span className="block text-sm font-semibold uppercase tracking-[0.18em] text-[var(--peridot-color-hex-dfeec2)] transition-colors group-hover:text-[var(--peridot-color-hex-fff1bd)]">
-              Preview the workspace
-            </span>
-            <span className="mt-3 block text-xl font-bold">Use sample data</span>
-            <span className="mt-3 block text-sm leading-6 text-[var(--peridot-color-hex-f4f4df)] transition-colors group-hover:text-[var(--peridot-color-hex-fff8df)]">
-              Enter the visualization workspace with Peridot&apos;s embedded sample dataset already loaded.
-            </span>
-          </button>
-        </div>
+          <div className="absolute left-[66.4%] top-1/2 flex w-[38%] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-[6.2cqw]">
+            <p className="m-0 w-[88%] text-center font-[Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[1.82cqw] font-normal leading-[1.28] tracking-[-0.012em] text-[var(--peridot-color-hex-f4f6df)] drop-shadow-[0_2px_14px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
+              Your go-to tool for exploring, visualizing, and presenting humanistic data.
+            </p>
 
-        <div className="mt-10 grid gap-y-5 md:grid-cols-3 md:gap-x-8">
-          <div className="p-1 md:pr-4">
-            <strong className="block text-base font-semibold text-[var(--peridot-color-hex-fbf6d9)]">Map and network views</strong>
-            <p className="mt-2 text-sm leading-7 text-[var(--peridot-color-hex-d7e3c0)]">
-              Explore point maps, route maps, entity networks, and force-directed relationship views when your data supports them.
-            </p>
-          </div>
-          <div className="p-1 md:border-l md:border-[var(--peridot-color-hex-d7e3c0-a20)] md:pl-6">
-            <strong className="block text-base font-semibold text-[var(--peridot-color-hex-fbf6d9)]">Search and chart records</strong>
-            <p className="mt-2 text-sm leading-7 text-[var(--peridot-color-hex-d7e3c0)]">
-              Filter, summarize, and visualize the active dataset through research-oriented controls.
-            </p>
-          </div>
-          <div className="p-1 md:border-l md:border-[var(--peridot-color-hex-d7e3c0-a20)] md:pl-6">
-            <strong className="block text-base font-semibold text-[var(--peridot-color-hex-fbf6d9)]">Inspect evidence</strong>
-            <p className="mt-2 text-sm leading-7 text-[var(--peridot-color-hex-d7e3c0)]">
-              Move from visual patterns to linked entities, places, routes, records, and metadata.
-            </p>
+            <div className="flex w-full flex-row items-center justify-center gap-[2.1cqw]">
+              <button
+                type="button"
+                onClick={onUseSampleData}
+                className={homeActionClass}
+                aria-label="Start visualizing with Peridot sample data"
+              >
+                Use sample data
+              </button>
+
+              <button
+                type="button"
+                onClick={onUploadData}
+                className={homeActionClass}
+                aria-label="Upload your own data"
+              >
+                Upload your data
+              </button>
+            </div>
           </div>
         </div>
       </div>
