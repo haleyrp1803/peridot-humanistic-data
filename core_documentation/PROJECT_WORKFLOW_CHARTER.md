@@ -45,8 +45,8 @@ assets/Peridot Logo.png
 assets/Peridot Logo Transparent.png
 assets/Peridot Logo Gilded.png
 assets/Peridot Logo Gilded Transparent.png
-assets/Adobe Stock Filagree 1.png
-assets/Adobe Stock Filagree Set.png
+assets/Adobe Stock Filigree 1.png
+assets/Adobe Stock Filigree Set.png
 assets/Homepage Current 2026-06-16.png
 assets/Homepage Layout Mockup.png
 assets/Homepage Layout Mockup Annotated.png

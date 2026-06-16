@@ -250,8 +250,8 @@ Brand and design assets:
 - `assets/Peridot Logo Transparent.png`
 - `assets/Peridot Logo Gilded.png`
 - `assets/Peridot Logo Gilded Transparent.png`
-- `assets/Adobe Stock Filagree 1.png`
-- `assets/Adobe Stock Filagree Set.png`
+- `assets/Adobe Stock Filigree 1.png`
+- `assets/Adobe Stock Filigree Set.png`
 - `assets/Homepage Current 2026-06-16.png`
 - `assets/Homepage Layout Mockup.png`
 - `assets/Homepage Layout Mockup Annotated.png`
@@ -849,14 +849,14 @@ The user-designed Peridot logo and related design assets live in `assets/`:
 - `assets/Peridot Logo Transparent.png` — original transparent-background logo.
 - `assets/Peridot Logo Gilded.png` — revised gilded logo for documentation/reference use.
 - `assets/Peridot Logo Gilded Transparent.png` — revised transparent logo used by the current Home workspace.
-- `assets/Adobe Stock Filagree 1.png` — selected licensed filigree used as Home workspace framing.
-- `assets/Adobe Stock Filagree Set.png` — licensed Adobe Stock filigree set retained as a future design-reference asset.
+- `assets/Adobe Stock Filigree 1.png` — selected licensed filigree used as Home workspace framing.
+- `assets/Adobe Stock Filigree Set.png` — licensed Adobe Stock filigree set retained as a future design-reference asset.
 - `assets/Homepage Current 2026-06-16.png` — current homepage screenshot for documentation.
 - `assets/Homepage Layout Mockup.png` and `assets/Homepage Layout Mockup Annotated.png` — user-authored layout references for the homepage redesign.
 - `assets/Chart Colors Base.jpeg`, `assets/Chart Colors Dark.jpeg`, and `assets/Chart Colors Pale.jpeg` — chart-palette reference assets.
 - `assets/Peridot Palette Upload Guide 1.png` and `assets/Peridot Palette Upload Guide 2.png` — palette-upload guide/reference assets.
 
-`src/PeridotHomeWorkspace.jsx` imports the gilded transparent logo directly from `../assets/Peridot Logo Gilded Transparent.png` and the selected filigree from `../assets/Adobe Stock Filagree 1.png`. Keep these files under version control. The local Photoshop source file, `assets/Peridot Logo Workspace.psd`, should remain ignored unless there is an explicit decision to archive editable design sources in the repository.
+`src/PeridotHomeWorkspace.jsx` imports the gilded transparent logo directly from `../assets/Peridot Logo Gilded Transparent.png` and the selected filigree from `../assets/Adobe Stock Filigree 1.png`. Keep these files under version control. The local Photoshop source file, `assets/Peridot Logo Workspace.psd`, should remain ignored unless there is an explicit decision to archive editable design sources in the repository.
 
 ### Home title-card layout contract
 
@@ -1041,7 +1041,7 @@ A future chat should start from:
 A future chat should also be told that:
 
 - the app identity is **Peridot**
-- the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filagree 1.png`
+- the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filigree 1.png`
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
 - the simplified hamburger/workspace structure is committed; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge

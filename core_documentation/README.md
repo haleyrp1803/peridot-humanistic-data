@@ -282,9 +282,9 @@ The current Home workspace uses a fixed-ratio title-card layout: logo identity o
 
 ### Filigree assets
 
-![Selected homepage filigree](../assets/Adobe%20Stock%20Filagree%201.png)
+![Selected homepage filigree](../assets/Adobe%20Stock%20Filigree%201.png)
 
-![Licensed Adobe Stock filigree set](../assets/Adobe%20Stock%20Filagree%20Set.png)
+![Licensed Adobe Stock filigree set](../assets/Adobe%20Stock%20Filigree%20Set.png)
 
 The filigree assets are licensed Adobe Stock design assets. The selected single filigree is used in the Home workspace; the larger set is retained as a future design-reference asset.
 
@@ -356,8 +356,8 @@ Brand image assets are stored in `assets/`:
 
 ```text
 assets/
-  Adobe Stock Filagree 1.png
-  Adobe Stock Filagree Set.png
+  Adobe Stock Filigree 1.png
+  Adobe Stock Filigree Set.png
   Homepage Current 2026-06-16.png
   Homepage Layout Mockup.png
   Homepage Layout Mockup Annotated.png

@@ -25,7 +25,7 @@
 import React from 'react';
 
 import peridotLogoTransparent from '../assets/Peridot Logo Gilded Transparent.png';
-import homepageFiligree from '../assets/Adobe Stock Filagree 1.png';
+import homepageFiligree from '../assets/Adobe Stock Filigree 1.png';
 
 function HomeTextureBackdrop() {
   return (

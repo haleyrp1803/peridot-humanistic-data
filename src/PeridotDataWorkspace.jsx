@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import dataDividerFiligree from '../assets/Adobe Stock Filagree 3.png';
+import dataDividerFiligree from '../assets/Adobe Stock Filigree 3.png';
 
 export function PeridotDataWorkspace({
   peridotFileLabel,
