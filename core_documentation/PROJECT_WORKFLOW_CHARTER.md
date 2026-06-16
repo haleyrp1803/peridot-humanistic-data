@@ -23,13 +23,13 @@ GitHub, canvas copies, temporary zips, downloaded replacements, and other artifa
 Current project source of truth folder:
 
 ```text
-C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
+C:\Users\haley\OneDrive\Desktop\Peridot\
 ```
 
 Current clean baseline:
 
 ```text
-e50ebf6 — Scope chart palette imports to chart series
+68f99da — add some homepage assets
 ```
 
 Current branch note:
@@ -43,6 +43,18 @@ Current brand assets:
 ```text
 assets/Peridot Logo.png
 assets/Peridot Logo Transparent.png
+assets/Peridot Logo Gilded.png
+assets/Peridot Logo Gilded Transparent.png
+assets/Adobe Stock Filagree 1.png
+assets/Adobe Stock Filagree Set.png
+assets/Homepage Current 2026-06-16.png
+assets/Homepage Layout Mockup.png
+assets/Homepage Layout Mockup Annotated.png
+assets/Chart Colors Base.jpeg
+assets/Chart Colors Dark.jpeg
+assets/Chart Colors Pale.jpeg
+assets/Peridot Palette Upload Guide 1.png
+assets/Peridot Palette Upload Guide 2.png
 ```
 
 ---
@@ -344,7 +356,15 @@ Current notable decisions:
 - Axis-based charts should use readable major and minor ticks/gridlines with adequate contrast against the parchment chart surface.
 - Chart colors should come from the finite Peridot chart color library by default and from active semantic chart-series roles when the user explicitly applies a chart palette; do not scatter one-off chart series colors through chart renderers.
 - Map and visualization chrome colors should be routed through semantic theme roles where possible.
-- Peridot’s logo assets should live in `assets/`; the solid-background logo is used for documentation display, and the transparent-background logo is used by the Home workspace hero.
+- Peridot’s logo assets should live in `assets/`; solid-background variants are used for documentation/reference display, and transparent variants are used by the Home workspace hero.
+- The Home workspace should remain an informative-minimalist title-card surface: a large Peridot logo, one concise description sentence, and two CTAs (**Use sample data** and **Upload your data**). Detailed onboarding belongs in **Learn More about Peridot**.
+- Home title-card composition should scale as one fixed-ratio stage. The logo and text/buttons are primary content; filigree is decorative framing anchored outside adjacent content and must not overlap the logo, sentence, or buttons.
+- The Home text hierarchy should remain: **PERIDOT** wordmark largest, “Your go-to…” sentence second, button labels smallest.
+- The selected homepage filigree comes from licensed Adobe Stock assets. Keep attribution/asset origin clear in documentation and avoid treating the full filigree set as open-source original artwork.
+- Map PNG export defaults to map-only output with no Peridot branding. Optional export title appears above the map image; optional metadata appears below it. This supports researchers using exports in presentations without unnecessary branding or whitespace.
+- Map PNG export should use Peridot’s in-app typography and readable text sizes for presentation legibility.
+- Capability wording should use plain availability language: unavailable visualization types are **not available** for the dataset, not merely “limited.” User-facing capability cards should avoid internal diagnostics language.
+
 
 ---
 
@@ -489,7 +509,7 @@ Each implementation pass should end with:
 For a new chat, start with:
 
 ```text
-Source of truth folder: C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\
+Source of truth folder: C:\Users\haley\OneDrive\Desktop\Peridot\
 Current documented clean baseline: `e50ebf6` — Scope chart palette imports to chart series. See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
@@ -514,5 +534,5 @@ The new chat should be told:
 - Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout, and is reached through Explore/workflow actions rather than the top-level hamburger.
 - Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, workbook import with unique-ID joins, validation popup, and persistent latest-upload summary.
 - Analytics chart views currently use a left-control/right-chart workspace with tabbed builder controls, manual series/category selection, year-default date axes, complete simplified summary/legend panels, shared three-quarter chart / one-quarter legend card layout, anchored titles, method labels, major/minor ticks, default finite chart colors with explicit chart-targeted palette overrides, and header-based chart PNG export.
-- Logo assets live in `assets/`; the Home workspace imports the transparent logo variant.
+- Logo, homepage filigree, homepage mockup, and current homepage screenshot assets live in `assets/`; the Home workspace imports the gilded transparent logo and selected Adobe Stock filigree.
 - Inspector person/place profiles currently show profile summaries, compact summary buttons, role-grouped related people/places, directed route summaries, selected uploaded fields, shared linked-letter detail navigation, clickable linked people/places, and route-row dossier navigation.

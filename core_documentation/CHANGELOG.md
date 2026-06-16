@@ -2,9 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`e50ebf6` — `Scope chart palette imports to chart series`** on branch **`main`**
+- **`68f99da` — `add some homepage assets`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, and the current Analytics chart-layout and chart-theme milestone. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 The current Data Inputs / import workflow now provides:
 
 - downloadable Peridot CSV template plus one unified CSV/TSV/XLSX/XLS table-workbook upload path;
@@ -47,9 +47,9 @@ The current Advanced Search workflow is the main Explore Your Data surface. It u
 
 The current interface/workspace workflow now provides:
 
-- user-designed Peridot logo assets in `assets/`;
-- the Home workspace uses the transparent Peridot logo variant as its visible hero lockup;
-- Home / welcome workspace with Upload my data and Use sample data start paths;
+- user-designed Peridot logo, gilded-logo, palette, and filigree assets in `assets/`;
+- the Home workspace uses the gilded transparent Peridot logo variant and selected licensed Adobe Stock filigree as its visible title-card lockup;
+- Home / welcome workspace with a single concise description sentence and **Use sample data** / **Upload your data** start paths;
 - hamburger-triggered labeled menu replacing the persistent icon rail as the primary visible navigation surface;
 - simplified hamburger stack: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**;
 - full-window workspaces for Data, Visualizations, Advanced Search, Learn More, Themes and Accessibility, and Inspector-compatible evidence review paths, with Explore Your Data routing directly into Advanced Search and Inspector remaining available through visualization/evidence workflows;
@@ -60,6 +60,7 @@ The current interface/workspace workflow now provides:
 - chart titles/subtitles are anchored near the top of the card, bar charts default to vertical orientation, and dense chart canvases use reduced whitespace;
 - chart export consolidated into the shared Visualizations header Export menu;
 - map and network export consolidated into the same Visualizations header Export menu, replacing the standalone Export workspace route;
+- map PNG export defaults to map-only output, with optional title text above the map and optional metadata below the map using Peridot typography;
 - map legend and map controls minimized by default as bottom-corner buttons;
 - Timeline implemented as a compact bottom Visualizations scrubber with dual range handles, playback controls, and collapse/expand behavior;
 - Explore Your Data now routes directly to Advanced Search, which contains the data-exploration, capability-summary, Browse, Results, Refine / Inspect, and Inspector-adjacent evidence entry points;
@@ -79,6 +80,27 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Home title-card, map export options, branding assets, and capability wording milestone
+
+- Updated the documented safe baseline to **`68f99da` — `add some homepage assets`**.
+- Renamed the local source-of-truth folder in documentation to `C:\Users\haley\OneDrive\Desktop\Peridot\`.
+- Updated the repository URL in documentation to `https://github.com/haleyrp1803/peridot-humanistic-data`.
+- Redesigned the Home workspace as an informative-minimalist fixed-ratio title-card composition.
+- Home now centers the app identity around the gilded transparent Peridot logo, a single concise sentence, and two CTAs: **Use sample data** and **Upload your data**.
+- Moved detailed onboarding expectations out of Home and into the future **Learn More about Peridot** direction.
+- Added and documented the homepage layout contract: the logo is the largest object, the sentence is second-level text, button labels are smallest, and the filigree frames the content without overlapping it.
+- Added the selected licensed Adobe Stock filigree to the Home workspace as decorative framing.
+- Tracked the larger licensed Adobe Stock filigree set as a future design-reference asset.
+- Added homepage mockup and annotated mockup references so future homepage changes preserve the intended proportional layout.
+- Added the current homepage screenshot reference for documentation.
+- Added gilded Peridot logo variants and palette/design reference assets to `assets/`.
+- Preserved `assets/Peridot Logo Workspace.psd` as an ignored local design source rather than a committed runtime/documentation asset.
+- Finalized map PNG export options: default output is map-only, with no Peridot branding or extra text.
+- Added optional map export title placement above the map image and optional metadata placement below the map image.
+- Improved map export annotation readability with larger Peridot typography and tighter whitespace.
+- Clarified Data/Advanced Search/Visualizations capability wording: internal capability diagnostics were removed from user-facing review; point and route map readiness language was combined/clarified where appropriate; unavailable visualization language now says the visualization is **not available** for the dataset rather than **limited**.
+- Confirmed point/site datasets such as Alaskan Airfields do not incorrectly advertise relational route/network readiness when no source-target relationships are mapped.
 
 ### Peridot logo and home-workspace branding milestone
 
@@ -290,7 +312,17 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
-- **`e50ebf6` — `Scope chart palette imports to chart series`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`68f99da` — `add some homepage assets`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`bb971a5` — `Redesign Peridot homepage`** implements the fixed-ratio Home title-card composition with the gilded logo, filigree framing, concise sentence, and two CTA buttons.
+- **`e0d2399` — `Finalize map export options and ignore design source files`** finalizes map-only default PNG export, optional title/metadata annotations, and ignored design-source handling.
+- **`499acc7` — `Improve map export annotation readability`** increases annotation readability and anchors title/metadata placement around the exported map image.
+- **`d835953` — `Clarify capability and availability wording`** updates user-facing capability language across Data, Advanced Search, and Visualizations.
+- **`97843c7` — `Refine capability wording for point datasets`** refines point/site dataset capability messages.
+- **`7d2b888` — `Fix route capability wording for point datasets`** prevents point-only datasets from being described as route/relationship-ready.
+- **`212fb4a` — `Track Peridot branding and palette assets`** tracks chart-color, palette-upload-guide, and related branding assets.
+- **`72bcae7` — `Add Peridot logo branding assets`** adds the initial Peridot logo assets.
+- **`954f553` — `Refresh documentation for analytics layout and theme milestone`** is the preceding documentation baseline after the analytics layout/theme pass.
+- **`e50ebf6` — `Scope chart palette imports to chart series`** remains the current implemented chart-palette baseline.
 - **`6334840` — `Route remaining analytics chart marks through theme series`**
 - **`db2bea6` — `Anchor analytics chart titles and restore vertical bar default`**
 - **`a1ce00a` — `Tighten analytics chart canvas spacing`**
@@ -372,6 +404,16 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-06-16 | `68f99da` | add some homepage assets | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-16 | `bb971a5` | Redesign Peridot homepage |  |
+| 2026-06-16 | `e0d2399` | Finalize map export options and ignore design source files |  |
+| 2026-06-16 | `499acc7` | Improve map export annotation readability |  |
+| 2026-06-16 | `d835953` | Clarify capability and availability wording |  |
+| 2026-06-16 | `97843c7` | Refine capability wording for point datasets |  |
+| 2026-06-16 | `7d2b888` | Fix route capability wording for point datasets |  |
+| 2026-06-16 | `212fb4a` | Track Peridot branding and palette assets |  |
+| 2026-06-16 | `72bcae7` | Add Peridot logo branding assets |  |
+| 2026-06-13 | `954f553` | Refresh documentation for analytics layout and theme milestone |  |
 | 2026-06-13 | `e50ebf6` | Scope chart palette imports to chart series | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-06-13 | `6334840` | Route remaining analytics chart marks through theme series |  |
 | 2026-06-13 | `db2bea6` | Anchor analytics chart titles and restore vertical bar default |  |

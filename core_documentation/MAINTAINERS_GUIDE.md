@@ -14,7 +14,7 @@ The full commit history is intentionally preserved in one place in `CHANGELOG.md
 
 Current source of truth folder:
 
-- `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
+- `C:\Users\haley\OneDrive\Desktop\Peridot\`
 
 Current active branch for continued legacy work:
 
@@ -22,10 +22,24 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`e50ebf6` — `Scope chart palette imports to chart series`**
+- **`68f99da` — `add some homepage assets`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, and the current Analytics chart-layout/theme milestone. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
 
+
+
+Recent homepage, export, branding, and capability-language milestones include:
+
+- **`68f99da` — `add some homepage assets`**
+- **`bb971a5` — `Redesign Peridot homepage`**
+- **`e0d2399` — `Finalize map export options and ignore design source files`**
+- **`499acc7` — `Improve map export annotation readability`**
+- **`d835953` — `Clarify capability and availability wording`**
+- **`97843c7` — `Refine capability wording for point datasets`**
+- **`7d2b888` — `Fix route capability wording for point datasets`**
+- **`212fb4a` — `Track Peridot branding and palette assets`**
+- **`72bcae7` — `Add Peridot logo branding assets`**
+- **`954f553` — `Refresh documentation for analytics layout and theme milestone`**
 
 Recent theme, visualization chrome, map palette, and Analytics milestones include:
 
@@ -139,7 +153,7 @@ Recent interface-routing milestones include:
 
 Current GitHub repository:
 
-- `https://github.com/haleyrp1803/correspondence-visualizer`
+- `https://github.com/haleyrp1803/peridot-humanistic-data`
 
 When the local folder and GitHub are confirmed aligned by the sync ritual, treat the current Git commit as the source of truth.
 
@@ -230,10 +244,24 @@ Maintainer/workflow documents are currently organized under `core_documentation/
 - `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md`
 - `planning_documents/PERIDOT_CODE_STRUCTURE_AUDIT.md`
 
-Brand assets:
+Brand and design assets:
 
 - `assets/Peridot Logo.png`
 - `assets/Peridot Logo Transparent.png`
+- `assets/Peridot Logo Gilded.png`
+- `assets/Peridot Logo Gilded Transparent.png`
+- `assets/Adobe Stock Filagree 1.png`
+- `assets/Adobe Stock Filagree Set.png`
+- `assets/Homepage Current 2026-06-16.png`
+- `assets/Homepage Layout Mockup.png`
+- `assets/Homepage Layout Mockup Annotated.png`
+- `assets/Chart Colors Base.jpeg`
+- `assets/Chart Colors Dark.jpeg`
+- `assets/Chart Colors Pale.jpeg`
+- `assets/Peridot Palette Upload Guide 1.png`
+- `assets/Peridot Palette Upload Guide 2.png`
+
+`assets/Peridot Logo Workspace.psd` may exist locally as a design source file but should remain ignored rather than committed unless there is an explicit design-source archival decision.
 
 ## Architectural summary
 
@@ -303,7 +331,7 @@ Primary visible navigation component. It renders the hamburger button and the si
 
 ### `src/PeridotHomeWorkspace.jsx`
 
-Full Home / welcome workspace with introductory copy, the transparent Peridot logo lockup, **Upload my data**, **Use sample data**, and feature summary cards.
+Full Home / welcome workspace implemented as a fixed-ratio title-card composition. It uses the gilded transparent Peridot logo, licensed filigree framing, a single concise sentence, and **Use sample data** / **Upload your data** calls to action. The component intentionally keeps detailed onboarding out of the homepage; longer explanatory material belongs in `PeridotLearnMoreWorkspace.jsx`.
 
 ### `src/PeridotDataWorkspace.jsx`
 
@@ -650,7 +678,7 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - shared Visualizations header Export menu
 - SVG export for map/network views
-- PNG export for map/network views
+- PNG export for map/network views, with map-only default PNG output and optional title/top annotation plus optional metadata/bottom annotation
 - nodes CSV export
 - edges/routes CSV export
 - Chart Visualizations PNG export
@@ -813,14 +841,55 @@ Do not reintroduce the legacy three-file workflow unless there is a specific rec
 
 ---
 
-## Current brand asset state
+## Current brand asset and Home workspace state
 
-The user-designed Peridot logo assets live in `assets/`:
+The user-designed Peridot logo and related design assets live in `assets/`:
 
-- `assets/Peridot Logo.png` — solid-background logo for README/documentation display.
-- `assets/Peridot Logo Transparent.png` — transparent-background logo used by the Home workspace hero.
+- `assets/Peridot Logo.png` — original solid-background logo for documentation/reference use.
+- `assets/Peridot Logo Transparent.png` — original transparent-background logo.
+- `assets/Peridot Logo Gilded.png` — revised gilded logo for documentation/reference use.
+- `assets/Peridot Logo Gilded Transparent.png` — revised transparent logo used by the current Home workspace.
+- `assets/Adobe Stock Filagree 1.png` — selected licensed filigree used as Home workspace framing.
+- `assets/Adobe Stock Filagree Set.png` — licensed Adobe Stock filigree set retained as a future design-reference asset.
+- `assets/Homepage Current 2026-06-16.png` — current homepage screenshot for documentation.
+- `assets/Homepage Layout Mockup.png` and `assets/Homepage Layout Mockup Annotated.png` — user-authored layout references for the homepage redesign.
+- `assets/Chart Colors Base.jpeg`, `assets/Chart Colors Dark.jpeg`, and `assets/Chart Colors Pale.jpeg` — chart-palette reference assets.
+- `assets/Peridot Palette Upload Guide 1.png` and `assets/Peridot Palette Upload Guide 2.png` — palette-upload guide/reference assets.
 
-`src/PeridotHomeWorkspace.jsx` imports the transparent logo directly from `../assets/Peridot Logo Transparent.png`. Keep these files under version control and avoid replacing the Home logo with a separate duplicate asset unless there is a deliberate branding pass. If the logo is revised later, update both image files and the README display together.
+`src/PeridotHomeWorkspace.jsx` imports the gilded transparent logo directly from `../assets/Peridot Logo Gilded Transparent.png` and the selected filigree from `../assets/Adobe Stock Filagree 1.png`. Keep these files under version control. The local Photoshop source file, `assets/Peridot Logo Workspace.psd`, should remain ignored unless there is an explicit decision to archive editable design sources in the repository.
+
+### Home title-card layout contract
+
+The Home workspace is intentionally a minimal orientation surface rather than a full onboarding page.
+
+Keep:
+
+- the deep green, multi-tone, striped Peridot background;
+- the gilded transparent logo;
+- the selected licensed gold filigree asset;
+- the CTA pair **Use sample data** and **Upload your data**, with **Upload your data** on the right;
+- the concise sentence: “Your go-to tool for exploring, visualizing, and presenting humanistic data.”;
+- Georgia / Peridot display-serif typography for the sentence;
+- non-scrolling first-screen presentation.
+
+Do not:
+
+- add explanatory cards back to the homepage;
+- let filigree overlap the logo, sentence, or buttons;
+- let button labels wrap;
+- let the sentence dominate the Peridot wordmark;
+- turn the homepage back into a dashboard/card-grid layout.
+
+Anchor rules:
+
+- the full homepage composition is one centered fixed-ratio title-card stage;
+- the logo is the largest visual object and sits left of center;
+- the sentence and buttons form one right-side content unit, vertically centered relative to the logo;
+- the sentence is centered over the buttons;
+- the left filigree frames the outside of the logo group;
+- the right filigree frames the outside of the text/buttons group;
+- all homepage elements should scale from the same stage sizing logic so the relative proportions remain stable across browser sizes.
+
 
 ## Current theme and routing state
 
@@ -863,7 +932,7 @@ Current routing state:
 
 Recent committed behavior includes:
 
-- Home / welcome startup workspace
+- fixed-ratio Home / welcome title-card workspace with gilded logo, filigree framing, concise description, and **Use sample data** / **Upload your data** entry points
 - unified Data workspace upload path for CSV / TSV / XLSX / XLS
 - compact Visualizations workspace with Place Map, People Network, Force-Directed, and Analytics
 - Search & Filter available as a full workspace through Explore/workflow actions
@@ -965,14 +1034,14 @@ This recent work also reinforced these process rules:
 
 A future chat should start from:
 
-- source of truth folder: `C:\Users\haley\OneDrive\Desktop\CorrespondenceVisualizer\`
+- source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current documented baseline: **`e50ebf6` — `Scope chart palette imports to chart series`**
+- current documented baseline: **`68f99da` — `add some homepage assets`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
-- the user-designed Peridot logo assets are stored in `assets/`, and the Home workspace uses `assets/Peridot Logo Transparent.png`
+- the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filagree 1.png`
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
 - the simplified hamburger/workspace structure is committed; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge

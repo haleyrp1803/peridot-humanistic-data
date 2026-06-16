@@ -1,7 +1,7 @@
 # Peridot (Correspondence Visualizer)
 
 <p align="center">
-  <img src="../assets/Peridot%20Logo.png" alt="Peridot logo" width="360" />
+  <img src="../assets/Peridot%20Logo%20Gilded.png" alt="Peridot logo" width="360" />
 </p>
 
 ## 1. Project title
@@ -20,14 +20,15 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`e50ebf6` — `Scope chart palette imports to chart series`** on branch **`main`**
+- **`68f99da` — `add some homepage assets`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, and the current Analytics chart-layout/theme milestone. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
-- a Home / welcome workspace with **Upload my data** and **Use sample data** start paths
-- user-designed Peridot logo assets in `assets/`, with the transparent logo integrated into the Home workspace hero
+- a redesigned Home / welcome workspace with a fixed-ratio title-card composition, the sentence “Your go-to tool for exploring, visualizing, and presenting humanistic data,” and **Use sample data** / **Upload your data** calls to action
+- user-designed Peridot logo assets in `assets/`, with the gilded transparent logo integrated into the Home workspace hero
+- licensed Adobe Stock filigree assets in `assets/`, with the selected filigree used as decorative homepage framing
 - a hamburger-triggered menu as the primary visible navigation surface
 - simplified hamburger menu entries for:
   - **Manage Your Data**
@@ -80,6 +81,8 @@ The current state of the active `main` project includes:
 - custom palette import targets and a finite 30-color Analytics chart series library using approved green, gold, blue, and pink palettes; explicit **Charts** imports override chart series colors without altering unrelated app chrome
 - visualization chrome polish for header tabs, ornamental edge controls, map utility buttons, dropdown layering, map palette, chart controls, chart summary panels, and axis ticks
 - in-place Visualizations header Export menu for SVG, PNG, nodes CSV, routes/edges CSV, and chart PNG export
+- map PNG export options where the default output is map-only; optional titles appear above the exported map, and optional metadata appears below it using Peridot’s in-app serif/UI typography
+- clarified capability and unavailable-state wording: visualization types that cannot be supported now say they are **not available** rather than **limited**, point/route map readiness is grouped more intuitively, and the internal capability-diagnostics card has been removed from user-facing review
 - extracted sample data, mapping UI config, mapping field controls, and evidence field controls that reduce pressure on `App.jsx` and `PeridotColumnMappingModal.jsx`
 - source-wide developer-orientation comments and a tracked code-structure audit planning document
 - export tooling for both images and tabular data
@@ -98,7 +101,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 
 ### Workspace navigation
 
-- Home / welcome workspace with sample-data and upload-data entry points
+- Home / welcome workspace with a fixed-ratio title-card composition, **Use sample data**, and **Upload your data** entry points
 - hamburger-triggered menu replacing the earlier persistent icon rail as the primary navigation surface
 - task-oriented hamburger menu for Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility
 - bottom Timeline scrubber integrated into Visualizations
@@ -261,13 +264,35 @@ Screenshots in the repository likely need refresh because the interface has chan
 
 ### Peridot logo assets
 
-![Peridot logo](../assets/Peridot%20Logo.png)
+![Peridot gilded logo](../assets/Peridot%20Logo%20Gilded.png)
 
-The transparent-background variant used by the Home workspace is stored at `assets/Peridot Logo Transparent.png`.
+![Peridot transparent logo](../assets/Peridot%20Logo%20Transparent.png)
 
-The screenshots in `docs/images/` may need refresh because the side-panel architecture, Advanced Search layout, Analytics overlay, Data Inputs workflow, and cluster inspector behavior have changed materially since the earlier documentation baseline.
+### Current Home workspace
 
-Existing screenshot references:
+![Current Peridot homepage](../assets/Homepage%20Current%202026-06-16.png)
+
+The current Home workspace uses a fixed-ratio title-card layout: logo identity on the left, a concise description and two calls to action on the right, and licensed filigree framing on both sides. The homepage is intentionally minimal; longer onboarding material belongs in **Learn More about Peridot**.
+
+### Home layout design references
+
+![Homepage layout mockup](../assets/Homepage%20Layout%20Mockup.png)
+
+![Homepage layout mockup annotated](../assets/Homepage%20Layout%20Mockup%20Annotated.png)
+
+### Filigree assets
+
+![Selected homepage filigree](../assets/Adobe%20Stock%20Filagree%201.png)
+
+![Licensed Adobe Stock filigree set](../assets/Adobe%20Stock%20Filagree%20Set.png)
+
+The filigree assets are licensed Adobe Stock design assets. The selected single filigree is used in the Home workspace; the larger set is retained as a future design-reference asset.
+
+### Legacy / older screenshots
+
+The screenshots in `docs/images/` may need refresh because the side-panel architecture, Advanced Search layout, Analytics overlay, Data Inputs workflow, cluster inspector behavior, Home workspace, export controls, and current visual design have changed materially since the earlier documentation baseline.
+
+Existing older screenshot references:
 
 ### Geographic view overview
 
@@ -303,6 +328,7 @@ Existing screenshot references:
 
 ![Modern theme example 2](docs/images/modern-theme-2.png)
 
+
 ---
 
 ## 7. Tech stack
@@ -330,8 +356,17 @@ Brand image assets are stored in `assets/`:
 
 ```text
 assets/
+  Adobe Stock Filagree 1.png
+  Adobe Stock Filagree Set.png
+  Homepage Current 2026-06-16.png
+  Homepage Layout Mockup.png
+  Homepage Layout Mockup Annotated.png
   Peridot Logo.png
   Peridot Logo Transparent.png
+  Peridot Logo Gilded.png
+  Peridot Logo Gilded Transparent.png
+  Peridot Palette Upload Guide 1.png
+  Peridot Palette Upload Guide 2.png
 ```
 
 The current `src/` structure is:
@@ -415,7 +450,7 @@ Primary visible navigation component. It renders the hamburger button and labele
 
 #### `src/PeridotHomeWorkspace.jsx`
 
-Home / welcome workspace with introductory copy, the transparent Peridot logo lockup, **Upload my data**, **Use sample data**, and feature summary cards. The Home workspace imports the transparent logo from `assets/Peridot Logo Transparent.png` so the same documented brand asset is used in the live app.
+Home / welcome workspace implemented as a fixed-ratio Peridot title-card composition. It uses the gilded transparent logo, licensed filigree framing, a single concise description sentence, and two CTAs: **Use sample data** and **Upload your data**. Longer onboarding is intentionally reserved for **Learn More about Peridot** so returning users can move through the homepage quickly.
 
 #### `src/PeridotDataWorkspace.jsx`
 
@@ -629,7 +664,7 @@ npm run preview
 ### Repository location
 
 ```text
-https://github.com/haleyrp1803/correspondence-visualizer
+https://github.com/haleyrp1803/peridot-humanistic-data
 ```
 
 ---
@@ -836,8 +871,8 @@ Likely near-term priorities include:
 - continue safe reduction of orchestration pressure inside `src/App.jsx`, using the code-structure audit as the planning reference
 - avoid renaming shared-panel compatibility props unless the inspector auto-open path is explicitly tested
 - refresh screenshots after the dual-mode Inspector, current workspace/hamburger interface, chart summary panels, logo integration, and theme/color work stabilize
-- keep the logo assets in `assets/` synchronized with the Home workspace branding
-- standardize visual export dimensions later if needed
+- keep the logo, filigree, homepage mockup, and current-homepage screenshot assets in `assets/` synchronized with the Home workspace branding
+- document the current visual-export sizing as acceptable for now; standardize visual export dimensions later only if a concrete user need appears
 - preserve full commit history in `CHANGELOG.md`
 
 ## 16. Author / maintainer / license
