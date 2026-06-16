@@ -317,9 +317,14 @@ function CapabilitySummaryWorkspace({ availability, onOpenSearch }) {
 }
 
 function VisualizationExportMenu({ exportControls, activeVisualizationLabel, compact = false }) {
-  const defaultPngExportTitle = exportControls?.defaultExportTitle || activeVisualizationLabel || '';
+  const peridotVisualizationTitle = `My Peridot ${activeVisualizationLabel || 'Visualization'}`;
+  const upstreamDefaultTitle = exportControls?.defaultExportTitle || '';
+  const defaultPngExportTitle = upstreamDefaultTitle && upstreamDefaultTitle !== 'Correspondence Visualizer'
+    ? upstreamDefaultTitle
+    : peridotVisualizationTitle;
   const [isOpen, setIsOpen] = useState(false);
   const [menuAnchorRect, setMenuAnchorRect] = useState(null);
+  const [activeExportPanel, setActiveExportPanel] = useState('actions');
   const [pngExportTitle, setPngExportTitle] = useState(defaultPngExportTitle);
   const [includePngTitle, setIncludePngTitle] = useState(false);
   const [includePngDateRange, setIncludePngDateRange] = useState(false);
@@ -327,9 +332,26 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
   const [includePngResultCounts, setIncludePngResultCounts] = useState(false);
   const menuAnchorRef = useRef(null);
   const closeTimerRef = useRef(null);
+  const lastAutoPngExportTitleRef = useRef(defaultPngExportTitle);
 
   useEffect(() => {
-    setPngExportTitle((currentTitle) => currentTitle || defaultPngExportTitle);
+    /*
+     * Keep the PNG title behaving like a live default rather than a stale
+     * one-time initialization. If the field still contains the previous
+     * generated title, update it when the active visualization changes; if a
+     * user has typed a custom title, preserve their edit.
+     */
+    setPngExportTitle((currentTitle) => {
+      const trimmedCurrentTitle = String(currentTitle || '').trim();
+      const previousAutoTitle = lastAutoPngExportTitleRef.current;
+      const shouldUseFreshDefault = !trimmedCurrentTitle
+        || trimmedCurrentTitle === previousAutoTitle
+        || trimmedCurrentTitle === 'Correspondence Visualizer';
+
+      lastAutoPngExportTitleRef.current = defaultPngExportTitle;
+
+      return shouldUseFreshDefault ? defaultPngExportTitle : currentTitle;
+    });
   }, [defaultPngExportTitle]);
 
   useEffect(() => () => {
@@ -360,6 +382,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
   const canExportEdges = typeof handleExportEdgesCsv === 'function' && edgeCount > 0;
   const canExportChartPng = typeof handleExportChartPng === 'function';
   const isChartExportMenu = canExportChartPng && !canExportSvg && !canExportPng && !handleExportNodesCsv && !handleExportEdgesCsv;
+  const isPngOptionsPanel = activeExportPanel === 'png-options' && canExportPng;
 
   const clearCloseTimer = () => {
     if (closeTimerRef.current) {
@@ -380,12 +403,15 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
     clearCloseTimer();
     setIsOpen(false);
     setMenuAnchorRect(null);
+    setActiveExportPanel('actions');
   };
 
   const scheduleClose = () => {
     clearCloseTimer();
     closeTimerRef.current = window.setTimeout(() => {
       setIsOpen(false);
+      setMenuAnchorRect(null);
+      setActiveExportPanel('actions');
       closeTimerRef.current = null;
     }, 260);
   };
@@ -411,6 +437,13 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
       : 'cursor-not-allowed text-[var(--peridot-color-hex-6f6554)] hover:bg-[var(--peridot-color-hex-f3e4bf)]',
   ].join(' ');
 
+  const primaryActionButtonClass = (enabled = true) => [
+    'mt-3 flex w-full items-center justify-center rounded-xl border px-3 py-2 text-sm font-extrabold uppercase tracking-[0.12em] transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
+    enabled
+      ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-b58b42)] text-[var(--peridot-color-hex-fff8e8)] hover:bg-[var(--peridot-color-hex-9b6f2f)]'
+      : 'cursor-not-allowed border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f3e4bf)] text-[var(--peridot-color-hex-6f6554)]',
+  ].join(' ');
+
   const buildPngExportOptions = () => ({
     title: pngExportTitle,
     includeTitle: includePngTitle,
@@ -424,6 +457,11 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
     if (typeof handler === 'function') {
       handler();
     }
+  };
+
+  const openPngOptions = () => {
+    clearCloseTimer();
+    setActiveExportPanel('png-options');
   };
 
   return (
@@ -462,129 +500,151 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
           onMouseLeave={scheduleClose}
           onFocus={openMenu}
         >
-            <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-6f6554)]">
-              Export {activeVisualizationLabel}
-            </div>
-
-            <div className="grid gap-1">
-              {canExportChartPng ? (
-                <button
-                  type="button"
-                  onClick={() => runAction(handleExportChartPng)}
-                  className={actionButtonClass(canExportChartPng)}
-                  disabled={!canExportChartPng}
-                >
-                  <span>Export chart PNG</span>
-                  {chartCount !== null ? (
-                    <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
-                      {chartCount}
-                    </span>
-                  ) : null}
-                </button>
-              ) : null}
-
-              {canExportSvg ? (
-                <button
-                  type="button"
-                  onClick={() => runAction(handleExportSvg)}
-                  className={actionButtonClass(canExportSvg)}
-                  disabled={!canExportSvg}
-                >
-                  <span>Export visualization SVG</span>
-                </button>
-              ) : null}
-              {canExportPng ? (
-                <div className="mx-1 mb-2 rounded-2xl border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-fbf7ea)] p-3 text-[var(--peridot-color-hex-26382b)]">
-                  <div className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-6f6554)]">
-                    PNG export options
-                  </div>
-                  <label className="mt-2 block text-xs font-bold text-[var(--peridot-color-hex-1d3326)]">
-                    Optional title
-                    <input
-                      type="text"
-                      value={pngExportTitle}
-                      onChange={(event) => setPngExportTitle(event.target.value)}
-                      className="mt-1 w-full rounded-xl border border-[var(--peridot-color-hex-cbdab2)] bg-[var(--peridot-color-hex-f8f5e8)] px-3 py-2 text-sm font-semibold text-[var(--peridot-color-hex-1d3326)] outline-none focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a35)]"
-                      placeholder={defaultPngExportTitle || 'Map title'}
-                    />
-                  </label>
-                  <div className="mt-3 grid gap-2 text-xs font-semibold text-[var(--peridot-color-hex-26382b)]">
-                    {[
-                      ['include-title', 'Show title at top', includePngTitle, setIncludePngTitle],
-                      ['include-date-range', 'Show visible date range at bottom', includePngDateRange, setIncludePngDateRange],
-                      ['include-active-filters', 'Show active filters at bottom', includePngActiveFilters, setIncludePngActiveFilters],
-                      ['include-result-counts', 'Show result counts at bottom', includePngResultCounts, setIncludePngResultCounts],
-                    ].map(([id, label, checked, setChecked]) => (
-                      <label key={id} className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={(event) => setChecked(event.target.checked)}
-                          className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
-                        />
-                        <span>{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                  <div className="mt-2 text-[11px] leading-relaxed text-[var(--peridot-color-hex-6f6554)]">
-                    With all options unchecked, the PNG export contains only the visualization.
-                  </div>
+          {isPngOptionsPanel ? (
+            <div>
+              <div className="flex items-center justify-between gap-3 px-3 pb-2 pt-1">
+                <div className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-6f6554)]">
+                  PNG export options
                 </div>
-              ) : null}
+                <button
+                  type="button"
+                  onClick={() => setActiveExportPanel('actions')}
+                  className="rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-6f6554)] transition hover:bg-[var(--peridot-color-hex-dfe9c8)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
+                >
+                  Back
+                </button>
+              </div>
 
-              {canExportPng ? (
+              <div className="mx-1 rounded-2xl border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-fbf7ea)] p-3 text-[var(--peridot-color-hex-26382b)]">
+                <label className="block text-xs font-bold text-[var(--peridot-color-hex-1d3326)]">
+                  Optional title
+                  <input
+                    type="text"
+                    value={pngExportTitle}
+                    onChange={(event) => setPngExportTitle(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-[var(--peridot-color-hex-cbdab2)] bg-[var(--peridot-color-hex-f8f5e8)] px-3 py-2 text-sm font-semibold text-[var(--peridot-color-hex-1d3326)] outline-none focus:border-[var(--peridot-role-ornament-line)] focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a35)]"
+                    placeholder={defaultPngExportTitle || 'Map title'}
+                  />
+                </label>
+                <div className="mt-3 grid gap-2 text-xs font-semibold text-[var(--peridot-color-hex-26382b)]">
+                  {[
+                    ['include-title', 'Show title at top', includePngTitle, setIncludePngTitle],
+                    ['include-date-range', 'Show visible date range at bottom', includePngDateRange, setIncludePngDateRange],
+                    ['include-active-filters', 'Show active filters at bottom', includePngActiveFilters, setIncludePngActiveFilters],
+                    ['include-result-counts', 'Show result counts at bottom', includePngResultCounts, setIncludePngResultCounts],
+                  ].map(([id, label, checked, setChecked]) => (
+                    <label key={id} className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={(event) => setChecked(event.target.checked)}
+                        className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="mt-2 text-[11px] leading-relaxed text-[var(--peridot-color-hex-6f6554)]">
+                  With all options unchecked, the PNG export contains only the visualization.
+                </div>
                 <button
                   type="button"
                   onClick={() => runAction(() => handleExportPng(buildPngExportOptions()))}
-                  className={actionButtonClass(canExportPng)}
+                  className={primaryActionButtonClass(canExportPng)}
                   disabled={!canExportPng}
                 >
-                  <span>Export visualization PNG</span>
+                  Download PNG
                 </button>
-              ) : null}
-              {typeof handleExportNodesCsv === 'function' ? (
-                <button
-                  type="button"
-                  onClick={() => runAction(handleExportNodesCsv)}
-                  className={actionButtonClass(canExportNodes)}
-                  disabled={!canExportNodes}
-                >
-                  <span>Export nodes CSV</span>
-                  <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
-                    {nodeCount}
-                  </span>
-                </button>
-              ) : null}
-              {typeof handleExportEdgesCsv === 'function' ? (
-                <button
-                  type="button"
-                  onClick={() => runAction(handleExportEdgesCsv)}
-                  className={actionButtonClass(canExportEdges)}
-                  disabled={!canExportEdges}
-                >
-                  <span>Export routes / edges CSV</span>
-                  <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
-                    {edgeCount}
-                  </span>
-                </button>
-              ) : null}
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="px-3 pb-2 pt-1 text-xs font-bold uppercase tracking-[0.16em] text-[var(--peridot-color-hex-6f6554)]">
+                Export {activeVisualizationLabel}
+              </div>
 
-            {exportStatus?.message ? (
-              <div
-                className={[
-                  'mx-1 mt-3 rounded-xl border p-3 text-xs leading-relaxed',
-                  exportStatus.kind === 'error'
-                    ? 'border-[var(--peridot-role-status-danger-border)] bg-[var(--peridot-role-status-danger-text)] text-[var(--peridot-role-status-danger-bg)]'
-                    : 'border-[var(--peridot-color-hex-cbdab2)] bg-[var(--peridot-color-hex-edf4df)] text-[var(--peridot-color-hex-26382b)]',
-                ].join(' ')}
-              >
-                {exportStatus.message}
-                {exportStatus.filename ? (
-                  <div className="mt-1 font-semibold">{exportStatus.filename}</div>
+              <div className="grid gap-1">
+                {canExportChartPng ? (
+                  <button
+                    type="button"
+                    onClick={() => runAction(handleExportChartPng)}
+                    className={actionButtonClass(canExportChartPng)}
+                    disabled={!canExportChartPng}
+                  >
+                    <span>Export chart PNG</span>
+                    {chartCount !== null ? (
+                      <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
+                        {chartCount}
+                      </span>
+                    ) : null}
+                  </button>
+                ) : null}
+
+                {canExportSvg ? (
+                  <button
+                    type="button"
+                    onClick={() => runAction(handleExportSvg)}
+                    className={actionButtonClass(canExportSvg)}
+                    disabled={!canExportSvg}
+                  >
+                    <span>Export visualization SVG</span>
+                  </button>
+                ) : null}
+                {canExportPng ? (
+                  <button
+                    type="button"
+                    onClick={openPngOptions}
+                    className={actionButtonClass(canExportPng)}
+                    disabled={!canExportPng}
+                  >
+                    <span>Export visualization PNG</span>
+                  </button>
+                ) : null}
+                {typeof handleExportNodesCsv === 'function' ? (
+                  <button
+                    type="button"
+                    onClick={() => runAction(handleExportNodesCsv)}
+                    className={actionButtonClass(canExportNodes)}
+                    disabled={!canExportNodes}
+                  >
+                    <span>Export nodes CSV</span>
+                    <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
+                      {nodeCount}
+                    </span>
+                  </button>
+                ) : null}
+                {typeof handleExportEdgesCsv === 'function' ? (
+                  <button
+                    type="button"
+                    onClick={() => runAction(handleExportEdgesCsv)}
+                    className={actionButtonClass(canExportEdges)}
+                    disabled={!canExportEdges}
+                  >
+                    <span>Export routes / edges CSV</span>
+                    <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] px-2 py-0.5 text-[10px] font-bold text-[var(--peridot-color-hex-6f6554)]">
+                      {edgeCount}
+                    </span>
+                  </button>
                 ) : null}
               </div>
-            ) : null}
+            </>
+          )}
+
+          {exportStatus?.message ? (
+            <div
+              className={[
+                'mx-1 mt-3 rounded-xl border p-3 text-xs leading-relaxed',
+                exportStatus.kind === 'error'
+                  ? 'border-[var(--peridot-role-status-danger-border)] bg-[var(--peridot-role-status-danger-text)] text-[var(--peridot-role-status-danger-bg)]'
+                  : 'border-[var(--peridot-color-hex-cbdab2)] bg-[var(--peridot-color-hex-edf4df)] text-[var(--peridot-color-hex-26382b)]',
+              ].join(' ')}
+            >
+              {exportStatus.message}
+              {exportStatus.filename ? (
+                <div className="mt-1 font-semibold">{exportStatus.filename}</div>
+              ) : null}
+            </div>
+          ) : null}
         </FloatingVisualizationMenu>
       ) : null}
     </div>
