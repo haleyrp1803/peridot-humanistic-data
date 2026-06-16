@@ -34,8 +34,7 @@ import { VisualizationTimelineScrubber } from './timelinePlaybackComponents.jsx'
 import { ANALYTICS_CHART_DEFINITIONS } from './analyticsConfig.js';
 
 const VISUALIZATION_TOOLS = Object.freeze({
-  POINT_MAP: 'point-map',
-  ROUTE_MAP: 'route-map',
+  LOCATION_MAP: 'location-map',
   ENTITY_NETWORK: 'entity-network',
   FORCE_NETWORK: 'force-network',
   CHART_WORKSPACE: 'chart-workspace',
@@ -689,9 +688,7 @@ export function PeridotVisualizationsWorkspace({
   const initialTool = visualizationsWorkspacePanel === 'analytics'
     ? VISUALIZATION_TOOLS.CHART_WORKSPACE
     : viewMode === 'geographic'
-      ? availability.hasRouteMap
-        ? VISUALIZATION_TOOLS.ROUTE_MAP
-        : VISUALIZATION_TOOLS.POINT_MAP
+      ? VISUALIZATION_TOOLS.LOCATION_MAP
       : personLayoutMode === 'force'
         ? VISUALIZATION_TOOLS.FORCE_NETWORK
         : VISUALIZATION_TOOLS.ENTITY_NETWORK;
@@ -758,42 +755,34 @@ export function PeridotVisualizationsWorkspace({
    * exist.
    */
   const toolDefinitions = useMemo(() => ({
-    [VISUALIZATION_TOOLS.POINT_MAP]: {
-      label: 'Point Map',
+    /*
+     * User-facing map language is intentionally broader than the renderer branch.
+     * Point and route maps share the same geographic map stage, so the header
+     * exposes one "Map by Location" choice and lets the capability audit decide
+     * whether the current rows contribute points, routes, or both.
+     */
+    [VISUALIZATION_TOOLS.LOCATION_MAP]: {
+      label: 'Map by Location',
       category: 'Mapping Visualizations',
-      available: availability.hasPointMap,
+      available: availability.hasPointMap || availability.hasRouteMap,
       action: onSelectPlaceMap,
-      unavailableTitle: 'Point Map is limited for this dataset.',
-      why: 'This dataset does not contain mapped point-place or point-coordinate roles in the current scope. Records may still be valid for routes, networks, charts, search, Inspector, or export.',
+      unavailableTitle: 'Map by Location is not available for this dataset.',
+      why: 'This dataset does not contain mapped point-place, point-coordinate, source-target place, or source-target coordinate-pair roles in the current scope. Records may still be valid for networks, charts, search, Inspector, or export.',
       availableInstead: [
-        availability.hasRouteMap ? 'Route Map' : null,
-        availability.hasCharts ? 'Chart Visualizations' : null,
-        availability.hasExploreData ? 'Explore Your Data' : null,
-      ].filter(Boolean),
-    },
-    [VISUALIZATION_TOOLS.ROUTE_MAP]: {
-      label: 'Route Map',
-      category: 'Mapping Visualizations',
-      available: availability.hasRouteMap,
-      action: onSelectPlaceMap,
-      unavailableTitle: 'Route Map is limited for this dataset.',
-      why: 'This dataset does not contain mapped source and target place roles or source-target coordinate pairs in the current scope. Records may still be valid for point maps, networks, charts, search, Inspector, or export.',
-      availableInstead: [
-        availability.hasPointMap ? 'Point Map' : null,
+        availability.hasNetwork ? 'Map by Person / Entity' : null,
         availability.hasCharts ? 'Chart Visualizations' : null,
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
     },
     [VISUALIZATION_TOOLS.ENTITY_NETWORK]: {
-      label: 'Entity / People Network',
+      label: 'Map by Person / Entity',
       category: 'Network Visualizations',
       available: availability.hasNetwork,
       action: onSelectPeopleNetwork,
-      unavailableTitle: 'Network visualizations are limited for this dataset.',
-      why: 'This dataset does not contain mapped source-target entity relationship fields in the current scope. That is expected for point/site, catalogue, and time-series datasets, which may still be valid for maps, charts, search, Inspector, and export.',
+      unavailableTitle: 'Map by Person / Entity is not available for this dataset.',
+      why: 'This dataset does not contain mapped source-target entity relationship fields in the current scope. That is expected for point/site, catalogue, and time-series datasets, which may still be valid for location maps, charts, search, Inspector, and export.',
       availableInstead: [
-        availability.hasPointMap ? 'Point Map' : null,
-        availability.hasRouteMap ? 'Route Map' : null,
+        availability.hasPointMap || availability.hasRouteMap ? 'Map by Location' : null,
         availability.hasCharts ? 'Chart Visualizations' : null,
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
@@ -803,11 +792,10 @@ export function PeridotVisualizationsWorkspace({
       category: 'Network Visualizations',
       available: availability.hasNetwork,
       action: onSelectForceDirected,
-      unavailableTitle: 'Force-Directed Network is limited for this dataset.',
-      why: 'Force-directed layouts require mapped source-target entity relationships. This dataset can still be valid for maps, charts, search, Inspector, and export even when it does not contain network data.',
+      unavailableTitle: 'Force-Directed Network is not available for this dataset.',
+      why: 'Force-directed layouts require mapped source-target entity relationships. This dataset can still be valid for location maps, charts, search, Inspector, and export even when it does not contain network data.',
       availableInstead: [
-        availability.hasPointMap ? 'Point Map' : null,
-        availability.hasRouteMap ? 'Route Map' : null,
+        availability.hasPointMap || availability.hasRouteMap ? 'Map by Location' : null,
         availability.hasCharts ? 'Chart Visualizations' : null,
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
@@ -817,12 +805,11 @@ export function PeridotVisualizationsWorkspace({
       category: 'Chart Visualizations',
       available: availability.hasCharts,
       action: onOpenAnalytics,
-      unavailableTitle: 'Chart Visualizations are limited for this dataset.',
+      unavailableTitle: 'Chart Visualizations are not available for this dataset.',
       why: 'No active records or chartable fields are available for charting in the current scope.',
       availableInstead: [
-        availability.hasPointMap ? 'Point Map' : null,
-        availability.hasRouteMap ? 'Route Map' : null,
-        availability.hasNetwork ? 'Network Visualizations' : null,
+        availability.hasPointMap || availability.hasRouteMap ? 'Map by Location' : null,
+        availability.hasNetwork ? 'Map by Person / Entity' : null,
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
     },
@@ -835,7 +822,7 @@ export function PeridotVisualizationsWorkspace({
       why: '',
       availableInstead: [],
     },
-  }), [availability.hasCharts, availability.hasExploreData, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onOpenChartVisualization, onOpenExplore, onSelectForceDirected, onSelectPeopleNetwork, onSelectPlaceMap]);
+  }), [availability.hasCharts, availability.hasExploreData, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onOpenExplore, onSelectForceDirected, onSelectPeopleNetwork, onSelectPlaceMap]);
 
   const selectedDefinition = toolDefinitions[selectedTool] || toolDefinitions[VISUALIZATION_TOOLS.CAPABILITY_SUMMARY];
   const activeVisualizationLabel = selectedDefinition.label;
@@ -843,13 +830,15 @@ export function PeridotVisualizationsWorkspace({
   const categories = [
     {
       label: 'Mapping Visualizations',
-      description: 'Point and route maps',
-      tools: [VISUALIZATION_TOOLS.POINT_MAP, VISUALIZATION_TOOLS.ROUTE_MAP],
+      description: 'Location and entity maps',
+      tools: [VISUALIZATION_TOOLS.LOCATION_MAP, VISUALIZATION_TOOLS.ENTITY_NETWORK],
+      selectionTools: [VISUALIZATION_TOOLS.LOCATION_MAP],
     },
     {
       label: 'Network Visualizations',
       description: 'Entity relationship views',
       tools: [VISUALIZATION_TOOLS.ENTITY_NETWORK, VISUALIZATION_TOOLS.FORCE_NETWORK],
+      selectionTools: [VISUALIZATION_TOOLS.ENTITY_NETWORK, VISUALIZATION_TOOLS.FORCE_NETWORK],
     },
     {
       label: 'Chart Visualizations',
@@ -873,7 +862,7 @@ export function PeridotVisualizationsWorkspace({
     }
   };
 
-  const isCategorySelected = (category) => category.tools.some((toolKey) => {
+  const isCategorySelected = (category) => (category.selectionTools || category.tools).some((toolKey) => {
     if (toolKey === VISUALIZATION_TOOLS.CHART_WORKSPACE) {
       return selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || Boolean(chartTypeFromToolKey(selectedTool));
     }
