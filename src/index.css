@@ -322,6 +322,130 @@ textarea {
 }
 
 
+/* Page-load entrance animations
+ * -----------------------------
+ * These utilities create Peridot's restrained illuminated-page arrival effect.
+ * They are intentionally generic so Home, Data, and future workspace landing
+ * surfaces can sequence important objects without adding animation libraries.
+ * Use opacity-only animation on elements that already rely on Tailwind transform
+ * utilities; use rise/scale on wrappers or elements without existing transforms.
+ * The homepage framing ornaments use side-specific wrapper animations so their
+ * images can keep their centering/rotation transforms while the frame itself
+ * drifts gently inward. Their home-specific delay lets the logo/sentence/action
+ * content establish itself before the filigree completes the frame.
+ */
+.peridot-appear-fade,
+.peridot-appear-soft,
+.peridot-appear-rise,
+.peridot-appear-frame-left,
+.peridot-appear-frame-right {
+  opacity: 0;
+  animation-delay: var(--peridot-appear-delay, 0ms);
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: opacity, transform;
+}
+
+.peridot-appear-fade {
+  animation-name: peridotAppearFade;
+  animation-duration: 1180ms;
+}
+
+.peridot-appear-soft {
+  transform: scale(0.982);
+  animation-name: peridotAppearSoft;
+  animation-duration: 1420ms;
+}
+
+.peridot-appear-rise {
+  transform: translateY(16px);
+  animation-name: peridotAppearRise;
+  animation-duration: 1260ms;
+}
+
+.peridot-appear-frame-left {
+  transform: translateX(-28px);
+  animation-name: peridotAppearFrameLeft;
+  animation-duration: 1520ms;
+}
+
+.peridot-appear-frame-right {
+  transform: translateX(28px);
+  animation-name: peridotAppearFrameRight;
+  animation-duration: 1520ms;
+}
+
+.peridot-appear-delay-0 { --peridot-appear-delay: 120ms; }
+.peridot-appear-delay-1 { --peridot-appear-delay: 380ms; }
+.peridot-appear-delay-2 { --peridot-appear-delay: 680ms; }
+.peridot-appear-delay-3 { --peridot-appear-delay: 940ms; }
+.peridot-appear-delay-4 { --peridot-appear-delay: 1120ms; }
+.peridot-appear-delay-5 { --peridot-appear-delay: 1300ms; }
+.peridot-appear-delay-home-frame { --peridot-appear-delay: 1040ms; }
+
+@keyframes peridotAppearFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes peridotAppearSoft {
+  from {
+    opacity: 0;
+    transform: scale(0.982);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes peridotAppearRise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes peridotAppearFrameLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes peridotAppearFrameRight {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-appear-fade,
+  .peridot-appear-soft,
+  .peridot-appear-rise,
+  .peridot-appear-frame-left,
+  .peridot-appear-frame-right {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+
+
 /* Peridot Upload Guide design layer
  * ---------------------------------
  * This layer translates the Palette Upload Guide's visual language into the app:

@@ -31,7 +31,7 @@ export function PeridotDataWorkspace({
   return (
     <section className="peridot-workspace-field flex min-h-full items-center text-[var(--peridot-color-hex-fbf7ea)]">
       <div className="peridot-workspace-frame w-full">
-        <div className="peridot-hero-card">
+        <div className="peridot-appear-rise peridot-appear-delay-0 peridot-hero-card">
           <div>
             <p className="peridot-kicker">Data workspace</p>
             <h1 className="peridot-title-medium">Choose what data to use.</h1>
@@ -54,49 +54,55 @@ export function PeridotDataWorkspace({
           <img
             src={dataDividerFiligree}
             alt=""
-            className="block h-auto w-full select-none object-contain opacity-95 drop-shadow-[0_12px_22px_var(--peridot-role-card-shadow)]"
+            className="peridot-appear-soft peridot-appear-delay-1 block h-auto w-full select-none object-contain opacity-95 drop-shadow-[0_12px_22px_var(--peridot-role-card-shadow)]"
             draggable="false"
           />
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-8">
-          <button
-            type="button"
-            onClick={handleDownloadPeridotTemplate}
-            className="peridot-button-cream min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
-            style={{
-              '--peridot-data-button-bg': '#0f2912',
-              '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
-              '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
-            }}
-          >
-            Start with a Template
-          </button>
+          <div className="peridot-appear-rise peridot-appear-delay-2">
+            <button
+              type="button"
+              onClick={handleDownloadPeridotTemplate}
+              className="peridot-button-cream min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+              style={{
+                '--peridot-data-button-bg': '#0f2912',
+                '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
+                '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
+              }}
+            >
+              Start with a Template
+            </button>
+          </div>
 
-          <button
-            type="button"
-            onClick={onOpenVisualizations}
-            className="peridot-button-cream min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
-            style={{
-              '--peridot-data-button-bg': '#0f2912',
-              '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
-              '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
-            }}
-          >
-            Start with Sample Data
-          </button>
+          <div className="peridot-appear-rise peridot-appear-delay-3">
+            <button
+              type="button"
+              onClick={onOpenVisualizations}
+              className="peridot-button-cream min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+              style={{
+                '--peridot-data-button-bg': '#0f2912',
+                '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
+                '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
+              }}
+            >
+              Start with Sample Data
+            </button>
+          </div>
 
-          <label
-            className="peridot-button-cream min-w-[18rem] cursor-pointer whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
-            style={{
-              '--peridot-data-button-bg': '#0f2912',
-              '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
-              '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
-            }}
-          >
-            Upload Your Data
-            <input type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values" onChange={handleColumnMappingTableUpload} className="sr-only" />
-          </label>
+          <div className="peridot-appear-rise peridot-appear-delay-4">
+            <label
+              className="peridot-button-cream min-w-[18rem] cursor-pointer whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+              style={{
+                '--peridot-data-button-bg': '#0f2912',
+                '--peridot-data-button-border': 'var(--peridot-role-ornament-corner-muted)',
+                '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
+              }}
+            >
+              Upload Your Data
+              <input type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values" onChange={handleColumnMappingTableUpload} className="sr-only" />
+            </label>
+          </div>
         </div>
 
         {columnMappingStaging ? (

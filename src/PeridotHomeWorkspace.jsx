@@ -43,15 +43,20 @@ function StageOrnament({ side = 'left' }) {
   const isRight = side === 'right';
   const xPosition = isRight ? 'left-[92.2%]' : 'left-[7.8%]';
   const rotationClass = isRight ? '-rotate-90' : 'rotate-90';
+  const entranceClass = isRight ? 'peridot-appear-frame-right' : 'peridot-appear-frame-left';
 
   return (
-    <img
-      src={homepageFiligree}
-      alt=""
+    <div
+      className={`${entranceClass} peridot-appear-delay-home-frame pointer-events-none absolute top-1/2 z-[1] ${xPosition}`}
       aria-hidden="true"
-      className={`pointer-events-none absolute top-1/2 z-[1] block w-[73cqh] max-w-none -translate-x-1/2 -translate-y-1/2 ${xPosition} ${rotationClass} opacity-100 drop-shadow-[0_0_18px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]`}
-      draggable="false"
-    />
+    >
+      <img
+        src={homepageFiligree}
+        alt=""
+        className={`block w-[73cqh] max-w-none -translate-x-1/2 -translate-y-1/2 ${rotationClass} opacity-100 drop-shadow-[0_0_18px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]`}
+        draggable="false"
+      />
+    </div>
   );
 }
 
@@ -79,19 +84,21 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
           <StageOrnament side="left" />
           <StageOrnament side="right" />
 
-          <img
-            src={peridotLogoTransparent}
-            alt="Peridot"
-            className="absolute left-[30%] top-1/2 block h-auto w-[30%] max-w-none -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_14px_26px_var(--peridot-color-rgba-rgba-0-0-0-0-38)]"
-            draggable="false"
-          />
+          <div className="peridot-appear-soft peridot-appear-delay-1 pointer-events-none absolute left-[30%] top-1/2 z-[2] w-[30%]">
+            <img
+              src={peridotLogoTransparent}
+              alt="Peridot"
+              className="block h-auto w-full max-w-none -translate-x-1/2 -translate-y-1/2 drop-shadow-[0_14px_26px_var(--peridot-color-rgba-rgba-0-0-0-0-38)]"
+              draggable="false"
+            />
+          </div>
 
           <div className="absolute left-[66.4%] top-1/2 flex w-[38%] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-[6.2cqw]">
-            <p className="m-0 w-[88%] text-center font-[Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[1.82cqw] font-normal leading-[1.28] tracking-[-0.012em] text-[var(--peridot-color-hex-f4f6df)] drop-shadow-[0_2px_14px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
+            <p className="peridot-appear-rise peridot-appear-delay-2 m-0 w-[88%] text-center font-[Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[1.82cqw] font-normal leading-[1.28] tracking-[-0.012em] text-[var(--peridot-color-hex-f4f6df)] drop-shadow-[0_2px_14px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
               Your go-to tool for exploring, visualizing, and presenting humanistic data.
             </p>
 
-            <div className="flex w-full flex-row items-center justify-center gap-[2.1cqw]">
+            <div className="peridot-appear-rise peridot-appear-delay-3 flex w-full flex-row items-center justify-center gap-[2.1cqw]">
               <button
                 type="button"
                 onClick={onUseSampleData}
