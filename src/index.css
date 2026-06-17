@@ -432,12 +432,171 @@ textarea {
   }
 }
 
+
+/* Visualization-workspace toggle entrance.
+ * These portal-mounted header/timeline toggle buttons sit outside the normal
+ * workspace DOM so they can stay above map and chart layers. Animate their
+ * fixed-position wrapper, not the button itself, so the inner hover transform
+ * remains responsive after the entrance choreography completes.
+ */
+.peridot-visualization-toggle-emerge-from-above,
+.peridot-visualization-toggle-emerge-from-below {
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  animation-delay: var(--peridot-toggle-emerge-delay, 0ms);
+  animation-duration: 920ms;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: opacity, transform;
+}
+
+.peridot-visualization-toggle-emerge-from-above {
+  animation-name: peridotVisualizationToggleEmergeFromAbove;
+}
+
+.peridot-visualization-toggle-emerge-from-below {
+  animation-name: peridotVisualizationToggleEmergeFromBelow;
+}
+
+@keyframes peridotVisualizationToggleEmergeFromAbove {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 16px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes peridotVisualizationToggleEmergeFromBelow {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 16px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+
+/* Visualization-stage switch choreography.
+ * The dark green block gives map/network/chart views a clean render interval
+ * before the next visualization appears. The transition is intentionally simple:
+ * fade to a fully opaque solid green field for about one second, switch the
+ * mounted visualization once the field is opaque, then fade from green into the
+ * new view for about one second. Keep the layer pointer-events:none so it never
+ * blocks map, chart, export, or timeline interactions.
+ */
+.peridot-visualization-stage-transition-shell {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.peridot-visualization-stage-transition-content {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 1000ms cubic-bezier(0.19, 1, 0.22, 1), filter 1000ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.peridot-visualization-stage-transition-shell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: inherit;
+  background: var(--peridot-role-interface-app-background);
+  opacity: 0;
+  transition: opacity 1000ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.peridot-visualization-stage-transition-active .peridot-visualization-stage-transition-content {
+  opacity: 0;
+  filter: saturate(0.72) brightness(0.58);
+}
+
+.peridot-visualization-stage-transition-active::after {
+  opacity: 1;
+}
+
+/* Timeline entrance sequencing.
+ * The timeline bar itself keeps the earlier upward float from the shared
+ * `peridot-appear-rise` wrapper. After the bar is in place, its visible
+ * controls fade in one by one from left to right. The descendant selector is
+ * deliberately scoped to the timeline sequence wrapper because the scrubber is
+ * rendered by `timelinePlaybackComponents.jsx`, outside this workspace file.
+ */
+.peridot-visualization-timeline-sequence {
+  opacity: 1;
+  transform: none;
+}
+
+.peridot-visualization-timeline-step,
+.peridot-visualization-timeline-sequence :is(button, label, input, select, output, [role="slider"], [aria-label], .peridot-kicker) {
+  opacity: 0;
+  transform: translateX(-10px);
+  animation: peridotVisualizationTimelineElement 720ms cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+
+.peridot-visualization-timeline-step:nth-child(1),
+.peridot-visualization-timeline-sequence :is(button, label, input, select, output, [role="slider"], [aria-label], .peridot-kicker):nth-of-type(1) { animation-delay: 1180ms; }
+.peridot-visualization-timeline-step:nth-child(2),
+.peridot-visualization-timeline-sequence :is(button, label, input, select, output, [role="slider"], [aria-label], .peridot-kicker):nth-of-type(2) { animation-delay: 1300ms; }
+.peridot-visualization-timeline-step:nth-child(3),
+.peridot-visualization-timeline-sequence :is(button, label, input, select, output, [role="slider"], [aria-label], .peridot-kicker):nth-of-type(3) { animation-delay: 1420ms; }
+.peridot-visualization-timeline-step:nth-child(4),
+.peridot-visualization-timeline-sequence :is(button, label, input, select, output, [role="slider"], [aria-label], .peridot-kicker):nth-of-type(4) { animation-delay: 1540ms; }
+.peridot-visualization-timeline-step:nth-child(5),
+.peridot-visualization-timeline-sequence :is(button, label, input, select, output, [role="slider"], [aria-label], .peridot-kicker):nth-of-type(5) { animation-delay: 1660ms; }
+.peridot-visualization-timeline-sequence :is(button, label, input, select, output, [role="slider"], [aria-label], .peridot-kicker):nth-of-type(n+6) { animation-delay: 1780ms; }
+
+@keyframes peridotVisualizationTimelineElement {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .peridot-appear-fade,
   .peridot-appear-soft,
   .peridot-appear-rise,
   .peridot-appear-frame-left,
   .peridot-appear-frame-right {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+
+  .peridot-visualization-toggle-emerge-from-above,
+  .peridot-visualization-toggle-emerge-from-below {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+    animation: none;
+  }
+
+  .peridot-visualization-stage-transition-content,
+  .peridot-visualization-stage-transition-active .peridot-visualization-stage-transition-content {
+    opacity: 1;
+    filter: none;
+    transition: none;
+  }
+
+  .peridot-visualization-stage-transition-shell::after {
+    opacity: 0;
+    transition: none;
+  }
+
+  .peridot-visualization-timeline-sequence,
+  .peridot-visualization-timeline-step {
     opacity: 1;
     transform: none;
     animation: none;

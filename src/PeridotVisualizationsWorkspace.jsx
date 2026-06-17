@@ -107,20 +107,29 @@ function FloatingOrnamentArrowToggle({
     .replace('visualization header', 'header')
     .replace('Visualization header', 'Header');
 
+  const emergeClass = placement === 'top'
+    ? 'peridot-visualization-toggle-emerge-from-below'
+    : 'peridot-visualization-toggle-emerge-from-above';
+  const emergeDelay = placement === 'top' ? '1080ms' : '620ms';
+
   return createPortal(
-    <button
-      type="button"
-      onClick={onClick}
-      className="pointer-events-auto fixed z-[25] flex h-7 min-w-[8.5rem] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 rounded-full border border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_78%,transparent)] px-3 text-[var(--peridot-role-interface-text-on-dark)] shadow-[0_7px_16px_rgba(0,0,0,0.28)] backdrop-blur-[1px] transition duration-150 hover:scale-[1.02] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_88%,transparent)] hover:text-[var(--peridot-role-ornament-sparkle)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-text-on-dark)]"
-      style={{ left, top }}
-      aria-label={label}
+    <div
+      className={`${emergeClass} pointer-events-auto fixed z-[9000]`}
+      style={{ left, top, '--peridot-toggle-emerge-delay': emergeDelay }}
     >
-      <span aria-hidden="true" className="h-px w-5 bg-gradient-to-r from-transparent to-[var(--peridot-role-ornament-line)] opacity-80" />
-      <span className="text-[10px] font-extrabold uppercase tracking-[0.18em]">
-        {displayLabel}
-      </span>
-      <span aria-hidden="true" className="h-px w-5 bg-gradient-to-l from-transparent to-[var(--peridot-role-ornament-line)] opacity-80" />
-    </button>,
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex h-7 min-w-[8.5rem] items-center justify-center gap-2 rounded-full border border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_78%,transparent)] px-3 text-[var(--peridot-role-interface-text-on-dark)] shadow-[0_7px_16px_rgba(0,0,0,0.28)] backdrop-blur-[1px] transition duration-150 hover:scale-[1.02] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_88%,transparent)] hover:text-[var(--peridot-role-ornament-sparkle)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-text-on-dark)]"
+        aria-label={label}
+      >
+        <span aria-hidden="true" className="h-px w-5 bg-gradient-to-r from-transparent to-[var(--peridot-role-ornament-line)] opacity-80" />
+        <span className="text-[10px] font-extrabold uppercase tracking-[0.18em]">
+          {displayLabel}
+        </span>
+        <span aria-hidden="true" className="h-px w-5 bg-gradient-to-l from-transparent to-[var(--peridot-role-ornament-line)] opacity-80" />
+      </button>
+    </div>,
     document.body
   );
 }
@@ -701,7 +710,11 @@ export function PeridotVisualizationsWorkspace({
   const headerToggleAnchorRef = useRef(null);
   const timelineToggleAnchorRef = useRef(null);
   const [chartExportControls, setChartExportControls] = useState(null);
+  const [isStageSwitching, setIsStageSwitching] = useState(false);
+  const [stageRenderKey, setStageRenderKey] = useState(0);
   const menuCloseTimerRef = useRef(null);
+  const stageSwitchTimerRef = useRef(null);
+  const stageRevealFrameRef = useRef(null);
 
   useEffect(() => {
     if (visualizationsWorkspacePanel === 'analytics') {
@@ -712,6 +725,13 @@ export function PeridotVisualizationsWorkspace({
   useEffect(() => () => {
     if (menuCloseTimerRef.current) {
       window.clearTimeout(menuCloseTimerRef.current);
+    }
+    if (stageSwitchTimerRef.current) {
+      window.clearTimeout(stageSwitchTimerRef.current);
+    }
+    if (stageRevealFrameRef.current) {
+      window.cancelAnimationFrame(stageRevealFrameRef.current);
+      stageRevealFrameRef.current = null;
     }
   }, []);
 
@@ -855,11 +875,43 @@ export function PeridotVisualizationsWorkspace({
 
   const selectTool = (toolKey) => {
     const tool = toolDefinitions[toolKey];
-    setSelectedTool(toolKey);
     closeMenu();
-    if (tool?.available && typeof tool.action === 'function') {
-      tool.action();
+
+    if (stageSwitchTimerRef.current) {
+      window.clearTimeout(stageSwitchTimerRef.current);
     }
+    if (stageRevealFrameRef.current) {
+      window.cancelAnimationFrame(stageRevealFrameRef.current);
+      stageRevealFrameRef.current = null;
+    }
+
+    if (toolKey === selectedTool) {
+      if (tool?.available && typeof tool.action === 'function') {
+        tool.action();
+      }
+      return;
+    }
+
+    /*
+     * View-switch choreography: fade through a fully opaque, solid dark-green
+     * field instead of swapping map/network/chart stages abruptly. The current
+     * visualization fades out for about one second; once the green field covers
+     * the stage, the next visualization mounts and starts fading in on the
+     * next animation frame. This avoids a fixed green hold while still giving
+     * React one paint cycle to mount the new stage under cover.
+     */
+    setIsStageSwitching(true);
+    stageSwitchTimerRef.current = window.setTimeout(() => {
+      setSelectedTool(toolKey);
+      if (tool?.available && typeof tool.action === 'function') {
+        tool.action();
+      }
+      setStageRenderKey((value) => value + 1);
+      stageRevealFrameRef.current = window.requestAnimationFrame(() => {
+        stageRevealFrameRef.current = null;
+        setIsStageSwitching(false);
+      });
+    }, 1000);
   };
 
   const isCategorySelected = (category) => (category.selectionTools || category.tools).some((toolKey) => {
@@ -954,7 +1006,7 @@ export function PeridotVisualizationsWorkspace({
           <div
             ref={headerToggleAnchorRef}
             className={[
-              'peridot-illuminated-panel relative z-[850] shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
+              'peridot-appear-rise peridot-appear-delay-0 peridot-illuminated-panel relative z-[850] shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
               isHeaderExpanded ? 'px-4 pb-4 pt-3' : 'px-4 py-2',
             ].join(' ')}
           >
@@ -968,11 +1020,11 @@ export function PeridotVisualizationsWorkspace({
                 </div>
 
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className={headerRowDecalClass} fill="none">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={`peridot-appear-fade ${headerRowDecalClass}`} style={{ '--peridot-appear-delay': '1120ms' }} fill="none">
                     <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
                     <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
                   </svg>
-                  {categories.filter((category) => !category.directAction).map((category) => {
+                  {categories.filter((category) => !category.directAction).map((category, categoryIndex) => {
                     const isOpen = openMenuCategory === category.label;
                     const selected = isCategorySelected(category);
                     const handleCategoryClick = (event) => {
@@ -986,7 +1038,8 @@ export function PeridotVisualizationsWorkspace({
                       <div
                         key={category.label}
                         data-visualization-menu-anchor="true"
-                        className={categoryClass(isOpen, selected)}
+                        className={`peridot-appear-fade ${categoryClass(isOpen, selected)}`}
+                        style={{ '--peridot-appear-delay': `${1040 - categoryIndex * 120}ms` }}
                         onMouseEnter={(event) => openMenu(category.label, event.currentTarget)}
                         onMouseLeave={scheduleMenuClose}
                         onFocus={(event) => openMenu(category.label, event.currentTarget)}
@@ -1033,7 +1086,8 @@ export function PeridotVisualizationsWorkspace({
                     <button
                       key={category.label}
                       type="button"
-                      className={headerActionClass}
+                      className={`peridot-appear-fade ${headerActionClass}`}
+                      style={{ '--peridot-appear-delay': '680ms' }}
                       onClick={() => {
                         closeMenu();
                         category.directAction();
@@ -1042,12 +1096,14 @@ export function PeridotVisualizationsWorkspace({
                       Explore
                     </button>
                   ))}
-                  <VisualizationExportMenu
-                    exportControls={activeExportControls}
-                    activeVisualizationLabel={activeVisualizationLabel}
-                    compact
-                  />
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className={`${headerRowDecalClass} scale-x-[-1]`} fill="none">
+                  <div className="peridot-appear-fade" style={{ '--peridot-appear-delay': '560ms' }}>
+                    <VisualizationExportMenu
+                      exportControls={activeExportControls}
+                      activeVisualizationLabel={activeVisualizationLabel}
+                      compact
+                    />
+                  </div>
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={`peridot-appear-fade ${headerRowDecalClass} scale-x-[-1]`} style={{ '--peridot-appear-delay': '460ms' }} fill="none">
                     <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
                     <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
                   </svg>
@@ -1060,12 +1116,14 @@ export function PeridotVisualizationsWorkspace({
                   <span className="truncate text-sm font-bold text-[var(--peridot-color-hex-f5ecd2)]">{activeVisualizationLabel}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <VisualizationExportMenu
-                    exportControls={activeExportControls}
-                    activeVisualizationLabel={activeVisualizationLabel}
-                    compact
-                  />
-                  <span className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-1 text-[11px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]">
+                  <div className="peridot-appear-fade" style={{ '--peridot-appear-delay': '560ms' }}>
+                    <VisualizationExportMenu
+                      exportControls={activeExportControls}
+                      activeVisualizationLabel={activeVisualizationLabel}
+                      compact
+                    />
+                  </div>
+                  <span className="peridot-appear-fade rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-1 text-[11px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]" style={{ '--peridot-appear-delay': '720ms' }}>
                     Navigation minimized
                   </span>
                 </div>
@@ -1084,11 +1142,18 @@ export function PeridotVisualizationsWorkspace({
           </div>
 
           <div className="relative z-[20] flex min-h-0 flex-1 flex-col gap-3" onMouseEnter={scheduleMenuClose}>
-            <div className="min-h-0 flex flex-1">
-              {renderWorkspaceBody()}
+            <div
+              className={[
+                'peridot-appear-soft peridot-appear-delay-5 peridot-visualization-stage-transition-shell min-h-0 flex flex-1',
+                isStageSwitching ? 'peridot-visualization-stage-transition-active' : '',
+              ].join(' ')}
+            >
+              <div key={stageRenderKey} className="peridot-visualization-stage-transition-content min-h-0 flex flex-1">
+                {renderWorkspaceBody()}
+              </div>
             </div>
             {timelineControlsProps ? (
-              <div ref={timelineToggleAnchorRef} className="relative shrink-0 pt-2">
+              <div ref={timelineToggleAnchorRef} className="peridot-appear-rise peridot-appear-delay-3 relative shrink-0 pt-2">
                 <FloatingOrnamentArrowToggle
                   anchorRef={timelineToggleAnchorRef}
                   placement="top"
@@ -1100,11 +1165,13 @@ export function PeridotVisualizationsWorkspace({
                   collapsedArrow="⌃"
                 />
                 {isTimelineExpanded ? (
-                  <VisualizationTimelineScrubber {...timelineControlsProps} />
+                  <div className="peridot-visualization-timeline-sequence">
+                    <VisualizationTimelineScrubber {...timelineControlsProps} />
+                  </div>
                 ) : (
-                  <div className="flex h-10 items-center justify-between rounded-[24px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-96),var(--peridot-color-rgba-rgba-5-29-19-0-98))] px-5 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_12px_32px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]">
-                    <span className="peridot-kicker !mb-0 text-[10px] text-[var(--peridot-color-hex-dfe9c8)]">Timeline</span>
-                    <span className="text-sm font-semibold text-[var(--peridot-color-hex-f5ecd2)]">{timelineControlsProps.currentRangeLabel}</span>
+                  <div className="peridot-visualization-timeline-sequence flex h-10 items-center justify-between rounded-[24px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-96),var(--peridot-color-rgba-rgba-5-29-19-0-98))] px-5 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_12px_32px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]">
+                    <span className="peridot-visualization-timeline-step peridot-kicker !mb-0 text-[10px] text-[var(--peridot-color-hex-dfe9c8)]">Timeline</span>
+                    <span className="peridot-visualization-timeline-step text-sm font-semibold text-[var(--peridot-color-hex-f5ecd2)]">{timelineControlsProps.currentRangeLabel}</span>
                   </div>
                 )}
               </div>
