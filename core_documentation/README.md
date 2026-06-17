@@ -20,9 +20,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`68f99da` — `add some homepage assets`** on branch **`main`**
+- **`bd9b807` — `Refine inspector workspace styling`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, and Inspector styling passes. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -81,6 +81,11 @@ The current state of the active `main` project includes:
 - custom palette import targets and a finite 30-color Analytics chart series library using approved green, gold, blue, and pink palettes; explicit **Charts** imports override chart series colors without altering unrelated app chrome
 - visualization chrome polish for header tabs, ornamental edge controls, map utility buttons, dropdown layering, map palette, chart controls, chart summary panels, and axis ticks
 - in-place Visualizations header Export menu for SVG, PNG, nodes CSV, routes/edges CSV, and chart PNG export
+- staged entrance animations for Home, Data, Visualizations, Timeline elements, and Chart Visualizations
+- solid dark-green visualization transitions between map/network/chart views
+- initial Force-Directed Network framing centered on the densest information cluster
+- chart-builder visual polish with muted dark-green paneling, clear tab states, gold cream-card controls, one-time reveal behavior, and scroll/dropdown layering fixes
+- Inspector visual polish matching the chart-builder language while suppressing visualization hide/show toggles when the full Inspector workspace is open
 - map PNG export options where the default output is map-only; optional titles appear above the exported map, and optional metadata appears below it using Peridot’s in-app serif/UI typography
 - clarified capability and unavailable-state wording: visualization types that cannot be supported now say they are **not available** rather than **limited**, point/route map readiness is grouped more intuitively, and the internal capability-diagnostics card has been removed from user-facing review
 - extracted sample data, mapping UI config, mapping field controls, and evidence field controls that reduce pressure on `App.jsx` and `PeridotColumnMappingModal.jsx`
@@ -163,7 +168,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 ### Analytics tools
 
 - **Chart Visualizations** available inside the Visualizations workspace
-- tabbed Analytics builder with **Chart**, **Fields**, **Categories**, and **Present** tabs
+- tabbed Analytics builder with **Chart type**, **X/Y variables**, **Visible categories**, and **Presentation** tabs
 - quarter-width control rail paired with a larger right-side chart card
 - chart menu with:
   - **Bar Chart**
@@ -357,6 +362,8 @@ Brand image assets are stored in `assets/`:
 ```text
 assets/
   Adobe Stock Filigree 1.png
+  Adobe Stock Filigree 2.png
+  Adobe Stock Filigree 3.png
   Adobe Stock Filigree Set.png
   Homepage Current 2026-06-16.png
   Homepage Layout Mockup.png
@@ -830,6 +837,7 @@ The maintainer documentation identifies the following areas as especially sensit
 - inspector-open interactions
 - shared side-panel shell behavior
 - cluster grouping and cluster inspector navigation
+- Inspector related-person navigation from related-list buttons; a current bug opens the blank state in some person-navigation paths while related-place navigation works
 - Advanced Search active-dataset state
 - Data upload state, single-CSV normalization, workbook mapping/import assembly, and validation summary behavior
 - Analytics expanded overlay positioning above the map area
@@ -862,7 +870,7 @@ Likely near-term priorities include:
 - keep active `main` on the D3/SVG path unless explicitly resuming MapLibre on a fresh branch/audit
 - preserve the current workspace-first routing model
 - refine the implemented bottom Visualizations timeline/scrubber after larger-dataset testing
-- refine the implemented dual-mode Inspector workspace, including section anchors, breadcrumbs, and future selected-entity/filter actions
+- refine the implemented dual-mode Inspector workspace, including section anchors, breadcrumbs, future selected-entity/filter actions, and the current related-person blank-state navigation bug
 - test the one-file Peridot CSV workflow, arbitrary role-based mapping, point/site imports, generic chart/evidence imports, route coordinate pairs, flexible Analytics charts, and workbook importer against larger and messier datasets
 - refine upload validation/capability wording if user testing shows confusion
 - treat the legacy three-file upload workflow as superseded by the one-file and mapped-import workflows

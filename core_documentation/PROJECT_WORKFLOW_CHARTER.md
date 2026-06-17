@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\Peridot\
 Current clean baseline:
 
 ```text
-68f99da — add some homepage assets
+bd9b807 — Refine inspector workspace styling
 ```
 
 Current branch note:
@@ -46,6 +46,8 @@ assets/Peridot Logo Transparent.png
 assets/Peridot Logo Gilded.png
 assets/Peridot Logo Gilded Transparent.png
 assets/Adobe Stock Filigree 1.png
+assets/Adobe Stock Filigree 2.png
+assets/Adobe Stock Filigree 3.png
 assets/Adobe Stock Filigree Set.png
 assets/Homepage Current 2026-06-16.png
 assets/Homepage Layout Mockup.png
@@ -95,6 +97,7 @@ Current fragile zones include:
 - map/network viewport measurement after switching between Analytics and map/network visualizations
 - shared side-panel shell behavior
 - inspector-open interactions after map clicks
+- Inspector related-person navigation from linked/related Inspector lists, especially the blank-state bug where related people fail but related places work
 - cluster grouping and cluster inspector navigation
 - Advanced Search active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, capability filters, dataset-wide Browse indexes, result facets, predictive suggestions, structured criteria, Boolean AND / OR / EXCLUDING logic, apply/clear behavior, and future metadata filters
 - Analytics expanded overlay positioning and backdrop contrast
@@ -207,6 +210,7 @@ Recent examples reinforced this rule:
 - a semantic shared-panel prop rename was rolled back after it broke inspector auto-open behavior
 - repeated Search & Filter patch-script failures showed that dense UI files should not be edited through brittle snippet assumptions
 - the team returned to the last clean baseline before proceeding
+- an Inspector related-person navigation fix that also changed place cluster display was rolled back after it caused related places to disappear and people clicks still opened the blank state
 
 ---
 
@@ -319,7 +323,7 @@ Current notable decisions:
 - Explore Your Data routes directly to Advanced Search; Inspector remains available through visualization/evidence workflows and compatibility paths rather than as a standalone top-level hamburger destination.
 - Export should be an in-place visualization header action rather than a standalone top-level workspace.
 - Chart Visualizations should use a dedicated large workspace with controls on the left and the chart canvas on the right.
-- Chart Visualizations should use a tabbed builder when that avoids a long cramped control rail; the current accepted tab set is Chart, Fields, Categories, and Present.
+- Chart Visualizations should use a tabbed builder when that avoids a long cramped control rail; the current accepted tab set is **Chart type**, **X/Y variables**, **Visible categories**, and **Presentation**.
 - Timeline is now implemented as a bottom Visualizations scrubber; future timeline work should refine this integration rather than reviving a standalone timeline workspace.
 - Map legend and controls should start minimized to preserve visualization workspace area.
 - Learn More about Peridot is intentionally a placeholder workspace for future project information, credits, tutorials, and help content.
@@ -364,6 +368,9 @@ Current notable decisions:
 - Map PNG export defaults to map-only output with no Peridot branding. Optional export title appears above the map image; optional metadata appears below it. This supports researchers using exports in presentations without unnecessary branding or whitespace.
 - Map PNG export should use Peridot’s in-app typography and readable text sizes for presentation legibility.
 - Capability wording should use plain availability language: unavailable visualization types are **not available** for the dataset, not merely “limited.” User-facing capability cards should avoid internal diagnostics language.
+- Staged workspace animations are acceptable when they orient the user without blocking work; the current visual direction uses subtle entrance choreography and a solid dark-green visualization transition rather than text-heavy loading states.
+- Force-Directed Network initial framing should privilege the densest information cluster / strongest node neighborhood rather than always fitting the whole network evenly.
+- Chart-builder and Inspector visual language now distinguish primary commands, related-object navigation, evidence/information cards, and passive metadata. Gold should not be used indiscriminately for every clickable object.
 
 
 ---
@@ -510,7 +517,7 @@ For a new chat, start with:
 
 ```text
 Source of truth folder: C:\Users\haley\OneDrive\Desktop\Peridot\
-Current documented clean baseline: `e50ebf6` — Scope chart palette imports to chart series. See `CHANGELOG.md` for the most recent documented safe baseline.
+Current documented clean baseline: `bd9b807` — Refine inspector workspace styling. See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 The new chat should be told:
@@ -536,3 +543,4 @@ The new chat should be told:
 - Analytics chart views currently use a left-control/right-chart workspace with tabbed builder controls, manual series/category selection, year-default date axes, complete simplified summary/legend panels, shared three-quarter chart / one-quarter legend card layout, anchored titles, method labels, major/minor ticks, default finite chart colors with explicit chart-targeted palette overrides, and header-based chart PNG export.
 - Logo, homepage filigree, homepage mockup, and current homepage screenshot assets live in `assets/`; the Home workspace imports the gilded transparent logo and selected Adobe Stock filigree.
 - Inspector person/place profiles currently show profile summaries, compact summary buttons, role-grouped related people/places, directed route summaries, selected uploaded fields, shared linked-letter detail navigation, clickable linked people/places, and route-row dossier navigation.
+- Known current issue: related-person navigation from some Inspector contexts can open the blank state while related-place navigation works; diagnose payload/resolver/router flow before editing.

@@ -2,9 +2,11 @@
 
 ## Current documented safe baseline
 
-- **`68f99da` — `add some homepage assets`** on branch **`main`**
+- **`bd9b807` — `Refine inspector workspace styling`** on branch **`main`**
 
 This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
+Recent June 2026 visual and interaction polish added workspace entrance choreography and clarified the current Visualizations/Inspector/Charts experience. The Home, Data, and Visualizations workspaces now use staged entrance animations; visualization switching fades through a solid dark-green interstitial; Chart Visualizations use a guided one-time reveal, muted dark-green builder panel, gold high-contrast tab states, and gold treatment for cream-card interactables while preserving side-panel scroll and dropdown layering; the force-directed network initially centers on the densest information cluster; and the Inspector workspace now follows the chart-builder visual language while suppressing visualization hide/show toggles when the full Inspector is open. A known Inspector navigation bug remains open: clicking related people from some Inspector contexts can open the blank state, while related place navigation works. A failed attempted fix was rolled back and should be re-diagnosed in a fresh bounded behavior pass before editing.
+
 The current Data Inputs / import workflow now provides:
 
 - downloadable Peridot CSV template plus one unified CSV/TSV/XLSX/XLS table-workbook upload path;
@@ -55,7 +57,7 @@ The current interface/workspace workflow now provides:
 - full-window workspaces for Data, Visualizations, Advanced Search, Learn More, Themes and Accessibility, and Inspector-compatible evidence review paths, with Explore Your Data routing directly into Advanced Search and Inspector remaining available through visualization/evidence workflows;
 - Visualizations workspace containing Place Map, People Network, Force-Directed, Chart Visualizations, a collapsible visualization header, and a bottom timeline scrubber;
 - Chart Visualizations redesigned as a large chart workspace with controls on the left and the chart canvas on the right;
-- Chart Visualizations now use a tabbed builder with Chart, Fields, Categories, and Present tabs, plus an optional editable presentation title;
+- Chart Visualizations now use a tabbed builder with **Chart type**, **X/Y variables**, **Visible categories**, and **Presentation** tabs, plus an optional editable presentation title;
 - Analytics chart rendering now reserves the left three-fourths of the chart card for chart marks and the right fourth for a complete simplified legend/summary column;
 - chart titles/subtitles are anchored near the top of the card, bar charts default to vertical orientation, and dense chart canvases use reduced whitespace;
 - chart export consolidated into the shared Visualizations header Export menu;
@@ -80,6 +82,19 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Workspace animation, chart-builder polish, force-network focus, and Inspector styling milestone
+
+- Updated the documented safe baseline to **`bd9b807` — `Refine inspector workspace styling`**.
+- Added staged entrance choreography for Home, Manage Your Data, Visualizations, Timeline controls, and Chart Visualizations.
+- Added visualization-stage transitions that fade the outgoing view into a solid dark-green field and fade directly into the next visualization without a loading label or intentional hold.
+- Added left-to-right timeline element sequencing after the timeline bar itself floats into place.
+- Redesigned Chart Visualizations as a more cohesive builder surface: muted dark-green side panel, four clearer builder tabs now labeled **Chart type**, **X/Y variables**, **Visible categories**, and **Presentation**, high-contrast inactive/hover/active tab states, one-time guided reveal, and chart fade-in after the builder context appears.
+- Applied a consistent Peridot gold treatment to chart-builder cream-card interactables, including buttons, dropdowns, steppers, text inputs, reset buttons, and category controls, while preserving side-panel scroll and dropdown layering.
+- Centered the Force-Directed Network initial viewport on the densest network cluster / strongest nearby focal area rather than presenting the whole graph evenly.
+- Updated the Inspector full workspace and compact side panel to share the chart-builder visual language: muted dark-green shell, cream information cards, gold primary commands, muted-green related-object navigation, and more restrained passive metadata treatment.
+- Suppressed visualization header/timeline hide-show toggles when the full Inspector workspace is open, while preserving those controls in ordinary Visualizations mode.
+- Recorded an open Inspector behavior issue for a fresh diagnostic pass: related-person navigation from some Inspector contexts opens the blank state; related-place navigation is working. The failed attempted fix touched `interactionHelpers.js` and `InspectorClusterView.jsx` and was rolled back with a clean tree.
 
 ### Home title-card, map export options, branding assets, and capability wording milestone
 
@@ -312,7 +327,16 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
-- **`68f99da` — `add some homepage assets`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`bd9b807` — `Refine inspector workspace styling`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`2bd6b3a` — `Center force network on dense cluster`** centers the Force-Directed Network on the densest information cluster / strongest local node neighborhood on initial load.
+- **`7c1f9fd` — `Polish chart builder controls`** updates Chart Visualizations tab labels and control styling, adds gold interactable treatment, and preserves side-panel scrolling/dropdown layering.
+- **`6dfd4c6` — `Animate chart workspace reveal`** adds the one-time guided Chart Visualizations reveal and muted chart-builder panel treatment.
+- **`7af288f` — `Refine visualization workspace transitions`** adds staged visualization entrance choreography and the solid-green view transition behavior.
+- **`ef8e188` — `Add workspace entrance animations`** adds shared Home/Data/Visualizations entrance animation utilities and reduced-motion handling.
+- **`3777fbc` — `Correct filigree asset spelling`** standardizes filigree asset filenames and references.
+- **`f8ea541` — `add a filegree asset`** tracks the added filigree design asset.
+- **`6f008ce` — `Redesign data workspace landing page`** redesigns the Manage Your Data landing surface around three primary start paths.
+- **`68f99da` — `add some homepage assets`** remains the preceding homepage-asset baseline.
 - **`bb971a5` — `Redesign Peridot homepage`** implements the fixed-ratio Home title-card composition with the gilded logo, filigree framing, concise sentence, and two CTA buttons.
 - **`e0d2399` — `Finalize map export options and ignore design source files`** finalizes map-only default PNG export, optional title/metadata annotations, and ignored design-source handling.
 - **`499acc7` — `Improve map export annotation readability`** increases annotation readability and anchors title/metadata placement around the exported map image.
@@ -376,6 +400,12 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Deferred / rolled-back work
 
+### Inspector related-person navigation blank-state issue
+
+Clicking related places from the Inspector currently resolves correctly, but clicking related people from some Inspector contexts opens the blank state instead of the selected person dossier. A combined attempted fix for person navigation and redundant place display touched `interactionHelpers.js` and `InspectorClusterView.jsx`, caused related places to disappear from the list, and was rolled back with `git restore`. The tree was clean afterward at `bd9b807`.
+
+Future work should start with a diagnostic behavior pass that traces the exact click payload from the person button to Inspector selection state, resolver output, and `InspectorBodyRouter` before making edits. Do not combine this diagnostic with additional visual/styling work.
+
 ### MapLibre migrated-overlay work paused / active preview removed
 
 The later MapLibre migrated-overlay branch is paused and should be retained as an archived experiment, not treated as active `main` code. The old dormant MapLibre preview files and dependency have now been removed from active `main` in `55a368c`.
@@ -400,11 +430,20 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `e50ebf6`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `bd9b807`.
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
-| 2026-06-16 | `68f99da` | add some homepage assets | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-16 | `bd9b807` | Refine inspector workspace styling | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-16 | `2bd6b3a` | Center force network on dense cluster |  |
+| 2026-06-16 | `7c1f9fd` | Polish chart builder controls |  |
+| 2026-06-16 | `6dfd4c6` | Animate chart workspace reveal |  |
+| 2026-06-16 | `7af288f` | Refine visualization workspace transitions |  |
+| 2026-06-16 | `ef8e188` | Add workspace entrance animations |  |
+| 2026-06-16 | `3777fbc` | Correct filigree asset spelling |  |
+| 2026-06-16 | `f8ea541` | add a filegree asset |  |
+| 2026-06-16 | `6f008ce` | Redesign data workspace landing page |  |
+| 2026-06-16 | `68f99da` | add some homepage assets |  |
 | 2026-06-16 | `bb971a5` | Redesign Peridot homepage |  |
 | 2026-06-16 | `e0d2399` | Finalize map export options and ignore design source files |  |
 | 2026-06-16 | `499acc7` | Improve map export annotation readability |  |

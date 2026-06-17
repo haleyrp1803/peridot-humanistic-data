@@ -22,11 +22,23 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`68f99da` — `add some homepage assets`**
+- **`bd9b807` — `Refine inspector workspace styling`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector visual hierarchy that separates gold primary commands from green related-object navigation.
 
 
+
+Recent animation, chart-builder, force-network, and Inspector styling milestones include:
+
+- **`bd9b807` — `Refine inspector workspace styling`**
+- **`2bd6b3a` — `Center force network on dense cluster`**
+- **`7c1f9fd` — `Polish chart builder controls`**
+- **`6dfd4c6` — `Animate chart workspace reveal`**
+- **`7af288f` — `Refine visualization workspace transitions`**
+- **`ef8e188` — `Add workspace entrance animations`**
+- **`3777fbc` — `Correct filigree asset spelling`**
+- **`f8ea541` — `add a filegree asset`**
+- **`6f008ce` — `Redesign data workspace landing page`**
 
 Recent homepage, export, branding, and capability-language milestones include:
 
@@ -251,6 +263,8 @@ Brand and design assets:
 - `assets/Peridot Logo Gilded.png`
 - `assets/Peridot Logo Gilded Transparent.png`
 - `assets/Adobe Stock Filigree 1.png`
+- `assets/Adobe Stock Filigree 2.png`
+- `assets/Adobe Stock Filigree 3.png`
 - `assets/Adobe Stock Filigree Set.png`
 - `assets/Homepage Current 2026-06-16.png`
 - `assets/Homepage Layout Mockup.png`
@@ -974,6 +988,8 @@ Future responsive work should be a narrow-window-specific override, not a univer
 
 These areas still deserve narrow, explicit passes:
 
+- Inspector related-person navigation currently needs a fresh behavior diagnostic: clicking related people from some Inspector contexts opens the blank state, while related-place navigation works. A failed attempted fix was rolled back after it broke related-place list display; trace payload → selection state → resolver → router before editing.
+
 - workspace routing and hamburger-menu behavior
 - map viewport centering/reset behavior
 - map/network viewport measurement after switching between Analytics and map/network modes
@@ -1036,12 +1052,12 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current documented baseline: **`68f99da` — `add some homepage assets`**
+- current documented baseline: **`bd9b807` — `Refine inspector workspace styling`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
-- the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filigree 1.png`
+- the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filigree 1.png`; the additional licensed filigree assets `Adobe Stock Filigree 2.png`, `Adobe Stock Filigree 3.png`, and `Adobe Stock Filigree Set.png` are retained for design reference/use
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
 - the simplified hamburger/workspace structure is committed; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge
@@ -1060,3 +1076,8 @@ A future chat should also be told that:
 ## Code commenting standard
 
 All future implementation work should keep source comments detailed enough for a new human developer to understand what each major section does, how it relates to other app sections and files, and why fragile or non-obvious decisions were made. Comments should identify compatibility bridges, cross-file state coupling, exported helper responsibilities, and retained legacy paths. They should be updated when behavior or routing changes so documentation in the code does not drift from the active app.
+
+
+## Current open issue note
+
+- Inspector related-person navigation from some Inspector contexts opens the blank state while related-place navigation works. The failed attempted fix touched `interactionHelpers.js` and `InspectorClusterView.jsx` and was rolled back. Diagnose the exact click payload and resolver output before editing.
