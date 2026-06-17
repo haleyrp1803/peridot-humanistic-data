@@ -547,9 +547,9 @@ function ControlSection({ eyebrow, title, description, children, compact = false
   return (
     <section
       className={[
-        'rounded-[20px] border border-[var(--peridot-role-ornament-paper-rule)]',
-        'bg-[linear-gradient(135deg,var(--peridot-role-analytics-chart-bg),var(--peridot-role-interface-card-background-warm))]',
-        'shadow-[0_8px_22px_rgba(0,0,0,0.10),inset_0_1px_0_rgba(255,255,255,0.42)]',
+        'rounded-[20px] border border-[rgba(176,132,50,0.32)]',
+        'bg-[#eee6cf]',
+        'shadow-[0_8px_22px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.34)]',
         compact ? 'p-3' : 'p-4',
       ].join(' ')}
     >
@@ -592,15 +592,13 @@ function ChartBuilderTabButton({ tab, active, onSelect }) {
       type="button"
       onClick={() => onSelect(tab.key)}
       className={[
-        'rounded-full border px-3.5 py-1.5 text-[10.5px] font-extrabold uppercase tracking-[0.13em] transition',
-        active
-          ? 'border-[var(--peridot-role-ornament-corner)] bg-[var(--peridot-role-button-primary-bg)] text-[var(--peridot-role-button-primary-text)] shadow-[0_8px_18px_rgba(86,52,22,0.20)]'
-          : 'border-[var(--peridot-role-button-secondary-border)] bg-[var(--peridot-role-button-secondary-bg)] text-[var(--peridot-role-button-secondary-text)] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-role-button-secondary-hover)]',
+        'peridot-chart-builder-tab-button rounded-full border px-3.5 py-1.5 text-[10.5px] font-extrabold uppercase tracking-[0.13em] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f6e6a7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#142d19]',
+        active ? 'peridot-chart-builder-tab-button-active' : '',
       ].join(' ')}
       aria-pressed={active}
     >
       <span>{tab.label}</span>
-      {tab.badge ? <span className="ml-1.5 rounded-full bg-[rgba(255,248,232,0.24)] px-1.5 py-0.5 text-[10px]">{tab.badge}</span> : null}
+      {tab.badge ? <span className="ml-1.5 rounded-full bg-[rgba(255,248,232,0.18)] px-1.5 py-0.5 text-[10px]">{tab.badge}</span> : null}
     </button>
   );
 }
@@ -614,6 +612,7 @@ export function AnalyticsPanelContent({
   // here; doing so would bypass Search/Timeline scope and make chart export
   // disagree with the visible chart.
   const chartSvgRef = useRef(null);
+  const [chartEntranceSettled, setChartEntranceSettled] = useState(false);
   const [exportStatus, setExportStatus] = useState(null);
   const [barOrientation, setBarOrientation] = useState('vertical');
   const [xField, setXField] = useState('year');
@@ -639,6 +638,11 @@ export function AnalyticsPanelContent({
   const [manualCategorySearch, setManualCategorySearch] = useState('');
   const [activeBuilderTab, setActiveBuilderTab] = useState('chart');
   const [presentationTitle, setPresentationTitle] = useState('');
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setChartEntranceSettled(true), 2300);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const {
     chartType,
@@ -1205,10 +1209,10 @@ export function AnalyticsPanelContent({
   };
 
   const chartBuilderTabs = [
-    { key: 'chart', label: 'Chart' },
-    { key: 'fields', label: 'Fields' },
-    { key: 'categories', label: 'Categories', badge: selectedManualCategoryValues.length ? selectedManualCategoryValues.length : '' },
-    { key: 'present', label: 'Present', badge: presentationTitle.trim() ? 'Title' : '' },
+    { key: 'chart', label: 'Chart type' },
+    { key: 'fields', label: 'X/Y variables' },
+    { key: 'categories', label: 'Visible categories', badge: selectedManualCategoryValues.length ? selectedManualCategoryValues.length : '' },
+    { key: 'present', label: 'Presentation', badge: presentationTitle.trim() ? 'Title' : '' },
   ];
 
   const renderActiveBuilderTab = () => {
@@ -1300,8 +1304,11 @@ export function AnalyticsPanelContent({
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-shell-bg)] text-[var(--peridot-role-analytics-chart-text)] shadow-[0_22px_60px_var(--peridot-role-card-shadow)] lg:flex-row">
-      <aside className="flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_78%,var(--peridot-role-interface-panel-background)_22%),var(--peridot-role-interface-card-background-muted))] lg:max-h-none lg:w-1/4 lg:border-b-0 lg:border-r">
-        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[linear-gradient(135deg,var(--peridot-role-interface-panel-background),var(--peridot-role-interface-panel-background-strong))] px-4 py-3 text-[var(--peridot-role-interface-text-on-dark)] shadow-[inset_0_-1px_0_rgba(255,255,255,0.04)]">
+      <aside className={[
+        'peridot-chart-builder-sequence flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[rgba(218,174,82,0.35)] bg-[#142d19] lg:max-h-none lg:w-1/4 lg:border-b-0 lg:border-r',
+        chartEntranceSettled ? 'peridot-chart-builder-sequence-settled' : '',
+      ].join(' ')}>
+        <div className="peridot-chart-builder-step peridot-chart-builder-step-0 shrink-0 border-b border-[rgba(244,226,174,0.12)] bg-[#142d19] px-4 py-3 text-[var(--peridot-role-interface-text-on-dark)] shadow-[inset_0_-1px_0_rgba(255,255,255,0.035)]">
           <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[26px] font-bold leading-none tracking-[-0.035em] text-[var(--peridot-role-interface-text-on-dark)]">
             Build Your Chart
           </h2>
@@ -1310,7 +1317,7 @@ export function AnalyticsPanelContent({
           </p>
         </div>
 
-        <div className="shrink-0 border-b border-[var(--peridot-role-ornament-line-muted)] bg-[color-mix(in_srgb,var(--peridot-role-analytics-sidebar-bg)_72%,var(--peridot-role-interface-panel-background)_28%)] px-4 py-2.5">
+        <div className="peridot-chart-builder-step peridot-chart-builder-step-1 shrink-0 border-b border-[rgba(244,226,174,0.12)] bg-[#142d19] px-4 py-2.5">
           <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Chart builder sections">
             {chartBuilderTabs.map((tab) => (
               <ChartBuilderTabButton
@@ -1323,7 +1330,7 @@ export function AnalyticsPanelContent({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 space-y-3 overflow-auto px-4 py-3.5">
+        <div className="peridot-chart-builder-step peridot-chart-builder-step-2 peridot-chart-builder-controls min-h-0 flex-1 space-y-3 overflow-auto px-4 py-3.5">
           {renderActiveBuilderTab()}
         </div>
       </aside>
@@ -1331,7 +1338,7 @@ export function AnalyticsPanelContent({
       <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--peridot-role-analytics-shell-bg)] lg:w-3/4">
         <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
           <div className="flex h-full min-h-0 w-full items-stretch">
-            <div className="flex h-full min-h-0 w-full rounded-[28px] border border-[var(--peridot-role-ornament-paper-rule)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 shadow-[0_22px_54px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.48)] md:p-4">
+            <div className="peridot-chart-stage-final flex h-full min-h-0 w-full rounded-[28px] border border-[var(--peridot-role-ornament-paper-rule)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 shadow-[0_22px_54px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.48)] md:p-4">
               <AnalyticsChartPreview chartData={displayChartData} svgRef={chartSvgRef} />
             </div>
           </div>
