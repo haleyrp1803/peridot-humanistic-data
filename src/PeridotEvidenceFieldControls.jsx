@@ -33,34 +33,34 @@ function normalizeAction(value) {
  */
 function IncludeIgnoreCheckboxPair({ action, disabled = false, onChange }) {
   const resolvedAction = disabled ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore : normalizeAction(action);
+  const isIncluded = resolvedAction === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include;
+  const isIgnored = resolvedAction === CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore;
 
   return (
-    <div className="flex flex-wrap gap-2">
-      <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60">
+    <div className="peridot-mapping-evidence-toggle" aria-label="Evidence field inclusion">
+      <label className={['peridot-mapping-evidence-choice', isIncluded ? 'peridot-mapping-evidence-choice-active' : '', disabled ? 'peridot-mapping-evidence-choice-disabled' : ''].filter(Boolean).join(' ')}>
         <input
           type="checkbox"
-          checked={resolvedAction === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include}
+          checked={isIncluded}
           disabled={disabled}
           onChange={(event) => onChange(
             event.target.checked
               ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.include
               : CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore,
           )}
-          className="h-4 w-4 accent-[var(--accent-color)] disabled:opacity-60"
         />
         <span>Include</span>
       </label>
-      <label className="inline-flex items-center gap-2 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60">
+      <label className={['peridot-mapping-evidence-choice', isIgnored ? 'peridot-mapping-evidence-choice-active' : '', disabled ? 'peridot-mapping-evidence-choice-disabled' : ''].filter(Boolean).join(' ')}>
         <input
           type="checkbox"
-          checked={resolvedAction === CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore}
+          checked={isIgnored}
           disabled={disabled}
           onChange={(event) => onChange(
             event.target.checked
               ? CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore
               : CUSTOM_INSPECTOR_FIELD_DEFAULTS.include,
           )}
-          className="h-4 w-4 accent-[var(--accent-color)] disabled:opacity-60"
         />
         <span>Ignore</span>
       </label>
@@ -99,11 +99,11 @@ export function InspectorFieldsStep({ selections, coreMapping, onActionChange, o
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose which remaining uploaded columns should be preserved for record dossiers, search, charts, export, and close reading. These fields can support record dossiers, Search & Filter, charts, and export without needing to become route or network fields.
+      <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+        Choose extra fields to preserve in dossiers, search, charts, filters, and export. Structural role columns are ignored here to avoid duplicates.
       </div>
 
-      <div className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
+      <div className="peridot-mapping-table-wrap overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
@@ -135,10 +135,10 @@ export function InspectorFieldsStep({ selections, coreMapping, onActionChange, o
                       type="text"
                       value={selection.label || selection.sourceColumn}
                       onChange={(event) => onLabelChange(index, event.target.value)}
-                      className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                      className="peridot-mapping-input w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
                     />
                   </td>
-                  <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</td>
+                  <td className="px-4 py-3"><span className={selection.analyticsEligible ? 'peridot-mapping-readiness-badge peridot-mapping-readiness-badge-chart' : 'peridot-mapping-readiness-badge'}>{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</span></td>
                 </tr>
               );
             })}
@@ -172,12 +172,12 @@ export function WorkbookInspectorFieldsStep({ workbookMapping, selections, onAct
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose which columns from the primary sheet and configured joined sheets should be preserved for record dossiers, search, charts, export, and close reading. Columns already mapped to visualization roles are automatically ignored here.
+      <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+        Choose extra workbook fields to preserve in dossiers, search, charts, filters, and export. Structural role columns are ignored here to avoid duplicates.
       </div>
 
       {Array.from(groupedSelections.entries()).map(([sheetName, sheetSelections]) => (
-        <div key={sheetName} className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
+        <div key={sheetName} className="peridot-mapping-table-wrap overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
           <div className="border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-3">
             <div className="font-semibold text-[var(--panel-card-text)]">{sheetName}</div>
             <div className="mt-1 text-xs text-[var(--panel-card-muted-text)]">
@@ -216,10 +216,10 @@ export function WorkbookInspectorFieldsStep({ workbookMapping, selections, onAct
                         type="text"
                         value={selection.label || buildWorkbookSelectionLabel(selection, workbookMapping.primarySheetName)}
                         onChange={(event) => onLabelChange(index, event.target.value)}
-                        className="w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                        className="peridot-mapping-input w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
                       />
                     </td>
-                    <td className="px-4 py-3">{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</td>
+                    <td className="px-4 py-3"><span className={selection.analyticsEligible ? 'peridot-mapping-readiness-badge peridot-mapping-readiness-badge-chart' : 'peridot-mapping-readiness-badge'}>{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</span></td>
                   </tr>
                 );
               })}

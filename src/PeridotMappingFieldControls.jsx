@@ -30,7 +30,7 @@ import {
  * rendering while avoiding a global CSS dependency.
  */
 const SOURCE_SELECT_CLASS =
-  'w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]';
+  'peridot-mapping-select w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]';
 
 const DISABLED_SOURCE_SELECT_CLASS = `${SOURCE_SELECT_CLASS} disabled:opacity-60`;
 
@@ -43,7 +43,7 @@ const DISABLED_SOURCE_SELECT_CLASS = `${SOURCE_SELECT_CLASS} disabled:opacity-60
  */
 export function TemporalMappingTable({ headers, temporalMapping = {}, onChange, compact = false }) {
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Temporal roles</div>
@@ -51,10 +51,10 @@ export function TemporalMappingTable({ headers, temporalMapping = {}, onChange, 
         </div>
       </div>
       <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-        The single-date role preserves simple record workflows. Date Start and Date End preserve intervals such as sent/received dates, inception/dissolution dates, activity spans, or active date ranges.
+        Use a single date for the primary record date, or Date Start and Date End for intervals such as activity spans, site lifespans, and correspondence ranges.
       </p>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
+      <div className="peridot-mapping-table-wrap mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
@@ -99,7 +99,7 @@ export function TemporalMappingTable({ headers, temporalMapping = {}, onChange, 
  */
 export function CoreRoleMappingTable({ title, description, definitions, headers, coreMapping, onChange }) {
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{title}</div>
@@ -107,7 +107,7 @@ export function CoreRoleMappingTable({ title, description, definitions, headers,
         </div>
       </div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
+      <div className="peridot-mapping-table-wrap mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
@@ -125,7 +125,7 @@ export function CoreRoleMappingTable({ title, description, definitions, headers,
                   <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
                 </td>
                 <td className="max-w-[24rem] px-4 py-3 leading-relaxed">{definition.description}</td>
-                <td className="max-w-[14rem] px-4 py-3">{(definition.usedFor || []).join(', ')}</td>
+                <td className="max-w-[14rem] px-4 py-3">{(definition.usedFor || []).map((item) => (<span key={item} className="peridot-mapping-mini-badge">{item}</span>))}</td>
                 <td className="px-4 py-3">
                   <select
                     value={coreMapping[definition.key] || ''}
@@ -157,14 +157,14 @@ export function WorkbookTemporalMappingTable({ workbookModel, workbookMapping, o
   const temporalMappings = workbookMapping.temporalMappings || {};
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Temporal roles</div>
       <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">Map one date, a start/end interval, or multiple recorded dates from workbook sheets.</div>
       <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-        Use Date Start and Date End for ranges such as sent/received dates, inception/dissolution dates, active periods, or site lifespans. These roles are preserved separately from the single Date field.
+        Use Date Start and Date End for intervals such as activity spans, site lifespans, and correspondence ranges.
       </p>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
+      <div className="peridot-mapping-table-wrap mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
@@ -232,11 +232,11 @@ export function WorkbookCoreRoleMappingTable({ title, description, definitions, 
   const coreMappings = workbookMapping.coreMappings || {};
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{title}</div>
       <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{description}</div>
 
-      <div className="mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
+      <div className="peridot-mapping-table-wrap mt-4 overflow-x-auto rounded-xl border border-[var(--panel-card-border)]">
         <table className="min-w-full border-collapse text-left text-sm">
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
@@ -259,7 +259,7 @@ export function WorkbookCoreRoleMappingTable({ title, description, definitions, 
                     <div className="mt-1 text-xs font-normal text-[var(--panel-card-muted-text)]">{definition.key}</div>
                   </td>
                   <td className="max-w-[24rem] px-4 py-3 leading-relaxed">{definition.description}</td>
-                  <td className="max-w-[14rem] px-4 py-3">{(definition.usedFor || []).join(', ')}</td>
+                  <td className="max-w-[14rem] px-4 py-3">{(definition.usedFor || []).map((item) => (<span key={item} className="peridot-mapping-mini-badge">{item}</span>))}</td>
                   <td className="px-4 py-3">
                     <select
                       value={currentRef.sheetName || ''}

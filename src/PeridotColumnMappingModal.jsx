@@ -92,14 +92,13 @@ function StepButton({ active, label, index, onClick }) {
       type="button"
       onClick={onClick}
       className={[
-        'rounded-2xl border px-4 py-3 text-left transition-all duration-150',
-        active
-          ? 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)] shadow-[0_10px_22px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]'
-          : 'border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] text-[var(--panel-card-muted-text)] hover:bg-[var(--button-secondary-hover)] hover:text-[var(--panel-card-text)]',
-      ].join(' ')}
+        'peridot-mapping-step-button',
+        active ? 'peridot-mapping-step-button-active' : '',
+      ].filter(Boolean).join(' ')}
+      aria-current={active ? 'step' : undefined}
     >
-      <div className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-80">Step {index + 1}</div>
-      <div className="mt-1 text-sm font-semibold">{label}</div>
+      <span className="peridot-mapping-step-number">{index + 1}</span>
+      <span className="peridot-mapping-step-label">{label}</span>
     </button>
   );
 }
@@ -117,7 +116,7 @@ function PreviewTable({ rows = [], headers = [], maxRows = 5 }) {
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
+    <div className="peridot-mapping-table-wrap overflow-x-auto rounded-2xl border border-[var(--panel-card-border)]">
       <table className="min-w-full border-collapse text-left text-xs text-[var(--panel-card-muted-text)]">
         <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
           <tr>
@@ -177,7 +176,7 @@ function CapabilityAuditCard({ audit, note }) {
   const openEndRows = temporalSummary.openEndRows ?? 0;
 
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Tool availability audit</div>
@@ -245,7 +244,7 @@ function CapabilityAuditCard({ audit, note }) {
 
 function MappingIntroCard({ eyebrow, title, children }) {
   return (
-    <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+    <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{eyebrow}</div>
       <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{title}</div>
       <div className="mt-2">{children}</div>
@@ -258,28 +257,23 @@ function IdentifyRecordsStep({ staging, previewRows, headers }) {
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Identify records" title="Describe what each row represents.">
         <p>
-          This phase reorients mapping around data roles rather than a correspondence-only schema. In this prototype, record labels,
-          IDs, citations, and links are preserved through the Evidence and analysis step while durable record-role mappings are added next.
-        </p>
-        <p className="mt-2">
-          Use this step to confirm the table shape before assigning temporal, place, and relationship roles. A row may represent a correspondence item,
-          site, event, object, publication, observation, relationship, or generic evidence record.
+          Confirm the table shape before assigning time, place, relationship, and evidence roles. A row may represent a letter, site, event, object, observation, catalogue entry, or other evidence record.
         </p>
       </MappingIntroCard>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Current file</div>
           <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{staging?.fileLabel || 'Staged data'}</div>
           <div className="mt-1 text-sm text-[var(--panel-card-muted-text)]">{staging?.rowCount || 0} rows · {staging?.columnCount || headers.length || 0} columns</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Good candidates</div>
           <div className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
             Record labels, IDs, source/citation fields, links, titles, notes, and descriptions.
           </div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Not required</div>
           <div className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
             Records do not have to contain networks, routes, coordinates, or exact dates to remain useful as evidence.
@@ -299,8 +293,7 @@ function TimeMappingStep({ headers, temporalMapping, onTemporalChange }) {
   return (
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Time" title="Map one date, multiple recorded dates, or an interval.">
-        Use a single date when one column best represents the record. Use Date Start and Date End for intervals such as sent/received dates,
-        inception/dissolution dates, active periods, or site lifespans.
+        Map one primary date, or use Date Start and Date End for intervals such as inception/dissolution dates, activity spans, or correspondence ranges.
       </MappingIntroCard>
       <TemporalMappingTable headers={headers} temporalMapping={temporalMapping} onChange={onTemporalChange} />
     </div>
@@ -314,10 +307,7 @@ function PlacesMappingStep({ definitions, headers, coreMapping, pointMapping, ro
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Places" title="Map locations according to how this dataset uses space.">
         <p>
-          Map one-location records as point places. Map relationship, correspondence, travel, exchange, or movement data as source/target route geography.
-        </p>
-        <p className="mt-2">
-          Coordinate-pair fields are latitude first, longitude second. Examples: 64.2008, -149.4937 or POINT(64.2008 -149.4937).
+          Use one-location fields for point/site records. Use source/target geography only when each row connects two places. Coordinate pairs are latitude first, longitude second.
         </p>
       </MappingIntroCard>
       <CoreRoleMappingTable
@@ -354,8 +344,7 @@ function RelationshipsMappingStep({ definitions, headers, coreMapping, onChange 
   return (
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Relationships" title="Map source/target entities only when the dataset contains relationships.">
-        These fields are optional. Relationship datasets may map source and target entities here; correspondence datasets often use sender and recipient columns. Point/site datasets, stock data,
-        catalogues, and many evidence tables may leave these roles unassigned.
+        Optional. Map source and target entities only when each row connects two people, institutions, objects, works, or other entities. Point/site datasets can leave these roles unassigned.
       </MappingIntroCard>
       <CoreRoleMappingTable
         title="Directed relationship roles"
@@ -424,19 +413,19 @@ function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilit
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Accepted records</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.acceptedRecordCount ?? 0}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Map available</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.capabilityCounts?.mapReady ?? 0}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Timeline available</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.capabilityCounts?.timelineReady ?? 0}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Warnings</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{warnings.length}</div>
         </div>
@@ -459,7 +448,7 @@ function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilit
       ) : null}
 
       {warnings.length ? (
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="font-semibold text-[var(--panel-card-text)]">Import warning preview</div>
           <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
             {warnings.slice(0, 8).map((warning, index) => (
@@ -488,19 +477,19 @@ function WorkbookOverviewStep({ staging, workbookModel, workbookSummary }) {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Workbook</div>
           <div className="mt-1 truncate text-lg font-bold text-[var(--panel-card-text)]">{staging.fileLabel}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Sheets</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{workbookModel?.sheets?.length || staging.sheetCount || 0}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Rows</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{workbookSummary?.totalRows ?? staging.rowCount ?? 0}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Columns</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{workbookSummary?.totalColumns ?? staging.columnCount ?? 0}</div>
         </div>
@@ -512,7 +501,7 @@ function WorkbookOverviewStep({ staging, workbookModel, workbookSummary }) {
 
       <div className="grid gap-3">
         {sheetSummaries.map((sheet) => (
-          <div key={sheet.sheetName} className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+          <div key={sheet.sheetName} className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="font-semibold text-[var(--panel-card-text)]">{sheet.sheetName}</div>
               <div className="text-sm text-[var(--panel-card-muted-text)]">{sheet.rowCount} rows · {sheet.columnCount} columns</div>
@@ -568,7 +557,7 @@ function WorkbookSetupStep({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <label className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="text-sm font-semibold text-[var(--panel-card-text)]">Primary record sheet</div>
           <select
             value={workbookMapping.primarySheetName || ''}
@@ -583,7 +572,7 @@ function WorkbookSetupStep({
           </select>
         </label>
 
-        <label className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <label className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="text-sm font-semibold text-[var(--panel-card-text)]">Primary unique ID column</div>
           <select
             value={workbookMapping.primaryLetterIdColumn || ''}
@@ -601,7 +590,7 @@ function WorkbookSetupStep({
         </label>
       </div>
 
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="font-semibold text-[var(--panel-card-text)]">Join additional sheets by unique ID</div>
@@ -626,7 +615,7 @@ function WorkbookSetupStep({
               const joinedHeaders = joinedSheet?.headers || [];
               const matchSummary = getLetterIdJoinMatchSummary(workbookModel, join);
               return (
-                <div key={`${join?.to?.sheetName || 'join'}-${index}`} className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+                <div key={`${join?.to?.sheetName || 'join'}-${index}`} className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
                   <div className="grid gap-3 lg:grid-cols-[1.1fr_1fr_1fr_auto]">
                     <label>
                       <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheet</div>
@@ -697,7 +686,7 @@ function WorkbookSetupStep({
       </div>
 
       {suggestions.length ? (
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="font-semibold text-[var(--panel-card-text)]">Primary sheet suggestions</div>
           <div className="mt-3 grid gap-2">
             {suggestions.slice(0, 5).map((suggestion) => (
@@ -734,17 +723,17 @@ function WorkbookIdentifyRecordsStep({ workbookModel, workbookMapping }) {
       </MappingIntroCard>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary record sheet</div>
           <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{workbookMapping.primarySheetName || '—'}</div>
           <div className="mt-1 text-sm text-[var(--panel-card-muted-text)]">{selectedSheet?.rowCount || 0} rows · {selectedSheet?.columnCount || 0} columns</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joins</div>
           <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{(workbookMapping.letterLevelJoins || []).length}</div>
           <div className="mt-1 text-sm text-[var(--panel-card-muted-text)]">Configured joined sheet(s)</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Evidence fields</div>
           <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{(workbookMapping.customFieldSelections || []).length}</div>
           <div className="mt-1 text-sm text-[var(--panel-card-muted-text)]">Candidates preserved in the Evidence step</div>
@@ -784,10 +773,7 @@ function WorkbookPlacesMappingStep({ workbookModel, workbookMapping, onRouteChan
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Places" title="Map locations according to how this workbook uses space.">
         <p>
-          Map one-location records as point places. Map relationship, correspondence, travel, exchange, or movement data as source/target route geography.
-        </p>
-        <p className="mt-2">
-          Coordinate-pair fields are latitude first, longitude second. Examples: 64.2008, -149.4937 or POINT(64.2008 -149.4937).
+          Use one-location fields for point/site records. Use source/target geography only when each row connects two places. Coordinate pairs are latitude first, longitude second.
         </p>
       </MappingIntroCard>
       <WorkbookCoreRoleMappingTable
@@ -824,8 +810,7 @@ function WorkbookRelationshipsMappingStep({ workbookModel, workbookMapping, onCh
   return (
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Relationships" title="Map source/target entities only when the workbook contains relationships.">
-        These fields are optional. Relationship datasets may map source and target entities here; correspondence datasets often use sender and recipient columns. Point/site datasets, stock data,
-        catalogues, and many evidence tables may leave these roles unassigned.
+        Optional. Map source and target entities only when each row connects two people, institutions, objects, works, or other entities. Point/site datasets can leave these roles unassigned.
       </MappingIntroCard>
       <WorkbookCoreRoleMappingTable
         title="Directed relationship roles"
@@ -849,19 +834,19 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary sheet</div>
           <div className="mt-1 truncate text-lg font-bold text-[var(--panel-card-text)]">{summary.primarySheetName || '—'}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary ID</div>
           <div className="mt-1 truncate text-lg font-bold text-[var(--panel-card-text)]">{summary.primaryLetterIdColumn || '—'}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheets</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary.letterLevelJoinCount || 0}</div>
         </div>
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Issues</div>
           <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary.errorCount} / {summary.warningCount}</div>
         </div>
@@ -895,7 +880,7 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
       ) : null}
 
 
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
         <div className="font-semibold text-[var(--panel-card-text)]">Configured unique-ID sheet joins</div>
         {workbookMapping.letterLevelJoins?.length ? (
           <div className="mt-3 space-y-2">
@@ -921,14 +906,14 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
         <PreviewTable rows={previewRows} headers={PERIDOT_TEMPLATE_COLUMNS} maxRows={3} />
       </div>
 
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
         <div className="font-semibold text-[var(--panel-card-text)]">Sheets used by core mappings</div>
         <div className="mt-2 text-sm text-[var(--panel-card-muted-text)]">
           {summary.mappedSheets?.length ? summary.mappedSheets.join(', ') : 'No mapped sheets yet.'}
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
         <div className="font-semibold text-[var(--panel-card-text)]">Selected evidence and analysis fields</div>
         {selectedCustomFields.length ? (
           <div className="mt-2 grid gap-2 md:grid-cols-2">
@@ -1463,13 +1448,13 @@ export function PeridotColumnMappingModal({
   };
 
   const footerHelper = isWorkbookMode
-    ? 'Closing keeps the staged workbook available in Data Inputs but does not change the active dataset. Confirm import assembles rows from the primary sheet and configured unique-ID joins, then replaces the active Peridot dataset.'
-    : 'Closing keeps the staged file available in Data Inputs but does not change the active dataset. Confirm import replaces the active Peridot dataset with this mapped table.';
+    ? 'Confirm import replaces the active dataset with assembled workbook rows.'
+    : 'Confirm import replaces the active dataset with this mapped table.';
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-sm">
-      <div className="flex max-h-[92vh] w-full max-w-[1180px] flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
-        <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-5">
+    <div className="peridot-mapping-modal fixed inset-0 z-[80] flex items-center justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-sm">
+      <div className="peridot-mapping-modal-shell flex flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
+        <div className="peridot-mapping-modal-header flex flex-wrap items-start justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
           <div>
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
               {isWorkbookMode ? 'Workbook mapping workspace' : 'Column mapping workspace'}
@@ -1478,7 +1463,7 @@ export function PeridotColumnMappingModal({
               {isWorkbookMode ? 'Assign workbook data roles for Peridot' : 'Assign data roles for Peridot'}
             </h2>
             <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-              {staging.fileLabel} staged as {staging.fileType}. This workspace lets you describe what your fields do: records, time, places, relationships, evidence, and analysis.
+              {staging.fileLabel} · {staging.fileType} · {staging.rowCount || 0} rows · {staging.columnCount || headers.length || 0} columns
             </p>
           </div>
           <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
@@ -1486,7 +1471,7 @@ export function PeridotColumnMappingModal({
           </button>
         </div>
 
-        <div className="grid gap-3 border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
+        <div className="peridot-mapping-progress border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-3">
           {stepKeys.map((step, index) => (
             <StepButton
               key={step}
@@ -1498,31 +1483,31 @@ export function PeridotColumnMappingModal({
           ))}
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        <div className="peridot-mapping-modal-body min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {!isWorkbookMode && activeStep === 'preview' ? (
             <div className="space-y-4">
               <div className="grid gap-3 md:grid-cols-4">
-                <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+                <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Format</div>
                   <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">{staging.fileType}</div>
                 </div>
-                <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+                <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Rows</div>
                   <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">{staging.rowCount}</div>
                 </div>
-                <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+                <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Columns</div>
                   <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">{staging.columnCount}</div>
                 </div>
-                <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Staged</div>
-                  <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">{staging.stagedAt || '—'}</div>
+                <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
+                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Mapping</div>
+                  <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">Ready</div>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
-                <p>{mappingState.formatGuidance?.dates}</p>
-                <p className="mt-2">{mappingState.formatGuidance?.coordinates}</p>
+              <div className="peridot-mapping-hint-row rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-xs leading-relaxed text-[var(--stat-card-muted-text)]">
+                <div><span>Date formats</span>{mappingState.formatGuidance?.dates}</div>
+                <div><span>Coordinates</span>{mappingState.formatGuidance?.coordinates}</div>
               </div>
 
               <PreviewTable rows={previewRows} headers={headers} />
@@ -1658,7 +1643,7 @@ export function PeridotColumnMappingModal({
           ) : null}
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
+        <div className="peridot-mapping-modal-footer flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-3">
           <p className="max-w-2xl text-sm text-[var(--panel-card-muted-text)]">{footerHelper}</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>
@@ -1692,16 +1677,16 @@ export function PeridotColumnMappingModal({
       {showCancelConfirmation ? (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[var(--peridot-role-interface-scrim)] p-4">
           <div className="w-full max-w-md rounded-3xl border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] p-5 shadow-[0_24px_60px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
-            <h3 className="text-lg font-bold text-[var(--heading-text)]">Are you sure you want to cancel?</h3>
+            <h3 className="text-lg font-bold text-[var(--heading-text)]">Discard this upload?</h3>
             <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-              The staged file will remain available in Data Inputs, but closing this workspace will not change the active dataset.
+              This will discard the uploaded file from the mapping workspace. The active dataset will not change.
             </p>
             <div className="mt-5 flex flex-wrap justify-end gap-2">
               <button type="button" onClick={handleReturnToWorkspace} className={buttonClassName({ variant: 'secondary' })}>
-                No, take me back.
+                Keep mapping
               </button>
               <button type="button" onClick={handleConfirmCancel} className={buttonClassName({ variant: 'danger' })}>
-                Yes, cancel.
+                Discard upload
               </button>
             </div>
           </div>

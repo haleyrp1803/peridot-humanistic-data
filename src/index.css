@@ -1249,3 +1249,576 @@ textarea {
   color: transparent;
   background: url('/assets/Adobe Stock Filigree 3.png') center / contain no-repeat;
 }
+
+/* Column-mapping folio visual refinement.
+ * This layer keeps the existing mapping workflow behavior intact while giving
+ * the upload/mapping modal the same folio hierarchy as the Inspector: dark
+ * green shell, subtle striped working field, cream mapping cards, compact gold
+ * progress states, and quieter explanatory text.
+ */
+.peridot-mapping-modal {
+  --mapping-shell-bg: #061d12;
+  --mapping-shell-bg-2: #0d2911;
+  --mapping-paper: #f7f1dc;
+  --mapping-paper-warm: #eee6c9;
+  --mapping-paper-muted: #e6dfbf;
+  --mapping-ink: #0b2411;
+  --mapping-muted: #405240;
+  --mapping-gold: #c79b3d;
+  --mapping-gold-light: #f0d27a;
+  --mapping-border: rgba(74, 93, 62, 0.20);
+}
+
+.peridot-mapping-modal-shell {
+  position: relative;
+  isolation: isolate;
+  border-color: rgba(221, 187, 105, 0.48) !important;
+  background: #061d12 !important;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(246, 223, 150, 0.18) !important;
+}
+
+.peridot-mapping-modal-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0.75rem;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 1.45rem;
+  background:
+    linear-gradient(135deg, rgba(2, 14, 8, 0.68), rgba(2, 14, 8, 0.80)),
+    repeating-linear-gradient(135deg, rgba(221, 187, 105, 0.10) 0 1px, transparent 1px 16px),
+    linear-gradient(135deg, #061d12 0%, #0d2911 48%, #04160f 100%);
+  box-shadow: inset 0 0 0 1px rgba(221, 187, 105, 0.14);
+}
+
+.peridot-mapping-modal-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.peridot-mapping-modal-header,
+.peridot-mapping-modal-footer {
+  border-color: rgba(221, 187, 105, 0.22) !important;
+  background:
+    linear-gradient(135deg, rgba(247, 241, 220, 0.94), rgba(232, 224, 191, 0.94)) !important;
+}
+
+.peridot-mapping-modal-header h2 {
+  color: var(--mapping-ink) !important;
+  letter-spacing: -0.025em;
+}
+
+.peridot-mapping-modal-header p,
+.peridot-mapping-modal-footer p {
+  color: var(--mapping-muted) !important;
+}
+
+.peridot-mapping-progress {
+  display: flex;
+  gap: 0.55rem;
+  overflow-x: auto;
+  background: rgba(255, 252, 241, 0.84) !important;
+  scrollbar-gutter: stable;
+}
+
+.peridot-mapping-step-button {
+  display: inline-flex;
+  min-width: max-content;
+  align-items: center;
+  gap: 0.48rem;
+  border: 1px solid rgba(74, 93, 62, 0.22);
+  border-radius: 999px;
+  background: rgba(230, 223, 191, 0.86);
+  color: var(--mapping-ink);
+  padding: 0.56rem 0.82rem;
+  font-size: 0.82rem;
+  font-weight: 750;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.peridot-mapping-step-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(199, 155, 61, 0.72);
+  background: rgba(238, 230, 201, 0.96);
+  box-shadow: 0 8px 18px rgba(86, 52, 22, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.peridot-mapping-step-button-active,
+.peridot-mapping-step-button-active:hover {
+  border-color: var(--mapping-gold-light);
+  background: linear-gradient(135deg, var(--mapping-gold), #d9ae4c);
+  color: #07190c;
+  box-shadow: 0 10px 22px rgba(86, 52, 22, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+.peridot-mapping-step-number {
+  display: inline-grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(7, 25, 12, 0.10);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.peridot-mapping-step-label {
+  white-space: nowrap;
+}
+
+.peridot-mapping-modal-body {
+  background: transparent !important;
+}
+
+.peridot-mapping-intro-card,
+.peridot-mapping-section-card,
+.peridot-mapping-stat-card {
+  border-color: var(--mapping-border) !important;
+  background: rgba(247, 241, 220, 0.90) !important;
+  color: var(--mapping-ink) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.peridot-mapping-section-card {
+  background: rgba(255, 250, 235, 0.92) !important;
+}
+
+.peridot-mapping-intro-card {
+  background: rgba(230, 223, 191, 0.92) !important;
+}
+
+
+.peridot-mapping-hint-row {
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: rgba(230, 223, 191, 0.92) !important;
+}
+
+.peridot-mapping-hint-row div {
+  color: var(--mapping-muted);
+}
+
+.peridot-mapping-hint-row span {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: #9a7331;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.peridot-mapping-table-wrap {
+  border-color: rgba(74, 93, 62, 0.18) !important;
+  background: rgba(255, 250, 235, 0.88) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.peridot-mapping-table-wrap table thead {
+  background: rgba(219, 205, 154, 0.82) !important;
+}
+
+.peridot-mapping-table-wrap th {
+  color: #2e3c2c !important;
+  font-size: 0.74rem;
+  letter-spacing: 0.055em;
+}
+
+.peridot-mapping-table-wrap td {
+  border-color: rgba(74, 93, 62, 0.12) !important;
+}
+
+.peridot-mapping-select,
+.peridot-mapping-input,
+.peridot-mapping-modal :is(select, input[type='text']) {
+  border-color: rgba(95, 113, 74, 0.24) !important;
+  background: rgba(255, 252, 241, 0.72) !important;
+  color: #0b2411 !important;
+}
+
+.peridot-mapping-select:focus,
+.peridot-mapping-input:focus,
+.peridot-mapping-modal :is(select, input[type='text']):focus {
+  border-color: #d9ae4c !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(246, 223, 150, 0.36) !important;
+}
+
+.peridot-mapping-mini-badge,
+.peridot-mapping-readiness-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: 0.08rem 0.18rem 0.08rem 0;
+  border: 1px solid rgba(95, 113, 74, 0.24);
+  border-radius: 999px;
+  background: rgba(230, 223, 191, 0.72);
+  color: #405240;
+  padding: 0.18rem 0.48rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.peridot-mapping-readiness-badge-chart {
+  border-color: rgba(199, 155, 61, 0.46);
+  background: rgba(230, 178, 77, 0.22);
+  color: #3b321d;
+}
+
+.peridot-mapping-evidence-toggle {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid rgba(95, 113, 74, 0.24);
+  border-radius: 999px;
+  background: rgba(230, 223, 191, 0.62);
+}
+
+.peridot-mapping-evidence-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.42rem 0.68rem;
+  color: #405240;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.peridot-mapping-evidence-choice + .peridot-mapping-evidence-choice {
+  border-left: 1px solid rgba(95, 113, 74, 0.18);
+}
+
+.peridot-mapping-evidence-choice input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.peridot-mapping-evidence-choice-active {
+  background: #c79b3d;
+  color: #07190c;
+}
+
+.peridot-mapping-evidence-choice-disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+@media (max-width: 760px) {
+  .peridot-mapping-hint-row {
+    grid-template-columns: 1fr;
+  }
+
+  .peridot-mapping-modal-header,
+  .peridot-mapping-modal-footer,
+  .peridot-mapping-progress,
+  .peridot-mapping-modal-body {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+
+/* Data workspace and mapping-window folio refinement.
+ * The upload entry surface and the mapping workspace now follow the Inspector's
+ * fixed-window folio model: a dark green outer frame, an inset striped field,
+ * cream cards for content, and transient mapping state. Abandoned uploads are
+ * intentionally not represented as resumable public staging cards.
+ */
+.peridot-data-workspace-shell {
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.peridot-data-folio-shell {
+  position: relative;
+  display: flex;
+  width: min(1120px, calc(100vw - 5rem));
+  height: min(82vh, 760px);
+  min-height: 620px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(221, 187, 105, 0.48);
+  border-radius: 30px;
+  background: #061d12;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.62),
+    inset 0 0 0 1px rgba(246, 223, 150, 0.16);
+}
+
+.peridot-data-folio-header {
+  position: relative;
+  z-index: 1;
+  border-bottom: 1px solid rgba(221, 187, 105, 0.20);
+  background: #0d2911;
+  padding: clamp(1.2rem, 2vw, 1.7rem) clamp(1.35rem, 2.6vw, 2.1rem);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    inset 0 -18px 34px rgba(0, 0, 0, 0.12);
+}
+
+.peridot-data-folio-header .peridot-title-medium {
+  color: var(--peridot-role-inspector-heading-text);
+}
+
+.peridot-data-folio-body {
+  position: relative;
+  z-index: 1;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: clamp(1rem, 2vw, 1.4rem) clamp(1.35rem, 2.6vw, 2.1rem) clamp(1.2rem, 2vw, 1.6rem);
+}
+
+.peridot-data-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.95rem;
+}
+
+.peridot-data-choice-card {
+  display: flex;
+  min-height: 11rem;
+  cursor: pointer;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.7rem;
+  border: 1px solid rgba(221, 187, 105, 0.26);
+  border-radius: 1.35rem;
+  background: rgba(247, 241, 220, 0.94);
+  color: #0b2411;
+  padding: 1.1rem;
+  text-align: left;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.peridot-data-choice-card strong {
+  display: block;
+  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.peridot-data-choice-card > span:last-child {
+  color: #405240;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.peridot-data-choice-card:hover,
+.peridot-data-choice-card:focus-within {
+  transform: translateY(-2px);
+  border-color: rgba(246, 223, 150, 0.78);
+  background: rgba(246, 231, 186, 0.98);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+
+.peridot-data-upload-card {
+  background: linear-gradient(135deg, #c79b3d, #d9ae4c);
+  border-color: #f0d27a;
+}
+
+.peridot-data-upload-card .peridot-section-label,
+.peridot-data-upload-card > span:last-child,
+.peridot-data-upload-card strong {
+  color: #07190c;
+}
+
+.peridot-data-current-card,
+.peridot-data-summary-card {
+  margin-top: 1rem;
+  border: 1px solid rgba(221, 187, 105, 0.22);
+  border-radius: 1.35rem;
+  background: rgba(247, 241, 220, 0.94);
+  color: #0b2411;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+.peridot-data-current-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.peridot-data-current-card h2 {
+  margin: 0.18rem 0 0;
+  color: #0b2411;
+  font-size: 1.1rem;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+.peridot-data-current-card p {
+  max-width: 34rem;
+  margin: 0;
+  color: #405240;
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.peridot-data-summary-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.peridot-data-summary-card ul {
+  margin: 0.6rem 0 0;
+  padding-left: 1rem;
+  color: #405240;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+.peridot-data-summary-card-ready {
+  background: rgba(238, 243, 221, 0.94);
+}
+
+.peridot-data-summary-card-warning {
+  background: rgba(255, 244, 216, 0.94);
+}
+
+.peridot-mapping-modal {
+  padding: clamp(1rem, 3vw, 2rem) !important;
+}
+
+.peridot-mapping-modal-shell {
+  width: min(1120px, calc(100vw - 5rem)) !important;
+  height: min(82vh, 760px) !important;
+  min-height: 620px;
+  max-height: none !important;
+}
+
+.peridot-mapping-modal-header,
+.peridot-mapping-modal-footer {
+  background: #0d2911 !important;
+  color: var(--peridot-role-inspector-chrome-text) !important;
+}
+
+.peridot-mapping-modal-header h2,
+.peridot-mapping-modal-header p,
+.peridot-mapping-modal-footer p,
+.peridot-mapping-modal-header div {
+  color: var(--peridot-role-inspector-chrome-text) !important;
+}
+
+.peridot-mapping-modal-header .text-xs,
+.peridot-mapping-modal-footer p {
+  color: color-mix(in srgb, var(--peridot-role-inspector-chrome-muted-text) 88%, #fff8e8 12%) !important;
+}
+
+.peridot-mapping-progress {
+  position: relative;
+  z-index: 1;
+  border-color: rgba(221, 187, 105, 0.18) !important;
+  background: rgba(6, 29, 18, 0.86) !important;
+}
+
+.peridot-mapping-step-button {
+  border-color: rgba(221, 187, 105, 0.28) !important;
+  background: rgba(247, 241, 220, 0.88) !important;
+  color: #0b2411 !important;
+}
+
+.peridot-mapping-step-button-active,
+.peridot-mapping-step-button-active:hover {
+  border-color: #f0d27a !important;
+  background: linear-gradient(135deg, #c79b3d, #d9ae4c) !important;
+  color: #07190c !important;
+}
+
+.peridot-mapping-modal-body {
+  position: relative;
+  z-index: 1;
+}
+
+.peridot-mapping-modal-footer {
+  border-color: rgba(221, 187, 105, 0.18) !important;
+}
+
+@media (max-width: 900px) {
+  .peridot-data-folio-shell,
+  .peridot-mapping-modal-shell {
+    width: calc(100vw - 2rem) !important;
+    height: calc(100vh - 2rem) !important;
+    min-height: 0;
+  }
+
+  .peridot-data-choice-grid,
+  .peridot-data-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .peridot-data-current-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* Column-mapping step rail no-scroll refinement.
+ * The mapping folio should behave like the Inspector window: fixed, stable, and
+ * not horizontally scrollable. Keep every step visible in one line by allowing
+ * the pill buttons to shrink evenly inside the available rail width. The labels
+ * remain single-line; compact typography and reduced padding handle the fit
+ * instead of a horizontal scrollbar.
+ */
+.peridot-mapping-progress {
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  justify-content: stretch;
+  gap: clamp(0.22rem, 0.48vw, 0.52rem) !important;
+  scrollbar-gutter: auto !important;
+}
+
+.peridot-mapping-step-button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  justify-content: center;
+  gap: clamp(0.24rem, 0.34vw, 0.42rem) !important;
+  padding: clamp(0.42rem, 0.62vw, 0.54rem) clamp(0.38rem, 0.70vw, 0.72rem) !important;
+  font-size: clamp(0.68rem, 0.72vw, 0.80rem) !important;
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+}
+
+.peridot-mapping-step-number {
+  flex: 0 0 auto;
+  width: clamp(1.22rem, 1.35vw, 1.42rem) !important;
+  height: clamp(1.22rem, 1.35vw, 1.42rem) !important;
+  font-size: clamp(0.62rem, 0.66vw, 0.72rem) !important;
+}
+
+.peridot-mapping-step-label {
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 920px) {
+  .peridot-mapping-step-button {
+    padding-inline: 0.32rem !important;
+    font-size: 0.64rem !important;
+  }
+
+  .peridot-mapping-step-number {
+    width: 1.12rem !important;
+    height: 1.12rem !important;
+  }
+}

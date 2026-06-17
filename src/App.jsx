@@ -4090,7 +4090,6 @@ export default function EuropeNetworkMapApp() {
     }
 
     try {
-      const importedAt = new Date().toLocaleTimeString();
       const isWorkbookImport = Boolean(columnMappingStaging.workbookMappingRequired || columnMappingStaging.mappingMode === 'workbook');
 
       if (isWorkbookImport) {
@@ -4110,18 +4109,11 @@ export default function EuropeNetworkMapApp() {
         setPeridotFileLabel(`${columnMappingStaging.fileLabel || 'Mapped workbook'} (mapped workbook)`);
         setPeridotValidationSummary(finalValidationSummary);
         setIsPeridotValidationModalOpen(true);
-        setColumnMappingStaging((current) => {
-          if (!current || current.status !== 'ready') return current;
-
-          return {
-            ...current,
-            mappingState: nextWorkbookMapping,
-            workbookMappingValidation: nextWorkbookValidation,
-            workbookMappingSummary: workbookSummary || current.workbookMappingSummary || null,
-            mappingValidationSummary: finalValidationSummary,
-            importedAt,
-          };
-        });
+        // A completed mapping import is durable through `peridotValidationSummary`
+        // and the active normalized dataset. The staged upload itself remains
+        // transient, so remove it once import succeeds instead of showing a
+        // resumable staging card in the Data workspace.
+        setColumnMappingStaging(null);
         setIsColumnMappingModalOpen(false);
         resetActiveDataInteractionState();
         setViewMode('geographic');
@@ -4150,23 +4142,11 @@ export default function EuropeNetworkMapApp() {
       setPeridotFileLabel(`${columnMappingStaging.fileLabel || 'Mapped table'} (mapped)`);
       setPeridotValidationSummary(finalValidationSummary);
       setIsPeridotValidationModalOpen(true);
-      setColumnMappingStaging((current) => {
-        if (!current || current.status !== 'ready') return current;
-
-        return {
-          ...current,
-          mappingState: {
-            ...(current.mappingState || {}),
-            coreMapping: nextCoreMapping,
-            temporalMapping: nextTemporalMapping,
-            pointMapping: nextPointMapping,
-            routeCoordinatePairMapping: nextRouteCoordinatePairMapping,
-            customFieldSelections: nextCustomFieldSelections,
-          },
-          mappingValidationSummary: finalValidationSummary,
-          importedAt,
-        };
-      });
+      // A completed mapping import is durable through `peridotValidationSummary`
+      // and the active normalized dataset. The staged upload itself remains
+      // transient, so remove it once import succeeds instead of showing a
+      // resumable staging card in the Data workspace.
+      setColumnMappingStaging(null);
       setIsColumnMappingModalOpen(false);
       resetActiveDataInteractionState();
       setViewMode('geographic');
@@ -4195,6 +4175,14 @@ export default function EuropeNetworkMapApp() {
   };
 
   const clearColumnMappingStaging = () => {
+    setColumnMappingStaging(null);
+    setIsColumnMappingModalOpen(false);
+  };
+
+  // Closing or cancelling the mapping workspace means abandoning the currently
+  // staged upload. Peridot should not surface abandoned staged files as public
+  // resumable state in the Data workspace.
+  const discardColumnMappingStaging = () => {
     setColumnMappingStaging(null);
     setIsColumnMappingModalOpen(false);
   };
@@ -4843,7 +4831,7 @@ export default function EuropeNetworkMapApp() {
         <PeridotColumnMappingModal
           open={isColumnMappingModalOpen}
           staging={columnMappingStaging}
-          onClose={() => setIsColumnMappingModalOpen(false)}
+          onClose={discardColumnMappingStaging}
           onSaveMapping={handleSaveColumnMappingState}
           onConfirmImport={handleConfirmColumnMappingImport}
         />
