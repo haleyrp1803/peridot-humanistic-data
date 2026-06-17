@@ -114,7 +114,7 @@ function buildLinkedLettersFromIncidentEdges(incidentEdges) {
     const aDate = a.parsedDate?.sortKey ?? Number.MAX_SAFE_INTEGER;
     const bDate = b.parsedDate?.sortKey ?? Number.MAX_SAFE_INTEGER;
     if (aDate !== bDate) return aDate - bDate;
-    return (a.sourcePerson || '').localeCompare(b.sourcePerson || '');
+    return getLetterSourcePerson(a).localeCompare(getLetterSourcePerson(b));
   });
 }
 
@@ -165,7 +165,7 @@ function buildTopPlacesFromLetters(linkedLetters) {
 function buildPlaceDetailsForPerson(linkedLetters, personLabel, mode) {
   const placeMap = new Map();
   linkedLetters.forEach((letter) => {
-    const matchesMode = mode === 'sent' ? letter.sourcePerson === personLabel : letter.targetPerson === personLabel;
+    const matchesMode = mode === 'sent' ? getLetterSourcePerson(letter) === personLabel : getLetterTargetPerson(letter) === personLabel;
     if (!matchesMode) return;
     const placeLabel = letter.targetLoc;
     if (!placeLabel) return;
@@ -187,7 +187,7 @@ function buildTopPeopleFromLetters(linkedLetters) {
   return Array.from(
     new Set(
       linkedLetters
-        .flatMap((letter) => [letter.sourcePerson, letter.targetPerson])
+        .flatMap((letter) => [getLetterSourcePerson(letter), getLetterTargetPerson(letter)])
         .filter(Boolean),
     ),
   ).slice(0, 12);
@@ -204,7 +204,7 @@ function buildLinkedLettersFromGraphEdges(graph) {
     const aDate = a.parsedDate?.sortKey ?? Number.MAX_SAFE_INTEGER;
     const bDate = b.parsedDate?.sortKey ?? Number.MAX_SAFE_INTEGER;
     if (aDate !== bDate) return aDate - bDate;
-    return (a.sourcePerson || '').localeCompare(b.sourcePerson || '');
+    return getLetterSourcePerson(a).localeCompare(getLetterSourcePerson(b));
   });
 }
 
@@ -242,6 +242,73 @@ function buildCounterpartPlaceDetailsFromLetters(placeLabel, linkedLetters = [])
     if (b.count !== a.count) return b.count - a.count;
     return a.label.localeCompare(b.label);
   });
+}
+
+function getLetterSourcePerson(letter) {
+  return letter?.sourcePerson || letter?.source || '';
+}
+
+function getLetterTargetPerson(letter) {
+  return letter?.targetPerson || letter?.target || '';
+}
+
+function letterMatchesPerson(letter, personLabel) {
+  return getLetterSourcePerson(letter) === personLabel || getLetterTargetPerson(letter) === personLabel;
+}
+
+function buildPersonCounterpartDetailsFromLetters(personLabel, linkedLetters = []) {
+  const counterpartMap = new Map();
+
+  linkedLetters.forEach((letter) => {
+    const sourcePerson = getLetterSourcePerson(letter);
+    const targetPerson = getLetterTargetPerson(letter);
+    const counterpartLabel = sourcePerson === personLabel ? targetPerson : targetPerson === personLabel ? sourcePerson : '';
+
+    if (!counterpartLabel) return;
+
+    const existing = counterpartMap.get(counterpartLabel) || {
+      label: counterpartLabel,
+      count: 0,
+    };
+    existing.count += 1;
+    counterpartMap.set(counterpartLabel, existing);
+  });
+
+  return Array.from(counterpartMap.values()).sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return a.label.localeCompare(b.label);
+  });
+}
+
+function buildPersonDetailSelectionFromLetters(name, linkedLetters = [], personMetadataByName) {
+  const personLetters = linkedLetters.filter((letter) => letterMatchesPerson(letter, name));
+  if (!personLetters.length) return null;
+
+  const { earliestDate, latestDate } = buildDateBoundsFromLetters(personLetters);
+  const counterpartDetails = buildPersonCounterpartDetailsFromLetters(name, personLetters);
+
+  return {
+    id: `person-detail:${name}`,
+    label: name,
+    degree: personLetters.length,
+    radius: 6,
+    __kind: 'person-detail',
+    incidentEdgeCount: counterpartDetails.length,
+    linkedLetterCount: personLetters.length,
+    linkedLetters: personLetters,
+    counterpartLabels: counterpartDetails.map((item) => `${item.label} (${item.count})`),
+    counterpartDetails,
+    earliestDate,
+    latestDate,
+    anchorLabel: '',
+    personMetadata: personMetadataByName.get(name) || null,
+    detailLabel: name,
+    detailPlaces: buildTopPlacesFromLetters(personLetters),
+    sentPlaceDetails: buildPlaceDetailsForPerson(personLetters, name, 'sent'),
+    sentPlaceLabels: buildPlaceDetailsForPerson(personLetters, name, 'sent').map((item) => `${item.label} (${item.count})`),
+    receivedPlaceDetails: buildPlaceDetailsForPerson(personLetters, name, 'received'),
+    receivedPlaceLabels: buildPlaceDetailsForPerson(personLetters, name, 'received').map((item) => `${item.label} (${item.count})`),
+  };
 }
 
 
@@ -292,7 +359,13 @@ export function buildPersonDetailSelection(name, graph, personMetadataByName) {
   const incidentEdges = graph.edges.filter(
     (edge) => edge.sourceLabel === name || edge.targetLabel === name,
   );
-  if (!incidentEdges.length) return null;
+  if (!incidentEdges.length) {
+    return buildPersonDetailSelectionFromLetters(
+      name,
+      buildLinkedLettersFromGraphEdges(graph),
+      personMetadataByName,
+    );
+  }
 
   const linkedLetters = buildLinkedLettersFromIncidentEdges(incidentEdges);
   const { earliestDate, latestDate } = buildDateBounds(incidentEdges);
@@ -379,7 +452,7 @@ export function buildPlaceDetailSelection(placeLabel, graph, personMetadataByNam
   };
 }
 
-export function resolveSelection(selectedSelection, graph, personMetadataByName) {
+export function resolveSelection(selectedSelection, graph, personMetadataByName, options = {}) {
   if (!selectedSelection) return null;
 
   if (selectedSelection.kind === 'edge') {
@@ -400,7 +473,15 @@ export function resolveSelection(selectedSelection, graph, personMetadataByName)
   }
 
   if (selectedSelection.kind === 'person-detail') {
-    return buildPersonDetailSelection(selectedSelection.name, graph, personMetadataByName);
+    const currentGraphSelection = buildPersonDetailSelection(selectedSelection.name, graph, personMetadataByName);
+    if (currentGraphSelection) return currentGraphSelection;
+
+    const fallbackGraph = options.personGraphFallback;
+    if (fallbackGraph && fallbackGraph !== graph) {
+      return buildPersonDetailSelection(selectedSelection.name, fallbackGraph, personMetadataByName);
+    }
+
+    return null;
   }
 
   if (selectedSelection.kind === 'place-detail') {
@@ -420,7 +501,7 @@ export function enrichSelectedLetters(selectedProps, personMetadataByName) {
 
   return baseLetters.map((letter) => ({
     ...letter,
-    sourcePersonMetadata: personMetadataByName.get(letter.source) || null,
-    targetPersonMetadata: personMetadataByName.get(letter.target) || null,
+    sourcePersonMetadata: personMetadataByName.get(getLetterSourcePerson(letter)) || null,
+    targetPersonMetadata: personMetadataByName.get(getLetterTargetPerson(letter)) || null,
   }));
 }

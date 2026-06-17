@@ -3291,8 +3291,10 @@ export default function EuropeNetworkMapApp() {
       };
     }
 
-    return resolveSelection(selectedSelection, graph, personMetadataByName);
-  }, [selectedSelection, graph, personMetadataByName]);
+    return resolveSelection(selectedSelection, graph, personMetadataByName, {
+      personGraphFallback: personGraph,
+    });
+  }, [selectedSelection, graph, personGraph, personMetadataByName]);
 
   const selectedLetterMetadata = useMemo(() => {
     if (selectedProps?.__kind === 'letter-detail') return [];
