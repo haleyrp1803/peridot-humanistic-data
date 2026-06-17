@@ -2,10 +2,10 @@
 
 ## Current documented safe baseline
 
-- **`bd9b807` — `Refine inspector workspace styling`** on branch **`main`**
+- **`74db963` — `Refine Inspector reference layout and record tables`** on branch **`main`**
 
 This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
-Recent June 2026 visual and interaction polish added workspace entrance choreography and clarified the current Visualizations/Inspector/Charts experience. The Home, Data, and Visualizations workspaces now use staged entrance animations; visualization switching fades through a solid dark-green interstitial; Chart Visualizations use a guided one-time reveal, muted dark-green builder panel, gold high-contrast tab states, and gold treatment for cream-card interactables while preserving side-panel scroll and dropdown layering; the force-directed network initially centers on the densest information cluster; and the Inspector workspace now follows the chart-builder visual language while suppressing visualization hide/show toggles when the full Inspector is open. A known Inspector navigation bug remains open: clicking related people from some Inspector contexts can open the blank state, while related place navigation works. A failed attempted fix was rolled back and should be re-diagnosed in a fresh bounded behavior pass before editing.
+Recent June 2026 visual and interaction polish added workspace entrance choreography and clarified the current Visualizations/Inspector/Charts experience. The Home, Data, and Visualizations workspaces now use staged entrance animations; visualization switching fades through a solid dark-green interstitial; Chart Visualizations use a guided one-time reveal, muted dark-green builder panel, gold high-contrast tab states, and gold treatment for cream-card interactables while preserving side-panel scroll and dropdown layering; the force-directed network initially centers on the densest information cluster; and the Inspector workspace now follows the chart-builder visual language while suppressing visualization hide/show toggles when the full Inspector is open. The earlier Inspector related-person navigation blank-state bug has been resolved by routing person-detail resolution through the appropriate people-graph fallback while preserving the mounted Visualizations overlay.
 
 The current Data Inputs / import workflow now provides:
 
@@ -42,7 +42,9 @@ The current Inspector workflow now provides a dual-mode evidence system:
 - linked-letter detail pages participate in the shared Inspector history;
 - linked-letter source/target people and places are clickable and return through Back;
 - directed route rows open route/edge dossier views with linked letters;
-- person/place profile pages show summary metrics, related people, related places, directed routes, linked-letter counts, selected uploaded fields, and dedicated linked-letter detail pages.
+- person/place profile pages use a scholarly reference-entry layout with lead summaries, optional image placeholders, compact metrics, related people, related places, directed connections, selected uploaded fields, and dedicated connected-record detail pages;
+- unresolved/missing place values are preserved as **Unknown** place-like buckets rather than dropped from connected-place summaries;
+- connected-record tables provide sorting, per-column filtering, 10/25/50 pagination, and capability-aware columns: source/target entity and source/target location for relational datasets, or entity/location for point-only datasets.
 
 The current Advanced Search workflow is the main Explore Your Data surface. It uses a tabbed research-search layout with Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. It preserves draft/apply global filtering, current applied scope, predictive suggestions, route-place and route-people filters, year text inputs, minimum-weight filtering, capability filters, dataset-wide browse indexes for people/places/routes/evidence fields, result cards with Inspector handoff, result facets with counts, and structured criteria supporting AND, OR, and EXCLUDING logic. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
 
@@ -82,6 +84,21 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Inspector reference-entry layout, mounted overlay, Unknown-as-place, and record-table capability milestone
+
+- Updated the documented safe baseline to **`74db963` — `Refine Inspector reference layout and record tables`**.
+- Kept the Visualizations workspace mounted behind the full Inspector overlay so opening/closing the full Inspector no longer reloads or replays the underlying map/network/chart workspace.
+- Suppressed Visualizations header/timeline hide-show buttons while the full Inspector overlay is open so those controls do not layer above the Inspector.
+- Fixed Inspector related-person navigation from geographic/place contexts by preserving the people-graph fallback through selection resolution; related person and related place navigation now share the same full-workspace Inspector pathway and Back history.
+- Reworked the full person/place Inspector from a dashboard-card model into a scholarly reference-entry layout with a lead summary, optional image/placeholder, prose description, compact summary facts, connected places, connected people, directed connections, selected fields, and connected records.
+- Refined the compact side Inspector so it remains an at-a-glance summary while using the same Peridot dark-green/cream/gold reference visual language as the full Inspector.
+- Added expandable connected people/place/connection lists so high-volume entities such as Firenze/Fiorenza and von Habsburg, Maria Magdalena do not silently truncate at an arbitrary count.
+- Treated **Unknown** as a first-class place-like bucket, parallel to person/entity values such as **Illegible**, so unresolved or missing place values are preserved, counted, and navigable where the record metadata can support an Inspector view.
+- Updated connected-record tables to support sorting, per-column filtering, 10/25/50 page-size controls, first/previous/numbered/next/end pagination, and date-first chronological defaults.
+- Made connected-record table columns capability-aware: relational source-target datasets show source entity, target entity, source location, and target location columns, while point-only datasets show the simpler entity/location form.
+- Shifted Inspector wording from correspondence-only language toward generic humanistic-data language: related records / connected records, person/entity, connected places, connected people, and directed connections.
+- Updated Inspector filigree assets and divider styling so the full and compact Inspector can use thin unobtrusive gold ornaments without relying on heavy glow/diamond fallback effects.
 
 ### Workspace animation, chart-builder polish, force-network focus, and Inspector styling milestone
 
@@ -327,7 +344,10 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
-- **`bd9b807` — `Refine inspector workspace styling`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`74db963` — `Refine Inspector reference layout and record tables`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`d6baedf` — `Refine Inspector reference layout and record tables`** is the preceding Inspector reference-layout commit in the current two-commit sequence.
+- **`05fe40f` — `Keep visualizations mounted behind Inspector overlay`** keeps Visualizations mounted behind the full Inspector overlay and suppresses visualization hide/show controls while the full Inspector is open.
+- **`306650f` — `Fix Inspector person navigation from geographic context`** fixes related-person Inspector navigation from geographic/place contexts.
 - **`2bd6b3a` — `Center force network on dense cluster`** centers the Force-Directed Network on the densest information cluster / strongest local node neighborhood on initial load.
 - **`7c1f9fd` — `Polish chart builder controls`** updates Chart Visualizations tab labels and control styling, adds gold interactable treatment, and preserves side-panel scrolling/dropdown layering.
 - **`6dfd4c6` — `Animate chart workspace reveal`** adds the one-time guided Chart Visualizations reveal and muted chart-builder panel treatment.
@@ -400,12 +420,6 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Deferred / rolled-back work
 
-### Inspector related-person navigation blank-state issue
-
-Clicking related places from the Inspector currently resolves correctly, but clicking related people from some Inspector contexts opens the blank state instead of the selected person dossier. A combined attempted fix for person navigation and redundant place display touched `interactionHelpers.js` and `InspectorClusterView.jsx`, caused related places to disappear from the list, and was rolled back with `git restore`. The tree was clean afterward at `bd9b807`.
-
-Future work should start with a diagnostic behavior pass that traces the exact click payload from the person button to Inspector selection state, resolver output, and `InspectorBodyRouter` before making edits. Do not combine this diagnostic with additional visual/styling work.
-
 ### MapLibre migrated-overlay work paused / active preview removed
 
 The later MapLibre migrated-overlay branch is paused and should be retained as an archived experiment, not treated as active `main` code. The old dormant MapLibre preview files and dependency have now been removed from active `main` in `55a368c`.
@@ -430,10 +444,15 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `bd9b807`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `74db963`.
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-06-17 | `74db963` | Refine Inspector reference layout and record tables | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-17 | `d6baedf` | Refine Inspector reference layout and record tables |  |
+| 2026-06-17 | `05fe40f` | Keep visualizations mounted behind Inspector overlay |  |
+| 2026-06-17 | `306650f` | Fix Inspector person navigation from geographic context |  |
+| 2026-06-16 | `dd8e9c5` | Refresh documentation for animation and inspector milestones |  |
 | 2026-06-16 | `bd9b807` | Refine inspector workspace styling | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-06-16 | `2bd6b3a` | Center force network on dense cluster |  |
 | 2026-06-16 | `7c1f9fd` | Polish chart builder controls |  |

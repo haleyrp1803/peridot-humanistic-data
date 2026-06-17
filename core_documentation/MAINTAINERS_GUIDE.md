@@ -22,11 +22,19 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`bd9b807` — `Refine inspector workspace styling`**
+- **`74db963` — `Refine Inspector reference layout and record tables`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector visual hierarchy that separates gold primary commands from green related-object navigation.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector reference-entry visual hierarchy that separates lead summaries, connected-place/person lists, directed connections, and connected-record tables. The full Inspector now overlays Visualizations without remounting the underlying workspace; related-person navigation from geographic contexts is fixed; **Unknown** place values are preserved as first-class place-like buckets; and connected-record tables use sorting, filtering, pagination, and capability-aware columns.
 
 
+
+Recent Inspector reference-layout and record-table milestones include:
+
+- **`74db963` — `Refine Inspector reference layout and record tables`**
+- **`d6baedf` — `Refine Inspector reference layout and record tables`**
+- **`05fe40f` — `Keep visualizations mounted behind Inspector overlay`**
+- **`306650f` — `Fix Inspector person navigation from geographic context`**
+- **`dd8e9c5` — `Refresh documentation for animation and inspector milestones`**
 
 Recent animation, chart-builder, force-network, and Inspector styling milestones include:
 
@@ -265,7 +273,8 @@ Brand and design assets:
 - `assets/Adobe Stock Filigree 1.png`
 - `assets/Adobe Stock Filigree 2.png`
 - `assets/Adobe Stock Filigree 3.png`
-- `assets/Adobe Stock Filigree Set.png`
+- `assets/Adobe Stock Filigree Divider Set.png`
+- `assets/Adobe Stock Filigree Full Set.png`
 - `assets/Homepage Current 2026-06-16.png`
 - `assets/Homepage Layout Mockup.png`
 - `assets/Homepage Layout Mockup Annotated.png`
@@ -325,7 +334,7 @@ The main maintenance challenge remains structural concentration in `src/App.jsx`
 
 ### `src/App.jsx`
 
-Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel compatibility contract building, Search & Filter state, timeline state, inspector navigation state, export wiring, and the live Data workflow. It wires template download, upload parsing, arbitrary CSV/TSV/workbook mapping flow, validation summary state, normalization output, upload-source reset behavior, and modal visibility.
+Main orchestration file. It owns top-level state, derived data wiring, workspace composition, theme token definitions, side-panel compatibility contract building, Search & Filter state, timeline state, inspector navigation state, export wiring, the connected-record table renderer, and the live Data workflow. It wires template download, upload parsing, arbitrary CSV/TSV/workbook mapping flow, validation summary state, normalization output, upload-source reset behavior, and modal visibility.
 
 `App.jsx` no longer contains the inline Home, Data, Theme, Visualizations, Explore, Learn More, Search, Export, or hamburger-menu UI components. Those have been extracted into dedicated `Peridot*Workspace` / menu files. It still remains the main state/orchestration boundary.
 
@@ -500,7 +509,7 @@ Owns the edge inspector state boundary.
 
 ### `src/InspectorNodeView.jsx`
 
-Owns the node / person-detail / place-detail inspector boundary. It now renders richer person/place profile summaries, role-grouped related people/places, directed route summaries, selected user-uploaded fields, and linked-record navigation entry points.
+Owns the node / person-detail / place-detail inspector boundary. It now renders the scholarly reference-entry Inspector layout: lead summary, optional image/placeholder, compact summary facts, role-grouped connected places and people, directed connections, expandable high-volume lists, selected user-uploaded fields, and connected-record navigation entry points. It also preserves **Unknown** as a place-like bucket when source/target location values are missing or unresolved.
 
 ### `src/mapLayoutHelpers.js`
 
@@ -512,7 +521,7 @@ Map-stage-adjacent UI/chrome components.
 
 ### `src/interactionHelpers.js`
 
-Pure interaction-resolution and selection-building helpers. This file owns helper logic for nearby candidate generation, selection resolution, cluster selection payload building, connected-correspondent ordering, `person-detail` / `place-detail` payload derivation, and person-detail sent/received place-section derivation.
+Pure interaction-resolution and selection-building helpers. This file owns helper logic for nearby candidate generation, selection resolution, cluster selection payload building, connected-correspondent ordering, `person-detail` / `place-detail` payload derivation, Unknown-as-place resolution, person-detail sent/received place-section derivation, and person-graph fallback resolution for related-person navigation from geographic contexts.
 
 ### `src/mapInteractionHandlers.js`
 
@@ -555,7 +564,10 @@ The Inspector now uses a dual-mode model:
 - hamburger **Inspector** and compact **Expand** open the full Inspector workspace;
 - compact and full modes share the same selected Inspector state and multi-step Back history;
 - `[x]`, Escape, and blank-map click close the appropriate Inspector surface and return to Visualizations;
-- person/place links, linked-letter detail pages, linked-letter source/target people and places, compact summary tiles, and directed route rows all route through the full Inspector workspace where appropriate.
+- person/place links, connected-record detail pages, connected-record source/target people and places, compact summary tiles, and directed route rows all route through the full Inspector workspace where appropriate;
+- full Inspector presentation overlays the existing Visualizations workspace without remounting or replaying the underlying visualization;
+- connected-record tables use date-first defaults, sort/filter controls, 10/25/50 page sizes, pagination, and capability-aware columns for relational versus point-only datasets;
+- **Unknown** is treated as a first-class place-like bucket for unresolved/missing place values.
 
 Important implementation boundaries:
 
@@ -664,8 +676,8 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - full Inspector workspace opens from hamburger **Inspector**, compact **Expand**, compact summary buttons, and Inspector-internal linked-data clicks
 - shared Inspector selection and multi-step Back history across compact and full modes
 - `[x]`, Escape, blank-map close, and Expand behavior
-- person/place profile summaries with role-grouped related people/places, directed routes, linked-letter counts, selected uploaded fields, and custom metadata where available
-- dedicated linked-letter detail pages inside shared Inspector state/history
+- person/place reference-entry summaries with role-grouped connected people/places, directed connections, connected-record counts, selected uploaded fields, and custom metadata where available
+- dedicated connected-record detail pages inside shared Inspector state/history
 - linked-letter source/target people and places open full person/place dossiers
 - directed route rows open route/edge dossiers with linked letters
 - compact summary tiles open the full workspace for linked letters, related people, related places, and routes
@@ -864,7 +876,8 @@ The user-designed Peridot logo and related design assets live in `assets/`:
 - `assets/Peridot Logo Gilded.png` — revised gilded logo for documentation/reference use.
 - `assets/Peridot Logo Gilded Transparent.png` — revised transparent logo used by the current Home workspace.
 - `assets/Adobe Stock Filigree 1.png` — selected licensed filigree used as Home workspace framing.
-- `assets/Adobe Stock Filigree Set.png` — licensed Adobe Stock filigree set retained as a future design-reference asset.
+- `assets/Adobe Stock Filigree Divider Set.png`
+- `assets/Adobe Stock Filigree Full Set.png` — licensed Adobe Stock filigree set retained as a future design-reference asset.
 - `assets/Homepage Current 2026-06-16.png` — current homepage screenshot for documentation.
 - `assets/Homepage Layout Mockup.png` and `assets/Homepage Layout Mockup Annotated.png` — user-authored layout references for the homepage redesign.
 - `assets/Chart Colors Base.jpeg`, `assets/Chart Colors Dark.jpeg`, and `assets/Chart Colors Pale.jpeg` — chart-palette reference assets.
@@ -988,8 +1001,6 @@ Future responsive work should be a narrow-window-specific override, not a univer
 
 These areas still deserve narrow, explicit passes:
 
-- Inspector related-person navigation currently needs a fresh behavior diagnostic: clicking related people from some Inspector contexts opens the blank state, while related-place navigation works. A failed attempted fix was rolled back after it broke related-place list display; trace payload → selection state → resolver → router before editing.
-
 - workspace routing and hamburger-menu behavior
 - map viewport centering/reset behavior
 - map/network viewport measurement after switching between Analytics and map/network modes
@@ -1052,12 +1063,12 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current documented baseline: **`bd9b807` — `Refine inspector workspace styling`**
+- current documented baseline: **`74db963` — `Refine Inspector reference layout and record tables`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
-- the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filigree 1.png`; the additional licensed filigree assets `Adobe Stock Filigree 2.png`, `Adobe Stock Filigree 3.png`, and `Adobe Stock Filigree Set.png` are retained for design reference/use
+- the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filigree 1.png`; the additional licensed filigree assets `Adobe Stock Filigree 2.png`, `Adobe Stock Filigree 3.png`, `Adobe Stock Filigree Divider Set.png`, and `Adobe Stock Filigree Full Set.png` are retained for design reference/use
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
 - the simplified hamburger/workspace structure is committed; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge
@@ -1076,8 +1087,3 @@ A future chat should also be told that:
 ## Code commenting standard
 
 All future implementation work should keep source comments detailed enough for a new human developer to understand what each major section does, how it relates to other app sections and files, and why fragile or non-obvious decisions were made. Comments should identify compatibility bridges, cross-file state coupling, exported helper responsibilities, and retained legacy paths. They should be updated when behavior or routing changes so documentation in the code does not drift from the active app.
-
-
-## Current open issue note
-
-- Inspector related-person navigation from some Inspector contexts opens the blank state while related-place navigation works. The failed attempted fix touched `interactionHelpers.js` and `InspectorClusterView.jsx` and was rolled back. Diagnose the exact click payload and resolver output before editing.

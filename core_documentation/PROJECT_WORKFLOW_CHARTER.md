@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\Peridot\
 Current clean baseline:
 
 ```text
-bd9b807 — Refine inspector workspace styling
+74db963 — Refine Inspector reference layout and record tables
 ```
 
 Current branch note:
@@ -48,7 +48,8 @@ assets/Peridot Logo Gilded Transparent.png
 assets/Adobe Stock Filigree 1.png
 assets/Adobe Stock Filigree 2.png
 assets/Adobe Stock Filigree 3.png
-assets/Adobe Stock Filigree Set.png
+assets/Adobe Stock Filigree Divider Set.png
+assets/Adobe Stock Filigree Full Set.png
 assets/Homepage Current 2026-06-16.png
 assets/Homepage Layout Mockup.png
 assets/Homepage Layout Mockup Annotated.png
@@ -97,7 +98,6 @@ Current fragile zones include:
 - map/network viewport measurement after switching between Analytics and map/network visualizations
 - shared side-panel shell behavior
 - inspector-open interactions after map clicks
-- Inspector related-person navigation from linked/related Inspector lists, especially the blank-state bug where related people fail but related places work
 - cluster grouping and cluster inspector navigation
 - Advanced Search active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, capability filters, dataset-wide Browse indexes, result facets, predictive suggestions, structured criteria, Boolean AND / OR / EXCLUDING logic, apply/clear behavior, and future metadata filters
 - Analytics expanded overlay positioning and backdrop contrast
@@ -371,6 +371,11 @@ Current notable decisions:
 - Staged workspace animations are acceptable when they orient the user without blocking work; the current visual direction uses subtle entrance choreography and a solid dark-green visualization transition rather than text-heavy loading states.
 - Force-Directed Network initial framing should privilege the densest information cluster / strongest node neighborhood rather than always fitting the whole network evenly.
 - Chart-builder and Inspector visual language now distinguish primary commands, related-object navigation, evidence/information cards, and passive metadata. Gold should not be used indiscriminately for every clickable object.
+- The full Inspector should behave like a scholarly reference entry rather than a dashboard stack: a compact lead summary, optional image/placeholder, connected people/places, directed connections, selected fields, and connected-record tables.
+- The full Inspector overlays the existing Visualizations workspace without remounting the map/network/chart surface; closing the Inspector should feel like setting a reference book aside rather than reloading the desk underneath.
+- `Unknown` is treated as a first-class place-like bucket, parallel to unresolved person/entity values such as `Illegible`, so missing/unresolved place values are preserved, counted, and inspected rather than silently dropped.
+- Connected-record tables should be capability-aware: relational datasets show source entity, target entity, source location, and target location; point-only datasets show entity and location. This table-specific distinction should not force the relationship-summary sections to drop their source/target role logic.
+- Connected-record tables should support date-first chronological defaults, sorting, filtering, 10/25/50 page sizes, and pagination so high-volume dossiers remain usable.
 
 
 ---
@@ -517,7 +522,7 @@ For a new chat, start with:
 
 ```text
 Source of truth folder: C:\Users\haley\OneDrive\Desktop\Peridot\
-Current documented clean baseline: `bd9b807` — Refine inspector workspace styling. See `CHANGELOG.md` for the most recent documented safe baseline.
+Current documented clean baseline: `74db963` — Refine Inspector reference layout and record tables. See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 The new chat should be told:
@@ -542,5 +547,5 @@ The new chat should be told:
 - Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, workbook import with unique-ID joins, validation popup, and persistent latest-upload summary.
 - Analytics chart views currently use a left-control/right-chart workspace with tabbed builder controls, manual series/category selection, year-default date axes, complete simplified summary/legend panels, shared three-quarter chart / one-quarter legend card layout, anchored titles, method labels, major/minor ticks, default finite chart colors with explicit chart-targeted palette overrides, and header-based chart PNG export.
 - Logo, homepage filigree, homepage mockup, and current homepage screenshot assets live in `assets/`; the Home workspace imports the gilded transparent logo and selected Adobe Stock filigree.
-- Inspector person/place profiles currently show profile summaries, compact summary buttons, role-grouped related people/places, directed route summaries, selected uploaded fields, shared linked-letter detail navigation, clickable linked people/places, and route-row dossier navigation.
-- Known current issue: related-person navigation from some Inspector contexts can open the blank state while related-place navigation works; diagnose payload/resolver/router flow before editing.
+- Inspector person/place profiles currently show reference-entry summaries, compact summary buttons, role-grouped connected people/places, directed connections, selected uploaded fields, shared connected-record detail navigation, clickable linked people/places, route-row dossier navigation, and Unknown-as-place handling.
+

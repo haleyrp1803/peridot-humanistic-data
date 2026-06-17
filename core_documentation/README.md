@@ -20,9 +20,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`bd9b807` — `Refine inspector workspace styling`** on branch **`main`**
+- **`74db963` — `Refine Inspector reference layout and record tables`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, and Inspector styling passes. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, mounted-Inspector overlay, Inspector reference-entry, Unknown-as-place, and connected-record table passes. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -86,6 +86,11 @@ The current state of the active `main` project includes:
 - initial Force-Directed Network framing centered on the densest information cluster
 - chart-builder visual polish with muted dark-green paneling, clear tab states, gold cream-card controls, one-time reveal behavior, and scroll/dropdown layering fixes
 - Inspector visual polish matching the chart-builder language while suppressing visualization hide/show toggles when the full Inspector workspace is open
+- full Inspector overlay behavior that keeps the underlying Visualizations workspace mounted rather than reloading or reanimating it
+- fixed related-person navigation from geographic/place Inspector contexts
+- full Inspector reference-entry layout with lead summaries, optional image/placeholder area, connected places, connected people, directed connections, and connected-record tables
+- **Unknown** preserved as a first-class place-like bucket for missing/unresolved place values
+- connected-record table sorting, per-column filtering, 10/25/50 page sizes, pagination, and capability-aware relational versus point-only columns
 - map PNG export options where the default output is map-only; optional titles appear above the exported map, and optional metadata appears below it using Peridot’s in-app serif/UI typography
 - clarified capability and unavailable-state wording: visualization types that cannot be supported now say they are **not available** rather than **limited**, point/route map readiness is grouped more intuitively, and the internal capability-diagnostics card has been removed from user-facing review
 - extracted sample data, mapping UI config, mapping field controls, and evidence field controls that reduce pressure on `App.jsx` and `PeridotColumnMappingModal.jsx`
@@ -142,14 +147,15 @@ The codebase is functional, but it is still under active maintenance. The larges
 - full-window Advanced Search workspace defining one active filtered dataset for map, Inspector, Timeline, Analytics, and Export
 - hover and click inspection
 - compact side-panel Inspector for selected nodes, edges, clusters, and linked records, plus a full Inspector evidence-dossier workspace
-- inspector-internal navigation between people and places
-- dedicated linked-letter detail pages inside Inspector
+- inspector-internal navigation between people/entities, places, routes, and connected records
+- dedicated connected-record detail pages inside Inspector
 - actionable cluster inspector lists
 - cluster members grouped by place and ordered by represented visible volume
 - connected-correspondent navigation ordered by relationship weight
-- person-detail place sections for:
-  - **Places this person sent letters to**
-  - **Places where this person received letters**
+- person/entity and place reference-entry summaries with connected people, connected places, directed connections, selected fields, and connected records
+- **Unknown** place buckets preserved when source/target location values are missing or unresolved
+- connected-record tables with sortable/filterable columns and 10/25/50 pagination
+- table column modes for relational source-target datasets versus point-only datasets
 - inspector **Back** button for returning to the previous internal panel
 - year-based timeline range filtering and playback through the current transitional Timeline bridge
 
@@ -289,9 +295,9 @@ The current Home workspace uses a fixed-ratio title-card layout: logo identity o
 
 ![Selected homepage filigree](../assets/Adobe%20Stock%20Filigree%201.png)
 
-![Licensed Adobe Stock filigree set](../assets/Adobe%20Stock%20Filigree%20Set.png)
+![Licensed Adobe Stock filigree full set](../assets/Adobe%20Stock%20Filigree%20Full%20Set.png)
 
-The filigree assets are licensed Adobe Stock design assets. The selected single filigree is used in the Home workspace; the larger set is retained as a future design-reference asset.
+The filigree assets are licensed Adobe Stock design assets. The selected single filigree is used in the Home workspace; the divider set supports thin Inspector divider references; and the full set is retained as a broader future design-reference asset.
 
 ### Legacy / older screenshots
 
@@ -364,7 +370,8 @@ assets/
   Adobe Stock Filigree 1.png
   Adobe Stock Filigree 2.png
   Adobe Stock Filigree 3.png
-  Adobe Stock Filigree Set.png
+  Adobe Stock Filigree Divider Set.png
+  Adobe Stock Filigree Full Set.png
   Homepage Current 2026-06-16.png
   Homepage Layout Mockup.png
   Homepage Layout Mockup Annotated.png
@@ -577,7 +584,7 @@ Edge inspector view boundary.
 
 #### `src/InspectorNodeView.jsx`
 
-Node / person-detail / place-detail inspector view boundary.
+Node / person-detail / place-detail Inspector view boundary. It owns the reference-entry layout, connected people/places, directed connections, Unknown-as-place presentation, expandable relationship lists, selected uploaded fields, and connected-record entry points.
 
 #### `src/mapLayoutHelpers.js`
 
@@ -585,7 +592,7 @@ Pure helper logic for viewport construction, clustering, cluster radius calculat
 
 #### `src/interactionHelpers.js`
 
-Selection and inspection logic, including nearby candidate generation, selection resolution, cluster selection payload derivation, person-detail/place-detail payload derivation, weighted connected-correspondent ordering, and person-detail place-section derivation.
+Selection and inspection logic, including nearby candidate generation, selection resolution, cluster selection payload derivation, person-detail/place-detail payload derivation, Unknown-as-place resolution, weighted connected-correspondent ordering, person-graph fallback behavior, and person-detail place-section derivation.
 
 #### `src/mapInteractionHandlers.js`
 
@@ -837,7 +844,6 @@ The maintainer documentation identifies the following areas as especially sensit
 - inspector-open interactions
 - shared side-panel shell behavior
 - cluster grouping and cluster inspector navigation
-- Inspector related-person navigation from related-list buttons; a current bug opens the blank state in some person-navigation paths while related-place navigation works
 - Advanced Search active-dataset state
 - Data upload state, single-CSV normalization, workbook mapping/import assembly, and validation summary behavior
 - Analytics expanded overlay positioning above the map area
@@ -870,7 +876,7 @@ Likely near-term priorities include:
 - keep active `main` on the D3/SVG path unless explicitly resuming MapLibre on a fresh branch/audit
 - preserve the current workspace-first routing model
 - refine the implemented bottom Visualizations timeline/scrubber after larger-dataset testing
-- refine the implemented dual-mode Inspector workspace, including section anchors, breadcrumbs, future selected-entity/filter actions, and the current related-person blank-state navigation bug
+- refine the implemented dual-mode Inspector workspace, including section anchors, breadcrumbs, future selected-entity/filter actions, and additional reference-entry polish
 - test the one-file Peridot CSV workflow, arbitrary role-based mapping, point/site imports, generic chart/evidence imports, route coordinate pairs, flexible Analytics charts, and workbook importer against larger and messier datasets
 - refine upload validation/capability wording if user testing shows confusion
 - treat the legacy three-file upload workflow as superseded by the one-file and mapped-import workflows
