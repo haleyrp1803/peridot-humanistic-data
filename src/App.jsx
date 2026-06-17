@@ -2792,7 +2792,7 @@ function AppMainWorkspace({
         <PeridotSearchWorkspace {...searchWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR ? (
         <div className="relative h-full overflow-hidden bg-[var(--peridot-role-interface-app-background)]" data-peridot-inspector-workspace="true">
-          <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} />
+          <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} suppressFloatingFrameToggles />
           <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-[4px] sm:p-6">
             <section
               className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2.5rem] border border-[var(--peridot-role-inspector-card-border)] bg-[linear-gradient(145deg,var(--peridot-role-inspector-chrome-bg-strong),var(--peridot-role-inspector-chrome-bg)_44%,var(--peridot-role-inspector-body-bg))] p-3 text-[var(--peridot-role-inspector-heading-text)] shadow-[0_30px_100px_var(--peridot-role-card-shadow)] ring-1 ring-[var(--peridot-role-interface-focus-ring)] sm:p-4"

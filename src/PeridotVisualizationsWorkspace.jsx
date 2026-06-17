@@ -678,6 +678,7 @@ export function PeridotVisualizationsWorkspace({
   onOpenExplore,
   timelineControlsProps,
   exportControls,
+  suppressFloatingFrameToggles = false,
 }) {
   const availability = {
     rowCount: 0,
@@ -1129,16 +1130,18 @@ export function PeridotVisualizationsWorkspace({
                 </div>
               </div>
             )}
-            <FloatingOrnamentArrowToggle
-              anchorRef={headerToggleAnchorRef}
-              placement="bottom"
-              expanded={isHeaderExpanded}
-              onClick={() => setIsHeaderExpanded((value) => !value)}
-              expandedLabel="Hide visualization header"
-              collapsedLabel="Show visualization header"
-              expandedArrow="⌃"
-              collapsedArrow="⌄"
-            />
+            {!suppressFloatingFrameToggles ? (
+              <FloatingOrnamentArrowToggle
+                anchorRef={headerToggleAnchorRef}
+                placement="bottom"
+                expanded={isHeaderExpanded}
+                onClick={() => setIsHeaderExpanded((value) => !value)}
+                expandedLabel="Hide visualization header"
+                collapsedLabel="Show visualization header"
+                expandedArrow="⌃"
+                collapsedArrow="⌄"
+              />
+            ) : null}
           </div>
 
           <div className="relative z-[20] flex min-h-0 flex-1 flex-col gap-3" onMouseEnter={scheduleMenuClose}>
@@ -1154,16 +1157,18 @@ export function PeridotVisualizationsWorkspace({
             </div>
             {timelineControlsProps ? (
               <div ref={timelineToggleAnchorRef} className="peridot-appear-rise peridot-appear-delay-3 relative shrink-0 pt-2">
-                <FloatingOrnamentArrowToggle
-                  anchorRef={timelineToggleAnchorRef}
-                  placement="top"
-                  expanded={isTimelineExpanded}
-                  onClick={() => setIsTimelineExpanded((value) => !value)}
-                  expandedLabel="Hide timeline"
-                  collapsedLabel="Show timeline"
-                  expandedArrow="⌄"
-                  collapsedArrow="⌃"
-                />
+                {!suppressFloatingFrameToggles ? (
+                  <FloatingOrnamentArrowToggle
+                    anchorRef={timelineToggleAnchorRef}
+                    placement="top"
+                    expanded={isTimelineExpanded}
+                    onClick={() => setIsTimelineExpanded((value) => !value)}
+                    expandedLabel="Hide timeline"
+                    collapsedLabel="Show timeline"
+                    expandedArrow="⌄"
+                    collapsedArrow="⌃"
+                  />
+                ) : null}
                 {isTimelineExpanded ? (
                   <div className="peridot-visualization-timeline-sequence">
                     <VisualizationTimelineScrubber {...timelineControlsProps} />
