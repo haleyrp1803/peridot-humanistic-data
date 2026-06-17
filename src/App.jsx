@@ -1476,6 +1476,171 @@ function buildHoverCardState(title, subtitle, point) {
   };
 }
 
+function getLinkEndpointId(endpoint) {
+  if (endpoint && typeof endpoint === 'object') {
+    return String(endpoint.id ?? endpoint.label ?? '').trim();
+  }
+
+  return String(endpoint ?? '').trim();
+}
+
+function getNodeNetworkWeight(node) {
+  const candidates = [
+    node?.degree,
+    node?.count,
+    node?.weight,
+    node?.recordCount,
+    node?.radius,
+  ];
+
+  const numericValues = candidates
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value) && value > 0);
+
+  return numericValues.length ? Math.max(...numericValues) : 1;
+}
+
+function averageWeightedNodePosition(weightedNodes, fallbackNode) {
+  if (!weightedNodes.length) {
+    return {
+      x: fallbackNode?.x ?? 0,
+      y: fallbackNode?.y ?? 0,
+    };
+  }
+
+  const totals = weightedNodes.reduce(
+    (acc, item) => {
+      const x = Number(item.node?.x);
+      const y = Number(item.node?.y);
+      const weight = Number.isFinite(item.weight) && item.weight > 0 ? item.weight : 1;
+
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return acc;
+
+      return {
+        x: acc.x + x * weight,
+        y: acc.y + y * weight,
+        weight: acc.weight + weight,
+      };
+    },
+    { x: 0, y: 0, weight: 0 },
+  );
+
+  if (!totals.weight) {
+    return {
+      x: fallbackNode?.x ?? 0,
+      y: fallbackNode?.y ?? 0,
+    };
+  }
+
+  return {
+    x: totals.x / totals.weight,
+    y: totals.y / totals.weight,
+  };
+}
+
+function buildDenseForceNetworkView(nodes = [], edges = [], width, height, clampScale) {
+  if (!nodes.length || !width || !height) {
+    return buildDefaultMapView(nodes, width, height, clampScale);
+  }
+
+  const positionedNodes = nodes.filter((node) => Number.isFinite(node?.x) && Number.isFinite(node?.y));
+  if (!positionedNodes.length) {
+    return buildDefaultMapView(nodes, width, height, clampScale);
+  }
+
+  const nodesById = new Map(positionedNodes.map((node) => [String(node.id), node]));
+  const adjacency = new Map(positionedNodes.map((node) => [String(node.id), []]));
+
+  edges.forEach((edge) => {
+    const sourceId = getLinkEndpointId(edge?.source);
+    const targetId = getLinkEndpointId(edge?.target);
+    const source = nodesById.get(sourceId);
+    const target = nodesById.get(targetId);
+
+    if (!source || !target) return;
+
+    const linkWeight = Math.max(1, Number(edge?.count) || Number(edge?.weight) || 1);
+    adjacency.get(sourceId)?.push({ node: target, weight: linkWeight });
+    adjacency.get(targetId)?.push({ node: source, weight: linkWeight });
+  });
+
+  const rankedNodes = positionedNodes
+    .map((node) => {
+      const nodeId = String(node.id);
+      const nodeWeight = getNodeNetworkWeight(node);
+      const neighbors = adjacency.get(nodeId) || [];
+      const neighborScore = neighbors.reduce((sum, neighbor) => {
+        return sum + neighbor.weight + getNodeNetworkWeight(neighbor.node) * 0.35;
+      }, 0);
+
+      return {
+        node,
+        score: nodeWeight * 1.8 + neighborScore + neighbors.length * 4,
+      };
+    })
+    .sort((a, b) => b.score - a.score || String(a.node.label || a.node.id).localeCompare(String(b.node.label || b.node.id)));
+
+  const anchorNode = rankedNodes[0]?.node || positionedNodes[0];
+  const anchorId = String(anchorNode.id);
+  const immediateNeighbors = [...(adjacency.get(anchorId) || [])]
+    .sort((a, b) => {
+      const aScore = a.weight + getNodeNetworkWeight(a.node);
+      const bScore = b.weight + getNodeNetworkWeight(b.node);
+      return bScore - aScore;
+    })
+    .slice(0, 14)
+    .map((item) => item.node);
+
+  const focusNodesById = new Map();
+  [anchorNode, ...immediateNeighbors].forEach((node) => {
+    if (node) focusNodesById.set(String(node.id), node);
+  });
+
+  rankedNodes.slice(0, 8).forEach(({ node }) => {
+    if (focusNodesById.size < 9 && node) focusNodesById.set(String(node.id), node);
+  });
+
+  const focusNodes = Array.from(focusNodesById.values());
+  const focusBounds = focusNodes.reduce(
+    (bounds, node) => ({
+      minX: Math.min(bounds.minX, node.x),
+      maxX: Math.max(bounds.maxX, node.x),
+      minY: Math.min(bounds.minY, node.y),
+      maxY: Math.max(bounds.maxY, node.y),
+    }),
+    { minX: Infinity, maxX: -Infinity, minY: Infinity, maxY: -Infinity },
+  );
+
+  const boundsAreUsable = Number.isFinite(focusBounds.minX)
+    && Number.isFinite(focusBounds.maxX)
+    && Number.isFinite(focusBounds.minY)
+    && Number.isFinite(focusBounds.maxY);
+
+  const fullView = buildDefaultMapView(nodes, width, height, clampScale);
+  const clusterSpanX = boundsAreUsable ? Math.max(1, focusBounds.maxX - focusBounds.minX) : width;
+  const clusterSpanY = boundsAreUsable ? Math.max(1, focusBounds.maxY - focusBounds.minY) : height;
+  const horizontalPadding = Math.max(120, width * 0.18);
+  const verticalPadding = Math.max(96, height * 0.18);
+  const candidateScale = Math.min(
+    (width - horizontalPadding * 2) / clusterSpanX,
+    (height - verticalPadding * 2) / clusterSpanY,
+  );
+  const fullScale = Number.isFinite(fullView.scale) && fullView.scale > 0 ? fullView.scale : 1;
+  const scale = clampScale(Math.max(fullScale, Math.min(2.15, Math.max(0.9, candidateScale))));
+
+  const weightedFocusNodes = [
+    { node: anchorNode, weight: getNodeNetworkWeight(anchorNode) * 2.75 },
+    ...immediateNeighbors.map((node) => ({ node, weight: getNodeNetworkWeight(node) })),
+  ];
+  const focusCenter = averageWeightedNodePosition(weightedFocusNodes, anchorNode);
+
+  return {
+    scale,
+    tx: width / 2 - focusCenter.x * scale,
+    ty: height / 2 - focusCenter.y * scale,
+  };
+}
+
 function buildMapStageProps(args) {
   return {
     mapViewportRef: args.mapViewportRef,
@@ -1498,6 +1663,7 @@ function buildMapStageProps(args) {
     selectedProps: args.selectedProps,
     zoomTuning: args.zoomTuning,
     viewResetKey: args.viewResetKey,
+    initialFocusStrategy: args.initialFocusStrategy,
     hoverCard: args.hoverCard,
   };
 }
@@ -1671,6 +1837,7 @@ function SvgMap({
   selectedFeature,
   zoomTuning = {},
   viewResetKey = 'default',
+  initialFocusStrategy = 'fit-all',
 }) {
   const svgRef = useRef(null);
   const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 });
@@ -1687,7 +1854,13 @@ function SvgMap({
 
   const projection = useMemo(() => createWorldProjection(width, height), [width, height]);
 
-  const defaultView = useMemo(() => buildDefaultMapView(nodes, width, height, clampScale), [nodes, width, height]);
+  const defaultView = useMemo(() => {
+    if (initialFocusStrategy === 'force-dense-cluster') {
+      return buildDenseForceNetworkView(nodes, edges, width, height, clampScale);
+    }
+
+    return buildDefaultMapView(nodes, width, height, clampScale);
+  }, [edges, initialFocusStrategy, nodes, width, height]);
 
   const basemapPathGenerator = useMemo(() => geoPath(projection), [projection]);
 
@@ -2493,6 +2666,7 @@ function LegacyD3MapStage({
   selectedProps,
   zoomTuning,
   viewResetKey,
+  initialFocusStrategy,
   hoverCard,
 }) {
   return (
@@ -2522,6 +2696,7 @@ function LegacyD3MapStage({
           selectedFeature={selectedProps}
           zoomTuning={zoomTuning}
           viewResetKey={viewResetKey}
+          initialFocusStrategy={initialFocusStrategy}
         />
       ) : null}
 
@@ -3881,6 +4056,7 @@ export default function EuropeNetworkMapApp() {
     selectedProps,
     zoomTuning,
     viewResetKey,
+    initialFocusStrategy: viewMode === 'person' && personLayoutMode === 'force' ? 'force-dense-cluster' : 'fit-all',
     hoverCard,
     personLayoutMode,
   });
