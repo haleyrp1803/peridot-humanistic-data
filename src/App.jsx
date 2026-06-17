@@ -1263,28 +1263,220 @@ function CustomInspectorFieldsBlock({ fields }) {
   );
 }
 
+function getLinkedRecordDateLabel(letter) {
+  return String(letter?.date || letter?.Date || '').trim() || 'undated';
+}
+
+function getLinkedRecordSortKey(letter, fallbackIndex = 0) {
+  const parsedSortKey = letter?.parsedDate?.sortKey;
+  if (Number.isFinite(parsedSortKey)) return parsedSortKey;
+  const dateLabel = getLinkedRecordDateLabel(letter);
+  if (dateLabel === 'undated') return Number.MAX_SAFE_INTEGER - 100000 + fallbackIndex;
+  const numericDate = Number(String(dateLabel).replace(/[^0-9]/g, '').slice(0, 8));
+  return Number.isFinite(numericDate) && numericDate > 0 ? numericDate : Number.MAX_SAFE_INTEGER - 100000 + fallbackIndex;
+}
+
+function sortLinkedRecordsChronologically(records = []) {
+  return records
+    .map((letter, index) => ({ letter, index, sortKey: getLinkedRecordSortKey(letter, index) }))
+    .sort((a, b) => {
+      if (a.sortKey !== b.sortKey) return a.sortKey - b.sortKey;
+      const aLabel = [a.letter?.source || a.letter?.sourcePerson, a.letter?.target || a.letter?.targetPerson].filter(Boolean).join(' → ');
+      const bLabel = [b.letter?.source || b.letter?.sourcePerson, b.letter?.target || b.letter?.targetPerson].filter(Boolean).join(' → ');
+      return aLabel.localeCompare(bLabel) || a.index - b.index;
+    })
+    .map((item) => item.letter);
+}
+
+function getLinkedRecordSourceEntityLabel(letter) {
+  return letter?.source || letter?.sourcePerson || '';
+}
+
+function getLinkedRecordTargetEntityLabel(letter) {
+  return letter?.target || letter?.targetPerson || '';
+}
+
+function getLinkedRecordEntityLabel(letter) {
+  return [getLinkedRecordSourceEntityLabel(letter), getLinkedRecordTargetEntityLabel(letter)]
+    .filter(Boolean)
+    .join(' → ') || getLinkedRecordSingleEntityLabel(letter) || 'No entity recorded';
+}
+
+function getLinkedRecordSingleEntityLabel(letter) {
+  return letter?.entity || letter?.person || letter?.personName || letter?.name || letter?.label || '';
+}
+
+function normalizeLinkedRecordPlaceLabel(value, { preserveBlank = false } = {}) {
+  const label = String(value || '').trim();
+  if (label) return label;
+  return preserveBlank ? '' : 'Unknown';
+}
+
+function getLinkedRecordSourceLocationLabel(letter, { preserveBlank = false } = {}) {
+  return normalizeLinkedRecordPlaceLabel(letter?.sourceLoc || letter?.sourceLocation, { preserveBlank });
+}
+
+function getLinkedRecordTargetLocationLabel(letter, { preserveBlank = false } = {}) {
+  return normalizeLinkedRecordPlaceLabel(letter?.targetLoc || letter?.targetLocation, { preserveBlank });
+}
+
+function getLinkedRecordLocationLabel(letter) {
+  const explicitLocation = letter?.location || letter?.place || letter?.loc || letter?.site;
+  if (explicitLocation) return explicitLocation;
+
+  return [
+    getLinkedRecordSourceLocationLabel(letter, { preserveBlank: true }),
+    getLinkedRecordTargetLocationLabel(letter, { preserveBlank: true }),
+  ].filter(Boolean).join(' → ') || 'Unknown';
+}
+
+function isMeaningfulRecordTableValue(value) {
+  const label = String(value || '').trim();
+  if (!label) return false;
+  return label.toLowerCase() !== 'unknown';
+}
+
+function recordHasRelationalEntityFields(letter) {
+  const sourceEntity = getLinkedRecordSourceEntityLabel(letter);
+  const targetEntity = getLinkedRecordTargetEntityLabel(letter);
+
+  // Record-table-only capability detection: a point-only dataset may place its
+  // mapped feature/entity in a source-like field and leave target blank/Unknown.
+  // Keep that table in single-point mode unless both entity endpoints are real.
+  return isMeaningfulRecordTableValue(sourceEntity) && isMeaningfulRecordTableValue(targetEntity);
+}
+
+function recordHasRelationalLocationFields(letter) {
+  const sourceLocation = getLinkedRecordSourceLocationLabel(letter, { preserveBlank: true });
+  const targetLocation = getLinkedRecordTargetLocationLabel(letter, { preserveBlank: true });
+
+  // Split source/target locations only when the record has a real two-sided
+  // location structure. A single mapped point belongs in the compact Location
+  // column even if internal fields happen to use source-like names.
+  return isMeaningfulRecordTableValue(sourceLocation) && isMeaningfulRecordTableValue(targetLocation);
+}
+
+function recordsUseRelationalColumns(records = []) {
+  return records.some((letter) => recordHasRelationalEntityFields(letter) || recordHasRelationalLocationFields(letter));
+}
+
+function getLinkedRecordCustomFieldValue(letter, label) {
+  const normalizedLabel = String(label || '').trim().toLowerCase();
+  if (!normalizedLabel) return '';
+
+  return normalizeLinkedLetterCustomInspectorFields(letter)
+    .find((field) => String(field.label || '').trim().toLowerCase() === normalizedLabel)
+    ?.value || '';
+}
+
+function getLinkedRecordColumnValue(letter, columnKey, fallbackIndex = 0) {
+  if (columnKey === 'date') return getLinkedRecordDateLabel(letter);
+  if (columnKey === 'entities') return getLinkedRecordEntityLabel(letter);
+  if (columnKey === 'sourceEntity') return getLinkedRecordSourceEntityLabel(letter) || 'Unknown';
+  if (columnKey === 'targetEntity') return getLinkedRecordTargetEntityLabel(letter) || 'Unknown';
+  if (columnKey === 'entity') return getLinkedRecordSingleEntityLabel(letter) || getLinkedRecordEntityLabel(letter);
+  if (columnKey === 'sourceLocation') return getLinkedRecordSourceLocationLabel(letter);
+  if (columnKey === 'targetLocation') return getLinkedRecordTargetLocationLabel(letter);
+  if (columnKey === 'location') return getLinkedRecordLocationLabel(letter);
+  if (columnKey.startsWith('custom:')) return getLinkedRecordCustomFieldValue(letter, columnKey.slice('custom:'.length));
+  if (columnKey === 'record') return getLinkedLetterUniqueId(letter, fallbackIndex);
+  return '';
+}
+
+function buildConnectedRecordColumns(records = []) {
+  const customLabels = [];
+  const seen = new Set();
+  const useRelationalColumns = recordsUseRelationalColumns(records);
+
+  records.forEach((letter) => {
+    normalizeLinkedLetterCustomInspectorFields(letter).forEach((field) => {
+      const label = String(field.label || '').trim();
+      const key = label.toLowerCase();
+      if (!label || seen.has(key)) return;
+      seen.add(key);
+      customLabels.push(label);
+    });
+  });
+
+  const baseColumns = useRelationalColumns
+    ? [
+      { key: 'date', label: 'Date', className: 'min-w-[7.5rem] w-[8rem]' },
+      { key: 'sourceEntity', label: 'Source entity', className: 'min-w-[13rem]' },
+      { key: 'targetEntity', label: 'Target entity', className: 'min-w-[13rem]' },
+      { key: 'sourceLocation', label: 'Source location', className: 'min-w-[11rem]' },
+      { key: 'targetLocation', label: 'Target location', className: 'min-w-[11rem]' },
+    ]
+    : [
+      { key: 'date', label: 'Date', className: 'min-w-[7.5rem] w-[8rem]' },
+      { key: 'entity', label: 'Entity', className: 'min-w-[16rem]' },
+      { key: 'location', label: 'Location', className: 'min-w-[13rem]' },
+    ];
+
+  return [
+    ...baseColumns,
+    ...customLabels.map((label) => ({
+      key: `custom:${label}`,
+      label,
+      className: 'min-w-[11rem]',
+    })),
+  ];
+}
+
+function getConnectedRecordSortValue(letter, columnKey, fallbackIndex = 0) {
+  if (columnKey === 'date') return getLinkedRecordSortKey(letter, fallbackIndex);
+  return getLinkedRecordColumnValue(letter, columnKey, fallbackIndex).toLowerCase();
+}
+
+function getConnectedRecordPaginationItems(currentPage, totalPages) {
+  if (totalPages <= 7) return Array.from({ length: totalPages }, (_, index) => index + 1);
+
+  const pages = new Set([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
+  if (currentPage <= 3) {
+    pages.add(2);
+    pages.add(3);
+    pages.add(4);
+  }
+  if (currentPage >= totalPages - 2) {
+    pages.add(totalPages - 1);
+    pages.add(totalPages - 2);
+    pages.add(totalPages - 3);
+  }
+
+  const sortedPages = Array.from(pages)
+    .filter((page) => page >= 1 && page <= totalPages)
+    .sort((a, b) => a - b);
+
+  return sortedPages.reduce((items, page, index) => {
+    if (index > 0 && page - sortedPages[index - 1] > 1) items.push('ellipsis');
+    items.push(page);
+    return items;
+  }, []);
+}
+
 function LinkedLetterListItem({ letter, index, onOpenLetter }) {
   const uniqueId = getLinkedLetterUniqueId(letter, index);
-  const routeLabel = [letter.source || letter.sourcePerson, letter.target || letter.targetPerson]
-    .filter(Boolean)
-    .join(' -> ');
-  const dateLabel = letter.date || letter.Date || 'undated';
-  const placeLabel = [letter.sourceLoc, letter.targetLoc].filter(Boolean).join(' -> ');
+  const entityLabel = getLinkedRecordEntityLabel(letter);
+  const dateLabel = getLinkedRecordDateLabel(letter);
+  const placeLabel = getLinkedRecordLocationLabel(letter);
 
   return (
     <button
       type="button"
       onClick={() => onOpenLetter(letter, index)}
-      className="w-full rounded-xl border border-[var(--button-border)] bg-[var(--button-bg)] p-3 text-left text-sm text-[var(--button-text)] transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
+      className="w-full rounded-lg border border-[var(--button-border)] bg-[var(--button-bg)] px-3 py-2 text-left text-sm text-[var(--button-text)] transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="font-medium text-[var(--panel-card-text)]">{uniqueId}</div>
-          <div className="mt-1 text-[var(--panel-card-muted-text)]">{routeLabel || 'No source/target names recorded'}</div>
-          {placeLabel ? <div className="text-[var(--panel-card-muted-text)]">{placeLabel}</div> : null}
-        </div>
-        <div className="shrink-0 rounded-full bg-[var(--badge-bg)] px-2 py-1 text-xs font-medium text-[var(--badge-text)]">
+      <div className="grid grid-cols-[minmax(5.8rem,0.24fr)_minmax(0,1fr)] gap-3">
+        <div className="shrink-0 text-xs font-bold tabular-nums text-[var(--button-text)]">
           {dateLabel}
+        </div>
+        <div className="min-w-0">
+          <div className="truncate font-medium text-[var(--button-text)]">
+            {entityLabel}
+          </div>
+          <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-[var(--button-text)]/80">
+            <span className="truncate">{placeLabel}</span>
+            <span className="truncate">Record: {uniqueId}</span>
+          </div>
         </div>
       </div>
     </button>
@@ -2611,36 +2803,173 @@ function MissingPersonMetadataCard() {
 }
 
 function LinkedLettersPanel({
-  linkedLettersToShow,
   selectedLetterMetadata,
-  showAllLinkedLetters,
-  setShowAllLinkedLetters,
   onOpenLetterDetail,
 }) {
+  const columns = useMemo(() => buildConnectedRecordColumns(selectedLetterMetadata), [selectedLetterMetadata]);
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortState, setSortState] = useState({ key: 'date', direction: 'asc' });
+  const [columnFilters, setColumnFilters] = useState({});
+
+  const setColumnFilter = (columnKey, value) => {
+    setColumnFilters((prev) => ({ ...prev, [columnKey]: value }));
+    setCurrentPage(1);
+  };
+
+  const toggleSort = (columnKey) => {
+    setSortState((prev) => ({
+      key: columnKey,
+      direction: prev.key === columnKey && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+    setCurrentPage(1);
+  };
+
+  const visibleRecords = useMemo(() => {
+    const activeFilters = Object.entries(columnFilters)
+      .map(([key, value]) => [key, String(value || '').trim().toLowerCase()])
+      .filter(([, value]) => value);
+
+    const filtered = selectedLetterMetadata.filter((letter, index) => activeFilters.every(([key, value]) => (
+      getLinkedRecordColumnValue(letter, key, index).toLowerCase().includes(value)
+    )));
+
+    return filtered
+      .map((letter, index) => ({ letter, index, sortValue: getConnectedRecordSortValue(letter, sortState.key, index) }))
+      .sort((a, b) => {
+        if (typeof a.sortValue === 'number' && typeof b.sortValue === 'number') {
+          return sortState.direction === 'asc' ? a.sortValue - b.sortValue : b.sortValue - a.sortValue;
+        }
+        const comparison = String(a.sortValue).localeCompare(String(b.sortValue));
+        return sortState.direction === 'asc' ? comparison : -comparison;
+      });
+  }, [selectedLetterMetadata, columnFilters, sortState]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleRecords.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const pageRecords = visibleRecords.slice(startIndex, startIndex + pageSize);
+  const paginationItems = getConnectedRecordPaginationItems(safeCurrentPage, totalPages);
+  const showingStart = visibleRecords.length ? startIndex + 1 : 0;
+  const showingEnd = Math.min(startIndex + pageSize, visibleRecords.length);
+
+  const goToPage = (page) => setCurrentPage(Math.min(Math.max(1, page), totalPages));
+
   return (
-    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_var(--peridot-role-card-shadow)]">
-      <div className="mb-3 flex items-center justify-between gap-3 text-sm">
+    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-3 shadow-[0_8px_24px_var(--peridot-role-card-shadow)]">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3 text-sm">
         <div>
-          <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Linked records</div>
+          <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">Connected records</div>
           <div className="mt-1 text-xs text-[var(--panel-card-muted-text)]">
-            Select a record ID to open a full record page in the Inspector.
+            Records are ordered chronologically by default. Sort or filter each column, then select a row to open the full record page.
           </div>
         </div>
-        <button type="button" onClick={() => setShowAllLinkedLetters((v) => !v)} className={buttonClassName()}>
-          {showAllLinkedLetters ? 'Show fewer' : 'Show all'}
-        </button>
+        <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--panel-card-muted-text)]">
+          View
+          <select
+            value={pageSize}
+            onChange={(event) => {
+              setPageSize(Number(event.target.value));
+              setCurrentPage(1);
+            }}
+            className="rounded-lg border border-[var(--button-border)] bg-[var(--button-bg)] px-2 py-1 text-xs font-bold text-[var(--button-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/35"
+          >
+            <option value={10}>10</option>
+            <option value={25}>25</option>
+            <option value={50}>50</option>
+          </select>
+        </label>
       </div>
-      <div className="space-y-3">
-        {linkedLettersToShow.length ? linkedLettersToShow.map((letter, index) => (
-          <LinkedLetterCard
-            key={letter.id || `${getLinkedLetterUniqueId(letter, index)}-${index}`}
-            letter={letter}
-            index={index}
-            onOpenLetter={(nextLetter, nextIndex) => onOpenLetterDetail?.(nextLetter, nextIndex)}
-          />
-        )) : <div className="text-sm text-[var(--panel-card-muted-text)]">No linked record-table rows were found for this selection in the current matching logic.</div>}
-        {!showAllLinkedLetters && selectedLetterMetadata.length > 10 ? <div className="text-sm text-[var(--panel-card-muted-text)]">Showing 10 of {selectedLetterMetadata.length} linked records.</div> : null}
-      </div>
+
+      {selectedLetterMetadata.length ? (
+        <>
+          <div className="overflow-x-auto rounded-xl border border-[var(--section-border)]/80 bg-[#e1d1aa]">
+            <table className="min-w-full border-collapse text-left text-xs text-[#102515]">
+              <thead className="bg-[#d7c18f] text-[10px] uppercase tracking-[0.12em] text-[#6f4d17]">
+                <tr>
+                  {columns.map((column) => (
+                    <th key={column.key} className={`${column.className} border-b border-[var(--section-border)]/80 px-3 py-2 align-bottom`}>
+                      <button
+                        type="button"
+                        onClick={() => toggleSort(column.key)}
+                        className="flex w-full items-center justify-between gap-2 text-left font-bold text-[var(--detail-label-text)] hover:text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+                      >
+                        <span className="truncate">{column.label}</span>
+                        <span className="shrink-0 text-[9px] text-[var(--panel-card-muted-text)]">
+                          {sortState.key === column.key ? (sortState.direction === 'asc' ? '▲' : '▼') : '↕'}
+                        </span>
+                      </button>
+                    </th>
+                  ))}
+                </tr>
+                <tr>
+                  {columns.map((column) => (
+                    <th key={`${column.key}:filter`} className={`${column.className} border-b border-[var(--section-border)]/80 px-3 py-1.5`}>
+                      <input
+                        type="search"
+                        value={columnFilters[column.key] || ''}
+                        onChange={(event) => setColumnFilter(column.key, event.target.value)}
+                        placeholder={`Filter ${column.label}`}
+                        className="w-full rounded-md border border-[#b58b42]/70 bg-[#eadfc3] px-2 py-1 text-[11px] normal-case tracking-normal text-[#102515] placeholder:text-[#314331] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30"
+                      />
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--section-border)]/70">
+                {pageRecords.length ? pageRecords.map(({ letter, index }) => (
+                  <tr
+                    key={letter.id || `${getLinkedLetterUniqueId(letter, index)}-${index}`}
+                    className="cursor-pointer bg-[#eadfc3] text-[#102515] transition odd:bg-[#e1d1aa] hover:bg-[#18391f] hover:text-[#fff3c8]"
+                    onClick={() => onOpenLetterDetail?.(letter, index)}
+                  >
+                    {columns.map((column) => (
+                      <td key={`${letter.id || index}:${column.key}`} className={`${column.className} max-w-[24rem] px-3 py-2 align-top`}>
+                        <div className="truncate font-semibold text-inherit">
+                          {getLinkedRecordColumnValue(letter, column.key, index) || '—'}
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={columns.length} className="px-3 py-4 text-sm text-[var(--panel-card-muted-text)]">
+                      No connected records match the active column filters.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--panel-card-muted-text)]">
+            <div>
+              Showing {showingStart}–{showingEnd} of {visibleRecords.length} connected record{visibleRecords.length === 1 ? '' : 's'}
+              {visibleRecords.length !== selectedLetterMetadata.length ? `, filtered from ${selectedLetterMetadata.length}` : ''}.
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button type="button" onClick={() => goToPage(1)} disabled={safeCurrentPage === 1} className={buttonClassName({ variant: 'secondary' })}>First</button>
+              <button type="button" onClick={() => goToPage(safeCurrentPage - 1)} disabled={safeCurrentPage === 1} className={buttonClassName({ variant: 'secondary' })}>Previous</button>
+              {paginationItems.map((item, index) => item === 'ellipsis' ? (
+                <span key={`ellipsis:${index}`} className="px-1 text-[var(--panel-card-muted-text)]">…</span>
+              ) : (
+                <button
+                  type="button"
+                  key={item}
+                  onClick={() => goToPage(item)}
+                  className={buttonClassName({ active: item === safeCurrentPage, variant: 'secondary' })}
+                >
+                  {item}
+                </button>
+              ))}
+              <button type="button" onClick={() => goToPage(safeCurrentPage + 1)} disabled={safeCurrentPage === totalPages} className={buttonClassName({ variant: 'secondary' })}>Next</button>
+              <button type="button" onClick={() => goToPage(totalPages)} disabled={safeCurrentPage === totalPages} className={buttonClassName({ variant: 'secondary' })}>End</button>
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="text-sm text-[var(--panel-card-muted-text)]">No connected records were found for this selection in the current matching logic.</div>
+      )}
     </div>
   );
 }
@@ -2770,15 +3099,15 @@ function AppMainWorkspace({
         },
       }
     : null;
+  const isInspectorWorkspaceOpen = [
+    INSPECTOR_PRESENTATION_MODES.WORKSPACE,
+    INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE,
+  ].includes(inspectorWorkspaceProps?.inspectorPresentationMode);
 
-  const isInspectorWorkspaceOpen =
-    inspectorWorkspaceProps?.inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE
-    || inspectorWorkspaceProps?.inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE;
-
-  const renderInspectorWorkspaceOverlay = () => (
-    <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-[4px] sm:p-6" data-peridot-inspector-workspace="true">
+  const inspectorWorkspaceOverlay = isInspectorWorkspaceOpen ? (
+    <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-[4px] sm:p-6">
       <section
-        className="flex h-full w-full max-w-6xl flex-col overflow-hidden rounded-[2.5rem] border border-[var(--peridot-role-inspector-card-border)] bg-[linear-gradient(145deg,var(--peridot-role-inspector-chrome-bg-strong),var(--peridot-role-inspector-chrome-bg)_44%,var(--peridot-role-inspector-body-bg))] p-3 text-[var(--peridot-role-inspector-heading-text)] shadow-[0_30px_100px_var(--peridot-role-card-shadow)] ring-1 ring-[var(--peridot-role-interface-focus-ring)] sm:p-4"
+        className="peridot-inspector-reference-ground flex h-full w-full max-w-[82rem] flex-col overflow-hidden rounded-[2.5rem] border border-[var(--peridot-role-inspector-card-border)] p-3 text-[var(--peridot-role-inspector-heading-text)] shadow-[0_30px_100px_var(--peridot-role-card-shadow)] ring-1 ring-[var(--peridot-role-interface-focus-ring)] sm:p-4"
         aria-label="Inspector workspace"
       >
         {workspaceInspectorPanelProps ? (
@@ -2792,7 +3121,7 @@ function AppMainWorkspace({
         ) : null}
       </section>
     </div>
-  );
+  ) : null;
 
   return (
     <main
@@ -2806,12 +3135,12 @@ function AppMainWorkspace({
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.THEME ? (
         <PeridotThemeWorkspace {...themeWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS ? (
-        <div className="relative h-full overflow-hidden" data-peridot-visualization-inspector-layered={isInspectorWorkspaceOpen ? 'true' : 'false'}>
+        <div className="relative h-full overflow-hidden" data-peridot-visualizations-with-inspector={isInspectorWorkspaceOpen ? 'true' : 'false'}>
           <PeridotVisualizationsWorkspace
             {...visualizationWorkspaceProps}
             suppressFloatingFrameToggles={isInspectorWorkspaceOpen}
           />
-          {isInspectorWorkspaceOpen ? renderInspectorWorkspaceOverlay() : null}
+          {inspectorWorkspaceOverlay}
         </div>
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPLORE ? (
         <PeridotExploreWorkspace {...exploreWorkspaceProps} />
@@ -2820,12 +3149,9 @@ function AppMainWorkspace({
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH ? (
         <PeridotSearchWorkspace {...searchWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR ? (
-        <div className="relative h-full overflow-hidden" data-peridot-visualization-inspector-layered="true">
-          <PeridotVisualizationsWorkspace
-            {...visualizationWorkspaceProps}
-            suppressFloatingFrameToggles
-          />
-          {renderInspectorWorkspaceOverlay()}
+        <div className="relative h-full overflow-hidden bg-[var(--peridot-role-interface-app-background)]" data-peridot-inspector-workspace="true">
+          <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} suppressFloatingFrameToggles />
+          {inspectorWorkspaceOverlay}
         </div>
       ) : (
         <div className="flex h-full flex-col">
@@ -3311,11 +3637,11 @@ export default function EuropeNetworkMapApp() {
     return resolveSelection(selectedSelection, graph, personMetadataByName, {
       personGraphFallback: personGraph,
     });
-  }, [selectedSelection, graph, personGraph, personMetadataByName]);
+  }, [selectedSelection, graph, personMetadataByName, personGraph]);
 
   const selectedLetterMetadata = useMemo(() => {
     if (selectedProps?.__kind === 'letter-detail') return [];
-    return enrichSelectedLetters(selectedProps, personMetadataByName);
+    return sortLinkedRecordsChronologically(enrichSelectedLetters(selectedProps, personMetadataByName));
   }, [selectedProps, personMetadataByName]);
 
   const linkedLettersToShow = showAllLinkedLetters ? selectedLetterMetadata : selectedLetterMetadata.slice(0, 10);

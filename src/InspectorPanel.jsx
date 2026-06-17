@@ -78,18 +78,18 @@ export function InspectorContent({
     '--peridot-role-inspector-body-text': '#102515',
     '--peridot-role-inspector-body-muted-text': '#314331',
     '--peridot-role-inspector-body-shadow': 'rgba(0, 0, 0, 0.24)',
-    '--peridot-role-inspector-card-bg': '#f0e8d4',
+    '--peridot-role-inspector-card-bg': '#eadfc3',
     '--peridot-role-inspector-card-border': 'rgba(176, 132, 50, 0.34)',
     '--peridot-role-inspector-card-text': '#102515',
     '--peridot-role-inspector-card-muted-text': '#314331',
-    '--peridot-role-inspector-card-hover-bg': '#eadfbd',
-    '--peridot-role-inspector-summary-card-bg': '#eee6cf',
+    '--peridot-role-inspector-card-hover-bg': '#e0cf9f',
+    '--peridot-role-inspector-summary-card-bg': '#eadfc3',
     '--peridot-role-inspector-summary-card-border': 'rgba(176, 132, 50, 0.38)',
     '--peridot-role-inspector-summary-card-text': '#102515',
-    '--peridot-role-inspector-section-bg': '#f0e8d4',
+    '--peridot-role-inspector-section-bg': '#eadfc3',
     '--peridot-role-inspector-section-border': 'rgba(176, 132, 50, 0.30)',
     '--peridot-role-inspector-panel-bg': '#142d19',
-    '--peridot-role-inspector-stat-card-bg': '#d6cfab',
+    '--peridot-role-inspector-stat-card-bg': '#d8c692',
     '--peridot-role-inspector-button-bg': '#c79b3d',
     '--peridot-role-inspector-button-border': '#f0d27a',
     '--peridot-role-inspector-button-text': '#0a2110',
@@ -99,9 +99,9 @@ export function InspectorContent({
     '--peridot-role-inspector-button-active-bg': '#e0bb62',
     '--peridot-role-inspector-button-active-border': '#fae9b1',
     '--peridot-role-inspector-button-active-hover-bg': '#e7c777',
-    '--peridot-role-inspector-badge-bg': '#d6cfab',
+    '--peridot-role-inspector-badge-bg': '#d8c692',
     '--peridot-role-inspector-badge-text': '#102515',
-    '--peridot-role-inspector-empty-state-bg': '#f0e8d4',
+    '--peridot-role-inspector-empty-state-bg': '#eadfc3',
     '--peridot-role-inspector-empty-state-border': 'rgba(176, 132, 50, 0.48)',
     '--peridot-role-inspector-empty-state-text': '#102515',
     '--peridot-role-inspector-detail-label-text': '#b58b42',
@@ -177,22 +177,22 @@ export function InspectorContent({
   };
 
   const rootClassName = isWorkspace
-    ? 'peridot-inspector-shell peridot-inspector-shell-workspace flex h-full min-h-0 flex-col rounded-[2.1rem] border border-[var(--peridot-role-inspector-chrome-border)] bg-[#142d19] p-4 text-[var(--peridot-role-inspector-chrome-text)] shadow-2xl shadow-black/65 ring-1 ring-[rgba(246,223,150,0.20)]'
-    : 'peridot-inspector-shell peridot-inspector-shell-compact flex min-h-full flex-col rounded-[1.85rem] border border-[var(--peridot-role-inspector-chrome-border)] bg-[#142d19] p-4 text-[var(--peridot-role-inspector-chrome-text)] shadow-xl shadow-black/40 ring-1 ring-[rgba(246,223,150,0.20)]';
+    ? 'peridot-inspector-shell peridot-inspector-shell-workspace peridot-inspector-reference-ground flex h-full min-h-0 flex-col overflow-auto rounded-[1.85rem] border border-[var(--peridot-role-inspector-chrome-border)] p-3 text-[var(--peridot-role-inspector-chrome-text)] shadow-2xl shadow-black/65 ring-1 ring-[rgba(246,223,150,0.20)]'
+    : 'peridot-inspector-shell peridot-inspector-shell-compact peridot-inspector-reference-ground flex min-h-full flex-col rounded-[1.75rem] border border-[var(--peridot-role-inspector-chrome-border)] bg-[#142d19] p-3.5 text-[var(--peridot-role-inspector-chrome-text)] shadow-xl shadow-black/40 ring-1 ring-[rgba(246,223,150,0.20)]';
 
-  const controlsClassName = 'mb-3 flex items-center justify-end gap-2';
+  const controlsClassName = 'mb-2 flex items-center justify-end gap-2';
 
   const headerClassName = isWorkspace
-    ? 'peridot-inspector-header mb-4 rounded-[1.55rem] border border-[var(--peridot-role-inspector-header-border)] bg-[#0d2911] px-5 py-4 shadow-inner shadow-black/25'
-    : 'peridot-inspector-header mb-4 rounded-[1.35rem] border border-[var(--peridot-role-inspector-header-border)] bg-[#0d2911] px-4 py-4 shadow-inner shadow-black/20';
+    ? 'peridot-inspector-header mb-3 rounded-[1.35rem] border border-[var(--peridot-role-inspector-header-border)] bg-[#0d2911] px-4 py-3 shadow-inner shadow-black/25'
+    : 'peridot-inspector-header mb-3 rounded-[1.25rem] border border-[var(--peridot-role-inspector-header-border)] bg-[#0d2911] px-3.5 py-3 shadow-inner shadow-black/20';
 
   const bodyClassName = isWorkspace
-    ? '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-role-inspector-body-bg)] peridot-inspector-body inspector-scroll min-h-0 flex-1 overflow-auto rounded-[1.55rem] border border-[var(--peridot-role-inspector-body-border)] bg-[#142d19] p-5 text-[var(--peridot-role-inspector-body-text)] shadow-inner shadow-[var(--peridot-role-inspector-body-shadow)]'
-    : '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-role-inspector-body-bg)] peridot-inspector-body inspector-scroll rounded-[1.35rem] border border-[var(--peridot-role-inspector-body-border)] bg-[#142d19] p-4 text-[var(--peridot-role-inspector-body-text)] shadow-inner shadow-[var(--peridot-role-inspector-body-shadow)]';
+    ? '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-role-inspector-body-bg)] peridot-inspector-body inspector-scroll peridot-inspector-reference-body flex-none overflow-visible rounded-[1.35rem] border border-[var(--peridot-role-inspector-body-border)] p-4 text-[var(--peridot-role-inspector-body-text)] shadow-inner shadow-[var(--peridot-role-inspector-body-shadow)]'
+    : '[scrollbar-color:var(--peridot-role-inspector-clickable-bg)_var(--peridot-role-inspector-body-bg)] peridot-inspector-body inspector-scroll peridot-inspector-reference-body rounded-[1.25rem] border border-[var(--peridot-role-inspector-body-border)] p-3.5 text-[var(--peridot-role-inspector-body-text)] shadow-inner shadow-[var(--peridot-role-inspector-body-shadow)]';
 
-  const actionButtonClassName = 'rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45';
+  const actionButtonClassName = 'rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45';
 
-  const closeButtonClassName = 'flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] text-lg font-bold leading-none text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45';
+  const closeButtonClassName = 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] text-base font-bold leading-none text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45';
 
   return (
     <div className={rootClassName} style={inspectorPaletteStyle} data-inspector-presentation={presentation}>
@@ -246,11 +246,6 @@ export function InspectorContent({
               showInspectorInfo={showInspectorInfo}
               setShowInspectorInfo={setShowInspectorInfo}
             />
-            {isWorkspace ? (
-              <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[var(--peridot-role-inspector-chrome-text)]">
-                Evidence dossier for the current selection. The visualization remains loaded underneath this workspace.
-              </p>
-            ) : null}
           </div>
         </>
       ) : null}

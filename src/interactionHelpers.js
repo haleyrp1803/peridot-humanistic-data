@@ -153,8 +153,7 @@ function buildTopPlacesFromLetters(linkedLetters) {
   return Array.from(
     new Map(
       linkedLetters
-        .flatMap((letter) => [letter.sourceLoc, letter.targetLoc])
-        .filter(Boolean)
+        .flatMap((letter) => [normalizePlaceLabel(letter.sourceLoc), normalizePlaceLabel(letter.targetLoc)])
         .map((placeLabel) => [placeLabel, 1]),
     ).entries(),
   )
@@ -167,8 +166,7 @@ function buildPlaceDetailsForPerson(linkedLetters, personLabel, mode) {
   linkedLetters.forEach((letter) => {
     const matchesMode = mode === 'sent' ? getLetterSourcePerson(letter) === personLabel : getLetterTargetPerson(letter) === personLabel;
     if (!matchesMode) return;
-    const placeLabel = letter.targetLoc;
-    if (!placeLabel) return;
+    const placeLabel = normalizePlaceLabel(letter.targetLoc);
     const existing = placeMap.get(placeLabel) || {
       label: placeLabel,
       count: 0,
@@ -224,9 +222,13 @@ function buildCounterpartPlaceDetailsFromLetters(placeLabel, linkedLetters = [])
   const counterpartMap = new Map();
 
   linkedLetters.forEach((letter) => {
-    const sourceLoc = letter.sourceLoc || '';
-    const targetLoc = letter.targetLoc || '';
-    const counterpartLabel = sourceLoc === placeLabel ? targetLoc : targetLoc === placeLabel ? sourceLoc : '';
+    const sourceLoc = normalizePlaceLabel(letter.sourceLoc);
+    const targetLoc = normalizePlaceLabel(letter.targetLoc);
+    const counterpartLabel = placeMatchesLabel(sourceLoc, placeLabel)
+      ? targetLoc
+      : placeMatchesLabel(targetLoc, placeLabel)
+        ? sourceLoc
+        : '';
 
     if (!counterpartLabel) return;
 
@@ -250,6 +252,15 @@ function getLetterSourcePerson(letter) {
 
 function getLetterTargetPerson(letter) {
   return letter?.targetPerson || letter?.target || '';
+}
+
+function normalizePlaceLabel(value) {
+  const normalized = String(value ?? '').trim();
+  return normalized || 'Unknown';
+}
+
+function placeMatchesLabel(value, placeLabel) {
+  return normalizePlaceLabel(value).toLowerCase() === String(placeLabel ?? '').trim().toLowerCase();
 }
 
 function letterMatchesPerson(letter, personLabel) {
@@ -416,7 +427,7 @@ export function buildPlaceDetailSelection(placeLabel, graph, personMetadataByNam
 
   if (!linkedLetters.length) {
     linkedLetters = buildLinkedLettersFromGraphEdges(graph).filter(
-      (letter) => letter.sourceLoc === placeLabel || letter.targetLoc === placeLabel,
+      (letter) => placeMatchesLabel(letter.sourceLoc, placeLabel) || placeMatchesLabel(letter.targetLoc, placeLabel),
     );
   }
 
