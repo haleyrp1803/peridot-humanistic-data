@@ -20,8 +20,6 @@ import {
   applyPeridotColumnMapping,
   CUSTOM_INSPECTOR_FIELD_DEFAULTS,
   PERIDOT_CORE_FIELD_DEFINITIONS,
-  PERIDOT_POINT_FIELD_DEFINITIONS,
-  PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS,
   validatePeridotColumnMapping,
 } from './peridotColumnMapping.js';
 import {
@@ -53,8 +51,10 @@ import {
 } from './peridotColumnMappingUiConfig.js';
 import {
   CoreRoleMappingTable,
+  SpatialMappingPanel,
   TemporalMappingTable,
   WorkbookCoreRoleMappingTable,
+  WorkbookSpatialMappingPanel,
   WorkbookTemporalMappingTable,
 } from './PeridotMappingFieldControls.jsx';
 import {
@@ -307,45 +307,17 @@ function TimeMappingStep({ headers, temporalMapping, onTemporalChange }) {
   );
 }
 
-function PlacesMappingStep({ definitions, headers, coreMapping, pointMapping, routeCoordinatePairMapping, onRouteChange, onPointChange, onRoutePairChange }) {
-  const placeDefinitions = definitionsForFields(definitions, CORE_FIELD_GROUPS.routePlaces);
-
+function PlacesMappingStep({ headers, coreMapping, pointMapping, routeCoordinatePairMapping, onRouteChange, onPointChange, onRoutePairChange }) {
   return (
-    <div className="space-y-4">
-      <MappingIntroCard eyebrow="Places" title="Choose the spatial pattern that fits the dataset.">
-        Use point roles for one-location records; use route roles only when each row connects two places. Coordinate pairs are latitude first.
-      </MappingIntroCard>
-      <CoreRoleMappingTable
-        title="Recommended for point/site records"
-        description="One location per record"
-        guidanceLabel="Start here"
-        guidanceText="Best for sites, events, buildings, institutions, objects, or observations with one primary location."
-        definitions={PERIDOT_POINT_FIELD_DEFINITIONS}
-        headers={headers}
-        coreMapping={pointMapping}
-        onChange={onPointChange}
-      />
-      <CoreRoleMappingTable
-        title="Optional coordinate-pair shortcuts"
-        description="Source or target coordinates stored in one column"
-        guidanceLabel="Optional"
-        guidanceText="Use only when route coordinates are already combined as latitude-first pairs."
-        definitions={PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS}
-        headers={headers}
-        coreMapping={routeCoordinatePairMapping}
-        onChange={onRoutePairChange}
-      />
-      <CoreRoleMappingTable
-        title="Only for route datasets"
-        description="Source place and target place per record"
-        guidanceLabel="Routes"
-        guidanceText="Use these fields when a row connects an origin place to a destination place."
-        definitions={placeDefinitions}
-        headers={headers}
-        coreMapping={coreMapping}
-        onChange={onRouteChange}
-      />
-    </div>
+    <SpatialMappingPanel
+      headers={headers}
+      pointMapping={pointMapping}
+      coreMapping={coreMapping}
+      routeCoordinatePairMapping={routeCoordinatePairMapping}
+      onPointChange={onPointChange}
+      onRouteChange={onRouteChange}
+      onRoutePairChange={onRoutePairChange}
+    />
   );
 }
 
@@ -759,44 +731,14 @@ function WorkbookTimeMappingStep({ workbookModel, workbookMapping, onTemporalCha
 }
 
 function WorkbookPlacesMappingStep({ workbookModel, workbookMapping, onRouteChange, onPointChange, onRoutePairChange }) {
-  const placeDefinitions = definitionsForFields(PERIDOT_CORE_FIELD_DEFINITIONS, CORE_FIELD_GROUPS.routePlaces);
-
   return (
-    <div className="space-y-4">
-      <MappingIntroCard eyebrow="Places" title="Choose the spatial pattern that fits the workbook.">
-        Use point roles for one-location records; use route roles only when each row connects two places. Coordinate pairs are latitude first.
-      </MappingIntroCard>
-      <WorkbookCoreRoleMappingTable
-        title="Recommended for point/site records"
-        description="One location per record"
-        guidanceLabel="Start here"
-        guidanceText="Best for sites, events, buildings, institutions, objects, or observations with one primary location."
-        definitions={PERIDOT_POINT_FIELD_DEFINITIONS}
-        workbookModel={workbookModel}
-        workbookMapping={{ ...workbookMapping, coreMappings: workbookMapping.pointMappings || {} }}
-        onChange={onPointChange}
-      />
-      <WorkbookCoreRoleMappingTable
-        title="Optional coordinate-pair shortcuts"
-        description="Source or target coordinates stored in one column"
-        guidanceLabel="Optional"
-        guidanceText="Use only when route coordinates are already combined as latitude-first pairs."
-        definitions={PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS}
-        workbookModel={workbookModel}
-        workbookMapping={{ ...workbookMapping, coreMappings: workbookMapping.routeCoordinatePairMappings || {} }}
-        onChange={onRoutePairChange}
-      />
-      <WorkbookCoreRoleMappingTable
-        title="Only for route datasets"
-        description="Source place and target place per record"
-        guidanceLabel="Routes"
-        guidanceText="Use these fields when a row connects an origin place to a destination place."
-        definitions={placeDefinitions}
-        workbookModel={workbookModel}
-        workbookMapping={workbookMapping}
-        onChange={onRouteChange}
-      />
-    </div>
+    <WorkbookSpatialMappingPanel
+      workbookModel={workbookModel}
+      workbookMapping={workbookMapping}
+      onPointChange={onPointChange}
+      onRouteChange={onRouteChange}
+      onRoutePairChange={onRoutePairChange}
+    />
   );
 }
 
@@ -1536,7 +1478,6 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && activeStep === 'places' ? (
             <PlacesMappingStep
-              definitions={definitions}
               headers={headers}
               coreMapping={coreMapping}
               pointMapping={pointMapping}
@@ -1549,7 +1490,6 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && activeStep === 'relationships' ? (
             <RelationshipsMappingStep
-              definitions={definitions}
               headers={headers}
               coreMapping={coreMapping}
               onChange={handleCoreMappingChange}

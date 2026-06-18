@@ -17,7 +17,12 @@
  */
 
 import React from 'react';
-import { PERIDOT_TEMPORAL_FIELD_DEFINITIONS } from './peridotColumnMapping.js';
+import {
+  PERIDOT_CORE_FIELD_DEFINITIONS_BY_KEY,
+  PERIDOT_POINT_FIELD_DEFINITIONS_BY_KEY,
+  PERIDOT_TEMPORAL_FIELD_DEFINITIONS,
+  PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS_BY_KEY,
+} from './peridotColumnMapping.js';
 import {
   getUsableWorkbookSheets,
   getWorkbookSheet,
@@ -33,6 +38,11 @@ const SOURCE_SELECT_CLASS =
   'peridot-mapping-select w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]';
 
 const DISABLED_SOURCE_SELECT_CLASS = `${SOURCE_SELECT_CLASS} disabled:opacity-60`;
+
+const SPATIAL_SELECT_CLASS =
+  'peridot-mapping-select w-full min-w-0 rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]';
+
+const DISABLED_SPATIAL_SELECT_CLASS = `${SPATIAL_SELECT_CLASS} disabled:opacity-60`;
 
 const VISIBLE_TEMPORAL_FIELD_DEFINITIONS = PERIDOT_TEMPORAL_FIELD_DEFINITIONS.filter(
   (definition) => definition.key !== 'Date_Display'
@@ -117,7 +127,7 @@ export function TemporalMappingTable({ headers, temporalMapping = {}, onChange }
 
 function TemporalUsagePanel() {
   return (
-    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Used for</div>
       <p className="mt-3">
         Temporal information is used in Peridot’s timeline, search and filter, charts, Inspector, and export.
@@ -180,6 +190,254 @@ export function CoreRoleMappingTable({ title, description, guidanceLabel, guidan
             ))}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+
+const SPATIAL_SINGLE_TABLE_ROWS = Object.freeze([
+  Object.freeze({
+    title: 'Single Location Points',
+    subtitle: 'Use when each row has one primary place.',
+    fields: Object.freeze([
+      Object.freeze({ label: 'Location/name', key: 'Point_Place', mappingType: 'point' }),
+      Object.freeze({ label: 'Coordinate pair', key: 'Point_Coordinates', mappingType: 'point' }),
+      Object.freeze({ label: 'Latitude', key: 'Point_Latitude', mappingType: 'point' }),
+      Object.freeze({ label: 'Longitude', key: 'Point_Longitude', mappingType: 'point' }),
+    ]),
+  }),
+  Object.freeze({
+    title: 'Connected Locations',
+    subtitle: 'Use when each row connects two places.',
+    fields: Object.freeze([]),
+  }),
+  Object.freeze({
+    title: 'Source/Start Location',
+    compact: true,
+    fields: Object.freeze([
+      Object.freeze({ label: 'Location/name', key: 'Source_Location', mappingType: 'route' }),
+      Object.freeze({ label: 'Coordinate pair', key: 'Source_Coordinates', mappingType: 'routePair' }),
+      Object.freeze({ label: 'Latitude', key: 'Source_Latitude', mappingType: 'route' }),
+      Object.freeze({ label: 'Longitude', key: 'Source_Longitude', mappingType: 'route' }),
+    ]),
+  }),
+  Object.freeze({
+    title: 'Target/End Location',
+    compact: true,
+    fields: Object.freeze([
+      Object.freeze({ label: 'Location/name', key: 'Target_Location', mappingType: 'route' }),
+      Object.freeze({ label: 'Coordinate pair', key: 'Target_Coordinates', mappingType: 'routePair' }),
+      Object.freeze({ label: 'Latitude', key: 'Target_Latitude', mappingType: 'route' }),
+      Object.freeze({ label: 'Longitude', key: 'Target_Longitude', mappingType: 'route' }),
+    ]),
+  }),
+]);
+
+function getSpatialDefinition(field) {
+  return (
+    PERIDOT_POINT_FIELD_DEFINITIONS_BY_KEY[field.key]
+    || PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS_BY_KEY[field.key]
+    || PERIDOT_CORE_FIELD_DEFINITIONS_BY_KEY[field.key]
+    || { key: field.key, label: field.label }
+  );
+}
+
+function SpatialUsagePanel() {
+  return (
+    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Used for</div>
+      <p className="mt-2">
+        Location information supports point maps, route maps, Inspector records, search and filter, charts, and export.
+      </p>
+      <p className="mt-2">
+        Use Single Location Points when each row has one place. Use Connected Locations when each row links a source/start place to a target/end place.
+      </p>
+      <p className="mt-2">
+        Choose either a coordinate pair or separate latitude and longitude fields.
+      </p>
+    </aside>
+  );
+}
+
+function SpatialSelect({ value, onChange, headers }) {
+  return (
+    <select
+      value={value || ''}
+      onChange={(event) => onChange(event.target.value)}
+      className={SPATIAL_SELECT_CLASS}
+    >
+      <option value="">Unassigned</option>
+      {headers.map((header) => (
+        <option key={header} value={header}>{header}</option>
+      ))}
+    </select>
+  );
+}
+
+function SpatialWorkbookSelect({ workbookModel, workbookMapping, currentRef = {}, onChange }) {
+  const usableSheets = getUsableWorkbookSheets(workbookModel);
+  const selectedSheet = getWorkbookSheet(workbookModel, currentRef.sheetName) || getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
+  const headers = selectedSheet?.headers || [];
+
+  return (
+    <div className="grid gap-2">
+      <select
+        value={currentRef.sheetName || ''}
+        onChange={(event) => onChange(makeWorkbookColumnRef(event.target.value, ''))}
+        className={SPATIAL_SELECT_CLASS}
+      >
+        <option value="">Sheet</option>
+        {usableSheets.map((sheet) => (
+          <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
+        ))}
+      </select>
+      <select
+        value={currentRef.columnName || ''}
+        disabled={!currentRef.sheetName}
+        onChange={(event) => onChange(makeWorkbookColumnRef(currentRef.sheetName, event.target.value))}
+        className={DISABLED_SPATIAL_SELECT_CLASS}
+      >
+        <option value="">Column</option>
+        {headers.map((header) => (
+          <option key={header} value={header}>{header}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+function SpatialFieldGrid({ children }) {
+  return (
+    <div className="grid gap-2 md:grid-cols-4">
+      {children}
+    </div>
+  );
+}
+
+function SpatialFieldShell({ field, children }) {
+  const definition = getSpatialDefinition(field);
+  return (
+    <label className="min-w-0">
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">{field.label}</div>
+      {children}
+      <div className="mt-1 truncate text-[11px] text-[var(--panel-card-muted-text)]" title={definition.label || definition.key}>
+        {definition.key}
+      </div>
+    </label>
+  );
+}
+
+function getSpatialMappingValue(field, { pointMapping, coreMapping, routeCoordinatePairMapping }) {
+  if (field.mappingType === 'point') return pointMapping?.[field.key] || '';
+  if (field.mappingType === 'routePair') return routeCoordinatePairMapping?.[field.key] || '';
+  return coreMapping?.[field.key] || '';
+}
+
+function getSpatialWorkbookMappingValue(field, workbookMapping) {
+  if (field.mappingType === 'point') return workbookMapping?.pointMappings?.[field.key] || {};
+  if (field.mappingType === 'routePair') return workbookMapping?.routeCoordinatePairMappings?.[field.key] || {};
+  return workbookMapping?.coreMappings?.[field.key] || {};
+}
+
+function handleSpatialMappingChange(field, value, { onPointChange, onRouteChange, onRoutePairChange }) {
+  if (field.mappingType === 'point') {
+    onPointChange(field.key, value);
+    return;
+  }
+  if (field.mappingType === 'routePair') {
+    onRoutePairChange(field.key, value);
+    return;
+  }
+  onRouteChange(field.key, value);
+}
+
+export function SpatialMappingPanel({ headers, pointMapping = {}, coreMapping = {}, routeCoordinatePairMapping = {}, onPointChange, onRouteChange, onRoutePairChange }) {
+  return (
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(18rem,0.75fr)]">
+        <div className="min-w-0">
+          <div className="rounded-t-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-2.5 text-sm font-semibold text-[var(--panel-card-text)]">
+            Location Role
+          </div>
+          <div className="rounded-b-xl border-x border-b border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-4 py-2">
+            {SPATIAL_SINGLE_TABLE_ROWS.map((row, rowIndex) => (
+              row.fields.length ? (
+                <section
+                  key={row.title}
+                  className={[
+                    'space-y-2 py-2.5',
+                    rowIndex === 0 ? 'pt-1' : 'border-t border-[var(--panel-card-border)]',
+                  ].join(' ')}
+                >
+                  <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
+                  <SpatialFieldGrid>
+                    {row.fields.map((field) => (
+                      <SpatialFieldShell key={field.key} field={field}>
+                        <SpatialSelect
+                          headers={headers}
+                          value={getSpatialMappingValue(field, { pointMapping, coreMapping, routeCoordinatePairMapping })}
+                          onChange={(value) => handleSpatialMappingChange(field, value, { onPointChange, onRouteChange, onRoutePairChange })}
+                        />
+                      </SpatialFieldShell>
+                    ))}
+                  </SpatialFieldGrid>
+                </section>
+              ) : (
+                <div key={row.title} className="border-t border-[var(--panel-card-border)] pb-0 pt-3">
+                  <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
+                </div>
+              )
+            ))}
+          </div>
+        </div>
+        <SpatialUsagePanel />
+      </div>
+    </div>
+  );
+}
+
+export function WorkbookSpatialMappingPanel({ workbookModel, workbookMapping = {}, onPointChange, onRouteChange, onRoutePairChange }) {
+  return (
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(18rem,0.75fr)]">
+        <div className="min-w-0">
+          <div className="rounded-t-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-2.5 text-sm font-semibold text-[var(--panel-card-text)]">
+            Location Role
+          </div>
+          <div className="rounded-b-xl border-x border-b border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-4 py-2">
+            {SPATIAL_SINGLE_TABLE_ROWS.map((row, rowIndex) => (
+              row.fields.length ? (
+                <section
+                  key={row.title}
+                  className={[
+                    'space-y-2 py-2.5',
+                    rowIndex === 0 ? 'pt-1' : 'border-t border-[var(--panel-card-border)]',
+                  ].join(' ')}
+                >
+                  <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
+                  <SpatialFieldGrid>
+                    {row.fields.map((field) => (
+                      <SpatialFieldShell key={field.key} field={field}>
+                        <SpatialWorkbookSelect
+                          workbookModel={workbookModel}
+                          workbookMapping={workbookMapping}
+                          currentRef={getSpatialWorkbookMappingValue(field, workbookMapping)}
+                          onChange={(value) => handleSpatialMappingChange(field, value, { onPointChange, onRouteChange, onRoutePairChange })}
+                        />
+                      </SpatialFieldShell>
+                    ))}
+                  </SpatialFieldGrid>
+                </section>
+              ) : (
+                <div key={row.title} className="border-t border-[var(--panel-card-border)] pb-0 pt-3">
+                  <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
+                </div>
+              )
+            ))}
+          </div>
+        </div>
+        <SpatialUsagePanel />
       </div>
     </div>
   );
