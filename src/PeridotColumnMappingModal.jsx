@@ -91,6 +91,7 @@ function StepButton({ active, label, index, onClick }) {
     <button
       type="button"
       onClick={onClick}
+      title={label}
       className={[
         'peridot-mapping-step-button',
         active ? 'peridot-mapping-step-button-active' : '',
@@ -181,7 +182,7 @@ function CapabilityAuditCard({ audit, note }) {
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Tool availability audit</div>
           <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">
-            Descriptive summary of which Peridot tools the mapped records appear able to support.
+            Which Peridot tools this mapping can support.
           </div>
         </div>
         <div className="rounded-full border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-1 text-xs font-semibold text-[var(--panel-card-muted-text)]">
@@ -244,10 +245,23 @@ function CapabilityAuditCard({ audit, note }) {
 
 function MappingIntroCard({ eyebrow, title, children }) {
   return (
-    <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+    <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{eyebrow}</div>
       <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{title}</div>
-      <div className="mt-2">{children}</div>
+      {children ? <div className="mt-1 text-xs leading-relaxed">{children}</div> : null}
+    </div>
+  );
+}
+
+function ReviewSummaryStrip({ items = [] }) {
+  return (
+    <div className="peridot-mapping-review-strip rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-3">
+      {items.map((item) => (
+        <div key={item.label} className="peridot-mapping-review-strip-item">
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">{item.label}</div>
+          <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">{item.value}</div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -255,10 +269,8 @@ function MappingIntroCard({ eyebrow, title, children }) {
 function IdentifyRecordsStep({ staging, previewRows, headers }) {
   return (
     <div className="space-y-4">
-      <MappingIntroCard eyebrow="Identify records" title="Describe what each row represents.">
-        <p>
-          Confirm the table shape before assigning time, place, relationship, and evidence roles. A row may represent a letter, site, event, object, observation, catalogue entry, or other evidence record.
-        </p>
+      <MappingIntroCard eyebrow="Identify records" title="Confirm the table shape before assigning roles.">
+        A row may represent a letter, site, event, object, observation, catalogue entry, or other evidence record.
       </MappingIntroCard>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -291,12 +303,7 @@ function IdentifyRecordsStep({ staging, previewRows, headers }) {
 
 function TimeMappingStep({ headers, temporalMapping, onTemporalChange }) {
   return (
-    <div className="space-y-4">
-      <MappingIntroCard eyebrow="Time" title="Map one date, multiple recorded dates, or an interval.">
-        Map one primary date, or use Date Start and Date End for intervals such as inception/dissolution dates, activity spans, or correspondence ranges.
-      </MappingIntroCard>
-      <TemporalMappingTable headers={headers} temporalMapping={temporalMapping} onChange={onTemporalChange} />
-    </div>
+    <TemporalMappingTable headers={headers} temporalMapping={temporalMapping} onChange={onTemporalChange} />
   );
 }
 
@@ -305,30 +312,34 @@ function PlacesMappingStep({ definitions, headers, coreMapping, pointMapping, ro
 
   return (
     <div className="space-y-4">
-      <MappingIntroCard eyebrow="Places" title="Map locations according to how this dataset uses space.">
-        <p>
-          Use one-location fields for point/site records. Use source/target geography only when each row connects two places. Coordinate pairs are latitude first, longitude second.
-        </p>
+      <MappingIntroCard eyebrow="Places" title="Choose the spatial pattern that fits the dataset.">
+        Use point roles for one-location records; use route roles only when each row connects two places. Coordinate pairs are latitude first.
       </MappingIntroCard>
       <CoreRoleMappingTable
-        title="One location per record"
-        description="Use these fields for sites, events, buildings, institutions, objects, or observations with one primary location."
+        title="Recommended for point/site records"
+        description="One location per record"
+        guidanceLabel="Start here"
+        guidanceText="Best for sites, events, buildings, institutions, objects, or observations with one primary location."
         definitions={PERIDOT_POINT_FIELD_DEFINITIONS}
         headers={headers}
         coreMapping={pointMapping}
         onChange={onPointChange}
       />
       <CoreRoleMappingTable
-        title="Route coordinate-pair roles"
-        description="Use these optional latitude-first coordinate pairs when source or target coordinates are stored in one column."
+        title="Optional coordinate-pair shortcuts"
+        description="Source or target coordinates stored in one column"
+        guidanceLabel="Optional"
+        guidanceText="Use only when route coordinates are already combined as latitude-first pairs."
         definitions={PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS}
         headers={headers}
         coreMapping={routeCoordinatePairMapping}
         onChange={onRoutePairChange}
       />
       <CoreRoleMappingTable
-        title="Route / directed-place roles"
-        description="Use these fields when a record has a source place and a target place."
+        title="Only for route datasets"
+        description="Source place and target place per record"
+        guidanceLabel="Routes"
+        guidanceText="Use these fields when a row connects an origin place to a destination place."
         definitions={placeDefinitions}
         headers={headers}
         coreMapping={coreMapping}
@@ -343,12 +354,14 @@ function RelationshipsMappingStep({ definitions, headers, coreMapping, onChange 
 
   return (
     <div className="space-y-4">
-      <MappingIntroCard eyebrow="Relationships" title="Map source/target entities only when the dataset contains relationships.">
-        Optional. Map source and target entities only when each row connects two people, institutions, objects, works, or other entities. Point/site datasets can leave these roles unassigned.
+      <MappingIntroCard eyebrow="Relationships" title="Map source and target entities only for relationship datasets.">
+        Point/site datasets can leave these roles unassigned.
       </MappingIntroCard>
       <CoreRoleMappingTable
         title="Directed relationship roles"
-        description="Use these fields for people, institutions, objects, works, or other entities connected by a record."
+        description="Source entity and target entity per record"
+        guidanceLabel="Optional"
+        guidanceText="Use for people, institutions, objects, works, or other entities connected by a record."
         definitions={relationshipDefinitions}
         headers={headers}
         coreMapping={coreMapping}
@@ -412,24 +425,14 @@ function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilit
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Accepted records</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.acceptedRecordCount ?? 0}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Map available</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.capabilityCounts?.mapReady ?? 0}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Timeline available</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary?.capabilityCounts?.timelineReady ?? 0}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Warnings</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{warnings.length}</div>
-        </div>
-      </div>
+      <ReviewSummaryStrip
+        items={[
+          { label: 'Accepted records', value: summary?.acceptedRecordCount ?? 0 },
+          { label: 'Map available', value: summary?.capabilityCounts?.mapReady ?? 0 },
+          { label: 'Timeline available', value: summary?.capabilityCounts?.timelineReady ?? 0 },
+          { label: 'Warnings', value: warnings.length },
+        ]}
+      />
 
       <CapabilityAuditCard
         audit={capabilityAudit}
@@ -714,12 +717,7 @@ function WorkbookIdentifyRecordsStep({ workbookModel, workbookMapping }) {
   return (
     <div className="space-y-4">
       <MappingIntroCard eyebrow="Identify records" title="Confirm the sheet whose rows become records.">
-        <p>
-          Each row on the primary sheet is treated as one record. Joined sheets may supply additional role fields through configured unique-ID matches.
-        </p>
-        <p className="mt-2">
-          Durable record-label, record-ID, citation, and link roles are planned for the next role-model expansion. For this prototype, keep those columns through Evidence and analysis.
-        </p>
+        Joined sheets may supply additional fields through configured unique-ID matches.
       </MappingIntroCard>
 
       <div className="grid gap-3 md:grid-cols-3">
@@ -752,17 +750,11 @@ function WorkbookIdentifyRecordsStep({ workbookModel, workbookMapping }) {
 
 function WorkbookTimeMappingStep({ workbookModel, workbookMapping, onTemporalChange }) {
   return (
-    <div className="space-y-4">
-      <MappingIntroCard eyebrow="Time" title="Map one date, multiple recorded dates, or an interval from workbook sheets.">
-        Use a single date when one date best represents the record. Use Date Start and Date End for intervals such as sent/received dates,
-        inception/dissolution dates, active periods, or site lifespans.
-      </MappingIntroCard>
-      <WorkbookTemporalMappingTable
-        workbookModel={workbookModel}
-        workbookMapping={workbookMapping}
-        onChange={onTemporalChange}
-      />
-    </div>
+    <WorkbookTemporalMappingTable
+      workbookModel={workbookModel}
+      workbookMapping={workbookMapping}
+      onChange={onTemporalChange}
+    />
   );
 }
 
@@ -771,30 +763,34 @@ function WorkbookPlacesMappingStep({ workbookModel, workbookMapping, onRouteChan
 
   return (
     <div className="space-y-4">
-      <MappingIntroCard eyebrow="Places" title="Map locations according to how this workbook uses space.">
-        <p>
-          Use one-location fields for point/site records. Use source/target geography only when each row connects two places. Coordinate pairs are latitude first, longitude second.
-        </p>
+      <MappingIntroCard eyebrow="Places" title="Choose the spatial pattern that fits the workbook.">
+        Use point roles for one-location records; use route roles only when each row connects two places. Coordinate pairs are latitude first.
       </MappingIntroCard>
       <WorkbookCoreRoleMappingTable
-        title="One location per record"
-        description="Use these fields for sites, events, buildings, institutions, objects, or observations with one primary location."
+        title="Recommended for point/site records"
+        description="One location per record"
+        guidanceLabel="Start here"
+        guidanceText="Best for sites, events, buildings, institutions, objects, or observations with one primary location."
         definitions={PERIDOT_POINT_FIELD_DEFINITIONS}
         workbookModel={workbookModel}
         workbookMapping={{ ...workbookMapping, coreMappings: workbookMapping.pointMappings || {} }}
         onChange={onPointChange}
       />
       <WorkbookCoreRoleMappingTable
-        title="Route coordinate-pair roles"
-        description="Use these optional latitude-first coordinate pairs when source or target coordinates are stored in one column."
+        title="Optional coordinate-pair shortcuts"
+        description="Source or target coordinates stored in one column"
+        guidanceLabel="Optional"
+        guidanceText="Use only when route coordinates are already combined as latitude-first pairs."
         definitions={PERIDOT_ROUTE_COORDINATE_PAIR_FIELD_DEFINITIONS}
         workbookModel={workbookModel}
         workbookMapping={{ ...workbookMapping, coreMappings: workbookMapping.routeCoordinatePairMappings || {} }}
         onChange={onRoutePairChange}
       />
       <WorkbookCoreRoleMappingTable
-        title="Route / directed-place roles"
-        description="Use these fields when a record has a source place and a target place."
+        title="Only for route datasets"
+        description="Source place and target place per record"
+        guidanceLabel="Routes"
+        guidanceText="Use these fields when a row connects an origin place to a destination place."
         definitions={placeDefinitions}
         workbookModel={workbookModel}
         workbookMapping={workbookMapping}
@@ -809,12 +805,14 @@ function WorkbookRelationshipsMappingStep({ workbookModel, workbookMapping, onCh
 
   return (
     <div className="space-y-4">
-      <MappingIntroCard eyebrow="Relationships" title="Map source/target entities only when the workbook contains relationships.">
-        Optional. Map source and target entities only when each row connects two people, institutions, objects, works, or other entities. Point/site datasets can leave these roles unassigned.
+      <MappingIntroCard eyebrow="Relationships" title="Map source and target entities only for relationship datasets.">
+        Point/site datasets can leave these roles unassigned.
       </MappingIntroCard>
       <WorkbookCoreRoleMappingTable
         title="Directed relationship roles"
-        description="Use these fields for people, institutions, objects, works, or other entities connected by a record."
+        description="Source entity and target entity per record"
+        guidanceLabel="Optional"
+        guidanceText="Use for people, institutions, objects, works, or other entities connected by a record."
         definitions={relationshipDefinitions}
         workbookModel={workbookModel}
         workbookMapping={workbookMapping}
@@ -833,24 +831,14 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary sheet</div>
-          <div className="mt-1 truncate text-lg font-bold text-[var(--panel-card-text)]">{summary.primarySheetName || '—'}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary ID</div>
-          <div className="mt-1 truncate text-lg font-bold text-[var(--panel-card-text)]">{summary.primaryLetterIdColumn || '—'}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheets</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary.letterLevelJoinCount || 0}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Issues</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{summary.errorCount} / {summary.warningCount}</div>
-        </div>
-      </div>
+      <ReviewSummaryStrip
+        items={[
+          { label: 'Primary sheet', value: summary.primarySheetName || '—' },
+          { label: 'Primary ID', value: summary.primaryLetterIdColumn || '—' },
+          { label: 'Joined sheets', value: summary.letterLevelJoinCount || 0 },
+          { label: 'Issues', value: `${summary.errorCount} / ${summary.warningCount}` },
+        ]}
+      />
 
       <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
         Review the workbook import before confirming. Peridot will assemble records from the primary sheet and configured unique-ID joins, then include selected evidence and analysis fields from the primary sheet and joined sheets.
@@ -940,6 +928,24 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
   );
 }
 
+
+function stripDisplayDateMapping(mapping = {}) {
+  return {
+    ...(mapping || {}),
+    Date_Display: '',
+  };
+}
+
+function stripWorkbookDisplayDateMapping(workbookMapping = {}) {
+  return {
+    ...(workbookMapping || {}),
+    temporalMappings: {
+      ...((workbookMapping || {}).temporalMappings || {}),
+      Date_Display: makeWorkbookColumnRef('', ''),
+    },
+  };
+}
+
 export function PeridotColumnMappingModal({
   open,
   staging,
@@ -960,11 +966,11 @@ export function PeridotColumnMappingModal({
 
   const [activeStep, setActiveStep] = useState(stepKeys[0]);
   const [coreMapping, setCoreMapping] = useState(mappingState.coreMapping || {});
-  const [temporalMapping, setTemporalMapping] = useState(mappingState.temporalMapping || {});
+  const [temporalMapping, setTemporalMapping] = useState(stripDisplayDateMapping(mappingState.temporalMapping || {}));
   const [pointMapping, setPointMapping] = useState(mappingState.pointMapping || {});
   const [routeCoordinatePairMapping, setRouteCoordinatePairMapping] = useState(mappingState.routeCoordinatePairMapping || {});
   const [customFieldSelections, setCustomFieldSelections] = useState(mappingState.customFieldSelections || []);
-  const [workbookMapping, setWorkbookMapping] = useState(mappingState);
+  const [workbookMapping, setWorkbookMapping] = useState(stripWorkbookDisplayDateMapping(mappingState));
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
 
   useEffect(() => {
@@ -972,19 +978,19 @@ export function PeridotColumnMappingModal({
     const nextIsWorkbookMode = staging?.mappingMode === 'workbook' || Boolean(staging?.workbookMappingRequired);
     setActiveStep(nextIsWorkbookMode ? WORKBOOK_STEP_KEYS[0] : SINGLE_TABLE_STEP_KEYS[0]);
     setCoreMapping(mappingState.coreMapping || {});
-    setTemporalMapping(mappingState.temporalMapping || {});
+    setTemporalMapping(stripDisplayDateMapping(mappingState.temporalMapping || {}));
     setCustomFieldSelections(mappingState.customFieldSelections || []);
     setWorkbookMapping(
       nextIsWorkbookMode && staging?.workbookModel
         ? {
-            ...(mappingState || {}),
+            ...stripWorkbookDisplayDateMapping(mappingState || {}),
             customFieldSelections: refreshWorkbookCustomSelections({
               workbookModel: staging.workbookModel,
               workbookMapping: mappingState || {},
               previousSelections: mappingState.customFieldSelections || [],
             }),
           }
-        : (mappingState || {})
+        : stripWorkbookDisplayDateMapping(mappingState || {})
     );
     setShowCancelConfirmation(false);
   }, [open, staging?.stagedAt]);
@@ -992,7 +998,7 @@ export function PeridotColumnMappingModal({
   const effectiveCustomSelections = useMemo(() => {
     const mappedCoreColumns = new Set([
       ...Object.values(coreMapping || {}),
-      ...Object.values(temporalMapping || {}),
+      ...Object.values(stripDisplayDateMapping(temporalMapping || {})),
       ...Object.values(pointMapping || {}),
       ...Object.values(routeCoordinatePairMapping || {}),
     ].filter(Boolean));
@@ -1006,7 +1012,7 @@ export function PeridotColumnMappingModal({
   const validation = useMemo(
     () => validatePeridotColumnMapping(headers, {
       coreMapping,
-      temporalMapping,
+      temporalMapping: stripDisplayDateMapping(temporalMapping),
       pointMapping,
       routeCoordinatePairMapping,
       customFieldSelections: effectiveCustomSelections,
@@ -1017,7 +1023,7 @@ export function PeridotColumnMappingModal({
   const mappedRows = useMemo(
     () => applyPeridotColumnMapping(rows, {
       coreMapping,
-      temporalMapping,
+      temporalMapping: stripDisplayDateMapping(temporalMapping),
       pointMapping,
       routeCoordinatePairMapping,
       customFieldSelections: effectiveCustomSelections,
@@ -1075,24 +1081,22 @@ export function PeridotColumnMappingModal({
   if (!open || !staging || staging.status !== 'ready') return null;
 
   const singleStepLabels = {
-    preview: 'Upload preview',
-    identify: 'Identify records',
+    preview: 'Upload',
     time: 'Time',
     places: 'Places',
-    relationships: 'Relationships',
-    evidence: 'Evidence and analysis',
-    review: 'Review tool availability',
+    relationships: 'Relations',
+    evidence: 'Evidence',
+    review: 'Review',
   };
 
   const workbookStepLabels = {
-    'workbook-preview': 'Workbook overview',
-    'workbook-setup': 'Record sheet',
-    'workbook-identify': 'Identify records',
+    'workbook-preview': 'Workbook',
+    'workbook-setup': 'Sheet',
     'workbook-time': 'Time',
     'workbook-places': 'Places',
-    'workbook-relationships': 'Relationships',
-    'workbook-evidence': 'Evidence and analysis',
-    'workbook-review': 'Review tool availability',
+    'workbook-relationships': 'Relations',
+    'workbook-evidence': 'Evidence',
+    'workbook-review': 'Review',
   };
 
   const stepLabels = isWorkbookMode ? workbookStepLabels : singleStepLabels;
@@ -1112,7 +1116,8 @@ export function PeridotColumnMappingModal({
   };
 
   const handleTemporalMappingChange = (field, sourceColumn) => {
-    setTemporalMapping((current) => ({
+    if (field === 'Date_Display') return;
+    setTemporalMapping((current) => stripDisplayDateMapping({
       ...current,
       [field]: sourceColumn,
     }));
@@ -1301,12 +1306,14 @@ export function PeridotColumnMappingModal({
   };
 
   const handleWorkbookTemporalMappingChange = (field, ref) => {
+    if (field === 'Date_Display') return;
     setWorkbookMapping((current) => {
       const nextMapping = {
         ...current,
         temporalMappings: {
           ...(current.temporalMappings || {}),
           [field]: ref,
+          Date_Display: makeWorkbookColumnRef('', ''),
         },
       };
       return {
@@ -1401,7 +1408,7 @@ export function PeridotColumnMappingModal({
   const buildCurrentMappingPayload = () => {
     if (isWorkbookMode) {
       return {
-        workbookMappingState: workbookMapping,
+        workbookMappingState: stripWorkbookDisplayDateMapping(workbookMapping),
         workbookValidation,
         workbookSummary: workbookMappingSummary,
       };
@@ -1409,7 +1416,7 @@ export function PeridotColumnMappingModal({
 
     return {
       coreMapping,
-      temporalMapping,
+      temporalMapping: stripDisplayDateMapping(temporalMapping),
       pointMapping,
       routeCoordinatePairMapping,
       customFieldSelections: effectiveCustomSelections,
@@ -1454,17 +1461,14 @@ export function PeridotColumnMappingModal({
   return (
     <div className="peridot-mapping-modal fixed inset-0 z-[80] flex items-center justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-sm">
       <div className="peridot-mapping-modal-shell flex flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
-        <div className="peridot-mapping-modal-header flex flex-wrap items-start justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">
-              {isWorkbookMode ? 'Workbook mapping workspace' : 'Column mapping workspace'}
-            </div>
-            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] mt-1 text-2xl font-bold text-[var(--heading-text)]">
+        <div className="peridot-mapping-modal-header flex flex-wrap items-center justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
+          <div className="min-w-0">
+            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold leading-tight text-[var(--heading-text)]">
               {isWorkbookMode ? 'Assign workbook data roles for Peridot' : 'Assign data roles for Peridot'}
             </h2>
-            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-              {staging.fileLabel} · {staging.fileType} · {staging.rowCount || 0} rows · {staging.columnCount || headers.length || 0} columns
-            </p>
+            <div className="mt-2 text-sm font-semibold text-[var(--muted-text)]">
+              {staging.fileLabel || 'Uploaded data'}
+            </div>
           </div>
           <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
             Close
@@ -1525,7 +1529,7 @@ export function PeridotColumnMappingModal({
           {!isWorkbookMode && activeStep === 'time' ? (
             <TimeMappingStep
               headers={headers}
-              temporalMapping={temporalMapping}
+              temporalMapping={stripDisplayDateMapping(temporalMapping)}
               onTemporalChange={handleTemporalMappingChange}
             />
           ) : null}
@@ -1555,7 +1559,7 @@ export function PeridotColumnMappingModal({
           {!isWorkbookMode && activeStep === 'evidence' ? (
             <InspectorFieldsStep
               selections={effectiveCustomSelections}
-              coreMapping={{ ...coreMapping, ...temporalMapping, ...pointMapping, ...routeCoordinatePairMapping }}
+              coreMapping={{ ...coreMapping, ...stripDisplayDateMapping(temporalMapping), ...pointMapping, ...routeCoordinatePairMapping }}
               onActionChange={handleCustomActionChange}
               onLabelChange={handleCustomLabelChange}
             />

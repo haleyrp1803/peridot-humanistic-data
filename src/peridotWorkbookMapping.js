@@ -139,6 +139,24 @@ function titleCase(value) {
   return text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1));
 }
 
+/*
+ * Build the display date stored on imported workbook rows. The mapping UI now
+ * hides Date_Display because most users should only choose a single date or a
+ * start/end interval; this helper keeps workbook imports aligned with ordinary
+ * single-table imports by composing the readable display value automatically.
+ */
+function composeDisplayDateValue(singleDate, dateStart, dateEnd, explicitDisplayDate) {
+  const display = asText(explicitDisplayDate);
+  const single = asText(singleDate);
+  const start = asText(dateStart);
+  const end = asText(dateEnd);
+  if (display) return display;
+  if (start && end) return `${start}–${end}`;
+  if (start) return `${start}–`;
+  if (end) return `–${end}`;
+  return single;
+}
+
 export function makeWorkbookColumnRef(sheetName = '', columnName = '') {
   return Object.freeze({
     sheetName: asText(sheetName),
@@ -1058,8 +1076,14 @@ export function buildPeridotRowsFromWorkbookMapping(workbookModel, mappingState 
 
     if (temporalValues.Date) coreValues.Date = temporalValues.Date;
     if (!coreValues.Date && temporalValues.Date_Start) coreValues.Date = temporalValues.Date_Start;
-    if (!coreValues.Date && temporalValues.Date_Display) coreValues.Date = temporalValues.Date_Display;
     if (!coreValues.Date && temporalValues.Date_End) coreValues.Date = temporalValues.Date_End;
+
+    const composedDisplayDate = composeDisplayDateValue(
+      coreValues.Date || temporalValues.Date,
+      temporalValues.Date_Start,
+      temporalValues.Date_End,
+      temporalValues.Date_Display
+    );
 
     const customInspectorFields = customSelections.map((selection) => ({
       key: selection.key || selection.sourceColumn || selection.label,
@@ -1080,7 +1104,7 @@ export function buildPeridotRowsFromWorkbookMapping(workbookModel, mappingState 
       ...coreValues,
       Date_Start: temporalValues.Date_Start || '',
       Date_End: temporalValues.Date_End || '',
-      Date_Display: temporalValues.Date_Display || '',
+      Date_Display: composedDisplayDate,
       ...pointValues,
       ...routeCoordinatePairValues,
       customInspectorFields,

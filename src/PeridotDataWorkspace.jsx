@@ -24,10 +24,6 @@ export function PeridotDataWorkspace({
   clearColumnMappingStaging,
   onOpenVisualizations,
 }) {
-  const popup = peridotValidationSummary?.popup || null;
-  const capabilityLines = popup?.capabilityLines || [];
-  const warningLines = popup?.warningLines || [];
-
   return (
     <section className="peridot-workspace-field flex min-h-full items-center text-[var(--peridot-color-hex-fbf7ea)]">
       <div className="peridot-workspace-frame w-full">
@@ -132,31 +128,8 @@ export function PeridotDataWorkspace({
           </div>
         ) : null}
 
-        {popup ? (
-          <div className="mx-auto mt-8 max-w-3xl peridot-cream-card peridot-card-inner">
-            <p className="peridot-section-label">Latest upload</p>
-            <h2 className="mt-2 text-2xl font-bold text-[var(--peridot-color-hex-26352b)]">{popup.title || 'Latest upload summary'}</h2>
-            {popup.intro ? <p className="mt-3 text-sm leading-6 text-[var(--peridot-color-hex-42533f)]">{popup.intro}</p> : null}
-            {capabilityLines.length ? (
-              <div className="mt-4 rounded-2xl border border-[var(--peridot-color-hex-5f714a-a25)] bg-[var(--peridot-color-hex-eef3dd)] p-4">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-5c724d)]">Tool availability</h3>
-                <ul className="mt-2 space-y-1 text-sm leading-6 text-[var(--peridot-color-hex-42533f)]">
-                  {capabilityLines.map((line) => <li key={line}>• {line}</li>)}
-                </ul>
-              </div>
-            ) : null}
-            {warningLines.length ? (
-              <div className="mt-4 rounded-2xl border border-[var(--peridot-color-hex-b58b42-a40)] bg-[var(--peridot-color-hex-fff4d8)] p-4">
-                <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-735726)]">Limits to review</h3>
-                <ul className="mt-2 space-y-1 text-sm leading-6 text-[var(--peridot-color-hex-51422a)]">
-                  {warningLines.map((line) => <li key={line}>• {line}</li>)}
-                </ul>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
 
-        {!columnMappingStaging && !popup ? (
+        {!columnMappingStaging ? (
           <p className="mt-6 text-center text-sm text-[var(--peridot-color-hex-f7f2df-a70)]">
             Current source: <strong className="text-[var(--peridot-color-hex-fbf7ea)]">{peridotFileLabel}</strong>
           </p>

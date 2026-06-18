@@ -1822,3 +1822,141 @@ textarea {
     height: 1.12rem !important;
   }
 }
+
+/* Upload mapping UX-density pass.
+ * This final override layer keeps the current dark-green folio design but makes
+ * the mapping workspace more task-oriented: shorter chrome, fully visible step
+ * labels, mapping controls promoted over explanatory copy, and compact review
+ * summaries. Behavior stays in the React modal; these rules only refine layout,
+ * density, and scanning hierarchy.
+ */
+.peridot-mapping-modal-shell {
+  width: min(1120px, calc(100vw - 4.5rem)) !important;
+  height: min(86vh, 780px) !important;
+  min-height: 610px !important;
+}
+
+.peridot-mapping-modal-header {
+  align-items: center !important;
+  padding-block: 0.82rem !important;
+}
+
+.peridot-mapping-modal-header h2 {
+  margin-top: 0.18rem !important;
+  font-size: clamp(1.35rem, 2.1vw, 1.72rem) !important;
+  line-height: 0.98 !important;
+}
+
+.peridot-mapping-modal-header .text-xs {
+  max-width: min(72vw, 58rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peridot-mapping-progress {
+  padding-block: 0.72rem !important;
+}
+
+.peridot-mapping-step-button {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  padding: 0.48rem 0.58rem !important;
+  font-size: clamp(0.72rem, 0.76vw, 0.82rem) !important;
+}
+
+.peridot-mapping-step-label {
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.peridot-mapping-modal-body {
+  padding-block: 1rem !important;
+}
+
+.peridot-mapping-modal-footer {
+  padding-block: 0.82rem !important;
+}
+
+.peridot-mapping-intro-card {
+  padding: 0.82rem 1rem !important;
+}
+
+.peridot-mapping-section-card {
+  padding: 1rem !important;
+}
+
+.peridot-mapping-role-cell p {
+  margin-bottom: 0;
+}
+
+.peridot-mapping-choice-cell {
+  width: clamp(16rem, 28vw, 22rem);
+}
+
+.peridot-mapping-used-for-row {
+  display: flex;
+  max-width: 18rem;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+}
+
+.peridot-mapping-mini-badge {
+  margin: 0 !important;
+  padding: 0.14rem 0.42rem !important;
+  font-size: 0.68rem !important;
+  line-height: 1.08 !important;
+}
+
+.peridot-mapping-priority-badge {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(199, 155, 61, 0.42);
+  border-radius: 999px;
+  background: rgba(199, 155, 61, 0.18);
+  color: #533d15;
+  padding: 0.22rem 0.62rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.peridot-mapping-review-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  background: rgba(230, 223, 191, 0.92) !important;
+}
+
+.peridot-mapping-review-strip-item {
+  min-width: 0;
+  border-right: 1px solid rgba(74, 93, 62, 0.16);
+  padding-right: 0.7rem;
+}
+
+.peridot-mapping-review-strip-item:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+
+.peridot-mapping-review-strip-item .text-lg {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 920px) {
+  .peridot-mapping-review-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .peridot-mapping-review-strip-item:nth-child(2n) {
+    border-right: 0;
+    padding-right: 0;
+  }
+
+  .peridot-mapping-choice-cell {
+    width: min(70vw, 22rem);
+  }
+}

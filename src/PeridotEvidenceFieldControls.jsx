@@ -138,7 +138,7 @@ export function InspectorFieldsStep({ selections, coreMapping, onActionChange, o
                       className="peridot-mapping-input w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
                     />
                   </td>
-                  <td className="px-4 py-3"><span className={selection.analyticsEligible ? 'peridot-mapping-readiness-badge peridot-mapping-readiness-badge-chart' : 'peridot-mapping-readiness-badge'}>{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</span></td>
+                  <td className="px-4 py-3"><span className={'peridot-mapping-readiness-badge'}>{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</span></td>
                 </tr>
               );
             })}
@@ -219,7 +219,7 @@ export function WorkbookInspectorFieldsStep({ workbookMapping, selections, onAct
                         className="peridot-mapping-input w-full min-w-[12rem] rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
                       />
                     </td>
-                    <td className="px-4 py-3"><span className={selection.analyticsEligible ? 'peridot-mapping-readiness-badge peridot-mapping-readiness-badge-chart' : 'peridot-mapping-readiness-badge'}>{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</span></td>
+                    <td className="px-4 py-3"><span className={'peridot-mapping-readiness-badge'}>{selection.analyticsEligible ? 'Likely chart/filter field' : 'Evidence only'}</span></td>
                   </tr>
                 );
               })}
