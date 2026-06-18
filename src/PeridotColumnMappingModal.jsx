@@ -51,9 +51,11 @@ import {
 } from './peridotColumnMappingUiConfig.js';
 import {
   CoreRoleMappingTable,
+  RelationshipMappingPanel,
   SpatialMappingPanel,
   TemporalMappingTable,
   WorkbookCoreRoleMappingTable,
+  WorkbookRelationshipMappingPanel,
   WorkbookSpatialMappingPanel,
   WorkbookTemporalMappingTable,
 } from './PeridotMappingFieldControls.jsx';
@@ -321,25 +323,15 @@ function PlacesMappingStep({ headers, coreMapping, pointMapping, routeCoordinate
   );
 }
 
-function RelationshipsMappingStep({ definitions, headers, coreMapping, onChange }) {
-  const relationshipDefinitions = definitionsForFields(definitions, CORE_FIELD_GROUPS.relationship);
-
+function RelationshipsMappingStep({ headers, coreMapping, relationshipMetadataMapping, onChange, onMetadataChange }) {
   return (
-    <div className="space-y-4">
-      <MappingIntroCard eyebrow="Relationships" title="Map source and target entities only for relationship datasets.">
-        Point/site datasets can leave these roles unassigned.
-      </MappingIntroCard>
-      <CoreRoleMappingTable
-        title="Directed relationship roles"
-        description="Source entity and target entity per record"
-        guidanceLabel="Optional"
-        guidanceText="Use for people, institutions, objects, works, or other entities connected by a record."
-        definitions={relationshipDefinitions}
-        headers={headers}
-        coreMapping={coreMapping}
-        onChange={onChange}
-      />
-    </div>
+    <RelationshipMappingPanel
+      headers={headers}
+      coreMapping={coreMapping}
+      relationshipMetadataMapping={relationshipMetadataMapping}
+      onCoreChange={onChange}
+      onMetadataChange={onMetadataChange}
+    />
   );
 }
 
@@ -742,25 +734,14 @@ function WorkbookPlacesMappingStep({ workbookModel, workbookMapping, onRouteChan
   );
 }
 
-function WorkbookRelationshipsMappingStep({ workbookModel, workbookMapping, onChange }) {
-  const relationshipDefinitions = definitionsForFields(PERIDOT_CORE_FIELD_DEFINITIONS, CORE_FIELD_GROUPS.relationship);
-
+function WorkbookRelationshipsMappingStep({ workbookModel, workbookMapping, onChange, onMetadataChange }) {
   return (
-    <div className="space-y-4">
-      <MappingIntroCard eyebrow="Relationships" title="Map source and target entities only for relationship datasets.">
-        Point/site datasets can leave these roles unassigned.
-      </MappingIntroCard>
-      <WorkbookCoreRoleMappingTable
-        title="Directed relationship roles"
-        description="Source entity and target entity per record"
-        guidanceLabel="Optional"
-        guidanceText="Use for people, institutions, objects, works, or other entities connected by a record."
-        definitions={relationshipDefinitions}
-        workbookModel={workbookModel}
-        workbookMapping={workbookMapping}
-        onChange={onChange}
-      />
-    </div>
+    <WorkbookRelationshipMappingPanel
+      workbookModel={workbookModel}
+      workbookMapping={workbookMapping}
+      onCoreChange={onChange}
+      onMetadataChange={onMetadataChange}
+    />
   );
 }
 function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summary, previewRows, capabilityAudit }) {
@@ -871,6 +852,108 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
 }
 
 
+const RELATIONSHIP_METADATA_LABELS = Object.freeze({
+  Relationship_Type: 'Relationship type',
+  Relationship_Label: 'Label/Note',
+});
+
+function normalizeRelationshipMetadataMapping(mapping = {}) {
+  return Object.freeze({
+    Relationship_Type: mapping.Relationship_Type || '',
+    Relationship_Label: mapping.Relationship_Label || '',
+  });
+}
+
+function applyRelationshipMetadataSelections(selections = [], relationshipMetadataMapping = {}) {
+  const selectedMetadata = Object.entries(RELATIONSHIP_METADATA_LABELS)
+    .map(([field, label]) => ({
+      field,
+      label,
+      sourceColumn: relationshipMetadataMapping?.[field] || '',
+    }))
+    .filter((item) => item.sourceColumn);
+
+  if (!selectedMetadata.length) return selections;
+
+  const nextSelections = selections.map((selection) => ({ ...selection }));
+  selectedMetadata.forEach((metadata) => {
+    const existingIndex = nextSelections.findIndex((selection) => selection.sourceColumn === metadata.sourceColumn);
+    const nextSelection = {
+      sourceColumn: metadata.sourceColumn,
+      label: metadata.label,
+      action: CUSTOM_INSPECTOR_FIELD_DEFAULTS.include,
+      suggested: true,
+      analyticsEligible: true,
+      reason: 'Selected as relationship metadata.',
+    };
+
+    if (existingIndex >= 0) {
+      nextSelections[existingIndex] = {
+        ...nextSelections[existingIndex],
+        ...nextSelection,
+      };
+    } else {
+      nextSelections.push(nextSelection);
+    }
+  });
+
+  return nextSelections;
+}
+
+function normalizeWorkbookRelationshipMetadataMappings(mapping = {}) {
+  return Object.freeze({
+    Relationship_Type: mapping.Relationship_Type || makeWorkbookColumnRef('', ''),
+    Relationship_Label: mapping.Relationship_Label || makeWorkbookColumnRef('', ''),
+  });
+}
+
+function getWorkbookRelationshipMetadataKey(ref = {}) {
+  return `${ref.sheetName || ''}::${ref.columnName || ''}`;
+}
+
+function applyWorkbookRelationshipMetadataSelections(selections = [], relationshipMetadataMappings = {}) {
+  const selectedMetadata = Object.entries(RELATIONSHIP_METADATA_LABELS)
+    .map(([field, label]) => ({
+      field,
+      label,
+      sourceRef: relationshipMetadataMappings?.[field] || makeWorkbookColumnRef('', ''),
+    }))
+    .filter((item) => item.sourceRef?.sheetName && item.sourceRef?.columnName);
+
+  if (!selectedMetadata.length) return selections;
+
+  const nextSelections = selections.map((selection) => ({ ...selection }));
+  selectedMetadata.forEach((metadata) => {
+    const metadataKey = getWorkbookRelationshipMetadataKey(metadata.sourceRef);
+    const existingIndex = nextSelections.findIndex((selection) => {
+      const ref = selection.sourceRef || makeWorkbookColumnRef(selection.sheetName, selection.sourceColumn);
+      return getWorkbookRelationshipMetadataKey(ref) === metadataKey;
+    });
+    const nextSelection = {
+      key: metadata.sourceRef.columnName,
+      sheetName: metadata.sourceRef.sheetName,
+      sourceColumn: metadata.sourceRef.columnName,
+      sourceRef: metadata.sourceRef,
+      label: metadata.label,
+      action: CUSTOM_INSPECTOR_FIELD_DEFAULTS.include,
+      suggested: true,
+      analyticsEligible: true,
+      reason: 'Selected as relationship metadata.',
+    };
+
+    if (existingIndex >= 0) {
+      nextSelections[existingIndex] = {
+        ...nextSelections[existingIndex],
+        ...nextSelection,
+      };
+    } else {
+      nextSelections.push(nextSelection);
+    }
+  });
+
+  return nextSelections;
+}
+
 function stripDisplayDateMapping(mapping = {}) {
   return {
     ...(mapping || {}),
@@ -885,6 +968,7 @@ function stripWorkbookDisplayDateMapping(workbookMapping = {}) {
       ...((workbookMapping || {}).temporalMappings || {}),
       Date_Display: makeWorkbookColumnRef('', ''),
     },
+    relationshipMetadataMappings: normalizeWorkbookRelationshipMetadataMappings((workbookMapping || {}).relationshipMetadataMappings || {}),
   };
 }
 
@@ -911,6 +995,7 @@ export function PeridotColumnMappingModal({
   const [temporalMapping, setTemporalMapping] = useState(stripDisplayDateMapping(mappingState.temporalMapping || {}));
   const [pointMapping, setPointMapping] = useState(mappingState.pointMapping || {});
   const [routeCoordinatePairMapping, setRouteCoordinatePairMapping] = useState(mappingState.routeCoordinatePairMapping || {});
+  const [relationshipMetadataMapping, setRelationshipMetadataMapping] = useState(normalizeRelationshipMetadataMapping(mappingState.relationshipMetadataMapping || {}));
   const [customFieldSelections, setCustomFieldSelections] = useState(mappingState.customFieldSelections || []);
   const [workbookMapping, setWorkbookMapping] = useState(stripWorkbookDisplayDateMapping(mappingState));
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
@@ -921,16 +1006,21 @@ export function PeridotColumnMappingModal({
     setActiveStep(nextIsWorkbookMode ? WORKBOOK_STEP_KEYS[0] : SINGLE_TABLE_STEP_KEYS[0]);
     setCoreMapping(mappingState.coreMapping || {});
     setTemporalMapping(stripDisplayDateMapping(mappingState.temporalMapping || {}));
+    setRelationshipMetadataMapping(normalizeRelationshipMetadataMapping(mappingState.relationshipMetadataMapping || {}));
     setCustomFieldSelections(mappingState.customFieldSelections || []);
     setWorkbookMapping(
       nextIsWorkbookMode && staging?.workbookModel
         ? {
             ...stripWorkbookDisplayDateMapping(mappingState || {}),
-            customFieldSelections: refreshWorkbookCustomSelections({
-              workbookModel: staging.workbookModel,
-              workbookMapping: mappingState || {},
-              previousSelections: mappingState.customFieldSelections || [],
-            }),
+            relationshipMetadataMappings: normalizeWorkbookRelationshipMetadataMappings(mappingState.relationshipMetadataMappings || {}),
+            customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+              refreshWorkbookCustomSelections({
+                workbookModel: staging.workbookModel,
+                workbookMapping: mappingState || {},
+                previousSelections: mappingState.customFieldSelections || [],
+              }),
+              normalizeWorkbookRelationshipMetadataMappings(mappingState.relationshipMetadataMappings || {})
+            ),
           }
         : stripWorkbookDisplayDateMapping(mappingState || {})
     );
@@ -944,12 +1034,13 @@ export function PeridotColumnMappingModal({
       ...Object.values(pointMapping || {}),
       ...Object.values(routeCoordinatePairMapping || {}),
     ].filter(Boolean));
-    return customFieldSelections.map((selection) => (
+    const structuralSelections = customFieldSelections.map((selection) => (
       mappedCoreColumns.has(selection.sourceColumn)
         ? { ...selection, action: CUSTOM_INSPECTOR_FIELD_DEFAULTS.ignore }
         : selection
     ));
-  }, [coreMapping, temporalMapping, pointMapping, routeCoordinatePairMapping, customFieldSelections]);
+    return applyRelationshipMetadataSelections(structuralSelections, relationshipMetadataMapping);
+  }, [coreMapping, temporalMapping, pointMapping, routeCoordinatePairMapping, relationshipMetadataMapping, customFieldSelections]);
 
   const validation = useMemo(
     () => validatePeridotColumnMapping(headers, {
@@ -957,6 +1048,7 @@ export function PeridotColumnMappingModal({
       temporalMapping: stripDisplayDateMapping(temporalMapping),
       pointMapping,
       routeCoordinatePairMapping,
+      relationshipMetadataMapping,
       customFieldSelections: effectiveCustomSelections,
     }),
     [headers, coreMapping, temporalMapping, pointMapping, routeCoordinatePairMapping, effectiveCustomSelections]
@@ -968,6 +1060,7 @@ export function PeridotColumnMappingModal({
       temporalMapping: stripDisplayDateMapping(temporalMapping),
       pointMapping,
       routeCoordinatePairMapping,
+      relationshipMetadataMapping,
       customFieldSelections: effectiveCustomSelections,
     }),
     [rows, coreMapping, temporalMapping, pointMapping, routeCoordinatePairMapping, effectiveCustomSelections]
@@ -1079,6 +1172,13 @@ export function PeridotColumnMappingModal({
     }));
   };
 
+  const handleRelationshipMetadataMappingChange = (field, sourceColumn) => {
+    setRelationshipMetadataMapping((current) => normalizeRelationshipMetadataMapping({
+      ...current,
+      [field]: sourceColumn,
+    }));
+  };
+
   const handleWorkbookPrimarySheetChange = (primarySheetName) => {
     const nextCoreMappings = suggestWorkbookCoreMappings(workbookModel, primarySheetName);
     const nextTemporalMappings = suggestWorkbookTemporalMappings(workbookModel, primarySheetName, nextCoreMappings);
@@ -1095,6 +1195,7 @@ export function PeridotColumnMappingModal({
         temporalMappings: nextTemporalMappings,
         pointMappings: nextPointMappings,
         routeCoordinatePairMappings: nextRouteCoordinatePairMappings,
+        relationshipMetadataMappings: normalizeWorkbookRelationshipMetadataMappings({}),
         letterLevelJoins: suggestedJoins,
         letterLevelJoinSuggestions: suggestedJoins,
       };
@@ -1142,11 +1243,14 @@ export function PeridotColumnMappingModal({
       };
       return {
         ...nextMapping,
-        customFieldSelections: refreshWorkbookCustomSelections({
-          workbookModel,
-          workbookMapping: nextMapping,
-          previousSelections: current.customFieldSelections || [],
-        }),
+        customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+          refreshWorkbookCustomSelections({
+            workbookModel,
+            workbookMapping: nextMapping,
+            previousSelections: current.customFieldSelections || [],
+          }),
+          nextMapping.relationshipMetadataMappings || {}
+        ),
       };
     });
   };
@@ -1159,11 +1263,14 @@ export function PeridotColumnMappingModal({
       };
       return {
         ...nextMapping,
-        customFieldSelections: refreshWorkbookCustomSelections({
-          workbookModel,
-          workbookMapping: nextMapping,
-          previousSelections: current.customFieldSelections || [],
-        }),
+        customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+          refreshWorkbookCustomSelections({
+            workbookModel,
+            workbookMapping: nextMapping,
+            previousSelections: current.customFieldSelections || [],
+          }),
+          nextMapping.relationshipMetadataMappings || {}
+        ),
       };
     });
   };
@@ -1185,11 +1292,14 @@ export function PeridotColumnMappingModal({
       };
       return {
         ...nextMapping,
-        customFieldSelections: refreshWorkbookCustomSelections({
-          workbookModel,
-          workbookMapping: nextMapping,
-          previousSelections: current.customFieldSelections || [],
-        }),
+        customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+          refreshWorkbookCustomSelections({
+            workbookModel,
+            workbookMapping: nextMapping,
+            previousSelections: current.customFieldSelections || [],
+          }),
+          nextMapping.relationshipMetadataMappings || {}
+        ),
       };
     });
   };
@@ -1238,11 +1348,14 @@ export function PeridotColumnMappingModal({
       };
       return {
         ...nextMapping,
-        customFieldSelections: refreshWorkbookCustomSelections({
-          workbookModel,
-          workbookMapping: nextMapping,
-          previousSelections: current.customFieldSelections || [],
-        }),
+        customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+          refreshWorkbookCustomSelections({
+            workbookModel,
+            workbookMapping: nextMapping,
+            previousSelections: current.customFieldSelections || [],
+          }),
+          nextMapping.relationshipMetadataMappings || {}
+        ),
       };
     });
   };
@@ -1260,11 +1373,14 @@ export function PeridotColumnMappingModal({
       };
       return {
         ...nextMapping,
-        customFieldSelections: refreshWorkbookCustomSelections({
-          workbookModel,
-          workbookMapping: nextMapping,
-          previousSelections: current.customFieldSelections || [],
-        }),
+        customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+          refreshWorkbookCustomSelections({
+            workbookModel,
+            workbookMapping: nextMapping,
+            previousSelections: current.customFieldSelections || [],
+          }),
+          nextMapping.relationshipMetadataMappings || {}
+        ),
       };
     });
   };
@@ -1280,11 +1396,14 @@ export function PeridotColumnMappingModal({
       };
       return {
         ...nextMapping,
-        customFieldSelections: refreshWorkbookCustomSelections({
-          workbookModel,
-          workbookMapping: nextMapping,
-          previousSelections: current.customFieldSelections || [],
-        }),
+        customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+          refreshWorkbookCustomSelections({
+            workbookModel,
+            workbookMapping: nextMapping,
+            previousSelections: current.customFieldSelections || [],
+          }),
+          nextMapping.relationshipMetadataMappings || {}
+        ),
       };
     });
   };
@@ -1300,11 +1419,38 @@ export function PeridotColumnMappingModal({
       };
       return {
         ...nextMapping,
-        customFieldSelections: refreshWorkbookCustomSelections({
-          workbookModel,
-          workbookMapping: nextMapping,
-          previousSelections: current.customFieldSelections || [],
-        }),
+        customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+          refreshWorkbookCustomSelections({
+            workbookModel,
+            workbookMapping: nextMapping,
+            previousSelections: current.customFieldSelections || [],
+          }),
+          nextMapping.relationshipMetadataMappings || {}
+        ),
+      };
+    });
+  };
+
+  const handleWorkbookRelationshipMetadataMappingChange = (field, ref) => {
+    setWorkbookMapping((current) => {
+      const nextRelationshipMetadataMappings = normalizeWorkbookRelationshipMetadataMappings({
+        ...(current.relationshipMetadataMappings || {}),
+        [field]: ref,
+      });
+      const nextMapping = {
+        ...current,
+        relationshipMetadataMappings: nextRelationshipMetadataMappings,
+      };
+      return {
+        ...nextMapping,
+        customFieldSelections: applyWorkbookRelationshipMetadataSelections(
+          refreshWorkbookCustomSelections({
+            workbookModel,
+            workbookMapping: nextMapping,
+            previousSelections: current.customFieldSelections || [],
+          }),
+          nextRelationshipMetadataMappings
+        ),
       };
     });
   };
@@ -1361,6 +1507,7 @@ export function PeridotColumnMappingModal({
       temporalMapping: stripDisplayDateMapping(temporalMapping),
       pointMapping,
       routeCoordinatePairMapping,
+      relationshipMetadataMapping,
       customFieldSelections: effectiveCustomSelections,
       validationSummary,
     };
@@ -1405,12 +1552,12 @@ export function PeridotColumnMappingModal({
       <div className="peridot-mapping-modal-shell flex flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
         <div className="peridot-mapping-modal-header flex flex-wrap items-center justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
           <div className="min-w-0">
+            <div className="mb-1 text-sm font-semibold text-[var(--muted-text)]">
+              {staging.fileLabel || 'Uploaded data'}
+            </div>
             <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold leading-tight text-[var(--heading-text)]">
               {isWorkbookMode ? 'Assign workbook data roles for Peridot' : 'Assign data roles for Peridot'}
             </h2>
-            <div className="mt-2 text-sm font-semibold text-[var(--muted-text)]">
-              {staging.fileLabel || 'Uploaded data'}
-            </div>
           </div>
           <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
             Close
@@ -1492,7 +1639,9 @@ export function PeridotColumnMappingModal({
             <RelationshipsMappingStep
               headers={headers}
               coreMapping={coreMapping}
+              relationshipMetadataMapping={relationshipMetadataMapping}
               onChange={handleCoreMappingChange}
+              onMetadataChange={handleRelationshipMetadataMappingChange}
             />
           ) : null}
 
@@ -1563,6 +1712,7 @@ export function PeridotColumnMappingModal({
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
               onChange={handleWorkbookCoreMappingChange}
+              onMetadataChange={handleWorkbookRelationshipMetadataMappingChange}
             />
           ) : null}
 

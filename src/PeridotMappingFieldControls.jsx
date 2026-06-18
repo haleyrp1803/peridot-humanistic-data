@@ -443,6 +443,146 @@ export function WorkbookSpatialMappingPanel({ workbookModel, workbookMapping = {
   );
 }
 
+
+const RELATIONSHIP_SINGLE_TABLE_FIELDS = Object.freeze([
+  Object.freeze({ label: 'Source entity', key: 'Source_Name', mappingType: 'core' }),
+  Object.freeze({ label: 'Target entity', key: 'Target_Name', mappingType: 'core' }),
+  Object.freeze({ label: 'Relationship type', key: 'Relationship_Type', mappingType: 'metadata' }),
+  Object.freeze({ label: 'Label/Note', key: 'Relationship_Label', mappingType: 'metadata' }),
+]);
+
+const RELATIONSHIP_METADATA_DEFINITIONS = Object.freeze({
+  Relationship_Type: Object.freeze({ key: 'Relationship_Type', label: 'Relationship type' }),
+  Relationship_Label: Object.freeze({ key: 'Relationship_Label', label: 'Label/Note' }),
+});
+
+function getRelationshipDefinition(field) {
+  return (
+    PERIDOT_CORE_FIELD_DEFINITIONS_BY_KEY[field.key]
+    || RELATIONSHIP_METADATA_DEFINITIONS[field.key]
+    || { key: field.key, label: field.label }
+  );
+}
+
+function RelationshipUsagePanel() {
+  return (
+    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Used for</div>
+      <p className="mt-2">
+        Relationship information supports network graphs, connected-correspondent views, Inspector records, search and filter, charts, and export.
+      </p>
+      <p className="mt-2">
+        Use this step when each row links one entity to another.
+      </p>
+      <p className="mt-2">
+        Point/site datasets can leave these fields unassigned.
+      </p>
+    </aside>
+  );
+}
+
+function RelationshipFieldGrid({ children }) {
+  return (
+    <div className="grid gap-2 md:grid-cols-4">
+      {children}
+    </div>
+  );
+}
+
+function RelationshipFieldShell({ field, children }) {
+  const definition = getRelationshipDefinition(field);
+  return (
+    <label className="min-w-0">
+      <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">{field.label}</div>
+      {children}
+      <div className="mt-1 truncate text-[11px] text-[var(--panel-card-muted-text)]" title={definition.label || definition.key}>
+        {definition.key}
+      </div>
+    </label>
+  );
+}
+
+function getRelationshipMappingValue(field, { coreMapping, relationshipMetadataMapping }) {
+  if (field.mappingType === 'metadata') return relationshipMetadataMapping?.[field.key] || '';
+  return coreMapping?.[field.key] || '';
+}
+
+function getRelationshipWorkbookMappingValue(field, workbookMapping) {
+  if (field.mappingType === 'metadata') return workbookMapping?.relationshipMetadataMappings?.[field.key] || {};
+  return workbookMapping?.coreMappings?.[field.key] || {};
+}
+
+function handleRelationshipMappingChange(field, value, { onCoreChange, onMetadataChange }) {
+  if (field.mappingType === 'metadata') {
+    onMetadataChange(field.key, value);
+    return;
+  }
+  onCoreChange(field.key, value);
+}
+
+export function RelationshipMappingPanel({ headers, coreMapping = {}, relationshipMetadataMapping = {}, onCoreChange, onMetadataChange }) {
+  return (
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(18rem,0.75fr)]">
+        <div className="min-w-0">
+          <div className="rounded-t-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-2.5 text-sm font-semibold text-[var(--panel-card-text)]">
+            Relationship Role
+          </div>
+          <div className="rounded-b-xl border-x border-b border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-4 py-3">
+            <section className="space-y-2">
+              <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Connected Entities</div>
+              <RelationshipFieldGrid>
+                {RELATIONSHIP_SINGLE_TABLE_FIELDS.map((field) => (
+                  <RelationshipFieldShell key={field.key} field={field}>
+                    <SpatialSelect
+                      headers={headers}
+                      value={getRelationshipMappingValue(field, { coreMapping, relationshipMetadataMapping })}
+                      onChange={(value) => handleRelationshipMappingChange(field, value, { onCoreChange, onMetadataChange })}
+                    />
+                  </RelationshipFieldShell>
+                ))}
+              </RelationshipFieldGrid>
+            </section>
+          </div>
+        </div>
+        <RelationshipUsagePanel />
+      </div>
+    </div>
+  );
+}
+
+export function WorkbookRelationshipMappingPanel({ workbookModel, workbookMapping = {}, onCoreChange, onMetadataChange }) {
+  return (
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(18rem,0.75fr)]">
+        <div className="min-w-0">
+          <div className="rounded-t-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-2.5 text-sm font-semibold text-[var(--panel-card-text)]">
+            Relationship Role
+          </div>
+          <div className="rounded-b-xl border-x border-b border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-4 py-3">
+            <section className="space-y-2">
+              <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Connected Entities</div>
+              <RelationshipFieldGrid>
+                {RELATIONSHIP_SINGLE_TABLE_FIELDS.map((field) => (
+                  <RelationshipFieldShell key={field.key} field={field}>
+                    <SpatialWorkbookSelect
+                      workbookModel={workbookModel}
+                      workbookMapping={workbookMapping}
+                      currentRef={getRelationshipWorkbookMappingValue(field, workbookMapping)}
+                      onChange={(value) => handleRelationshipMappingChange(field, value, { onCoreChange, onMetadataChange })}
+                    />
+                  </RelationshipFieldShell>
+                ))}
+              </RelationshipFieldGrid>
+            </section>
+          </div>
+        </div>
+        <RelationshipUsagePanel />
+      </div>
+    </div>
+  );
+}
+
 /*
  * Renders workbook temporal mappings. Workbook mappings differ from ordinary
  * table mappings because each role points to a sheet/column pair rather than a
