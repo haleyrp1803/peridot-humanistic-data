@@ -106,9 +106,18 @@ function StepButton({ active, label, index, onClick }) {
   );
 }
 
-function PreviewTable({ rows = [], headers = [], maxRows = 5 }) {
-  const displayHeaders = headers.slice(0, 8);
+function formatPreviewCount(value) {
+  const numberValue = Number(value || 0);
+  return Number.isFinite(numberValue) ? numberValue.toLocaleString() : value;
+}
+
+function PreviewTable({ rows = [], headers = [], maxRows = 11, totalRows, sheetName }) {
+  const displayHeaders = headers;
   const displayRows = rows.slice(0, maxRows);
+  const effectiveTotalRows = totalRows ?? rows.length;
+  const footerText = sheetName
+    ? `Showing ${formatPreviewCount(displayRows.length)} of ${formatPreviewCount(effectiveTotalRows)} rows on sheet “${sheetName}.”`
+    : `Showing ${formatPreviewCount(displayRows.length)} of ${formatPreviewCount(effectiveTotalRows)} rows.`;
 
   if (!displayRows.length || !displayHeaders.length) {
     return (
@@ -124,7 +133,7 @@ function PreviewTable({ rows = [], headers = [], maxRows = 5 }) {
         <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
           <tr>
             {displayHeaders.map((header) => (
-              <th key={header} className="max-w-[14rem] truncate px-3 py-2 font-semibold">{header}</th>
+              <th key={header} className="max-w-[14rem] whitespace-nowrap px-3 py-2 font-semibold">{header}</th>
             ))}
           </tr>
         </thead>
@@ -138,11 +147,28 @@ function PreviewTable({ rows = [], headers = [], maxRows = 5 }) {
           ))}
         </tbody>
       </table>
-      {headers.length > displayHeaders.length ? (
-        <div className="border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-xs text-[var(--panel-card-muted-text)]">
-          Showing {displayHeaders.length} of {headers.length} columns.
-        </div>
-      ) : null}
+      <div className="border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-xs text-[var(--panel-card-muted-text)]">
+        {footerText}
+      </div>
+    </div>
+  );
+}
+
+function PreviewSummaryStrip({ fileLabel, rowCount, columnCount, sheetName, sheetCount }) {
+  const summaryParts = [
+    fileLabel || 'Uploaded data',
+    sheetName ? `Sheet: ${sheetName}` : '',
+    `${formatPreviewCount(rowCount)} row${Number(rowCount) === 1 ? '' : 's'}`,
+    `${formatPreviewCount(columnCount)} column${Number(columnCount) === 1 ? '' : 's'}`,
+    sheetCount ? `${formatPreviewCount(sheetCount)} sheet${Number(sheetCount) === 1 ? '' : 's'}` : '',
+  ].filter(Boolean);
+
+  return (
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] px-4 py-3">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">File preview</div>
+      <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">
+        {summaryParts.join(' · ')}
+      </div>
     </div>
   );
 }
@@ -439,59 +465,30 @@ function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilit
 }
 
 function WorkbookOverviewStep({ staging, workbookModel, workbookSummary }) {
-  const sheetSummaries = workbookSummary?.sheets || staging?.sheets || [];
+  const usableSheets = getUsableWorkbookSheets(workbookModel);
+  const previewSheet = usableSheets[0] || workbookModel?.sheets?.[0] || staging?.sheets?.[0] || null;
+  const previewRows = previewSheet?.rows || [];
+  const previewHeaders = previewSheet?.headers || [];
+  const rowCount = previewSheet?.rowCount ?? previewRows.length ?? 0;
+  const columnCount = previewSheet?.columnCount ?? previewHeaders.length ?? 0;
+  const sheetCount = workbookModel?.sheets?.length || staging.sheetCount || workbookSummary?.sheets?.length || 0;
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Workbook</div>
-          <div className="mt-1 truncate text-lg font-bold text-[var(--panel-card-text)]">{staging.fileLabel}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Sheets</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{workbookModel?.sheets?.length || staging.sheetCount || 0}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Rows</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{workbookSummary?.totalRows ?? staging.rowCount ?? 0}</div>
-        </div>
-        <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Columns</div>
-          <div className="mt-1 text-2xl font-bold text-[var(--panel-card-text)]">{workbookSummary?.totalColumns ?? staging.columnCount ?? 0}</div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
-        This workspace configures a multi-sheet workbook import. Peridot will use the primary sheet as the record basis and pull mapped core values from joined sheets through the unique-ID joins you configure.
-      </div>
-
-      <div className="grid gap-3">
-        {sheetSummaries.map((sheet) => (
-          <div key={sheet.sheetName} className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="font-semibold text-[var(--panel-card-text)]">{sheet.sheetName}</div>
-              <div className="text-sm text-[var(--panel-card-muted-text)]">{sheet.rowCount} rows · {sheet.columnCount} columns</div>
-            </div>
-            {sheet.headers?.length ? (
-              <div className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-                Headers: {sheet.headers.slice(0, 12).join(', ')}{sheet.headers.length > 12 ? ', …' : ''}
-              </div>
-            ) : null}
-          </div>
-        ))}
-      </div>
-
-      {workbookSummary?.warnings?.length ? (
-        <div className="rounded-2xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] p-4 text-sm text-[var(--peridot-role-status-warning-text)]">
-          <div className="font-semibold">Workbook notes</div>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {workbookSummary.warnings.slice(0, 8).map((warning, index) => (
-              <li key={`${warning.code || 'warning'}-${index}`}>{warning.sheetName ? `${warning.sheetName}: ` : ''}{warning.message}</li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+    <div className="space-y-3">
+      <PreviewSummaryStrip
+        fileLabel={staging.fileLabel}
+        rowCount={rowCount}
+        columnCount={columnCount}
+        sheetName={previewSheet?.sheetName}
+        sheetCount={sheetCount}
+      />
+      <PreviewTable
+        rows={previewRows}
+        headers={previewHeaders}
+        totalRows={rowCount}
+        sheetName={previewSheet?.sheetName}
+        maxRows={11}
+      />
     </div>
   );
 }
@@ -1116,7 +1113,7 @@ export function PeridotColumnMappingModal({
   if (!open || !staging || staging.status !== 'ready') return null;
 
   const singleStepLabels = {
-    preview: 'Upload',
+    preview: 'Preview',
     time: 'Time',
     places: 'Places',
     relationships: 'Relations',
@@ -1125,7 +1122,7 @@ export function PeridotColumnMappingModal({
   };
 
   const workbookStepLabels = {
-    'workbook-preview': 'Workbook',
+    'workbook-preview': 'Preview',
     'workbook-setup': 'Sheet',
     'workbook-time': 'Time',
     'workbook-places': 'Places',
@@ -1578,32 +1575,18 @@ export function PeridotColumnMappingModal({
 
         <div className="peridot-mapping-modal-body min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {!isWorkbookMode && activeStep === 'preview' ? (
-            <div className="space-y-4">
-              <div className="grid gap-3 md:grid-cols-4">
-                <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Format</div>
-                  <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">{staging.fileType}</div>
-                </div>
-                <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Rows</div>
-                  <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">{staging.rowCount}</div>
-                </div>
-                <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Columns</div>
-                  <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">{staging.columnCount}</div>
-                </div>
-                <div className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Mapping</div>
-                  <div className="mt-1 text-xl font-bold text-[var(--panel-card-text)]">Ready</div>
-                </div>
-              </div>
-
-              <div className="peridot-mapping-hint-row rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-xs leading-relaxed text-[var(--stat-card-muted-text)]">
-                <div><span>Date formats</span>{mappingState.formatGuidance?.dates}</div>
-                <div><span>Coordinates</span>{mappingState.formatGuidance?.coordinates}</div>
-              </div>
-
-              <PreviewTable rows={previewRows} headers={headers} />
+            <div className="space-y-3">
+              <PreviewSummaryStrip
+                fileLabel={staging.fileLabel}
+                rowCount={staging.rowCount ?? rows.length}
+                columnCount={staging.columnCount ?? headers.length}
+              />
+              <PreviewTable
+                rows={rows}
+                headers={headers}
+                totalRows={staging.rowCount ?? rows.length}
+                maxRows={11}
+              />
             </div>
           ) : null}
 

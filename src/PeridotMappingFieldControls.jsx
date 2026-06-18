@@ -59,6 +59,16 @@ function UsedForBadges({ items = [] }) {
   );
 }
 
+function SectionDivider() {
+  return (
+    <div className="flex items-center gap-3 py-1" aria-hidden="true">
+      <div className="h-px flex-1 bg-[var(--button-primary-bg)] opacity-85" />
+      <div className="h-2.5 w-2.5 rotate-45 border border-[var(--button-primary-active-border)] bg-[var(--button-primary-bg)] opacity-85" />
+      <div className="h-px flex-1 bg-[var(--button-primary-bg)] opacity-85" />
+    </div>
+  );
+}
+
 function RoleCell({ definition }) {
   return (
     <div className="peridot-mapping-role-cell">
@@ -361,14 +371,28 @@ export function SpatialMappingPanel({ headers, pointMapping = {}, coreMapping = 
             Location Role
           </div>
           <div className="rounded-b-xl border-x border-b border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-4 py-2">
-            {SPATIAL_SINGLE_TABLE_ROWS.map((row, rowIndex) => (
-              row.fields.length ? (
+            {SPATIAL_SINGLE_TABLE_ROWS.map((row, rowIndex) => {
+              const isSourceRow = row.title === 'Source/Start Location';
+              const isTargetRow = row.title === 'Target/End Location';
+
+              if (!row.fields.length) {
+                return (
+                  <div key={row.title} className="pb-0 pt-2">
+                    <SectionDivider />
+                    <div className="pt-1 text-[16px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
+                  </div>
+                );
+              }
+
+              return (
                 <section
                   key={row.title}
                   className={[
                     'space-y-2 py-2.5',
-                    rowIndex === 0 ? 'pt-1' : 'border-t border-[var(--panel-card-border)]',
-                  ].join(' ')}
+                    rowIndex === 0 ? 'pt-1' : '',
+                    isSourceRow ? 'pt-2' : '',
+                    isTargetRow ? 'pt-2' : '',
+                  ].filter(Boolean).join(' ')}
                 >
                   <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
                   <SpatialFieldGrid>
@@ -383,12 +407,8 @@ export function SpatialMappingPanel({ headers, pointMapping = {}, coreMapping = 
                     ))}
                   </SpatialFieldGrid>
                 </section>
-              ) : (
-                <div key={row.title} className="border-t border-[var(--panel-card-border)] pb-0 pt-3">
-                  <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
-                </div>
-              )
-            ))}
+              );
+            })}
           </div>
         </div>
         <SpatialUsagePanel />
@@ -406,14 +426,28 @@ export function WorkbookSpatialMappingPanel({ workbookModel, workbookMapping = {
             Location Role
           </div>
           <div className="rounded-b-xl border-x border-b border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-4 py-2">
-            {SPATIAL_SINGLE_TABLE_ROWS.map((row, rowIndex) => (
-              row.fields.length ? (
+            {SPATIAL_SINGLE_TABLE_ROWS.map((row, rowIndex) => {
+              const isSourceRow = row.title === 'Source/Start Location';
+              const isTargetRow = row.title === 'Target/End Location';
+
+              if (!row.fields.length) {
+                return (
+                  <div key={row.title} className="pb-0 pt-2">
+                    <SectionDivider />
+                    <div className="pt-1 text-[16px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
+                  </div>
+                );
+              }
+
+              return (
                 <section
                   key={row.title}
                   className={[
                     'space-y-2 py-2.5',
-                    rowIndex === 0 ? 'pt-1' : 'border-t border-[var(--panel-card-border)]',
-                  ].join(' ')}
+                    rowIndex === 0 ? 'pt-1' : '',
+                    isSourceRow ? 'pt-2' : '',
+                    isTargetRow ? 'pt-2' : '',
+                  ].filter(Boolean).join(' ')}
                 >
                   <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
                   <SpatialFieldGrid>
@@ -429,12 +463,8 @@ export function WorkbookSpatialMappingPanel({ workbookModel, workbookMapping = {
                     ))}
                   </SpatialFieldGrid>
                 </section>
-              ) : (
-                <div key={row.title} className="border-t border-[var(--panel-card-border)] pb-0 pt-3">
-                  <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">{row.title}</div>
-                </div>
-              )
-            ))}
+              );
+            })}
           </div>
         </div>
         <SpatialUsagePanel />
