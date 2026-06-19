@@ -3143,11 +3143,17 @@ function AppMainWorkspace({
           {inspectorWorkspaceOverlay}
         </div>
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPLORE ? (
-        <PeridotExploreWorkspace {...exploreWorkspaceProps} />
+        <div className="relative h-full overflow-hidden" data-peridot-explore-with-inspector={isInspectorWorkspaceOpen ? 'true' : 'false'}>
+          <PeridotExploreWorkspace {...exploreWorkspaceProps} />
+          {inspectorWorkspaceOverlay}
+        </div>
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.LEARN_MORE ? (
         <PeridotLearnMoreWorkspace {...learnMoreWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH ? (
-        <PeridotSearchWorkspace {...searchWorkspaceProps} />
+        <div className="relative h-full overflow-hidden" data-peridot-search-with-inspector={isInspectorWorkspaceOpen ? 'true' : 'false'}>
+          <PeridotSearchWorkspace {...searchWorkspaceProps} />
+          {inspectorWorkspaceOverlay}
+        </div>
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR ? (
         <div className="relative h-full overflow-hidden bg-[var(--peridot-role-interface-app-background)]" data-peridot-inspector-workspace="true">
           <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} suppressFloatingFrameToggles />
@@ -3217,7 +3223,6 @@ export default function EuropeNetworkMapApp() {
     }
     inspectorNavigationRef.current = true;
     setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
     setIsSidePanelOpen(false);
     setActivePanelTab('inspector');
     setSelectedSelection({ kind: 'person-detail', name });
@@ -3231,7 +3236,6 @@ export default function EuropeNetworkMapApp() {
     }
     inspectorNavigationRef.current = true;
     setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
     setIsSidePanelOpen(false);
     setActivePanelTab('inspector');
     setSelectedSelection({ kind: 'place-detail', label });
@@ -3246,7 +3250,6 @@ export default function EuropeNetworkMapApp() {
     const uniqueId = getLinkedLetterUniqueId(letter, index);
     inspectorNavigationRef.current = true;
     setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
     setIsSidePanelOpen(false);
     setActivePanelTab('inspector');
     setSelectedSelection({
@@ -3273,7 +3276,6 @@ export default function EuropeNetworkMapApp() {
       inspectorNavigationRef.current = true;
       if (inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE || inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE) {
         setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
-        setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
         setIsSidePanelOpen(false);
       } else {
         setShowRightSidebar(true);
@@ -3808,7 +3810,9 @@ export default function EuropeNetworkMapApp() {
   const closeInspectorWorkspace = () => {
     setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.CLOSED);
     setIsSidePanelOpen(false);
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR) {
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    }
   };
 
   const expandInspectorToWorkspace = () => {
@@ -3818,7 +3822,6 @@ export default function EuropeNetworkMapApp() {
         : INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE,
     );
     setIsSidePanelOpen(false);
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
   };
 
   useEffect(() => {
