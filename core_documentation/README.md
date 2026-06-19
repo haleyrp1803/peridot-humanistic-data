@@ -20,9 +20,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`** on branch **`main`**
+- **`e5f832c` — `Animate Explore workspace transitions`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, mounted-Inspector overlay, Inspector reference-entry, Unknown-as-place, connected-record table, Data/workbook mapping modal redesign, upload animation, hidden-theme-menu, and Learn More animation passes. The app now uses a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented internally for development and future user-facing restoration, but is hidden from the hamburger menu for now. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, mounted-Inspector overlay, Inspector reference-entry, Unknown-as-place, connected-record table, Data/workbook mapping modal redesign, upload animation, hidden-theme-menu, Learn More animation, and Search/Explore workspace redesign passes. The app now uses a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented internally for development and future user-facing restoration, but is hidden from the hamburger menu for now. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -70,7 +70,7 @@ The current state of the active `main` project includes:
 - Evidence and analysis field inclusion using explicit Include and Ignore checkboxes that default to Include, with workbook evidence grouped by sheet but labeled by column name
 - upload validation that reports which records are Inspector-ready, Search-ready, Point-map-ready, Route-map-ready, Network-ready, Timeline-ready, Chart-ready, and Export-ready
 - legacy Geography / Raw Data / Person Metadata upload controls removed from the ordinary public workflow after the one-file and mapped-import direction became active
-- implemented Advanced Search as the direct Explore Your Data destination, with Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs; keyword/person/place/route/date/weight filters; capability filters; dataset-wide browse indexes; structured AND / OR / EXCLUDING criteria; result cards; facets; and Inspector handoff
+- implemented Advanced Search as the direct Explore Your Data destination, with animated Build Search, compact Browse ledgers, Results ledgers, route-aware Refine / Inspect facets, and Capabilities tabs; keyword/person/place/route/date/weight filters; capability filters; dataset-wide route-aware indexes; structured AND / OR / EXCLUDING criteria; Inspector-style Results pagination; and full Inspector handoff above the current Explore page
 - actionable cluster inspector behavior
 - cluster inspector members grouped by place
 - dynamic node radius contrast based on active data
@@ -163,12 +163,12 @@ The codebase is functional, but it is still under active maintenance. The larges
 ### Advanced Search / Explore tools
 
 - **Explore Your Data** opens Advanced Search directly from the hamburger menu and the Visualizations header.
-- Advanced Search is organized into **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs.
+- Advanced Search is organized into **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs, with gentle folio/tab animations and normal scrolling when content expands.
 - Build Search supports simple fields for keyword, person/entity, place, route-place, route-people, date range, minimum weight, and capability filters.
 - Structured criteria allow up to five rows with predictive suggestions and explicit **AND**, **OR**, and **EXCLUDING** connectors after the first criterion.
-- Browse indexes expose dataset-wide people/entities, places, routes, and evidence fields before a search is applied.
-- Results show compact record cards with matched-field explanations, capability badges, and full Inspector handoff.
-- Refine / Inspect shows facets with counts based on the current applied result set and fills draft filters for later Apply.
+- Browse indexes expose compact searchable ledgers for dataset-wide people/entities, places/locations, and routes when route data is present.
+- Results show compact route-aware ledger rows with Inspector-style pagination and full Inspector handoff above the current Explore page.
+- Refine / Inspect shows route-aware facets with counts based on the current applied result set, compact default cards, and Show all / Show less expansion that fills draft filters for later Apply.
 - Capabilities preserves the former "what this data can do" summary inside Advanced Search.
 
 ### Analytics tools
@@ -476,7 +476,7 @@ Full-window Visualizations workspace. It hosts the compact selector for Place Ma
 
 #### `src/PeridotSearchWorkspace.jsx`
 
-Full-window Advanced Search workspace and primary Explore surface. It renders the current applied scope, Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs; keyword/person/place/route filters; date and weight controls; predictive suggestions; capability filters; structured AND / OR / EXCLUDING criteria; Apply Filters; Clear Filters; result cards; facets; dataset-wide browse indexes; and Inspector handoff.
+Full-window Advanced Search workspace and primary Explore surface. It renders the current applied scope, animated Build Search, compact Browse ledgers, Results ledgers, route-aware Refine / Inspect facets, and Capabilities tabs; keyword/person/place/route filters; date and weight controls; predictive suggestions; capability filters; structured AND / OR / EXCLUDING criteria; Apply Filters; Clear Filters; result cards; facets; dataset-wide browse ledgers; Explore-specific page/row animations; and Inspector handoff that opens the full Inspector above the current Explore page.
 
 #### `src/PeridotThemeWorkspace.jsx`
 
@@ -804,7 +804,7 @@ Under that model:
 - **Inspector** remains selection-driven.
 - **Export** labels whether it is exporting loaded, filtered, visible, selected, or charted data.
 
-Implemented Advanced Search controls include keyword, person, place, Route Filter (Place), Route Filter (People), minimum correspondence weight, date range, predictive suggestions, Apply Filters, Clear Filters, current applied scope, and pre-update status feedback.
+Implemented Advanced Search controls include keyword, person, place, Route Filter (Place), Route Filter (People), minimum correspondence weight, date range, predictive suggestions, Apply Filters, Clear Filters, current applied scope, pre-update status feedback, route-aware Browse/Results/Refine layouts, compact default pages, and Inspector overlay handoff.
 
 ## 12. MapLibre status
 

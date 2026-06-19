@@ -22,11 +22,23 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`**
+- **`e5f832c` — `Animate Explore workspace transitions`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, the upload-mapping animation passes, the hidden-theme-menu navigation polish, and the Learn More card animation pass. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector reference-entry visual hierarchy that separates lead summaries, connected-place/person lists, directed connections, and connected-record tables. The full Inspector now overlays Visualizations without remounting the underlying workspace; related-person navigation from geographic contexts is fixed; **Unknown** place values are preserved as first-class place-like buckets; and connected-record tables use sorting, filtering, pagination, and capability-aware columns.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, the upload-mapping animation passes, the hidden-theme-menu navigation polish, the Learn More card animation pass, and the Search/Explore workspace redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector reference-entry visual hierarchy that separates lead summaries, connected-place/person lists, directed connections, and connected-record tables. The full Inspector now overlays Visualizations without remounting the underlying workspace; related-person navigation from geographic contexts is fixed; **Unknown** place values are preserved as first-class place-like buckets; and connected-record tables use sorting, filtering, pagination, and capability-aware columns.
 
 
+
+Recent Search/Explore redesign milestones include:
+
+- **`e5f832c` — `Animate Explore workspace transitions`**
+- **`d3e4625` — `Open Inspector over Explore workspace`**
+- **`7942fda` — `Convert Explore Browse to compact ledgers`**
+- **`efd6d95` — `Compact Explore Build and Capabilities layouts`**
+- **`a793c06` — `Make Explore Refine facets route-aware`**
+- **`3e96f59` — `Refine Explore facet panel behavior`**
+- **`7e5df91` — `Polish Explore Results ledger density`**
+- **`dd09003` — `Match Explore Results pagination to Inspector`**
+- **`1542c04` — `Refine Explore Results ledger`**
 
 Recent upload mapping, workbook, menu, and Learn More polish milestones include:
 
@@ -107,6 +119,15 @@ Recent theme, visualization chrome, map palette, and Analytics milestones includ
 
 Recent Advanced Search / Explore milestones include:
 
+- **`e5f832c` — `Animate Explore workspace transitions`**
+- **`d3e4625` — `Open Inspector over Explore workspace`**
+- **`7942fda` — `Convert Explore Browse to compact ledgers`**
+- **`efd6d95` — `Compact Explore Build and Capabilities layouts`**
+- **`a793c06` — `Make Explore Refine facets route-aware`**
+- **`3e96f59` — `Refine Explore facet panel behavior`**
+- **`7e5df91` — `Polish Explore Results ledger density`**
+- **`dd09003` — `Match Explore Results pagination to Inspector`**
+- **`1542c04` — `Refine Explore Results ledger`**
 - **`10f6e19` — `Polish analytics chart axes and summary panels`**
 - **`3d296cb` — `Route Explore directly to advanced search`**
 - **`37f2755` — `Clarify structured search Boolean labels`**
@@ -378,7 +399,7 @@ Full Visualizations workspace. It contains capability-aware dropdown groups for 
 
 ### `src/PeridotSearchWorkspace.jsx`
 
-Full Advanced Search workspace and primary Explore surface. It renders active-scope summary plus the **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs. It owns the UI for keyword/person/place/route/date/weight filters, predictive suggestions, capability filters, structured AND / OR / EXCLUDING criteria, dataset-wide browse indexes, result cards, result facets, Apply Filters, Clear Filters, and search-result Inspector handoff.
+Full Advanced Search workspace and primary Explore surface. It renders active-scope summary plus the animated **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs. It owns the UI for keyword/person/place/route/date/weight filters, predictive suggestions, capability filters, structured AND / OR / EXCLUDING criteria, compact dataset-wide Browse ledgers, route-aware Results ledgers, result facets, Apply Filters, Clear Filters, Explore-scoped page animations, and search-result Inspector handoff. Inspect actions from Explore now open the full Inspector above the current Explore page so the researcher returns to the same tab/state when the Inspector closes.
 
 ### `src/PeridotThemeWorkspace.jsx`
 
@@ -664,7 +685,7 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 ### Advanced Search / Explore capabilities
 
 - Explore Your Data routes directly to Advanced Search from the hamburger menu and Visualizations header
-- full Advanced Search workspace organized around Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs
+- full Advanced Search workspace organized around animated Build Search, compact Browse ledgers, Results ledgers, route-aware Refine / Inspect facets, and Capabilities tabs
 - draft/apply global filtering model
 - **Apply Filters** commits all filter changes together
 - **Clear Filters** clears keyword/person/place/route fields, restores minimum weight to `1`, restores the full date range, and resets playback
@@ -674,9 +695,9 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 - text filters include keyword search, person filter, place filter, **Route Filter (Place)**, and **Route Filter (People)**
 - structured criteria support first-row search plus later **AND**, **OR**, and **EXCLUDING** connectors
 - structured criteria support predictive suggestions and a five-row cap
-- dataset-wide Browse indexes cover People / Entities, Places, Routes, and Evidence Fields
-- Results show compact result cards, matched-field explanations, capability badges, and Inspector handoff
-- Refine / Inspect shows facets based on the current applied result set
+- dataset-wide Browse indexes render as compact ledgers for People / Entities, Places / Locations, and Routes when route data is present
+- Results show compact route-aware ledger rows, matched-field context, pagination, page-size controls, and Inspector handoff
+- Refine / Inspect shows route-aware facets based on the current applied result set, with compact default cards and Show all / Show less expansion
 - Capabilities contains the former "what this data can do" summary inside Advanced Search
 - non-text filters include minimum correspondence weight and date range
 - predictive suggestions are available for person, place, route-place, route-people, start year, and end year
@@ -1076,7 +1097,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current documented baseline: **`d04eaf6` — `Hide theme menu entry and animate learn more cards`**
+- current documented baseline: **`e5f832c` — `Animate Explore workspace transitions`**
 
 A future chat should also be told that:
 

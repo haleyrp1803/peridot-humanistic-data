@@ -2,9 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`** on branch **`main`**
+- **`e5f832c` — `Animate Explore workspace transitions`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, upload-mapping entrance and step-transition animation passes, and the final Learn More/menu polish pass. The current app is workspace-first around a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented as an internal/development-facing workspace and can be restored to the hamburger menu later without rebuilding the feature. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, upload-mapping entrance and step-transition animation passes, the final Learn More/menu polish pass, and the Search/Explore workspace redesign. The current app is workspace-first around a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented as an internal/development-facing workspace and can be restored to the hamburger menu later without rebuilding the feature. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 Recent June 2026 visual and interaction polish added workspace entrance choreography and clarified the current Visualizations/Inspector/Charts experience. The Home, Data, and Visualizations workspaces now use staged entrance animations; visualization switching fades through a solid dark-green interstitial; Chart Visualizations use a guided one-time reveal, muted dark-green builder panel, gold high-contrast tab states, and gold treatment for cream-card interactables while preserving side-panel scroll and dropdown layering; the force-directed network initially centers on the densest information cluster; and the Inspector workspace now follows the chart-builder visual language while suppressing visualization hide/show toggles when the full Inspector is open. The earlier Inspector related-person navigation blank-state bug has been resolved by routing person-detail resolution through the appropriate people-graph fallback while preserving the mounted Visualizations overlay.
 
 The current Data Inputs / import workflow now provides:
@@ -46,7 +46,7 @@ The current Inspector workflow now provides a dual-mode evidence system:
 - unresolved/missing place values are preserved as **Unknown** place-like buckets rather than dropped from connected-place summaries;
 - connected-record tables provide sorting, per-column filtering, 10/25/50 pagination, and capability-aware columns: source/target entity and source/target location for relational datasets, or entity/location for point-only datasets.
 
-The current Advanced Search workflow is the main Explore Your Data surface. It uses a tabbed research-search layout with Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. It preserves draft/apply global filtering, current applied scope, predictive suggestions, route-place and route-people filters, year text inputs, minimum-weight filtering, capability filters, dataset-wide browse indexes for people/places/routes/evidence fields, result cards with Inspector handoff, result facets with counts, and structured criteria supporting AND, OR, and EXCLUDING logic. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
+The current Advanced Search workflow is the main Explore Your Data surface. It uses a compact animated research-search layout with Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. It preserves draft/apply global filtering, current applied scope, predictive suggestions, route-place and route-people filters, year text inputs, minimum-weight filtering, capability filters, dataset-wide compact Browse ledgers for people/entities, places/locations, and route pairs when supported; route-aware point-only Browse and Refine surfaces; Results ledgers with Inspector-style pagination; result facets with counts; full Inspector handoff as an overlay on top of Explore; and structured criteria supporting AND, OR, and EXCLUDING logic. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
 
 
 The current interface/workspace workflow now provides:
@@ -84,6 +84,20 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Search/Explore compact-ledger, Inspector overlay, and animation milestone
+
+- Updated the documented safe baseline to **`e5f832c` — `Animate Explore workspace transitions`**.
+- Completed the Search/Explore Workspace redesign around a compact folio interface for **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities**.
+- Refined Build Search so the default page fits in one viewport, removed redundant empty Structured Criteria helper copy, simplified the Structured Criteria card wording, and preserved normal scrolling when users add criteria or otherwise expand the page.
+- Converted Browse into compact index ledgers with panel-scoped search fields for people/entities, places/locations, and route pairs; the Routes panel appears only when the active dataset has meaningful source-target route data.
+- Made Browse route-aware for point-only datasets so point/site uploads show entity and location indexes without self-route artifacts.
+- Reworked Results into a compact ledger/table model with route-aware columns, point-dataset columns, Inspector-style pagination, 10/25/50 page-size controls, row-density tuning, and descender-safe text rendering.
+- Reworked Refine / Inspect into a route-aware facet dashboard with compact default panels, fuller collapsed chip counts, Show all / Show less expansion, row-height expansion that moves lower panels down cleanly, and no route-only facets for point datasets.
+- Tightened Capabilities spacing so its default review page fits the workspace better, and corrected the dark-background **Review note** text to use cream/light text.
+- Changed Explore Inspector handoff so clicking **Inspect** from Explore opens the full Inspector as an overlay above the current Explore page instead of navigating away from the researcher’s active search context.
+- Added gentle Explore entrance and tab-transition choreography: folio/header reveal, left-to-right step-button sequencing, slower content dissolve/rise, animated Refine panels, Results row “page-turn” filing, Browse index-row filing, and reduced-motion fallbacks.
+- Restored Explore scrolling after animation-layer testing so expanded Refine panels, Results pages, Browse lists, and criteria-heavy Build views can scroll normally.
 
 ### Data mapping redesign, workbook controls, upload animation, menu, and Learn More polish milestone
 
@@ -359,7 +373,15 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
-- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`e5f832c` — `Animate Explore workspace transitions`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`d3e4625` — `Open Inspector over Explore workspace`** keeps Explore mounted underneath full Inspector handoff so researchers can close the Inspector and return to the same Explore state.
+- **`7942fda` — `Convert Explore Browse to compact ledgers`** converts Browse to route-aware entity/place/route ledgers with panel-scoped searches.
+- **`efd6d95` — `Compact Explore Build and Capabilities layouts`** tightens Build and Capabilities spacing and copy after the Explore visual redesign.
+- **`a793c06` — `Make Explore Refine facets route-aware`** removes route-only facet behavior from point-only datasets while preserving route facets for relationship data.
+- **`3e96f59` — `Refine Explore facet panel behavior`** adds compact Refine cards with clean expansion behavior.
+- **`7e5df91` — `Polish Explore Results ledger density`** tunes Results rows after the Inspector-style pagination pass.
+- **`dd09003` — `Match Explore Results pagination to Inspector`** adds Inspector-style pagination to Explore Results.
+- **`1542c04` — `Refine Explore Results ledger`** establishes the compact Results ledger model.
 - **`342e606` — `Simplify upload step transitions`** accepts the opacity-only mapping step transition after carousel/fade experiments.
 - **`35946d4` — `Animate upload mapping transitions`** records the checkpointed upload-mapping entrance/carousel animation pass.
 - **`18419a5` — `Refine workbook sheet assembly layout`** redesigns the workbook Sheets step as a compact two-column assembly page.
@@ -468,11 +490,20 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `74db963`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `e5f832c`.
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
-| 2026-06-18 | `d04eaf6` | Hide theme menu entry and animate learn more cards | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-19 | `e5f832c` | Animate Explore workspace transitions | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-19 | `d3e4625` | Open Inspector over Explore workspace |  |
+| 2026-06-19 | `7942fda` | Convert Explore Browse to compact ledgers |  |
+| 2026-06-19 | `efd6d95` | Compact Explore Build and Capabilities layouts |  |
+| 2026-06-19 | `a793c06` | Make Explore Refine facets route-aware |  |
+| 2026-06-19 | `3e96f59` | Refine Explore facet panel behavior |  |
+| 2026-06-19 | `7e5df91` | Polish Explore Results ledger density |  |
+| 2026-06-19 | `dd09003` | Match Explore Results pagination to Inspector |  |
+| 2026-06-19 | `1542c04` | Refine Explore Results ledger |  |
+| 2026-06-18 | `d04eaf6` | Hide theme menu entry and animate learn more cards |  |
 | 2026-06-18 | `342e606` | Simplify upload step transitions |  |
 | 2026-06-18 | `35946d4` | Animate upload mapping transitions |  |
 | 2026-06-18 | `18419a5` | Refine workbook sheet assembly layout |  |

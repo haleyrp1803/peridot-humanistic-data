@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\Peridot\
 Current clean baseline:
 
 ```text
-d04eaf6 — Hide theme menu entry and animate learn more cards
+e5f832c — Animate Explore workspace transitions
 ```
 
 Current branch note:
@@ -100,6 +100,7 @@ Current fragile zones include:
 - inspector-open interactions after map clicks
 - cluster grouping and cluster inspector navigation
 - Advanced Search active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, capability filters, dataset-wide Browse indexes, result facets, predictive suggestions, structured criteria, Boolean AND / OR / EXCLUDING logic, apply/clear behavior, and future metadata filters
+- Explore workspace visual/animation layer, including step-button sequencing, tab transitions, Results/Browse row filing effects, reduced-motion behavior, and scroll restoration after expanded panels
 - Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
 - Analytics flexible chart-variable controls, record-count metrics, wide numeric-series selection, and chart availability routing
@@ -292,6 +293,9 @@ Current notable decisions:
 - Cluster inspector members are grouped by place.
 - MapLibre migrated-overlay work is paused; legacy D3/SVG Peridot is the active continuation path unless the user explicitly resumes MapLibre.
 - Advanced Search is the long-term owner of global dataset filtering and the primary Explore Your Data surface.
+- The completed Search/Explore redesign uses a compact folio workflow: Build fits by default, Browse uses compact route-aware ledgers, Results uses Inspector-style pagination and route-aware ledger rows, Refine uses route-aware expandable facet cards, and Capabilities uses compact review cards.
+- Inspect actions from Explore should open the full Inspector as an overlay above the current Explore page instead of navigating away; closing Inspector should return to the same Explore tab/state.
+- Explore animations should remain gentle and useful: left-to-right step-button sequencing, soft content transitions, default Results/Browse row filing effects, normal scrolling after expansion, and reduced-motion fallbacks.
 - Controls / View should govern display, not the active filtered dataset.
 - Timeline should focus on chronological playback and consume the active date range.
 - Analytics should chart the currently filtered dataset by default.
@@ -524,7 +528,7 @@ For a new chat, start with:
 
 ```text
 Source of truth folder: C:\Users\haley\OneDrive\Desktop\Peridot\
-Current documented clean baseline: `d04eaf6` — Hide theme menu entry and animate learn more cards. See `CHANGELOG.md` for the most recent documented safe baseline.
+Current documented clean baseline: `e5f832c` — Animate Explore workspace transitions. See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 The new chat should be told:
