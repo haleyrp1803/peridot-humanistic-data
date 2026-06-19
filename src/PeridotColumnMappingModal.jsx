@@ -626,8 +626,8 @@ function ReviewWarningsCard({ warnings = [], validationIssues = [] }) {
           </div>
         ))}
         {hasValidationIssues ? (
-          <div className="rounded-xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] px-3 py-2 text-sm leading-relaxed text-[var(--peridot-role-status-warning-text)]">
-            <span className="font-semibold">Mapping issues:</span> {validationIssues.map((issue) => issue.message).join(' ')}
+          <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            <span className="font-semibold text-[var(--panel-card-text)]">Mapping issues:</span> {validationIssues.map((issue) => issue.message).join(' ')}
           </div>
         ) : null}
       </div>

@@ -285,35 +285,49 @@ function SpatialSelect({ value, onChange, headers }) {
   );
 }
 
-function SpatialWorkbookSelect({ workbookModel, workbookMapping, currentRef = {}, onChange }) {
+function makeWorkbookFieldValue(ref = {}) {
+  return ref?.sheetName && ref?.columnName ? `${ref.sheetName}::${ref.columnName}` : '';
+}
+
+function parseWorkbookFieldValue(value = '') {
+  const separatorIndex = String(value).indexOf('::');
+  if (separatorIndex < 0) return makeWorkbookColumnRef('', '');
+  return makeWorkbookColumnRef(
+    String(value).slice(0, separatorIndex),
+    String(value).slice(separatorIndex + 2)
+  );
+}
+
+function WorkbookFieldSelect({ workbookModel, currentRef = {}, onChange }) {
   const usableSheets = getUsableWorkbookSheets(workbookModel);
-  const selectedSheet = getWorkbookSheet(workbookModel, currentRef.sheetName) || getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
-  const headers = selectedSheet?.headers || [];
 
   return (
-    <div className="grid gap-2">
-      <select
-        value={currentRef.sheetName || ''}
-        onChange={(event) => onChange(makeWorkbookColumnRef(event.target.value, ''))}
-        className={SPATIAL_SELECT_CLASS}
-      >
-        <option value="">Sheet</option>
-        {usableSheets.map((sheet) => (
-          <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
-        ))}
-      </select>
-      <select
-        value={currentRef.columnName || ''}
-        disabled={!currentRef.sheetName}
-        onChange={(event) => onChange(makeWorkbookColumnRef(currentRef.sheetName, event.target.value))}
-        className={DISABLED_SPATIAL_SELECT_CLASS}
-      >
-        <option value="">Column</option>
-        {headers.map((header) => (
-          <option key={header} value={header}>{header}</option>
-        ))}
-      </select>
-    </div>
+    <select
+      value={makeWorkbookFieldValue(currentRef)}
+      onChange={(event) => onChange(parseWorkbookFieldValue(event.target.value))}
+      className={SPATIAL_SELECT_CLASS}
+    >
+      <option value="">Unassigned</option>
+      {usableSheets.map((sheet) => (
+        <optgroup key={sheet.sheetName} label={sheet.sheetName}>
+          {(sheet.headers || []).map((header) => (
+            <option key={`${sheet.sheetName}::${header}`} value={`${sheet.sheetName}::${header}`}>
+              {sheet.sheetName} — {header}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </select>
+  );
+}
+
+function SpatialWorkbookSelect({ workbookModel, currentRef = {}, onChange }) {
+  return (
+    <WorkbookFieldSelect
+      workbookModel={workbookModel}
+      currentRef={currentRef}
+      onChange={onChange}
+    />
   );
 }
 
@@ -620,57 +634,35 @@ export function WorkbookRelationshipMappingPanel({ workbookModel, workbookMappin
  * Time step: three visible date decisions plus one shared usage note.
  */
 export function WorkbookTemporalMappingTable({ workbookModel, workbookMapping, onChange }) {
-  const usableSheets = getUsableWorkbookSheets(workbookModel);
   const temporalMappings = workbookMapping.temporalMappings || {};
 
   return (
     <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-5">
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.55fr)_minmax(18rem,0.85fr)]">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.85fr)]">
         <div className="min-w-0">
-          <div className="grid grid-cols-[minmax(8rem,0.75fr)_minmax(11rem,1fr)_minmax(11rem,1fr)] gap-3 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-3 text-sm font-semibold text-[var(--panel-card-text)]">
+          <div className="grid grid-cols-[minmax(9rem,0.8fr)_minmax(14rem,1fr)] gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-3 text-sm font-semibold text-[var(--panel-card-text)]">
             <div>Temporal role</div>
-            <div>Sheet</div>
-            <div>Column</div>
+            <div>Your column</div>
           </div>
 
           <div className="divide-y divide-[var(--panel-card-border)] rounded-b-xl border-x border-b border-[var(--panel-card-border)] bg-[var(--input-bg)]/35">
             {VISIBLE_TEMPORAL_FIELD_DEFINITIONS.map((definition) => {
               const currentRef = temporalMappings[definition.key] || {};
-              const selectedSheet = getWorkbookSheet(workbookModel, currentRef.sheetName) || getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
-              const headers = selectedSheet?.headers || [];
               return (
                 <div
                   key={definition.key}
-                  className="grid grid-cols-[minmax(8rem,0.75fr)_minmax(11rem,1fr)_minmax(11rem,1fr)] gap-3 px-4 py-4 text-sm"
+                  className="grid grid-cols-[minmax(9rem,0.8fr)_minmax(14rem,1fr)] gap-4 px-4 py-4 text-sm"
                 >
                   <div className="min-w-0">
                     <div className="font-semibold text-[var(--panel-card-text)]">{definition.label || definition.key}</div>
                     <div className="mt-1 text-[11px] font-normal uppercase tracking-[0.08em] text-[var(--panel-card-muted-text)]">{definition.key}</div>
                   </div>
                   <div className="peridot-mapping-choice-cell min-w-0">
-                    <select
-                      value={currentRef.sheetName || ''}
-                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(event.target.value, ''))}
-                      className={SOURCE_SELECT_CLASS}
-                    >
-                      <option value="">Unassigned</option>
-                      {usableSheets.map((sheet) => (
-                        <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="peridot-mapping-choice-cell min-w-0">
-                    <select
-                      value={currentRef.columnName || ''}
-                      disabled={!currentRef.sheetName}
-                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(currentRef.sheetName, event.target.value))}
-                      className={DISABLED_SOURCE_SELECT_CLASS}
-                    >
-                      <option value="">Unassigned</option>
-                      {headers.map((header) => (
-                        <option key={header} value={header}>{header}</option>
-                      ))}
-                    </select>
+                    <WorkbookFieldSelect
+                      workbookModel={workbookModel}
+                      currentRef={currentRef}
+                      onChange={(ref) => onChange(definition.key, ref)}
+                    />
                   </div>
                 </div>
               );
@@ -691,7 +683,6 @@ export function WorkbookTemporalMappingTable({ workbookModel, workbookMapping, o
  * workbook mapping state when a selection changes.
  */
 export function WorkbookCoreRoleMappingTable({ title, description, guidanceLabel, guidanceText, definitions, workbookModel, workbookMapping, onChange }) {
-  const usableSheets = getUsableWorkbookSheets(workbookModel);
   const coreMappings = workbookMapping.coreMappings || {};
 
   return (
@@ -710,45 +701,24 @@ export function WorkbookCoreRoleMappingTable({ title, description, guidanceLabel
           <thead className="bg-[var(--stat-card-bg)] text-[var(--panel-card-text)]">
             <tr>
               <th className="px-4 py-3">Field role</th>
-              <th className="px-4 py-3">Sheet</th>
-              <th className="px-4 py-3">Column</th>
+              <th className="px-4 py-3">Your column</th>
               <th className="px-4 py-3">Used for</th>
             </tr>
           </thead>
           <tbody className="text-[var(--panel-card-muted-text)]">
             {definitions.map((definition) => {
               const currentRef = coreMappings[definition.key] || {};
-              const selectedSheet = getWorkbookSheet(workbookModel, currentRef.sheetName) || getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
-              const headers = selectedSheet?.headers || [];
               return (
                 <tr key={definition.key} className="border-t border-[var(--panel-card-border)] align-top">
                   <td className="px-4 py-3">
                     <RoleCell definition={definition} />
                   </td>
                   <td className="peridot-mapping-choice-cell px-4 py-3">
-                    <select
-                      value={currentRef.sheetName || ''}
-                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(event.target.value, ''))}
-                      className={SOURCE_SELECT_CLASS}
-                    >
-                      <option value="">Unassigned</option>
-                      {usableSheets.map((sheet) => (
-                        <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="peridot-mapping-choice-cell px-4 py-3">
-                    <select
-                      value={currentRef.columnName || ''}
-                      disabled={!currentRef.sheetName}
-                      onChange={(event) => onChange(definition.key, makeWorkbookColumnRef(currentRef.sheetName, event.target.value))}
-                      className={DISABLED_SOURCE_SELECT_CLASS}
-                    >
-                      <option value="">Unassigned</option>
-                      {headers.map((header) => (
-                        <option key={header} value={header}>{header}</option>
-                      ))}
-                    </select>
+                    <WorkbookFieldSelect
+                      workbookModel={workbookModel}
+                      currentRef={currentRef}
+                      onChange={(ref) => onChange(definition.key, ref)}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     <UsedForBadges items={definition.usedFor || []} />
