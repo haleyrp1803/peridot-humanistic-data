@@ -1397,13 +1397,13 @@ export function PeridotSearchWorkspace({
   };
 
   const renderBuildSearch = () => (
-    <div className="space-y-4">
+    <div className="peridot-search-build-view space-y-4">
       <SectionHeader eyebrow="Step 1" title="Build Search">
         Draft changes do not affect maps, charts, export, or Inspector until Apply Filters is pressed.
       </SectionHeader>
       <ExploreDivider />
 
-      <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel p-4'}>
+      <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel peridot-search-build-primary-panel p-4'}>
         <div className="grid gap-3 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <label htmlFor="advanced-search-keyword" className={FIELD_LABEL_CLASS}>Keyword search</label>
@@ -1458,7 +1458,7 @@ export function PeridotSearchWorkspace({
         </p>
       </div>
 
-      <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel p-4'}>
+      <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel peridot-search-build-entity-panel p-4'}>
         <div className="flex flex-col gap-3 lg:flex-row">
           <div className="lg:w-[34%]">
             <AutocompleteTextInput
@@ -1509,12 +1509,12 @@ export function PeridotSearchWorkspace({
 
       <ExploreDivider className="peridot-search-build-divider-before-criteria" />
 
-      <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel p-4'}>
+      <div className={PANEL_INSET_CLASS + ` peridot-search-build-panel peridot-search-structured-panel ${draftStructuredCriteria.length ? 'peridot-search-structured-panel-active' : 'peridot-search-structured-panel-empty'} p-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className={FIELD_LABEL_CLASS}>Structured criteria</div>
             <p className="peridot-search-helper-text mt-1 text-xs leading-5">
-              Optional fielded rules. The first row starts the structured search; later rows use AND, OR, or EXCLUDING to combine with what came before.
+              Add optional field-specific rules.
             </p>
           </div>
           <div className="peridot-search-draft-pill rounded-full border px-3 py-1 text-xs font-bold">
@@ -1535,14 +1535,10 @@ export function PeridotSearchWorkspace({
               />
             ))}
           </div>
-        ) : (
-          <div className="peridot-search-empty-state mt-3 rounded-xl border border-dashed px-3 py-2 text-sm">
-            No structured criteria are active. Simple keyword, person, place, route, date, and capability filters still work normally.
-          </div>
-        )}
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        ) : null}
+        <div className="peridot-search-structured-footer mt-3 flex flex-wrap items-center justify-between gap-2">
           <p className="peridot-search-helper-text text-xs leading-5">
-            Applied: {activeStructuredLabel}. Base filters still apply first; structured rows are evaluated in plain language as Start with, AND, OR, and EXCLUDING when Apply Filters is pressed.
+            Applied: {activeStructuredLabel}.
           </p>
           <button
             type="button"
@@ -1557,7 +1553,7 @@ export function PeridotSearchWorkspace({
 
       <ExploreDivider className="peridot-search-build-divider-after-criteria" />
 
-      <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel p-4'}>
+      <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel peridot-search-capability-filter-panel p-4'}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <div className={FIELD_LABEL_CLASS}>Capability filters</div>
@@ -1569,7 +1565,7 @@ export function PeridotSearchWorkspace({
             Draft: {draftCapabilityLabel}
           </div>
         </div>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="peridot-search-capability-filter-grid mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {CAPABILITY_FILTER_OPTIONS.map((option) => (
             <CapabilityFilterToggle
               key={option.id}
@@ -1583,7 +1579,7 @@ export function PeridotSearchWorkspace({
       </div>
 
 
-      <div className="peridot-search-status-strip flex flex-wrap items-center justify-between gap-2 rounded-[1rem] border p-3 shadow-sm shadow-black/5">
+      <div className="peridot-search-status-strip peridot-search-build-action-strip flex flex-wrap items-center justify-between gap-2 rounded-[1rem] border p-3 shadow-sm shadow-black/5">
         <p className="peridot-search-status-strip-text text-xs font-semibold leading-5">
           {hasDraftChanges ? 'Draft changes are pending.' : 'Applied state is current.'}
         </p>

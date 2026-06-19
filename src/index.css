@@ -3897,3 +3897,440 @@ textarea {
     padding-bottom: 0.28rem !important;
   }
 }
+
+
+/* Explore Build one-window fit pass, 2026-06-19.
+ * Scope: Build tab only. The goal is a comfortable no-scroll default dashboard:
+ * existing search rows, empty Structured Criteria, Capability Filters, and the
+ * action strip fit in one desktop viewport. If users add structured criteria,
+ * the criteria editor may expand and the page may scroll normally.
+ */
+.peridot-search-workspace .peridot-search-build-view {
+  --build-compact-gap: 0.50rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view > :not([hidden]) ~ :not([hidden]) {
+  margin-top: var(--build-compact-gap) !important;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-section-header {
+  margin-bottom: 0;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-section-title {
+  font-size: 1.18rem;
+  line-height: 0.98;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-section-description,
+.peridot-search-workspace .peridot-search-build-view .peridot-search-section-header p {
+  margin-top: 0.22rem !important;
+  font-size: 0.80rem;
+  line-height: 1.25;
+}
+
+.peridot-search-workspace .peridot-search-build-view > .peridot-search-divider:first-of-type {
+  min-height: 0.95rem;
+  margin-top: 0.02rem;
+  margin-bottom: 0.06rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-before-criteria,
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-after-criteria {
+  min-height: 0.82rem;
+  margin-top: 0.02rem;
+  margin-bottom: 0.06rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
+  padding: 0.52rem 0.72rem !important;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-primary-panel .grid,
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-entity-panel .flex {
+  gap: 0.70rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-field-label {
+  font-size: 0.54rem;
+  line-height: 1;
+  letter-spacing: 0.15em;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-input {
+  margin-top: 0.30rem !important;
+  border-radius: 0.70rem;
+  padding: 0.46rem 0.62rem;
+  font-size: 0.80rem;
+  line-height: 1.10;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-helper-text {
+  line-height: 1.20;
+}
+
+.peridot-search-workspace .peridot-search-build-primary-panel > .peridot-search-helper-text,
+.peridot-search-workspace .peridot-search-build-primary-panel > p {
+  margin-top: 0.42rem !important;
+  font-size: 0.70rem;
+  line-height: 1.20;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty {
+  padding-top: 0.50rem !important;
+  padding-bottom: 0.50rem !important;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-helper-text {
+  margin-top: 0.18rem !important;
+  line-height: 1.18;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-empty-state {
+  margin-top: 0.42rem !important;
+  padding: 0.42rem 0.62rem !important;
+  font-size: 0.80rem;
+  line-height: 1.20;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer {
+  margin-top: 0.44rem !important;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer .peridot-search-helper-text {
+  max-width: min(100%, 48rem);
+  font-size: 0.68rem;
+  line-height: 1.18;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-active .peridot-search-structured-footer {
+  margin-top: 0.62rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-filter-panel {
+  padding-top: 0.50rem !important;
+  padding-bottom: 0.58rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-filter-panel .peridot-search-helper-text {
+  margin-top: 0.16rem !important;
+  font-size: 0.70rem;
+  line-height: 1.15;
+}
+
+.peridot-search-workspace .peridot-search-capability-filter-grid {
+  margin-top: 0.48rem !important;
+  gap: 0.46rem !important;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-capability-toggle {
+  min-height: 0;
+  border-radius: 0.58rem;
+  padding: 0.40rem 0.58rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-capability-toggle span span:first-child {
+  font-size: 0.66rem;
+  line-height: 1;
+  letter-spacing: 0.10em;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-count-badge {
+  padding: 0.08rem 0.40rem;
+  font-size: 0.56rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-build-action-strip {
+  min-height: 0;
+  padding: 0.58rem 0.74rem !important;
+}
+
+.peridot-search-workspace .peridot-search-build-action-strip .peridot-search-status-strip-text {
+  font-size: 0.74rem;
+  line-height: 1.20;
+}
+
+.peridot-search-workspace .peridot-search-build-action-strip .peridot-search-button {
+  padding-top: 0.54rem;
+  padding-bottom: 0.54rem;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-build-view {
+    --build-compact-gap: 0.38rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-section-title {
+    font-size: 1.10rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-section-description,
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-section-header p {
+    font-size: 0.76rem;
+    line-height: 1.18;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view > .peridot-search-divider:first-of-type,
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-before-criteria,
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-after-criteria {
+    min-height: 0.72rem;
+    margin-top: 0;
+    margin-bottom: 0.02rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-divider span {
+    height: 0.84rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
+    padding: 0.44rem 0.62rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-input {
+    padding-top: 0.38rem;
+    padding-bottom: 0.38rem;
+    font-size: 0.76rem;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-empty-state {
+    margin-top: 0.32rem !important;
+    padding-top: 0.34rem !important;
+    padding-bottom: 0.34rem !important;
+    font-size: 0.76rem;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer {
+    margin-top: 0.34rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer .peridot-search-helper-text {
+    font-size: 0.64rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-filter-grid {
+    margin-top: 0.38rem !important;
+    gap: 0.36rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-capability-toggle {
+    padding-top: 0.32rem;
+    padding-bottom: 0.32rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-action-strip {
+    padding-top: 0.48rem !important;
+    padding-bottom: 0.48rem !important;
+  }
+}
+
+
+/* Explore Build empty-criteria removal and comfort restore, 2026-06-19.
+ * Scope: Build page only. The empty Structured Criteria dashed notice duplicated
+ * nearby explanatory text and consumed vertical space. With that JSX element
+ * removed, restore a little comfortable padding while keeping the default Build
+ * page inside one viewport. Active structured-criteria rows can still expand and
+ * introduce scroll when the user adds criteria.
+ */
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
+  padding: 0.60rem 0.80rem !important;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-input {
+  padding-top: 0.48rem;
+  padding-bottom: 0.48rem;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty {
+  padding-top: 0.60rem !important;
+  padding-bottom: 0.62rem !important;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer {
+  margin-top: 0.50rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-filter-panel {
+  padding-top: 0.58rem !important;
+  padding-bottom: 0.64rem !important;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
+    padding: 0.50rem 0.68rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-input {
+    padding-top: 0.40rem;
+    padding-bottom: 0.40rem;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty {
+    padding-top: 0.50rem !important;
+    padding-bottom: 0.52rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer {
+    margin-top: 0.40rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-filter-panel {
+    padding-top: 0.50rem !important;
+    padding-bottom: 0.56rem !important;
+  }
+}
+
+/* Explore Capabilities one-window density and review-note contrast, 2026-06-19.
+ * Scope: Capabilities tab only. Tighten the review page's vertical rhythm so the
+ * default capability summary fits in one desktop viewport, while preserving the
+ * existing cream-card/dark-folio color hierarchy. The review note sits on a dark
+ * green surface, so its label and body copy use light text rather than the
+ * cream-card dark-label treatment.
+ */
+.peridot-search-workspace .peridot-search-capabilities-view > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.56rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capabilities-view .peridot-search-divider {
+  min-height: 1rem;
+  margin-top: 0.04rem;
+  margin-bottom: 0.10rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-grid {
+  align-items: start;
+  gap: 0.72rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-card {
+  padding: 0.72rem 0.82rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list,
+.peridot-search-workspace .peridot-search-capability-availability-list {
+  margin-top: 0.52rem;
+  gap: 0.34rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list div {
+  min-height: 0;
+  padding: 0.36rem 0.56rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list span {
+  font-size: 0.78rem;
+  line-height: 1.12;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list strong {
+  font-size: 0.92rem;
+  line-height: 1.1;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row {
+  gap: 0.55rem;
+  padding: 0.44rem 0.58rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row h3 {
+  font-size: 0.86rem;
+  line-height: 1.08;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row p {
+  margin-top: 0.12rem;
+  font-size: 0.70rem;
+  line-height: 1.22;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-meta {
+  gap: 0.34rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-meta strong,
+.peridot-search-workspace .peridot-search-capability-value {
+  padding: 0.28rem 0.52rem;
+  font-size: 0.76rem;
+  line-height: 1.14;
+}
+
+.peridot-search-workspace .peridot-search-capability-status,
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  padding: 0.25rem 0.48rem;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-note {
+  align-items: flex-start;
+  border-color: rgba(221, 187, 105, 0.28);
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark) !important;
+  padding: 0.66rem 0.82rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-note .peridot-search-field-label {
+  color: var(--explore-gold-soft) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24) !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-note p {
+  margin: 0.24rem 0 0;
+  color: var(--explore-text-on-dark) !important;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18) !important;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-capabilities-view > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.42rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-capabilities-view .peridot-search-divider {
+    min-height: 0.82rem;
+    margin-top: 0;
+    margin-bottom: 0.04rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-grid {
+    gap: 0.58rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-card {
+    padding: 0.58rem 0.68rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-scope-list,
+  .peridot-search-workspace .peridot-search-capability-availability-list {
+    margin-top: 0.42rem;
+    gap: 0.28rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-scope-list div {
+    padding: 0.30rem 0.50rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-availability-row {
+    padding: 0.36rem 0.50rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-availability-row h3 {
+    font-size: 0.82rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-availability-row p {
+    font-size: 0.68rem;
+    line-height: 1.18;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-note {
+    padding: 0.54rem 0.70rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-note p {
+    font-size: 0.80rem;
+    line-height: 1.26;
+  }
+}
