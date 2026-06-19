@@ -2817,6 +2817,192 @@ textarea {
   color: var(--explore-text-on-dark);
 }
 
+
+
+/* Explore Inspector-aligned refinement, 2026-06-19.
+ * This layer keeps the consolidated Explore-only styling system, but aligns the
+ * rendered hierarchy with the full Inspector: dark pine folio/chrome, readable
+ * cream headers on dark surfaces, cream evidence/form cards with dark text, and
+ * dark-green navigational/action rows. It also supports the legacy
+ * `.peridot-search-panel-inset` hook so the visual system remains stable if a
+ * browser/dev-server session is holding an older component bundle.
+ */
+.peridot-search-workspace .peridot-search-status-ribbon,
+.peridot-search-workspace .peridot-search-status-item {
+  display: none;
+}
+
+.peridot-search-workspace .peridot-search-tab-card {
+  background: #061d12;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-section-header,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child {
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-section-eyebrow,
+.peridot-search-workspace .peridot-search-tab-card .peridot-search-section-eyebrow {
+  color: var(--explore-gold-soft);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24);
+}
+
+.peridot-search-workspace .peridot-search-section-title,
+.peridot-search-workspace .peridot-search-tab-card h2.peridot-search-section-title {
+  color: var(--explore-text-on-dark);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24);
+}
+
+.peridot-search-workspace .peridot-search-section-description,
+.peridot-search-workspace .peridot-search-section-header .peridot-search-helper-text,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child p,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child p {
+  color: var(--explore-muted-on-dark);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+}
+
+/* Cream evidence/form cards. These mirror the Inspector record cards: local
+ * cream surfaces on the dark folio, with dark ink and dark antique-gold labels.
+ */
+.peridot-search-workspace .peridot-search-panel,
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace .peridot-search-panel-cream,
+.peridot-search-workspace .peridot-search-build-panel {
+  border: 1px solid rgba(221, 187, 105, 0.30);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--explore-paper-soft), var(--explore-paper-muted));
+  color: var(--explore-text-on-light);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.peridot-search-workspace .peridot-search-panel-inset.p-4,
+.peridot-search-workspace .peridot-search-panel-inset.p-3,
+.peridot-search-workspace .peridot-search-panel.p-4,
+.peridot-search-workspace .peridot-search-panel.p-3 {
+  padding: 0.72rem 0.86rem;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-panel-inset :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-panel-cream :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]) {
+  color: #5f4214;
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-panel-inset :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-panel-cream :is(p, .peridot-search-helper-text) {
+  color: var(--explore-muted-on-light);
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-cream :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-input {
+  border-color: rgba(84, 99, 68, 0.38);
+  background: #fffaf0;
+  color: var(--explore-text-on-light);
+  text-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.peridot-search-workspace .peridot-search-panel :is(input, textarea)::placeholder,
+.peridot-search-workspace .peridot-search-panel-inset :is(input, textarea)::placeholder,
+.peridot-search-workspace .peridot-search-input::placeholder {
+  color: rgba(49, 67, 49, 0.72);
+}
+
+.peridot-search-workspace .peridot-search-empty-state,
+.peridot-search-workspace .peridot-search-structured-row,
+.peridot-search-workspace .peridot-search-structured-start,
+.peridot-search-workspace .peridot-search-draft-pill,
+.peridot-search-workspace .peridot-search-count-badge,
+.peridot-search-workspace .peridot-search-chip-count,
+.peridot-search-workspace .peridot-search-small-badge,
+.peridot-search-workspace .peridot-search-result-badge,
+.peridot-search-workspace .peridot-search-heading-pill,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full:not(button) {
+  border-color: rgba(84, 99, 68, 0.34);
+  background: #f6efd8;
+  color: var(--explore-text-on-light);
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle {
+  border-color: rgba(221, 187, 105, 0.30);
+  background: #0f3a22;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle .peridot-search-count-badge {
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle:hover,
+.peridot-search-workspace .peridot-search-capability-toggle-active {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle:hover *,
+.peridot-search-workspace .peridot-search-capability-toggle-active * {
+  color: var(--explore-gold-text);
+}
+
+/* Capability review page: Inspector-like cards instead of dominant beige bars. */
+.peridot-search-workspace .peridot-search-capability-review-card {
+  background: var(--explore-paper-muted);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list div,
+.peridot-search-workspace .peridot-search-capability-availability-row {
+  border: 1px solid rgba(84, 99, 68, 0.24);
+  background: #f6efd8;
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list span,
+.peridot-search-workspace .peridot-search-capability-availability-row p {
+  color: var(--explore-muted-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list strong,
+.peridot-search-workspace .peridot-search-capability-availability-row h3,
+.peridot-search-workspace .peridot-search-capability-availability-meta strong {
+  color: var(--explore-text-on-light);
+}
+
+/* Legacy capability ledger classes from the pre-consolidation component. */
+.peridot-search-workspace .peridot-search-capability-ledger {
+  border-color: rgba(221, 187, 105, 0.30);
+  background: var(--explore-paper-muted);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-row {
+  border-color: rgba(84, 99, 68, 0.24);
+  background: #f6efd8;
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-row :is(h3, strong, div, span),
+.peridot-search-workspace .peridot-search-capability-note {
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-row p {
+  color: var(--explore-muted-on-light);
+}
+
 /* Compact fit and responsive rules */
 @media (min-width: 1100px) and (max-height: 860px) {
   .peridot-search-workspace {
