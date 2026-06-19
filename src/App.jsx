@@ -4802,17 +4802,25 @@ export default function EuropeNetworkMapApp() {
         `}</style>
       <div className="relative h-full">
         {workspaceMode !== PERIDOT_WORKSPACE_MODES.HOME ? (
-          <PeridotHamburgerMenu
-            open={isMainMenuOpen}
-            onToggle={() => setIsMainMenuOpen((value) => !value)}
-            onClose={() => setIsMainMenuOpen(false)}
-            workspaceMode={workspaceMode}
-            onOpenData={openDataWorkspace}
-            onOpenVisualizations={openVisualizationsWorkspace}
-            onOpenExplore={openExploreWorkspaceFromMenu}
-            onOpenLearnMore={openLearnMoreWorkspaceFromMenu}
-            onOpenTheme={openThemeWorkspaceFromMenu}
-          />
+          <>
+            {/*
+              Themes and Accessibility remains an internal routed workspace for
+              development, but it is intentionally hidden from the public
+              hamburger menu until the user-facing page is ready again. Restore
+              `onOpenTheme={openThemeWorkspaceFromMenu}` on this menu component
+              to re-enable that entry without changing the workspace itself.
+            */}
+            <PeridotHamburgerMenu
+              open={isMainMenuOpen}
+              onToggle={() => setIsMainMenuOpen((value) => !value)}
+              onClose={() => setIsMainMenuOpen(false)}
+              workspaceMode={workspaceMode}
+              onOpenData={openDataWorkspace}
+              onOpenVisualizations={openVisualizationsWorkspace}
+              onOpenExplore={openExploreWorkspaceFromMenu}
+              onOpenLearnMore={openLearnMoreWorkspaceFromMenu}
+            />
+          </>
         ) : null}
         {/*
           CONTROL PANEL MOUNT POINT

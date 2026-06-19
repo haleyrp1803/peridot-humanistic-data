@@ -10,9 +10,11 @@
 
 // Workspace-mode constants and guards for Peridot's redesigned routing model.
 // The primary product navigation is now Manage Your Data, Visualize Your Data,
-// Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
-// Search and Inspector remain available as internal/compatibility routes even
-// though they are no longer separate top-level hamburger-menu items.
+// Explore Your Data, and Learn More about Peridot. Themes and Accessibility
+// remains an internal development workspace so it can be restored to public
+// navigation later without rebuilding the route. Search and Inspector remain
+// available as internal/compatibility routes even though they are no longer
+// separate top-level hamburger-menu items.
 export const PERIDOT_WORKSPACE_MODES = Object.freeze({
   HOME: 'home',
   DATA: 'data',

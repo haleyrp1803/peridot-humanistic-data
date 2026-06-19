@@ -1,7 +1,7 @@
 /*
  * Primary product navigation menu.
  * 
- * This component renders the hamburger-triggered menu. It exposes the current top-level product model: data management, visualization, exploration, project information, and appearance/accessibility settings.
+ * This component renders the hamburger-triggered menu. It exposes the current top-level product model: data management, visualization, exploration, and project information.
  * 
  * Important relationships:
  * - It calls workspace route setters owned by `App.jsx`.
@@ -22,7 +22,6 @@ export function PeridotHamburgerMenu({
   onOpenVisualizations,
   onOpenExplore,
   onOpenLearnMore,
-  onOpenTheme,
 }) {
   if (workspaceMode === 'home') {
     return null;
@@ -57,13 +56,11 @@ export function PeridotHamburgerMenu({
       action: onOpenLearnMore,
       active: workspaceMode === 'learn-more',
     },
-    {
-      key: 'theme',
-      title: 'Themes and Accessibility',
-      description: 'Adjust Peridot appearance and future accessibility settings.',
-      action: onOpenTheme,
-      active: workspaceMode === 'theme',
-    },
+    /*
+     * Themes and Accessibility remains an internal workspace for development,
+     * but is intentionally hidden from the public hamburger menu for now.
+     * Restore the menu entry by re-adding the item that opens the THEME route.
+     */
   ];
 
   const handleItemClick = (item) => {

@@ -13,7 +13,7 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
   return (
     <section className="peridot-workspace-field text-[var(--peridot-color-hex-fbf7ea)]">
       <div className="peridot-workspace-frame">
-        <div className="peridot-hero-card">
+        <div className="peridot-appear-rise peridot-appear-delay-0 peridot-hero-card">
           <div className="peridot-workspace-header-row">
             <div>
               <p className="peridot-kicker">Learn more about Peridot</p>
@@ -28,7 +28,7 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
           </div>
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a32)] bg-[var(--peridot-color-hex-dfe9c8-a10)] p-8 text-[var(--peridot-color-hex-f8f4e6)] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-24)]">
+        <div className="peridot-appear-rise peridot-appear-delay-1 mt-6 rounded-[28px] border border-[var(--peridot-color-hex-dfe9c8-a32)] bg-[var(--peridot-color-hex-dfe9c8-a10)] p-8 text-[var(--peridot-color-hex-f8f4e6)] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-24)]">
           <p className="peridot-kicker text-[11px] text-[var(--peridot-color-hex-dfe9c8)]">Coming soon</p>
           <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-3xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-f5ecd2)]">
             Documentation, tutorials, and credits will live here.
