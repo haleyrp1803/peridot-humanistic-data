@@ -702,6 +702,7 @@ function WorkbookSetupStep({
   const selectedSheet = getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
   const headers = selectedSheet?.headers || [];
   const suggestions = workbookMapping.primaryRecordSheetSuggestions || [];
+  const likelyPrimarySuggestion = suggestions[0] || null;
   const joins = workbookMapping.letterLevelJoins || [];
   const joinedSheetNames = new Set(joins.map((join) => join?.to?.sheetName).filter(Boolean));
   const availableJoinSheets = usableSheets.filter(
@@ -709,162 +710,171 @@ function WorkbookSetupStep({
   );
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose the sheet whose rows represent the Peridot records. If record-level data is spread across multiple sheets, add each joined sheet and tell Peridot which columns contain the shared unique ID. The ID-column names do not need to match; the values need to match.
-      </div>
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(18rem,0.75fr)]">
+        <div className="min-w-0">
+          <div className="rounded-t-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-4 py-2.5 text-sm font-semibold text-[var(--panel-card-text)]">
+            Workbook assembly
+          </div>
+          <div className="rounded-b-xl border-x border-b border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-4 py-3">
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary record sheet</div>
+                <select
+                  value={workbookMapping.primarySheetName || ''}
+                  onChange={(event) => onPrimarySheetChange(event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                >
+                  {usableSheets.map((sheet) => (
+                    <option key={sheet.sheetName} value={sheet.sheetName}>
+                      {sheet.sheetName} — {sheet.rowCount} rows
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <label className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-          <div className="text-sm font-semibold text-[var(--panel-card-text)]">Primary record sheet</div>
-          <select
-            value={workbookMapping.primarySheetName || ''}
-            onChange={(event) => onPrimarySheetChange(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-          >
-            {usableSheets.map((sheet) => (
-              <option key={sheet.sheetName} value={sheet.sheetName}>
-                {sheet.sheetName} — {sheet.rowCount} rows
-              </option>
-            ))}
-          </select>
-        </label>
+              <label className="min-w-0">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary unique ID column</div>
+                <select
+                  value={workbookMapping.primaryLetterIdColumn || ''}
+                  onChange={(event) => onLetterIdChange(event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                >
+                  <option value="">Select a unique ID column</option>
+                  {headers.map((header) => (
+                    <option key={header} value={header}>{header}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
-        <label className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-          <div className="text-sm font-semibold text-[var(--panel-card-text)]">Primary unique ID column</div>
-          <select
-            value={workbookMapping.primaryLetterIdColumn || ''}
-            onChange={(event) => onLetterIdChange(event.target.value)}
-            className="mt-2 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-          >
-            <option value="">Select a unique ID column</option>
-            {headers.map((header) => (
-              <option key={header} value={header}>{header}</option>
-            ))}
-          </select>
-          <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-            This can be called Letter_ID, Record Key, Accession Number, or anything else. Peridot uses your selection, not the header name.
-          </p>
-        </label>
-      </div>
-
-      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className="font-semibold text-[var(--panel-card-text)]">Join additional sheets by unique ID</div>
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-              Use this when record-level information is spread across more than one sheet. Click Add sheet for each sheet that should be joined to the primary record sheet, then choose the matching ID columns.
+            <p className="mt-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+              Choose the sheet whose rows become Peridot records. If data spans sheets, select the shared ID column and add joined sheets below.
             </p>
-          </div>
-          <button
-            type="button"
-            onClick={onAddJoin}
-            disabled={!workbookMapping.primarySheetName || !availableJoinSheets.length}
-            className={buttonClassName({ variant: 'primary' })}
-          >
-            + Add sheet
-          </button>
-        </div>
 
-        {joins.length ? (
-          <div className="mt-4 space-y-3">
-            {joins.map((join, index) => {
-              const joinedSheet = getWorkbookSheet(workbookModel, join?.to?.sheetName);
-              const joinedHeaders = joinedSheet?.headers || [];
-              const matchSummary = getLetterIdJoinMatchSummary(workbookModel, join);
-              return (
-                <div key={`${join?.to?.sheetName || 'join'}-${index}`} className="peridot-mapping-stat-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-                  <div className="grid gap-3 lg:grid-cols-[1.1fr_1fr_1fr_auto]">
-                    <label>
-                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheet</div>
-                      <select
-                        value={join?.to?.sheetName || ''}
-                        onChange={(event) => onJoinSheetChange(index, event.target.value)}
-                        className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                      >
-                        <option value="">Select sheet</option>
-                        {usableSheets
-                          .filter((sheet) => sheet.sheetName !== workbookMapping.primarySheetName)
-                          .map((sheet) => (
-                            <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
-                          ))}
-                      </select>
-                    </label>
+            <div className="flex items-center gap-3 py-3" aria-hidden="true">
+              <div className="h-px flex-1 bg-[var(--button-primary-bg)] opacity-85" />
+              <div className="h-2.5 w-2.5 rotate-45 border border-[var(--button-primary-active-border)] bg-[var(--button-primary-bg)] opacity-85" />
+              <div className="h-px flex-1 bg-[var(--button-primary-bg)] opacity-85" />
+            </div>
 
-                    <label>
-                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary ID column</div>
-                      <select
-                        value={join?.from?.columnName || ''}
-                        onChange={(event) => onJoinPrimaryColumnChange(index, event.target.value)}
-                        className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
-                      >
-                        <option value="">Select column</option>
-                        {headers.map((header) => (
-                          <option key={header} value={header}>{header}</option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <label>
-                      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheet ID column</div>
-                      <select
-                        value={join?.to?.columnName || ''}
-                        onChange={(event) => onJoinTargetColumnChange(index, event.target.value)}
-                        disabled={!join?.to?.sheetName}
-                        className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
-                      >
-                        <option value="">Select column</option>
-                        {joinedHeaders.map((header) => (
-                          <option key={header} value={header}>{header}</option>
-                        ))}
-                      </select>
-                    </label>
-
-                    <div className="flex items-end">
-                      <button type="button" onClick={() => onRemoveJoin(index)} className={buttonClassName({ variant: 'secondary' })}>
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-3 rounded-xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-                    <span className="font-semibold text-[var(--panel-card-text)]">Match check:</span> {matchSummary.message}
-                    {matchSummary.isConfigured ? (
-                      <span> Primary blanks: {matchSummary.primaryBlankIdCount}; joined-sheet blanks: {matchSummary.joinedBlankIdCount}; primary duplicate IDs: {matchSummary.primaryDuplicateIdCount}; joined-sheet duplicate IDs: {matchSummary.joinedDuplicateIdCount}.</span>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="mt-4 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
-            No joined sheets configured yet. Add sheets here if the workbook stores record-level data across multiple sheets.
-          </div>
-        )}
-      </div>
-
-      {suggestions.length ? (
-        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-          <div className="font-semibold text-[var(--panel-card-text)]">Primary sheet suggestions</div>
-          <div className="mt-3 grid gap-2">
-            {suggestions.slice(0, 5).map((suggestion) => (
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Joined sheets</div>
+                <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+                  Add sheets only when record-level information needs to be joined to the primary record sheet.
+                </p>
+              </div>
               <button
-                key={suggestion.sheetName}
                 type="button"
-                onClick={() => onPrimarySheetChange(suggestion.sheetName)}
-                className="flex items-center justify-between rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-left text-sm hover:bg-[var(--button-secondary-hover)]"
+                onClick={onAddJoin}
+                disabled={!workbookMapping.primarySheetName || !availableJoinSheets.length}
+                className={buttonClassName({ variant: 'primary' })}
               >
-                <span className="font-medium text-[var(--panel-card-text)]">{suggestion.sheetName}</span>
-                <span className="text-[var(--panel-card-muted-text)]">score {suggestion.score} · {suggestion.rowCount} rows</span>
+                + Add sheet
               </button>
-            ))}
+            </div>
+
+            {joins.length ? (
+              <div className="mt-3 space-y-3">
+                {joins.map((join, index) => {
+                  const joinedSheet = getWorkbookSheet(workbookModel, join?.to?.sheetName);
+                  const joinedHeaders = joinedSheet?.headers || [];
+                  const matchSummary = getLetterIdJoinMatchSummary(workbookModel, join);
+                  return (
+                    <div key={`${join?.to?.sheetName || 'join'}-${index}`} className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3">
+                      <div className="grid gap-2 lg:grid-cols-[1.1fr_1fr_1fr_auto]">
+                        <label className="min-w-0">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined sheet</div>
+                          <select
+                            value={join?.to?.sheetName || ''}
+                            onChange={(event) => onJoinSheetChange(index, event.target.value)}
+                            className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                          >
+                            <option value="">Select sheet</option>
+                            {usableSheets
+                              .filter((sheet) => sheet.sheetName !== workbookMapping.primarySheetName)
+                              .map((sheet) => (
+                                <option key={sheet.sheetName} value={sheet.sheetName}>{sheet.sheetName}</option>
+                              ))}
+                          </select>
+                        </label>
+
+                        <label className="min-w-0">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Primary ID column</div>
+                          <select
+                            value={join?.from?.columnName || ''}
+                            onChange={(event) => onJoinPrimaryColumnChange(index, event.target.value)}
+                            className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)]"
+                          >
+                            <option value="">Select column</option>
+                            {headers.map((header) => (
+                              <option key={header} value={header}>{header}</option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <label className="min-w-0">
+                          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--muted-text)]">Joined ID column</div>
+                          <select
+                            value={join?.to?.columnName || ''}
+                            onChange={(event) => onJoinTargetColumnChange(index, event.target.value)}
+                            disabled={!join?.to?.sheetName}
+                            className="mt-1 w-full rounded-xl border border-[var(--input-border)] bg-[var(--input-bg)] px-3 py-2 text-[var(--input-text)] disabled:opacity-60"
+                          >
+                            <option value="">Select column</option>
+                            {joinedHeaders.map((header) => (
+                              <option key={header} value={header}>{header}</option>
+                            ))}
+                          </select>
+                        </label>
+
+                        <div className="flex items-end">
+                          <button type="button" onClick={() => onRemoveJoin(index)} className={buttonClassName({ variant: 'secondary' })}>
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+                      <div className="mt-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+                        <span className="font-semibold text-[var(--panel-card-text)]">Match check:</span> {matchSummary.message}
+                        {matchSummary.isConfigured ? (
+                          <span> Primary blanks: {matchSummary.primaryBlankIdCount}; joined-sheet blanks: {matchSummary.joinedBlankIdCount}; primary duplicate IDs: {matchSummary.primaryDuplicateIdCount}; joined-sheet duplicate IDs: {matchSummary.joinedDuplicateIdCount}.</span>
+                        ) : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="mt-3 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
+                No joined sheets configured yet.
+              </div>
+            )}
           </div>
         </div>
-      ) : null}
+
+        <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+          <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Used for</div>
+          <p className="mt-2">
+            The primary record sheet determines which workbook rows become Peridot records.
+          </p>
+          <p className="mt-2">
+            Use joined sheets only when record-level data is spread across multiple sheets.
+          </p>
+          <p className="mt-2">
+            ID-column names do not need to match; the values need to match.
+          </p>
+          {likelyPrimarySuggestion ? (
+            <div className="mt-3 rounded-xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
+              <div className="font-semibold text-[var(--panel-card-text)]">Likely primary sheet</div>
+              <div className="mt-1">{likelyPrimarySuggestion.sheetName} · {likelyPrimarySuggestion.rowCount} rows</div>
+            </div>
+          ) : null}
+        </aside>
+      </div>
     </div>
   );
 }
-
 
 function WorkbookIdentifyRecordsStep({ workbookModel, workbookMapping }) {
   const selectedSheet = getWorkbookSheet(workbookModel, workbookMapping.primarySheetName);
@@ -1230,7 +1240,7 @@ export function PeridotColumnMappingModal({
 
   const workbookStepLabels = {
     'workbook-preview': 'Preview',
-    'workbook-setup': 'Sheet',
+    'workbook-setup': 'Sheets',
     'workbook-time': 'Time',
     'workbook-places': 'Places',
     'workbook-relationships': 'Relations',
