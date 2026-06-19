@@ -12,7 +12,7 @@
 
 ## 2. One-paragraph summary
 
-The application ingests humanistic tabular data, derives the structures the mapped fields can safely support, and renders an interactive workspace for exploring records through point maps, route maps, person-centered networks, force-directed graphs, chart-based Analytics, full-window Advanced Search, theme controls, export tools, timeline playback, and evidence inspection. The current interface has moved away from the earlier map-first, persistent-rail model: Peridot now opens to a Home / welcome workspace, uses a hamburger-triggered menu, and provides full-window workspaces for Home, Data, Visualizations, Explore, Learn More, Advanced Search, and Themes and Accessibility. Timeline is now a bottom Visualizations scrubber, while Inspector uses a dual-mode model: compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for deeper navigation.
+The application ingests humanistic tabular data, derives the structures the mapped fields can safely support, and renders an interactive workspace for exploring records through point maps, route maps, person-centered networks, force-directed graphs, chart-based Analytics, full-window Advanced Search, theme controls, export tools, timeline playback, and evidence inspection. The current interface has moved away from the earlier map-first, persistent-rail model: Peridot now opens to a Home / welcome workspace, uses a hamburger-triggered menu, and provides public full-window workspaces for Home, Data, Visualizations, Explore, Learn More, and Advanced Search, while Themes and Accessibility remains internally implemented for development/future restoration. Timeline is now a bottom Visualizations scrubber, while Inspector uses a dual-mode model: compact side-panel summaries for visualization clicks and a full evidence-dossier workspace for deeper navigation.
 
 ## 3. Current status
 
@@ -20,9 +20,9 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`74db963` — `Refine Inspector reference layout and record tables`** on branch **`main`**
+- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, mounted-Inspector overlay, Inspector reference-entry, Unknown-as-place, and connected-record table passes. The app now uses a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, mounted-Inspector overlay, Inspector reference-entry, Unknown-as-place, connected-record table, Data/workbook mapping modal redesign, upload animation, hidden-theme-menu, and Learn More animation passes. The app now uses a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented internally for development and future user-facing restoration, but is hidden from the hamburger menu for now. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 The current state of the active `main` project includes:
 
@@ -30,13 +30,13 @@ The current state of the active `main` project includes:
 - user-designed Peridot logo assets in `assets/`, with the gilded transparent logo integrated into the Home workspace hero
 - licensed Adobe Stock filigree assets in `assets/`, with the selected filigree used as decorative homepage framing
 - a hamburger-triggered menu as the primary visible navigation surface
-- simplified hamburger menu entries for:
+- simplified public hamburger menu entries for:
   - **Manage Your Data**
   - **Visualize Your Data**
   - **Explore Your Data**
   - **Learn More about Peridot**
-  - **Themes and Accessibility**
-- full-window workspaces for Data, Visualizations, Advanced Search, Learn More, Themes and Accessibility, and Inspector-compatible evidence review paths
+- internally retained **Themes and Accessibility** workspace for development and future user-facing restoration
+- full-window workspaces for Data, Visualizations, Advanced Search, Learn More, an internally retained Themes and Accessibility workspace, and Inspector-compatible evidence review paths
 - bottom Timeline scrubber integrated into the Visualizations workspace
 - dual-mode Inspector behavior:
   - compact side-panel summaries from visualization clicks
@@ -53,8 +53,8 @@ The current state of the active `main` project includes:
 - a downloadable CSV template using the current public Peridot column names
 - arbitrary CSV/TSV column-mapping workflow for non-template tables
 - workbook import support for `.xlsx` and `.xls` files
-- multi-sheet workbook mapping with user-configured unique-ID joins
-- role-based upload mapping for records, time, places, relationships, evidence/analysis, and capability review
+- multi-sheet workbook mapping with user-configured unique-ID joins, compact workbook assembly controls, and combined sheet-column selectors
+- role-based upload mapping for Preview, workbook Sheets, Time, Places, Relations, Evidence, and Review
 - explicit support for single dates, start/end date intervals, display-date labels, point locations, separated coordinates, and latitude-first coordinate pairs
 - point/site datasets that can render in Place Map without requiring people/network relationships
 - chart-first and generic evidence records that can enter the active dataset without map or network roles
@@ -67,7 +67,7 @@ The current state of the active `main` project includes:
 - finite 30-color chart series library coordinated with the Peridot green/gold/blue/pink palette as the default graph palette
 - flexible Analytics controls for x-axis/category, y-axis/metric, aggregation, grouping/series, heatmap axes, histogram distributions, and selected wide numeric series
 - Record count available as an explicit metric across aggregate charts
-- Evidence and analysis field inclusion using explicit Include and Ignore checkboxes that default to Include
+- Evidence and analysis field inclusion using explicit Include and Ignore checkboxes that default to Include, with workbook evidence grouped by sheet but labeled by column name
 - upload validation that reports which records are Inspector-ready, Search-ready, Point-map-ready, Route-map-ready, Network-ready, Timeline-ready, Chart-ready, and Export-ready
 - legacy Geography / Raw Data / Person Metadata upload controls removed from the ordinary public workflow after the one-file and mapped-import direction became active
 - implemented Advanced Search as the direct Explore Your Data destination, with Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs; keyword/person/place/route/date/weight filters; capability filters; dataset-wide browse indexes; structured AND / OR / EXCLUDING criteria; result cards; facets; and Inspector handoff
@@ -81,7 +81,7 @@ The current state of the active `main` project includes:
 - custom palette import targets and a finite 30-color Analytics chart series library using approved green, gold, blue, and pink palettes; explicit **Charts** imports override chart series colors without altering unrelated app chrome
 - visualization chrome polish for header tabs, ornamental edge controls, map utility buttons, dropdown layering, map palette, chart controls, chart summary panels, and axis ticks
 - in-place Visualizations header Export menu for SVG, PNG, nodes CSV, routes/edges CSV, and chart PNG export
-- staged entrance animations for Home, Data, Visualizations, Timeline elements, and Chart Visualizations
+- staged entrance animations for Home, Data, Visualizations, Timeline elements, Chart Visualizations, Learn More placeholder cards, and the upload mapping modal
 - solid dark-green visualization transitions between map/network/chart views
 - initial Force-Directed Network framing centered on the densest information cluster
 - chart-builder visual polish with muted dark-green paneling, clear tab states, gold cream-card controls, one-time reveal behavior, and scroll/dropdown layering fixes
@@ -113,7 +113,7 @@ The codebase is functional, but it is still under active maintenance. The larges
 
 - Home / welcome workspace with a fixed-ratio title-card composition, **Use sample data**, and **Upload your data** entry points
 - hamburger-triggered menu replacing the earlier persistent icon rail as the primary navigation surface
-- task-oriented hamburger menu for Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility
+- task-oriented public hamburger menu for Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot
 - bottom Timeline scrubber integrated into Visualizations
 - compact side-panel bridge retained for visualization-click Inspector summaries
 
@@ -247,12 +247,12 @@ The current interface is now workspace-first rather than side-panel-first.
 Current top-level navigation:
 
 - a hamburger-triggered labeled menu, implemented in `src/PeridotHamburgerMenu.jsx`
-- full-window workspaces for:
+- full-window public workspaces for:
   - **Manage Your Data** — Data workspace with CSV / TSV / XLSX / XLS upload, mapping, template download, and validation summary
   - **Visualize Your Data** — Visualizations workspace with Place Map, People Network, Force-Directed, Chart Visualizations, Timeline, and in-place Export
   - **Explore Your Data** — direct entry point to Advanced Search, including data capabilities, Browse, Results, Refine / Inspect, and Inspector-adjacent evidence workflow
   - **Learn More about Peridot** — placeholder for future project information, credits, tutorials, and help content
-  - **Themes and Accessibility** — appearance presets and future accessibility settings
+- internally retained **Themes and Accessibility** workspace for appearance presets and future accessibility settings
 - dual-mode Inspector workflow:
   - visualization node/edge/cluster clicks open compact Inspector
   - hamburger **Inspector**, **Expand**, compact summary buttons, and linked-data clicks open the full Inspector workspace
@@ -460,7 +460,7 @@ Defines the Peridot workspace-mode vocabulary and guard helpers used by `App.jsx
 
 #### `src/PeridotHamburgerMenu.jsx`
 
-Primary visible navigation component. It renders the hamburger button and labeled menu entries for Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
+Primary visible navigation component. It renders the hamburger button and labeled menu entries for Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot. The Themes and Accessibility row is intentionally hidden for now while the workspace remains implemented internally.
 
 #### `src/PeridotHomeWorkspace.jsx`
 
@@ -480,7 +480,7 @@ Full-window Advanced Search workspace and primary Explore surface. It renders th
 
 #### `src/PeridotThemeWorkspace.jsx`
 
-Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, custom palette import, role-targeted theme application, and future appearance/accessibility settings.
+Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, custom palette import, role-targeted theme application, and future appearance/accessibility settings. It is currently development-facing/internal rather than visible in the public hamburger menu.
 
 #### `src/peridotTheme.js`
 
@@ -500,7 +500,7 @@ Compatibility Explore workspace. Explore Your Data now routes directly to Advanc
 
 #### `src/PeridotLearnMoreWorkspace.jsx`
 
-Placeholder workspace for future Peridot project information, credits, tutorials, and help content.
+Placeholder workspace for future Peridot project information, credits, tutorials, and help content. Its current placeholder cards reuse the same gentle float-in animation language as Manage Your Data.
 
 #### `src/LeftControlPanel.jsx`
 
@@ -741,7 +741,7 @@ Coordinates and dates are not required for upload. Instead, the upload summary t
 
 Peridot does **not** clean or standardize person names, place names, dates, topics, relationships, languages, titles, or other user-entered values. Charts, filters, and labels use uploaded values exactly as entered. Users who want cleaner networks or less fragmented Analytics categories should standardize their data before upload.
 
-For arbitrary tables and workbooks, the mapping workflow now asks users to describe field roles rather than forcing every table into a correspondence schema. Current role groups include record identity, time, places, relationships, evidence/analysis fields, and final capability review. This allows datasets such as point/site tables to map one location per row and render in Place Map even when they have no source-target people and therefore do not populate People Network or Force-Directed views.
+For arbitrary tables and workbooks, the mapping workflow now asks users to describe field roles rather than forcing every table into a correspondence schema. Current steps include Preview, workbook Sheets, Time, Places, Relations, Evidence, and final Review. This allows datasets such as point/site tables to map one location per row and render in Place Map even when they have no source-target people and therefore do not populate People Network or Force-Directed views.
 
 Coordinate-pair fields are interpreted as latitude first, longitude second, including `POINT(latitude longitude)` strings. Route datasets may use separated source/target latitude-longitude columns or combined source/target coordinate-pair columns.
 
@@ -753,11 +753,11 @@ For `.xlsx` and `.xls` files, Peridot now supports a workbook-aware import path:
 
 - upload workbook;
 - review workbook/sheet summary;
-- choose a primary record sheet;
+- choose a primary record sheet on the compact **Sheets** assembly page;
 - choose a primary unique-ID column;
 - add one or more joined sheets;
 - choose the primary-sheet ID column and joined-sheet ID column for each join;
-- map the nine core Peridot variables from any available sheet in the row context;
+- map Peridot roles from any available sheet in the row context using combined sheet-column selectors;
 - choose custom Inspector/Analytics fields from the primary and joined sheets;
 - confirm import to assemble Peridot rows from the configured unique-ID joins.
 

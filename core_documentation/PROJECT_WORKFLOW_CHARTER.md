@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\Peridot\
 Current clean baseline:
 
 ```text
-74db963 — Refine Inspector reference layout and record tables
+d04eaf6 — Hide theme menu entry and animate learn more cards
 ```
 
 Current branch note:
@@ -107,7 +107,7 @@ Current fragile zones include:
 - Analytics summary panels, shared chart/legend layout, axis ticks/gridlines, manual category/series selection, date-axis defaults, and chart color-series handling
 - semantic theme roles, finite default chart color library, chart-targeted palette import scoping, and map/chrome palette assignments
 - stale or insufficient code comments around fragile compatibility and cross-file wiring
-- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, generic chart/evidence record admission, evidence-field include/ignore checkbox behavior, coordinate-pair parsing, date-range/display-date handling, and legacy upload cleanup
+- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, generic chart/evidence record admission, evidence-field include/ignore checkbox behavior, coordinate-pair parsing, date-range/display-date handling, upload-mapping animation hooks, and legacy upload cleanup
 
 ---
 
@@ -301,6 +301,7 @@ Current notable decisions:
 - Advanced Search should visually resemble a compact database/library advanced-search interface rather than a stack of explanatory cards.
 - Expanded Analytics charts should keep the chart on a white/cream card while the layer behind it can use a dark translucent green with blur to preserve map context.
 - Data Inputs should use one standardized Peridot CSV upload as the public workflow.
+- The Data/workbook mapping modal should use the compact Preview/Sheets/Time/Places/Relations/Evidence/Review workflow, combined workbook sheet-column selectors, neutral Review warnings, and opacity-only step transitions.
 - Peridot should treat uploaded correspondence data as database records first and visualization inputs second.
 - Rows can be accepted when they contain either source/target names or source/target place information; coordinates and parseable dates are capability-enabling fields, not upload-admission requirements.
 - Peridot should not clean, standardize, merge, or enforce controlled vocabularies for uploaded names, places, dates, topics, relationships, languages, titles, notes, or links. Users are responsible for standardization outside the app.
@@ -319,7 +320,7 @@ Current notable decisions:
 - Person/place profile views should aggregate linked-record information and display related people, related places, directed routes, date spans, linked letters, and selected uploaded fields where available.
 - Linked letters should open as dedicated Inspector detail views rather than long inline expansions.
 - Peridot’s primary interface direction is now workspace-first rather than side-panel-first.
-- The hamburger menu is now product-task oriented: Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
+- The hamburger menu is now product-task oriented: Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot.
 - Explore Your Data routes directly to Advanced Search; Inspector remains available through visualization/evidence workflows and compatibility paths rather than as a standalone top-level hamburger destination.
 - Export should be an in-place visualization header action rather than a standalone top-level workspace.
 - Chart Visualizations should use a dedicated large workspace with controls on the left and the chart canvas on the right.
@@ -328,8 +329,9 @@ Current notable decisions:
 - Map legend and controls should start minimized to preserve visualization workspace area.
 - Learn More about Peridot is intentionally a placeholder workspace for future project information, credits, tutorials, and help content.
 - Themes and Accessibility is the appearance/settings hub; future accessibility controls should live there.
+- Themes and Accessibility is currently hidden from the public hamburger menu because it remains more useful for development than for ordinary users. Keep the workspace, route mode, and component intact so the menu entry can be restored later.
 - The hamburger-triggered labeled menu is the intended primary navigation surface; the old persistent icon rail is legacy/compatibility code unless explicitly revived.
-- Home, Data, Visualizations, Advanced Search, Learn More, and Themes and Accessibility are the primary full workspaces; Export is integrated into the Visualizations header.
+- Home, Data, Visualizations, Advanced Search, and Learn More are the primary public full workspaces; Themes and Accessibility remains an internal/development-facing full workspace; Export is integrated into the Visualizations header.
 - Timeline should not be promoted to a standalone full workspace; the preferred future direction is a bottom timeline/scrubber integrated with Visualizations.
 - Inspector is now dual-mode: visualization clicks open compact side-panel summaries, while hamburger **Inspector**, compact **Expand**, compact summary buttons, and linked-data clicks open the full Inspector workspace.
 - Compact and full Inspector modes must share one selection state and multi-step Back history.
@@ -522,14 +524,14 @@ For a new chat, start with:
 
 ```text
 Source of truth folder: C:\Users\haley\OneDrive\Desktop\Peridot\
-Current documented clean baseline: `74db963` — Refine Inspector reference layout and record tables. See `CHANGELOG.md` for the most recent documented safe baseline.
+Current documented clean baseline: `d04eaf6` — Hide theme menu entry and animate learn more cards. See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 The new chat should be told:
 
 - Peridot is the current app identity.
 - The current fixed basemap is `countries50m`.
-- The app uses a hamburger-triggered labeled menu with Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
+- The app uses a hamburger-triggered labeled menu with Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot. Themes and Accessibility is currently hidden from public navigation but remains implemented internally.
 - Timeline is implemented as a bottom Visualizations scrubber with collapse/expand behavior and dual range handles.
 - Inspector is dual-mode: compact side-panel summaries are still used for visualization clicks, and the full evidence-dossier workspace is implemented for hamburger/Expand/linked-data navigation.
 - `LeftControlPanel.jsx` owns the compact Inspector side-panel shell for visualization-click Inspector presentation.

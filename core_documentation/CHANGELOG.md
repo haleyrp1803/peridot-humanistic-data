@@ -2,9 +2,9 @@
 
 ## Current documented safe baseline
 
-- **`74db963` — `Refine Inspector reference layout and record tables`** on branch **`main`**
+- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`** on branch **`main`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The current app is workspace-first around a simplified product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, upload-mapping entrance and step-transition animation passes, and the final Learn More/menu polish pass. The current app is workspace-first around a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented as an internal/development-facing workspace and can be restored to the hamburger menu later without rebuilding the feature. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 Recent June 2026 visual and interaction polish added workspace entrance choreography and clarified the current Visualizations/Inspector/Charts experience. The Home, Data, and Visualizations workspaces now use staged entrance animations; visualization switching fades through a solid dark-green interstitial; Chart Visualizations use a guided one-time reveal, muted dark-green builder panel, gold high-contrast tab states, and gold treatment for cream-card interactables while preserving side-panel scroll and dropdown layering; the force-directed network initially centers on the densest information cluster; and the Inspector workspace now follows the chart-builder visual language while suppressing visualization hide/show toggles when the full Inspector is open. The earlier Inspector related-person navigation blank-state bug has been resolved by routing person-detail resolution through the appropriate people-graph fallback while preserving the mounted Visualizations overlay.
 
 The current Data Inputs / import workflow now provides:
@@ -55,8 +55,8 @@ The current interface/workspace workflow now provides:
 - the Home workspace uses the gilded transparent Peridot logo variant and selected licensed Adobe Stock filigree as its visible title-card lockup;
 - Home / welcome workspace with a single concise description sentence and **Use sample data** / **Upload your data** start paths;
 - hamburger-triggered labeled menu replacing the persistent icon rail as the primary visible navigation surface;
-- simplified hamburger stack: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**;
-- full-window workspaces for Data, Visualizations, Advanced Search, Learn More, Themes and Accessibility, and Inspector-compatible evidence review paths, with Explore Your Data routing directly into Advanced Search and Inspector remaining available through visualization/evidence workflows;
+- simplified public hamburger stack: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**, with **Themes and Accessibility** hidden from public navigation for now but retained internally;
+- full-window workspaces for Data, Visualizations, Advanced Search, Learn More, an internally retained Themes and Accessibility workspace, and Inspector-compatible evidence review paths, with Explore Your Data routing directly into Advanced Search and Inspector remaining available through visualization/evidence workflows;
 - Visualizations workspace containing Place Map, People Network, Force-Directed, Chart Visualizations, a collapsible visualization header, and a bottom timeline scrubber;
 - Chart Visualizations redesigned as a large chart workspace with controls on the left and the chart canvas on the right;
 - Chart Visualizations now use a tabbed builder with **Chart type**, **X/Y variables**, **Visible categories**, and **Presentation** tabs, plus an optional editable presentation title;
@@ -84,6 +84,21 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Data mapping redesign, workbook controls, upload animation, menu, and Learn More polish milestone
+
+- Updated the documented safe baseline to **`d04eaf6` — `Hide theme menu entry and animate learn more cards`**.
+- Redesigned the column/workbook mapping modal into a more compact Peridot folio workflow: shorter header chrome, compact step rail, Preview/Sheets/Time/Places/Relations/Evidence/Review sequencing, cream working cards, clearer right-side guidance panels, and consistent gold divider ornaments.
+- Refined Preview so uploaded tables show a compact file-preview strip and an 11-row horizontally scrollable preview table without the older large statistic cards.
+- Reworked Time, Places, Relations, and Review mapping pages so users see role-oriented controls rather than large explanatory stacks, with workbook and single-sheet paths kept visually aligned.
+- Rebuilt the workbook **Sheets** step as a two-column workbook-assembly page with primary record sheet, primary unique-ID column, joined-sheet setup, guidance copy, and a compact likely-primary-sheet note.
+- Replaced stacked workbook sheet/column selectors on Time, Places, and Relations with combined sheet-column field selectors while preserving the internal `{ sheetName, columnName }` workbook mapping model.
+- Kept workbook Evidence grouped by sheet, but simplified default field labels so the sheet name is no longer duplicated inside each evidence display label.
+- Refined Review warnings so capability reassurance appears once, coordinate warnings are consolidated, and all warning cards share the same neutral warning styling.
+- Added staged upload-mapping entrance animation for the mapping modal, including slow modal/header/step/body/footer reveal and left-to-right step sequencing.
+- Simplified step-to-step upload navigation after testing carousel variants; the accepted behavior is an opacity-only step transition that avoids bright cream flashes, lateral jolts, scale changes, blur, or upward drift.
+- Removed **Themes and Accessibility** from the visible hamburger menu while retaining the internal Theme workspace mode, component, and routing path for future restoration.
+- Added matching entrance animation to the two **Learn More about Peridot** placeholder cards by reusing the existing Data workspace float-in classes.
 
 ### Inspector reference-entry layout, mounted overlay, Unknown-as-place, and record-table capability milestone
 
@@ -203,7 +218,7 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Added a collapsible Visualizations header and a collapsible bottom Timeline bar, both starting expanded.
 - Implemented the Timeline as a compact bottom scrubber inside Visualizations with dual range handles, playback controls, reset/all-dates controls, and playback position controls.
 - Changed map legend and controls to start minimized as bottom-corner buttons that can be opened and minimized in place.
-- Simplified the hamburger menu to **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and **Themes and Accessibility**.
+- Simplified the hamburger menu to **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, **Learn More about Peridot**, and, at that stage, **Themes and Accessibility** before the later user-facing menu hide.
 - Added `src/PeridotExploreWorkspace.jsx` for combined capability summary, Search access, and Inspector-adjacent evidence review.
 - Added `src/PeridotLearnMoreWorkspace.jsx` as a placeholder for future project information, credits, tutorials, and help content.
 - Reframed Theme as **Themes and Accessibility**.
@@ -344,7 +359,16 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
-- **`74db963` — `Refine Inspector reference layout and record tables`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`** is the current documented `main` baseline and current head in the provided sync ritual.
+- **`342e606` — `Simplify upload step transitions`** accepts the opacity-only mapping step transition after carousel/fade experiments.
+- **`35946d4` — `Animate upload mapping transitions`** records the checkpointed upload-mapping entrance/carousel animation pass.
+- **`18419a5` — `Refine workbook sheet assembly layout`** redesigns the workbook Sheets step as a compact two-column assembly page.
+- **`3d2704e` — `Refine workbook mapping controls`** replaces workbook sheet/column stacks with combined field selectors and simplifies workbook Evidence labels.
+- **`e12862c` — `Refine review warning display`** consolidates Review warnings and removes over-prioritized warning styling.
+- **`4330312` — `Refine preview and places mapping details`** finalizes compact Preview and Places mapping treatments.
+- **`b9c113c` — `Refine relationship mapping layout`** compacts the Relations mapping page.
+- **`d3bda6f` — `Refine places mapping layout`** establishes the compact Places mapping structure.
+- **`74db963` — `Refine Inspector reference layout and record tables`** is the preceding documented Inspector/reference baseline.
 - **`d6baedf` — `Refine Inspector reference layout and record tables`** is the preceding Inspector reference-layout commit in the current two-commit sequence.
 - **`05fe40f` — `Keep visualizations mounted behind Inspector overlay`** keeps Visualizations mounted behind the full Inspector overlay and suppresses visualization hide/show controls while the full Inspector is open.
 - **`306650f` — `Fix Inspector person navigation from geographic context`** fixes related-person Inspector navigation from geographic/place contexts.
@@ -448,6 +472,15 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-06-18 | `d04eaf6` | Hide theme menu entry and animate learn more cards | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-18 | `342e606` | Simplify upload step transitions |  |
+| 2026-06-18 | `35946d4` | Animate upload mapping transitions |  |
+| 2026-06-18 | `18419a5` | Refine workbook sheet assembly layout |  |
+| 2026-06-18 | `3d2704e` | Refine workbook mapping controls |  |
+| 2026-06-18 | `e12862c` | Refine review warning display |  |
+| 2026-06-18 | `4330312` | Refine preview and places mapping details |  |
+| 2026-06-18 | `b9c113c` | Refine relationship mapping layout |  |
+| 2026-06-18 | `d3bda6f` | Refine places mapping layout |  |
 | 2026-06-17 | `74db963` | Refine Inspector reference layout and record tables | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-06-17 | `d6baedf` | Refine Inspector reference layout and record tables |  |
 | 2026-06-17 | `05fe40f` | Keep visualizations mounted behind Inspector overlay |  |

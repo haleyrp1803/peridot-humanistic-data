@@ -22,11 +22,23 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`74db963` — `Refine Inspector reference layout and record tables`**
+- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`**
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector reference-entry visual hierarchy that separates lead summaries, connected-place/person lists, directed connections, and connected-record tables. The full Inspector now overlays Visualizations without remounting the underlying workspace; related-person navigation from geographic contexts is fixed; **Unknown** place values are preserved as first-class place-like buckets; and connected-record tables use sorting, filtering, pagination, and capability-aware columns.
+This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, the upload-mapping animation passes, the hidden-theme-menu navigation polish, and the Learn More card animation pass. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector reference-entry visual hierarchy that separates lead summaries, connected-place/person lists, directed connections, and connected-record tables. The full Inspector now overlays Visualizations without remounting the underlying workspace; related-person navigation from geographic contexts is fixed; **Unknown** place values are preserved as first-class place-like buckets; and connected-record tables use sorting, filtering, pagination, and capability-aware columns.
 
 
+
+Recent upload mapping, workbook, menu, and Learn More polish milestones include:
+
+- **`d04eaf6` — `Hide theme menu entry and animate learn more cards`**
+- **`342e606` — `Simplify upload step transitions`**
+- **`35946d4` — `Animate upload mapping transitions`**
+- **`18419a5` — `Refine workbook sheet assembly layout`**
+- **`3d2704e` — `Refine workbook mapping controls`**
+- **`e12862c` — `Refine review warning display`**
+- **`4330312` — `Refine preview and places mapping details`**
+- **`b9c113c` — `Refine relationship mapping layout`**
+- **`d3bda6f` — `Refine places mapping layout`**
 
 Recent Inspector reference-layout and record-table milestones include:
 
@@ -350,7 +362,7 @@ Workspace-mode vocabulary and helper functions used by `App.jsx` for Home, Data,
 
 ### `src/PeridotHamburgerMenu.jsx`
 
-Primary visible navigation component. It renders the hamburger button and the simplified task-oriented menu: Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility.
+Primary visible navigation component. It renders the hamburger button and the simplified task-oriented public menu: Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot. Themes and Accessibility is intentionally hidden from the public menu for now, but the component comments preserve the restore point for re-adding that entry later.
 
 ### `src/PeridotHomeWorkspace.jsx`
 
@@ -370,7 +382,7 @@ Full Advanced Search workspace and primary Explore surface. It renders active-sc
 
 ### `src/PeridotThemeWorkspace.jsx`
 
-Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, custom palette import, role-targeted palette application, and future accessibility/appearance controls. Theme controls should continue to operate through semantic role targets rather than one-off component overrides. Explicit chart-targeted imports should alter chart series colors without recoloring unrelated app chrome.
+Themes and Accessibility workspace for Peridot default, Early modern map, Modern map presets, custom palette import, role-targeted palette application, and future accessibility/appearance controls. It remains implemented and route-compatible, but the hamburger menu entry is currently hidden while the page remains more development-facing than user-ready. Theme controls should continue to operate through semantic role targets rather than one-off component overrides. Explicit chart-targeted imports should alter chart series colors without recoloring unrelated app chrome.
 
 ### `src/peridotTheme.js`
 
@@ -435,9 +447,9 @@ Owns pure post-upload validation summaries. It produces:
 
 ### `src/PeridotColumnMappingModal.jsx`
 
-Owns the large column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports. The current UI is role-based rather than correspondence-template-first: users move through record identification, time, places, relationships, evidence/analysis, and capability review. It still produces Peridot-compatible rows for the existing visualization pipeline, but it now exposes explicit temporal roles, point-location roles, route coordinate-pair roles, workbook primary-sheet selection, multi-sheet unique-ID joins, and selected evidence/Analytics metadata from primary and joined sheets.
+Owns the large column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports. The current UI is role-based rather than correspondence-template-first: users move through Preview, Sheets for workbooks, Time, Places, Relations, Evidence, and Review. It still produces Peridot-compatible rows for the existing visualization pipeline, but it now exposes explicit temporal roles, point-location roles, route coordinate-pair roles, workbook primary-sheet selection, multi-sheet unique-ID joins, and selected evidence/Analytics metadata from primary and joined sheets.
 
-This file has been partially decomposed. Static UI labels/step groupings live in `peridotColumnMappingUiConfig.js`; repeated mapping table controls live in `PeridotMappingFieldControls.jsx`; evidence/analysis Include/Ignore controls live in `PeridotEvidenceFieldControls.jsx`. The modal should continue to own state transitions, workbook state, import/cancel behavior, and final mapping assembly.
+This file has been partially decomposed. Static UI labels/step groupings live in `peridotColumnMappingUiConfig.js`; repeated mapping table controls live in `PeridotMappingFieldControls.jsx`; evidence/analysis Include/Ignore controls live in `PeridotEvidenceFieldControls.jsx`. The modal should continue to own state transitions, workbook state, import/cancel behavior, final mapping assembly, upload-mapping entrance animation hooks, and the accepted opacity-only step transition. Avoid reintroducing carousel/slide/scale/blur transitions for step changes unless a new motion pass explicitly chooses that direction.
 
 ### `src/peridotColumnMappingUiConfig.js`
 
@@ -445,11 +457,11 @@ Static UI configuration for the mapping modal: single-table/workbook step sequen
 
 ### `src/PeridotMappingFieldControls.jsx`
 
-Presentational mapping-table controls used by the mapping modal for temporal fields, core relationship/place roles, and workbook-aware field-role rows. It should remain stateless and receive current values plus callbacks from `PeridotColumnMappingModal.jsx`.
+Presentational mapping-table controls used by the mapping modal for temporal fields, core relationship/place roles, and workbook-aware field-role rows. Workbook role controls now use combined sheet-column selectors rather than stacked Sheet and Column dropdowns, while preserving the internal workbook reference shape. It should remain stateless and receive current values plus callbacks from `PeridotColumnMappingModal.jsx`.
 
 ### `src/PeridotEvidenceFieldControls.jsx`
 
-Presentational evidence/analysis Include/Ignore controls for single-table and workbook imports. The modal owns the state and update handlers; this file owns the repeated row rendering, display labels, and checkbox layout.
+Presentational evidence/analysis Include/Ignore controls for single-table and workbook imports. Workbook Evidence remains grouped by sheet, but default display labels use the column name only so the sheet name is not duplicated in every label. The modal owns the state and update handlers; this file owns the repeated row rendering, display labels, and checkbox layout.
 
 ### `src/peridotColumnMapping.js`
 
@@ -603,8 +615,8 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - app opens to the Home workspace
 - hamburger menu is the primary visible navigation surface
-- hamburger menu exposes Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility
-- full workspaces exist for Data, Visualizations, Explore, Learn More, Themes and Accessibility, Search, and Inspector-compatible evidence review
+- hamburger menu exposes Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot
+- full workspaces exist for Data, Visualizations, Explore, Learn More, the internally retained Themes and Accessibility workspace, Search, and Inspector-compatible evidence review
 - Timeline is integrated as a bottom Visualizations scrubber
 - Export is integrated as a Visualizations header menu rather than a standalone workspace
 - Inspector compact mode remains tied to visualization-click side-panel behavior and auto-opens from node/edge/cluster interactions
@@ -631,14 +643,15 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 
 - full Data workspace
 - unified CSV / TSV / XLSX / XLS upload path
+- compact role-based mapping modal with staged entrance animation and opacity-only step transitions
 - downloadable Peridot CSV template
 - arbitrary CSV/TSV/Excel role-based mapping workflow
-- XLSX/XLS workbook staging, mapping, unique-ID joins, and import assembly
+- XLSX/XLS workbook staging, mapping, unique-ID joins, combined sheet-column role selectors, and import assembly
 - database-first permissive upload model
 - upload validation popup
 - persistent latest-upload summary
 - capability audit at the mapping-review decision point
-- role-based upload mapping for record identity, time, places, relationships, evidence/analysis, and capability review
+- role-based upload mapping for Preview, workbook Sheets, Time, Places, Relations, Evidence, and Review
 - explicit temporal roles for single dates, start dates, end dates, and display dates
 - point-location roles for datasets with one location per record
 - route coordinate roles that accept separated latitude/longitude columns or combined latitude-first coordinate pairs
@@ -948,8 +961,8 @@ Other retained presets still function as map-focused alternatives:
 
 Current routing state:
 
-- Hamburger entries are Manage Your Data, Visualize Your Data, Explore Your Data, Learn More about Peridot, and Themes and Accessibility
-- Data, Visualizations, Explore, Learn More, Themes and Accessibility, Search, and Inspector-compatible evidence review are full workspace paths
+- Hamburger entries are Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot
+- Data, Visualizations, Explore, Learn More, Search, and Inspector-compatible evidence review are public workspace paths; Themes and Accessibility remains an internal/development-facing full workspace path
 - Export is integrated into the Visualizations header, not a top-level workspace
 - hamburger-triggered labeled menu is the intended navigation model
 - the persistent rail is no longer the intended primary visible navigation surface
@@ -964,7 +977,7 @@ Recent committed behavior includes:
 - compact Visualizations workspace with Place Map, People Network, Force-Directed, and Analytics
 - Search & Filter available as a full workspace through Explore/workflow actions
 - Export consolidated into the Visualizations header
-- Theme reframed as Themes and Accessibility
+- Theme reframed as Themes and Accessibility, then hidden from the public hamburger menu until it is ready as a user-facing page
 - routing contract updated after workspace promotions
 - Timeline implemented as a bottom Visualizations scrubber
 - Inspector full evidence-dossier workspace implemented in dual-mode form; future work should refine content density, breadcrumbs, section anchors, and visual polish
@@ -1063,7 +1076,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current documented baseline: **`74db963` — `Refine Inspector reference layout and record tables`**
+- current documented baseline: **`d04eaf6` — `Hide theme menu entry and animate learn more cards`**
 
 A future chat should also be told that:
 
@@ -1071,9 +1084,9 @@ A future chat should also be told that:
 - the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filigree 1.png`; the additional licensed filigree assets `Adobe Stock Filigree 2.png`, `Adobe Stock Filigree 3.png`, `Adobe Stock Filigree Divider Set.png`, and `Adobe Stock Filigree Full Set.png` are retained for design reference/use
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed
-- the simplified hamburger/workspace structure is committed; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge
+- the simplified hamburger/workspace structure is committed; public menu entries are Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot; Themes and Accessibility is hidden from public navigation but retained internally; the shared side panel remains primarily as the compact Inspector surface and compatibility bridge
 - `InspectorPanel.jsx` is content-only
-- `LeftControlPanel.jsx` owns the compact Inspector side-panel shell; Data/Visualizations/Explore/Learn More/Search/Themes and Accessibility are full workspace paths, while Export and Timeline are Visualizations-integrated
+- `LeftControlPanel.jsx` owns the compact Inspector side-panel shell; Data/Visualizations/Explore/Learn More/Search are public full workspace paths; Themes and Accessibility remains an internal full workspace path; Export and Timeline are Visualizations-integrated
 - `peridotCsvSchema.js`, `peridotCsvNormalizer.js`, `peridotCsvValidation.js`, `peridotColumnMapping.js`, `PeridotColumnMappingModal.jsx`, and `peridotWorkbookParsing.js` own the current template upload, arbitrary table mapping, validation, and workbook-helper boundaries
 - current cluster, Inspector profile, dual-mode Inspector, linked-letter history, clickable linked people/places, compact summary tile, and route-row features are committed, not deferred
 - MapLibre preview code has been removed from active `main`; the migrated-overlay branch remains archived and should not be treated as active implementation direction
