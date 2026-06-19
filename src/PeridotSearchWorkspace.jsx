@@ -618,6 +618,31 @@ function BrowseIndexGroup({ group, onChooseBrowseItem }) {
 
 const RESULT_PAGE_SIZE_OPTIONS = [10, 25, 50];
 
+function buildCondensedPaginationItems(currentPage, totalPages) {
+  if (totalPages <= 1) return [1];
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  const visiblePages = new Set([1, totalPages]);
+  for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+    if (page >= 1 && page <= totalPages) visiblePages.add(page);
+  }
+
+  const sortedPages = Array.from(visiblePages).sort((a, b) => a - b);
+  const items = [];
+
+  sortedPages.forEach((page, index) => {
+    const previousPage = sortedPages[index - 1];
+    if (index > 0 && page - previousPage > 1) {
+      items.push(`ellipsis-${previousPage}-${page}`);
+    }
+    items.push(page);
+  });
+
+  return items;
+}
+
 const UNKNOWN_RESULT_VALUES = new Set([
   '',
   'unknown',
@@ -1609,7 +1634,23 @@ export function PeridotSearchWorkspace({
                 <button type="button" onClick={() => goToResultPage(safeResultPage - 1)} disabled={safeResultPage === 1}>
                   Previous
                 </button>
-                <span className="peridot-search-results-pagination-current">{safeResultPage}</span>
+                {buildCondensedPaginationItems(safeResultPage, resultPageCount).map((item) => (
+                  typeof item === 'number' ? (
+                    <button
+                      key={`page-${item}`}
+                      type="button"
+                      onClick={() => goToResultPage(item)}
+                      className={item === safeResultPage ? 'peridot-search-results-pagination-current' : ''}
+                      aria-current={item === safeResultPage ? 'page' : undefined}
+                    >
+                      {item}
+                    </button>
+                  ) : (
+                    <span key={item} className="peridot-search-results-pagination-ellipsis" aria-hidden="true">
+                      …
+                    </span>
+                  )
+                ))}
                 <button type="button" onClick={() => goToResultPage(safeResultPage + 1)} disabled={safeResultPage === resultPageCount}>
                   Next
                 </button>

@@ -3451,7 +3451,8 @@ textarea {
 }
 
 .peridot-search-workspace .peridot-search-results-pagination button,
-.peridot-search-workspace .peridot-search-results-pagination-current {
+.peridot-search-workspace .peridot-search-results-pagination-current,
+.peridot-search-workspace .peridot-search-results-pagination-ellipsis {
   display: inline-flex;
   min-width: 2.2rem;
   align-items: center;
@@ -3488,8 +3489,17 @@ textarea {
 }
 
 .peridot-search-workspace .peridot-search-results-pagination-current {
-  background: var(--explore-gold);
-  color: var(--explore-gold-text);
+  border-color: var(--explore-gold-soft) !important;
+  background: var(--explore-gold) !important;
+  color: var(--explore-gold-text) !important;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination-ellipsis {
+  min-width: 1.4rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--explore-text-on-dark);
+  padding-inline: 0.18rem;
 }
 
 @media (max-width: 1180px) {
