@@ -550,6 +550,62 @@ function getRefineFacetVisibleLimit(group) {
   return 8;
 }
 
+function refineGroupIsRouteGroup(group) {
+  const id = String(group?.id || '').toLowerCase();
+  const type = String(group?.type || '').toLowerCase();
+  const label = String(group?.label || '').toLowerCase();
+
+  return id.includes('route') || type.includes('route') || label.includes('route');
+}
+
+function refineCapabilityItemIsRouteSpecific(item) {
+  const value = String(item?.value || '').toLowerCase();
+  const label = String(item?.label || '').toLowerCase();
+
+  return value.includes('route') || label.includes('route');
+}
+
+/*
+ * Refine's facet vocabulary should follow the applied result set's structure.
+ * Route/correspondence datasets keep route facets. Point datasets use entity and
+ * location language, and route-only facets are omitted so self-routes such as
+ * "Airfield → Airfield" do not appear as meaningful routes.
+ */
+function normalizeSearchFacetGroupsForRefine(groups, { isRouteCapable = true } = {}) {
+  const safeGroups = Array.isArray(groups) ? groups : [];
+  if (isRouteCapable) return safeGroups;
+
+  return safeGroups
+    .filter((group) => !refineGroupIsRouteGroup(group))
+    .map((group) => {
+      if (group.type === 'person') {
+        return {
+          ...group,
+          label: 'Entities',
+          description: group.description || 'Entities represented in the current result set.',
+        };
+      }
+
+      if (group.type === 'place') {
+        return {
+          ...group,
+          label: 'Locations',
+          description: group.description || 'Mapped point locations in the current result set.',
+        };
+      }
+
+      if (group.type === 'capability') {
+        return {
+          ...group,
+          items: (group.items || []).filter((item) => !refineCapabilityItemIsRouteSpecific(item)),
+        };
+      }
+
+      return group;
+    })
+    .filter((group) => (group.items || []).length > 0);
+}
+
 function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
   const [expanded, setExpanded] = useState(false);
   const visibleLimit = getRefineFacetVisibleLimit(group);
@@ -1027,7 +1083,11 @@ export function PeridotSearchWorkspace({
     setResultPage((currentPage) => Math.min(currentPage, resultPageCount));
   }, [resultPageCount]);
 
-  const searchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 48 }), [searchRows]);
+  const rawSearchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 48 }), [searchRows]);
+  const searchFacetGroups = useMemo(
+    () => normalizeSearchFacetGroupsForRefine(rawSearchFacetGroups, { isRouteCapable: searchResultsAreRouteCapable }),
+    [rawSearchFacetGroups, searchResultsAreRouteCapable],
+  );
   const browseIndexGroups = useMemo(() => buildBrowseIndexGroups(browseRows), [browseRows]);
   const filteredBrowseIndexGroups = useMemo(() => filterBrowseGroups(browseIndexGroups, browseQuery), [browseIndexGroups, browseQuery]);
 
