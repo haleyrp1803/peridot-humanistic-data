@@ -481,6 +481,15 @@ function AutocompleteTextInput({
   );
 }
 
+function AppliedScopeCard({ label, value }) {
+  return (
+    <div className="peridot-search-status-item">
+      <span>{label}</span>
+      <strong title={value}>{value}</strong>
+    </div>
+  );
+}
+
 function SectionHeader({ eyebrow, title, children }) {
   return (
     <div>
@@ -491,14 +500,6 @@ function SectionHeader({ eyebrow, title, children }) {
       ) : null}
       <h2 className="mt-0.5 text-2xl font-black tracking-tight text-[var(--peridot-color-hex-203729)]">{title}</h2>
       {children ? <p className={'mt-1 ' + MUTED_TEXT_CLASS}>{children}</p> : null}
-    </div>
-  );
-}
-
-function ExploreDivider({ className = '' }) {
-  return (
-    <div className={`peridot-search-ornament-divider ${className}`.trim()} aria-hidden="true">
-      <span />
     </div>
   );
 }
@@ -624,6 +625,11 @@ function BrowseIndexGroup({ group, onChooseBrowseItem }) {
 }
 
 function SearchResultCard({ result, onInspectSearchResult }) {
+  const visibleMatches = result.matchedFields.slice(0, 3);
+  const hiddenMatchCount = Math.max(0, result.matchedFields.length - visibleMatches.length);
+  const visibleBadges = result.capabilityBadges.slice(0, 4);
+  const hiddenBadgeCount = Math.max(0, result.capabilityBadges.length - visibleBadges.length);
+
   return (
     <article className="rounded-[1rem] border border-[var(--peridot-color-hex-9fb28f)] bg-[var(--peridot-color-hex-d3e3c8)] p-3 text-[var(--peridot-color-hex-203729)] shadow-[0_8px_18px_var(--peridot-color-rgba-rgba-39-50-36-0-08)] transition duration-150 hover:-translate-y-0.5 hover:border-[var(--peridot-color-hex-74897a)] hover:bg-[var(--peridot-color-hex-deebd5)] hover:shadow-[0_12px_26px_var(--peridot-color-rgba-rgba-39-50-36-0-13)]">
       <div className="flex items-start justify-between gap-3">
@@ -656,9 +662,46 @@ function SearchResultCard({ result, onInspectSearchResult }) {
         </div>
       </dl>
 
-      {/* Result cards intentionally omit scope and capability badge rows.
-          The Results tab itself represents the current applied scope, and
-          workflow-readiness information now lives in the Capabilities tab. */}
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {visibleMatches.length ? (
+          visibleMatches.map((match) => (
+            <span
+              key={`${match.label}-${match.value}`}
+              title={`${match.label}: ${match.value}`}
+              className="max-w-full truncate rounded-full border border-[var(--peridot-color-hex-b8c8aa)] bg-[var(--peridot-color-hex-e2eed8)] px-2 py-0.5 text-[0.68rem] font-semibold text-[var(--peridot-color-hex-344a38)]"
+            >
+              <span className="font-black">{match.label}:</span> {match.value}
+            </span>
+          ))
+        ) : (
+          <span className="rounded-full border border-[var(--peridot-color-hex-b8c8aa)] bg-[var(--peridot-color-hex-e2eed8)] px-2 py-0.5 text-[0.68rem] font-semibold text-[var(--peridot-color-hex-465d49)]">
+            In current applied scope
+          </span>
+        )}
+        {hiddenMatchCount > 0 ? (
+          <span className="rounded-full border border-[var(--peridot-color-hex-b8c8aa)] bg-[var(--peridot-color-hex-d7e6cc)] px-2 py-0.5 text-[0.68rem] font-black text-[var(--peridot-color-hex-38553d)]">
+            +{hiddenMatchCount} matches
+          </span>
+        ) : null}
+      </div>
+
+      {visibleBadges.length ? (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {visibleBadges.map((badge) => (
+            <span
+              key={badge}
+              className="rounded-full border border-[var(--peridot-color-hex-9db48e)] bg-[var(--peridot-color-hex-d7e6cc)] px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] text-[var(--peridot-color-hex-274633)]"
+            >
+              {badge}
+            </span>
+          ))}
+          {hiddenBadgeCount > 0 ? (
+            <span className="rounded-full border border-[var(--peridot-color-hex-9db48e)] bg-[var(--peridot-color-hex-eaf3e1)] px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] text-[var(--peridot-color-hex-274633)]">
+              +{hiddenBadgeCount}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </article>
   );
 }
@@ -1092,7 +1135,6 @@ export function PeridotSearchWorkspace({
       <SectionHeader eyebrow="Step 1" title="Build Search">
         Draft changes do not affect maps, charts, export, or Inspector until Apply Filters is pressed.
       </SectionHeader>
-      <ExploreDivider />
 
       <div className={PANEL_INSET_CLASS + ' p-4'}>
         <div className="grid gap-3 lg:grid-cols-12">
@@ -1297,7 +1339,6 @@ export function PeridotSearchWorkspace({
           {(browseRows?.length || 0)} loaded records indexed
         </div>
       </div>
-      <ExploreDivider />
 
       <div className={PANEL_INSET_CLASS + ' p-3'}>
         <AutocompleteTextInput
@@ -1310,7 +1351,6 @@ export function PeridotSearchWorkspace({
           suggestions={personSuggestions.concat(placeSuggestions, routePlaceSuggestions, evidenceFieldSuggestions).slice(0, 200)}
         />
       </div>
-      <ExploreDivider />
 
       {filteredBrowseIndexGroups.length ? (
         <div className="grid gap-3">
@@ -1343,7 +1383,6 @@ export function PeridotSearchWorkspace({
           {hiddenSearchResultCount > 0 ? <span className="text-[var(--peridot-color-hex-667960)]">+{hiddenSearchResultCount} more</span> : null}
         </div>
       </div>
-      <ExploreDivider />
 
       <div className="grid gap-3 xl:grid-cols-2">
         {searchResultCards.length ? (
@@ -1369,92 +1408,38 @@ export function PeridotSearchWorkspace({
     </div>
   );
 
-  const renderCapabilities = () => {
-    const loadedCount = Array.isArray(browseRows) ? browseRows.length : 0;
-    const appliedCount = Array.isArray(searchRows) ? searchRows.length : 0;
-    const readyCapabilityCount = capabilityRows.filter((row) => row.ready).length;
-    const unavailableRows = capabilityRows.filter((row) => !row.ready);
+  const renderCapabilities = () => (
+    <div className="space-y-4">
+      <SectionHeader eyebrow="Step 5" title="Capabilities">
+        Review loaded records and the current applied scope before moving into visualizations, charts, export, or Inspector evidence review.
+      </SectionHeader>
 
-    return (
-      <div className="space-y-4">
-        <SectionHeader eyebrow="Step 5" title="Capabilities">
-          Review what the loaded and applied records can support before moving into visualizations, charts, export, or Inspector evidence review.
-        </SectionHeader>
-        <ExploreDivider />
-
-        <div className="peridot-search-capability-review-grid">
-          <section className="peridot-search-capability-review-card">
-            <div className={FIELD_LABEL_CLASS}>Scope status</div>
-            <div className="peridot-search-capability-scope-list">
-              <div>
-                <span>Loaded records</span>
-                <strong>{loadedCount}</strong>
-              </div>
-              <div>
-                <span>Applied result scope</span>
-                <strong>{appliedCount}</strong>
-              </div>
-              <div>
-                <span>Timeline</span>
-                <strong>{currentRangeLabel}</strong>
-              </div>
-              <div>
-                <span>Minimum route weight</span>
-                <strong>{currentMinCountLabel}</strong>
-              </div>
-              <div>
-                <span>Draft state</span>
-                <strong>{hasDraftChanges ? 'Pending changes' : 'Current'}</strong>
-              </div>
+      <div className="peridot-search-capability-ledger">
+        {capabilityRows.map((row) => (
+          <article key={row.label} className="peridot-search-capability-row">
+            <div className="min-w-0">
+              <div className={FIELD_LABEL_CLASS}>Tool check</div>
+              <h3 className="mt-1 text-base font-black text-[var(--peridot-color-hex-203729)]">{row.label}</h3>
             </div>
-          </section>
-
-          <section className="peridot-search-capability-review-card">
-            <div className={FIELD_LABEL_CLASS}>Tool availability</div>
-            <div className="peridot-search-capability-availability-list">
-              {capabilityRows.map((row) => (
-                <article key={row.label} className="peridot-search-capability-availability-row">
-                  <div>
-                    <h3>{row.label}</h3>
-                    <p>{row.note}</p>
-                  </div>
-                  <div className="peridot-search-capability-availability-meta">
-                    <strong>{row.value}</strong>
-                    <span className={[
-                      'peridot-search-capability-status',
-                      row.ready ? 'peridot-search-capability-status-ready' : 'peridot-search-capability-status-missing',
-                    ].join(' ')}>
-                      {row.statusLabel || (row.ready ? 'Available' : 'Not available')}
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        </div>
-        <ExploreDivider />
-
-        <div className="peridot-search-capability-review-note">
-          <div>
-            <span className={FIELD_LABEL_CLASS}>Review note</span>
-            <p>
-              {unavailableRows.length
-                ? `${unavailableRows.length} capability ${unavailableRows.length === 1 ? 'area is' : 'areas are'} not available for the current scope.`
-                : `${readyCapabilityCount} capability checks are available for the current scope.`}
-              {' '}Data that cannot support one visualization can still remain available for search, Inspector review, charting, or export when its mapped fields support those tools.
-            </p>
-          </div>
-        </div>
+            <div className="peridot-search-capability-value">{row.value}</div>
+            <span className={[
+              'peridot-search-capability-status',
+              row.ready ? 'peridot-search-capability-status-ready' : 'peridot-search-capability-status-missing',
+            ].join(' ')}>
+              {row.statusLabel || (row.ready ? 'Available' : 'Not available')}
+            </span>
+            <p className="peridot-search-capability-note">{row.note}</p>
+          </article>
+        ))}
       </div>
-    );
-  };
+    </div>
+  );
 
   const renderRefineInspect = () => (
     <div className="space-y-4">
       <SectionHeader eyebrow="Step 4" title="Refine / Inspect">
         Facets summarize the applied result set. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>
-      <ExploreDivider />
 
       <div className={PANEL_INSET_CLASS + ' p-3'}>
         <div className={FIELD_LABEL_CLASS}>Inspector handoff</div>
@@ -1462,7 +1447,6 @@ export function PeridotSearchWorkspace({
           Use <span className="font-black text-[var(--peridot-color-hex-203729)]">Inspect</span> on a result card to open the record in the full evidence workspace. Dataset capability information now lives in the <span className="font-black text-[var(--peridot-color-hex-203729)]">Capabilities</span> tab.
         </p>
       </div>
-      <ExploreDivider />
 
       {searchFacetGroups.length ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -1511,6 +1495,14 @@ export function PeridotSearchWorkspace({
               </div>
             </div>
 
+            <div className="peridot-search-status-ribbon" aria-label="Current advanced-search scope">
+              <AppliedScopeCard label="Applied scope" value={`${searchRows?.length || 0} records`} />
+              <AppliedScopeCard label="Timeline" value={currentRangeLabel} />
+              <AppliedScopeCard label="Minimum" value={currentMinCountLabel} />
+              <AppliedScopeCard label="Capabilities" value={activeCapabilityLabel} />
+              <AppliedScopeCard label="Criteria" value={activeStructuredLabel} />
+              <AppliedScopeCard label="Draft" value={hasDraftChanges ? 'Pending changes' : 'Current'} />
+            </div>
           </header>
 
           {filterStatusMessage ? (
