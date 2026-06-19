@@ -615,45 +615,212 @@ function BrowseIndexGroup({ group, onChooseBrowseItem }) {
   );
 }
 
-function SearchResultCard({ result, onInspectSearchResult }) {
-  return (
-    <article className="peridot-search-result-card rounded-[1rem] border p-3 shadow-[0_8px_18px_var(--peridot-color-rgba-rgba-39-50-36-0-08)] transition duration-150 hover:-translate-y-0.5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="peridot-search-result-badge rounded-full border px-2 py-0.5 text-[0.56rem] font-black uppercase tracking-[0.14em]">
-              Result
-            </span>
-            <span className="peridot-search-result-date text-xs font-black">{result.displayDate}</span>
-          </div>
-          <h3 className="peridot-search-result-title mt-1 truncate text-sm font-black">{result.title}</h3>
+
+const RESULT_PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+const UNKNOWN_RESULT_VALUES = new Set([
+  '',
+  'unknown',
+  'unknown target',
+  'unknown source',
+  'unnamed',
+  '—',
+  '-',
+  'null',
+  'undefined',
+]);
+
+function cleanResultText(value) {
+  return String(value ?? '').trim();
+}
+
+function isMeaningfulResultValue(value) {
+  const text = cleanResultText(value);
+  return Boolean(text) && !UNKNOWN_RESULT_VALUES.has(text.toLowerCase());
+}
+
+function firstResultText(sources, fields) {
+  for (const source of sources) {
+    if (!source || typeof source !== 'object') continue;
+    for (const field of fields) {
+      const value = cleanResultText(source[field]);
+      if (value) return value;
+    }
+  }
+  return '';
+}
+
+function splitRouteLabel(value) {
+  const text = cleanResultText(value);
+  if (!text.includes('→')) return [text, ''];
+  const [source = '', target = ''] = text.split('→');
+  return [cleanResultText(source), cleanResultText(target)];
+}
+
+function getResultSources(result) {
+  return [
+    result,
+    result?.row,
+    result?.record,
+    result?.data,
+    result?.sourceRow,
+    result?.originalRow,
+    result?.raw,
+  ];
+}
+
+function getResultDisplayParts(result) {
+  const sources = getResultSources(result);
+  const [routeSourceEntity, routeTargetEntity] = splitRouteLabel(result?.peopleRoute || result?.title);
+  const [routeSourcePlace, routeTargetPlace] = splitRouteLabel(result?.placeRoute);
+
+  const sourceEntity = firstResultText(sources, [
+    'sourcePerson',
+    'sourceEntity',
+    'Source_Entity',
+    'Source_Person',
+    'Source',
+    'sender',
+    'Sender',
+    'entity',
+    'Entity',
+    'label',
+  ]) || routeSourceEntity;
+
+  const targetEntity = firstResultText(sources, [
+    'targetPerson',
+    'targetEntity',
+    'Target_Entity',
+    'Target_Person',
+    'Target',
+    'recipient',
+    'Recipient',
+  ]) || routeTargetEntity;
+
+  const sourceLocation = firstResultText(sources, [
+    'sourcePlaceLabel',
+    'sourcePlace',
+    'sourceLocation',
+    'sourceLoc',
+    'Source_Place',
+    'Source_Loc',
+    'Location',
+    'location',
+    'place',
+    'Place',
+  ]) || routeSourcePlace;
+
+  const targetLocation = firstResultText(sources, [
+    'targetPlaceLabel',
+    'targetPlace',
+    'targetLocation',
+    'targetLoc',
+    'Target_Place',
+    'Target_Loc',
+    'Target_Inferred_Loc',
+  ]) || routeTargetPlace;
+
+  return {
+    date: cleanResultText(result?.displayDate || result?.date || result?.Date || result?.parsedDate) || '—',
+    sourceEntity: cleanResultText(sourceEntity) || 'Unknown source',
+    targetEntity: cleanResultText(targetEntity) || '',
+    entity: cleanResultText(sourceEntity) || cleanResultText(targetEntity) || cleanResultText(result?.title) || 'Unknown entity',
+    sourceLocation: cleanResultText(sourceLocation) || 'Unknown',
+    targetLocation: cleanResultText(targetLocation) || '',
+    location: cleanResultText(sourceLocation) || cleanResultText(targetLocation) || 'Unknown',
+  };
+}
+
+function resultLooksRouteCapable(result) {
+  const parts = getResultDisplayParts(result);
+  const hasMeaningfulTargetEntity = isMeaningfulResultValue(parts.targetEntity);
+  const hasMeaningfulSourceEntity = isMeaningfulResultValue(parts.sourceEntity);
+  const hasDistinctMeaningfulLocations =
+    isMeaningfulResultValue(parts.sourceLocation)
+    && isMeaningfulResultValue(parts.targetLocation)
+    && parts.sourceLocation.toLowerCase() !== parts.targetLocation.toLowerCase();
+
+  return (hasMeaningfulSourceEntity && hasMeaningfulTargetEntity) || hasDistinctMeaningfulLocations;
+}
+
+function SearchResultCard({ result, onInspectSearchResult, isRouteCapable }) {
+  const parts = getResultDisplayParts(result);
+
+  if (!isRouteCapable) {
+    return (
+      <article className="peridot-search-result-card peridot-search-result-ledger-card peridot-search-results-ledger-row peridot-search-results-ledger-row-point">
+        <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-date-cell">
+          <span className="peridot-search-results-ledger-mobile-label">Date</span>
+          <span className="peridot-search-result-date">{parts.date}</span>
         </div>
+
+        <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-entity-cell">
+          <span className="peridot-search-results-ledger-mobile-label">Entity</span>
+          <span className="peridot-search-result-title" title={parts.entity}>{parts.entity}</span>
+        </div>
+
+        <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-location-cell">
+          <span className="peridot-search-results-ledger-mobile-label">Location</span>
+          <span className="peridot-search-result-meta-value" title={parts.location}>{parts.location}</span>
+        </div>
+
+        <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-action-cell">
+          <button
+            type="button"
+            onClick={() => onInspectSearchResult?.(result)}
+            className={DARK_BUTTON_CLASS + ' peridot-search-result-inspect-action'}
+          >
+            Inspect
+          </button>
+        </div>
+      </article>
+    );
+  }
+
+  return (
+    <article className="peridot-search-result-card peridot-search-result-ledger-card peridot-search-results-ledger-row peridot-search-results-ledger-row-route">
+      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-date-cell">
+        <span className="peridot-search-results-ledger-mobile-label">Date</span>
+        <span className="peridot-search-result-date">{parts.date}</span>
+      </div>
+
+      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-source-entity-cell">
+        <span className="peridot-search-results-ledger-mobile-label">Source entity</span>
+        <span className="peridot-search-result-title" title={parts.sourceEntity}>{parts.sourceEntity}</span>
+      </div>
+
+      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-target-entity-cell">
+        <span className="peridot-search-results-ledger-mobile-label">Target entity</span>
+        <span className="peridot-search-result-meta-value" title={parts.targetEntity || 'Unknown target'}>
+          {parts.targetEntity || 'Unknown target'}
+        </span>
+      </div>
+
+      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-source-location-cell">
+        <span className="peridot-search-results-ledger-mobile-label">Source location</span>
+        <span className="peridot-search-result-meta-value" title={parts.sourceLocation}>{parts.sourceLocation}</span>
+      </div>
+
+      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-target-location-cell">
+        <span className="peridot-search-results-ledger-mobile-label">Target location</span>
+        <span className="peridot-search-result-meta-value" title={parts.targetLocation || 'Unknown'}>
+          {parts.targetLocation || 'Unknown'}
+        </span>
+      </div>
+
+      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-action-cell">
         <button
           type="button"
           onClick={() => onInspectSearchResult?.(result)}
-          className={DARK_BUTTON_CLASS + ' shrink-0 px-3 py-1.5'}
+          className={DARK_BUTTON_CLASS + ' peridot-search-result-inspect-action'}
         >
           Inspect
         </button>
       </div>
-
-      <dl className="mt-2 grid gap-1.5 text-xs sm:grid-cols-2">
-        <div className="peridot-search-result-meta min-w-0 rounded-lg px-2.5 py-1.5">
-          <dt className="peridot-search-result-meta-label inline font-black uppercase tracking-[0.1em]">Entities: </dt>
-          <dd className="peridot-search-result-meta-value inline font-semibold">{result.peopleRoute}</dd>
-        </div>
-        <div className="peridot-search-result-meta min-w-0 rounded-lg px-2.5 py-1.5">
-          <dt className="peridot-search-result-meta-label inline font-black uppercase tracking-[0.1em]">Places: </dt>
-          <dd className="peridot-search-result-meta-value inline font-semibold">{result.placeRoute}</dd>
-        </div>
-      </dl>
-
-      {/* Result cards intentionally omit scope and capability badge rows.
-          The Results tab itself represents the current applied scope, and
-          workflow-readiness information now lives in the Capabilities tab. */}
     </article>
   );
 }
+
 
 export function PeridotSearchWorkspace({
   search,
@@ -714,6 +881,8 @@ export function PeridotSearchWorkspace({
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
   const [filterStatusMessage, setFilterStatusMessage] = useState('');
   const [browseQuery, setBrowseQuery] = useState('');
+  const [resultPageSize, setResultPageSize] = useState(10);
+  const [resultPage, setResultPage] = useState(1);
 
   useEffect(() => {
     setDraftSearch(search ?? '');
@@ -756,7 +925,7 @@ export function PeridotSearchWorkspace({
   ), [timelineMonths]);
 
   const appliedCapabilityFilters = Array.isArray(capabilityFilters) ? capabilityFilters : [];
-  const searchResultCards = useMemo(() => buildPeridotSearchResults(
+  const allSearchResultCards = useMemo(() => buildPeridotSearchResults(
     searchRows,
     {
       search,
@@ -767,8 +936,36 @@ export function PeridotSearchWorkspace({
       capabilityFilters: appliedCapabilityFilters,
       structuredCriteria,
     },
-    { limit: 50 },
+    { limit: Math.max(Array.isArray(searchRows) ? searchRows.length : 0, 1) },
   ), [searchRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, appliedCapabilityFilters, structuredCriteria]);
+
+  const searchResultsAreRouteCapable = useMemo(
+    () => allSearchResultCards.some(resultLooksRouteCapable),
+    [allSearchResultCards],
+  );
+
+  const resultPageCount = Math.max(1, Math.ceil(allSearchResultCards.length / resultPageSize));
+  const safeResultPage = Math.min(resultPage, resultPageCount);
+  const resultPageStartIndex = (safeResultPage - 1) * resultPageSize;
+  const searchResultCards = allSearchResultCards.slice(resultPageStartIndex, resultPageStartIndex + resultPageSize);
+
+  useEffect(() => {
+    setResultPage(1);
+  }, [
+    search,
+    personFilter,
+    placeFilter,
+    routePlaceFilter,
+    routePeopleFilter,
+    appliedCapabilityFilters,
+    structuredCriteria,
+    searchRows,
+    resultPageSize,
+  ]);
+
+  useEffect(() => {
+    setResultPage((currentPage) => Math.min(currentPage, resultPageCount));
+  }, [resultPageCount]);
 
   const searchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 8 }), [searchRows]);
   const browseIndexGroups = useMemo(() => buildBrowseIndexGroups(browseRows), [browseRows]);
@@ -817,7 +1014,7 @@ export function PeridotSearchWorkspace({
   };
   const activeStructuredLabel = appliedStructuredCriteria.length ? summarizeStructuredOperators(appliedStructuredCriteria) : 'None';
   const draftStructuredLabel = normalizedDraftStructuredCriteria.length ? summarizeStructuredOperators(normalizedDraftStructuredCriteria) : 'None';
-  const hiddenSearchResultCount = Math.max(0, (searchRows?.length || 0) - searchResultCards.length);
+  const hiddenSearchResultCount = Math.max(0, allSearchResultCards.length - searchResultCards.length);
   const capabilityRows = useMemo(() => {
     const loadedRecordCount = Array.isArray(browseRows) ? browseRows.length : 0;
     const activeRecordCount = Array.isArray(searchRows) ? searchRows.length : 0;
@@ -1322,44 +1519,120 @@ export function PeridotSearchWorkspace({
     </div>
   );
 
-  const renderResults = () => (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <SectionHeader eyebrow="Step 3" title="Search Results">
-          Compact cards reflect the current applied dataset. Use Inspect to open a record in the full Inspector workspace.
-        </SectionHeader>
-        <div className="peridot-search-heading-pill flex flex-wrap items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black shadow-sm shadow-black/5">
-          <span>{searchRows?.length || 0} records</span>
-          <span className="peridot-search-heading-pill-separator">/</span>
-          <span>{searchResultCards.length} cards shown</span>
-          {hiddenSearchResultCount > 0 ? <span className="peridot-search-heading-pill-muted">+{hiddenSearchResultCount} more</span> : null}
+  const renderResults = () => {
+    const firstShown = allSearchResultCards.length ? resultPageStartIndex + 1 : 0;
+    const lastShown = Math.min(resultPageStartIndex + searchResultCards.length, allSearchResultCards.length);
+
+    const goToResultPage = (page) => {
+      setResultPage(Math.min(Math.max(page, 1), resultPageCount));
+    };
+
+    return (
+      <div className="peridot-search-results-tab space-y-4">
+        <div className="peridot-search-results-header flex flex-wrap items-start justify-between gap-3">
+          <SectionHeader eyebrow="Step 3" title="Search Results">
+            Compact ledger rows reflect the current applied dataset. Use Inspect to open a record in the full Inspector workspace.
+          </SectionHeader>
+          <div className="peridot-search-heading-pill flex flex-wrap items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black shadow-sm shadow-black/5">
+            <span>{allSearchResultCards.length} records</span>
+            <span className="peridot-search-heading-pill-separator">/</span>
+            <span>{firstShown}–{lastShown} rows shown</span>
+          </div>
+        </div>
+        <ExploreDivider />
+
+        <div className="peridot-search-results-grid peridot-search-results-card-grid peridot-search-results-ledger">
+          {searchResultCards.length ? (
+            <>
+              <div className="peridot-search-results-ledger-toolbar">
+                <div className="peridot-search-results-ledger-showing">
+                  Showing {firstShown}–{lastShown} of {allSearchResultCards.length} records.
+                </div>
+                <label className="peridot-search-results-page-size">
+                  <span>View</span>
+                  <select
+                    value={resultPageSize}
+                    onChange={(event) => {
+                      setResultPageSize(Number(event.target.value));
+                      setResultPage(1);
+                    }}
+                    aria-label="Rows per page"
+                  >
+                    {RESULT_PAGE_SIZE_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{option}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div
+                className={
+                  searchResultsAreRouteCapable
+                    ? 'peridot-search-results-ledger-header peridot-search-results-ledger-header-route'
+                    : 'peridot-search-results-ledger-header peridot-search-results-ledger-header-point'
+                }
+                aria-hidden="true"
+              >
+                {searchResultsAreRouteCapable ? (
+                  <>
+                    <span>Date</span>
+                    <span>Source entity</span>
+                    <span>Target entity</span>
+                    <span>Source location</span>
+                    <span>Target location</span>
+                    <span>Inspect</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Date</span>
+                    <span>Entity</span>
+                    <span>Location</span>
+                    <span>Inspect</span>
+                  </>
+                )}
+              </div>
+              <div className="peridot-search-results-ledger-body">
+                {searchResultCards.map((result) => (
+                  <SearchResultCard
+                    key={result.id}
+                    result={result}
+                    isRouteCapable={searchResultsAreRouteCapable}
+                    onInspectSearchResult={onInspectSearchResult}
+                  />
+                ))}
+              </div>
+
+              <div className="peridot-search-results-pagination" aria-label="Search results pages">
+                <button type="button" onClick={() => goToResultPage(1)} disabled={safeResultPage === 1}>
+                  First
+                </button>
+                <button type="button" onClick={() => goToResultPage(safeResultPage - 1)} disabled={safeResultPage === 1}>
+                  Previous
+                </button>
+                <span className="peridot-search-results-pagination-current">{safeResultPage}</span>
+                <button type="button" onClick={() => goToResultPage(safeResultPage + 1)} disabled={safeResultPage === resultPageCount}>
+                  Next
+                </button>
+                <button type="button" onClick={() => goToResultPage(resultPageCount)} disabled={safeResultPage === resultPageCount}>
+                  End
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="peridot-search-empty-results peridot-search-results-empty-state rounded-[1.25rem] border p-6 text-center shadow-sm shadow-black/5">
+              <div className="peridot-search-empty-results-title text-lg font-black">No records are currently in scope.</div>
+              <p className="peridot-search-empty-results-text mx-auto mt-2 max-w-md text-sm leading-6">
+                Clear filters or broaden the date window to restore results.
+              </p>
+              <button type="button" onClick={clearFilters} className={SECONDARY_BUTTON_CLASS + ' mt-4'}>
+                Clear Filters
+              </button>
+            </div>
+          )}
         </div>
       </div>
-      <ExploreDivider />
-
-      <div className="peridot-search-results-grid grid gap-3 xl:grid-cols-2">
-        {searchResultCards.length ? (
-          searchResultCards.map((result) => (
-            <SearchResultCard
-              key={result.id}
-              result={result}
-              onInspectSearchResult={onInspectSearchResult}
-            />
-          ))
-        ) : (
-          <div className="peridot-search-empty-results rounded-[1.25rem] border p-6 text-center shadow-sm shadow-black/5 xl:col-span-2">
-            <div className="peridot-search-empty-results-title text-lg font-black">No records are currently in scope.</div>
-            <p className="peridot-search-empty-results-text mx-auto mt-2 max-w-md text-sm leading-6">
-              Clear filters or broaden the date window to restore results.
-            </p>
-            <button type="button" onClick={clearFilters} className={SECONDARY_BUTTON_CLASS + ' mt-4'}>
-              Clear Filters
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
   const renderCapabilities = () => {
     const loadedCount = Array.isArray(browseRows) ? browseRows.length : 0;

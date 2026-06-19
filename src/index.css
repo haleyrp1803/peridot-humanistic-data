@@ -3188,3 +3188,353 @@ textarea {
 .peridot-search-workspace .peridot-search-capability-toggle-active * {
   color: var(--explore-gold-text) !important;
 }
+
+/* Explore Results ledger refinement, 2026-06-19.
+ * Scope: Results tab only. This converts the Results card grid into an
+ * Inspector-like ledger/list without touching Build, Browse, Refine,
+ * Capabilities, search logic, or shared Inspector code. Keep these selectors
+ * below the earlier Explore rules so the ledger can override only the
+ * Results-specific hooks added in PeridotSearchWorkspace.jsx.
+ */
+.peridot-search-workspace .peridot-search-results-ledger {
+  display: block;
+  border: 1px solid rgba(221, 187, 105, 0.30);
+  border-radius: 1rem;
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark);
+  padding: 0.58rem;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header,
+.peridot-search-workspace .peridot-search-results-ledger-row {
+  display: grid;
+  grid-template-columns: minmax(5.6rem, 0.58fr) minmax(13rem, 1.45fr) minmax(10rem, 1fr) minmax(10rem, 1fr) minmax(5.5rem, auto);
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header {
+  padding: 0.18rem 0.68rem 0.42rem;
+  color: var(--explore-gold-soft);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-body {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-card,
+.peridot-search-workspace .peridot-search-results-ledger-row {
+  border: 1px solid rgba(84, 99, 68, 0.30);
+  border-radius: 0.82rem;
+  background: linear-gradient(135deg, var(--explore-paper-soft), var(--explore-paper-muted));
+  color: var(--explore-text-on-light);
+  padding: 0.52rem 0.58rem;
+  box-shadow:
+    0 6px 14px rgba(6, 29, 18, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-card:hover,
+.peridot-search-workspace .peridot-search-results-ledger-row:hover {
+  transform: translateY(-1px);
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-paper-soft);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-cell {
+  min-width: 0;
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-result-title,
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date,
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-meta-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--explore-text-on-light);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date {
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-meta-value {
+  color: var(--explore-muted-on-light);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-action-cell {
+  justify-self: end;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-inspect-action {
+  min-width: 4.9rem;
+  padding: 0.48rem 0.76rem;
+  white-space: nowrap;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-mobile-label {
+  display: none;
+}
+
+@media (max-width: 1020px) {
+  .peridot-search-workspace .peridot-search-results-ledger-header {
+    display: none;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.48rem 0.72rem;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-date-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-record-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-entities-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-places-cell {
+    grid-column: 1 / 2;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-action-cell {
+    grid-column: 2 / 3;
+    grid-row: 1 / span 4;
+    align-self: center;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger-mobile-label {
+    display: block;
+    margin-bottom: 0.08rem;
+    color: #5f4214;
+    font-size: 0.56rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 640px) {
+  .peridot-search-workspace .peridot-search-results-ledger-row {
+    grid-template-columns: 1fr;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-action-cell {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: stretch;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-inspect-action {
+    width: 100%;
+  }
+}
+
+
+/* Explore Results route-aware ledger refinement, 2026-06-19.
+ * Scope: Results tab only. This pass removes the repeated Record column, mirrors
+ * the Inspector connected-records table model, and adds local pagination/page-size
+ * controls without changing Build, Browse, Refine, Capabilities, or filter logic.
+ */
+.peridot-search-workspace .peridot-search-results-ledger-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-showing {
+  color: var(--explore-muted-on-dark);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.peridot-search-workspace .peridot-search-results-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.46rem;
+  color: var(--explore-text-on-dark);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-results-page-size select {
+  border: 1px solid rgba(221, 187, 105, 0.42);
+  border-radius: 0.55rem;
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+  padding: 0.34rem 1.85rem 0.34rem 0.58rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow:
+    0 7px 16px rgba(86, 52, 22, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header,
+.peridot-search-workspace .peridot-search-results-ledger-row {
+  grid-template-columns: unset;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header-route,
+.peridot-search-workspace .peridot-search-results-ledger-row-route {
+  display: grid;
+  grid-template-columns:
+    minmax(5.8rem, 0.52fr)
+    minmax(10rem, 1.05fr)
+    minmax(10rem, 1.05fr)
+    minmax(9rem, 0.92fr)
+    minmax(9rem, 0.92fr)
+    minmax(5.5rem, auto);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header-point,
+.peridot-search-workspace .peridot-search-results-ledger-row-point {
+  display: grid;
+  grid-template-columns:
+    minmax(5.8rem, 0.48fr)
+    minmax(16rem, 1.45fr)
+    minmax(12rem, 1fr)
+    minmax(5.5rem, auto);
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-entity-cell .peridot-search-result-title,
+.peridot-search-workspace .peridot-search-result-ledger-source-entity-cell .peridot-search-result-title {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--explore-text-on-light);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.42rem;
+  margin-top: 0.6rem;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button,
+.peridot-search-workspace .peridot-search-results-pagination-current {
+  display: inline-flex;
+  min-width: 2.2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(221, 187, 105, 0.42);
+  border-radius: 0.65rem;
+  padding: 0.46rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button {
+  background: #07351f;
+  color: var(--explore-text-on-dark);
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination-current {
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+@media (max-width: 1180px) {
+  .peridot-search-workspace .peridot-search-results-ledger-header-route {
+    display: none;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger-row-route {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.48rem 0.72rem;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-date-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-source-entity-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-target-entity-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-source-location-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-target-location-cell {
+    grid-column: 1 / 2;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-action-cell {
+    grid-column: 2 / 3;
+    grid-row: 1 / span 5;
+    align-self: center;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger-mobile-label {
+    display: block;
+    margin-bottom: 0.08rem;
+    color: #5f4214;
+    font-size: 0.56rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 760px) {
+  .peridot-search-workspace .peridot-search-results-ledger-toolbar,
+  .peridot-search-workspace .peridot-search-results-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .peridot-search-workspace .peridot-search-results-page-size {
+    justify-content: space-between;
+  }
+}
