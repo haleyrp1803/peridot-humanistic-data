@@ -537,14 +537,40 @@ function CapabilityFilterToggle({ option, checked, count, onToggle }) {
   );
 }
 
+function getRefineFacetVisibleLimit(group) {
+  const id = String(group?.id || '').toLowerCase();
+  const type = String(group?.type || '').toLowerCase();
+  const label = String(group?.label || '').toLowerCase();
+
+  if (id.includes('capab') || type.includes('capab') || label.includes('capab')) return Number.MAX_SAFE_INTEGER;
+  if ((id.includes('place') || type.includes('place') || label.includes('place')) && !id.includes('route') && !type.includes('route') && !label.includes('route')) return 12;
+  if (id.includes('people') || id.includes('person') || type.includes('person') || label.includes('people') || label.includes('entit')) return 10;
+  if (id.includes('year') || type.includes('year') || label.includes('year')) return 10;
+
+  return 8;
+}
+
 function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleLimit = getRefineFacetVisibleLimit(group);
+  const hiddenCount = Number.isFinite(visibleLimit) ? Math.max(0, group.items.length - visibleLimit) : 0;
+  const visibleItems = expanded || !Number.isFinite(visibleLimit) ? group.items : group.items.slice(0, visibleLimit);
+  const canExpand = hiddenCount > 0;
+
   return (
-    <section className="peridot-search-facet-panel rounded-[1rem] border p-3 shadow-[0_10px_24px_var(--peridot-color-rgba-rgba-34-51-38-0-16)]">
-      <h3 className="peridot-search-panel-heading text-[0.62rem] font-black uppercase tracking-[0.15em]">
-        {group.label}
-      </h3>
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {group.items.map((item) => {
+    <section className={`peridot-search-facet-panel peridot-search-refine-facet-panel ${expanded ? 'peridot-search-refine-facet-panel-expanded' : ''} rounded-[1rem] border p-3 shadow-[0_10px_24px_var(--peridot-color-rgba-rgba-34-51-38-0-16)]`}>
+      <div className="peridot-search-refine-facet-header">
+        <h3 className="peridot-search-panel-heading text-[0.62rem] font-black uppercase tracking-[0.15em]">
+          {group.label}
+        </h3>
+        {canExpand ? (
+          <span className="peridot-search-count-badge peridot-search-refine-hidden-count rounded-full border px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em]">
+            +{hiddenCount} more
+          </span>
+        ) : null}
+      </div>
+      <div className="peridot-search-refine-chip-list mt-2 flex flex-wrap gap-1.5">
+        {visibleItems.map((item) => {
           const isCapability = group.type === 'capability';
           const isActive = isCapability && activeCapabilityFilters.includes(item.value);
           return (
@@ -563,6 +589,15 @@ function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
           );
         })}
       </div>
+      {canExpand ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+          className={DARK_BUTTON_CLASS + ' peridot-search-refine-expand-button mt-2 px-3 py-1 text-[0.62rem]'}
+        >
+          {expanded ? 'Show less' : `Show all +${hiddenCount}`}
+        </button>
+      ) : null}
     </section>
   );
 }
@@ -992,7 +1027,7 @@ export function PeridotSearchWorkspace({
     setResultPage((currentPage) => Math.min(currentPage, resultPageCount));
   }, [resultPageCount]);
 
-  const searchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 8 }), [searchRows]);
+  const searchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 48 }), [searchRows]);
   const browseIndexGroups = useMemo(() => buildBrowseIndexGroups(browseRows), [browseRows]);
   const filteredBrowseIndexGroups = useMemo(() => filterBrowseGroups(browseIndexGroups, browseQuery), [browseIndexGroups, browseQuery]);
 
@@ -1760,7 +1795,7 @@ export function PeridotSearchWorkspace({
   };
 
   const renderRefineInspect = () => (
-    <div className="space-y-4">
+    <div className="peridot-search-refine-view space-y-4">
       <SectionHeader eyebrow="Step 4" title="Refine / Inspect">
         Facets summarize the applied result set. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>

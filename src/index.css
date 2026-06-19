@@ -3683,3 +3683,217 @@ textarea {
 .peridot-search-workspace .peridot-search-results-ledger-cell {
   overflow: visible;
 }
+
+
+/* Explore Refine fixed-height facet layout, 2026-06-19.
+ * Scope: Refine tab only. Preserve the existing facet panel/chip color system
+ * and add only layout behavior: equal-height collapsed dashboard cards, default
+ * chip caps, and per-panel Show all / Show less expansion. Collapsed cards keep
+ * the no-scroll dashboard view; an expanded card spans the grid width and grows
+ * to reveal all chips instead of overlapping neighboring panels or forcing a
+ * small internal scrollbar.
+ */
+.peridot-search-workspace .peridot-search-refine-grid {
+  align-items: stretch;
+  grid-auto-rows: minmax(9.65rem, auto);
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded {
+  grid-column: 1 / -1;
+  height: auto;
+  min-height: 9.65rem;
+  overflow: visible;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-hidden-count {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.peridot-search-workspace .peridot-search-refine-chip-list {
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: flex-start;
+  overflow: hidden;
+  padding-right: 0.1rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded .peridot-search-refine-chip-list {
+  flex: 0 0 auto;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.peridot-search-workspace .peridot-search-refine-expand-button {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  line-height: 1;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-refine-grid {
+    grid-auto-rows: minmax(8.75rem, auto);
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel {
+    padding: 0.58rem 0.68rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel-expanded {
+    min-height: 8.75rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-chip-list {
+    gap: 0.28rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-expand-button {
+    margin-top: 0.38rem;
+    padding-top: 0.30rem;
+    padding-bottom: 0.30rem;
+  }
+}
+
+@media (max-width: 980px) {
+  .peridot-search-workspace .peridot-search-refine-grid {
+    grid-auto-rows: minmax(10rem, auto);
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel {
+    min-height: 10rem;
+  }
+}
+
+
+/* Explore Refine row-height expansion correction, 2026-06-19.
+ * Scope: Refine tab only. Use the second expansion model: an expanded facet
+ * stays in its original grid column, makes the whole grid row taller, and moves
+ * lower rows down cleanly. This overrides the prior full-row spanning behavior
+ * without touching colors, chip styling, or Refine interaction logic.
+ */
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded {
+  grid-column: auto;
+  width: auto;
+}
+
+
+/* Explore Refine default fit and fuller collapsed boxes, 2026-06-19.
+ * Scope: Refine tab only. Keep the option-2 expansion model: expanded cards
+ * stay in their own column and make the whole grid row taller. The collapsed
+ * dashboard becomes content-sized instead of fixed-tall, shows more chips where
+ * the facet type can reasonably fit them, and keeps the default Refine page
+ * within one viewport at desktop height.
+ */
+.peridot-search-workspace .peridot-search-refine-view > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.56rem !important;
+}
+
+.peridot-search-workspace .peridot-search-refine-view .peridot-search-divider {
+  min-height: 1rem;
+  margin-top: 0.06rem;
+  margin-bottom: 0.12rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-view .peridot-search-panel-inset {
+  padding: 0.54rem 0.72rem !important;
+}
+
+.peridot-search-workspace .peridot-search-refine-grid {
+  align-items: stretch;
+  grid-auto-rows: auto;
+  gap: 0.58rem 0.70rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel {
+  height: 100%;
+  min-height: 0;
+  padding: 0.58rem 0.70rem !important;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel:not(.peridot-search-refine-facet-panel-expanded) {
+  min-height: 7.15rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-header {
+  min-height: 1.12rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-chip-list {
+  flex: 0 1 auto;
+  align-content: flex-start;
+  gap: 0.30rem 0.34rem;
+  margin-top: 0.46rem !important;
+  overflow: hidden;
+  padding-right: 0;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded {
+  grid-column: auto;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded .peridot-search-refine-chip-list {
+  overflow: visible;
+}
+
+.peridot-search-workspace .peridot-search-refine-expand-button {
+  margin-top: 0.46rem !important;
+  padding: 0.34rem 0.76rem !important;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-refine-view > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.44rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-view .peridot-search-divider {
+    min-height: 0.9rem;
+    margin-top: 0.02rem;
+    margin-bottom: 0.06rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-view .peridot-search-panel-inset {
+    padding: 0.46rem 0.64rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-grid {
+    gap: 0.46rem 0.58rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel {
+    padding: 0.48rem 0.58rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel:not(.peridot-search-refine-facet-panel-expanded) {
+    min-height: 6.45rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-chip-list {
+    gap: 0.24rem 0.28rem;
+    margin-top: 0.34rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-expand-button {
+    margin-top: 0.34rem !important;
+    padding-top: 0.28rem !important;
+    padding-bottom: 0.28rem !important;
+  }
+}
