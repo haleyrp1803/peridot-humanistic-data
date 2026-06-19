@@ -2118,3 +2118,2782 @@ textarea {
     animation: none;
   }
 }
+
+
+/* Advanced Search / Explore folio pass.
+ * This scoped layer gives Explore the same visual hierarchy as the redesigned
+ * Upload and Inspector surfaces without changing the draft/apply filtering
+ * contract in `PeridotSearchWorkspace.jsx`. The page keeps the five-step
+ * research metaphor, but compresses header chrome and status summaries so the
+ * researcher reaches the actual query/evidence work faster.
+ */
+.peridot-search-workspace {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(119, 154, 92, 0.18), transparent 32rem),
+    radial-gradient(circle at 82% 18%, rgba(181, 139, 66, 0.08), transparent 30rem),
+    linear-gradient(135deg, var(--peridot-role-interface-app-background) 0%, var(--peridot-role-interface-app-background-alt) 52%, var(--peridot-role-interface-workspace-background) 100%);
+}
+
+.peridot-search-folio-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(221, 187, 105, 0.42);
+  border-radius: 1.75rem;
+  background: #061d12;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(246, 223, 150, 0.12);
+}
+
+.peridot-search-folio-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0.75rem;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 1.35rem;
+  background:
+    linear-gradient(135deg, rgba(2, 14, 8, 0.66), rgba(2, 14, 8, 0.80)),
+    repeating-linear-gradient(135deg, rgba(221, 187, 105, 0.09) 0 1px, transparent 1px 16px),
+    linear-gradient(135deg, #061d12 0%, #0d2911 48%, #04160f 100%);
+  box-shadow: inset 0 0 0 1px rgba(221, 187, 105, 0.12);
+}
+
+.peridot-search-folio-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.peridot-search-folio-header {
+  border-bottom: 1px solid rgba(221, 187, 105, 0.20);
+  background: #0d2911;
+  padding: clamp(1rem, 2vw, 1.35rem) clamp(1.15rem, 2.2vw, 1.75rem);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    inset 0 -18px 34px rgba(0, 0, 0, 0.12);
+}
+
+.peridot-search-status-ribbon {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.95rem;
+}
+
+.peridot-search-status-item {
+  display: inline-grid;
+  min-width: min(13rem, 100%);
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.45rem;
+  border: 1px solid rgba(221, 187, 105, 0.22);
+  border-radius: 999px;
+  background: rgba(247, 241, 220, 0.10);
+  color: var(--peridot-role-interface-text-on-dark);
+  padding: 0.42rem 0.68rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055);
+}
+
+.peridot-search-status-item span {
+  color: color-mix(in srgb, var(--peridot-role-interface-text-muted-on-dark) 88%, #fff8e8 12%);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.peridot-search-status-item strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--peridot-role-interface-text-on-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peridot-search-status-message {
+  border-bottom: 1px solid rgba(221, 187, 105, 0.18);
+  background: rgba(199, 155, 61, 0.22);
+  color: var(--peridot-role-interface-text-on-dark);
+  padding: 0.55rem 1.2rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.peridot-search-step-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.45rem;
+  border-bottom: 1px solid rgba(221, 187, 105, 0.18);
+  background: rgba(6, 29, 18, 0.88);
+  padding: 0.72rem clamp(1.15rem, 2.2vw, 1.75rem);
+}
+
+.peridot-search-step-button {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid rgba(221, 187, 105, 0.26);
+  border-radius: 999px;
+  background: rgba(247, 241, 220, 0.88);
+  color: #0b2411;
+  padding: 0.55rem 0.74rem;
+  font-size: clamp(0.78rem, 0.88vw, 0.92rem);
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease;
+}
+
+.peridot-search-step-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(246, 223, 150, 0.72);
+  background: rgba(238, 230, 201, 0.98);
+  box-shadow:
+    0 8px 18px rgba(86, 52, 22, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+
+.peridot-search-step-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(246, 230, 167, 0.38),
+    0 10px 22px rgba(86, 52, 22, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+.peridot-search-step-button-active,
+.peridot-search-step-button-active:hover {
+  border-color: #f0d27a;
+  background: linear-gradient(135deg, #c79b3d, #d9ae4c);
+  color: #07190c;
+  box-shadow:
+    0 10px 22px rgba(86, 52, 22, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+.peridot-search-step-number {
+  display: inline-grid;
+  width: 1.42rem;
+  height: 1.42rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(7, 25, 12, 0.12);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.peridot-search-step-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peridot-search-folio-body {
+  min-height: 0;
+  background: rgba(247, 241, 220, 0.90);
+  padding: clamp(0.95rem, 1.7vw, 1.25rem);
+}
+
+.peridot-search-tab-card {
+  position: relative;
+  overflow: visible;
+  border: 1px solid rgba(74, 93, 62, 0.18);
+  border-radius: 1.35rem;
+  background: rgba(247, 241, 220, 0.94);
+  color: #0b2411;
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.peridot-search-panel-inset {
+  border: 1px solid rgba(74, 93, 62, 0.20);
+  border-radius: 1rem;
+  background: rgba(230, 223, 191, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 6px 16px rgba(0, 0, 0, 0.055);
+}
+
+.peridot-search-capability-ledger {
+  overflow: hidden;
+  border: 1px solid rgba(74, 93, 62, 0.20);
+  border-radius: 1.15rem;
+  background: rgba(255, 250, 235, 0.78);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    0 10px 24px rgba(0, 0, 0, 0.10);
+}
+
+.peridot-search-capability-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(10rem, 0.9fr) auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.95rem 1rem;
+  border-bottom: 1px solid rgba(74, 93, 62, 0.16);
+}
+
+.peridot-search-capability-row:last-child {
+  border-bottom: 0;
+}
+
+.peridot-search-capability-value {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(95, 113, 74, 0.22);
+  border-radius: 0.9rem;
+  background: rgba(230, 223, 191, 0.70);
+  color: #0b2411;
+  padding: 0.54rem 0.7rem;
+  font-size: 0.88rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peridot-search-capability-status {
+  justify-self: end;
+  border: 1px solid rgba(95, 113, 74, 0.22);
+  border-radius: 999px;
+  padding: 0.35rem 0.72rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.peridot-search-capability-status-ready {
+  border-color: rgba(92, 114, 77, 0.36);
+  background: rgba(220, 233, 210, 0.94);
+  color: #244c35;
+}
+
+.peridot-search-capability-status-missing {
+  border-color: rgba(199, 155, 61, 0.34);
+  background: rgba(245, 224, 182, 0.92);
+  color: #5d3d16;
+}
+
+.peridot-search-capability-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #405240;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 980px) {
+  .peridot-search-step-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .peridot-search-step-button:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .peridot-search-capability-row {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .peridot-search-capability-status {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 680px) {
+  .peridot-search-workspace {
+    padding-inline: 1rem !important;
+  }
+
+  .peridot-search-status-item {
+    width: 100%;
+  }
+
+  .peridot-search-step-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .peridot-search-step-button:last-child {
+    grid-column: auto;
+  }
+}
+
+/* Explore folio density follow-up.
+ * The first Explore folio pass established the dark-green shell, compact step
+ * rail, and cream working cards. This narrower visual override tightens only
+ * the top chrome and the three low-complexity pages that should usually fit in
+ * a normal desktop viewport: Build, Refine, and Capabilities. It deliberately
+ * does not change the Advanced Search draft/apply contract, Browse indexes,
+ * Results cards, facet actions, or Inspector handoff behavior.
+ */
+.peridot-search-workspace {
+  padding: 1rem 1.4rem !important;
+}
+
+.peridot-search-folio-shell {
+  border-radius: 1.55rem;
+}
+
+.peridot-search-folio-shell::before {
+  inset: 0.55rem;
+  border-radius: 1.18rem;
+}
+
+.peridot-search-folio-header {
+  padding: 0.82rem clamp(1rem, 2vw, 1.55rem) 0.76rem;
+}
+
+.peridot-search-folio-header h1 {
+  margin-top: 0.22rem !important;
+  font-size: clamp(1.78rem, 2.75vw, 2.55rem) !important;
+  line-height: 0.94 !important;
+}
+
+.peridot-search-folio-header p {
+  margin-top: 0.48rem !important;
+  line-height: 1.45 !important;
+}
+
+.peridot-search-status-ribbon {
+  gap: 0.38rem;
+  margin-top: 0.72rem;
+}
+
+.peridot-search-status-item {
+  min-width: min(12rem, 100%);
+  padding: 0.34rem 0.58rem;
+}
+
+.peridot-search-status-item span {
+  font-size: 0.54rem;
+  letter-spacing: 0.12em;
+}
+
+.peridot-search-status-item strong {
+  font-size: 0.72rem;
+}
+
+.peridot-search-step-rail {
+  gap: 0.36rem;
+  padding: 0.58rem clamp(1rem, 2vw, 1.55rem);
+}
+
+.peridot-search-step-button {
+  gap: 0.34rem;
+  padding: 0.44rem 0.62rem;
+  font-size: clamp(0.74rem, 0.82vw, 0.86rem);
+}
+
+.peridot-search-step-number {
+  width: 1.22rem;
+  height: 1.22rem;
+  font-size: 0.66rem;
+}
+
+.peridot-search-folio-body {
+  padding: 0.72rem clamp(0.72rem, 1.35vw, 1rem);
+}
+
+.peridot-search-tab-card.p-4 {
+  padding: 0.86rem !important;
+}
+
+.peridot-search-tab-card h2 {
+  margin-top: 0 !important;
+  font-size: 1.38rem !important;
+  line-height: 1.02 !important;
+}
+
+.peridot-search-tab-card h3 {
+  line-height: 1.08 !important;
+}
+
+.peridot-search-tab-card :where(.space-y-4 > :not([hidden]) ~ :not([hidden])) {
+  margin-top: 0.72rem !important;
+}
+
+.peridot-search-panel-inset.p-4,
+.peridot-search-panel-inset.p-3 {
+  padding: 0.72rem 0.86rem !important;
+}
+
+.peridot-search-panel-inset :where(p.mt-1, p.mt-2, p.mt-3) {
+  margin-top: 0.3rem !important;
+  line-height: 1.38 !important;
+}
+
+.peridot-search-workspace :where(input, select) {
+  min-height: 0 !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset input,
+.peridot-search-workspace .peridot-search-panel-inset select {
+  padding-top: 0.46rem !important;
+  padding-bottom: 0.46rem !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :where(.mt-3) {
+  margin-top: 0.55rem !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :where(.gap-3) {
+  gap: 0.62rem !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :where(.gap-2) {
+  gap: 0.42rem !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset button {
+  padding-top: 0.46rem !important;
+  padding-bottom: 0.46rem !important;
+}
+
+.peridot-search-workspace [class*="rounded-[1rem]"].p-3 {
+  padding: 0.62rem 0.78rem !important;
+}
+
+.peridot-search-capability-ledger {
+  border-radius: 1rem;
+}
+
+.peridot-search-capability-row {
+  grid-template-columns: minmax(9rem, 1.05fr) minmax(10rem, 0.9fr) auto;
+  gap: 0.55rem;
+  padding: 0.62rem 0.78rem;
+}
+
+.peridot-search-capability-row h3 {
+  margin-top: 0.08rem !important;
+  font-size: 0.95rem !important;
+}
+
+.peridot-search-capability-value {
+  border-radius: 0.75rem;
+  padding: 0.42rem 0.58rem;
+  font-size: 0.82rem;
+}
+
+.peridot-search-capability-status {
+  padding: 0.28rem 0.58rem;
+  font-size: 0.62rem;
+  letter-spacing: 0.10em;
+}
+
+.peridot-search-capability-note {
+  font-size: 0.78rem;
+  line-height: 1.34;
+}
+
+@media (min-width: 1100px) and (max-height: 820px) {
+  .peridot-search-workspace {
+    padding-block: 0.72rem !important;
+  }
+
+  .peridot-search-folio-header {
+    padding-top: 0.68rem;
+    padding-bottom: 0.62rem;
+  }
+
+  .peridot-search-folio-header h1 {
+    font-size: clamp(1.65rem, 2.55vw, 2.35rem) !important;
+  }
+
+  .peridot-search-status-ribbon {
+    margin-top: 0.58rem;
+  }
+
+  .peridot-search-step-rail {
+    padding-block: 0.48rem;
+  }
+
+  .peridot-search-folio-body {
+    padding-block: 0.58rem;
+  }
+
+  .peridot-search-tab-card.p-4 {
+    padding: 0.74rem !important;
+  }
+
+  .peridot-search-tab-card :where(.space-y-4 > :not([hidden]) ~ :not([hidden])) {
+    margin-top: 0.56rem !important;
+  }
+}
+
+/* Explore Build fit refinement, 2026-06-18.
+ * Build has a fixed pre-criteria workload, unlike Browse and Results. This
+ * final density layer trims only the Build-search vertical stack enough for the
+ * empty/default Build state to fit in a normal desktop viewport. It does not
+ * collapse controls, hide capabilities, or alter any draft/apply behavior.
+ */
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace {
+    padding-top: 0.48rem !important;
+    padding-bottom: 0.48rem !important;
+  }
+
+  .peridot-search-folio-header {
+    padding-top: 0.52rem !important;
+    padding-bottom: 0.48rem !important;
+  }
+
+  .peridot-search-folio-header h1 {
+    margin-top: 0.08rem !important;
+    font-size: clamp(1.52rem, 2.25vw, 2.05rem) !important;
+    line-height: 0.9 !important;
+  }
+
+  .peridot-search-folio-header p {
+    margin-top: 0.32rem !important;
+    font-size: 0.82rem !important;
+    line-height: 1.28 !important;
+  }
+
+  .peridot-search-status-ribbon {
+    margin-top: 0.46rem !important;
+    gap: 0.28rem !important;
+  }
+
+  .peridot-search-status-item {
+    padding: 0.26rem 0.46rem !important;
+  }
+
+  .peridot-search-step-rail {
+    padding-top: 0.38rem !important;
+    padding-bottom: 0.38rem !important;
+  }
+
+  .peridot-search-step-button {
+    padding-top: 0.34rem !important;
+    padding-bottom: 0.34rem !important;
+  }
+
+  .peridot-search-folio-body {
+    padding-top: 0.46rem !important;
+    padding-bottom: 0.54rem !important;
+  }
+
+  .peridot-search-tab-card.p-4 {
+    padding: 0.60rem 0.72rem !important;
+  }
+
+  .peridot-search-tab-card h2 {
+    font-size: 1.22rem !important;
+  }
+
+  .peridot-search-tab-card .peridot-section-label,
+  .peridot-search-workspace .peridot-section-label {
+    font-size: 0.58rem !important;
+    letter-spacing: 0.16em !important;
+  }
+
+  .peridot-search-tab-card :where(.space-y-4 > :not([hidden]) ~ :not([hidden])) {
+    margin-top: 0.44rem !important;
+  }
+
+  .peridot-search-panel-inset.p-4,
+  .peridot-search-panel-inset.p-3 {
+    padding: 0.52rem 0.66rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset input,
+  .peridot-search-workspace .peridot-search-panel-inset select {
+    padding-top: 0.34rem !important;
+    padding-bottom: 0.34rem !important;
+    font-size: 0.84rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset :where(.mt-1) {
+    margin-top: 0.18rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset :where(.mt-2) {
+    margin-top: 0.24rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset :where(.mt-3) {
+    margin-top: 0.36rem !important;
+  }
+
+  .peridot-search-panel-inset p,
+  .peridot-search-workspace .text-xs {
+    line-height: 1.28 !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset :where(.gap-3) {
+    gap: 0.46rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset :where(.gap-2) {
+    gap: 0.34rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset button {
+    padding-top: 0.34rem !important;
+    padding-bottom: 0.34rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset .rounded-full {
+    padding-top: 0.24rem !important;
+    padding-bottom: 0.24rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset .rounded-xl {
+    padding-top: 0.42rem !important;
+    padding-bottom: 0.42rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 {
+    grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+    gap: 0.34rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button {
+    min-height: 0 !important;
+    padding: 0.30rem 0.44rem !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.09em !important;
+  }
+
+  .peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button span:last-child {
+    font-size: 0.58rem !important;
+  }
+
+  .peridot-search-workspace [class*="rounded-[1rem]"].p-3 {
+    padding: 0.46rem 0.62rem !important;
+  }
+
+  .peridot-search-workspace [class*="rounded-[1rem]"] button {
+    padding-top: 0.36rem !important;
+    padding-bottom: 0.36rem !important;
+  }
+}
+
+/* Explore Upload-gold visual alignment, 2026-06-18.
+ * This override keeps the Explore layout and Advanced Search behavior intact,
+ * but replaces the remaining moss/green result, facet, browse, and capability
+ * surfaces with the warmer cream/gold scheme used by the Upload mapping folio.
+ * The outer Explore field also adopts the same subdued dark-green striped work
+ * surface used behind the upload interface.
+ */
+.peridot-search-workspace {
+  background:
+    linear-gradient(135deg, rgba(2, 14, 8, 0.68), rgba(2, 14, 8, 0.80)),
+    radial-gradient(circle at 20% 14%, rgba(221, 187, 105, 0.055), transparent 28rem),
+    radial-gradient(circle at 78% 18%, rgba(119, 154, 92, 0.045), transparent 30rem),
+    repeating-linear-gradient(135deg, rgba(221, 187, 105, 0.095) 0 1px, transparent 1px 16px),
+    linear-gradient(135deg, #061d12 0%, #0d2911 48%, #04160f 100%) !important;
+}
+
+.peridot-search-folio-shell {
+  border-color: rgba(221, 187, 105, 0.48) !important;
+  background: #061d12 !important;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.58),
+    inset 0 0 0 1px rgba(246, 223, 150, 0.16) !important;
+}
+
+.peridot-search-folio-shell::before {
+  background:
+    linear-gradient(135deg, rgba(2, 14, 8, 0.68), rgba(2, 14, 8, 0.80)),
+    repeating-linear-gradient(135deg, rgba(221, 187, 105, 0.10) 0 1px, transparent 1px 16px),
+    linear-gradient(135deg, #061d12 0%, #0d2911 48%, #04160f 100%) !important;
+  box-shadow: inset 0 0 0 1px rgba(221, 187, 105, 0.14) !important;
+}
+
+.peridot-search-folio-header,
+.peridot-search-step-rail {
+  border-color: rgba(221, 187, 105, 0.22) !important;
+  background: #0d2911 !important;
+}
+
+.peridot-search-status-item {
+  border-color: rgba(221, 187, 105, 0.30) !important;
+  background: rgba(199, 155, 61, 0.15) !important;
+}
+
+.peridot-search-folio-body {
+  background: rgba(247, 241, 220, 0.90) !important;
+}
+
+.peridot-search-tab-card {
+  border-color: rgba(221, 187, 105, 0.26) !important;
+  background: rgba(247, 241, 220, 0.94) !important;
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+.peridot-search-panel-inset,
+.peridot-search-capability-ledger {
+  border-color: rgba(199, 155, 61, 0.30) !important;
+  background: rgba(230, 223, 191, 0.66) !important;
+}
+
+.peridot-search-workspace :where(input, select, textarea) {
+  border-color: rgba(199, 155, 61, 0.38) !important;
+  background: rgba(255, 252, 241, 0.88) !important;
+  color: #0b2411 !important;
+}
+
+.peridot-search-workspace :where(input, select, textarea):focus {
+  border-color: #d9ae4c !important;
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(246, 223, 150, 0.34) !important;
+}
+
+.peridot-search-workspace :where(input, textarea)::placeholder {
+  color: #746849 !important;
+}
+
+/* Replace green-tinted cards, rows, badges, and passive chips with warm paper
+ * tones. These selectors intentionally target the existing Tailwind arbitrary
+ * color classes inside Explore so this can remain a CSS-only visual pass.
+ */
+.peridot-search-workspace :is(
+  [class*="bg-[var(--peridot-color-hex-edf5e5)"],
+  [class*="bg-[var(--peridot-color-hex-d8e6cf)"],
+  [class*="bg-[var(--peridot-color-hex-dfead2)"],
+  [class*="bg-[var(--peridot-color-hex-c9d9bb)"],
+  [class*="bg-[var(--peridot-color-hex-dce9d2)"],
+  [class*="bg-[var(--peridot-color-hex-c6d9bb)"],
+  [class*="bg-[var(--peridot-color-hex-d7e6cc)"],
+  [class*="bg-[var(--peridot-color-hex-e2eed8)"],
+  [class*="bg-[var(--peridot-color-hex-eaf3e1)"],
+  [class*="bg-[var(--peridot-color-hex-c7d9bc)"],
+  [class*="bg-[var(--peridot-color-hex-d3e3c8)"],
+  [class*="bg-[var(--peridot-color-hex-eef6e8)"],
+  [class*="bg-[var(--peridot-color-hex-f6fbf1)"]
+) {
+  background: rgba(255, 250, 235, 0.90) !important;
+  color: #0b2411 !important;
+}
+
+.peridot-search-workspace :is(
+  [class*="border-[var(--peridot-color-hex-9db48e)"],
+  [class*="border-[var(--peridot-color-hex-b8c8aa)"],
+  [class*="border-[var(--peridot-color-hex-aec19d)"],
+  [class*="border-[var(--peridot-color-hex-98ad8c)"],
+  [class*="border-[var(--peridot-color-hex-4f6d50)"],
+  [class*="border-[var(--peridot-color-hex-74897a)"],
+  [class*="border-[var(--peridot-color-hex-617665)"],
+  [class*="border-[var(--peridot-color-hex-d6e4cb)"],
+  [class*="border-[var(--peridot-color-hex-9fb28f)"]
+) {
+  border-color: rgba(199, 155, 61, 0.34) !important;
+}
+
+/* Browse and Refine group panels were the most visibly green. Shift them to a
+ * warm folio panel instead of the earlier moss block while retaining enough
+ * contrast for dense index/facet scanning.
+ */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] {
+  border-color: rgba(199, 155, 61, 0.44) !important;
+  background:
+    linear-gradient(135deg, rgba(230, 223, 191, 0.96), rgba(215, 199, 151, 0.88)) !important;
+  color: #0b2411 !important;
+  box-shadow:
+    0 10px 24px rgba(86, 52, 22, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] h3,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .peridot-section-label {
+  color: #533d15 !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] p {
+  color: #4e4936 !important;
+}
+
+/* Turn green primary action buttons in Explore into Upload-style gold actions.
+ * Apply Filters already uses this family; Search and Inspect now harmonize.
+ */
+.peridot-search-workspace button[class*="bg-[var(--peridot-color-hex-244c35)]"],
+.peridot-search-workspace button[class*="bg-[var(--peridot-color-hex-315f43)]"],
+.peridot-search-workspace button[class*="bg-[var(--peridot-color-hex-a9c498)]"] {
+  border-color: #f0d27a !important;
+  background: linear-gradient(135deg, #c79b3d, #d9ae4c) !important;
+  color: #07190c !important;
+  box-shadow:
+    0 8px 18px rgba(86, 52, 22, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.peridot-search-workspace button[class*="bg-[var(--peridot-color-hex-244c35)]"]:hover,
+.peridot-search-workspace button[class*="bg-[var(--peridot-color-hex-315f43)]"]:hover,
+.peridot-search-workspace button[class*="bg-[var(--peridot-color-hex-a9c498)]"]:hover {
+  border-color: #f6df96 !important;
+  background: linear-gradient(135deg, #d9ae4c, #e0bb62) !important;
+  color: #07190c !important;
+}
+
+/* Capability chips should read as selectable parchment/gold controls rather
+ * than green status bars. Active chips still receive a stronger gold fill.
+ */
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button {
+  border-color: rgba(199, 155, 61, 0.36) !important;
+  background: rgba(255, 250, 235, 0.92) !important;
+  color: #0b2411 !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover {
+  border-color: rgba(246, 223, 150, 0.78) !important;
+  background: rgba(246, 231, 186, 0.98) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button[aria-pressed="true"],
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button[aria-selected="true"] {
+  border-color: #f0d27a !important;
+  background: linear-gradient(135deg, #c79b3d, #d9ae4c) !important;
+  color: #07190c !important;
+}
+
+.peridot-search-workspace :is(
+  [class*="text-[var(--peridot-color-hex-38553d)"],
+  [class*="text-[var(--peridot-color-hex-274633)"],
+  [class*="text-[var(--peridot-color-hex-244c35)"],
+  [class*="text-[var(--peridot-color-hex-344a38)"],
+  [class*="text-[var(--peridot-color-hex-465d49)"],
+  [class*="text-[var(--peridot-color-hex-4f654d)"]
+) {
+  color: #3f371f !important;
+}
+
+.peridot-search-workspace :is(
+  [class*="text-[var(--peridot-color-hex-667960)"],
+  [class*="text-[var(--peridot-color-hex-718069)"],
+  [class*="text-[var(--peridot-color-hex-7f9b70)"]
+) {
+  color: #746849 !important;
+}
+
+.peridot-search-workspace :is(
+  [class*="bg-[var(--peridot-color-hex-f8fbf4)"],
+  [class*="bg-[var(--peridot-color-hex-fffdf6)"]
+) {
+  background: rgba(255, 252, 241, 0.96) !important;
+}
+
+.peridot-search-workspace :is(
+  [class*="hover:bg-[var(--peridot-color-hex-dfead2)"],
+  [class*="hover:bg-[var(--peridot-color-hex-c9ddba)"],
+  [class*="hover:bg-[var(--peridot-color-hex-deebd5)"]
+):hover {
+  background: rgba(246, 231, 186, 0.98) !important;
+  color: #07190c !important;
+}
+
+.peridot-search-capability-row {
+  border-color: rgba(199, 155, 61, 0.20) !important;
+}
+
+.peridot-search-capability-value {
+  border-color: rgba(199, 155, 61, 0.28) !important;
+  background: rgba(230, 223, 191, 0.78) !important;
+}
+
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  border-color: rgba(199, 155, 61, 0.40) !important;
+  background: rgba(246, 231, 186, 0.92) !important;
+  color: #533d15 !important;
+}
+
+/* Explore information hierarchy refinement, 2026-06-18.
+ * The prior pass aligned Explore with the Upload folio's cream/gold palette.
+ * Explore is more information-dense than Upload, so this layer restores a
+ * stronger hierarchy: darker warm section panels, lighter data cards, quieter
+ * repeated action buttons, and clearer ledger/result separation. Behavior stays
+ * entirely unchanged.
+ */
+.peridot-search-workspace {
+  --explore-gold-panel: #d8c37b;
+  --explore-gold-panel-deep: #c9af65;
+  --explore-gold-panel-soft: #eadfb5;
+  --explore-paper: #fffaf0;
+  --explore-paper-strong: #fffdf7;
+  --explore-paper-muted: #f3ecd1;
+  --explore-ink: #082114;
+  --explore-muted: #51472b;
+  --explore-rule: rgba(170, 125, 42, 0.34);
+  --explore-rule-strong: rgba(170, 125, 42, 0.58);
+  --explore-green-action: #0d2911;
+  --explore-green-action-hover: #17391f;
+}
+
+/* Keep the folio page pale, but make working subsections visibly distinct from
+ * the page itself. These are the Build field groups, Browse search box, Refine
+ * handoff note, and related utility panels.
+ */
+.peridot-search-panel-inset {
+  border-color: var(--explore-rule) !important;
+  background: linear-gradient(135deg, rgba(235, 223, 181, 0.72), rgba(242, 235, 207, 0.70)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 6px 16px rgba(86, 52, 22, 0.07) !important;
+}
+
+/* Browse and Refine category/facet panels: dark enough to group information,
+ * but still in the Upload gold family rather than returning to moss blocks.
+ */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] {
+  border-color: var(--explore-rule-strong) !important;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 252, 241, 0.30), transparent 18rem),
+    linear-gradient(135deg, var(--explore-gold-panel), var(--explore-gold-panel-deep)) !important;
+  color: var(--explore-ink) !important;
+  box-shadow:
+    0 12px 28px rgba(86, 52, 22, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    inset 0 0 0 1px rgba(255, 252, 241, 0.16) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] h3 {
+  color: #3a2d0f !important;
+  text-shadow: 0 1px 0 rgba(255, 252, 241, 0.36);
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] p {
+  color: #493f24 !important;
+}
+
+/* Browse rows should be the primary scan objects inside the darker index
+ * panels. Keep them brighter than their parent section and give them a firmer
+ * edge so large indexes do not read as one continuous gold sheet.
+ */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article {
+  border-color: rgba(152, 108, 31, 0.30) !important;
+  background: linear-gradient(135deg, rgba(255, 253, 247, 0.98), rgba(255, 248, 230, 0.96)) !important;
+  box-shadow:
+    0 6px 14px rgba(86, 52, 22, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.54) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover {
+  border-color: rgba(199, 155, 61, 0.68) !important;
+  background: linear-gradient(135deg, #fffdf7, #fff2cf) !important;
+  box-shadow:
+    0 8px 18px rgba(86, 52, 22, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+}
+
+/* Repeated Search/Inspect actions appear many times in Browse and Results.
+ * Use a dark-green-with-gold-edge default so Apply, active steps, and committed
+ * state remain the only large repeated filled-gold signals. Hover still turns
+ * the control gold, matching the rest of the system.
+ */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button[class*="bg-[var(--peridot-color-hex-244c35)]"] {
+  border-color: rgba(240, 210, 122, 0.76) !important;
+  background: linear-gradient(135deg, var(--explore-green-action), var(--explore-green-action-hover)) !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button[class*="bg-[var(--peridot-color-hex-244c35)]"]:hover {
+  border-color: #f6df96 !important;
+  background: linear-gradient(135deg, #c79b3d, #d9ae4c) !important;
+  color: #07190c !important;
+  box-shadow:
+    0 10px 22px rgba(86, 52, 22, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26) !important;
+}
+
+/* Result cards: make each record read as a pale evidence entry sitting on the
+ * folio page, with title and evidence strips more important than badges.
+ */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] {
+  border-color: rgba(199, 155, 61, 0.34) !important;
+  background: linear-gradient(135deg, var(--explore-paper-strong), var(--explore-paper)) !important;
+  color: var(--explore-ink) !important;
+  box-shadow:
+    0 8px 18px rgba(86, 52, 22, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.56) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover {
+  border-color: rgba(199, 155, 61, 0.62) !important;
+  background: linear-gradient(135deg, #fffdf7, #fff7df) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] h3 {
+  color: var(--explore-ink) !important;
+  font-size: 0.98rem !important;
+  line-height: 1.18 !important;
+  letter-spacing: -0.012em;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div {
+  border: 1px solid rgba(199, 155, 61, 0.18);
+  background: rgba(255, 253, 247, 0.86) !important;
+}
+
+/* Metadata and capability badges should support scanning, not compete with the
+ * record title. Keep them small, pale, and edged.
+ */
+.peridot-search-workspace :is(
+  article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] span[class*="bg-[var(--peridot-color-hex-d7e6cc)"],
+  article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] span[class*="bg-[var(--peridot-color-hex-e2eed8)"],
+  section[class*="bg-[var(--peridot-color-hex-74897a)]"] span[class*="bg-[var(--peridot-color-hex-d7e6cc)"],
+  section[class*="bg-[var(--peridot-color-hex-74897a)]"] span[class*="bg-[var(--peridot-color-hex-e2eed8)"]
+) {
+  border: 1px solid rgba(199, 155, 61, 0.22) !important;
+  background: rgba(255, 252, 241, 0.84) !important;
+  color: #3f371f !important;
+}
+
+/* Facet chips need to remain clearly clickable against the darker gold panels. */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not([class*="bg-[var(--peridot-color-hex-244c35)]"]) {
+  border-color: rgba(152, 108, 31, 0.30) !important;
+  background: rgba(255, 252, 241, 0.90) !important;
+  color: var(--explore-ink) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.44) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not([class*="bg-[var(--peridot-color-hex-244c35)]"]):hover {
+  border-color: rgba(199, 155, 61, 0.76) !important;
+  background: #fff2cf !important;
+}
+
+/* Build capability toggles are numerous but not data objects. Make their label
+ * area more like compact parchment controls rather than pale result cards.
+ */
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button {
+  border-color: rgba(170, 125, 42, 0.34) !important;
+  background: rgba(255, 252, 241, 0.86) !important;
+  color: var(--explore-ink) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover {
+  border-color: rgba(199, 155, 61, 0.76) !important;
+  background: #fff2cf !important;
+}
+
+/* Capability ledger: the structure is working. Strengthen separators and make
+ * value/status columns discrete without reintroducing heavy dashboard cards.
+ */
+.peridot-search-capability-ledger {
+  border-color: rgba(199, 155, 61, 0.34) !important;
+  background: rgba(255, 250, 235, 0.92) !important;
+}
+
+.peridot-search-capability-row {
+  border-color: rgba(170, 125, 42, 0.26) !important;
+  background: linear-gradient(90deg, rgba(255, 252, 241, 0.34), rgba(235, 223, 181, 0.16)) !important;
+}
+
+.peridot-search-capability-value {
+  border-color: rgba(170, 125, 42, 0.30) !important;
+  background: rgba(255, 253, 247, 0.72) !important;
+}
+
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  border-color: rgba(199, 155, 61, 0.48) !important;
+  background: rgba(255, 252, 241, 0.86) !important;
+  color: #533d15 !important;
+}
+
+/* Explore pine/olive hierarchy correction, 2026-06-18.
+ * This layer pivots the information-dense Explore workspace away from the
+ * heavier Upload-style gold sheet treatment. Upload can sustain more cream/gold
+ * because it has fewer simultaneous data objects; Explore needs cooler,
+ * steadier section containers. Keep the dark striped work-surface and cream
+ * evidence cards, but use pine/olive grouping fields and reserve gold primarily
+ * for active navigation state, Apply, and hover confirmation.
+ */
+.peridot-search-workspace {
+  --explore-gold-panel: #7d8957;
+  --explore-gold-panel-deep: #5f6d43;
+  --explore-gold-panel-soft: #dfe6c9;
+  --explore-paper: #fffaf0;
+  --explore-paper-strong: #fffdf7;
+  --explore-paper-muted: #eef2df;
+  --explore-ink: #061d12;
+  --explore-muted: #33442d;
+  --explore-rule: rgba(92, 109, 62, 0.38);
+  --explore-rule-strong: rgba(63, 82, 44, 0.62);
+  --explore-green-action: #0b2614;
+  --explore-green-action-hover: #17391f;
+  --explore-olive-control: #e3e8cf;
+  --explore-olive-control-hover: #ccd9a8;
+  --explore-olive-chip: #f3f6e9;
+  --explore-olive-chip-border: rgba(92, 109, 62, 0.30);
+}
+
+/* Search/Build utility panels: replace the strong warm wash with a quieter
+ * olive parchment so form fields remain easy to scan on long Build states.
+ */
+.peridot-search-panel-inset {
+  border-color: rgba(92, 109, 62, 0.28) !important;
+  background:
+    linear-gradient(135deg, rgba(229, 233, 207, 0.82), rgba(245, 241, 221, 0.76)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 6px 16px rgba(6, 29, 18, 0.06) !important;
+}
+
+/* Browse and Refine grouping panels should read as calm pine/olive fields,
+ * not warm gold slabs. This improves endurance when scanning many indexes or
+ * facets while preserving a Peridot botanical palette.
+ */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] {
+  border-color: rgba(191, 205, 148, 0.34) !important;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 252, 241, 0.18), transparent 18rem),
+    linear-gradient(135deg, #71805a, #4f6044) !important;
+  color: #fffaf0 !important;
+  box-shadow:
+    0 12px 28px rgba(6, 29, 18, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(255, 252, 241, 0.07) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] h3 {
+  color: #fff8e8 !important;
+  text-shadow: 0 1px 0 rgba(6, 29, 18, 0.42) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] p {
+  color: rgba(255, 250, 235, 0.84) !important;
+}
+
+/* Browse rows remain light evidence objects inside the darker section panels. */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article {
+  border-color: rgba(92, 109, 62, 0.30) !important;
+  background: linear-gradient(135deg, rgba(255, 253, 247, 0.98), rgba(244, 248, 235, 0.96)) !important;
+  color: #061d12 !important;
+  box-shadow:
+    0 6px 14px rgba(6, 29, 18, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover {
+  border-color: rgba(191, 205, 148, 0.78) !important;
+  background: linear-gradient(135deg, #fffdf7, #eef5dd) !important;
+  box-shadow:
+    0 8px 18px rgba(6, 29, 18, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66) !important;
+}
+
+/* Metadata chips and facet chips: pale olive instead of pale gold. */
+.peridot-search-workspace :is(
+  article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] span[class*="bg-[var(--peridot-color-hex-d7e6cc)"],
+  article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] span[class*="bg-[var(--peridot-color-hex-e2eed8)"],
+  section[class*="bg-[var(--peridot-color-hex-74897a)]"] span[class*="bg-[var(--peridot-color-hex-d7e6cc)"],
+  section[class*="bg-[var(--peridot-color-hex-74897a)]"] span[class*="bg-[var(--peridot-color-hex-e2eed8)"]
+) {
+  border: 1px solid var(--explore-olive-chip-border) !important;
+  background: var(--explore-olive-chip) !important;
+  color: #20351f !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not([class*="bg-[var(--peridot-color-hex-244c35)]"]) {
+  border-color: rgba(92, 109, 62, 0.32) !important;
+  background: rgba(247, 250, 239, 0.94) !important;
+  color: #061d12 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not([class*="bg-[var(--peridot-color-hex-244c35)]"]):hover {
+  border-color: rgba(191, 205, 148, 0.82) !important;
+  background: #e9f0d5 !important;
+}
+
+/* Repeated Search/Inspect actions stay pine. Gold is reserved for Apply and
+ * active workflow state, reducing button noise across Results and Browse.
+ */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button[class*="bg-[var(--peridot-color-hex-244c35)]"] {
+  border-color: rgba(191, 205, 148, 0.58) !important;
+  background: linear-gradient(135deg, #0b2614, #17391f) !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 8px 18px rgba(6, 29, 18, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button[class*="bg-[var(--peridot-color-hex-244c35)]"]:hover {
+  border-color: #f0d27a !important;
+  background: linear-gradient(135deg, #c79b3d, #d9ae4c) !important;
+  color: #07190c !important;
+}
+
+/* Results cards remain cream, but use olive rules and softer evidence strips. */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] {
+  border-color: rgba(92, 109, 62, 0.28) !important;
+  background: linear-gradient(135deg, #fffdf7, #fbf8ec) !important;
+  color: #061d12 !important;
+  box-shadow:
+    0 8px 18px rgba(6, 29, 18, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover {
+  border-color: rgba(92, 109, 62, 0.54) !important;
+  background: linear-gradient(135deg, #fffdf7, #f4f8ea) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div {
+  border: 1px solid rgba(92, 109, 62, 0.18) !important;
+  background: rgba(248, 251, 240, 0.86) !important;
+}
+
+/* Build capability controls use pale olive instead of yellow parchment. */
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button {
+  border-color: rgba(92, 109, 62, 0.32) !important;
+  background: rgba(244, 249, 235, 0.92) !important;
+  color: #061d12 !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover {
+  border-color: rgba(125, 137, 87, 0.76) !important;
+  background: #e6eed2 !important;
+}
+
+/* Capability ledger should stay light and calm, with olive separators rather
+ * than gold emphasis. */
+.peridot-search-capability-ledger {
+  border-color: rgba(92, 109, 62, 0.30) !important;
+  background: rgba(252, 250, 239, 0.94) !important;
+}
+
+.peridot-search-capability-row {
+  border-color: rgba(92, 109, 62, 0.20) !important;
+  background: linear-gradient(90deg, rgba(255, 252, 241, 0.50), rgba(229, 236, 211, 0.22)) !important;
+}
+
+.peridot-search-capability-value {
+  border-color: rgba(92, 109, 62, 0.26) !important;
+  background: rgba(248, 251, 240, 0.84) !important;
+}
+
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  border-color: rgba(92, 109, 62, 0.34) !important;
+  background: rgba(244, 249, 235, 0.92) !important;
+  color: #20351f !important;
+}
+
+/* Explore pine/olive unification pass, 2026-06-18.
+ * Browse and Refine now have the right balance of cream evidence objects set
+ * inside calmer pine/olive information fields. Extend that hierarchy to Build,
+ * Results, and Capabilities so Explore reads as one research folio instead of
+ * alternating between green index pages and pale form/ledger pages.
+ */
+.peridot-search-workspace {
+  --explore-panel-pine-top: #71805a;
+  --explore-panel-pine-bottom: #4f6044;
+  --explore-panel-pine-deep: #405238;
+  --explore-panel-text: #fff8e8;
+  --explore-panel-muted: rgba(255, 250, 235, 0.82);
+  --explore-evidence-paper: #fffdf7;
+  --explore-evidence-paper-alt: #f5f8eb;
+  --explore-evidence-border: rgba(92, 109, 62, 0.30);
+}
+
+/* Build and small utility panels: give them the same pine/olive field used by
+ * Browse/Refine, while keeping inputs and empty-state boxes as light evidence
+ * objects for readability.
+ */
+.peridot-search-workspace .peridot-search-panel-inset {
+  border-color: rgba(191, 205, 148, 0.34) !important;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 252, 241, 0.16), transparent 17rem),
+    linear-gradient(135deg, var(--explore-panel-pine-top), var(--explore-panel-pine-bottom)) !important;
+  color: var(--explore-panel-text) !important;
+  box-shadow:
+    0 10px 24px rgba(6, 29, 18, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 0 1px rgba(255, 252, 241, 0.07) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(label, .peridot-section-label, div[class*="tracking-[0.14em]"], div[class*="tracking-[0.15em]"]) {
+  color: #fff8e8 !important;
+  text-shadow: 0 1px 0 rgba(6, 29, 18, 0.34);
+}
+
+.peridot-search-workspace .peridot-search-panel-inset p {
+  color: var(--explore-panel-muted) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea) {
+  border-color: rgba(92, 109, 62, 0.32) !important;
+  background: linear-gradient(135deg, #fffdf7, #f5f8eb) !important;
+  color: #061d12 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea)::placeholder {
+  color: rgba(32, 53, 31, 0.62) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea):focus {
+  border-color: rgba(240, 210, 122, 0.84) !important;
+  box-shadow:
+    0 0 0 3px rgba(246, 230, 167, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.66) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed {
+  border-color: rgba(191, 205, 148, 0.36) !important;
+  background: rgba(255, 253, 247, 0.90) !important;
+  color: #20351f !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed {
+  border-style: dashed !important;
+}
+
+/* Capability toggles inside Build become light objects nested in the green
+ * field, mirroring Browse item cards and Refine chips.
+ */
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button {
+  border-color: rgba(92, 109, 62, 0.34) !important;
+  background: linear-gradient(135deg, #fffdf7, #eef4df) !important;
+  color: #061d12 !important;
+  box-shadow:
+    0 4px 10px rgba(6, 29, 18, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover {
+  border-color: rgba(191, 205, 148, 0.82) !important;
+  background: linear-gradient(135deg, #fffdf7, #dfe8c7) !important;
+}
+
+/* Build footer should read as a light status strip attached to the green folio,
+ * not as a separate mint-green island.
+ */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] {
+  border-color: rgba(92, 109, 62, 0.34) !important;
+  background: linear-gradient(135deg, #f6f8ea, #e2ead0) !important;
+  color: #20351f !important;
+}
+
+/* Results: add the same pine/olive field behind the repeated result cards.
+ * The cards remain light evidence objects so titles and routes stay readable.
+ */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .grid.gap-3.xl\:grid-cols-2 {
+  border: 1px solid rgba(191, 205, 148, 0.34);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 252, 241, 0.14), transparent 18rem),
+    linear-gradient(135deg, var(--explore-panel-pine-top), var(--explore-panel-pine-bottom));
+  box-shadow:
+    0 12px 28px rgba(6, 29, 18, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  padding: 0.7rem;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] {
+  border-color: var(--explore-evidence-border) !important;
+  background: linear-gradient(135deg, var(--explore-evidence-paper), var(--explore-evidence-paper-alt)) !important;
+  box-shadow:
+    0 7px 16px rgba(6, 29, 18, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div {
+  border: 1px solid rgba(92, 109, 62, 0.22) !important;
+  background: rgba(255, 253, 247, 0.88) !important;
+}
+
+/* Count badges at the top of Results/Browse should join the olive language. */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .flex .rounded-full:not(button) {
+  border-color: rgba(92, 109, 62, 0.30) !important;
+  background: linear-gradient(135deg, #f5f8eb, #e0e9cb) !important;
+  color: #20351f !important;
+}
+
+/* Capabilities: use a green field with light ledger rows, matching Browse's
+ * container/card hierarchy while preserving the compact readiness-ledger form.
+ */
+.peridot-search-capability-ledger {
+  border-color: rgba(191, 205, 148, 0.34) !important;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(255, 252, 241, 0.14), transparent 18rem),
+    linear-gradient(135deg, var(--explore-panel-pine-top), var(--explore-panel-pine-bottom)) !important;
+  box-shadow:
+    0 12px 28px rgba(6, 29, 18, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+  padding: 0.65rem !important;
+}
+
+.peridot-search-capability-row {
+  border: 1px solid rgba(92, 109, 62, 0.28) !important;
+  border-radius: 0.8rem !important;
+  background: linear-gradient(135deg, #fffdf7, #f3f7e8) !important;
+  color: #061d12 !important;
+  margin-bottom: 0.5rem !important;
+  box-shadow:
+    0 5px 12px rgba(6, 29, 18, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58) !important;
+}
+
+.peridot-search-capability-row:last-child {
+  margin-bottom: 0 !important;
+}
+
+.peridot-search-capability-value,
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  border-color: rgba(92, 109, 62, 0.30) !important;
+  background: rgba(255, 253, 247, 0.92) !important;
+  color: #20351f !important;
+}
+
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  background: #eef4df !important;
+}
+
+/* Explore pine/olive flat-field correction, 2026-06-18.
+ * The first unified pine pass used a pale-to-mid green gradient inside the
+ * Build, Results, Browse, Refine, and Capabilities information fields. That
+ * read too visually busy in the information-dense Explore workspace. Flatten
+ * those fields to a mostly solid darker pine/olive so cream evidence objects
+ * carry the readable content hierarchy.
+ */
+.peridot-search-workspace {
+  --explore-panel-pine-flat: #4f6044;
+  --explore-panel-pine-flat-deep: #425239;
+  --explore-panel-pine-flat-border: rgba(191, 205, 148, 0.38);
+}
+
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .grid.gap-3.xl\:grid-cols-2,
+.peridot-search-capability-ledger,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] {
+  border-color: var(--explore-panel-pine-flat-border) !important;
+  background: var(--explore-panel-pine-flat) !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 10px 24px rgba(6, 29, 18, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 1px rgba(255, 252, 241, 0.045) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset:nth-of-type(even),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even) {
+  background: var(--explore-panel-pine-flat-deep) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(label, .peridot-section-label, div[class*="tracking-[0.14em]"], div[class*="tracking-[0.15em]"], h3),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] :is(.peridot-section-label, h3, div[class*="tracking-[0.14em]"], div[class*="tracking-[0.15em]"]),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] :is(.peridot-section-label, h3, div[class*="tracking-[0.14em]"], div[class*="tracking-[0.15em]"]) {
+  color: #fff8e8 !important;
+  text-shadow: 0 1px 0 rgba(6, 29, 18, 0.36);
+}
+
+.peridot-search-workspace .peridot-search-panel-inset p,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] p,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] p {
+  color: rgba(255, 250, 235, 0.82) !important;
+}
+
+/* Keep the nested content objects light against the flatter dark field. */
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button:not(.rounded-full),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button:not(.rounded-full) {
+  background: #fffdf7 !important;
+  color: #061d12 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button:not(.rounded-full):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button:not(.rounded-full):hover {
+  border-color: rgba(240, 210, 122, 0.84) !important;
+  background: #f6e3ac !important;
+  color: #061d12 !important;
+}
+
+/* Explore dark working-page correction, 2026-06-18.
+ * The pine/olive field direction works for Browse and Refine, but the large
+ * cream tab-card ground still reads as an empty page behind the active work.
+ * Make the main Explore working card a flat dark-green folio page, without the
+ * diagonal stripe texture used on the outer app background. Inner fields remain
+ * pine/olive and nested evidence objects stay light for readability.
+ */
+.peridot-search-workspace .peridot-search-tab-card {
+  border-color: rgba(221, 187, 105, 0.34) !important;
+  background: #071f13 !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    inset 0 0 0 1px rgba(221, 187, 105, 0.08) !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > div:first-child,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child {
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card h2,
+.peridot-search-workspace .peridot-search-tab-card h3,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child p,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child p {
+  color: #fff8e8 !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
+}
+
+.peridot-search-workspace .peridot-search-tab-card > div:first-child .peridot-section-label,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child .peridot-section-label,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child [class*="tracking-[0.14em]"] {
+  color: #f0d27a !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
+}
+
+/* Keep small count/status pills readable after the outer tab card becomes dark. */
+.peridot-search-workspace .peridot-search-tab-card > div:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child .rounded-full {
+  border-color: rgba(221, 187, 105, 0.34) !important;
+  background: rgba(255, 253, 247, 0.94) !important;
+  color: #061d12 !important;
+  text-shadow: none !important;
+}
+
+/* Light callouts should no longer float as cream islands on a cream page;
+ * against the dark folio ground they become readable evidence slips.
+ */
+.peridot-search-workspace .peridot-search-tab-card .rounded-\[1rem\]:not(.peridot-search-panel-inset):not(.peridot-search-capability-ledger) {
+  border-color: rgba(191, 205, 148, 0.30);
+}
+
+/* Bottom apply status strip remains a light action strip, but its border is
+ * strengthened so it reads as attached to the dark folio page.
+ */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] {
+  border-color: rgba(221, 187, 105, 0.38) !important;
+  background: #eef4df !important;
+  color: #061d12 !important;
+}
+
+/* Explore light-tone calibration, 2026-06-18.
+ * This pass keeps the successful dark-pine Explore structure while reducing
+ * the stark white/lightest surfaces that were tiring against dense search
+ * content. Light objects become warm parchment; repeated actions return to
+ * dark pine by default; gold remains for active steps, Apply, and hover
+ * confirmation.
+ */
+.peridot-search-workspace {
+  --explore-paper-warm: #f1ead2;
+  --explore-paper-warm-alt: #e9dfc2;
+  --explore-paper-soft: #f6f0dc;
+  --explore-paper-chip: #efe8cf;
+  --explore-paper-border: rgba(104, 116, 77, 0.32);
+  --explore-pine-ink: #071d10;
+  --explore-pine-action: #08351f;
+  --explore-pine-action-border: rgba(240, 210, 122, 0.44);
+  --explore-muted-ink: #43513d;
+  --explore-muted-gold: #c79b3d;
+}
+
+/* Light page objects: warm them away from bright white. */
+.peridot-search-workspace .peridot-search-tab-card input,
+.peridot-search-workspace .peridot-search-tab-card select,
+.peridot-search-workspace .peridot-search-tab-card textarea,
+.peridot-search-workspace .peridot-search-panel-inset input,
+.peridot-search-workspace .peridot-search-panel-inset select,
+.peridot-search-workspace .peridot-search-panel-inset textarea {
+  border-color: var(--explore-paper-border) !important;
+  background: var(--explore-paper-soft) !important;
+  color: var(--explore-pine-ink) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card input::placeholder,
+.peridot-search-workspace .peridot-search-tab-card textarea::placeholder {
+  color: rgba(67, 81, 61, 0.74) !important;
+}
+
+/* Build/Refine empty-state slips and capability chips should read as paper,
+ * not white plastic, while remaining clearly distinct from the dark fields.
+ */
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full {
+  border-color: var(--explore-paper-border) !important;
+  background: var(--explore-paper-chip) !important;
+  color: var(--explore-pine-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full:hover {
+  border-color: rgba(240, 210, 122, 0.72) !important;
+  background: #e7d59c !important;
+  color: var(--explore-pine-ink) !important;
+}
+
+/* Browse rows and Results cards are evidence objects. Keep them light, but
+ * bring them down into parchment so repeated cards are easier on the eyes.
+ */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] {
+  border-color: var(--explore-paper-border) !important;
+  background: linear-gradient(135deg, var(--explore-paper-soft), var(--explore-paper-warm)) !important;
+  color: var(--explore-pine-ink) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 7px 16px rgba(6, 29, 18, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] h3,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] strong,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dt,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dd,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article h3,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article h3 {
+  color: var(--explore-pine-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] p,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] span,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article span,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article span {
+  color: var(--explore-pine-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div {
+  border-color: rgba(104, 116, 77, 0.24) !important;
+  background: rgba(246, 240, 220, 0.82) !important;
+}
+
+/* Repeated Search/Inspect actions should be visible but not gold by default. */
+.peridot-search-workspace article button,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button {
+  border-color: var(--explore-pine-action-border) !important;
+  background: var(--explore-pine-action) !important;
+  color: #fff8e8 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 8px 16px rgba(6, 29, 18, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+.peridot-search-workspace article button:hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:hover {
+  border-color: rgba(246, 223, 150, 0.84) !important;
+  background: #c79b3d !important;
+  color: var(--explore-pine-ink) !important;
+}
+
+/* Small metadata badges and top result-count pills use parchment/olive rather
+ * than bright white, keeping status readable without shouting.
+ */
+.peridot-search-workspace article .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .flex .rounded-full {
+  border-color: var(--explore-paper-border) !important;
+  background: var(--explore-paper-chip) !important;
+  color: var(--explore-pine-ink) !important;
+  text-shadow: none !important;
+}
+
+/* Capabilities ledger: keep the green field, but make rows warm parchment and
+ * force the left-column text back to readable pine/muted olive. */
+.peridot-search-capability-row {
+  border-color: var(--explore-paper-border) !important;
+  background: linear-gradient(135deg, var(--explore-paper-soft), var(--explore-paper-warm)) !important;
+  color: var(--explore-pine-ink) !important;
+}
+
+.peridot-search-capability-row h3,
+.peridot-search-capability-row strong,
+.peridot-search-capability-row div,
+.peridot-search-capability-row span {
+  color: var(--explore-pine-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-capability-row p {
+  color: var(--explore-muted-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-capability-row [class*="tracking-[0.14em]"],
+.peridot-search-capability-row [class*="tracking-[0.15em]"] {
+  color: #9a7331 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-capability-value,
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  border-color: rgba(104, 116, 77, 0.30) !important;
+  background: var(--explore-paper-chip) !important;
+  color: var(--explore-pine-ink) !important;
+}
+
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  background: #e3ead0 !important;
+}
+
+/* Inactive step buttons should be parchment rather than white; active remains
+ * gold from the existing step-rail rules.
+ */
+.peridot-search-workspace .peridot-search-step-button:not(.peridot-search-step-button-active) {
+  border-color: rgba(104, 116, 77, 0.32) !important;
+  background: #dedbc2 !important;
+  color: var(--explore-pine-ink) !important;
+}
+
+.peridot-search-workspace .peridot-search-step-button:not(.peridot-search-step-button-active):hover {
+  border-color: rgba(240, 210, 122, 0.62) !important;
+  background: #e8dfc1 !important;
+}
+
+/* Explore dark-parchment and hover-state calibration, 2026-06-18.
+ * This override responds to the annotated Explore screenshots after the dark
+ * main-card pass. The successful hierarchy is kept: dark pine folio, olive
+ * fields, parchment evidence objects, restrained gold. The remaining pale
+ * outer working-body card becomes darker muted parchment, and hover states are
+ * made intentional: repeated evidence actions hover gold, while passive ledger
+ * rows no longer wash out to low-contrast white text.
+ */
+.peridot-search-workspace {
+  --explore-back-parchment: #b6ae8f;
+  --explore-back-parchment-deep: #9e9678;
+  --explore-paper-readable: #eee6c9;
+  --explore-paper-readable-alt: #e5ddbf;
+  --explore-paper-readable-soft: #f2ebd4;
+  --explore-olive-field: #425239;
+  --explore-olive-field-alt: #4b5d41;
+  --explore-deep-pine: #061d12;
+  --explore-action-pine: #07351f;
+  --explore-hover-gold: #c79b3d;
+  --explore-hover-gold-light: #e6c36a;
+  --explore-readable-ink: #071d10;
+}
+
+/* The pale cream shelf behind the active dark tab card was still too bright.
+ * Make it a darker, muted parchment so it frames the dark working card without
+ * competing with the content.
+ */
+.peridot-search-workspace .peridot-search-folio-body {
+  background: linear-gradient(135deg, var(--explore-back-parchment), var(--explore-back-parchment-deep)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 1px rgba(62, 72, 44, 0.24) !important;
+}
+
+/* Keep the active tab card itself as the flat dark green folio page. */
+.peridot-search-workspace .peridot-search-tab-card {
+  border-color: rgba(221, 187, 105, 0.36) !important;
+  background: var(--explore-deep-pine) !important;
+}
+
+/* Olive fields stay mostly flat and dark. */
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .grid.gap-3.xl\:grid-cols-2,
+.peridot-search-workspace .peridot-search-capability-ledger,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] {
+  border-color: rgba(191, 205, 148, 0.38) !important;
+  background: var(--explore-olive-field) !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 10px 24px rgba(6, 29, 18, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset:nth-of-type(even),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even) {
+  background: var(--explore-olive-field-alt) !important;
+}
+
+/* Parchment evidence objects: less white, more readable against the dark field. */
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"],
+.peridot-search-workspace .peridot-search-capability-row {
+  border-color: rgba(90, 103, 67, 0.34) !important;
+  background: linear-gradient(135deg, var(--explore-paper-readable-soft), var(--explore-paper-readable)) !important;
+  color: var(--explore-readable-ink) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 6px 14px rgba(6, 29, 18, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea)::placeholder {
+  color: rgba(32, 53, 31, 0.62) !important;
+}
+
+/* The passive capability ledger was turning too pale/low-contrast. Force its
+ * text back to readable ink, while keeping the row paper muted.
+ */
+.peridot-search-workspace .peridot-search-capability-row :is(h3, strong, div, span) {
+  color: var(--explore-readable-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-row p,
+.peridot-search-workspace .peridot-search-capability-note {
+  color: #3f4f39 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-row [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-capability-row [class*="tracking-[0.15em]"] {
+  color: #8c672b !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-value,
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  border-color: rgba(90, 103, 67, 0.34) !important;
+  background: var(--explore-paper-readable-alt) !important;
+  color: var(--explore-readable-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  background: #dfe8c7 !important;
+}
+
+/* Repeated action buttons: dark pine by default, gold on hover. This applies to
+ * Browse Search buttons, Results Inspect buttons, and comparable evidence-card
+ * actions without touching the top Apply button.
+ */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button {
+  border-color: rgba(221, 187, 105, 0.36) !important;
+  background: var(--explore-action-pine) !important;
+  color: #fff8e8 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 8px 16px rgba(6, 29, 18, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:hover {
+  border-color: rgba(246, 223, 150, 0.90) !important;
+  background: var(--explore-hover-gold) !important;
+  color: var(--explore-readable-ink) !important;
+  box-shadow:
+    0 10px 20px rgba(86, 52, 22, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+/* Facet chips and capability toggles: highlight gold on hover/active instead
+ * of becoming pale low-contrast pills. Keep ordinary chips parchment.
+ */
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full:not(button),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full:not(button),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] .rounded-full:not(button) {
+  border-color: rgba(90, 103, 67, 0.34) !important;
+  background: var(--explore-paper-readable) !important;
+  color: var(--explore-readable-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover,
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button[aria-pressed="true"],
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button[aria-selected="true"],
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:hover {
+  border-color: rgba(246, 223, 150, 0.90) !important;
+  background: var(--explore-hover-gold-light) !important;
+  color: var(--explore-readable-ink) !important;
+  box-shadow:
+    0 8px 16px rgba(86, 52, 22, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+/* The bottom status/apply strip should not remain a bright mint island. */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] {
+  border-color: rgba(90, 103, 67, 0.36) !important;
+  background: var(--explore-paper-readable-alt) !important;
+  color: var(--explore-readable-ink) !important;
+  box-shadow:
+    0 5px 12px rgba(6, 29, 18, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30) !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] p,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] span {
+  color: var(--explore-readable-ink) !important;
+  text-shadow: none !important;
+}
+
+/* Status/count pills in active-tab headings should be parchment, not white. */
+.peridot-search-workspace .peridot-search-tab-card > div:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .flex .rounded-full:not(button) {
+  border-color: rgba(90, 103, 67, 0.34) !important;
+  background: var(--explore-paper-readable) !important;
+  color: var(--explore-readable-ink) !important;
+}
+
+
+/* Explore dark-pine shelf and gold-hover correction, 2026-06-19.
+ * The active Explore card now sits on a dark pine shelf rather than a pale
+ * parchment shelf. Repeated evidence actions and chip-like controls should not
+ * flash white on hover; they use Peridot gold for hover/active confirmation.
+ */
+.peridot-search-workspace {
+  --explore-back-parchment: #03160f;
+  --explore-back-parchment-deep: #02110b;
+  --explore-shelf-pine: #02140d;
+  --explore-shelf-pine-border: rgba(221, 187, 105, 0.34);
+  --explore-action-gold: #c79b3d;
+  --explore-action-gold-light: #e2ba5c;
+  --explore-action-gold-border: #f0d27a;
+  --explore-action-gold-text: #07190c;
+}
+
+.peridot-search-workspace .peridot-search-folio-body {
+  background: var(--explore-shelf-pine) !important;
+  border-top: 1px solid var(--explore-shelf-pine-border) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(246, 223, 150, 0.10),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.22) !important;
+}
+
+.peridot-search-workspace .peridot-search-folio-body::before,
+.peridot-search-workspace .peridot-search-folio-body::after {
+  background: transparent !important;
+  opacity: 0 !important;
+}
+
+/* Preserve the active dark tab card as a separate object on the darker pine shelf. */
+.peridot-search-workspace .peridot-search-tab-card {
+  background: #061d12 !important;
+  border-color: rgba(221, 187, 105, 0.42) !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+/* Top/bottom action buttons inside the active tab card: keep secondary actions
+ * pale by default, but use gold on hover instead of white.
+ */
+.peridot-search-workspace .peridot-search-tab-card button:not(.peridot-search-step-button):not(:disabled):hover {
+  border-color: var(--explore-action-gold-border) !important;
+  background: var(--explore-action-gold) !important;
+  color: var(--explore-action-gold-text) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 10px 22px rgba(86, 52, 22, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26) !important;
+  transform: translateY(-1px);
+}
+
+.peridot-search-workspace .peridot-search-tab-card button:not(.peridot-search-step-button):not(:disabled):active {
+  background: var(--explore-action-gold-light) !important;
+  color: var(--explore-action-gold-text) !important;
+  transform: translateY(0);
+}
+
+/* Autocomplete suggestion rows were still using the old pale hover state. */
+.peridot-search-workspace [class*="absolute"] button:hover,
+.peridot-search-workspace [class*="absolute"] button:focus-visible {
+  border-color: var(--explore-action-gold-border) !important;
+  background: var(--explore-action-gold) !important;
+  color: var(--explore-action-gold-text) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+/* Browse/Results repeated actions: pine default, gold hover. Use broad selectors
+ * because these actions inherit dense Tailwind classes from the component.
+ */
+.peridot-search-workspace article button:not(:disabled),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled) {
+  border-color: rgba(221, 187, 105, 0.38) !important;
+  background: #07351f !important;
+  color: #fff8e8 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace article button:not(:disabled):hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled):hover {
+  border-color: var(--explore-action-gold-border) !important;
+  background: var(--explore-action-gold) !important;
+  color: var(--explore-action-gold-text) !important;
+}
+
+/* Facet chips and capability toggles: parchment default, gold hover/selected.
+ * This catches the rounded chip controls shown in Refine and Build without
+ * recoloring passive non-button metadata pills on hover.
+ */
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button[aria-pressed="true"],
+.peridot-search-workspace .peridot-search-panel-inset button[aria-selected="true"] {
+  border-color: var(--explore-action-gold-border) !important;
+  background: var(--explore-action-gold) !important;
+  color: var(--explore-action-gold-text) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled):hover span,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled):hover span,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover span,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover span {
+  color: var(--explore-action-gold-text) !important;
+}
+
+/* Result-card hover should stay readable and parchment-toned instead of turning
+ * white. The actionable Inspect button handles the gold hover affordance.
+ */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover {
+  border-color: rgba(221, 187, 105, 0.42) !important;
+  background: #eee6c9 !important;
+  color: #071d10 !important;
+}
+
+/* Bottom status strip belongs to the dark folio; remove the remaining pale shelf
+ * effect while keeping the message and controls legible.
+ */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] {
+  border-color: rgba(221, 187, 105, 0.30) !important;
+  background: #425239 !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] p,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] span {
+  color: #fff8e8 !important;
+}
+
+/* Explore final pine hierarchy pass, 2026-06-19
+ * ------------------------------------------------
+ * This layer removes the redundant top status pills through JSX and then
+ * recalibrates the remaining Explore visuals: the back shelf becomes the
+ * darkest flat pine, dense content uses pine/olive grouping fields, light
+ * evidence objects stay parchment rather than white, and hover confirmations
+ * use Peridot gold instead of white flashes.
+ */
+.peridot-search-workspace {
+  --explore-deepest-pine: #010b07;
+  --explore-active-pine: #061d12;
+  --explore-field-pine: #405236;
+  --explore-field-pine-alt: #4a5d3e;
+  --explore-field-border: rgba(221, 187, 105, 0.34);
+  --explore-parchment: #e8dfc1;
+  --explore-parchment-light: #f1ead4;
+  --explore-parchment-bright: #f7f0da;
+  --explore-pale-olive: #d9dec4;
+  --explore-ink: #071d10;
+  --explore-muted-ink: #314331;
+  --explore-gold: #c79b3d;
+  --explore-gold-light: #e0bb62;
+  --explore-gold-soft: #ecd38a;
+  --explore-gold-text: #07190c;
+}
+
+.peridot-search-workspace .peridot-search-folio-header {
+  padding-bottom: clamp(0.8rem, 1.4vw, 1.1rem) !important;
+}
+
+.peridot-search-workspace .peridot-search-folio-body {
+  background: var(--explore-deepest-pine) !important;
+  border-top: 1px solid rgba(221, 187, 105, 0.26) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(246, 223, 150, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.32) !important;
+}
+
+.peridot-search-workspace .peridot-search-folio-body::before,
+.peridot-search-workspace .peridot-search-folio-body::after {
+  opacity: 0 !important;
+  background: transparent !important;
+}
+
+.peridot-search-workspace .peridot-search-status-ribbon,
+.peridot-search-workspace .peridot-search-status-item {
+  display: none !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card {
+  background: var(--explore-active-pine) !important;
+  border-color: rgba(221, 187, 105, 0.42) !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card h2,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child h2,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child h2 {
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > div:first-child p,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child p {
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > div:first-child [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-panel-inset [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-panel-inset [class*="tracking-[0.15em]"] {
+  color: var(--explore-gold-soft) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .grid.gap-3.xl\:grid-cols-2,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] {
+  border-color: rgba(221, 187, 105, 0.30) !important;
+  background: var(--explore-field-pine) !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset:nth-of-type(even),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even) {
+  background: var(--explore-field-pine-alt) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset p,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] p,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] p {
+  color: #f4eedb !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] {
+  border-color: rgba(84, 99, 68, 0.42) !important;
+  background: var(--explore-parchment-light) !important;
+  color: var(--explore-ink) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea)::placeholder {
+  color: rgba(49, 67, 49, 0.72) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover {
+  border-color: var(--explore-gold-soft) !important;
+  background: #ead798 !important;
+  color: var(--explore-gold-text) !important;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover :is(h3, strong, dt, dd, span),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover :is(h3, strong, dt, dd, span),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover :is(h3, strong, dt, dd, span) {
+  color: var(--explore-gold-text) !important;
+}
+
+.peridot-search-workspace article button:not(:disabled),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled) {
+  border-color: rgba(221, 187, 105, 0.38) !important;
+  background: #07351f !important;
+  color: #fff8e8 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card button:not(.peridot-search-step-button):not(:disabled):hover,
+.peridot-search-workspace [class*="absolute"] button:hover,
+.peridot-search-workspace [class*="absolute"] button:focus-visible,
+.peridot-search-workspace article button:not(:disabled):hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button[aria-pressed="true"],
+.peridot-search-workspace .peridot-search-panel-inset button[aria-selected="true"] {
+  border-color: var(--explore-gold-soft) !important;
+  background: var(--explore-gold) !important;
+  color: var(--explore-gold-text) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 10px 22px rgba(86, 52, 22, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26) !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card button:not(.peridot-search-step-button):not(:disabled):hover *,
+.peridot-search-workspace [class*="absolute"] button:hover *,
+.peridot-search-workspace article button:not(:disabled):hover *,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled):hover *,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled):hover *,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover *,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover * {
+  color: var(--explore-gold-text) !important;
+}
+
+.peridot-search-workspace article .rounded-full,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] .rounded-full {
+  border-color: rgba(84, 99, 68, 0.34) !important;
+  background: var(--explore-parchment) !important;
+  color: var(--explore-ink) !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] {
+  border-color: rgba(221, 187, 105, 0.30) !important;
+  background: #31432b !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] p,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] span {
+  color: #fff8e8 !important;
+}
+
+/* Capabilities review redesign. Mirrors the upload review page's concise two-card
+ * structure while keeping Explore's darker pine work surface.
+ */
+.peridot-search-capability-review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+  gap: 1rem;
+}
+
+.peridot-search-capability-review-card,
+.peridot-search-capability-review-note {
+  border: 1px solid rgba(221, 187, 105, 0.30);
+  border-radius: 1.15rem;
+  background: #dcd4b7;
+  color: var(--explore-ink);
+  padding: 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.peridot-search-capability-review-card [class*="tracking-[0.14em]"],
+.peridot-search-capability-review-note [class*="tracking-[0.14em]"] {
+  color: #536247 !important;
+}
+
+.peridot-search-capability-scope-list {
+  margin-top: 0.8rem;
+  display: grid;
+  gap: 0.44rem;
+}
+
+.peridot-search-capability-scope-list div,
+.peridot-search-capability-availability-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.8rem;
+  background: rgba(246, 239, 218, 0.78);
+  padding: 0.48rem 0.65rem;
+}
+
+.peridot-search-capability-scope-list span {
+  color: #314331;
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.peridot-search-capability-scope-list strong {
+  color: var(--explore-ink);
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.peridot-search-capability-availability-list {
+  margin-top: 0.8rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.peridot-search-capability-availability-row {
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.58fr);
+  padding: 0.62rem 0.72rem;
+}
+
+.peridot-search-capability-availability-row h3 {
+  margin: 0;
+  color: var(--explore-ink);
+  font-size: 0.93rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.peridot-search-capability-availability-row p {
+  margin: 0.18rem 0 0;
+  color: #42523d !important;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.peridot-search-capability-availability-meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.peridot-search-capability-availability-meta strong,
+.peridot-search-capability-value {
+  min-width: 0;
+  border: 1px solid rgba(84, 99, 68, 0.28);
+  border-radius: 999px;
+  background: #e8dfc1;
+  color: var(--explore-ink);
+  padding: 0.35rem 0.62rem;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.peridot-search-capability-status,
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  border: 1px solid rgba(84, 99, 68, 0.30) !important;
+  border-radius: 999px;
+  background: #d9dec4 !important;
+  color: var(--explore-ink) !important;
+  padding: 0.32rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.peridot-search-capability-status-missing {
+  background: #efe0b5 !important;
+  border-color: rgba(199, 155, 61, 0.40) !important;
+}
+
+.peridot-search-capability-review-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #425239;
+  color: #fff8e8;
+}
+
+.peridot-search-capability-review-note p {
+  margin: 0.25rem 0 0;
+  color: #fff8e8 !important;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 980px) {
+  .peridot-search-capability-review-grid,
+  .peridot-search-capability-availability-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Explore sage-paper replacement pass, 2026-06-19
+ * ------------------------------------------------
+ * The user preferred the darker muted green used by the Capabilities review
+ * note over the remaining cream/parchment surfaces. This layer replaces most
+ * working-surface cream objects with a calmer sage/pine hierarchy while keeping
+ * gold reserved for interactive hover/active confirmation.
+ */
+.peridot-search-workspace {
+  --explore-sage-surface: #425239;
+  --explore-sage-surface-alt: #4c5d43;
+  --explore-sage-surface-soft: #56684c;
+  --explore-sage-chip: #607154;
+  --explore-sage-chip-alt: #6a7a5e;
+  --explore-sage-border: rgba(221, 187, 105, 0.24);
+  --explore-sage-text: #fff8e8;
+  --explore-sage-muted-text: #e5ddc0;
+  --explore-sage-placeholder: rgba(245, 238, 216, 0.60);
+}
+
+/* Swap cream evidence/data surfaces to muted sage. */
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"],
+.peridot-search-workspace .peridot-search-capability-review-card,
+.peridot-search-workspace .peridot-search-capability-review-note,
+.peridot-search-workspace .peridot-search-capability-scope-list div,
+.peridot-search-workspace .peridot-search-capability-availability-row {
+  border-color: var(--explore-sage-border) !important;
+  background: var(--explore-sage-surface) !important;
+  color: var(--explore-sage-text) !important;
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:nth-of-type(even),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article:nth-of-type(even),
+.peridot-search-workspace .peridot-search-capability-scope-list div:nth-child(even),
+.peridot-search-workspace .peridot-search-capability-availability-row:nth-child(even) {
+  background: var(--explore-sage-surface-alt) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea)::placeholder,
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea) option {
+  color: var(--explore-sage-placeholder) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea):focus,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article :is(h3, strong, dt, dd, p, span),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article :is(h3, strong, dt, dd, p, span),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] :is(h3, strong, dt, dd, p, span),
+.peridot-search-workspace .peridot-search-capability-review-card :is(h3, strong, p, span, div),
+.peridot-search-workspace .peridot-search-capability-review-note :is(h3, strong, p, span, div) {
+  color: var(--explore-sage-text) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-card [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-capability-review-note [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-capability-review-card [class*="tracking-[0.15em]"],
+.peridot-search-workspace .peridot-search-panel-inset [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-panel-inset [class*="tracking-[0.15em]"],
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article [class*="tracking-[0.14em]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article [class*="tracking-[0.14em]"] {
+  color: var(--explore-gold-soft) !important;
+}
+
+/* Default chip/pill objects also move off cream. */
+.peridot-search-workspace article .rounded-full,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] .rounded-full,
+.peridot-search-workspace .peridot-search-capability-availability-meta strong,
+.peridot-search-workspace .peridot-search-capability-value,
+.peridot-search-workspace .peridot-search-capability-status,
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  border-color: rgba(246, 223, 150, 0.18) !important;
+  background: var(--explore-sage-chip) !important;
+  color: var(--explore-sage-text) !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  background: #786336 !important;
+  border-color: rgba(240, 210, 122, 0.30) !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row p,
+.peridot-search-workspace .peridot-search-capability-review-note p,
+.peridot-search-workspace .peridot-search-capability-review-card p,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] p,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article p,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article p {
+  color: var(--explore-sage-muted-text) !important;
+}
+
+/* Data-object hover should feel richer, not pale or white. */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover,
+.peridot-search-workspace .peridot-search-capability-scope-list div:hover,
+.peridot-search-workspace .peridot-search-capability-availability-row:hover {
+  border-color: rgba(240, 210, 122, 0.48) !important;
+  background: var(--explore-sage-surface-soft) !important;
+  color: var(--explore-sage-text) !important;
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover :is(h3, strong, dt, dd, p, span),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover :is(h3, strong, dt, dd, p, span),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover :is(h3, strong, dt, dd, p, span) {
+  color: var(--explore-sage-text) !important;
+}
+
+/* Keep active/hover confirmation gold on controls. */
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button[aria-pressed="true"],
+.peridot-search-workspace .peridot-search-panel-inset button[aria-selected="true"] {
+  border-color: var(--explore-gold-soft) !important;
+  background: var(--explore-gold) !important;
+  color: var(--explore-gold-text) !important;
+}
+
+/* The minimal Capabilities review layout should follow the same dark sage tone. */
+.peridot-search-capability-review-card,
+.peridot-search-capability-review-note {
+  border-color: rgba(221, 187, 105, 0.30) !important;
+  background: var(--explore-sage-surface) !important;
+  color: var(--explore-sage-text) !important;
+}
+
+.peridot-search-capability-review-grid + .peridot-search-capability-review-note {
+  background: var(--explore-sage-surface) !important;
+}
+
+
+/* Explore gold-default control/chip pass, 2026-06-19
+ * -------------------------------------------------
+ * After the sage-swap pass, the remaining bright cream/white chips, pills,
+ * buttons, and evidence strips were visually too stark. These elements now use
+ * Peridot gold by default, with a lighter gold hover/focus state. Larger
+ * information surfaces remain sage/pine.
+ */
+.peridot-search-workspace {
+  --explore-chip-gold: #cfa642;
+  --explore-chip-gold-deep: #bd9134;
+  --explore-chip-gold-light: #ead27b;
+  --explore-chip-gold-pale: #f0d98f;
+  --explore-chip-gold-text: #061d12;
+  --explore-chip-gold-border: rgba(246, 223, 150, 0.58);
+}
+
+/* Small pills/chips throughout Results, Browse, Refine, and Capability filters:
+ * default to gold rather than cream.
+ */
+.peridot-search-workspace article .rounded-full,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] .rounded-full,
+.peridot-search-workspace .peridot-search-capability-availability-meta strong,
+.peridot-search-workspace .peridot-search-capability-value,
+.peridot-search-workspace .peridot-search-capability-status,
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  border-color: var(--explore-chip-gold-border) !important;
+  background: var(--explore-chip-gold) !important;
+  color: var(--explore-chip-gold-text) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 5px 12px rgba(36, 30, 9, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.peridot-search-workspace article .rounded-full :is(span, strong),
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full :is(span, strong),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full :is(span, strong),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full :is(span, strong),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] .rounded-full :is(span, strong) {
+  color: var(--explore-chip-gold-text) !important;
+}
+
+/* Result evidence strips such as ENTITIES / PLACES were still pale cream.
+ * Make them gold objects inside sage result cards.
+ */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f2f6ee)]"],
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f4f6ed)]"] {
+  border-color: var(--explore-chip-gold-border) !important;
+  background: var(--explore-chip-gold) !important;
+  color: var(--explore-chip-gold-text) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div :is(dt, dd, span, strong),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f2f6ee)]"] :is(dt, dd, span, strong),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f4f6ed)]"] :is(dt, dd, span, strong) {
+  color: var(--explore-chip-gold-text) !important;
+}
+
+/* Repeated action buttons should also be gold by default, then lighten on hover. */
+.peridot-search-workspace article button:not(:disabled),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled),
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled),
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled) {
+  border-color: var(--explore-chip-gold-border) !important;
+  background: var(--explore-chip-gold) !important;
+  color: var(--explore-chip-gold-text) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 7px 15px rgba(36, 30, 9, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.peridot-search-workspace article button:not(:disabled) *,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled) *,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled) *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled) *,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled) *,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled) *,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled) *,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled) * {
+  color: var(--explore-chip-gold-text) !important;
+}
+
+/* Hover/highlight becomes lighter gold, matching the requested "highlight can
+ * become lighter" behavior instead of white.
+ */
+.peridot-search-workspace article .rounded-full:hover,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full:hover,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed:hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] .rounded-full:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] .rounded-full:hover,
+.peridot-search-workspace article button:not(:disabled):hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover,
+.peridot-search-workspace .peridot-search-panel-inset button[aria-pressed="true"],
+.peridot-search-workspace .peridot-search-panel-inset button[aria-selected="true"] {
+  border-color: rgba(255, 239, 179, 0.88) !important;
+  background: var(--explore-chip-gold-light) !important;
+  color: var(--explore-chip-gold-text) !important;
+  box-shadow:
+    0 9px 18px rgba(36, 30, 9, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36) !important;
+}
+
+.peridot-search-workspace article button:not(:disabled):hover *,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover *,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled):hover *,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-xl:not(:disabled):hover *,
+.peridot-search-workspace .peridot-search-panel-inset button.rounded-full:not(:disabled):hover *,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover *,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:not(:disabled):hover * {
+  color: var(--explore-chip-gold-text) !important;
+}
+
+/* Keep ordinary text inputs green/sage, not gold, so forms remain recognizable. */
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea) {
+  border-color: rgba(246, 223, 150, 0.20) !important;
+  background: var(--explore-sage-surface-alt) !important;
+  color: var(--explore-sage-text) !important;
+}
+
+
+/* Explore result-card pill/action gold alignment, 2026-06-19
+ * ---------------------------------------------------------
+ * The result-type pill and Inspect action in result cards were still reading as
+ * pale cream. Promote those repeated result-card controls to the same gold
+ * default used for evidence strips, with lighter gold on hover.
+ */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child .rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child span.rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child button.rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button.rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button[class*="rounded-full"],
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] span[class*="rounded-full"] {
+  border-color: var(--explore-chip-gold-border) !important;
+  background: var(--explore-chip-gold) !important;
+  color: var(--explore-chip-gold-text) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 5px 12px rgba(36, 30, 9, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child .rounded-full *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child span.rounded-full *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child button.rounded-full *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button.rounded-full *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button[class*="rounded-full"] *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] span[class*="rounded-full"] * {
+  color: var(--explore-chip-gold-text) !important;
+}
+
+/* The Inspect button may carry only text/button classes rather than an explicit
+ * bg token after earlier overrides; target the result-card action position too.
+ */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child > button,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > button,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button {
+  border-color: var(--explore-chip-gold-border) !important;
+  background: var(--explore-chip-gold) !important;
+  color: var(--explore-chip-gold-text) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child > button:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > button:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child .rounded-full:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] span[class*="rounded-full"]:hover {
+  border-color: rgba(255, 239, 179, 0.88) !important;
+  background: var(--explore-chip-gold-light) !important;
+  color: var(--explore-chip-gold-text) !important;
+  box-shadow:
+    0 9px 18px rgba(36, 30, 9, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36) !important;
+}

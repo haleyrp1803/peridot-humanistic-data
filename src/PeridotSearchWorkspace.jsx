@@ -80,12 +80,9 @@ import {
   getCapabilityFilterLabel,
 } from './peridotSearchResultHelpers.js';
 
-const SHELL_CLASS =
-  'rounded-[1.6rem] border border-[var(--peridot-color-hex-8fa582)] bg-[var(--peridot-color-hex-cfdfc5)] text-[var(--peridot-color-hex-203729)] shadow-[0_24px_70px_var(--peridot-color-rgba-rgba-0-0-0-0-22)]';
-const CARD_CLASS =
-  'rounded-[1.25rem] border border-[var(--peridot-color-hex-8fa582)] bg-[var(--peridot-color-hex-d8e6cf)] shadow-[0_12px_30px_var(--peridot-color-rgba-rgba-39-50-36-0-12)]';
-const PANEL_INSET_CLASS =
-  'rounded-[1rem] border border-[var(--peridot-color-hex-9fb28f)] bg-[var(--peridot-color-hex-c7d9bc)] shadow-inner shadow-white/20';
+const SHELL_CLASS = 'peridot-search-folio-shell text-[var(--peridot-color-hex-203729)]';
+const CARD_CLASS = 'peridot-search-tab-card';
+const PANEL_INSET_CLASS = 'peridot-search-panel-inset';
 const FIELD_LABEL_CLASS = 'block text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--peridot-color-hex-38553d)]';
 const MUTED_TEXT_CLASS = 'text-sm leading-5 text-[var(--peridot-color-hex-465d49)]';
 const PRIMARY_BUTTON_CLASS =
@@ -484,17 +481,6 @@ function AutocompleteTextInput({
   );
 }
 
-function AppliedScopeCard({ label, value }) {
-  return (
-    <div className="rounded-xl border border-[var(--peridot-color-hex-9fb28f)] bg-[var(--peridot-color-hex-dce9d2)] px-3 py-2 shadow-sm shadow-black/5">
-      <div className="text-[0.58rem] font-black uppercase tracking-[0.16em] text-[var(--peridot-color-hex-4b6a4b)]">
-        {label}
-      </div>
-      <div className="mt-0.5 truncate text-sm font-black text-[var(--peridot-color-hex-203729)]">{value}</div>
-    </div>
-  );
-}
-
 function SectionHeader({ eyebrow, title, children }) {
   return (
     <div>
@@ -509,24 +495,16 @@ function SectionHeader({ eyebrow, title, children }) {
   );
 }
 
-function SearchTabButton({ id, label, summary, active, onClick }) {
+function SearchTabButton({ id, stepNumber, label, summary, active, onClick }) {
   return (
     <button
       type="button"
       onClick={() => onClick(id)}
-      className={`rounded-[1rem] border px-4 py-2.5 text-left shadow-sm transition duration-150 active:translate-y-[1px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--peridot-color-hex-78976a-a55)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--peridot-color-hex-cfdfc5)] ${
-        active
-          ? 'border-[var(--peridot-color-hex-6f8e62)] bg-[var(--peridot-color-hex-86a96f)] text-[var(--peridot-color-hex-fffaf0)] shadow-[0_10px_20px_var(--peridot-color-rgba-rgba-55-79-52-0-20)]'
-          : 'border-[var(--peridot-color-hex-9fb28f)] bg-[var(--peridot-color-hex-c6d9bb)] text-[var(--peridot-color-hex-274633)] hover:border-[var(--peridot-color-hex-74897a)] hover:bg-[var(--peridot-color-hex-b7cda9)] hover:shadow-[0_7px_16px_var(--peridot-color-rgba-rgba-39-50-36-0-10)] active:bg-[var(--peridot-color-hex-a8c097)]'
-      }`}
+      title={summary}
+      className={`peridot-search-step-button ${active ? 'peridot-search-step-button-active' : ''}`}
     >
-      <span className={`block text-[0.58rem] font-black uppercase tracking-[0.17em] ${active ? 'text-[var(--peridot-color-hex-fff5d9-a82)]' : 'text-[var(--peridot-color-hex-4b6a4b)]'}`}>
-        {id === 'build' ? 'Step 1' : id === 'browse' ? 'Step 2' : id === 'results' ? 'Step 3' : 'Step 4'}
-      </span>
-      <span className="mt-0.5 block text-base font-black">{label}</span>
-      <span className={`mt-0.5 block text-xs leading-4 ${active ? 'text-[var(--peridot-color-hex-fffaf0-a82)]' : 'text-[var(--peridot-color-hex-4f654d)]'}`}>
-        {summary}
-      </span>
+      <span className="peridot-search-step-number">{stepNumber}</span>
+      <span className="peridot-search-step-label">{label}</span>
     </button>
   );
 }
@@ -638,11 +616,6 @@ function BrowseIndexGroup({ group, onChooseBrowseItem }) {
 }
 
 function SearchResultCard({ result, onInspectSearchResult }) {
-  const visibleMatches = result.matchedFields.slice(0, 3);
-  const hiddenMatchCount = Math.max(0, result.matchedFields.length - visibleMatches.length);
-  const visibleBadges = result.capabilityBadges.slice(0, 4);
-  const hiddenBadgeCount = Math.max(0, result.capabilityBadges.length - visibleBadges.length);
-
   return (
     <article className="rounded-[1rem] border border-[var(--peridot-color-hex-9fb28f)] bg-[var(--peridot-color-hex-d3e3c8)] p-3 text-[var(--peridot-color-hex-203729)] shadow-[0_8px_18px_var(--peridot-color-rgba-rgba-39-50-36-0-08)] transition duration-150 hover:-translate-y-0.5 hover:border-[var(--peridot-color-hex-74897a)] hover:bg-[var(--peridot-color-hex-deebd5)] hover:shadow-[0_12px_26px_var(--peridot-color-rgba-rgba-39-50-36-0-13)]">
       <div className="flex items-start justify-between gap-3">
@@ -675,46 +648,9 @@ function SearchResultCard({ result, onInspectSearchResult }) {
         </div>
       </dl>
 
-      <div className="mt-2 flex flex-wrap gap-1.5">
-        {visibleMatches.length ? (
-          visibleMatches.map((match) => (
-            <span
-              key={`${match.label}-${match.value}`}
-              title={`${match.label}: ${match.value}`}
-              className="max-w-full truncate rounded-full border border-[var(--peridot-color-hex-b8c8aa)] bg-[var(--peridot-color-hex-e2eed8)] px-2 py-0.5 text-[0.68rem] font-semibold text-[var(--peridot-color-hex-344a38)]"
-            >
-              <span className="font-black">{match.label}:</span> {match.value}
-            </span>
-          ))
-        ) : (
-          <span className="rounded-full border border-[var(--peridot-color-hex-b8c8aa)] bg-[var(--peridot-color-hex-e2eed8)] px-2 py-0.5 text-[0.68rem] font-semibold text-[var(--peridot-color-hex-465d49)]">
-            In current applied scope
-          </span>
-        )}
-        {hiddenMatchCount > 0 ? (
-          <span className="rounded-full border border-[var(--peridot-color-hex-b8c8aa)] bg-[var(--peridot-color-hex-d7e6cc)] px-2 py-0.5 text-[0.68rem] font-black text-[var(--peridot-color-hex-38553d)]">
-            +{hiddenMatchCount} matches
-          </span>
-        ) : null}
-      </div>
-
-      {visibleBadges.length ? (
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {visibleBadges.map((badge) => (
-            <span
-              key={badge}
-              className="rounded-full border border-[var(--peridot-color-hex-9db48e)] bg-[var(--peridot-color-hex-d7e6cc)] px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] text-[var(--peridot-color-hex-274633)]"
-            >
-              {badge}
-            </span>
-          ))}
-          {hiddenBadgeCount > 0 ? (
-            <span className="rounded-full border border-[var(--peridot-color-hex-9db48e)] bg-[var(--peridot-color-hex-eaf3e1)] px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em] text-[var(--peridot-color-hex-274633)]">
-              +{hiddenBadgeCount}
-            </span>
-          ) : null}
-        </div>
-      ) : null}
+      {/* Result cards intentionally omit scope and capability badge rows.
+          The Results tab itself represents the current applied scope, and
+          workflow-readiness information now lives in the Capabilities tab. */}
     </article>
   );
 }
@@ -1421,41 +1357,83 @@ export function PeridotSearchWorkspace({
     </div>
   );
 
-  const renderCapabilities = () => (
-    <div className="space-y-4">
-      <SectionHeader eyebrow="Step 5" title="What this data can support">
-        Review the loaded records and current applied search scope before moving into visualizations, charts, export, or Inspector evidence review.
-      </SectionHeader>
+  const renderCapabilities = () => {
+    const loadedCount = Array.isArray(browseRows) ? browseRows.length : 0;
+    const appliedCount = Array.isArray(searchRows) ? searchRows.length : 0;
+    const readyCapabilityCount = capabilityRows.filter((row) => row.ready).length;
+    const unavailableRows = capabilityRows.filter((row) => !row.ready);
 
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {capabilityRows.map((row) => (
-          <article
-            key={row.label}
-            className="rounded-[1.1rem] border border-[var(--peridot-color-hex-6f836d)] bg-[var(--peridot-color-hex-74897a)] p-4 text-[var(--peridot-color-hex-f7fbf0)] shadow-[0_10px_24px_var(--peridot-color-rgba-rgba-32-55-40-0-14)]"
-          >
-            <div className="flex items-start justify-between gap-3">
+    return (
+      <div className="space-y-4">
+        <SectionHeader eyebrow="Step 5" title="Capabilities">
+          Review what the loaded and applied records can support before moving into visualizations, charts, export, or Inspector evidence review.
+        </SectionHeader>
+
+        <div className="peridot-search-capability-review-grid">
+          <section className="peridot-search-capability-review-card">
+            <div className={FIELD_LABEL_CLASS}>Scope status</div>
+            <div className="peridot-search-capability-scope-list">
               <div>
-                <div className="text-[0.62rem] font-black uppercase tracking-[0.14em] text-[var(--peridot-color-hex-e8f1de)]">Tool check</div>
-                <h3 className="mt-1 text-base font-black text-[var(--peridot-role-interface-text-inverse)]">{row.label}</h3>
+                <span>Loaded records</span>
+                <strong>{loadedCount}</strong>
               </div>
-              <span className={[
-                'rounded-full border px-2.5 py-1 text-[0.68rem] font-black uppercase tracking-[0.12em]',
-                row.ready
-                  ? 'border-[var(--peridot-color-hex-dce9d2-a70)] bg-[var(--peridot-color-hex-dce9d2)] text-[var(--peridot-color-hex-244c35)]'
-                  : 'border-[var(--peridot-color-hex-f0d7a8-a70)] bg-[var(--peridot-color-hex-f5e0b6)] text-[var(--peridot-color-hex-5d3d16)]',
-              ].join(' ')}>
-                {row.statusLabel || (row.ready ? 'Available' : 'Not available')}
-              </span>
+              <div>
+                <span>Applied result scope</span>
+                <strong>{appliedCount}</strong>
+              </div>
+              <div>
+                <span>Timeline</span>
+                <strong>{currentRangeLabel}</strong>
+              </div>
+              <div>
+                <span>Minimum route weight</span>
+                <strong>{currentMinCountLabel}</strong>
+              </div>
+              <div>
+                <span>Draft state</span>
+                <strong>{hasDraftChanges ? 'Pending changes' : 'Current'}</strong>
+              </div>
             </div>
-            <div className="mt-3 rounded-xl border border-[var(--peridot-color-hex-dce9d2-a35)] bg-[var(--peridot-color-hex-506a57-a55)] px-3 py-2 text-sm font-black text-[var(--peridot-role-interface-text-inverse)]">
-              {row.value}
+          </section>
+
+          <section className="peridot-search-capability-review-card">
+            <div className={FIELD_LABEL_CLASS}>Tool availability</div>
+            <div className="peridot-search-capability-availability-list">
+              {capabilityRows.map((row) => (
+                <article key={row.label} className="peridot-search-capability-availability-row">
+                  <div>
+                    <h3>{row.label}</h3>
+                    <p>{row.note}</p>
+                  </div>
+                  <div className="peridot-search-capability-availability-meta">
+                    <strong>{row.value}</strong>
+                    <span className={[
+                      'peridot-search-capability-status',
+                      row.ready ? 'peridot-search-capability-status-ready' : 'peridot-search-capability-status-missing',
+                    ].join(' ')}>
+                      {row.statusLabel || (row.ready ? 'Available' : 'Not available')}
+                    </span>
+                  </div>
+                </article>
+              ))}
             </div>
-            <p className="mt-3 text-sm leading-6 text-[var(--peridot-color-hex-f0f6ea)]">{row.note}</p>
-          </article>
-        ))}
+          </section>
+        </div>
+
+        <div className="peridot-search-capability-review-note">
+          <div>
+            <span className={FIELD_LABEL_CLASS}>Review note</span>
+            <p>
+              {unavailableRows.length
+                ? `${unavailableRows.length} capability ${unavailableRows.length === 1 ? 'area is' : 'areas are'} not available for the current scope.`
+                : `${readyCapabilityCount} capability checks are available for the current scope.`}
+              {' '}Data that cannot support one visualization can still remain available for search, Inspector review, charting, or export when its mapped fields support those tools.
+            </p>
+          </div>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderRefineInspect = () => (
     <div className="space-y-4">
@@ -1490,19 +1468,21 @@ export function PeridotSearchWorkspace({
   );
 
   return (
-    <section className="min-h-full bg-[radial-gradient(circle_at_top_left,var(--peridot-color-rgba-rgba-196-215-184-0-28),transparent_28%),linear-gradient(135deg,var(--peridot-role-interface-app-background-alt)_0%,var(--peridot-role-interface-panel-background)_50%,var(--peridot-role-interface-workspace-background)_100%)] px-6 py-5 text-[var(--peridot-color-hex-203729)]">
+    <section className="peridot-search-workspace min-h-full px-6 py-5 text-[var(--peridot-color-hex-203729)]">
       <div className="mx-auto max-w-[1380px]">
-        <div className={SHELL_CLASS + ' overflow-hidden'}>
-          <header className="border-b border-[var(--peridot-color-hex-9fb28f)] bg-[var(--peridot-color-hex-cfdfc5)] p-4">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="max-w-3xl">
-                <div className="text-[0.66rem] font-black uppercase tracking-[0.22em] text-[var(--peridot-color-hex-667960)]">Search workspace</div>
-                <h1 className="mt-2 text-3xl font-black tracking-tight text-[var(--peridot-color-hex-263d2e)]">Advanced Search</h1>
-                <p className="mt-2 text-sm leading-6 text-[var(--peridot-color-hex-5a6659)]">
-                  Build a draft query, browse dataset-wide indexes, review applied results, refine with facets, check what the data can support, and open records in Inspector.
+        <div className={SHELL_CLASS}>
+          <header className="peridot-search-folio-header">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0 max-w-3xl">
+                <div className="text-[0.62rem] font-black uppercase tracking-[0.24em] text-[var(--peridot-role-ornament-sparkle)]">Explore workspace</div>
+                <h1 className="mt-1.5 font-serif text-[clamp(2rem,3.2vw,3rem)] font-black leading-none tracking-[-0.045em] text-[var(--peridot-role-interface-text-on-dark)]">
+                  Advanced Search
+                </h1>
+                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--peridot-role-interface-text-muted-on-dark)]">
+                  Build a draft query, browse indexes, review results, refine scope, check capabilities, and open records in Inspector.
                 </p>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 xl:justify-end">
                 <button type="button" onClick={onOpenVisualizations} className={SECONDARY_BUTTON_CLASS}>
                   Open visualizations
                 </button>
@@ -1515,32 +1495,26 @@ export function PeridotSearchWorkspace({
               </div>
             </div>
 
-            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-6">
-              <AppliedScopeCard label="Records in scope" value={`${searchRows?.length || 0} records`} />
-              <AppliedScopeCard label="Timeline" value={currentRangeLabel} />
-              <AppliedScopeCard label="Minimum" value={currentMinCountLabel} />
-              <AppliedScopeCard label="Capabilities" value={activeCapabilityLabel} />
-              <AppliedScopeCard label="Criteria" value={activeStructuredLabel} />
-              <AppliedScopeCard label="Draft state" value={hasDraftChanges ? 'Draft changes pending' : 'Applied state current'} />
-            </div>
           </header>
 
           {filterStatusMessage ? (
-            <div className="border-b border-[var(--peridot-color-hex-9fb28f)] bg-[var(--peridot-color-hex-b7cda9)] px-4 py-2 text-sm font-bold text-[var(--peridot-color-hex-203729)]">
+            <div className="peridot-search-status-message">
               {filterStatusMessage}
             </div>
           ) : null}
 
-          <nav className="grid gap-2 border-b border-[var(--peridot-color-hex-9fb28f)] bg-[var(--peridot-color-hex-b7cda9)] p-4 md:grid-cols-2 xl:grid-cols-5" aria-label="Advanced Search workflow tabs">
+          <nav className="peridot-search-step-rail" aria-label="Advanced Search workflow tabs">
             <SearchTabButton
               id="build"
-              label="Build Search"
+              stepNumber="1"
+              label="Build"
               summary="Draft criteria and capability filters"
               active={activeTab === 'build'}
               onClick={setActiveTab}
             />
             <SearchTabButton
               id="browse"
+              stepNumber="2"
               label="Browse"
               summary="Dataset-wide people, places, routes, and evidence"
               active={activeTab === 'browse'}
@@ -1548,6 +1522,7 @@ export function PeridotSearchWorkspace({
             />
             <SearchTabButton
               id="results"
+              stepNumber="3"
               label="Results"
               summary={`${searchRows?.length || 0} records currently applied`}
               active={activeTab === 'results'}
@@ -1555,13 +1530,15 @@ export function PeridotSearchWorkspace({
             />
             <SearchTabButton
               id="refine"
-              label="Refine / Inspect"
+              stepNumber="4"
+              label="Refine"
               summary="Facet counts and Inspector guidance"
               active={activeTab === 'refine'}
               onClick={setActiveTab}
             />
             <SearchTabButton
               id="capabilities"
+              stepNumber="5"
               label="Capabilities"
               summary="What this data can do"
               active={activeTab === 'capabilities'}
@@ -1569,7 +1546,7 @@ export function PeridotSearchWorkspace({
             />
           </nav>
 
-          <main className="bg-[var(--peridot-color-hex-cfdfc5)] p-4">
+          <main className="peridot-search-folio-body">
             <div className={CARD_CLASS + ' p-4'}>
               {activeTab === 'build' ? renderBuildSearch() : null}
               {activeTab === 'browse' ? renderBrowse() : null}
