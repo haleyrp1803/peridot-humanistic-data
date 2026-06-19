@@ -5720,3 +5720,44 @@ textarea {
 .peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button * {
   color: var(--explore-readable-pine) !important;
 }
+
+/* Explore Build cream-panel text correction, 2026-06-19
+ * ------------------------------------------------------
+ * Surgical follow-up: keep the current Explore layout/colors intact and only
+ * correct text that sits on cream/parchment Build panels. The prior palette
+ * layers intentionally use pale gold/cream text on dark pine surfaces; those
+ * colors become illegible when the same utility classes are inside the cream
+ * form panels. These selectors are scoped to the Build panel inset text
+ * patterns and do not alter panel backgrounds, tab rails, buttons, or layout.
+ */
+.peridot-search-workspace .peridot-search-panel-inset :is(label, div)[class*="text-[0.62rem]"][class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-panel-inset :is(label, div)[class*="text-[0.62rem]"][class*="tracking-[0.15em]"],
+.peridot-search-workspace .peridot-search-panel-inset :is(label, div)[class*="font-black"][class*="uppercase"] {
+  color: #071d10 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset p[class*="text-xs"],
+.peridot-search-workspace .peridot-search-panel-inset p[class*="leading-5"],
+.peridot-search-workspace .peridot-search-panel-inset :is(p, small)[class*="text-[var(--peridot-color-hex-4f654d)]"],
+.peridot-search-workspace .peridot-search-panel-inset :is(p, small)[class*="text-[var(--peridot-color-hex-465d49)]"] {
+  color: #102313 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed :is(p, span, div, strong) {
+  color: #071d10 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset input,
+.peridot-search-workspace .peridot-search-panel-inset select,
+.peridot-search-workspace .peridot-search-panel-inset textarea {
+  color: #071d10 !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset input::placeholder,
+.peridot-search-workspace .peridot-search-panel-inset textarea::placeholder {
+  color: rgba(7, 29, 16, 0.68) !important;
+}
