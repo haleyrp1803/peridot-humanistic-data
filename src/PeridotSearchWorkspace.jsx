@@ -1412,6 +1412,8 @@ export function PeridotSearchWorkspace({
         </div>
       </div>
 
+      <ExploreDivider className="peridot-search-build-divider-before-criteria" />
+
       <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel p-4'}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
@@ -1458,6 +1460,7 @@ export function PeridotSearchWorkspace({
         </div>
       </div>
 
+      <ExploreDivider className="peridot-search-build-divider-after-criteria" />
 
       <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel p-4'}>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -1483,6 +1486,7 @@ export function PeridotSearchWorkspace({
           ))}
         </div>
       </div>
+
 
       <div className="peridot-search-status-strip flex flex-wrap items-center justify-between gap-2 rounded-[1rem] border p-3 shadow-sm shadow-black/5">
         <p className="peridot-search-status-strip-text text-xs font-semibold leading-5">

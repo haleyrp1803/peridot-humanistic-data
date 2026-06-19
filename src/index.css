@@ -3548,3 +3548,138 @@ textarea {
     justify-content: space-between;
   }
 }
+
+
+/* Explore Build divider rhythm refinement, 2026-06-19.
+ * Scope: Build page only. The divider component dimensions remain unchanged;
+ * these rules tune vertical spacing so the repeated ornaments read as a
+ * consistent section rhythm rather than different-sized dividers.
+ */
+.peridot-search-workspace .peridot-search-build-divider-before-criteria {
+  margin-top: 0.08rem;
+  margin-bottom: 0.24rem;
+}
+
+.peridot-search-workspace .peridot-search-build-divider-after-criteria {
+  margin-top: 0.24rem;
+  margin-bottom: 0.28rem;
+}
+
+.peridot-search-workspace .peridot-search-build-divider-after-capabilities {
+  margin-top: 0.34rem;
+  margin-bottom: 0.62rem;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-build-divider-before-criteria {
+    margin-top: 0.02rem;
+    margin-bottom: 0.16rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-divider-after-criteria {
+    margin-top: 0.16rem;
+    margin-bottom: 0.18rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-divider-after-capabilities {
+    margin-top: 0.24rem;
+    margin-bottom: 0.46rem;
+  }
+}
+
+/* Explore Results compact-row fit adjustment, 2026-06-19.
+ * Scope: Results tab only. Reduce ledger row height enough for the default
+ * 10-row view to fit in the Explore viewport without changing pagination,
+ * route-aware columns, Inspect handoff, or other Explore tabs.
+ */
+.peridot-search-workspace .peridot-search-results-ledger {
+  padding: 0.44rem;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-toolbar {
+  margin-bottom: 0.32rem;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header {
+  padding: 0.10rem 0.52rem 0.28rem;
+  font-size: 0.54rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-body {
+  gap: 0.26rem;
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-card,
+.peridot-search-workspace .peridot-search-results-ledger-row {
+  min-height: 0;
+  border-radius: 0.68rem;
+  padding: 0.34rem 0.48rem;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date {
+  font-size: 0.74rem;
+  line-height: 1.05;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-title {
+  font-size: 0.80rem;
+  line-height: 1.08;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-meta-value {
+  font-size: 0.72rem;
+  line-height: 1.08;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-inspect-action {
+  min-width: 4.65rem;
+  padding: 0.34rem 0.66rem;
+  font-size: 0.70rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination {
+  gap: 0.34rem;
+  margin-top: 0.44rem;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button,
+.peridot-search-workspace .peridot-search-results-pagination-current,
+.peridot-search-workspace .peridot-search-results-pagination-ellipsis {
+  min-width: 2rem;
+  border-radius: 0.58rem;
+  padding: 0.38rem 0.62rem;
+  font-size: 0.74rem;
+}
+
+.peridot-search-workspace .peridot-search-results-page-size select {
+  padding-top: 0.28rem;
+  padding-bottom: 0.28rem;
+}
+
+/* Explore Results row-weight correction, 2026-06-19.
+ * Scope: Results tab only. Match Date and Source entity weights to the other
+ * row cells so each ledger item reads as a single even table row; headers and
+ * Inspect actions retain their existing emphasis.
+ */
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date,
+.peridot-search-workspace .peridot-search-result-ledger-source-entity-cell .peridot-search-result-title {
+  font-weight: 700;
+}
+
+/* Explore Results descender clipping correction, 2026-06-19.
+ * Scope: Results tab only. The compact row pass made line boxes tight enough
+ * that descenders such as g, y, p, q, and j could be clipped by the ellipsis
+ * spans. Keep the compact table height, but give text a safer line box so
+ * glyphs render cleanly.
+ */
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date,
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-title,
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-meta-value {
+  line-height: 1.24;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-cell {
+  overflow: visible;
+}
