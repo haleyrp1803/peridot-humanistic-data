@@ -515,7 +515,7 @@ function SearchTabButton({ id, stepNumber, label, summary, active, onClick }) {
       type="button"
       onClick={() => onClick(id)}
       title={summary}
-      className={`peridot-search-step-button ${active ? 'peridot-search-step-button-active' : ''}`}
+      className={`peridot-search-step-button peridot-search-step-button-${id} ${active ? 'peridot-search-step-button-active' : ''}`}
     >
       <span className="peridot-search-step-number">{stepNumber}</span>
       <span className="peridot-search-step-label">{label}</span>
@@ -1918,10 +1918,10 @@ export function PeridotSearchWorkspace({
   );
 
   return (
-    <section className="peridot-search-workspace min-h-full px-6 py-5">
+    <section className="peridot-search-workspace peridot-search-workspace-animated min-h-full px-6 py-5">
       <div className="mx-auto max-w-[1380px]">
-        <div className={SHELL_CLASS}>
-          <header className="peridot-search-folio-header">
+        <div className={`${SHELL_CLASS} peridot-search-enter-shell`}>
+          <header className="peridot-search-folio-header peridot-search-enter-header">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0 max-w-3xl">
                 <div className="peridot-search-workspace-kicker text-[0.62rem] font-black uppercase tracking-[0.24em]">Explore workspace</div>
@@ -1953,7 +1953,7 @@ export function PeridotSearchWorkspace({
             </div>
           ) : null}
 
-          <nav className="peridot-search-step-rail" aria-label="Advanced Search workflow tabs">
+          <nav className="peridot-search-step-rail peridot-search-enter-step-rail" aria-label="Advanced Search workflow tabs">
             <SearchTabButton
               id="build"
               stepNumber="1"
@@ -1996,13 +1996,15 @@ export function PeridotSearchWorkspace({
             />
           </nav>
 
-          <main className="peridot-search-folio-body">
-            <div className={CARD_CLASS + ' p-4'}>
-              {activeTab === 'build' ? renderBuildSearch() : null}
-              {activeTab === 'browse' ? renderBrowse() : null}
-              {activeTab === 'results' ? renderResults() : null}
-              {activeTab === 'refine' ? renderRefineInspect() : null}
-              {activeTab === 'capabilities' ? renderCapabilities() : null}
+          <main className="peridot-search-folio-body peridot-search-enter-body">
+            <div className={CARD_CLASS + ' peridot-search-active-card p-4'}>
+              <div key={activeTab} className={`peridot-search-tab-motion peridot-search-tab-motion-${activeTab}`}>
+                {activeTab === 'build' ? renderBuildSearch() : null}
+                {activeTab === 'browse' ? renderBrowse() : null}
+                {activeTab === 'results' ? renderResults() : null}
+                {activeTab === 'refine' ? renderRefineInspect() : null}
+                {activeTab === 'capabilities' ? renderCapabilities() : null}
+              </div>
             </div>
           </main>
         </div>
