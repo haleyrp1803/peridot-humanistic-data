@@ -273,7 +273,7 @@ function CapabilityAuditCard({ audit, note }) {
 
 function MappingIntroCard({ eyebrow, title, children }) {
   return (
-    <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+    <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-snug text-[var(--panel-card-muted-text)]">
       <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">{eyebrow}</div>
       <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">{title}</div>
       {children ? <div className="mt-1 text-xs leading-relaxed">{children}</div> : null}
@@ -410,55 +410,249 @@ function refreshWorkbookCustomSelections({ workbookModel, workbookMapping, previ
 }
 
 
-function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilityAudit }) {
-  const warnings = summary?.warnings || [];
+const REVIEW_CAPABILITY_ITEMS = Object.freeze([
+  Object.freeze({ label: 'Inspector', key: 'inspectorReady' }),
+  Object.freeze({ label: 'Search', key: 'searchReady' }),
+  Object.freeze({ label: 'Point map', key: 'pointMapReady' }),
+  Object.freeze({ label: 'Route map', key: 'routeMapReady' }),
+  Object.freeze({ label: 'Network', key: 'networkReady' }),
+  Object.freeze({ label: 'Timeline', key: 'timelineReady' }),
+  Object.freeze({ label: 'Charts', key: 'chartReady' }),
+  Object.freeze({ label: 'Export', key: 'exportReady' }),
+]);
+
+function GoldDiamondDivider() {
+  return (
+    <div className="flex items-center gap-3 py-1" aria-hidden="true">
+      <div className="h-px flex-1 bg-[var(--button-primary-bg)] opacity-85" />
+      <div className="h-2.5 w-2.5 rotate-45 border border-[var(--button-primary-active-border)] bg-[var(--button-primary-bg)] opacity-85" />
+      <div className="h-px flex-1 bg-[var(--button-primary-bg)] opacity-85" />
+    </div>
+  );
+}
+
+function getReviewTotalRows(capabilityAudit, fallbackTotal = 0) {
+  return capabilityAudit?.dataset?.totalRows || fallbackTotal || 0;
+}
+
+function getReviewCapabilityCount(capabilityAudit, key) {
+  return capabilityAudit?.dataset?.capabilityCounts?.[key] ?? 0;
+}
+
+function getReviewCapabilityStatus(count, totalRows) {
+  if (!totalRows || count <= 0) return 'Unavailable';
+  if (count >= totalRows) return 'Available';
+  return 'Partial';
+}
+
+function getReviewCapabilityClass(status) {
+  if (status === 'Available') {
+    return 'border-[var(--button-primary-active-border)] bg-[var(--button-primary-active-bg)] text-[var(--button-primary-text)]';
+  }
+  if (status === 'Partial') {
+    return 'border-[var(--button-primary-border)] bg-[var(--button-primary-bg)]/75 text-[var(--button-primary-text)]';
+  }
+  return 'border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 text-[var(--panel-card-muted-text)]';
+}
+
+function estimateWarningRowCount(message = '') {
+  const rowListMatch = message.match(/Rows?\s+(.+?)\s+(?:do|does|are|is|include|includes|have|has|will|cannot)/i);
+  const moreMatch = message.match(/and\s+(\d+)\s+more/i);
+  let explicitRows = 0;
+
+  if (rowListMatch?.[1]) {
+    explicitRows = (rowListMatch[1].match(/\d+/g) || []).length;
+  }
+
+  return explicitRows + (moreMatch ? Number(moreMatch[1]) : 0);
+}
+
+function simplifyReviewWarningText(message = '') {
+  return String(message || '')
+    .replace(/\s+/g, ' ')
+    .replace(/\s*They will be available for search, Inspector, charts, and export (?:if|when|where) otherwise accepted, but they will /gi, ' They will ')
+    .replace(/\s*They will be available for search, Inspector, charts, and export (?:if|when|where) otherwise accepted, but they cannot /gi, ' They cannot ')
+    .replace(/\s*They will be available for Inspector, Advanced Search, charts, and export (?:if|when|where) otherwise accepted\.\s*/gi, ' ')
+    .replace(/\s*They will be available for search and inspection features (?:if|when|where) otherwise accepted\.\s*/gi, ' ')
+    .replace(/\s*They will remain available for search and inspection features (?:if|when|where) otherwise accepted\.\s*/gi, ' ')
+    .replace(/\s*Data mapped for unavailable visualizations will still remain available for search and inspection (?:if|when|where) otherwise accepted\.\s*/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getReviewWarningLabel(message = '', fallbackIndex = 0) {
+  if (/coordinate|latitude|longitude|map rendering/i.test(message)) return 'Coordinates';
+  if (/date|timeline|date-range/i.test(message)) return 'Dates';
+  if (/sheet|join|id|mapping|place information/i.test(message)) return 'Mapping';
+  if (/record|row|source_name|target_name/i.test(message)) return 'Records';
+  return `Warning ${fallbackIndex + 1}`;
+}
+
+function getReviewWarningRowsPhrase(message = '') {
+  const match = String(message || '').match(/Rows?\s+(.+?)\s+(?:do|does|are|is|include|includes|have|has|will|cannot|may)/i);
+  return match?.[1] ? `Rows ${match[1].trim()}` : 'Some rows';
+}
+
+function buildConsolidatedCoordinateWarning(coordinateWarnings = []) {
+  if (!coordinateWarnings.length) return null;
+
+  const rowsPhrase = getReviewWarningRowsPhrase(coordinateWarnings[0].text);
+  return {
+    label: 'Coordinates',
+    text: `${rowsPhrase} have missing, incomplete, invalid, or out-of-range coordinates. They may not appear in map-based visualizations.`,
+  };
+}
+
+function buildReviewWarningItems(warnings = []) {
+  const coordinateWarnings = [];
+  const otherWarnings = [];
+
+  warnings.forEach((warning, index) => {
+    const message = simplifyReviewWarningText(warning?.message || '');
+    if (!message) return;
+
+    const label = getReviewWarningLabel(message, index);
+    const item = { label, text: message };
+
+    if (label === 'Coordinates') {
+      coordinateWarnings.push(item);
+      return;
+    }
+
+    otherWarnings.push(item);
+  });
+
+  const consolidatedCoordinates = buildConsolidatedCoordinateWarning(coordinateWarnings);
+  const orderedItems = [];
+  const firstCoordinateIndex = warnings.findIndex((warning) => {
+    const message = simplifyReviewWarningText(warning?.message || '');
+    return getReviewWarningLabel(message) === 'Coordinates';
+  });
+
+  otherWarnings.forEach((item, index) => {
+    if (consolidatedCoordinates && index === firstCoordinateIndex) {
+      orderedItems.push(consolidatedCoordinates);
+    }
+    orderedItems.push(item);
+  });
+
+  if (consolidatedCoordinates && !orderedItems.includes(consolidatedCoordinates)) {
+    orderedItems.push(consolidatedCoordinates);
+  }
+
+  return orderedItems;
+}
+
+function getReviewWarningDisplayCount(warnings = [], validationIssues = []) {
+  return buildReviewWarningItems(warnings).length + validationIssues.length;
+}
+
+
+function ReviewImportSummaryStrip({ acceptedRecords = 0, warningCount = 0 }) {
+  return (
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] px-4 py-3">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Review import</div>
+      <div className="mt-1 text-sm font-semibold text-[var(--panel-card-text)]">
+        {formatPreviewCount(acceptedRecords)} record{Number(acceptedRecords) === 1 ? '' : 's'} · {formatPreviewCount(warningCount)} warning{Number(warningCount) === 1 ? '' : 's'}
+      </div>
+    </div>
+  );
+}
+
+function ReviewStatusPanel({ acceptedRecords = 0, warningCount = 0, capabilityAudit }) {
+  const totalRows = getReviewTotalRows(capabilityAudit, acceptedRecords);
 
   return (
-    <div className="space-y-4">
-      <ReviewSummaryStrip
-        items={[
-          { label: 'Accepted records', value: summary?.acceptedRecordCount ?? 0 },
-          { label: 'Map available', value: summary?.capabilityCounts?.mapReady ?? 0 },
-          { label: 'Timeline available', value: summary?.capabilityCounts?.timelineReady ?? 0 },
-          { label: 'Warnings', value: warnings.length },
-        ]}
-      />
-
-      <CapabilityAuditCard
-        audit={capabilityAudit}
-        note="This audit is based on the mapped rows Peridot will import if you confirm this table. It explains tool availability but does not block otherwise accepted records."
-      />
-
-      {!validation?.isValid ? (
-        <div className="rounded-2xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] p-4 text-sm text-[var(--peridot-role-status-warning-text)]">
-          <div className="font-semibold">Mapping issues</div>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {(validation?.issues || []).map((issue) => (
-              <li key={`${issue.code}-${issue.field || issue.sourceColumn}`}>{issue.message}</li>
-            ))}
-          </ul>
+    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-snug text-[var(--panel-card-muted-text)]">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Import status</div>
+      <div className="mt-1.5 grid gap-1.5">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-3 py-1.5">
+          <span className="font-semibold text-[var(--panel-card-text)]">Accepted records</span>
+          <span>{formatPreviewCount(acceptedRecords)}</span>
         </div>
-      ) : null}
-
-      {warnings.length ? (
-        <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-          <div className="font-semibold text-[var(--panel-card-text)]">Import warning preview</div>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            {warnings.slice(0, 8).map((warning, index) => (
-              <li key={`${warning.code || 'warning'}-${index}`}>{warning.message}</li>
-            ))}
-            {warnings.length > 8 ? <li>{warnings.length - 8} more warnings will be shown after import.</li> : null}
-          </ul>
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 px-3 py-1.5">
+          <span className="font-semibold text-[var(--panel-card-text)]">Warnings</span>
+          <span>{formatPreviewCount(warningCount)}</span>
         </div>
-      ) : (
-        <div className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm text-[var(--panel-card-muted-text)]">
-          No mapping warnings detected in the staged data.
-        </div>
-      )}
+      </div>
 
-      <div>
-        <div className="mb-2 text-sm font-semibold text-[var(--panel-card-text)]">Mapped row preview</div>
-        <PreviewTable rows={mappedPreviewRows} headers={headers} maxRows={3} />
+      <div className="my-2">
+        <GoldDiamondDivider />
+      </div>
+
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Tool availability</div>
+      <div className="mt-1.5 grid gap-1.5">
+        {REVIEW_CAPABILITY_ITEMS.map((item) => {
+          const count = getReviewCapabilityCount(capabilityAudit, item.key);
+          const status = getReviewCapabilityStatus(count, totalRows);
+          return (
+            <div
+              key={item.key}
+              className={[
+                'flex items-center justify-between gap-3 rounded-xl border px-3 py-1.5 text-xs',
+                getReviewCapabilityClass(status),
+              ].join(' ')}
+            >
+              <span className="font-semibold">{item.label}</span>
+              <span>{status}{totalRows ? ` · ${formatPreviewCount(count)} / ${formatPreviewCount(totalRows)}` : ''}</span>
+            </div>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
+
+function ReviewWarningsCard({ warnings = [], validationIssues = [] }) {
+  const warningItems = buildReviewWarningItems(warnings);
+  const hasValidationIssues = validationIssues.length > 0;
+
+  if (!warningItems.length && !hasValidationIssues) {
+    return (
+      <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-snug text-[var(--panel-card-muted-text)]">
+        <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Warnings to review</div>
+        <p className="mt-2">No warnings detected.</p>
+      </aside>
+    );
+  }
+
+  return (
+    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-snug text-[var(--panel-card-muted-text)]">
+      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Warnings to review</div>
+      <div className="mt-3 grid gap-2">
+        {warningItems.map((warning, index) => (
+          <div key={`${warning.label}-${index}`} className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
+            <span className="font-semibold text-[var(--panel-card-text)]">{warning.label}:</span> {warning.text}
+          </div>
+        ))}
+        {hasValidationIssues ? (
+          <div className="rounded-xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] px-3 py-2 text-sm leading-relaxed text-[var(--peridot-role-status-warning-text)]">
+            <span className="font-semibold">Mapping issues:</span> {validationIssues.map((issue) => issue.message).join(' ')}
+          </div>
+        ) : null}
+      </div>
+      <p className="mt-3 text-sm font-semibold leading-relaxed text-[var(--panel-card-text)]">
+        Data that cannot be used in one or more visualizations will still be available for search and inspection features.
+      </p>
+    </aside>
+  );
+}
+
+
+function ReviewStep({ validation, summary, mappedPreviewRows, headers, capabilityAudit }) {
+  const warnings = summary?.warnings || [];
+  const acceptedRecords = summary?.acceptedRecordCount ?? mappedPreviewRows.length;
+  const validationIssues = validation?.isValid ? [] : (validation?.issues || []);
+
+  return (
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <ReviewStatusPanel
+          acceptedRecords={acceptedRecords}
+          warningCount={getReviewWarningDisplayCount(warnings, validationIssues)}
+          capabilityAudit={capabilityAudit}
+        />
+        <ReviewWarningsCard warnings={warnings} validationIssues={validationIssues} />
       </div>
     </div>
   );
@@ -745,109 +939,22 @@ function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summar
   const issues = validation?.issues || [];
   const errors = issues.filter((issue) => issue.severity === 'error');
   const warnings = issues.filter((issue) => issue.severity !== 'error');
-  const selectedCustomFields = (workbookMapping.customFieldSelections || []).filter(
-    (selection) => selection?.action === CUSTOM_INSPECTOR_FIELD_DEFAULTS.include
-  );
+  const acceptedRecords = summary?.totalRows ?? capabilityAudit?.dataset?.totalRows ?? previewRows.length;
+  const validationIssues = [...errors, ...warnings];
 
   return (
-    <div className="space-y-4">
-      <ReviewSummaryStrip
-        items={[
-          { label: 'Primary sheet', value: summary.primarySheetName || '—' },
-          { label: 'Primary ID', value: summary.primaryLetterIdColumn || '—' },
-          { label: 'Joined sheets', value: summary.letterLevelJoinCount || 0 },
-          { label: 'Issues', value: `${summary.errorCount} / ${summary.warningCount}` },
-        ]}
-      />
-
-      <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--stat-card-muted-text)]">
-        Review the workbook import before confirming. Peridot will assemble records from the primary sheet and configured unique-ID joins, then include selected evidence and analysis fields from the primary sheet and joined sheets.
-      </div>
-
-      <CapabilityAuditCard
-        audit={capabilityAudit}
-        note="This audit is based on the assembled workbook records Peridot will import if you confirm this mapping. It explains tool availability but does not block otherwise accepted records."
-      />
-
-      {errors.length ? (
-        <div className="rounded-2xl border border-[var(--peridot-role-status-danger-border)] bg-[var(--peridot-role-status-danger-bg)] p-4 text-sm text-[var(--peridot-role-status-danger-text)]">
-          <div className="font-semibold">Blocking issues before import</div>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {errors.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}
-          </ul>
-        </div>
-      ) : null}
-
-      {warnings.length ? (
-        <div className="rounded-2xl border border-[var(--peridot-role-status-warning-border)] bg-[var(--peridot-role-status-warning-bg)] p-4 text-sm text-[var(--peridot-role-status-warning-text)]">
-          <div className="font-semibold">Limits and rules to review</div>
-          <ul className="mt-2 list-disc space-y-1 pl-5">
-            {warnings.map((issue, index) => <li key={`${issue.code}-${index}`}>{issue.message}</li>)}
-          </ul>
-        </div>
-      ) : null}
-
-
-      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-        <div className="font-semibold text-[var(--panel-card-text)]">Configured unique-ID sheet joins</div>
-        {workbookMapping.letterLevelJoins?.length ? (
-          <div className="mt-3 space-y-2">
-            {workbookMapping.letterLevelJoins.map((join, index) => {
-              const matchSummary = getLetterIdJoinMatchSummary(workbookModel, join);
-              return (
-                <div key={`${join?.to?.sheetName || 'join'}-${index}`} className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
-                  <div className="font-medium text-[var(--panel-card-text)]">
-                    {join?.from?.sheetName || 'Primary sheet'}.{join?.from?.columnName || '—'} ↔ {join?.to?.sheetName || 'Joined sheet'}.{join?.to?.columnName || '—'}
-                  </div>
-                  <div className="mt-1 text-xs">{matchSummary.message}</div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">No joined sheets configured.</p>
-        )}
-      </div>
-
-      <div>
-        <div className="mb-2 text-sm font-semibold text-[var(--panel-card-text)]">Primary-sheet mapping preview</div>
-        <PreviewTable rows={previewRows} headers={PERIDOT_TEMPLATE_COLUMNS} maxRows={3} />
-      </div>
-
-      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-        <div className="font-semibold text-[var(--panel-card-text)]">Sheets used by core mappings</div>
-        <div className="mt-2 text-sm text-[var(--panel-card-muted-text)]">
-          {summary.mappedSheets?.length ? summary.mappedSheets.join(', ') : 'No mapped sheets yet.'}
-        </div>
-      </div>
-
-      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
-        <div className="font-semibold text-[var(--panel-card-text)]">Selected evidence and analysis fields</div>
-        {selectedCustomFields.length ? (
-          <div className="mt-2 grid gap-2 md:grid-cols-2">
-            {selectedCustomFields.slice(0, 12).map((selection, index) => {
-              const ref = getWorkbookSelectionRef(selection);
-              return (
-                <div key={`${ref.sheetName}-${ref.columnName}-${index}`} className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
-                  <div className="font-medium text-[var(--panel-card-text)]">{selection.label || ref.columnName}</div>
-                  <div className="mt-1 text-xs">{ref.sheetName}.{ref.columnName}</div>
-                </div>
-              );
-            })}
-            {selectedCustomFields.length > 12 ? (
-              <div className="rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-sm text-[var(--panel-card-muted-text)]">
-                {selectedCustomFields.length - 12} more selected field(s).
-              </div>
-            ) : null}
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">No evidence or analysis fields selected.</p>
-        )}
+    <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-4">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <ReviewStatusPanel
+          acceptedRecords={acceptedRecords}
+          warningCount={getReviewWarningDisplayCount(warnings, validationIssues)}
+          capabilityAudit={capabilityAudit}
+        />
+        <ReviewWarningsCard warnings={warnings} validationIssues={validationIssues} />
       </div>
     </div>
   );
 }
-
 
 const RELATIONSHIP_METADATA_LABELS = Object.freeze({
   Relationship_Type: 'Relationship type',
