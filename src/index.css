@@ -2073,180 +2073,48 @@ textarea {
 }
 
 
-/* Upload mapping step carousel transitions.
- * The first-load entrance establishes the modal shell. Step navigation uses a
- * very soft folio-curtain dissolve: the current page drifts only a few pixels
- * while fading under a dark green veil, then the next page begins nearly hidden
- * and slowly resolves as the veil clears. The movement is deliberately smaller
- * than the initial carousel pass to avoid the stop-start, staggery feeling while
- * still preserving forward/back direction. The modal chrome remains fixed.
+/* Upload mapping step opacity dissolve.
+ * Step changes now use the simplest possible motion: the current content fades
+ * out in place, the step swaps while invisible, and the next content fades in
+ * without lateral movement, vertical float, scale, blur, brightness shifts, or a
+ * dark curtain. The initial modal entrance still keeps its slower folio reveal;
+ * this rule only governs navigation between already-open mapping steps.
  */
-.peridot-mapping-step-carousel-shell {
+.peridot-mapping-step-soft-shell {
   position: relative;
   overflow-x: hidden !important;
+  background: transparent;
 }
 
-.peridot-mapping-step-carousel-shell::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 8;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 18%, rgba(199, 155, 61, 0.045), transparent 24rem),
-    linear-gradient(135deg, rgba(4, 18, 11, 0.975), rgba(8, 31, 18, 0.975));
-  opacity: 0;
-}
-
-.peridot-mapping-step-carousel-shell-exit::after {
-  animation: peridotMappingStepCarouselVeilInSmooth 920ms cubic-bezier(0.45, 0, 0.2, 1) both;
-}
-
-.peridot-mapping-step-carousel-shell-enter::after {
-  animation: peridotMappingStepCarouselVeilOutSmooth 1720ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
-}
-
-.peridot-mapping-step-carousel-panel {
+.peridot-mapping-step-soft-panel {
   position: relative;
-  z-index: 1;
   opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
-  filter: saturate(1) brightness(1);
-  animation-fill-mode: both;
-  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-  backface-visibility: hidden;
-  transform-origin: center center;
-  will-change: opacity, transform, filter;
+  will-change: opacity;
 }
 
-.peridot-mapping-step-carousel-panel-forward.peridot-mapping-step-carousel-panel-exit {
-  animation-name: peridotMappingStepCarouselExitForwardSmooth;
-  animation-duration: 920ms;
+.peridot-mapping-step-soft-panel-fade-out {
+  animation: peridotMappingStepOpacityFadeOut 520ms cubic-bezier(0.33, 0, 0.2, 1) both;
 }
 
-.peridot-mapping-step-carousel-panel-back.peridot-mapping-step-carousel-panel-exit {
-  animation-name: peridotMappingStepCarouselExitBackSmooth;
-  animation-duration: 920ms;
+.peridot-mapping-step-soft-panel-fade-in {
+  animation: peridotMappingStepOpacityFadeIn 940ms cubic-bezier(0.19, 1, 0.22, 1) both;
 }
 
-.peridot-mapping-step-carousel-panel-forward.peridot-mapping-step-carousel-panel-enter {
-  animation-name: peridotMappingStepCarouselEnterForwardSmooth;
-  animation-duration: 1720ms;
+@keyframes peridotMappingStepOpacityFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
-.peridot-mapping-step-carousel-panel-back.peridot-mapping-step-carousel-panel-enter {
-  animation-name: peridotMappingStepCarouselEnterBackSmooth;
-  animation-duration: 1720ms;
+@keyframes peridotMappingStepOpacityFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
-
-@keyframes peridotMappingStepCarouselExitForwardSmooth {
-  0% {
-    opacity: 1;
-    filter: saturate(1) brightness(1);
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  55% {
-    opacity: 0.48;
-    filter: saturate(0.92) brightness(0.86);
-    transform: translate3d(-2px, 0, 0) scale(0.9995);
-  }
-  100% {
-    opacity: 0;
-    filter: saturate(0.82) brightness(0.70);
-    transform: translate3d(-4px, 0, 0) scale(0.999);
-  }
-}
-
-@keyframes peridotMappingStepCarouselExitBackSmooth {
-  0% {
-    opacity: 1;
-    filter: saturate(1) brightness(1);
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  55% {
-    opacity: 0.48;
-    filter: saturate(0.92) brightness(0.86);
-    transform: translate3d(2px, 0, 0) scale(0.9995);
-  }
-  100% {
-    opacity: 0;
-    filter: saturate(0.82) brightness(0.70);
-    transform: translate3d(4px, 0, 0) scale(0.999);
-  }
-}
-
-@keyframes peridotMappingStepCarouselEnterForwardSmooth {
-  0% {
-    opacity: 0;
-    filter: saturate(0.82) brightness(0.78);
-    transform: translate3d(4px, 0, 0) scale(0.999);
-  }
-  26% {
-    opacity: 0.12;
-    filter: saturate(0.86) brightness(0.82);
-    transform: translate3d(3px, 0, 0) scale(0.9992);
-  }
-  62% {
-    opacity: 0.72;
-    filter: saturate(0.94) brightness(0.92);
-    transform: translate3d(1px, 0, 0) scale(0.9997);
-  }
-  100% {
-    opacity: 1;
-    filter: saturate(1) brightness(1);
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes peridotMappingStepCarouselEnterBackSmooth {
-  0% {
-    opacity: 0;
-    filter: saturate(0.82) brightness(0.78);
-    transform: translate3d(-4px, 0, 0) scale(0.999);
-  }
-  26% {
-    opacity: 0.12;
-    filter: saturate(0.86) brightness(0.82);
-    transform: translate3d(-3px, 0, 0) scale(0.9992);
-  }
-  62% {
-    opacity: 0.72;
-    filter: saturate(0.94) brightness(0.92);
-    transform: translate3d(-1px, 0, 0) scale(0.9997);
-  }
-  100% {
-    opacity: 1;
-    filter: saturate(1) brightness(1);
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-}
-
-@keyframes peridotMappingStepCarouselVeilInSmooth {
-  0% { opacity: 0; }
-  45% { opacity: 0.58; }
-  78% { opacity: 0.90; }
-  100% { opacity: 0.975; }
-}
-
-@keyframes peridotMappingStepCarouselVeilOutSmooth {
-  0% { opacity: 0.975; }
-  24% { opacity: 0.90; }
-  52% { opacity: 0.60; }
-  78% { opacity: 0.24; }
-  100% { opacity: 0; }
-}
-
 
 @media (prefers-reduced-motion: reduce) {
-  .peridot-mapping-step-carousel-shell::after {
-    display: none;
-    animation: none;
-  }
-
-  .peridot-mapping-step-carousel-panel {
+  .peridot-mapping-step-soft-panel,
+  .peridot-mapping-step-soft-panel-fade-out,
+  .peridot-mapping-step-soft-panel-fade-in {
     opacity: 1;
-    filter: none;
-    transform: none;
     animation: none;
   }
 }

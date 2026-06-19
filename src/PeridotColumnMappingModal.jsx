@@ -1115,21 +1115,17 @@ export function PeridotColumnMappingModal({
   const [workbookMapping, setWorkbookMapping] = useState(stripWorkbookDisplayDateMapping(mappingState));
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
   const [renderedStep, setRenderedStep] = useState(stepKeys[0]);
-  const [stepTransitionDirection, setStepTransitionDirection] = useState('forward');
   const [stepTransitionPhase, setStepTransitionPhase] = useState('idle');
-  const stepTransitionTimeoutRef = useRef(null);
+  const stepTransitionTimeoutsRef = useRef([]);
 
   useEffect(() => {
     if (!open || !staging) return;
     const nextIsWorkbookMode = staging?.mappingMode === 'workbook' || Boolean(staging?.workbookMappingRequired);
     const firstStep = nextIsWorkbookMode ? WORKBOOK_STEP_KEYS[0] : SINGLE_TABLE_STEP_KEYS[0];
-    if (stepTransitionTimeoutRef.current) {
-      window.clearTimeout(stepTransitionTimeoutRef.current);
-      stepTransitionTimeoutRef.current = null;
-    }
+    stepTransitionTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    stepTransitionTimeoutsRef.current = [];
     setActiveStep(firstStep);
     setRenderedStep(firstStep);
-    setStepTransitionDirection('forward');
     setStepTransitionPhase('idle');
     setCoreMapping(mappingState.coreMapping || {});
     setTemporalMapping(stripDisplayDateMapping(mappingState.temporalMapping || {}));
@@ -1155,9 +1151,8 @@ export function PeridotColumnMappingModal({
   }, [open, staging?.stagedAt]);
 
   useEffect(() => () => {
-    if (stepTransitionTimeoutRef.current) {
-      window.clearTimeout(stepTransitionTimeoutRef.current);
-    }
+    stepTransitionTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    stepTransitionTimeoutsRef.current = [];
   }, []);
 
   const effectiveCustomSelections = useMemo(() => {
@@ -1272,27 +1267,25 @@ export function PeridotColumnMappingModal({
 
   const moveToStep = (nextStep) => {
     const nextIndex = stepKeys.indexOf(nextStep);
-    const currentIndex = stepKeys.indexOf(activeStep);
     if (nextIndex < 0 || nextStep === activeStep) return;
 
-    const direction = nextIndex > currentIndex ? 'forward' : 'back';
-    if (stepTransitionTimeoutRef.current) {
-      window.clearTimeout(stepTransitionTimeoutRef.current);
-      stepTransitionTimeoutRef.current = null;
-    }
+    stepTransitionTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
+    stepTransitionTimeoutsRef.current = [];
 
-    setStepTransitionDirection(direction);
     setActiveStep(nextStep);
-    setStepTransitionPhase('exit');
+    setStepTransitionPhase('fade-out');
 
-    stepTransitionTimeoutRef.current = window.setTimeout(() => {
+    const swapTimeout = window.setTimeout(() => {
       setRenderedStep(nextStep);
-      setStepTransitionPhase('enter');
-      stepTransitionTimeoutRef.current = window.setTimeout(() => {
-        setStepTransitionPhase('idle');
-        stepTransitionTimeoutRef.current = null;
-      }, 1720);
-    }, 920);
+      setStepTransitionPhase('fade-in');
+    }, 520);
+
+    const settleTimeout = window.setTimeout(() => {
+      setStepTransitionPhase('idle');
+      stepTransitionTimeoutsRef.current = [];
+    }, 1480);
+
+    stepTransitionTimeoutsRef.current = [swapTimeout, settleTimeout];
   };
 
   const handleCoreMappingChange = (field, sourceColumn) => {
@@ -1705,6 +1698,155 @@ export function PeridotColumnMappingModal({
     ? 'Confirm import replaces the active dataset with assembled workbook rows.'
     : 'Confirm import replaces the active dataset with this mapped table.';
 
+  const renderStepContent = (stepForRender) => (
+    <>
+          {!isWorkbookMode && stepForRender === 'preview' ? (
+            <div className="space-y-3">
+              <PreviewSummaryStrip
+                fileLabel={staging.fileLabel}
+                rowCount={staging.rowCount ?? rows.length}
+                columnCount={staging.columnCount ?? headers.length}
+              />
+              <PreviewTable
+                rows={rows}
+                headers={headers}
+                totalRows={staging.rowCount ?? rows.length}
+                maxRows={11}
+              />
+            </div>
+          ) : null}
+
+          {!isWorkbookMode && stepForRender === 'identify' ? (
+            <IdentifyRecordsStep
+              staging={staging}
+              previewRows={previewRows}
+              headers={headers}
+            />
+          ) : null}
+
+          {!isWorkbookMode && stepForRender === 'time' ? (
+            <TimeMappingStep
+              headers={headers}
+              temporalMapping={stripDisplayDateMapping(temporalMapping)}
+              onTemporalChange={handleTemporalMappingChange}
+            />
+          ) : null}
+
+          {!isWorkbookMode && stepForRender === 'places' ? (
+            <PlacesMappingStep
+              headers={headers}
+              coreMapping={coreMapping}
+              pointMapping={pointMapping}
+              routeCoordinatePairMapping={routeCoordinatePairMapping}
+              onRouteChange={handleCoreMappingChange}
+              onPointChange={handlePointMappingChange}
+              onRoutePairChange={handleRouteCoordinatePairMappingChange}
+            />
+          ) : null}
+
+          {!isWorkbookMode && stepForRender === 'relationships' ? (
+            <RelationshipsMappingStep
+              headers={headers}
+              coreMapping={coreMapping}
+              relationshipMetadataMapping={relationshipMetadataMapping}
+              onChange={handleCoreMappingChange}
+              onMetadataChange={handleRelationshipMetadataMappingChange}
+            />
+          ) : null}
+
+          {!isWorkbookMode && stepForRender === 'evidence' ? (
+            <InspectorFieldsStep
+              selections={effectiveCustomSelections}
+              coreMapping={{ ...coreMapping, ...stripDisplayDateMapping(temporalMapping), ...pointMapping, ...routeCoordinatePairMapping }}
+              onActionChange={handleCustomActionChange}
+              onLabelChange={handleCustomLabelChange}
+            />
+          ) : null}
+
+          {!isWorkbookMode && stepForRender === 'review' ? (
+            <ReviewStep
+              validation={validation}
+              summary={validationSummary}
+              mappedPreviewRows={mappedRows.slice(0, 5)}
+              headers={PERIDOT_TEMPLATE_COLUMNS}
+              capabilityAudit={mappedRowsCapabilityAudit}
+            />
+          ) : null}
+
+          {isWorkbookMode && stepForRender === 'workbook-preview' ? (
+            <WorkbookOverviewStep staging={staging} workbookModel={workbookModel} workbookSummary={workbookSummary} />
+          ) : null}
+
+          {isWorkbookMode && stepForRender === 'workbook-setup' ? (
+            <WorkbookSetupStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+              onPrimarySheetChange={handleWorkbookPrimarySheetChange}
+              onLetterIdChange={handleWorkbookLetterIdChange}
+              onAddJoin={handleAddWorkbookJoin}
+              onRemoveJoin={handleRemoveWorkbookJoin}
+              onJoinSheetChange={handleWorkbookJoinSheetChange}
+              onJoinPrimaryColumnChange={handleWorkbookJoinPrimaryColumnChange}
+              onJoinTargetColumnChange={handleWorkbookJoinTargetColumnChange}
+            />
+          ) : null}
+
+          {isWorkbookMode && stepForRender === 'workbook-identify' ? (
+            <WorkbookIdentifyRecordsStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+            />
+          ) : null}
+
+          {isWorkbookMode && stepForRender === 'workbook-time' ? (
+            <WorkbookTimeMappingStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+              onTemporalChange={handleWorkbookTemporalMappingChange}
+            />
+          ) : null}
+
+          {isWorkbookMode && stepForRender === 'workbook-places' ? (
+            <WorkbookPlacesMappingStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+              onRouteChange={handleWorkbookCoreMappingChange}
+              onPointChange={handleWorkbookPointMappingChange}
+              onRoutePairChange={handleWorkbookRouteCoordinatePairMappingChange}
+            />
+          ) : null}
+
+          {isWorkbookMode && stepForRender === 'workbook-relationships' ? (
+            <WorkbookRelationshipsMappingStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+              onChange={handleWorkbookCoreMappingChange}
+              onMetadataChange={handleWorkbookRelationshipMetadataMappingChange}
+            />
+          ) : null}
+
+          {isWorkbookMode && stepForRender === 'workbook-evidence' ? (
+            <WorkbookInspectorFieldsStep
+              workbookMapping={workbookMapping}
+              selections={workbookMapping.customFieldSelections || []}
+              onActionChange={handleWorkbookCustomActionChange}
+              onLabelChange={handleWorkbookCustomLabelChange}
+            />
+          ) : null}
+
+          {isWorkbookMode && stepForRender === 'workbook-review' ? (
+            <WorkbookReviewStep
+              workbookModel={workbookModel}
+              workbookMapping={workbookMapping}
+              validation={workbookValidation}
+              summary={workbookMappingSummary}
+              previewRows={workbookMappedPreviewRows}
+              capabilityAudit={workbookCapabilityAudit}
+            />
+          ) : null}
+    </>
+  );
+
   return (
     <div className="peridot-mapping-modal fixed inset-0 z-[80] flex items-center justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-sm">
       <div className="peridot-mapping-modal-shell peridot-mapping-modal-enter-shell flex flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
@@ -1734,155 +1876,12 @@ export function PeridotColumnMappingModal({
           ))}
         </div>
 
-        <div className={`peridot-mapping-modal-body peridot-mapping-modal-enter-body peridot-mapping-step-carousel-shell peridot-mapping-step-carousel-shell-${stepTransitionPhase} min-h-0 flex-1 overflow-y-auto px-6 py-5`}>
+        <div className={`peridot-mapping-modal-body peridot-mapping-modal-enter-body peridot-mapping-step-soft-shell peridot-mapping-step-soft-shell-${stepTransitionPhase} min-h-0 flex-1 overflow-y-auto px-6 py-5`}>
           <div
-            key={renderedStep}
-            className={`peridot-mapping-step-carousel-panel peridot-mapping-step-carousel-panel-${stepTransitionDirection} peridot-mapping-step-carousel-panel-${stepTransitionPhase}`}
+            key={`step-${renderedStep}`}
+            className={`peridot-mapping-step-soft-panel peridot-mapping-step-soft-panel-${stepTransitionPhase}`}
           >
-          {!isWorkbookMode && renderedStep === 'preview' ? (
-            <div className="space-y-3">
-              <PreviewSummaryStrip
-                fileLabel={staging.fileLabel}
-                rowCount={staging.rowCount ?? rows.length}
-                columnCount={staging.columnCount ?? headers.length}
-              />
-              <PreviewTable
-                rows={rows}
-                headers={headers}
-                totalRows={staging.rowCount ?? rows.length}
-                maxRows={11}
-              />
-            </div>
-          ) : null}
-
-          {!isWorkbookMode && renderedStep === 'identify' ? (
-            <IdentifyRecordsStep
-              staging={staging}
-              previewRows={previewRows}
-              headers={headers}
-            />
-          ) : null}
-
-          {!isWorkbookMode && renderedStep === 'time' ? (
-            <TimeMappingStep
-              headers={headers}
-              temporalMapping={stripDisplayDateMapping(temporalMapping)}
-              onTemporalChange={handleTemporalMappingChange}
-            />
-          ) : null}
-
-          {!isWorkbookMode && renderedStep === 'places' ? (
-            <PlacesMappingStep
-              headers={headers}
-              coreMapping={coreMapping}
-              pointMapping={pointMapping}
-              routeCoordinatePairMapping={routeCoordinatePairMapping}
-              onRouteChange={handleCoreMappingChange}
-              onPointChange={handlePointMappingChange}
-              onRoutePairChange={handleRouteCoordinatePairMappingChange}
-            />
-          ) : null}
-
-          {!isWorkbookMode && renderedStep === 'relationships' ? (
-            <RelationshipsMappingStep
-              headers={headers}
-              coreMapping={coreMapping}
-              relationshipMetadataMapping={relationshipMetadataMapping}
-              onChange={handleCoreMappingChange}
-              onMetadataChange={handleRelationshipMetadataMappingChange}
-            />
-          ) : null}
-
-          {!isWorkbookMode && renderedStep === 'evidence' ? (
-            <InspectorFieldsStep
-              selections={effectiveCustomSelections}
-              coreMapping={{ ...coreMapping, ...stripDisplayDateMapping(temporalMapping), ...pointMapping, ...routeCoordinatePairMapping }}
-              onActionChange={handleCustomActionChange}
-              onLabelChange={handleCustomLabelChange}
-            />
-          ) : null}
-
-          {!isWorkbookMode && renderedStep === 'review' ? (
-            <ReviewStep
-              validation={validation}
-              summary={validationSummary}
-              mappedPreviewRows={mappedRows.slice(0, 5)}
-              headers={PERIDOT_TEMPLATE_COLUMNS}
-              capabilityAudit={mappedRowsCapabilityAudit}
-            />
-          ) : null}
-
-          {isWorkbookMode && renderedStep === 'workbook-preview' ? (
-            <WorkbookOverviewStep staging={staging} workbookModel={workbookModel} workbookSummary={workbookSummary} />
-          ) : null}
-
-          {isWorkbookMode && renderedStep === 'workbook-setup' ? (
-            <WorkbookSetupStep
-              workbookModel={workbookModel}
-              workbookMapping={workbookMapping}
-              onPrimarySheetChange={handleWorkbookPrimarySheetChange}
-              onLetterIdChange={handleWorkbookLetterIdChange}
-              onAddJoin={handleAddWorkbookJoin}
-              onRemoveJoin={handleRemoveWorkbookJoin}
-              onJoinSheetChange={handleWorkbookJoinSheetChange}
-              onJoinPrimaryColumnChange={handleWorkbookJoinPrimaryColumnChange}
-              onJoinTargetColumnChange={handleWorkbookJoinTargetColumnChange}
-            />
-          ) : null}
-
-          {isWorkbookMode && renderedStep === 'workbook-identify' ? (
-            <WorkbookIdentifyRecordsStep
-              workbookModel={workbookModel}
-              workbookMapping={workbookMapping}
-            />
-          ) : null}
-
-          {isWorkbookMode && renderedStep === 'workbook-time' ? (
-            <WorkbookTimeMappingStep
-              workbookModel={workbookModel}
-              workbookMapping={workbookMapping}
-              onTemporalChange={handleWorkbookTemporalMappingChange}
-            />
-          ) : null}
-
-          {isWorkbookMode && renderedStep === 'workbook-places' ? (
-            <WorkbookPlacesMappingStep
-              workbookModel={workbookModel}
-              workbookMapping={workbookMapping}
-              onRouteChange={handleWorkbookCoreMappingChange}
-              onPointChange={handleWorkbookPointMappingChange}
-              onRoutePairChange={handleWorkbookRouteCoordinatePairMappingChange}
-            />
-          ) : null}
-
-          {isWorkbookMode && renderedStep === 'workbook-relationships' ? (
-            <WorkbookRelationshipsMappingStep
-              workbookModel={workbookModel}
-              workbookMapping={workbookMapping}
-              onChange={handleWorkbookCoreMappingChange}
-              onMetadataChange={handleWorkbookRelationshipMetadataMappingChange}
-            />
-          ) : null}
-
-          {isWorkbookMode && renderedStep === 'workbook-evidence' ? (
-            <WorkbookInspectorFieldsStep
-              workbookMapping={workbookMapping}
-              selections={workbookMapping.customFieldSelections || []}
-              onActionChange={handleWorkbookCustomActionChange}
-              onLabelChange={handleWorkbookCustomLabelChange}
-            />
-          ) : null}
-
-          {isWorkbookMode && renderedStep === 'workbook-review' ? (
-            <WorkbookReviewStep
-              workbookModel={workbookModel}
-              workbookMapping={workbookMapping}
-              validation={workbookValidation}
-              summary={workbookMappingSummary}
-              previewRows={workbookMappedPreviewRows}
-              capabilityAudit={workbookCapabilityAudit}
-            />
-          ) : null}
+            {renderStepContent(renderedStep)}
           </div>
         </div>
 
