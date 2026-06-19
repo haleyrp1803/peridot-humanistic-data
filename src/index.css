@@ -3117,3 +3117,74 @@ textarea {
   }
 }
 
+/* Explore cream-surface text contrast correction, 2026-06-19.
+ * Keep the Inspector-aligned Explore layout intact, but enforce the standing
+ * contrast rule for cream/parchment surfaces: no white or pale-gold body copy
+ * on cream. Dark text belongs on these local evidence/form cards; cream text is
+ * reserved for dark pine/sage surfaces.
+ */
+.peridot-search-workspace .peridot-search-panel,
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace .peridot-search-panel-cream,
+.peridot-search-workspace .peridot-search-build-panel,
+.peridot-search-workspace .peridot-search-capability-review-card,
+.peridot-search-workspace .peridot-search-capability-scope-list div,
+.peridot-search-workspace .peridot-search-capability-availability-row,
+.peridot-search-workspace .peridot-search-status-strip,
+.peridot-search-workspace .peridot-search-empty-state,
+.peridot-search-workspace .peridot-search-structured-row {
+  color: var(--explore-text-on-light) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-panel-inset :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-panel-cream :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-build-panel :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-capability-review-card :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-capability-availability-row p,
+.peridot-search-workspace .peridot-search-status-strip :is(p, span),
+.peridot-search-workspace .peridot-search-empty-state,
+.peridot-search-workspace .peridot-search-structured-row :is(p, span, div) {
+  color: var(--explore-muted-on-light) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-panel-inset :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-panel-cream :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-build-panel :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-capability-review-card .peridot-search-field-label,
+.peridot-search-workspace .peridot-search-capability-review-note .peridot-search-field-label {
+  color: #5f4214 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-inline-strong,
+.peridot-search-workspace .peridot-search-panel strong,
+.peridot-search-workspace .peridot-search-panel-inset strong,
+.peridot-search-workspace .peridot-search-panel-cream strong,
+.peridot-search-workspace .peridot-search-build-panel strong,
+.peridot-search-workspace .peridot-search-capability-scope-list strong,
+.peridot-search-workspace .peridot-search-capability-availability-row :is(h3, strong),
+.peridot-search-workspace .peridot-search-status-strip strong {
+  color: var(--explore-text-on-light) !important;
+  text-shadow: none !important;
+}
+
+/* Preserve intentionally dark-green controls nested inside cream Build panels. */
+.peridot-search-workspace .peridot-search-capability-toggle,
+.peridot-search-workspace .peridot-search-capability-toggle :is(span, strong, div) {
+  color: var(--explore-text-on-dark) !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle .peridot-search-count-badge {
+  color: var(--explore-gold-text) !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle:hover,
+.peridot-search-workspace .peridot-search-capability-toggle:hover *,
+.peridot-search-workspace .peridot-search-capability-toggle-active,
+.peridot-search-workspace .peridot-search-capability-toggle-active * {
+  color: var(--explore-gold-text) !important;
+}
