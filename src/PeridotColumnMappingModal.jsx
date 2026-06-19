@@ -13,7 +13,7 @@
  * - Preserve the distinction between correspondence-compatible roles and broader humanistic-data roles.
  */
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
 import { buildPeridotCsvValidationSummary } from './peridotCsvValidation.js';
 import {
@@ -98,6 +98,7 @@ function StepButton({ active, label, index, onClick }) {
         'peridot-mapping-step-button',
         active ? 'peridot-mapping-step-button-active' : '',
       ].filter(Boolean).join(' ')}
+      style={{ '--peridot-mapping-step-delay': `${760 + index * 170}ms` }}
       aria-current={active ? 'step' : undefined}
     >
       <span className="peridot-mapping-step-number">{index + 1}</span>
@@ -1113,11 +1114,23 @@ export function PeridotColumnMappingModal({
   const [customFieldSelections, setCustomFieldSelections] = useState(mappingState.customFieldSelections || []);
   const [workbookMapping, setWorkbookMapping] = useState(stripWorkbookDisplayDateMapping(mappingState));
   const [showCancelConfirmation, setShowCancelConfirmation] = useState(false);
+  const [renderedStep, setRenderedStep] = useState(stepKeys[0]);
+  const [stepTransitionDirection, setStepTransitionDirection] = useState('forward');
+  const [stepTransitionPhase, setStepTransitionPhase] = useState('idle');
+  const stepTransitionTimeoutRef = useRef(null);
 
   useEffect(() => {
     if (!open || !staging) return;
     const nextIsWorkbookMode = staging?.mappingMode === 'workbook' || Boolean(staging?.workbookMappingRequired);
-    setActiveStep(nextIsWorkbookMode ? WORKBOOK_STEP_KEYS[0] : SINGLE_TABLE_STEP_KEYS[0]);
+    const firstStep = nextIsWorkbookMode ? WORKBOOK_STEP_KEYS[0] : SINGLE_TABLE_STEP_KEYS[0];
+    if (stepTransitionTimeoutRef.current) {
+      window.clearTimeout(stepTransitionTimeoutRef.current);
+      stepTransitionTimeoutRef.current = null;
+    }
+    setActiveStep(firstStep);
+    setRenderedStep(firstStep);
+    setStepTransitionDirection('forward');
+    setStepTransitionPhase('idle');
     setCoreMapping(mappingState.coreMapping || {});
     setTemporalMapping(stripDisplayDateMapping(mappingState.temporalMapping || {}));
     setRelationshipMetadataMapping(normalizeRelationshipMetadataMapping(mappingState.relationshipMetadataMapping || {}));
@@ -1140,6 +1153,12 @@ export function PeridotColumnMappingModal({
     );
     setShowCancelConfirmation(false);
   }, [open, staging?.stagedAt]);
+
+  useEffect(() => () => {
+    if (stepTransitionTimeoutRef.current) {
+      window.clearTimeout(stepTransitionTimeoutRef.current);
+    }
+  }, []);
 
   const effectiveCustomSelections = useMemo(() => {
     const mappedCoreColumns = new Set([
@@ -1250,6 +1269,31 @@ export function PeridotColumnMappingModal({
 
   const stepLabels = isWorkbookMode ? workbookStepLabels : singleStepLabels;
   const activeStepIndex = stepKeys.indexOf(activeStep);
+
+  const moveToStep = (nextStep) => {
+    const nextIndex = stepKeys.indexOf(nextStep);
+    const currentIndex = stepKeys.indexOf(activeStep);
+    if (nextIndex < 0 || nextStep === activeStep) return;
+
+    const direction = nextIndex > currentIndex ? 'forward' : 'back';
+    if (stepTransitionTimeoutRef.current) {
+      window.clearTimeout(stepTransitionTimeoutRef.current);
+      stepTransitionTimeoutRef.current = null;
+    }
+
+    setStepTransitionDirection(direction);
+    setActiveStep(nextStep);
+    setStepTransitionPhase('exit');
+
+    stepTransitionTimeoutRef.current = window.setTimeout(() => {
+      setRenderedStep(nextStep);
+      setStepTransitionPhase('enter');
+      stepTransitionTimeoutRef.current = window.setTimeout(() => {
+        setStepTransitionPhase('idle');
+        stepTransitionTimeoutRef.current = null;
+      }, 1720);
+    }, 920);
+  };
 
   const handleCoreMappingChange = (field, sourceColumn) => {
     setCoreMapping((current) => ({
@@ -1649,12 +1693,12 @@ export function PeridotColumnMappingModal({
 
   const goNext = () => {
     const nextIndex = Math.min(stepKeys.length - 1, activeStepIndex + 1);
-    setActiveStep(stepKeys[nextIndex]);
+    moveToStep(stepKeys[nextIndex]);
   };
 
   const goBack = () => {
     const nextIndex = Math.max(0, activeStepIndex - 1);
-    setActiveStep(stepKeys[nextIndex]);
+    moveToStep(stepKeys[nextIndex]);
   };
 
   const footerHelper = isWorkbookMode
@@ -1663,8 +1707,8 @@ export function PeridotColumnMappingModal({
 
   return (
     <div className="peridot-mapping-modal fixed inset-0 z-[80] flex items-center justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-sm">
-      <div className="peridot-mapping-modal-shell flex flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
-        <div className="peridot-mapping-modal-header flex flex-wrap items-center justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
+      <div className="peridot-mapping-modal-shell peridot-mapping-modal-enter-shell flex flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
+        <div className="peridot-mapping-modal-header peridot-mapping-modal-enter-header flex flex-wrap items-center justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
           <div className="min-w-0">
             <div className="mb-1 text-sm font-semibold text-[var(--muted-text)]">
               {staging.fileLabel || 'Uploaded data'}
@@ -1678,20 +1722,24 @@ export function PeridotColumnMappingModal({
           </button>
         </div>
 
-        <div className="peridot-mapping-progress border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-3">
+        <div className="peridot-mapping-progress peridot-mapping-modal-enter-progress border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-3">
           {stepKeys.map((step, index) => (
             <StepButton
               key={step}
               active={activeStep === step}
               label={stepLabels[step]}
               index={index}
-              onClick={() => setActiveStep(step)}
+              onClick={() => moveToStep(step)}
             />
           ))}
         </div>
 
-        <div className="peridot-mapping-modal-body min-h-0 flex-1 overflow-y-auto px-6 py-5">
-          {!isWorkbookMode && activeStep === 'preview' ? (
+        <div className={`peridot-mapping-modal-body peridot-mapping-modal-enter-body peridot-mapping-step-carousel-shell peridot-mapping-step-carousel-shell-${stepTransitionPhase} min-h-0 flex-1 overflow-y-auto px-6 py-5`}>
+          <div
+            key={renderedStep}
+            className={`peridot-mapping-step-carousel-panel peridot-mapping-step-carousel-panel-${stepTransitionDirection} peridot-mapping-step-carousel-panel-${stepTransitionPhase}`}
+          >
+          {!isWorkbookMode && renderedStep === 'preview' ? (
             <div className="space-y-3">
               <PreviewSummaryStrip
                 fileLabel={staging.fileLabel}
@@ -1707,7 +1755,7 @@ export function PeridotColumnMappingModal({
             </div>
           ) : null}
 
-          {!isWorkbookMode && activeStep === 'identify' ? (
+          {!isWorkbookMode && renderedStep === 'identify' ? (
             <IdentifyRecordsStep
               staging={staging}
               previewRows={previewRows}
@@ -1715,7 +1763,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {!isWorkbookMode && activeStep === 'time' ? (
+          {!isWorkbookMode && renderedStep === 'time' ? (
             <TimeMappingStep
               headers={headers}
               temporalMapping={stripDisplayDateMapping(temporalMapping)}
@@ -1723,7 +1771,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {!isWorkbookMode && activeStep === 'places' ? (
+          {!isWorkbookMode && renderedStep === 'places' ? (
             <PlacesMappingStep
               headers={headers}
               coreMapping={coreMapping}
@@ -1735,7 +1783,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {!isWorkbookMode && activeStep === 'relationships' ? (
+          {!isWorkbookMode && renderedStep === 'relationships' ? (
             <RelationshipsMappingStep
               headers={headers}
               coreMapping={coreMapping}
@@ -1745,7 +1793,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {!isWorkbookMode && activeStep === 'evidence' ? (
+          {!isWorkbookMode && renderedStep === 'evidence' ? (
             <InspectorFieldsStep
               selections={effectiveCustomSelections}
               coreMapping={{ ...coreMapping, ...stripDisplayDateMapping(temporalMapping), ...pointMapping, ...routeCoordinatePairMapping }}
@@ -1754,7 +1802,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {!isWorkbookMode && activeStep === 'review' ? (
+          {!isWorkbookMode && renderedStep === 'review' ? (
             <ReviewStep
               validation={validation}
               summary={validationSummary}
@@ -1764,11 +1812,11 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-preview' ? (
+          {isWorkbookMode && renderedStep === 'workbook-preview' ? (
             <WorkbookOverviewStep staging={staging} workbookModel={workbookModel} workbookSummary={workbookSummary} />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-setup' ? (
+          {isWorkbookMode && renderedStep === 'workbook-setup' ? (
             <WorkbookSetupStep
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
@@ -1782,14 +1830,14 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-identify' ? (
+          {isWorkbookMode && renderedStep === 'workbook-identify' ? (
             <WorkbookIdentifyRecordsStep
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-time' ? (
+          {isWorkbookMode && renderedStep === 'workbook-time' ? (
             <WorkbookTimeMappingStep
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
@@ -1797,7 +1845,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-places' ? (
+          {isWorkbookMode && renderedStep === 'workbook-places' ? (
             <WorkbookPlacesMappingStep
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
@@ -1807,7 +1855,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-relationships' ? (
+          {isWorkbookMode && renderedStep === 'workbook-relationships' ? (
             <WorkbookRelationshipsMappingStep
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
@@ -1816,7 +1864,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-evidence' ? (
+          {isWorkbookMode && renderedStep === 'workbook-evidence' ? (
             <WorkbookInspectorFieldsStep
               workbookMapping={workbookMapping}
               selections={workbookMapping.customFieldSelections || []}
@@ -1825,7 +1873,7 @@ export function PeridotColumnMappingModal({
             />
           ) : null}
 
-          {isWorkbookMode && activeStep === 'workbook-review' ? (
+          {isWorkbookMode && renderedStep === 'workbook-review' ? (
             <WorkbookReviewStep
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
@@ -1835,9 +1883,10 @@ export function PeridotColumnMappingModal({
               capabilityAudit={workbookCapabilityAudit}
             />
           ) : null}
+          </div>
         </div>
 
-        <div className="peridot-mapping-modal-footer flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-3">
+        <div className="peridot-mapping-modal-footer peridot-mapping-modal-enter-footer flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-3">
           <p className="max-w-2xl text-sm text-[var(--panel-card-muted-text)]">{footerHelper}</p>
           <div className="flex flex-wrap gap-2">
             <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>
