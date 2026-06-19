@@ -495,6 +495,14 @@ function SectionHeader({ eyebrow, title, children }) {
   );
 }
 
+function ExploreDivider({ className = '' }) {
+  return (
+    <div className={`peridot-search-ornament-divider ${className}`.trim()} aria-hidden="true">
+      <span />
+    </div>
+  );
+}
+
 function SearchTabButton({ id, stepNumber, label, summary, active, onClick }) {
   return (
     <button
@@ -1084,6 +1092,7 @@ export function PeridotSearchWorkspace({
       <SectionHeader eyebrow="Step 1" title="Build Search">
         Draft changes do not affect maps, charts, export, or Inspector until Apply Filters is pressed.
       </SectionHeader>
+      <ExploreDivider />
 
       <div className={PANEL_INSET_CLASS + ' p-4'}>
         <div className="grid gap-3 lg:grid-cols-12">
@@ -1288,6 +1297,7 @@ export function PeridotSearchWorkspace({
           {(browseRows?.length || 0)} loaded records indexed
         </div>
       </div>
+      <ExploreDivider />
 
       <div className={PANEL_INSET_CLASS + ' p-3'}>
         <AutocompleteTextInput
@@ -1300,6 +1310,7 @@ export function PeridotSearchWorkspace({
           suggestions={personSuggestions.concat(placeSuggestions, routePlaceSuggestions, evidenceFieldSuggestions).slice(0, 200)}
         />
       </div>
+      <ExploreDivider />
 
       {filteredBrowseIndexGroups.length ? (
         <div className="grid gap-3">
@@ -1332,6 +1343,7 @@ export function PeridotSearchWorkspace({
           {hiddenSearchResultCount > 0 ? <span className="text-[var(--peridot-color-hex-667960)]">+{hiddenSearchResultCount} more</span> : null}
         </div>
       </div>
+      <ExploreDivider />
 
       <div className="grid gap-3 xl:grid-cols-2">
         {searchResultCards.length ? (
@@ -1368,6 +1380,7 @@ export function PeridotSearchWorkspace({
         <SectionHeader eyebrow="Step 5" title="Capabilities">
           Review what the loaded and applied records can support before moving into visualizations, charts, export, or Inspector evidence review.
         </SectionHeader>
+        <ExploreDivider />
 
         <div className="peridot-search-capability-review-grid">
           <section className="peridot-search-capability-review-card">
@@ -1419,6 +1432,7 @@ export function PeridotSearchWorkspace({
             </div>
           </section>
         </div>
+        <ExploreDivider />
 
         <div className="peridot-search-capability-review-note">
           <div>
@@ -1440,6 +1454,7 @@ export function PeridotSearchWorkspace({
       <SectionHeader eyebrow="Step 4" title="Refine / Inspect">
         Facets summarize the applied result set. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>
+      <ExploreDivider />
 
       <div className={PANEL_INSET_CLASS + ' p-3'}>
         <div className={FIELD_LABEL_CLASS}>Inspector handoff</div>
@@ -1447,6 +1462,7 @@ export function PeridotSearchWorkspace({
           Use <span className="font-black text-[var(--peridot-color-hex-203729)]">Inspect</span> on a result card to open the record in the full evidence workspace. Dataset capability information now lives in the <span className="font-black text-[var(--peridot-color-hex-203729)]">Capabilities</span> tab.
         </p>
       </div>
+      <ExploreDivider />
 
       {searchFacetGroups.length ? (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

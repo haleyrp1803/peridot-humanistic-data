@@ -4897,3 +4897,826 @@ textarea {
     0 9px 18px rgba(36, 30, 9, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.36) !important;
 }
+
+
+/* Explore Inspector-aligned color and divider pass, 2026-06-19
+ * -----------------------------------------------------------
+ * Aligns Explore with the cleaner Inspector hierarchy:
+ * - dark green workspace and active tab page
+ * - large readable cream panels
+ * - repeated list objects in dark green
+ * - gold counts, actions, active state, and ornamental dividers
+ * This intentionally supersedes the exploratory sage/gold-chip layers above.
+ */
+.peridot-search-workspace {
+  --explore-inspector-pine-deep: #04170f;
+  --explore-inspector-pine: #082514;
+  --explore-inspector-pine-row: #123d20;
+  --explore-inspector-pine-row-hover: #174a29;
+  --explore-inspector-cream: #e8dec0;
+  --explore-inspector-cream-soft: #eee6cf;
+  --explore-inspector-cream-panel: #e2d5ae;
+  --explore-inspector-cream-field: #f3ecd8;
+  --explore-inspector-gold: #cfa642;
+  --explore-inspector-gold-dark: #b8892f;
+  --explore-inspector-gold-light: #e4bf5d;
+  --explore-inspector-gold-pale: #f0dc9a;
+  --explore-inspector-ink: #061d12;
+  --explore-inspector-muted-ink: #344534;
+  --explore-inspector-border: rgba(212, 174, 78, 0.42);
+  --explore-inspector-cream-border: rgba(137, 107, 45, 0.26);
+}
+
+/* Dark frame and active page. */
+.peridot-search-workspace .peridot-search-folio-body {
+  background: var(--explore-inspector-pine-deep) !important;
+  border-top: 1px solid rgba(212, 174, 78, 0.30) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(240, 220, 154, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.28) !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card {
+  border-color: rgba(212, 174, 78, 0.44) !important;
+  background: var(--explore-inspector-pine) !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card h2,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child h2,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child h2 {
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > div:first-child p,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child p {
+  color: #fff8e8 !important;
+}
+
+/* Inspector-style ornamental dividers. */
+.peridot-search-ornament-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.15rem;
+  margin: 0.15rem 0 0.35rem;
+  color: var(--explore-inspector-gold);
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.peridot-search-ornament-divider::before,
+.peridot-search-ornament-divider::after {
+  content: "";
+  height: 1px;
+  flex: 1 1 auto;
+  max-width: 18rem;
+  background: linear-gradient(
+    90deg,
+    rgba(207, 166, 66, 0),
+    rgba(207, 166, 66, 0.56),
+    rgba(207, 166, 66, 0)
+  );
+}
+
+.peridot-search-ornament-divider span {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.8rem;
+  color: var(--explore-inspector-gold);
+}
+
+.peridot-search-ornament-divider span::before {
+  content: "❧";
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  line-height: 1;
+  transform: rotate(90deg);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.20);
+}
+
+.peridot-search-ornament-divider span::after {
+  content: "❧";
+  position: absolute;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.05rem;
+  line-height: 1;
+  transform: translateX(1.35rem) rotate(-90deg);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.20);
+}
+
+/* Large readable content panels: use Inspector cream. */
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"],
+.peridot-search-workspace .peridot-search-capability-review-card {
+  border-color: var(--explore-inspector-cream-border) !important;
+  background: var(--explore-inspector-cream) !important;
+  color: var(--explore-inspector-ink) !important;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset:nth-of-type(even),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even) {
+  background: var(--explore-inspector-cream) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(h3, label, .peridot-section-label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] :is(h3, label, .peridot-section-label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] :is(h3, label, .peridot-section-label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-capability-review-card [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-capability-review-card [class*="tracking-[0.15em]"] {
+  color: #8b672b !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset p,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] p,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] p,
+.peridot-search-workspace .peridot-search-capability-review-card p {
+  color: var(--explore-inspector-muted-ink) !important;
+  text-shadow: none !important;
+}
+
+/* Forms and simple paper fields within cream panels. */
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed {
+  border-color: rgba(137, 107, 45, 0.24) !important;
+  background: var(--explore-inspector-cream-field) !important;
+  color: var(--explore-inspector-ink) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea)::placeholder {
+  color: rgba(52, 69, 52, 0.68) !important;
+}
+
+/* Results: Inspector-style cream evidence cards. */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] {
+  border-color: var(--explore-inspector-cream-border) !important;
+  background: var(--explore-inspector-cream-soft) !important;
+  color: var(--explore-inspector-ink) !important;
+  box-shadow:
+    0 9px 20px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover {
+  border-color: rgba(207, 166, 66, 0.72) !important;
+  background: #f0e7cd !important;
+  color: var(--explore-inspector-ink) !important;
+  transform: translateY(-1px);
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] :is(h3, strong, dt, dd, p, span) {
+  color: var(--explore-inspector-ink) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] h3 {
+  color: var(--explore-inspector-ink) !important;
+}
+
+/* Result metadata and evidence strips: gold/tan, not white. */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child span.rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f2f6ee)]"],
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f4f6ed)]"] {
+  border-color: rgba(137, 107, 45, 0.24) !important;
+  background: #dcc37a !important;
+  color: var(--explore-inspector-ink) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div :is(dt, dd, span, strong),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child span.rounded-full :is(span, strong) {
+  color: var(--explore-inspector-ink) !important;
+}
+
+/* Browse/refine repeated list objects: dark green rows with gold counts. */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full {
+  border-color: rgba(212, 174, 78, 0.30) !important;
+  background: var(--explore-inspector-pine-row) !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:hover {
+  border-color: rgba(230, 191, 93, 0.65) !important;
+  background: var(--explore-inspector-pine-row-hover) !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article :is(h3, strong, dt, dd, p, span, div),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article :is(h3, strong, dt, dd, p, span, div),
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button :is(span, strong),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full :is(span, strong),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full :is(span, strong) {
+  color: #fff8e8 !important;
+  text-shadow: none !important;
+}
+
+/* Gold count badges inside dark rows. */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article .rounded-full,
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button .rounded-full,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full .rounded-full,
+.peridot-search-workspace .peridot-search-capability-scope-list strong,
+.peridot-search-workspace .peridot-search-capability-availability-meta strong,
+.peridot-search-workspace .peridot-search-capability-status,
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  border-color: rgba(240, 220, 154, 0.38) !important;
+  background: var(--explore-inspector-gold) !important;
+  color: var(--explore-inspector-ink) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 4px 10px rgba(41, 30, 7, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+/* Primary repeated actions: gold like Inspector controls. */
+.peridot-search-workspace article button:not(:disabled),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled),
+.peridot-search-workspace .peridot-search-tab-card button:not(.peridot-search-step-button):not(:disabled):hover,
+.peridot-search-workspace [class*="absolute"] button:hover,
+.peridot-search-workspace [class*="absolute"] button:focus-visible {
+  border-color: rgba(240, 220, 154, 0.44) !important;
+  background: var(--explore-inspector-gold) !important;
+  color: var(--explore-inspector-ink) !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 8px 16px rgba(41, 30, 7, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+.peridot-search-workspace article button:not(:disabled):hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:not(:disabled):hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:not(:disabled):hover {
+  background: var(--explore-inspector-gold-light) !important;
+  color: var(--explore-inspector-ink) !important;
+  transform: translateY(-1px);
+}
+
+/* Capability review: Upload-review layout with Inspector colors. */
+.peridot-search-capability-review-grid {
+  gap: 1rem !important;
+}
+
+.peridot-search-capability-review-card {
+  background: var(--explore-inspector-cream) !important;
+}
+
+.peridot-search-capability-scope-list div,
+.peridot-search-capability-availability-row {
+  border: 1px solid rgba(212, 174, 78, 0.28) !important;
+  background: var(--explore-inspector-pine-row) !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-capability-scope-list div :is(span, strong),
+.peridot-search-capability-availability-row :is(h3, p, span, strong, div) {
+  color: #fff8e8 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-capability-availability-row p {
+  color: #e9dfbf !important;
+}
+
+.peridot-search-capability-review-note {
+  border-color: rgba(212, 174, 78, 0.34) !important;
+  background: var(--explore-inspector-pine-row) !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-capability-review-note :is(p, span, strong, div) {
+  color: #fff8e8 !important;
+}
+
+/* Footer status strip belongs to the dark workspace. */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] {
+  border-color: rgba(212, 174, 78, 0.30) !important;
+  background: var(--explore-inspector-pine-row) !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] :is(p, span) {
+  color: #fff8e8 !important;
+}
+
+/* Header/count pills on tab headings should be gold, not pale cream. */
+.peridot-search-workspace .peridot-search-tab-card > div:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .flex .rounded-full:not(button) {
+  border-color: rgba(240, 220, 154, 0.38) !important;
+  background: var(--explore-inspector-gold) !important;
+  color: var(--explore-inspector-ink) !important;
+}
+
+/* Do not let the broad gold button rules recolor Build text fields. */
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea) {
+  background: var(--explore-inspector-cream-field) !important;
+  color: var(--explore-inspector-ink) !important;
+}
+
+
+/* Explore final Inspector palette + asset-divider pass, 2026-06-19
+ * ----------------------------------------------------------------
+ * This refinement applies the user's mockup direction after the first
+ * Inspector-aligned pass:
+ * - Build form groups return to calm Inspector cream panels.
+ * - Results cards are cream by default and dark green only on hover/focus.
+ * - Browse/Refine repeated rows use Inspector dark green with gold counts.
+ * - The Explore divider uses the same filigree asset treatment as Inspector.
+ *
+ * Asset expected in project: assets/Adobe Stock Filigree 3.png
+ */
+
+/* Divider: use the supplied filigree asset rather than text glyphs. */
+.peridot-search-ornament-divider {
+  min-height: 1.35rem !important;
+  margin: 0.12rem 0 0.55rem !important;
+  opacity: 0.96 !important;
+}
+
+.peridot-search-ornament-divider::before,
+.peridot-search-ornament-divider::after {
+  max-width: 19rem !important;
+  height: 1px !important;
+  background: linear-gradient(
+    90deg,
+    rgba(207, 166, 66, 0),
+    rgba(207, 166, 66, 0.68),
+    rgba(236, 211, 138, 0.75),
+    rgba(207, 166, 66, 0)
+  ) !important;
+}
+
+.peridot-search-ornament-divider span {
+  width: 5.6rem !important;
+  height: 1.3rem !important;
+  background-image: url('../assets/Adobe Stock Filigree 3.png') !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: contain !important;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.30));
+}
+
+.peridot-search-ornament-divider span::before,
+.peridot-search-ornament-divider span::after {
+  content: none !important;
+}
+
+/* Slightly tighten the divider spacing on Build so it separates without adding
+ * an empty decorative band.
+ */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .peridot-search-ornament-divider:first-of-type {
+  margin-top: -0.1rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+/* Active page remains the same flat Inspector dark green. */
+.peridot-search-workspace .peridot-search-tab-card {
+  background: #061d12 !important;
+  border-color: rgba(207, 166, 66, 0.45) !important;
+}
+
+/* Large readable panels: restore the Inspector cream/parchment role. This
+ * intentionally supersedes the prior sage/gold chip experiments.
+ */
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"],
+.peridot-search-workspace .peridot-search-capability-review-card {
+  border-color: rgba(137, 107, 45, 0.28) !important;
+  background: #e8dec0 !important;
+  color: #061d12 !important;
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset:nth-of-type(even),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"]:nth-of-type(even) {
+  background: #e8dec0 !important;
+}
+
+/* Build text and form controls: cream panels with readable field interiors. */
+.peridot-search-workspace .peridot-search-panel-inset :is(label, h3, strong, span, div),
+.peridot-search-workspace .peridot-search-panel-inset [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-panel-inset [class*="tracking-[0.15em]"] {
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset [class*="tracking-[0.14em]"],
+.peridot-search-workspace .peridot-search-panel-inset [class*="tracking-[0.15em]"],
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] [class*="tracking-[0.14em]"],
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] [class*="tracking-[0.15em]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] [class*="tracking-[0.14em]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] [class*="tracking-[0.15em]"] {
+  color: #8b672b !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset p,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] p,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] p {
+  color: #344534 !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea) {
+  border-color: rgba(137, 107, 45, 0.28) !important;
+  background: #f3ecd8 !important;
+  color: #061d12 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea)::placeholder {
+  color: rgba(52, 69, 52, 0.70) !important;
+}
+
+/* Build capability filter toggles: dark green row-buttons with gold counts,
+ * matching Inspector connection rows.
+ */
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button,
+.peridot-search-workspace .peridot-search-panel-inset button[title*="workflow"],
+.peridot-search-workspace .peridot-search-panel-inset button[title*="missing"],
+.peridot-search-workspace .peridot-search-panel-inset button[title*="Map"],
+.peridot-search-workspace .peridot-search-panel-inset button[title*="Network"],
+.peridot-search-workspace .peridot-search-panel-inset button[title*="Timeline"],
+.peridot-search-workspace .peridot-search-panel-inset button[title*="Inspector"] {
+  border-color: rgba(207, 166, 66, 0.32) !important;
+  background: #123d20 !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button:hover,
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button[aria-pressed="true"],
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button[aria-selected="true"] {
+  border-color: rgba(230, 191, 93, 0.70) !important;
+  background: #174a29 !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button :is(span, strong) {
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button .rounded-full {
+  border-color: rgba(240, 220, 154, 0.42) !important;
+  background: #cfa642 !important;
+  color: #061d12 !important;
+}
+
+/* Results grid field remains dark; default record cards are Inspector cream.
+ * Hover/focus turns a result card dark green, as in the user's mockup.
+ */
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .grid.gap-3.xl\:grid-cols-2 {
+  border: 1px solid rgba(207, 166, 66, 0.30) !important;
+  border-radius: 1.1rem !important;
+  background: #405236 !important;
+  padding: 0.7rem !important;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] {
+  border-color: rgba(137, 107, 45, 0.28) !important;
+  background: #eee6cf !important;
+  color: #061d12 !important;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] :is(h3, strong, dt, dd, p, span) {
+  color: #061d12 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:focus-within {
+  border-color: rgba(230, 191, 93, 0.72) !important;
+  background: #061d12 !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  transform: translateY(-1px);
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover :is(h3, strong, p, span),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:focus-within :is(h3, strong, p, span) {
+  color: #fff8e8 !important;
+}
+
+/* Result metadata and evidence strips: gold/tan accents on both cream and dark
+ * card states.
+ */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child span.rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f2f6ee)]"],
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f4f6ed)]"] {
+  border-color: rgba(137, 107, 45, 0.24) !important;
+  background: #dcc37a !important;
+  color: #061d12 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div :is(dt, dd, span, strong),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child span.rounded-full :is(span, strong) {
+  color: #061d12 !important;
+}
+
+/* Gold result action buttons, with lighter gold hover. */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button {
+  border-color: rgba(240, 220, 154, 0.44) !important;
+  background: #cfa642 !important;
+  color: #061d12 !important;
+  text-shadow: none !important;
+  box-shadow:
+    0 8px 16px rgba(41, 30, 7, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button:hover {
+  border-color: rgba(255, 239, 179, 0.78) !important;
+  background: #e4bf5d !important;
+  color: #061d12 !important;
+}
+
+/* Browse item cards and Refine facet chips: Inspector dark rows with gold counts. */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full {
+  border-color: rgba(207, 166, 66, 0.32) !important;
+  background: #123d20 !important;
+  color: #fff8e8 !important;
+  box-shadow:
+    0 6px 14px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article:hover,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full:hover {
+  border-color: rgba(230, 191, 93, 0.70) !important;
+  background: #174a29 !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article :is(h3, strong, dt, dd, p, span, div),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article :is(h3, strong, dt, dd, p, span, div),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full :is(span, strong),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full :is(span, strong) {
+  color: #fff8e8 !important;
+}
+
+/* Gold counts and Search actions in dark rows. */
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article .rounded-full,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full .rounded-full {
+  border-color: rgba(240, 220, 154, 0.42) !important;
+  background: #cfa642 !important;
+  color: #061d12 !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button {
+  border-color: rgba(240, 220, 154, 0.44) !important;
+  background: #cfa642 !important;
+  color: #061d12 !important;
+}
+
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:hover,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article button:hover {
+  background: #e4bf5d !important;
+  color: #061d12 !important;
+}
+
+/* Capabilities review: Inspector colors while preserving the two-card review layout. */
+.peridot-search-capability-review-card {
+  background: #e8dec0 !important;
+  color: #061d12 !important;
+}
+
+.peridot-search-capability-scope-list div,
+.peridot-search-capability-availability-row {
+  border-color: rgba(207, 166, 66, 0.32) !important;
+  background: #123d20 !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-capability-scope-list div :is(span, strong),
+.peridot-search-capability-availability-row :is(h3, p, span, strong, div) {
+  color: #fff8e8 !important;
+}
+
+.peridot-search-capability-scope-list strong,
+.peridot-search-capability-availability-meta strong,
+.peridot-search-capability-status,
+.peridot-search-capability-status-ready,
+.peridot-search-capability-status-missing {
+  border-color: rgba(240, 220, 154, 0.42) !important;
+  background: #cfa642 !important;
+  color: #061d12 !important;
+}
+
+.peridot-search-capability-review-note,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] {
+  border-color: rgba(207, 166, 66, 0.34) !important;
+  background: #123d20 !important;
+  color: #fff8e8 !important;
+}
+
+.peridot-search-capability-review-note :is(p, span, strong, div),
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] :is(p, span, strong, div) {
+  color: #fff8e8 !important;
+}
+
+/* Top right status/count pills in tab headings remain gold accents. */
+.peridot-search-workspace .peridot-search-tab-card > div:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .flex .rounded-full:not(button) {
+  border-color: rgba(240, 220, 154, 0.42) !important;
+  background: #cfa642 !important;
+  color: #061d12 !important;
+}
+
+
+/* Explore cream-surface legibility correction, 2026-06-19
+ * -------------------------------------------------------
+ * Rule: never use white or pale gold on cream/parchment. Text on cream uses
+ * near-black pine or dark antique gold. White is reserved for dark pine rows
+ * and dark page surfaces only.
+ */
+.peridot-search-workspace {
+  --explore-readable-pine: #03130b;
+  --explore-readable-pine-soft: #102313;
+  --explore-readable-muted: #273529;
+  --explore-readable-dark-gold: #6f4f12;
+  --explore-readable-dark-gold-2: #7f5b16;
+}
+
+/* Cream panels and cards: force readable dark ink. */
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace .peridot-search-capability-review-card,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"],
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"],
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] {
+  color: var(--explore-readable-pine) !important;
+}
+
+/* General prose on cream: dark green, not white or pale gold. */
+.peridot-search-workspace .peridot-search-panel-inset :is(p, li, span, div, dd),
+.peridot-search-workspace .peridot-search-capability-review-card :is(p, li, span, div, dd),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] :is(p, li, span, div, dd),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] > :not(article):not(button) :is(p, li, span, div, dd),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] > :not(article):not(button) :is(p, li, span, div, dd) {
+  color: var(--explore-readable-pine-soft) !important;
+  text-shadow: none !important;
+}
+
+/* Titles and strong text on cream: near-black pine. */
+.peridot-search-workspace .peridot-search-panel-inset :is(h1, h2, h3, h4, strong, dt),
+.peridot-search-workspace .peridot-search-capability-review-card :is(h1, h2, h3, h4, strong, dt),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] :is(h1, h2, h3, h4, strong, dt),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] > :not(article):not(button) :is(h1, h2, h3, h4, strong, dt),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] > :not(article):not(button) :is(h1, h2, h3, h4, strong, dt) {
+  color: var(--explore-readable-pine) !important;
+  text-shadow: none !important;
+}
+
+/* Labels/kickers on cream: dark antique gold, not light gold. */
+.peridot-search-workspace .peridot-search-panel-inset :is(label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"], [class*="tracking-[0.18em]"]),
+.peridot-search-workspace .peridot-search-capability-review-card :is(label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"], [class*="tracking-[0.18em]"]),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] :is(label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"], [class*="tracking-[0.18em]"]),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] > :not(article):not(button) :is(label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"], [class*="tracking-[0.18em]"]),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] > :not(article):not(button) :is(label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"], [class*="tracking-[0.18em]"]) {
+  color: var(--explore-readable-dark-gold) !important;
+  text-shadow: none !important;
+}
+
+/* Gold strips/pills on cream still use dark ink. */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child span.rounded-full,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f2f6ee)]"],
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f4f6ed)]"],
+.peridot-search-workspace .peridot-search-tab-card > div:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child .rounded-full,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .flex .rounded-full:not(button) {
+  color: var(--explore-readable-pine) !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] > div:first-child span.rounded-full *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] dl > div *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f2f6ee)]"] *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] [class*="bg-[var(--peridot-color-hex-f4f6ed)]"] *,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child .rounded-full *,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child .rounded-full *,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > .flex .rounded-full:not(button) * {
+  color: var(--explore-readable-pine) !important;
+  text-shadow: none !important;
+}
+
+/* Keep dark rows readable with cream text. These override the cream-panel
+ * corrections above for Inspector-style dark selectable rows.
+ */
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full,
+.peridot-search-workspace .peridot-search-capability-scope-list div,
+.peridot-search-workspace .peridot-search-capability-availability-row,
+.peridot-search-workspace .peridot-search-capability-review-note,
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] {
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label),
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label),
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label),
+.peridot-search-workspace .peridot-search-capability-scope-list div :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label),
+.peridot-search-workspace .peridot-search-capability-availability-row :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label),
+.peridot-search-workspace .peridot-search-capability-review-note :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label),
+.peridot-search-workspace .peridot-search-tab-card > .space-y-4 > div:last-child.rounded-\[1rem\] :is(h1, h2, h3, h4, p, span, strong, div, dt, dd, label) {
+  color: #fff8e8 !important;
+  text-shadow: none !important;
+}
+
+/* Gold badges inside dark rows still need dark ink. */
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button .rounded-full,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article .rounded-full,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full .rounded-full,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full .rounded-full,
+.peridot-search-workspace .peridot-search-capability-scope-list strong,
+.peridot-search-workspace .peridot-search-capability-availability-meta strong,
+.peridot-search-workspace .peridot-search-capability-status,
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  color: var(--explore-readable-pine) !important;
+}
+
+.peridot-search-workspace .peridot-search-panel-inset .grid.lg\:grid-cols-4 button .rounded-full *,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] article .rounded-full *,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] article .rounded-full *,
+.peridot-search-workspace section[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full .rounded-full *,
+.peridot-search-workspace div[class*="bg-[var(--peridot-color-hex-74897a)]"] button.rounded-full .rounded-full *,
+.peridot-search-workspace .peridot-search-capability-scope-list strong *,
+.peridot-search-workspace .peridot-search-capability-availability-meta strong *,
+.peridot-search-workspace .peridot-search-capability-status *,
+.peridot-search-workspace .peridot-search-capability-status-ready *,
+.peridot-search-workspace .peridot-search-capability-status-missing * {
+  color: var(--explore-readable-pine) !important;
+}
+
+/* Result card hover/focus is a dark surface; keep ordinary text cream there,
+ * but maintain dark text inside the gold strips and gold buttons.
+ */
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover :is(h3, p, span, strong),
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:focus-within :is(h3, p, span, strong) {
+  color: #fff8e8 !important;
+}
+
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover dl > div *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:focus-within dl > div *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:hover > div:first-child span.rounded-full *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"]:focus-within > div:first-child span.rounded-full *,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button,
+.peridot-search-workspace article[class*="bg-[var(--peridot-color-hex-d3e3c8)]"] button * {
+  color: var(--explore-readable-pine) !important;
+}
