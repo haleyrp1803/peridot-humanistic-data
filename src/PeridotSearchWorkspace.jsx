@@ -126,6 +126,7 @@ const STRUCTURED_MATCH_MODE_OPTIONS = Object.freeze([
 const MAX_STRUCTURED_CRITERIA = 5;
 
 const BROWSE_INDEX_LIMIT = 120;
+const BROWSE_PANEL_VISIBLE_LIMIT = 8;
 const BROWSE_SOURCE_PERSON_FIELDS = ['sourcePerson', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender'];
 const BROWSE_TARGET_PERSON_FIELDS = ['targetPerson', 'Target', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient'];
 const BROWSE_SOURCE_PLACE_FIELDS = ['sourcePlaceLabel', 'sourcePlace', 'sourceLoc', 'Source_Loc', 'Source_Place', 'sourceLocation'];
@@ -201,11 +202,20 @@ function sortBrowseItems(map, limit = BROWSE_INDEX_LIMIT) {
     .slice(0, limit);
 }
 
+function normalizeBrowsePairValue(value) {
+  return browseText(value).toLowerCase();
+}
+
+function hasMeaningfulBrowsePair(sourceValue, targetValue) {
+  const source = normalizeBrowsePairValue(sourceValue);
+  const target = normalizeBrowsePairValue(targetValue);
+  return Boolean(source && target && source !== target);
+}
+
 function buildBrowseIndexGroups(rows = []) {
   const people = new Map();
   const places = new Map();
   const routes = new Map();
-  const evidenceFields = new Map();
 
   (Array.isArray(rows) ? rows : []).forEach((row) => {
     const sourcePerson = firstBrowseText(row, BROWSE_SOURCE_PERSON_FIELDS);
@@ -218,51 +228,47 @@ function buildBrowseIndexGroups(rows = []) {
     addBrowseCount(places, sourcePlace, { source: true });
     addBrowseCount(places, targetPlace, { target: true });
 
-    if (sourcePlace || targetPlace) {
-      const routeLabel = `${sourcePlace || 'Unknown source'} → ${targetPlace || 'Unknown target'}`;
+    if (hasMeaningfulBrowsePair(sourcePlace, targetPlace)) {
+      const routeLabel = `${sourcePlace} → ${targetPlace}`;
       addBrowseCount(routes, routeLabel, { example: routeLabel });
     }
-
-    Object.entries(row || {}).forEach(([key, value]) => {
-      if (BROWSE_CORE_FIELDS.has(key)) return;
-      const text = browseText(value);
-      if (!text) return;
-      addBrowseCount(evidenceFields, browseFieldLabel(key), { example: text });
-    });
   });
 
-  return [
+  const routeItems = sortBrowseItems(routes);
+  const hasRoutes = routeItems.length > 0;
+  const groups = [
     {
       id: 'browse-people',
       type: 'person',
-      label: 'People / Entities',
-      description: 'Dataset-wide index of source and target entities.',
+      label: hasRoutes ? 'People / Entities' : 'Entities',
+      description: hasRoutes
+        ? 'Source and target entity index.'
+        : 'Entity or record-label index for this dataset.',
       items: sortBrowseItems(people),
     },
     {
       id: 'browse-places',
       type: 'place',
-      label: 'Places',
-      description: 'Dataset-wide index of source, target, and point-location places.',
+      label: hasRoutes ? 'Places' : 'Locations',
+      description: hasRoutes
+        ? 'Source and target place index.'
+        : 'Mapped location index for point or place records.',
       items: sortBrowseItems(places),
     },
-    {
+  ];
+
+  if (hasRoutes) {
+    groups.push({
       id: 'browse-routes',
       type: 'routePlace',
       label: 'Routes',
-      description: 'Dataset-wide source → target place routes.',
-      items: sortBrowseItems(routes),
-    },
-    {
-      id: 'browse-evidence',
-      type: 'evidenceField',
-      label: 'Evidence Fields',
-      description: 'Custom and evidence/analysis fields with populated values.',
-      items: sortBrowseItems(evidenceFields),
-    },
-  ].filter((group) => group.items.length > 0);
-}
+      description: 'Source → target place route index.',
+      items: routeItems,
+    });
+  }
 
+  return groups.filter((group) => group.items.length > 0);
+}
 function filterBrowseGroups(groups, query) {
   const cleanQuery = browseText(query).toLowerCase();
   if (!cleanQuery) return groups;
@@ -660,52 +666,94 @@ function FacetGroup({ group, activeCapabilityFilters, onChooseFacet }) {
 
 
 function BrowseIndexGroup({ group, onChooseBrowseItem }) {
+  const [panelQuery, setPanelQuery] = useState('');
+  const [isExpanded, setIsExpanded] = useState(false);
+  const cleanPanelQuery = panelQuery.trim().toLowerCase();
+  const panelItems = cleanPanelQuery
+    ? group.items.filter((item) => (
+        item.label.toLowerCase().includes(cleanPanelQuery)
+        || item.examples.some((example) => example.toLowerCase().includes(cleanPanelQuery))
+      ))
+    : group.items;
+  const visibleItems = isExpanded ? panelItems : panelItems.slice(0, BROWSE_PANEL_VISIBLE_LIMIT);
+  const hiddenCount = Math.max(panelItems.length - visibleItems.length, 0);
+  const isRouteGroup = group.type === 'routePlace';
+
   return (
-    <section className="peridot-search-browse-panel rounded-[1rem] border p-3 shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-34-51-38-0-18)]">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h3 className="peridot-search-panel-heading text-[0.7rem] font-black uppercase tracking-[0.15em]">
+    <section className={`peridot-search-browse-panel peridot-search-browse-ledger-panel ${isExpanded ? 'peridot-search-browse-ledger-panel-expanded' : ''}`}>
+      <div className="peridot-search-browse-ledger-panel-header">
+        <div className="min-w-0">
+          <h3 className="peridot-search-panel-heading peridot-search-browse-ledger-title">
             {group.label}
           </h3>
-          <p className="peridot-search-panel-description mt-1 text-xs leading-5">{group.description}</p>
         </div>
-        <span className="peridot-search-count-badge rounded-full border px-2 py-0.5 text-[0.62rem] font-black">
-          {group.items.length} shown
+        <span className="peridot-search-count-badge peridot-search-browse-ledger-count rounded-full border px-2 py-0.5 text-[0.62rem] font-black">
+          {panelItems.length} shown
         </span>
       </div>
-      <div className="mt-3 grid max-h-[24rem] gap-2 overflow-y-auto pr-1 sm:grid-cols-2 xl:grid-cols-3">
-        {group.items.map((item) => (
-          <article key={`${group.id}-${item.value}`} className="peridot-search-browse-item rounded-xl border p-2.5 shadow-sm transition duration-150">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <div className="peridot-search-browse-title truncate text-sm font-black" title={item.label}>{item.label}</div>
-                <div className="peridot-search-browse-meta mt-1 flex flex-wrap gap-1.5 text-[0.62rem] font-black uppercase tracking-[0.08em]">
-                  <span className="peridot-search-small-badge rounded-full px-2 py-0.5">{item.count} records</span>
-                  {item.sourceCount ? <span className="peridot-search-small-badge rounded-full px-2 py-0.5">source {item.sourceCount}</span> : null}
-                  {item.targetCount ? <span className="peridot-search-small-badge rounded-full px-2 py-0.5">target {item.targetCount}</span> : null}
-                </div>
-              </div>
+
+      <input
+        id={`browse-panel-search-${group.id}`}
+        value={panelQuery}
+        onChange={(event) => {
+          setPanelQuery(event.target.value);
+          setIsExpanded(false);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' && panelItems.length > BROWSE_PANEL_VISIBLE_LIMIT) {
+            event.preventDefault();
+            setIsExpanded(true);
+          }
+        }}
+        className="peridot-search-input peridot-search-browse-ledger-search"
+        placeholder={`Search within ${group.label.toLowerCase()}`}
+        type="search"
+      />
+
+      <div className="peridot-search-browse-ledger" role="table" aria-label={`${group.label} browse index`}>
+        <div className={`peridot-search-browse-ledger-row peridot-search-browse-ledger-head ${isRouteGroup ? 'peridot-search-browse-ledger-row-route' : ''}`} role="row">
+          <div role="columnheader">{isRouteGroup ? 'Route' : 'Name'}</div>
+          <div role="columnheader">Records</div>
+          {isRouteGroup ? null : <div role="columnheader">Source</div>}
+          {isRouteGroup ? null : <div role="columnheader">Target</div>}
+          <div role="columnheader">Search</div>
+        </div>
+        {visibleItems.map((item) => (
+          <div key={`${group.id}-${item.value}`} className={`peridot-search-browse-ledger-row ${isRouteGroup ? 'peridot-search-browse-ledger-row-route' : ''}`} role="row">
+            <div className="peridot-search-browse-ledger-name" role="cell" title={item.label}>{item.label}</div>
+            <div className="peridot-search-browse-ledger-number" role="cell">{item.count}</div>
+            {isRouteGroup ? null : <div className="peridot-search-browse-ledger-number" role="cell">{item.sourceCount || '—'}</div>}
+            {isRouteGroup ? null : <div className="peridot-search-browse-ledger-number" role="cell">{item.targetCount || '—'}</div>}
+            <div className="peridot-search-browse-ledger-action" role="cell">
               <button
                 type="button"
                 onClick={() => onChooseBrowseItem(group, item)}
-                className={DARK_BUTTON_CLASS + ' px-3 py-1.5'}
+                className={DARK_BUTTON_CLASS + ' peridot-search-browse-ledger-search-button'}
               >
                 Search
               </button>
             </div>
-            {item.examples?.length ? (
-              <div className="peridot-search-browse-examples mt-2 text-[0.68rem] leading-4">
-                <span className="peridot-search-browse-examples-label font-black uppercase tracking-[0.08em]">Examples: </span>
-                {item.examples.join(' · ')}
-              </div>
-            ) : null}
-          </article>
+          </div>
         ))}
+        {!visibleItems.length ? (
+          <div className="peridot-search-browse-ledger-empty" role="row">
+            No entries match this panel search.
+          </div>
+        ) : null}
       </div>
+
+      {panelItems.length > BROWSE_PANEL_VISIBLE_LIMIT ? (
+        <button
+          type="button"
+          onClick={() => setIsExpanded((current) => !current)}
+          className={DARK_BUTTON_CLASS + ' peridot-search-browse-ledger-expand'}
+        >
+          {isExpanded ? 'Show less' : `Show all +${hiddenCount}`}
+        </button>
+      ) : null}
     </section>
   );
 }
-
 
 const RESULT_PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -996,7 +1044,6 @@ export function PeridotSearchWorkspace({
   const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
   const [filterStatusMessage, setFilterStatusMessage] = useState('');
-  const [browseQuery, setBrowseQuery] = useState('');
   const [resultPageSize, setResultPageSize] = useState(10);
   const [resultPage, setResultPage] = useState(1);
 
@@ -1089,7 +1136,7 @@ export function PeridotSearchWorkspace({
     [rawSearchFacetGroups, searchResultsAreRouteCapable],
   );
   const browseIndexGroups = useMemo(() => buildBrowseIndexGroups(browseRows), [browseRows]);
-  const filteredBrowseIndexGroups = useMemo(() => filterBrowseGroups(browseIndexGroups, browseQuery), [browseIndexGroups, browseQuery]);
+  const filteredBrowseIndexGroups = browseIndexGroups;
 
   const capabilityFacetCounts = useMemo(() => {
     const capabilityGroup = searchFacetGroups.find((group) => group.id === 'capabilities');
@@ -1606,20 +1653,6 @@ export function PeridotSearchWorkspace({
           {(browseRows?.length || 0)} loaded records indexed
         </div>
       </div>
-      <ExploreDivider />
-
-      <div className={PANEL_INSET_CLASS + ' p-3'}>
-        <AutocompleteTextInput
-          id="browse-index-search"
-          label="Search within browse indexes"
-          value={browseQuery}
-          onChange={setBrowseQuery}
-          onKeyDown={handleDraftKeyDown}
-          placeholder="Filter people, places, routes, evidence fields, or example values"
-          suggestions={personSuggestions.concat(placeSuggestions, routePlaceSuggestions, evidenceFieldSuggestions).slice(0, 200)}
-        />
-      </div>
-      <ExploreDivider />
 
       {filteredBrowseIndexGroups.length ? (
         <div className="peridot-search-browse-grid grid gap-3">
