@@ -8,6 +8,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
+
+// Learn More styling remains loaded after the shared stylesheet on purpose.
+// Its extracted rules formerly occupied the final `index.css` cascade layer.
+import './PeridotLearnMoreWorkspace.css';
 import { applyPeridotThemeVariables } from './peridotTheme.js';
 import { applyPeridotColorVariables } from './peridotColorPalette.js';
 
