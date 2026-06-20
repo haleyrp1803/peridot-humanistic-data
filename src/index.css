@@ -6665,3 +6665,11 @@ textarea {
 .peridot-learn-more-tutorial-card {
   background: linear-gradient(135deg, #e7dcb9, #d4c79f);
 }
+
+/* Explore folio corner containment repair â€” 2026-06-20
+ * Keep page scrolling on `.peridot-search-workspace`, while the rounded folio
+ * shell remains the clipping boundary for its dark header/body layers.
+ */
+.peridot-search-workspace .peridot-search-folio-shell {
+  overflow: hidden;
+}
