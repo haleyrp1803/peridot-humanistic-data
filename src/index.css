@@ -1029,7 +1029,7 @@ textarea {
 
 .peridot-kicker::before,
 .peridot-kicker::after {
-  content: 'â—†';
+  content: '◆';
   color: var(--peridot-role-ornament-line);
   font-size: 0.62em;
   vertical-align: 0.12em;
@@ -1077,7 +1077,7 @@ textarea {
 .peridot-button-primary::before,
 .peridot-button-secondary::before,
 .peridot-button-cream::before {
-  content: 'â—†';
+  content: '◆';
   margin-right: 0.45rem;
   font-size: 0.72em;
   opacity: 0.78;
@@ -2188,15 +2188,14 @@ textarea {
 .peridot-search-workspace .peridot-search-folio-shell::before {
   content: '';
   position: absolute;
-  inset: 0.55rem;
+  inset: 0;
   z-index: 0;
   pointer-events: none;
-  border-radius: 1.18rem;
+  border-radius: inherit;
   background:
     linear-gradient(135deg, rgba(2, 14, 8, 0.68), rgba(2, 14, 8, 0.80)),
     repeating-linear-gradient(135deg, rgba(221, 187, 105, 0.10) 0 1px, transparent 1px 16px),
     linear-gradient(135deg, var(--explore-shell) 0%, var(--explore-shell-mid) 48%, #04160f 100%);
-  box-shadow: inset 0 0 0 1px rgba(221, 187, 105, 0.14);
 }
 
 .peridot-search-workspace .peridot-search-folio-shell > * {
@@ -4934,7 +4933,7 @@ textarea {
 }
 
 .peridot-search-workspace .peridot-search-folio-shell {
-  overflow: visible;
+  overflow: hidden;
 }
 
 .peridot-search-workspace .peridot-search-folio-body,
@@ -5679,7 +5678,7 @@ textarea {
 }
 
 .peridot-learn-more-github-destination::before {
-  content: 'â—†';
+  content: '◆';
   color: #f0d27a;
   font-size: 0.66rem;
 }
@@ -6157,17 +6156,3 @@ textarea {
   }
 }
 
-
-
-/* Explore folio clipping repair, 2026-06-19.
- * Scope: Advanced Search shell only. The Search folio owns the rounded outer
- * frame and its decorative pseudo-element. The late scroll-restoration pass
- * must not allow that background layer to render outside the rounded boundary
- * during the shell entrance animation. Workspace scrolling remains on
- * `.peridot-search-workspace`; autocomplete menus may extend within the folio
- * but are clipped at the folio edge, which preserves the single-frame visual
- * contract.
- */
-.peridot-search-workspace .peridot-search-folio-shell {
-  overflow: hidden;
-}

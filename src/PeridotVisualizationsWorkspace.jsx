@@ -716,6 +716,31 @@ export function PeridotVisualizationsWorkspace({
   const menuCloseTimerRef = useRef(null);
   const stageSwitchTimerRef = useRef(null);
   const stageRevealFrameRef = useRef(null);
+  const headerEntranceTimerRef = useRef(null);
+  const [hasHeaderEntranceSettled, setHasHeaderEntranceSettled] = useState(false);
+
+  /*
+   * The Visualizations header has a one-time, right-to-left arrival sequence:
+   * Export, Explore, Charts, Network, then Mapping. Once that sequence has
+   * finished, these controls must remain fully visible. Visualization-stage
+   * switches re-render the header while the map/chart body transitions through
+   * its green veil, so replaying the generic opacity-zero entrance class here
+   * would make active controls disappear. Keep the mount-only timer independent
+   * from selected-tool and stage-switch state.
+   */
+  useEffect(() => {
+    headerEntranceTimerRef.current = window.setTimeout(() => {
+      headerEntranceTimerRef.current = null;
+      setHasHeaderEntranceSettled(true);
+    }, 2280);
+
+    return () => {
+      if (headerEntranceTimerRef.current) {
+        window.clearTimeout(headerEntranceTimerRef.current);
+        headerEntranceTimerRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (visualizationsWorkspacePanel === 'analytics') {
@@ -928,7 +953,9 @@ export function PeridotVisualizationsWorkspace({
     'focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
   ].join(' ');
 
-  const categoryClass = () => 'relative rounded-full';
+  const headerEntranceClass = () => (hasHeaderEntranceSettled ? '' : 'peridot-appear-fade');
+  const headerEntranceStyle = (delay) => (hasHeaderEntranceSettled ? undefined : { '--peridot-appear-delay': delay });
+  const categoryClass = () => ['relative rounded-full', headerEntranceClass()].filter(Boolean).join(' ');
 
   const headerTabStateClass = (open, selected) => [
     selected
@@ -1021,11 +1048,11 @@ export function PeridotVisualizationsWorkspace({
                 </div>
 
                 <div className="flex flex-wrap items-center justify-end gap-2">
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className={`peridot-appear-fade ${headerRowDecalClass}`} style={{ '--peridot-appear-delay': '1120ms' }} fill="none">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={[headerEntranceClass(), headerRowDecalClass].filter(Boolean).join(' ')} style={headerEntranceStyle('1120ms')} fill="none">
                     <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
                     <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
                   </svg>
-                  {categories.filter((category) => !category.directAction).map((category, categoryIndex) => {
+                  {categories.filter((category) => !category.directAction).map((category) => {
                     const isOpen = openMenuCategory === category.label;
                     const selected = isCategorySelected(category);
                     const handleCategoryClick = (event) => {
@@ -1039,8 +1066,16 @@ export function PeridotVisualizationsWorkspace({
                       <div
                         key={category.label}
                         data-visualization-menu-anchor="true"
-                        className={`peridot-appear-fade ${categoryClass(isOpen, selected)}`}
-                        style={{ '--peridot-appear-delay': `${1040 - categoryIndex * 120}ms` }}
+                        /* Initial header entrance is deliberately mount-only. Once settled, the
+                         * category wrapper carries no opacity-zero animation class, so stage changes
+                         * cannot make Charts, Network, or Mapping disappear during a body transition.
+                         */
+                        className={categoryClass()}
+                        style={headerEntranceStyle({
+                          'Mapping Visualizations': '1040ms',
+                          'Network Visualizations': '920ms',
+                          'Chart Visualizations': '800ms',
+                        }[category.label])}
                         onMouseEnter={(event) => openMenu(category.label, event.currentTarget)}
                         onMouseLeave={scheduleMenuClose}
                         onFocus={(event) => openMenu(category.label, event.currentTarget)}
@@ -1087,8 +1122,8 @@ export function PeridotVisualizationsWorkspace({
                     <button
                       key={category.label}
                       type="button"
-                      className={`peridot-appear-fade ${headerActionClass}`}
-                      style={{ '--peridot-appear-delay': '680ms' }}
+                      className={[headerEntranceClass(), headerActionClass].filter(Boolean).join(' ')}
+                      style={headerEntranceStyle('680ms')}
                       onClick={() => {
                         closeMenu();
                         category.directAction();
@@ -1097,14 +1132,14 @@ export function PeridotVisualizationsWorkspace({
                       Explore
                     </button>
                   ))}
-                  <div className="peridot-appear-fade" style={{ '--peridot-appear-delay': '560ms' }}>
+                  <div className={headerEntranceClass()} style={headerEntranceStyle('560ms')}>
                     <VisualizationExportMenu
                       exportControls={activeExportControls}
                       activeVisualizationLabel={activeVisualizationLabel}
                       compact
                     />
                   </div>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className={`peridot-appear-fade ${headerRowDecalClass} scale-x-[-1]`} style={{ '--peridot-appear-delay': '460ms' }} fill="none">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" className={[headerEntranceClass(), headerRowDecalClass, 'scale-x-[-1]'].filter(Boolean).join(' ')} style={headerEntranceStyle('460ms')} fill="none">
                     <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
                     <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
                   </svg>
@@ -1117,14 +1152,14 @@ export function PeridotVisualizationsWorkspace({
                   <span className="truncate text-sm font-bold text-[var(--peridot-color-hex-f5ecd2)]">{activeVisualizationLabel}</span>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <div className="peridot-appear-fade" style={{ '--peridot-appear-delay': '560ms' }}>
+                  <div className={headerEntranceClass()} style={headerEntranceStyle('560ms')}>
                     <VisualizationExportMenu
                       exportControls={activeExportControls}
                       activeVisualizationLabel={activeVisualizationLabel}
                       compact
                     />
                   </div>
-                  <span className="peridot-appear-fade rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-1 text-[11px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]" style={{ '--peridot-appear-delay': '720ms' }}>
+                  <span className={[headerEntranceClass(), 'rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-1 text-[11px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]'].filter(Boolean).join(' ')} style={headerEntranceStyle('720ms')}>
                     Navigation minimized
                   </span>
                 </div>
