@@ -1,11 +1,45 @@
 ﻿/*
- * Global CSS layer for Peridot.
- * 
- * This file should stay small. Most visual styling is intentionally implemented with Tailwind utility classes and theme tokens in React components. Global CSS is reserved for base Tailwind setup, app-wide layout behavior, typography defaults, and a few cross-cutting rules that are awkward to express locally.
- * 
- * Maintenance cautions:
- * - Avoid putting component-specific styling here unless it truly applies across the app.
- * - Check whether a style belongs in a workspace/component first; global rules can unintentionally affect maps, charts, Inspector, and export rendering.
+ * Peridot shared stylesheet: global foundations plus legacy workspace-specific
+ * compatibility layers.
+ *
+ * IMPORTANT: This file is behavior-bearing. It controls not only appearance,
+ * but also scroll ownership, rounded clipping, dropdown stacking, animation
+ * timing, reduced-motion fallbacks, and portal-mounted visualization controls.
+ * Its order is therefore part of the current application contract.
+ *
+ * Source and ownership map
+ * ------------------------
+ * 1. Global foundations and reusable primitives (this file; consumed broadly).
+ * 2. Shared workspace / visualization choreography
+ *    (`PeridotHomeWorkspace.jsx`, `PeridotDataWorkspace.jsx`,
+ *    `PeridotVisualizationsWorkspace.jsx`, and `timelinePlaybackComponents.jsx`).
+ * 3. Chart-builder and Inspector compatibility styling
+ *    (`AnalyticsPanel.jsx`, `InspectorPanel.jsx`, and `LeftControlPanel.jsx`).
+ * 4. Upload, Data, and column-mapping folio styling
+ *    (`PeridotDataWorkspace.jsx` and `PeridotColumnMappingModal.jsx`).
+ * 5. Advanced Search / Explore styling (`PeridotSearchWorkspace.jsx`).
+ * 6. Learn More styling (`PeridotLearnMoreWorkspace.jsx`).
+ *
+ * Theme contract
+ * --------------
+ * Semantic `--peridot-role-*` variables are produced by `peridotTheme.js`.
+ * Older generated `--peridot-color-*` tokens and literal color values remain
+ * compatibility paths. Do not consolidate color systems in this file without a
+ * separate visual/theming pass and review of palette-import behavior.
+ *
+ * Cascade contract
+ * ----------------
+ * Several later blocks intentionally override earlier blocks after focused,
+ * visually accepted repairs. Do not reorder blocks, merge duplicate selectors,
+ * remove `!important`, or alter selector specificity merely because a rule
+ * appears redundant. First identify the JSX owner and test the affected
+ * workspace plus its documented cross-workspace regression points.
+ *
+ * Extraction direction
+ * --------------------
+ * Future structural passes may move verified workspace-local sections into
+ * co-located CSS files. Until then, retain source order and treat this file as
+ * the authoritative compatibility layer for the active stylesheet.
  */
 
 @tailwind base;
@@ -322,6 +356,15 @@ textarea {
 }
 
 
+/*
+ * ==========================================================================
+ * Shared workspace and visualization choreography
+ * ==========================================================================
+ * Owners: Home, Data, Visualizations, Timeline, and chart-stage components.
+ * These utilities are shared by multiple JSX owners. Keep keyframe names,
+ * delay classes, and transform ownership stable: several components already
+ * apply Tailwind transforms that would conflict with a moved animation.
+ */
 /* Page-load entrance animations
  * -----------------------------
  * These utilities create Peridot's restrained illuminated-page arrival effect.
@@ -566,6 +609,14 @@ textarea {
 }
 
 
+/*
+ * Chart builder boundary
+ * ---------------------
+ * Owner: `AnalyticsPanel.jsx`, entered through `PeridotVisualizationsWorkspace.jsx`.
+ * The builder animation starts only after the visualization-stage veil clears.
+ * The final chart fade remains opacity-only because SVG measurement and PNG
+ * export depend on stable layout while the chart mounts.
+ */
 /* Chart-visualization entrance choreography.
  * The Visualizations shell, header, timeline, and green stage transition animate
  * outside AnalyticsPanel. Start this local chart-builder reveal just after the
@@ -779,6 +830,15 @@ textarea {
 }
 
 
+/*
+ * Inspector compatibility boundary
+ * --------------------------------
+ * Owners: `InspectorPanel.jsx` and the compact shell in `LeftControlPanel.jsx`.
+ * Class-fragment selectors below intentionally bridge semantic Inspector CSS
+ * variables into Tailwind-generated markup. They are fragile by design:
+ * rename or restructure the matching JSX classes only with Inspector visual
+ * regression testing in both compact and full-workspace modes.
+ */
 /* Inspector side-panel chart-language polish.
  * The Inspector follows the same family as the Chart builder, but it needs more
  * hierarchy because it contains many more interactive rows. Gold is reserved for
@@ -883,6 +943,14 @@ textarea {
 }
 
 
+/*
+ * Accessibility: shared reduced-motion fallback
+ * ----------------------------------------------
+ * This is the first of several local fallbacks. It neutralizes shared workspace,
+ * visualization, timeline, chart-builder, and Inspector-adjacent entrance
+ * motion. Workspace-specific sections retain their own fallbacks beside the
+ * animations they reset so future extracted CSS can preserve that coupling.
+ */
 @media (prefers-reduced-motion: reduce) {
   .peridot-appear-fade,
   .peridot-appear-soft,
@@ -926,6 +994,15 @@ textarea {
 
 
 
+/*
+ * ==========================================================================
+ * Shared folio foundation and upload-oriented workspace layers
+ * ==========================================================================
+ * This begins the historical Upload Guide compatibility foundation. It revises
+ * several earlier generic primitives using semantic theme roles. Later Data,
+ * Mapping, Inspector, Explore, and Learn More sections build on this layer;
+ * preserve it even where a later workspace block supplies a narrower override.
+ */
 /* Peridot Upload Guide design layer
  * ---------------------------------
  * This layer translates the Palette Upload Guide's visual language into the app:
@@ -1171,6 +1248,13 @@ textarea {
 }
 
 
+/*
+ * Inspector reference-entry ground
+ * --------------------------------
+ * Owner: `InspectorPanel.jsx`. The pseudo-element is an inset visual stratum,
+ * not a decorative overlay: `isolation`, z-index, and pointer-events preserve
+ * readable content and interactive links above the striped ground.
+ */
 /* Inspector reference-page ground and section dividers.
  * Layering contract:
  * - The outer full-Inspector shell remains a solid dark green folio frame.
@@ -1250,6 +1334,14 @@ textarea {
   background: url('/assets/Adobe Stock Filigree 3.png') center / contain no-repeat;
 }
 
+/*
+ * Mapping modal base layer
+ * ------------------------
+ * Owner: `PeridotColumnMappingModal.jsx`. This block establishes the modal's
+ * base folio vocabulary. Later mapping blocks intentionally override geometry,
+ * rail density, and animation. Do not merge them before reviewing the modal's
+ * fixed-window, step-navigation, and workbook layouts together.
+ */
 /* Column-mapping folio visual refinement.
  * This layer keeps the existing mapping workflow behavior intact while giving
  * the upload/mapping modal the same folio hierarchy as the Inspector: dark
@@ -1524,6 +1616,14 @@ textarea {
 }
 
 
+/*
+ * Data and mapping fixed-window geometry
+ * ---------------------------------------
+ * Owners: `PeridotDataWorkspace.jsx` and `PeridotColumnMappingModal.jsx`.
+ * Height, overflow, and responsive width rules are functional contracts:
+ * they determine which surface owns scrolling and prevent background-page
+ * scroll from competing with a modal or folio workspace.
+ */
 /* Data workspace and mapping-window folio refinement.
  * The upload entry surface and the mapping workspace now follow the Inspector's
  * fixed-window folio model: a dark green outer frame, an inset striped field,
@@ -1770,6 +1870,14 @@ textarea {
   }
 }
 
+/*
+ * Mapping rail compatibility override
+ * -----------------------------------
+ * This later block intentionally supersedes the earlier horizontally scrollable
+ * progress rail. Its flex and overflow rules keep every mapping step visible
+ * in one line. Preserve its cascade position until all supported viewport
+ * widths and workbook/single-table step sequences have been checked.
+ */
 /* Column-mapping step rail no-scroll refinement.
  * The mapping folio should behave like the Inspector window: fixed, stable, and
  * not horizontally scrollable. Keep every step visible in one line by allowing
@@ -1823,6 +1931,14 @@ textarea {
   }
 }
 
+/*
+ * Mapping density compatibility override
+ * --------------------------------------
+ * This is a late, accepted layout layer over the mapping base. It changes only
+ * presentation density but depends on the exact modal class contract. Keep
+ * it separate from the base block so a future extraction can carry the entire
+ * mapping cascade in current order.
+ */
 /* Upload mapping UX-density pass.
  * This final override layer keeps the current dark-green folio design but makes
  * the mapping workspace more task-oriented: shorter chrome, fully visible step
@@ -2119,6 +2235,22 @@ textarea {
   }
 }
 
+/*
+ * ==========================================================================
+ * Advanced Search / Explore workspace
+ * ==========================================================================
+ * Owner: `PeridotSearchWorkspace.jsx`.
+ *
+ * This section is intentionally self-contained beneath `.peridot-search-workspace`.
+ * It has accumulated several late corrective layers for contrast, compact
+ * ledgers, responsive facets, entrance choreography, scrolling, and rounded
+ * folio containment. The sequence is part of the tested visual behavior.
+ *
+ * Critical contract: the outer workspace owns vertical scrolling; the rounded
+ * folio shell owns clipping of its internal dark layers. Do not move `overflow`
+ * between those two elements without testing expanded Build, Browse, Results,
+ * Refine, and Capabilities content.
+ */
 /* Advanced Search / Explore workspace
  * -----------------------------------
  * Scope: `PeridotSearchWorkspace.jsx` only. This section intentionally replaces
@@ -2819,6 +2951,14 @@ textarea {
 
 
 
+/*
+ * Explore Inspector-alignment override
+ * -------------------------------------
+ * Later, scoped correction layer. It intentionally reuses the Inspector's
+ * reference-entry hierarchy without changing Inspector state or routing.
+ * Keep this after the base Explore system until a dedicated Explore extraction
+ * pass can consolidate the complete selector sequence.
+ */
 /* Explore Inspector-aligned refinement, 2026-06-19.
  * This layer keeps the consolidated Explore-only styling system, but aligns the
  * rendered hierarchy with the full Inspector: dark pine folio/chrome, readable
@@ -4617,6 +4757,15 @@ textarea {
 }
 
 
+/*
+ * Explore animation and scroll-restoration layer
+ * ----------------------------------------------
+ * Owner: `PeridotSearchWorkspace.jsx`. These animations are strictly visual,
+ * but their selectors touch dense lists and tab content. Reduced-motion
+ * fallback and normal scroll behavior must remain coupled to any future
+ * animation changes; do not remove row animations independently of their
+ * reset rules later in this section.
+ */
 /* Explore workspace gentle entrance and tab-motion pass, 2026-06-19.
  * Scope: Explore / Advanced Search only. This mirrors the rest of Peridot's
  * restrained workspace choreography: the folio settles in, the header resolves,
@@ -5015,6 +5164,19 @@ textarea {
 }
 
 
+/*
+ * ==========================================================================
+ * Learn More public-information workspace
+ * ==========================================================================
+ * Owner: `PeridotLearnMoreWorkspace.jsx`.
+ *
+ * This section follows the Explore baseline intentionally. It is an additive
+ * cascade of accepted Learn More refinements, not a generic workspace layer.
+ * Keep it after Explore: both areas use shared folio primitives, but Learn More
+ * must not alter Explore behavior. The individual late blocks document repairs
+ * to the current JSX layout contract and should be migrated as a group in any
+ * future extraction pass.
+ */
 /* Learn More styles restored after Explore baseline recovery.
  * The Search/Explore stylesheet above is restored byte-for-byte from commit e5f832c.
  * The following section is limited to `.peridot-learn-more-*` selectors.
@@ -5763,6 +5925,13 @@ textarea {
     min-height: 0;
   }
 }
+/*
+ * Learn More JSX/CSS compatibility repair
+ * ----------------------------------------
+ * This block is retained because it reconciles the current component structure
+ * with earlier visual rules. Treat it as a component-contract bridge, not as
+ * redundant styling. Review the associated JSX before removing or merging it.
+ */
 /* Learn More workspace repair
  * ---------------------------
  * This is an additive, tightly scoped layer. It restores the component's
@@ -6652,7 +6821,15 @@ textarea {
 }
 
 
-/* Learn More warmer parchment tone â€” 2026-06-20 */
+/*
+ * Learn More late visual refinements
+ * ----------------------------------
+ * The following small blocks are deliberately last in the stylesheet. They
+ * correct parchment warmth, Explore corner containment, and divider spacing/
+ * sequencing without reopening the larger Explore or Learn More systems.
+ * Preserve their position and reduced-motion behavior during Pass 1.
+ */
+/* Learn More warmer parchment tone — 2026-06-20 */
 .peridot-learn-more-author-card,
 .peridot-learn-more-author-copy {
   background: linear-gradient(135deg, #e9dfbf, #d8cca6);
@@ -6666,7 +6843,7 @@ textarea {
   background: linear-gradient(135deg, #e7dcb9, #d4c79f);
 }
 
-/* Explore folio corner containment repair â€” 2026-06-20
+/* Explore folio corner containment repair — 2026-06-20
  * Keep page scrolling on `.peridot-search-workspace`, while the rounded folio
  * shell remains the clipping boundary for its dark header/body layers.
  */
@@ -6674,7 +6851,7 @@ textarea {
   overflow: hidden;
 }
 
-/* Learn More section dividers â€” 2026-06-20
+/* Learn More section dividers — 2026-06-20
  * These use the same restrained filigree/rule treatment as Inspector and
  * Advanced Search. Each divider is centered in the Learn More frame's existing
  * grid gap, so the page gains hierarchy without acquiring extra vertical space.
