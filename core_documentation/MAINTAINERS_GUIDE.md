@@ -22,11 +22,25 @@ Current active branch for continued legacy work:
 
 Current documented baseline:
 
-- **`e5f832c` — `Animate Explore workspace transitions`**
+- **`0c5a219` — `Add Learn More section dividers`**
 
 This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, the upload-mapping animation passes, the hidden-theme-menu navigation polish, the Learn More card animation pass, and the Search/Explore workspace redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector reference-entry visual hierarchy that separates lead summaries, connected-place/person lists, directed connections, and connected-record tables. The full Inspector now overlays Visualizations without remounting the underlying workspace; related-person navigation from geographic contexts is fixed; **Unknown** place values are preserved as first-class place-like buckets; and connected-record tables use sorting, filtering, pagination, and capability-aware columns.
 
 
+
+The current code baseline also completes the first substantive **Learn More about Peridot** information hub. It is no longer a placeholder: it provides a compact/expandable creator biography, creator headshot and CV entry point, a compact open-source/GitHub resource panel, expandable AI-disclosure papers, a Tutorials section, warmer parchment reading surfaces, and a shared top-row expansion model in which the expanded biography grows while the GitHub resource panel remains usable. Learn More section dividers reuse the restrained Inspector/Explore gold-filigree treatment, sit in dedicated dark-green breathing room, and enter in a reading sequence—divider, associated section, divider, associated section—rather than resolving simultaneously with the following card. The recent Explore containment repair restores rounded folio clipping without disabling workspace scrolling.
+
+Recent Learn More, Explore-containment, and documentation-preparation milestones include:
+
+- **`0c5a219` — `Add Learn More section dividers`**
+- **`795f0f7` — `Restore Explore folio corner containment`**
+- **`98cccf5` — `Warm Learn More parchment surfaces`**
+- **`59f7d69` — `Refine Learn More expanded biography layout`**
+- **`39983e3` — `Refine Learn More project information layout`**
+- **`2307d5a` — `Stabilize visualization header entrance and Explore folio frame`**
+- **`7a115f7` — `Fix Explore folio frame clipping`**
+- **`81f6311` — `Add Learn More author assets`**
+- **`9fbd200` — `Expand Learn More author and GitHub sections`**
 
 Recent Search/Explore redesign milestones include:
 
@@ -326,10 +340,11 @@ Peridot is a Vite/React/Tailwind correspondence visualizer that has moved from a
 The current top-level interface includes:
 
 - Home / welcome startup path
+- Learn More project-information hub with expandable creator and AI-method material
 - Manage Your Data / Data workspace
 - Visualize Your Data / Visualizations workspace
 - Explore Your Data routing directly into Advanced Search
-- Learn More about Peridot placeholder workspace
+- Learn More about Peridot project-information hub
 - Themes and Accessibility workspace
 - Advanced Search workspace as the primary Explore surface
 - bottom Timeline scrubber integrated with Visualizations
@@ -425,7 +440,7 @@ Compatibility routing boundary for the old Explore workspace. Current Explore en
 
 ### `src/PeridotLearnMoreWorkspace.jsx`
 
-Placeholder workspace for future project information, credits, tutorials, and help content.
+Public project-information hub for creator context, project provenance, open-source resources, AI-method disclosures, tutorials, and help. It keeps compact reading as the default: the creator biography and both disclosure papers expand independently, while the creator/GitHub top row can reallocate width in favor of the longer biography without removing access to repository materials. The creator portrait is part of the expanded biography’s reading flow rather than a separate dashboard card. Major Learn More sections are separated by the same restrained gold-filigree divider language used in Inspector and Explore; divider timing intentionally establishes reading order before each following section appears.
 
 ### `src/peridotCsvSchema.js`
 
@@ -1036,6 +1051,7 @@ Future responsive work should be a narrow-window-specific override, not a univer
 These areas still deserve narrow, explicit passes:
 
 - workspace routing and hamburger-menu behavior
+- shared `src/index.css` delivery: broad replacements can silently overwrite newer unrelated visual rules; treat small styling work as a source-verified local change rather than a convenience full-file handoff
 - map viewport centering/reset behavior
 - map/network viewport measurement after switching between Analytics and map/network modes
 - dense map hover/click interaction

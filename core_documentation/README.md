@@ -20,9 +20,11 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`e5f832c` — `Animate Explore workspace transitions`** on branch **`main`**
+- **`0c5a219` — `Add Learn More section dividers`** on branch **`main`**
 
 This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, mounted-Inspector overlay, Inspector reference-entry, Unknown-as-place, connected-record table, Data/workbook mapping modal redesign, upload animation, hidden-theme-menu, Learn More animation, and Search/Explore workspace redesign passes. The app now uses a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented internally for development and future user-facing restoration, but is hidden from the hamburger menu for now. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
+
+This baseline also records the completed first public **Learn More about Peridot** information hub. Learn More is no longer a placeholder: it contains a compact/expandable creator biography with headshot and CV entry point, an open-source/GitHub resource panel, expandable AI-method disclosures, a Tutorials section, warmer parchment reading surfaces, and staged filigree dividers between major horizontal chunks. The creator biography can expand without removing the GitHub resources; its portrait lives inside the longer biography’s reading flow, with prose wrapping alongside and then beneath it. Learn More dividers use the same restrained Inspector/Explore visual language, receive their own dark-green interval, and enter before the following section. The current baseline also restores rounded clipping to the Explore folio while keeping normal Explore scrolling.
 
 The current state of the active `main` project includes:
 
@@ -116,6 +118,16 @@ The codebase is functional, but it is still under active maintenance. The larges
 - task-oriented public hamburger menu for Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot
 - bottom Timeline scrubber integrated into Visualizations
 - compact side-panel bridge retained for visualization-click Inspector summaries
+
+### Learn More project-information hub
+
+- creator biography with a compact initial reading state and an expandable longer-form biography
+- expanded portrait integrated into biography reading flow, with text wrapping alongside and continuing beneath it
+- open-source/GitHub resource panel linking to the repository and core project documentation
+- expandable creator and AI-method disclosure material without making the Home workspace dense
+- Tutorials section reserved for forthcoming research-workflow guidance
+- Inspector/Explore-style gold filigree dividers in dedicated dark-green intervals between major chunks
+- vertical entrance choreography in the order divider → following section
 
 ### Visualization modes
 
@@ -251,7 +263,7 @@ Current top-level navigation:
   - **Manage Your Data** — Data workspace with CSV / TSV / XLSX / XLS upload, mapping, template download, and validation summary
   - **Visualize Your Data** — Visualizations workspace with Place Map, People Network, Force-Directed, Chart Visualizations, Timeline, and in-place Export
   - **Explore Your Data** — direct entry point to Advanced Search, including data capabilities, Browse, Results, Refine / Inspect, and Inspector-adjacent evidence workflow
-  - **Learn More about Peridot** — placeholder for future project information, credits, tutorials, and help content
+  - **Learn More about Peridot** — public project-information hub for creator context, project resources, AI-method disclosures, tutorials, and help
 - internally retained **Themes and Accessibility** workspace for appearance presets and future accessibility settings
 - dual-mode Inspector workflow:
   - visualization node/edge/cluster clicks open compact Inspector
@@ -381,6 +393,8 @@ assets/
   Peridot Logo Gilded Transparent.png
   Peridot Palette Upload Guide 1.png
   Peridot Palette Upload Guide 2.png
+  2026_Price_Headshot.jpg
+  Price_CV.pdf
 ```
 
 The current `src/` structure is:
@@ -500,7 +514,7 @@ Compatibility Explore workspace. Explore Your Data now routes directly to Advanc
 
 #### `src/PeridotLearnMoreWorkspace.jsx`
 
-Placeholder workspace for future Peridot project information, credits, tutorials, and help content. Its current placeholder cards reuse the same gentle float-in animation language as Manage Your Data.
+Public project-information hub for creator context, provenance, open-source resources, AI-method disclosures, tutorials, and help. It opens with a concise project header, then moves through a creator/GitHub row, AI-disclosure section, and Tutorials section. The creator biography and disclosure papers are independently expandable; the biography’s expanded portrait is integrated into prose flow rather than treated as a separate dashboard tile. Major sections use the Inspector/Explore filigree divider language and a staged divider-first entrance order.
 
 #### `src/LeftControlPanel.jsx`
 

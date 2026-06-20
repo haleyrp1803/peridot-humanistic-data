@@ -29,8 +29,17 @@ C:\Users\haley\OneDrive\Desktop\Peridot\
 Current clean baseline:
 
 ```text
-e5f832c — Animate Explore workspace transitions
+0c5a219 — Add Learn More section dividers
 ```
+
+### Applied-file continuity rule
+
+After the user applies and tests an uncommitted replacement, script, or manual edit, the resulting **local file** becomes the new source of truth for that file. Before a later change to the same file, either:
+
+- obtain that exact current local file again; or
+- work from a newly committed Git state that the user has confirmed contains the tested change.
+
+Do not regenerate a broad replacement from an earlier upload, generated artifact, or remembered snapshot. This is especially important for shared files such as `src/index.css`, where unrelated workspace rules may coexist and a stale full-file handoff can silently revert a successful visual repair.
 
 Current branch note:
 
@@ -58,6 +67,8 @@ assets/Chart Colors Dark.jpeg
 assets/Chart Colors Pale.jpeg
 assets/Peridot Palette Upload Guide 1.png
 assets/Peridot Palette Upload Guide 2.png
+assets/2026_Price_Headshot.jpg
+assets/Price_CV.pdf
 ```
 
 ---
@@ -100,7 +111,9 @@ Current fragile zones include:
 - inspector-open interactions after map clicks
 - cluster grouping and cluster inspector navigation
 - Advanced Search active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, capability filters, dataset-wide Browse indexes, result facets, predictive suggestions, structured criteria, Boolean AND / OR / EXCLUDING logic, apply/clear behavior, and future metadata filters
-- Explore workspace visual/animation layer, including step-button sequencing, tab transitions, Results/Browse row filing effects, reduced-motion behavior, and scroll restoration after expanded panels
+- Explore workspace visual/animation layer, including step-button sequencing, tab transitions, Results/Browse row filing effects, reduced-motion behavior, scroll restoration after expanded panels, and rounded-folio clipping containment
+- shared `src/index.css` change delivery, particularly Learn More/Explore overrides that can supersede unrelated recently tested rules
+- Learn More section hierarchy, biography expansion/portrait flow, resource-card width reallocation, divider spacing, and staged divider-first entrance choreography
 - Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
 - Analytics flexible chart-variable controls, record-count metrics, wide numeric-series selection, and chart availability routing
@@ -137,6 +150,20 @@ Small targeted replacement blocks are allowed only when all of the following are
 - the anchor text is unambiguous;
 - repeated code patterns or prop names will not make the replacement brittle;
 - the risk is lower than a full-file replacement.
+
+### Shared-stylesheet and script safeguards
+
+`src/index.css` is a high-risk shared dependency even when a requested visual change is small. For a narrowly scoped color, spacing, or animation adjustment:
+
+- do not send a full stylesheet replacement merely for convenience;
+- start from the exact latest local stylesheet or a confirmed commit that contains all accepted interim changes;
+- identify preservation checks for unrelated behaviors that must survive the change;
+- use a narrow, source-verified edit only when its selector/anchor is stable and unambiguous;
+- prefer an individual replacement file over an executable patch script unless the user explicitly requests a script.
+
+Do not rely on comment markers as the only verification anchor for a generated script. Comment text may be altered by text encoding or prior tooling. Verify stable selector or structural hooks instead.
+
+If a generated patch script fails, stop and confirm that no changes were written. Do not iterate through increasingly permissive scripts against an uncertain local file. Re-establish the current source, then choose one bounded repair or restore a clean checkpoint.
 
 If a patch fails, begins to loop, or requires repeated corrective scripts, stop immediately. Roll back to the last clean commit/checkpoint, restate the goal, and switch to a reviewed full-file replacement or a new implementation plan.
 
@@ -182,7 +209,7 @@ Preferred modes:
 - fragile/high-risk file: full replacement from the current source of truth
 - generated source replacement: provide individual `.txt` files that the user can copy into place
 
-When delivering files, default to individual `.txt` replacements and direct `Copy-Item` commands from `$HOME\Downloads` into the source-of-truth project folder. Do not deliver ZIP packages or apply scripts unless the user explicitly asks for them.
+When delivering files, default to individual `.txt` replacements and direct `Copy-Item` commands from `$HOME\Downloads` into the source-of-truth project folder. Do not deliver ZIP packages or executable apply scripts unless the user explicitly asks for them. A script may be appropriate only when a verified narrow change cannot be safely delivered as a replacement file and its anchors are stable against the real current source.
 
 When delivering files, include exact Windows PowerShell copy commands. Image/brand asset passes should provide exact copy commands for the image files as well as source/documentation replacements.
 
@@ -331,7 +358,7 @@ Current notable decisions:
 - Chart Visualizations should use a tabbed builder when that avoids a long cramped control rail; the current accepted tab set is **Chart type**, **X/Y variables**, **Visible categories**, and **Presentation**.
 - Timeline is now implemented as a bottom Visualizations scrubber; future timeline work should refine this integration rather than reviving a standalone timeline workspace.
 - Map legend and controls should start minimized to preserve visualization workspace area.
-- Learn More about Peridot is intentionally a placeholder workspace for future project information, credits, tutorials, and help content.
+- Learn More about Peridot is a public project-information hub for creator context, project resources, AI-method disclosures, tutorials, and help content. Keep detailed onboarding there rather than rebuilding it into the minimal Home workspace.
 - Themes and Accessibility is the appearance/settings hub; future accessibility controls should live there.
 - Themes and Accessibility is currently hidden from the public hamburger menu because it remains more useful for development than for ordinary users. Keep the workspace, route mode, and component intact so the menu entry can be restored later.
 - The hamburger-triggered labeled menu is the intended primary navigation surface; the old persistent icon rail is legacy/compatibility code unless explicitly revived.
@@ -383,6 +410,11 @@ Current notable decisions:
 - Connected-record tables should be capability-aware: relational datasets show source entity, target entity, source location, and target location; point-only datasets show entity and location. This table-specific distinction should not force the relationship-summary sections to drop their source/target role logic.
 - Connected-record tables should support date-first chronological defaults, sorting, filtering, 10/25/50 page sizes, and pagination so high-volume dossiers remain usable.
 
+
+- Learn More about Peridot is now a public project-information hub rather than a placeholder. It should keep compact reading as the default, retain expandable creator and disclosure prose, preserve access to open-source project resources, and keep tutorials/help material separate from the minimal Home workspace.
+- Learn More dividers reuse the restrained Inspector/Explore filigree treatment. They belong in dedicated dark-green intervals between major horizontal chunks, not inside cards or between the creator and GitHub cards. Their entrance order is divider → following section, so the page reads vertically rather than resolving all elements at once.
+- The Learn More expanded biography may grow while the GitHub resource card contracts. The portrait belongs to the biography’s reading flow and should allow prose to wrap alongside it and continue beneath it.
+- A small shared-style change must preserve the accepted behavior of unrelated current rules. For example, a Learn More parchment-color adjustment must not reintroduce an earlier portrait crop or remove the expanded biography’s text-flow rules.
 
 ---
 
@@ -528,7 +560,7 @@ For a new chat, start with:
 
 ```text
 Source of truth folder: C:\Users\haley\OneDrive\Desktop\Peridot\
-Current documented clean baseline: `e5f832c` — Animate Explore workspace transitions. See `CHANGELOG.md` for the most recent documented safe baseline.
+Current documented clean baseline: `0c5a219` — Add Learn More section dividers. See `CHANGELOG.md` for the most recent documented safe baseline.
 ```
 
 The new chat should be told:

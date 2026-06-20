@@ -2,10 +2,12 @@
 
 ## Current documented safe baseline
 
-- **`e5f832c` — `Animate Explore workspace transitions`** on branch **`main`**
+- **`0c5a219` — `Add Learn More section dividers`** on branch **`main`**
 
 This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, upload-mapping entrance and step-transition animation passes, the final Learn More/menu polish pass, and the Search/Explore workspace redesign. The current app is workspace-first around a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented as an internal/development-facing workspace and can be restored to the hamburger menu later without rebuilding the feature. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
 Recent June 2026 visual and interaction polish added workspace entrance choreography and clarified the current Visualizations/Inspector/Charts experience. The Home, Data, and Visualizations workspaces now use staged entrance animations; visualization switching fades through a solid dark-green interstitial; Chart Visualizations use a guided one-time reveal, muted dark-green builder panel, gold high-contrast tab states, and gold treatment for cream-card interactables while preserving side-panel scroll and dropdown layering; the force-directed network initially centers on the densest information cluster; and the Inspector workspace now follows the chart-builder visual language while suppressing visualization hide/show toggles when the full Inspector is open. The earlier Inspector related-person navigation blank-state bug has been resolved by routing person-detail resolution through the appropriate people-graph fallback while preserving the mounted Visualizations overlay.
+
+The most recent completed code cluster replaces the former Learn More placeholder treatment with a public project-information hub and repairs the related shared visual foundations. The current Learn More page now has a compact/expandable creator biography, creator headshot/CV assets, a GitHub/core-documentation resource panel, expandable AI-method disclosure papers, a Tutorials surface, warmer parchment reading cards, and vertical filigree dividers between its major horizontal blocks. The expanded biography may grow while the GitHub panel contracts but remains usable; the portrait belongs to the biography’s reading flow so prose wraps beside it and continues beneath it. Divider choreography is intentionally sequential—divider before following section—rather than synchronous card animation. The same cluster restores the rounded Explore folio containment boundary while preserving its scroll behavior.
 
 The current Data Inputs / import workflow now provides:
 
@@ -68,7 +70,7 @@ The current interface/workspace workflow now provides:
 - map legend and map controls minimized by default as bottom-corner buttons;
 - Timeline implemented as a compact bottom Visualizations scrubber with dual range handles, playback controls, and collapse/expand behavior;
 - Explore Your Data now routes directly to Advanced Search, which contains the data-exploration, capability-summary, Browse, Results, Refine / Inspect, and Inspector-adjacent evidence entry points;
-- Learn More about Peridot placeholder workspace added for future project information, credits, tutorials, and help content;
+- Learn More about Peridot is now a public project-information hub with creator context, project resources, AI-method disclosures, tutorials, and help material;
 - Theme reframed as **Themes and Accessibility**;
 - Data workspace using the unified CSV/TSV/XLSX/XLS uploader;
 - Inspector implemented as a dual-mode system: compact side-panel summaries for visualization clicks plus a full evidence-dossier workspace from Expand/linked-data navigation, sharing selection and history;
@@ -84,6 +86,22 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 ---
 
 ## Current milestone notes
+
+### Learn More project-information hub, divider choreography, and Explore folio-containment milestone
+
+- Updated the documented safe baseline to **`0c5a219` — `Add Learn More section dividers`**.
+- Replaced the earlier Learn More placeholder composition with a public project-information hub that gives project context without making the minimal Home workspace carry long onboarding material.
+- Added public creator assets and a compact creator biography with a **Read full bio** expansion path plus a CV entry point.
+- Designed the expanded biography as an editorial reading flow: the portrait appears inside the longer biography, prose wraps beside it at the opening, and later paragraphs continue beneath it.
+- Added a compact open-source/GitHub resource panel with direct repository, README, Maintainer’s Guide, Project Workflow Charter, and Changelog links.
+- Added an AI-disclosure section with two independently expandable companion papers, preserving the distinction between the creator’s account of the project and ChatGPT’s account of its role.
+- Added a Tutorials surface for forthcoming research-workflow material.
+- Warmed the large Learn More parchment/reading surfaces while retaining legible dark ink and the existing dark-green/cream hierarchy.
+- Added Inspector/Explore-style gold filigree dividers between the header, creator/GitHub row, AI disclosure, and Tutorials sections; dividers use dedicated dark-green breathing room rather than consuming card interior space.
+- Staged Learn More entrance choreography as a vertical reading sequence: each divider resolves before its following section, while the creator and GitHub cards enter together as a shared row.
+- Preserved the responsive creator/GitHub reallocation model: expanding the biography increases creator reading space while the GitHub resource card contracts but remains usable.
+- Restored the rounded Explore folio clipping boundary after a late scroll-restoration rule allowed dark inner layers to project through square corners; Explore scrolling remains on the workspace rather than the rounded folio shell.
+- Current code sequence: **`9fbd200`**, **`81f6311`**, **`7a115f7`**, **`2307d5a`**, **`39983e3`**, **`59f7d69`**, **`98cccf5`**, **`795f0f7`**, and **`0c5a219`**.
 
 ### Search/Explore compact-ledger, Inspector overlay, and animation milestone
 
@@ -373,6 +391,15 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
+- **`0c5a219` — `Add Learn More section dividers`** is the current documented `main` baseline and code head supplied by the most recent sync ritual.
+- **`795f0f7` — `Restore Explore folio corner containment`** restores rounded Explore folio clipping while retaining workspace scrolling.
+- **`98cccf5` — `Warm Learn More parchment surfaces`** warms the creator, AI-disclosure, and Tutorials reading cards.
+- **`59f7d69` — `Refine Learn More expanded biography layout`** establishes the biography’s editorial portrait/text flow and top-row expansion behavior.
+- **`39983e3` — `Refine Learn More project information layout`** introduces the project-information hub composition.
+- **`2307d5a` — `Stabilize visualization header entrance and Explore folio frame`** preserves one-time Visualizations header entrances and repairs earlier Explore frame behavior.
+- **`7a115f7` — `Fix Explore folio frame clipping`** records the earlier folio frame fix.
+- **`81f6311` — `Add Learn More author assets`** tracks the public creator headshot/CV assets.
+- **`9fbd200` — `Expand Learn More author and GitHub sections`** establishes the expandable creator/GitHub content direction.
 - **`e5f832c` — `Animate Explore workspace transitions`** is the current documented `main` baseline and current head in the provided sync ritual.
 - **`d3e4625` — `Open Inspector over Explore workspace`** keeps Explore mounted underneath full Inspector handoff so researchers can close the Inspector and return to the same Explore state.
 - **`7942fda` — `Convert Explore Browse to compact ledgers`** converts Browse to route-aware entity/place/route ledgers with panel-scoped searches.
@@ -494,6 +521,15 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-06-19 | `0c5a219` | Add Learn More section dividers | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-19 | `795f0f7` | Restore Explore folio corner containment |  |
+| 2026-06-19 | `98cccf5` | Warm Learn More parchment surfaces |  |
+| 2026-06-19 | `59f7d69` | Refine Learn More expanded biography layout |  |
+| 2026-06-19 | `39983e3` | Refine Learn More project information layout |  |
+| 2026-06-19 | `2307d5a` | Stabilize visualization header entrance and Explore folio frame |  |
+| 2026-06-19 | `7a115f7` | Fix Explore folio frame clipping |  |
+| 2026-06-19 | `81f6311` | Add Learn More author assets |  |
+| 2026-06-19 | `9fbd200` | Expand Learn More author and GitHub sections |  |
 | 2026-06-19 | `e5f832c` | Animate Explore workspace transitions | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-06-19 | `d3e4625` | Open Inspector over Explore workspace |  |
 | 2026-06-19 | `7942fda` | Convert Explore Browse to compact ledgers |  |
