@@ -6673,3 +6673,98 @@ textarea {
 .peridot-search-workspace .peridot-search-folio-shell {
   overflow: hidden;
 }
+
+/* Learn More section dividers â€” 2026-06-20
+ * These use the same restrained filigree/rule treatment as Inspector and
+ * Advanced Search. Each divider is centered in the Learn More frame's existing
+ * grid gap, so the page gains hierarchy without acquiring extra vertical space.
+ */
+.peridot-learn-more-frame {
+  --peridot-learn-more-section-gap: clamp(0.72rem, 1.25vw, 1.05rem);
+}
+
+.peridot-learn-more-section-with-divider {
+  position: relative;
+}
+
+.peridot-learn-more-section-divider {
+  position: absolute;
+  top: calc(var(--peridot-learn-more-section-gap) / -2);
+  left: 0;
+  z-index: 2;
+  display: flex;
+  width: 100%;
+  min-height: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--detail-label-text, #b58b42);
+  opacity: 0.9;
+}
+
+.peridot-learn-more-section-divider::before,
+.peridot-learn-more-section-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(181, 139, 66, 0.68), transparent);
+}
+
+.peridot-learn-more-section-divider::before {
+  margin-right: 0.85rem;
+}
+
+.peridot-learn-more-section-divider::after {
+  margin-left: 0.85rem;
+}
+
+.peridot-learn-more-section-divider span {
+  display: inline-flex;
+  min-width: min(18rem, 42vw);
+  height: 1.1rem;
+  color: transparent;
+  background: url('/assets/Adobe Stock Filigree 3.png') center / contain no-repeat;
+}
+
+@media (max-width: 760px) {
+  .peridot-learn-more-section-divider::before {
+    margin-right: 0.55rem;
+  }
+
+  .peridot-learn-more-section-divider::after {
+    margin-left: 0.55rem;
+  }
+}
+
+/* peridot-learn-more-divider-breathing-room-v2
+ * Increase the Learn More frame gap so the existing filigree divider has the
+ * same clear dark-green cushion above and below it as Inspector and Explore.
+ */
+.peridot-learn-more-frame {
+  --peridot-learn-more-section-gap: clamp(2rem, 2.4vw, 2.35rem);
+  gap: var(--peridot-learn-more-section-gap);
+}
+
+/* peridot-learn-more-divider-sequence-v1
+ * Center each ornament in its enlarged dark-green interval. The JSX assigns
+ * delay classes so each divider starts before the following major card block:
+ * divider one -> creator/GitHub row -> divider two -> AI disclosure ->
+ * divider three -> Tutorials.
+ */
+.peridot-appear-delay-6 {
+  --peridot-appear-delay: 1480ms;
+}
+
+.peridot-learn-more-section-divider {
+  transform: translateY(-50%);
+}
+
+/* The shared reduced-motion reset must preserve the divider's permanent
+ * centering transform even while it disables entrance animation. */
+@media (prefers-reduced-motion: reduce) {
+  .peridot-learn-more-section-divider.peridot-appear-fade {
+    opacity: 1;
+    transform: translateY(-50%);
+    animation: none;
+  }
+}

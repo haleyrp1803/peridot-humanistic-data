@@ -50,6 +50,17 @@ const githubDestinations = [
   },
 ];
 
+function LearnMoreSectionDivider({ delayClass }) {
+  return (
+    <div
+      className={`peridot-learn-more-section-divider peridot-appear-fade ${delayClass}`}
+      aria-hidden="true"
+    >
+      <span />
+    </div>
+  );
+}
+
 function ExpandableDisclosure({ title, children }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -92,9 +103,11 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
           </div>
         </header>
 
-        <div className={`peridot-learn-more-top-grid${isBioExpanded ? ' is-bio-expanded' : ''}`}>
+        <div className="peridot-learn-more-section-with-divider">
+          <LearnMoreSectionDivider delayClass="peridot-appear-delay-1" />
+          <div className={`peridot-learn-more-top-grid${isBioExpanded ? ' is-bio-expanded' : ''}`}>
           <section
-            className={`peridot-appear-rise peridot-appear-delay-1 peridot-learn-more-author-card${isBioExpanded ? ' is-expanded' : ''}`}
+            className={`peridot-appear-rise peridot-appear-delay-2 peridot-learn-more-author-card${isBioExpanded ? ' is-expanded' : ''}`}
             aria-labelledby="peridot-author-heading"
           >
             <div className="peridot-learn-more-author-copy">
@@ -165,9 +178,12 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
               ))}
             </nav>
           </section>
+          </div>
         </div>
 
-        <section className="peridot-appear-rise peridot-appear-delay-3 peridot-learn-more-ai-card" aria-labelledby="peridot-ai-heading">
+        <div className="peridot-learn-more-section-with-divider">
+          <LearnMoreSectionDivider delayClass="peridot-appear-delay-3" />
+          <section className="peridot-appear-rise peridot-appear-delay-4 peridot-learn-more-ai-card" aria-labelledby="peridot-ai-heading">
           <p className="peridot-section-label">AI disclosure</p>
           <h2 id="peridot-ai-heading">How AI Was Used in Peridot</h2>
           <p className="peridot-learn-more-ai-intro">
@@ -192,16 +208,20 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
               </p>
             </ExpandableDisclosure>
           </div>
-        </section>
+          </section>
+        </div>
 
-        <section className="peridot-appear-rise peridot-appear-delay-4 peridot-learn-more-tutorial-card" aria-labelledby="peridot-tutorials-heading">
+        <div className="peridot-learn-more-section-with-divider">
+          <LearnMoreSectionDivider delayClass="peridot-appear-delay-5" />
+          <section className="peridot-appear-rise peridot-appear-delay-6 peridot-learn-more-tutorial-card" aria-labelledby="peridot-tutorials-heading">
           <p className="peridot-section-label">Tutorials</p>
           <h2 id="peridot-tutorials-heading">Video tutorials are in preparation</h2>
           <p>
             Future video tutorials will guide researchers through preparing a dataset, exploring records, building visualizations, searching and refining evidence, and exporting research outputs from Peridot.
           </p>
           <span className="peridot-learn-more-coming-soon">Coming soon</span>
-        </section>
+          </section>
+        </div>
       </div>
     </section>
   );
