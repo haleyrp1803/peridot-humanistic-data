@@ -6448,3 +6448,206 @@ textarea {
     text-align: left;
   }
 }
+/* Learn More expanded-biography reallocation, 2026-06-19.
+ * Scope: `PeridotLearnMoreWorkspace.jsx` only. The compact opening row remains
+ * balanced at rest. When the creator biography opens, the grid reallocates
+ * horizontal space toward the author dossier while the GitHub companion card
+ * contracts but remains fully present and usable. The portrait becomes an
+ * editorial floated image: it uses a compact 4:5 frame and the biography flows
+ * beside it before continuing beneath it.
+ */
+.peridot-learn-more-top-grid {
+  grid-template-columns: minmax(0, 0.94fr) minmax(19rem, 1.06fr);
+  transition:
+    grid-template-columns 720ms cubic-bezier(0.19, 1, 0.22, 1),
+    gap 720ms cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: grid-template-columns;
+}
+
+.peridot-learn-more-top-grid.is-bio-expanded {
+  grid-template-columns: minmax(0, 1.48fr) minmax(19rem, 0.52fr);
+}
+
+.peridot-learn-more-top-grid .peridot-learn-more-author-card,
+.peridot-learn-more-top-grid .peridot-learn-more-github-card {
+  transition:
+    padding 720ms cubic-bezier(0.19, 1, 0.22, 1),
+    border-radius 720ms cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card {
+  padding-inline: clamp(0.86rem, 1.25vw, 1.05rem);
+}
+
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-intro {
+  font-size: 0.82rem;
+  line-height: 1.38;
+}
+
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card-compact .peridot-learn-more-github-destinations {
+  gap: 0.34rem;
+  margin-top: 0.62rem;
+}
+
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card-compact .peridot-learn-more-github-destination,
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card-compact .peridot-learn-more-github-destination.is-primary {
+  gap: 0.38rem;
+  padding: 0.50rem 0.58rem;
+}
+
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card-compact .peridot-learn-more-github-destination span,
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card-compact .peridot-learn-more-github-destination.is-primary span {
+  display: none;
+}
+
+/* The figure is the complete visual frame. Remove any extra canvas-like area
+ * around the asset and let only the portrait itself occupy the floated block.
+ */
+.peridot-learn-more-top-grid .peridot-learn-more-author-portrait {
+  display: block;
+  float: left;
+  width: clamp(10.5rem, 15.5vw, 13.5rem);
+  aspect-ratio: 4 / 5;
+  margin: 0.08rem 1.1rem 0.72rem 0;
+  overflow: hidden;
+  border: 1px solid rgba(181, 139, 66, 0.64);
+  border-radius: 0.9rem;
+  background: #d9cda8;
+  box-shadow: 0 10px 24px rgba(43, 31, 12, 0.20);
+  line-height: 0;
+}
+
+.peridot-learn-more-top-grid .peridot-learn-more-author-portrait .peridot-learn-more-headshot {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: 50% 50%;
+  box-shadow: none;
+}
+
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-author-portrait {
+  animation: peridotLearnMorePortraitResolve 620ms cubic-bezier(0.19, 1, 0.22, 1) 130ms both;
+}
+
+@keyframes peridotLearnMorePortraitResolve {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 920px) {
+  .peridot-learn-more-top-grid,
+  .peridot-learn-more-top-grid.is-bio-expanded {
+    grid-template-columns: 1fr;
+    transition: none;
+  }
+
+  .peridot-learn-more-top-grid .peridot-learn-more-author-portrait {
+    float: none;
+    width: min(100%, 15rem);
+    margin: 0.12rem 0 0.9rem;
+  }
+
+  .peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card {
+    padding-inline: clamp(1rem, 1.65vw, 1.35rem);
+  }
+
+  .peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card-compact .peridot-learn-more-github-destination span,
+  .peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-github-card-compact .peridot-learn-more-github-destination.is-primary span {
+    display: block;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-learn-more-top-grid,
+  .peridot-learn-more-top-grid .peridot-learn-more-author-card,
+  .peridot-learn-more-top-grid .peridot-learn-more-github-card {
+    transition: none;
+  }
+
+  .peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-author-portrait {
+    animation: none;
+  }
+}
+
+/* Learn More expanded biography text-flow correction, 2026-06-19.
+ * Scope: `PeridotLearnMoreWorkspace.jsx` only. The portrait is now rendered
+ * inside the biography reading flow, rather than above a separate grid-based
+ * copy container. In the expanded state, the figure floats left so prose wraps
+ * alongside it and then continues across the full card width beneath it.
+ *
+ * The portrait uses its natural image ratio. This removes the prior forced 4:5
+ * crop and avoids transform-based image animation, which can make an otherwise
+ * high-resolution JPEG appear softer while the top-row grid is resizing.
+ */
+.peridot-learn-more-top-grid .peridot-learn-more-bio.is-expanded {
+  display: block;
+  margin-top: 1rem;
+}
+
+.peridot-learn-more-top-grid .peridot-learn-more-bio.is-expanded::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+.peridot-learn-more-top-grid .peridot-learn-more-bio.is-expanded .peridot-learn-more-author-portrait {
+  float: left;
+  width: clamp(10.75rem, 15vw, 13.5rem);
+  aspect-ratio: auto;
+  margin: 0.08rem 1.1rem 0.72rem 0;
+  overflow: visible;
+  border: 1px solid rgba(181, 139, 66, 0.64);
+  border-radius: 0.9rem;
+  background: transparent;
+  box-shadow: 0 10px 24px rgba(43, 31, 12, 0.20);
+  line-height: 0;
+}
+
+.peridot-learn-more-top-grid .peridot-learn-more-bio.is-expanded .peridot-learn-more-author-portrait .peridot-learn-more-headshot {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: calc(0.9rem - 1px);
+  object-fit: contain;
+  object-position: center;
+  box-shadow: none;
+  image-rendering: auto;
+}
+
+.peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-author-portrait {
+  animation: peridotLearnMorePortraitFadeIn 520ms cubic-bezier(0.19, 1, 0.22, 1) 130ms both;
+}
+
+@keyframes peridotLearnMorePortraitFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (max-width: 920px) {
+  .peridot-learn-more-top-grid .peridot-learn-more-bio.is-expanded .peridot-learn-more-author-portrait {
+    float: none;
+    width: min(100%, 15rem);
+    margin: 0.12rem 0 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-learn-more-top-grid.is-bio-expanded .peridot-learn-more-author-portrait {
+    animation: none;
+  }
+}
+

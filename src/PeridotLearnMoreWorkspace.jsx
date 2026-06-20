@@ -101,13 +101,13 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
               <p className="peridot-section-label">Creator</p>
               <h2 id="peridot-author-heading">Haley Price</h2>
 
-              {isBioExpanded && (
-                <figure className="peridot-learn-more-author-portrait">
-                  <img src={priceHeadshot} alt="Haley Price" className="peridot-learn-more-headshot" />
-                </figure>
-              )}
-
               <div className={`peridot-learn-more-bio${isBioExpanded ? ' is-expanded' : ''}`}>
+                {isBioExpanded && (
+                  <figure className="peridot-learn-more-author-portrait">
+                    <img src={priceHeadshot} alt="Haley Price" className="peridot-learn-more-headshot" />
+                  </figure>
+                )}
+
                 <p>
                   Haley Price created Peridot as an open-source, open-access digital scholarship tool with the help of ChatGPT. Aware of the fraught ethics of the current AI landscape, Price advocates for humanists to be well-informed about AI. Rather than avoid it altogether, Price sees the need for scholars to engage in it (as responsibly and ethically as is possible given the current state of the AI/Tech industry) so that humanists have a voice in shaping AI&apos;s impact on the production and maintenance of humanistic knowledge and in humanities pedagogy.
                 </p>
