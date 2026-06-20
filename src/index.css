@@ -6651,3 +6651,17 @@ textarea {
   }
 }
 
+
+/* Learn More warmer parchment tone â€” 2026-06-20 */
+.peridot-learn-more-author-card,
+.peridot-learn-more-author-copy {
+  background: linear-gradient(135deg, #e9dfbf, #d8cca6);
+}
+
+.peridot-learn-more-disclosure-paper {
+  background: linear-gradient(135deg, #e9dfbf, #d8cca6);
+}
+
+.peridot-learn-more-tutorial-card {
+  background: linear-gradient(135deg, #e7dcb9, #d4c79f);
+}
