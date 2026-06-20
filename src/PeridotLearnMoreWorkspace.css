@@ -35,8 +35,6 @@
 }
 
 .peridot-learn-more-author-card,
-.peridot-learn-more-dark-card,
-.peridot-learn-more-cream-card,
 .peridot-learn-more-github-card {
   position: relative;
   overflow: hidden;
@@ -56,27 +54,6 @@
     linear-gradient(135deg, rgba(2, 14, 8, 0.24), rgba(2, 14, 8, 0.42)),
     linear-gradient(135deg, #0d2911 0%, #061d12 100%);
   padding: clamp(1rem, 2.4vw, 1.6rem);
-}
-
-.peridot-learn-more-headshot-frame {
-  position: relative;
-  min-height: 100%;
-  overflow: hidden;
-  border: 1px solid rgba(221, 187, 105, 0.44);
-  border-radius: 24px;
-  background: #061d12;
-  box-shadow:
-    0 18px 38px rgba(0, 0, 0, 0.34),
-    inset 0 0 0 1px rgba(246, 223, 150, 0.10);
-}
-
-.peridot-learn-more-headshot-frame::after {
-  content: '';
-  position: absolute;
-  inset: 0.75rem;
-  pointer-events: none;
-  border: 1px solid rgba(221, 187, 105, 0.28);
-  border-radius: 18px;
 }
 
 .peridot-learn-more-headshot {
@@ -99,13 +76,11 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
-.peridot-learn-more-author-copy .peridot-section-label,
-.peridot-learn-more-cream-card .peridot-section-label {
+.peridot-learn-more-author-copy .peridot-section-label {
   color: #5f4214;
 }
 
 .peridot-learn-more-author-copy h2,
-.peridot-learn-more-cream-card h2,
 .peridot-learn-more-github-card h2 {
   margin: 0.18rem 0 0;
   color: #071d10;
@@ -123,10 +98,7 @@
 }
 
 .peridot-learn-more-bio p,
-.peridot-learn-more-cream-card p,
-.peridot-learn-more-github-card p,
-.peridot-learn-more-github-steps li,
-.peridot-learn-more-core-docs a {
+.peridot-learn-more-github-card p {
   color: #314331;
   font-size: 0.94rem;
   line-height: 1.68;
@@ -143,14 +115,6 @@
   margin-top: 1.2rem;
 }
 
-.peridot-learn-more-section-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.peridot-learn-more-dark-card,
 .peridot-learn-more-github-card {
   border: 1px solid rgba(221, 187, 105, 0.34);
   background:
@@ -158,79 +122,6 @@
     linear-gradient(135deg, #0d2911, #061d12);
   color: var(--peridot-role-interface-text-on-dark, #fff8e8);
   padding: clamp(1.15rem, 2.5vw, 1.7rem);
-}
-
-.peridot-learn-more-dark-card h2,
-.peridot-learn-more-dark-card .peridot-section-label {
-  color: #f0d27a;
-}
-
-.peridot-learn-more-dark-card h2 {
-  margin: 0.18rem 0 0;
-  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-  font-size: clamp(1.65rem, 3vw, 2.5rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-
-.peridot-learn-more-dark-card p {
-  margin-top: 0.86rem;
-  color: #f7f1dc;
-  font-size: 0.94rem;
-  line-height: 1.68;
-}
-
-.peridot-learn-more-cream-card {
-  border: 1px solid rgba(221, 187, 105, 0.30);
-  background: linear-gradient(135deg, #f6efd8, #ded5b8);
-  color: #071d10;
-  padding: clamp(1.15rem, 2.5vw, 1.7rem);
-}
-
-.peridot-learn-more-tutorial-list {
-  display: grid;
-  gap: 0.64rem;
-  margin-top: 1rem;
-}
-
-.peridot-learn-more-tutorial-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 0.85rem;
-  align-items: start;
-  border: 1px solid rgba(84, 99, 68, 0.28);
-  border-radius: 16px;
-  background: rgba(255, 250, 240, 0.76);
-  padding: 0.78rem 0.86rem;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
-}
-
-.peridot-learn-more-tutorial-item h3,
-.peridot-learn-more-core-docs h3 {
-  margin: 0;
-  color: #071d10;
-  font-size: 0.98rem;
-  font-weight: 900;
-  line-height: 1.18;
-}
-
-.peridot-learn-more-tutorial-item p {
-  margin: 0.2rem 0 0;
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.peridot-learn-more-tutorial-item span {
-  border: 1px solid rgba(199, 155, 61, 0.42);
-  border-radius: 999px;
-  background: rgba(199, 155, 61, 0.20);
-  color: #533d15;
-  padding: 0.26rem 0.56rem;
-  font-size: 0.66rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
 }
 
 .peridot-learn-more-github-card {
@@ -253,71 +144,8 @@
   color: #f7f1dc;
 }
 
-.peridot-learn-more-github-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-}
-
-.peridot-learn-more-github-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.62fr);
-  gap: 1rem;
-}
-
-.peridot-learn-more-github-steps,
-.peridot-learn-more-core-docs {
-  border: 1px solid rgba(84, 99, 68, 0.28);
-  border-radius: 20px;
-  background: linear-gradient(135deg, #f6efd8, #ded5b8);
-  color: #071d10;
-  box-shadow:
-    0 10px 24px rgba(0, 0, 0, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34);
-}
-
-.peridot-learn-more-github-steps {
-  display: grid;
-  gap: 0.5rem;
-  margin: 0;
-  padding: 1rem 1.1rem 1rem 2rem;
-}
-
-.peridot-learn-more-github-steps li::marker {
-  color: #5f4214;
-  font-weight: 900;
-}
-
-.peridot-learn-more-core-docs {
-  display: grid;
-  gap: 0.54rem;
-  padding: 1rem 1.1rem;
-}
-
-.peridot-learn-more-core-docs a {
-  border: 1px solid rgba(84, 99, 68, 0.22);
-  border-radius: 14px;
-  background: rgba(255, 250, 240, 0.70);
-  color: #071d10;
-  padding: 0.62rem 0.72rem;
-  font-weight: 800;
-  text-decoration: none;
-  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
-}
-
-.peridot-learn-more-core-docs a:hover,
-.peridot-learn-more-core-docs a:focus-visible {
-  transform: translateY(-1px);
-  border-color: rgba(199, 155, 61, 0.72);
-  background: rgba(246, 231, 186, 0.96);
-  box-shadow: 0 10px 22px rgba(86, 52, 22, 0.14);
-  outline: none;
-}
-
 @media (max-width: 980px) {
-  .peridot-learn-more-author-card,
-  .peridot-learn-more-section-grid,
-  .peridot-learn-more-github-layout {
+  .peridot-learn-more-author-card {
     grid-template-columns: 1fr;
   }
 
@@ -329,22 +157,8 @@
 
 @media (max-width: 640px) {
   .peridot-learn-more-author-card,
-  .peridot-learn-more-dark-card,
-  .peridot-learn-more-cream-card,
   .peridot-learn-more-github-card {
     border-radius: 22px;
-  }
-
-  .peridot-learn-more-tutorial-item {
-    grid-template-columns: 1fr;
-  }
-
-  .peridot-learn-more-tutorial-item span {
-    width: fit-content;
-  }
-
-  .peridot-learn-more-github-actions a {
-    width: 100%;
   }
 }
 
@@ -416,20 +230,6 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }
 
-.peridot-learn-more-author-headshot {
-  float: left;
-  width: clamp(7.4rem, 12vw, 9.5rem);
-  aspect-ratio: 0.84;
-  margin: 0 1.05rem 0.55rem 0;
-  border: 1px solid rgba(181, 139, 66, 0.50);
-  border-radius: 16px;
-  object-fit: cover;
-  object-position: 50% 24%;
-  box-shadow:
-    0 10px 22px rgba(6, 29, 18, 0.22),
-    inset 0 0 0 1px rgba(246, 223, 150, 0.10);
-}
-
 .peridot-learn-more-author-copy .peridot-section-label {
   margin-top: 0.05rem;
   color: #5f4214;
@@ -445,67 +245,12 @@
   text-shadow: none;
 }
 
-.peridot-learn-more-bio-lead,
-.peridot-learn-more-bio-expanded p {
-  margin: 0.72rem 0 0;
-  color: #314331;
-  font-size: 0.92rem;
-  line-height: 1.65;
-  text-shadow: none;
-}
-
-.peridot-learn-more-bio-expanded p + p {
-  margin-top: 0.72rem;
-}
-
-.peridot-learn-more-bio-expanded a {
-  color: #173d22;
-  font-weight: 800;
-  text-decoration-line: underline;
-  text-decoration-color: rgba(181, 139, 66, 0.72);
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.16em;
-}
-
-.peridot-learn-more-bio-expanded a:hover,
-.peridot-learn-more-bio-expanded a:focus-visible {
-  color: #7a5717;
-  text-decoration-color: #7a5717;
-  outline: none;
-}
-
-.peridot-learn-more-bio-expanded em {
-  color: #071d10;
-  font-style: italic;
-  font-weight: 700;
-}
-
 .peridot-learn-more-author-actions {
   display: flex;
   clear: both;
   flex-wrap: wrap;
   gap: 0.6rem;
   margin-top: 0.9rem;
-}
-
-.peridot-learn-more-bio-toggle {
-  background: #17391f;
-  color: #fff8e8;
-}
-
-.peridot-learn-more-bio-toggle:hover {
-  color: #07190c;
-}
-
-.peridot-learn-more-author-card-expanded .peridot-learn-more-author-copy {
-  min-height: 0;
-}
-
-.peridot-learn-more-author-card-expanded .peridot-learn-more-author-headshot {
-  width: clamp(9rem, 15vw, 12.25rem);
-  margin-right: 1.3rem;
-  margin-bottom: 0.78rem;
-  border-radius: 18px;
 }
 
 /* Companion disclosures give the human and AI accounts equal structural weight
@@ -517,106 +262,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   margin-top: 1rem;
-}
-
-.peridot-learn-more-disclosure-card {
-  min-height: 20.5rem;
-}
-
-.peridot-learn-more-disclosure-card h2 {
-  margin: 0.18rem 0 0;
-  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-  font-size: clamp(1.55rem, 2.6vw, 2.3rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-
-.peridot-learn-more-dark-card.peridot-learn-more-disclosure-card h2,
-.peridot-learn-more-dark-card.peridot-learn-more-disclosure-card .peridot-section-label {
-  color: #f0d27a;
-}
-
-.peridot-learn-more-disclosure-card p {
-  margin-top: 0.82rem;
-}
-
-.peridot-learn-more-disclosure-placeholder {
-  display: grid;
-  min-height: 7.5rem;
-  place-items: center start;
-  border: 1px dashed rgba(240, 210, 122, 0.46);
-  border-radius: 16px;
-  color: rgba(255, 248, 232, 0.78) !important;
-  padding: 1rem;
-  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-  font-size: 1.05rem !important;
-  font-style: italic;
-}
-
-.peridot-learn-more-chatgpt-disclosure h2,
-.peridot-learn-more-chatgpt-disclosure .peridot-section-label {
-  color: #5f4214;
-}
-
-.peridot-learn-more-chatgpt-disclosure p {
-  color: #314331;
-  font-size: 0.91rem;
-  line-height: 1.62;
-  text-shadow: none;
-}
-
-/* One future-facing video learning placeholder keeps the public page honest
- * without presenting a stack of unavailable tutorial topics as completed work.
- */
-.peridot-learn-more-tutorial-placeholder {
-  position: relative;
-  overflow: hidden;
-  margin-top: 1rem;
-  border: 1px solid rgba(221, 187, 105, 0.34);
-  border-radius: 28px;
-  background:
-    linear-gradient(135deg, rgba(2, 14, 8, 0.34), rgba(2, 14, 8, 0.56)),
-    linear-gradient(135deg, #0d2911, #061d12);
-  color: #fff8e8;
-  padding: clamp(1.1rem, 2.2vw, 1.55rem);
-  box-shadow:
-    0 18px 42px rgba(0, 0, 0, 0.26),
-    inset 0 1px 0 rgba(255, 255, 255, 0.055);
-}
-
-.peridot-learn-more-tutorial-placeholder .peridot-section-label {
-  color: #f0d27a;
-}
-
-.peridot-learn-more-tutorial-placeholder h2 {
-  margin: 0.18rem 0 0;
-  color: #fff8e8;
-  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-  font-size: clamp(1.7rem, 2.9vw, 2.5rem);
-  line-height: 1;
-  letter-spacing: -0.04em;
-}
-
-.peridot-learn-more-tutorial-placeholder p {
-  max-width: 58rem;
-  margin: 0.68rem 0 0;
-  color: #f4eedb;
-  font-size: 0.94rem;
-  line-height: 1.58;
-}
-
-.peridot-learn-more-coming-soon-badge {
-  display: inline-flex;
-  margin-top: 0.88rem;
-  border: 1px solid rgba(240, 210, 122, 0.60);
-  border-radius: 999px;
-  background: rgba(199, 155, 61, 0.22);
-  color: #f8e8ad;
-  padding: 0.34rem 0.66rem;
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 /* GitHub becomes a set of destination cards rather than a prose instruction
@@ -631,12 +276,6 @@
 
 .peridot-learn-more-github-card > div:first-child > p:last-child {
   max-width: 48rem;
-}
-
-.peridot-learn-more-github-destination-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 0.62rem;
 }
 
 .peridot-learn-more-github-destination {
@@ -701,21 +340,7 @@
   color: #07190c;
 }
 
-.peridot-learn-more-github-destination-primary {
-  border-color: #f0d27a;
-  background: linear-gradient(135deg, #c79b3d, #d9ae4c);
-}
-
-.peridot-learn-more-github-destination-primary :is(strong, span),
-.peridot-learn-more-github-destination-primary::before {
-  color: #07190c;
-}
-
 @media (max-width: 1180px) {
-  .peridot-learn-more-github-destination-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .peridot-learn-more-github-destination {
     min-height: 8.8rem;
   }
@@ -725,24 +350,9 @@
   .peridot-learn-more-disclosure-grid {
     grid-template-columns: 1fr;
   }
-
-  .peridot-learn-more-disclosure-card {
-    min-height: 0;
-  }
-
-  .peridot-learn-more-github-destination-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 640px) {
-  .peridot-learn-more-author-headshot,
-  .peridot-learn-more-author-card-expanded .peridot-learn-more-author-headshot {
-    width: 6.8rem;
-    margin-right: 0.8rem;
-    margin-bottom: 0.46rem;
-  }
-
   .peridot-learn-more-author-actions {
     flex-direction: column;
   }
@@ -751,14 +361,18 @@
     width: 100%;
   }
 
-  .peridot-learn-more-github-destination-grid {
-    grid-template-columns: 1fr;
-  }
-
   .peridot-learn-more-github-destination {
     min-height: 0;
   }
 }
+/* Learn More dead-selector cleanup, 2026-06-20.
+ * Removed the superseded pre-hub author, disclosure, tutorial, and GitHub
+ * selector families after comparison with the current
+ * `PeridotLearnMoreWorkspace.jsx` contract. Retained rules still preserve the
+ * active compact/expanded biography, disclosure, document-destination, divider,
+ * responsive, and reduced-motion behavior.
+ */
+
 /*
  * Learn More JSX/CSS compatibility repair
  * ----------------------------------------
