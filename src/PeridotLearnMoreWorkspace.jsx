@@ -23,29 +23,29 @@ const REPOSITORY_CHANGELOG_URL = `${PERIDOT_REPOSITORY_URL}/blob/main/core_docum
 
 const githubDestinations = [
   {
-    title: 'Open GitHub repository',
-    description: 'Browse Peridot’s public source code, assets, issues, and project files in GitHub.',
+    title: 'Peridot on GitHub',
+    description: 'Repository',
     href: PERIDOT_REPOSITORY_URL,
     primary: true,
   },
   {
-    title: 'README.md',
-    description: 'Read the project overview, core capabilities, and practical usage notes.',
+    title: 'Project README',
+    description: 'Overview and usage',
     href: REPOSITORY_README_URL,
   },
   {
-    title: 'MAINTAINERS_GUIDE.md',
-    description: 'Read the app’s architecture, component relationships, and maintenance responsibilities.',
+    title: 'Maintainer’s Guide',
+    description: 'Architecture and maintenance',
     href: REPOSITORY_MAINTAINERS_GUIDE_URL,
   },
   {
-    title: 'PROJECT_WORKFLOW_CHARTER.md',
-    description: 'Read the project’s development principles, review conventions, and decision-making rules.',
+    title: 'Project Workflow Charter',
+    description: 'Development principles',
     href: REPOSITORY_WORKFLOW_CHARTER_URL,
   },
   {
-    title: 'CHANGELOG.md',
-    description: 'Follow Peridot’s development history and completed milestones.',
+    title: 'Project Changelog',
+    description: 'Milestones and history',
     href: REPOSITORY_CHANGELOG_URL,
   },
 ];
@@ -92,38 +92,82 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
           </div>
         </header>
 
-        <section className={`peridot-appear-rise peridot-appear-delay-1 peridot-learn-more-author-card${isBioExpanded ? ' is-expanded' : ''}`} aria-labelledby="peridot-author-heading">
-          <div className="peridot-learn-more-author-copy">
-            <img src={priceHeadshot} alt="Haley Price" className="peridot-learn-more-headshot" />
-            <p className="peridot-section-label">Creator</p>
-            <h2 id="peridot-author-heading">Haley Price</h2>
-            <div className={`peridot-learn-more-bio${isBioExpanded ? ' is-expanded' : ''}`}>
-              <p>
-                Haley Price created Peridot as an open-source, open-access digital scholarship tool with the help of ChatGPT. Aware of the fraught ethics of the current AI landscape, Price advocates for humanists to be well-informed about AI. Rather than avoid it altogether, Price sees the need for scholars to engage in it (as responsibly and ethically as is possible given the current state of the AI/Tech industry) so that humanists have a voice in shaping AI&apos;s impact on the production and maintenance of humanistic knowledge and in humanities pedagogy.
-              </p>
-              {isBioExpanded && (
-                <>
-                  <p>
-                    Price is a <a href={BROWN_PROFILE_URL} target="_blank" rel="noreferrer">History PhD Candidate at Brown University</a> and the <a href={JAPANLAB_PROFILE_URL} target="_blank" rel="noreferrer">Digital Humanities Specialist for UT Austin’s JapanLab</a>. Price is interested in the relationship between power, piety, patronage, networks, and gender in early modern Italy. She studied History and Humanities as an undergraduate at the University of Texas at Austin, where she engineered her own interdisciplinary degree plan to create educational history-based video games. This study culminated in <a href={PAZZI_CONSPIRACY_URL} target="_blank" rel="noreferrer"><em>The Pazzi Conspiracy</em></a>, which aims to teach students about patronage and power in 15th century Florence. Her doctoral dissertation visualizes and analyzes Maria Maddalena von Habsburg de’ Medici’s (1589 – 1631) network, using her epistolary record and family tree to map her kith, kin, and correspondents across early modern Europe both through digital visualizations and traditional prose.
-                  </p>
-                  <p>
-                    Price&apos;s research interests include Early Modern European History, Medici Studies, the themes of power, piety, patronage, gender, and networks, Digital History/Visualization, Educational Video Games and Interactive Media, History Pedagogy, and AI Ethics in the Humanities.
-                  </p>
-                </>
-              )}
-            </div>
-            <div className="peridot-learn-more-author-actions">
-              <button type="button" className="peridot-learn-more-text-button" onClick={() => setIsBioExpanded((currentValue) => !currentValue)} aria-expanded={isBioExpanded}>
-                {isBioExpanded ? 'Show shorter bio' : 'Read full bio'}
-              </button>
-              <a href={priceCvUrl} download className="peridot-button-primary peridot-learn-more-cv-button">
-                Download Haley Price’s CV
-              </a>
-            </div>
-          </div>
-        </section>
+        <div className={`peridot-learn-more-top-grid${isBioExpanded ? ' is-bio-expanded' : ''}`}>
+          <section
+            className={`peridot-appear-rise peridot-appear-delay-1 peridot-learn-more-author-card${isBioExpanded ? ' is-expanded' : ''}`}
+            aria-labelledby="peridot-author-heading"
+          >
+            <div className="peridot-learn-more-author-copy">
+              <p className="peridot-section-label">Creator</p>
+              <h2 id="peridot-author-heading">Haley Price</h2>
 
-        <section className="peridot-appear-rise peridot-appear-delay-2 peridot-learn-more-ai-card" aria-labelledby="peridot-ai-heading">
+              {isBioExpanded && (
+                <figure className="peridot-learn-more-author-portrait">
+                  <img src={priceHeadshot} alt="Haley Price" className="peridot-learn-more-headshot" />
+                </figure>
+              )}
+
+              <div className={`peridot-learn-more-bio${isBioExpanded ? ' is-expanded' : ''}`}>
+                <p>
+                  Haley Price created Peridot as an open-source, open-access digital scholarship tool with the help of ChatGPT. Aware of the fraught ethics of the current AI landscape, Price advocates for humanists to be well-informed about AI. Rather than avoid it altogether, Price sees the need for scholars to engage in it (as responsibly and ethically as is possible given the current state of the AI/Tech industry) so that humanists have a voice in shaping AI&apos;s impact on the production and maintenance of humanistic knowledge and in humanities pedagogy.
+                </p>
+                {isBioExpanded && (
+                  <>
+                    <p>
+                      Price is a <a href={BROWN_PROFILE_URL} target="_blank" rel="noreferrer">History PhD Candidate at Brown University</a> and the <a href={JAPANLAB_PROFILE_URL} target="_blank" rel="noreferrer">Digital Humanities Specialist for UT Austin’s JapanLab</a>. Price is interested in the relationship between power, piety, patronage, networks, and gender in early modern Italy. She studied History and Humanities as an undergraduate at the University of Texas at Austin, where she engineered her own interdisciplinary degree plan to create educational history-based video games. This study culminated in <a href={PAZZI_CONSPIRACY_URL} target="_blank" rel="noreferrer"><em>The Pazzi Conspiracy</em></a>, which aims to teach students about patronage and power in 15th century Florence. Her doctoral dissertation visualizes and analyzes Maria Maddalena von Habsburg de’ Medici’s (1589 – 1631) network, using her epistolary record and family tree to map her kith, kin, and correspondents across early modern Europe both through digital visualizations and traditional prose.
+                    </p>
+                    <p>
+                      Price&apos;s research interests include Early Modern European History, Medici Studies, the themes of power, piety, patronage, gender, and networks, Digital History/Visualization, Educational Video Games and Interactive Media, History Pedagogy, and AI Ethics in the Humanities.
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div className="peridot-learn-more-author-actions">
+                <button
+                  type="button"
+                  className="peridot-learn-more-text-button"
+                  onClick={() => setIsBioExpanded((currentValue) => !currentValue)}
+                  aria-expanded={isBioExpanded}
+                >
+                  {isBioExpanded ? 'Show shorter bio' : 'Read full bio'}
+                </button>
+                {isBioExpanded && (
+                  <a href={priceCvUrl} download className="peridot-button-primary peridot-learn-more-cv-button">
+                    Download Haley Price’s CV
+                  </a>
+                )}
+              </div>
+            </div>
+          </section>
+
+          <section
+            className="peridot-appear-rise peridot-appear-delay-2 peridot-learn-more-github-card peridot-learn-more-github-card-compact"
+            aria-labelledby="peridot-github-heading"
+          >
+            <p className="peridot-section-label">Open source</p>
+            <h2 id="peridot-github-heading">Find Peridot on GitHub</h2>
+            <p className="peridot-learn-more-github-intro">
+              Browse the public repository or open the project’s core reference documents.
+            </p>
+            <nav className="peridot-learn-more-github-destinations" aria-label="Project repository and documentation links">
+              {githubDestinations.map((destination) => (
+                <a
+                  key={destination.title}
+                  href={destination.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={`peridot-learn-more-github-destination${destination.primary ? ' is-primary' : ''}`}
+                >
+                  <strong>{destination.title}</strong>
+                  <span>{destination.description}</span>
+                </a>
+              ))}
+            </nav>
+          </section>
+        </div>
+
+        <section className="peridot-appear-rise peridot-appear-delay-3 peridot-learn-more-ai-card" aria-labelledby="peridot-ai-heading">
           <p className="peridot-section-label">AI disclosure</p>
           <h2 id="peridot-ai-heading">How AI Was Used in Peridot</h2>
           <p className="peridot-learn-more-ai-intro">
@@ -150,32 +194,13 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
           </div>
         </section>
 
-        <section className="peridot-appear-rise peridot-appear-delay-3 peridot-learn-more-tutorial-card" aria-labelledby="peridot-tutorials-heading">
+        <section className="peridot-appear-rise peridot-appear-delay-4 peridot-learn-more-tutorial-card" aria-labelledby="peridot-tutorials-heading">
           <p className="peridot-section-label">Tutorials</p>
           <h2 id="peridot-tutorials-heading">Video tutorials are in preparation</h2>
           <p>
             Future video tutorials will guide researchers through preparing a dataset, exploring records, building visualizations, searching and refining evidence, and exporting research outputs from Peridot.
           </p>
           <span className="peridot-learn-more-coming-soon">Coming soon</span>
-        </section>
-
-        <section className="peridot-appear-rise peridot-appear-delay-4 peridot-learn-more-github-card" aria-labelledby="peridot-github-heading">
-          <p className="peridot-section-label">Open source</p>
-          <h2 id="peridot-github-heading">Find Peridot on GitHub</h2>
-          <div className="peridot-learn-more-github-destinations" aria-label="Project repository and documentation links">
-            {githubDestinations.map((destination) => (
-              <a
-                key={destination.title}
-                href={destination.href}
-                target="_blank"
-                rel="noreferrer"
-                className={`peridot-learn-more-github-destination${destination.primary ? ' is-primary' : ''}`}
-              >
-                <strong>{destination.title}</strong>
-                <span>{destination.description}</span>
-              </a>
-            ))}
-          </div>
         </section>
       </div>
     </section>
