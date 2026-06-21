@@ -12,6 +12,7 @@
  */
 
 import React from 'react';
+import { PeridotFeedbackForm } from './PeridotFeedbackForm';
 
 export function PeridotHamburgerMenu({
   open,
@@ -72,15 +73,19 @@ export function PeridotHamburgerMenu({
 
   return (
     <div className="fixed left-5 top-5 z-[200]">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="peridot-gem-button flex h-11 w-11 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5f1df)] text-xl font-black text-[var(--peridot-color-hex-173120)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-38)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f5ecd2-a80)]"
-        aria-label={open ? 'Close Peridot menu' : 'Open Peridot menu'}
-        aria-expanded={open}
-      >
-        {open ? '×' : '≡'}
-      </button>
+      <div className="flex flex-col items-start gap-3">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="peridot-gem-button flex h-11 w-11 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a70)] bg-[var(--peridot-color-hex-f5f1df)] text-xl font-black text-[var(--peridot-color-hex-173120)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-38)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-f5ecd2-a80)]"
+          aria-label={open ? 'Close Peridot menu' : 'Open Peridot menu'}
+          aria-expanded={open}
+        >
+          {open ? '×' : '≡'}
+        </button>
+
+        <PeridotFeedbackForm />
+      </div>
 
       {open ? (
         <div
