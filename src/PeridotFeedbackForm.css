@@ -1,0 +1,331 @@
+/*
+ * ==========================================================================
+ * Persistent Peridot feedback control
+ * ==========================================================================
+ * Owner: `PeridotFeedbackForm.jsx`.
+ *
+ * This layer is loaded after the other component styles because it renders a
+ * global fixed-position navigation control and a modal dialog above every
+ * workspace. It must not style ordinary forms outside the `.peridot-feedback-*`
+ * namespace. The hamburger menu owns placement; this file owns visual behavior.
+ */
+
+.peridot-feedback-trigger {
+  display: inline-flex;
+  width: 2.75rem;
+  height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--peridot-color-hex-dfe9c8-a70);
+  border-radius: 999px;
+  background: var(--peridot-color-hex-f5f1df);
+  color: var(--peridot-color-hex-173120);
+  cursor: pointer;
+  box-shadow:
+    0 12px 28px var(--peridot-color-rgba-rgba-0-0-0-0-38),
+    inset 0 0 0 1px var(--peridot-role-ornament-corner-muted);
+  transition:
+    transform 140ms ease,
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.peridot-feedback-trigger:hover {
+  border-color: var(--peridot-role-ornament-corner);
+  background: var(--peridot-color-hex-d6a36a);
+  color: var(--peridot-role-interface-text-on-light);
+  box-shadow:
+    0 14px 30px var(--peridot-color-rgba-rgba-86-52-22-0-34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transform: translateY(-1px);
+}
+
+.peridot-feedback-trigger:focus-visible,
+.peridot-feedback-close:focus-visible,
+.peridot-feedback-choice:focus-within {
+  outline: 3px solid var(--peridot-color-hex-f5ecd2-a80);
+  outline-offset: 3px;
+}
+
+.peridot-feedback-trigger-icon {
+  width: 1.28rem;
+  height: 1.28rem;
+}
+
+.peridot-feedback-dialog-layer {
+  position: fixed;
+  z-index: 520;
+  inset: 0;
+  display: grid;
+  overflow-y: auto;
+  place-items: center;
+  padding: clamp(1rem, 3vw, 2rem);
+  background: rgba(2, 16, 10, 0.72);
+  backdrop-filter: blur(7px) saturate(0.82);
+}
+
+.peridot-feedback-dialog {
+  width: min(100%, 46rem);
+  max-height: min(54rem, calc(100vh - 2rem));
+  overflow: auto;
+  border: 1px solid var(--peridot-role-ornament-corner-muted);
+  border-radius: 1.5rem;
+  background:
+    linear-gradient(135deg, rgba(7, 31, 19, 0.99), rgba(12, 45, 25, 0.99));
+  color: var(--peridot-role-interface-text-on-dark);
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.56),
+    inset 0 0 0 1px var(--peridot-role-ornament-line-muted);
+}
+
+.peridot-feedback-dialog-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--peridot-color-hex-dfe9c8-a20);
+  padding: clamp(1rem, 2.4vw, 1.5rem);
+}
+
+.peridot-feedback-dialog-kicker {
+  margin: 0;
+  color: var(--peridot-role-ornament-sparkle);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.peridot-feedback-dialog h2,
+.peridot-feedback-success h3 {
+  margin: 0.25rem 0 0;
+  color: var(--peridot-role-interface-text-on-dark);
+  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  font-size: clamp(1.7rem, 4vw, 2.35rem);
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.peridot-feedback-close {
+  flex: 0 0 auto;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--peridot-color-hex-dfe9c8-a45);
+  border-radius: 999px;
+  background: rgba(247, 242, 223, 0.08);
+  color: var(--peridot-role-interface-text-on-dark);
+  cursor: pointer;
+  font-size: 1.6rem;
+  line-height: 1;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease;
+}
+
+.peridot-feedback-close:hover:not(:disabled) {
+  border-color: var(--peridot-role-ornament-corner);
+  background: var(--peridot-role-button-primary-hover-bg);
+  color: var(--peridot-role-interface-text-on-light);
+}
+
+.peridot-feedback-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.peridot-feedback-form,
+.peridot-feedback-success {
+  display: grid;
+  gap: 1.1rem;
+  padding: clamp(1rem, 2.4vw, 1.5rem);
+}
+
+.peridot-feedback-form fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.peridot-feedback-form legend,
+.peridot-feedback-field > span {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--peridot-color-hex-fbf7ea);
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.peridot-feedback-form legend span,
+.peridot-feedback-field em {
+  color: var(--peridot-color-hex-dfe9c8);
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 650;
+}
+
+.peridot-feedback-field b {
+  color: var(--peridot-role-ornament-sparkle);
+}
+
+.peridot-feedback-choice-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.48rem;
+}
+
+.peridot-feedback-area-grid {
+  gap: 0.42rem;
+}
+
+.peridot-feedback-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  border: 1px solid var(--peridot-color-hex-dfe9c8-a30);
+  border-radius: 999px;
+  background: rgba(247, 242, 223, 0.07);
+  color: var(--peridot-color-hex-fbf7ea);
+  cursor: pointer;
+  padding: 0.44rem 0.64rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.1;
+  transition: background 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease;
+}
+
+.peridot-feedback-choice:hover {
+  border-color: var(--peridot-role-ornament-corner);
+  background: rgba(181, 139, 66, 0.22);
+  transform: translateY(-1px);
+}
+
+.peridot-feedback-choice:has(input:checked) {
+  border-color: var(--peridot-role-ornament-corner);
+  background: var(--peridot-role-button-primary-hover-bg);
+  color: var(--peridot-role-interface-text-on-light);
+}
+
+.peridot-feedback-choice input {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: var(--peridot-role-button-primary-hover-bg);
+}
+
+.peridot-feedback-field textarea,
+.peridot-feedback-field input {
+  width: 100%;
+  border: 1px solid var(--peridot-color-hex-dfe9c8-a46);
+  border-radius: 0.88rem;
+  background: rgba(2, 18, 10, 0.72);
+  color: var(--peridot-role-interface-text-on-dark);
+  padding: 0.72rem 0.8rem;
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.48;
+  outline: none;
+  resize: vertical;
+}
+
+.peridot-feedback-field textarea::placeholder,
+.peridot-feedback-field input::placeholder {
+  color: var(--peridot-color-hex-dfe9c8-a58);
+}
+
+.peridot-feedback-field textarea:focus,
+.peridot-feedback-field input:focus {
+  border-color: var(--peridot-role-ornament-corner);
+  box-shadow: 0 0 0 3px rgba(240, 210, 122, 0.22);
+}
+
+.peridot-feedback-privacy-note {
+  margin: 0;
+  border-left: 2px solid var(--peridot-role-ornament-corner);
+  color: var(--peridot-color-hex-dfe9c8);
+  font-size: 0.77rem;
+  line-height: 1.48;
+  padding-left: 0.72rem;
+}
+
+.peridot-feedback-error {
+  margin: 0;
+  border: 1px solid rgba(244, 173, 146, 0.6);
+  border-radius: 0.75rem;
+  background: rgba(133, 42, 25, 0.28);
+  color: #ffe0d3;
+  padding: 0.72rem 0.82rem;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.peridot-feedback-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.68rem;
+  flex-wrap: wrap;
+}
+
+.peridot-feedback-actions .peridot-button-primary,
+.peridot-feedback-actions .peridot-button-secondary,
+.peridot-feedback-success .peridot-button-primary {
+  cursor: pointer;
+}
+
+.peridot-feedback-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.peridot-feedback-success {
+  min-height: 15rem;
+  align-content: center;
+  justify-items: start;
+}
+
+.peridot-feedback-success p {
+  max-width: 33rem;
+  margin: 0;
+  color: var(--peridot-color-hex-dfe9c8);
+  line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .peridot-feedback-dialog-layer {
+    align-items: end;
+    padding: 0.65rem;
+  }
+
+  .peridot-feedback-dialog {
+    max-height: calc(100vh - 1.3rem);
+    border-radius: 1.25rem;
+  }
+
+  .peridot-feedback-dialog-header,
+  .peridot-feedback-form,
+  .peridot-feedback-success {
+    padding: 1rem;
+  }
+
+  .peridot-feedback-actions {
+    justify-content: stretch;
+  }
+
+  .peridot-feedback-actions .peridot-button-primary,
+  .peridot-feedback-actions .peridot-button-secondary {
+    flex: 1 1 auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-feedback-trigger,
+  .peridot-feedback-close,
+  .peridot-feedback-choice {
+    transition: none;
+  }
+
+  .peridot-feedback-trigger:hover,
+  .peridot-feedback-choice:hover {
+    transform: none;
+  }
+}

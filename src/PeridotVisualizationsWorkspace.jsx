@@ -112,9 +112,14 @@ function FloatingOrnamentArrowToggle({
     : 'peridot-visualization-toggle-emerge-from-above';
   const emergeDelay = placement === 'top' ? '1080ms' : '620ms';
 
+  /*
+   * These portal-mounted controls must sit above the map/chart stage but below
+   * global dialogs. Keep this at the Visualizations workspace layer instead of
+   * treating header/timeline toggles as universal top-layer UI.
+   */
   return createPortal(
     <div
-      className={`${emergeClass} pointer-events-auto fixed z-[9000]`}
+      className={`${emergeClass} pointer-events-auto fixed z-[400]`}
       style={{ left, top, '--peridot-toggle-emerge-delay': emergeDelay }}
     >
       <button
