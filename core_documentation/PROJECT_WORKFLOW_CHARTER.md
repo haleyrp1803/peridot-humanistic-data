@@ -29,7 +29,7 @@ C:\Users\haley\OneDrive\Desktop\Peridot\
 Current clean baseline:
 
 ```text
-0c5a219 — Add Learn More section dividers
+639e30f — Extract Inspector stylesheet
 ```
 
 ### Applied-file continuity rule
@@ -113,6 +113,8 @@ Current fragile zones include:
 - Advanced Search active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, capability filters, dataset-wide Browse indexes, result facets, predictive suggestions, structured criteria, Boolean AND / OR / EXCLUDING logic, apply/clear behavior, and future metadata filters
 - Explore workspace visual/animation layer, including step-button sequencing, tab transitions, Results/Browse row filing effects, reduced-motion behavior, scroll restoration after expanded panels, and rounded-folio clipping containment
 - shared `src/index.css` change delivery, particularly Learn More/Explore overrides that can supersede unrelated recently tested rules
+- stylesheet import order in `src/main.jsx`, including the global → Inspector → Analytics → Search → Mapping → Learn More cascade contract
+- extracted Search scroll/folio-corner ordering, Analytics builder/dropdown layering, and compact/full/Explore Inspector presentation styles
 - Learn More section hierarchy, biography expansion/portrait flow, resource-card width reallocation, divider spacing, and staged divider-first entrance choreography
 - Analytics expanded overlay positioning and backdrop contrast
 - Analytics dynamic variable detection
@@ -415,6 +417,11 @@ Current notable decisions:
 - Learn More dividers reuse the restrained Inspector/Explore filigree treatment. They belong in dedicated dark-green intervals between major horizontal chunks, not inside cards or between the creator and GitHub cards. Their entrance order is divider → following section, so the page reads vertically rather than resolving all elements at once.
 - The Learn More expanded biography may grow while the GitHub resource card contracts. The portrait belongs to the biography’s reading flow and should allow prose to wrap alongside it and continue beneath it.
 - A small shared-style change must preserve the accepted behavior of unrelated current rules. For example, a Learn More parchment-color adjustment must not reintroduce an earlier portrait crop or remove the expanded biography’s text-flow rules.
+
+- Component-specific CSS is now extracted into dedicated stylesheets for Inspector, Analytics, Search, Mapping, and Learn More. `index.css` remains a shared/global contract, and `main.jsx` import order is treated as functional cascade behavior.
+- CSS extraction, dead-rule cleanup, visual redesign, and functional repairs are separate bounded passes. Never remove or rewrite suspect component styles merely because a selector appears unused until the extraction has been visually verified.
+- Search has a deferred coverage/scope audit: verify loaded dataset versus applied result set versus the records/counts displayed by Browse, Results, Refine, facets, pagination, capability filters, structured criteria, and Inspector handoff.
+- Timeline playback has a deferred Analytics audit: verify timeline range/playback scope against chart input rows, chart-local date controls, rendering updates, titles/counts/legends, and export output.
 
 ---
 

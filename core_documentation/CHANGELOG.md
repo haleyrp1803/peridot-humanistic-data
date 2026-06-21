@@ -1,6 +1,38 @@
 # Changelog
 
-## Current documented safe baseline
+## Current stylesheet architecture milestone
+
+Current documented safe baseline:
+
+- **`639e30f` — `Extract Inspector stylesheet`** on branch **`main`**
+
+The completed structural sequence moved component-owned stylesheet layers out of `src/index.css` while preserving the established stylesheet cascade in `src/main.jsx`:
+
+- **`264e8d9` — `Remove obsolete Data workspace stylesheet rules`**
+- **`7b9ddf3` — `Extract column mapping modal stylesheet`**
+- **`5c0532d` — `Remove residual Learn More global stylesheet rules`**
+- **`407becc` — `Remove obsolete column mapping stylesheet rules`**
+- **`19acc89` — `Extract Search workspace stylesheet`**
+- **`f7e885c` — `Extract Analytics stylesheet`**
+- **`639e30f` — `Extract Inspector stylesheet`**
+
+The active component stylesheet order is:
+
+```jsx
+import './index.css';
+import './InspectorPanel.css';
+import './AnalyticsPanel.css';
+import './PeridotSearchWorkspace.css';
+import './PeridotColumnMappingModal.css';
+import './PeridotLearnMoreWorkspace.css';
+```
+
+`index.css` remains responsible for shared/global contracts only. Search, Analytics, Inspector, Mapping, and Learn More now own their component-specific presentation rules. The Search extraction includes the ordered scroll and folio-corner containment cascade; Analytics includes builder/dropdown and reduced-motion behavior; Inspector includes compact/full/Explore dossier presentation; Mapping and Learn More retain their previously extracted visual layers.
+
+The next substantive behavior work is intentionally deferred into two separate audits: Search dataset coverage/scope and timeline playback × Analytics scope. These must not be conflated with stylesheet cleanup.
+
+
+## Historical documented safe baseline
 
 - **`0c5a219` — `Add Learn More section dividers`** on branch **`main`**
 
@@ -391,6 +423,11 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 
 ## Current branch status
 
+- **`639e30f` — `Extract Inspector stylesheet`** is the current synced `main` head in the most recent post-commit ritual.
+- **`f7e885c` — `Extract Analytics stylesheet`**, **`19acc89` — `Extract Search workspace stylesheet`**, and the preceding Mapping/Learn More cleanup commits form the immediately preceding structural sequence.
+- The working tree was clean and `main`, `origin/main`, and `origin/HEAD` were aligned after the Inspector extraction.
+
+
 - **`0c5a219` — `Add Learn More section dividers`** is the current documented `main` baseline and code head supplied by the most recent sync ritual.
 - **`795f0f7` — `Restore Explore folio corner containment`** restores rounded Explore folio clipping while retaining workspace scrolling.
 - **`98cccf5` — `Warm Learn More parchment surfaces`** warms the creator, AI-disclosure, and Tutorials reading cards.
@@ -517,10 +554,17 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 # Full development history
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `e5f832c`.
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `639e30f`.
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-06-21 | `639e30f` | Extract Inspector stylesheet | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-21 | `f7e885c` | Extract Analytics stylesheet |  |
+| 2026-06-21 | `19acc89` | Extract Search workspace stylesheet |  |
+| 2026-06-21 | `407becc` | Remove obsolete column mapping stylesheet rules |  |
+| 2026-06-21 | `5c0532d` | Remove residual Learn More global stylesheet rules |  |
+| 2026-06-21 | `7b9ddf3` | Extract column mapping modal stylesheet |  |
+| 2026-06-21 | `264e8d9` | Remove obsolete Data workspace stylesheet rules |  |
 | 2026-06-19 | `0c5a219` | Add Learn More section dividers | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-06-19 | `795f0f7` | Restore Explore folio corner containment |  |
 | 2026-06-19 | `98cccf5` | Warm Learn More parchment surfaces |  |

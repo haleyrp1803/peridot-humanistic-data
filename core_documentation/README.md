@@ -20,11 +20,42 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`0c5a219` — `Add Learn More section dividers`** on branch **`main`**
+- **`639e30f` — `Extract Inspector stylesheet`** on branch **`main`**
 
 This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, mounted-Inspector overlay, Inspector reference-entry, Unknown-as-place, connected-record table, Data/workbook mapping modal redesign, upload animation, hidden-theme-menu, Learn More animation, and Search/Explore workspace redesign passes. The app now uses a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented internally for development and future user-facing restoration, but is hidden from the hamburger menu for now. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 This baseline also records the completed first public **Learn More about Peridot** information hub. Learn More is no longer a placeholder: it contains a compact/expandable creator biography with headshot and CV entry point, an open-source/GitHub resource panel, expandable AI-method disclosures, a Tutorials section, warmer parchment reading surfaces, and staged filigree dividers between major horizontal chunks. The creator biography can expand without removing the GitHub resources; its portrait lives inside the longer biography’s reading flow, with prose wrapping alongside and then beneath it. Learn More dividers use the same restrained Inspector/Explore visual language, receive their own dark-green interval, and enter before the following section. The current baseline also restores rounded clipping to the Explore folio while keeping normal Explore scrolling.
+
+## Current stylesheet architecture milestone
+
+Current documented safe baseline:
+
+- **`639e30f` — `Extract Inspector stylesheet`** on branch **`main`**
+
+The completed structural sequence moved component-owned stylesheet layers out of `src/index.css` while preserving the established stylesheet cascade in `src/main.jsx`:
+
+- **`264e8d9` — `Remove obsolete Data workspace stylesheet rules`**
+- **`7b9ddf3` — `Extract column mapping modal stylesheet`**
+- **`5c0532d` — `Remove residual Learn More global stylesheet rules`**
+- **`407becc` — `Remove obsolete column mapping stylesheet rules`**
+- **`19acc89` — `Extract Search workspace stylesheet`**
+- **`f7e885c` — `Extract Analytics stylesheet`**
+- **`639e30f` — `Extract Inspector stylesheet`**
+
+The active component stylesheet order is:
+
+```jsx
+import './index.css';
+import './InspectorPanel.css';
+import './AnalyticsPanel.css';
+import './PeridotSearchWorkspace.css';
+import './PeridotColumnMappingModal.css';
+import './PeridotLearnMoreWorkspace.css';
+```
+
+`index.css` remains responsible for shared/global contracts only. Search, Analytics, Inspector, Mapping, and Learn More now own their component-specific presentation rules. The Search extraction includes the ordered scroll and folio-corner containment cascade; Analytics includes builder/dropdown and reduced-motion behavior; Inspector includes compact/full/Explore dossier presentation; Mapping and Learn More retain their previously extracted visual layers.
+
+The next substantive behavior work is intentionally deferred into two separate audits: Search dataset coverage/scope and timeline playback × Analytics scope. These must not be conflated with stylesheet cleanup.
 
 The current state of the active `main` project includes:
 
@@ -97,6 +128,8 @@ The current state of the active `main` project includes:
 - clarified capability and unavailable-state wording: visualization types that cannot be supported now say they are **not available** rather than **limited**, point/route map readiness is grouped more intuitively, and the internal capability-diagnostics card has been removed from user-facing review
 - extracted sample data, mapping UI config, mapping field controls, and evidence field controls that reduce pressure on `App.jsx` and `PeridotColumnMappingModal.jsx`
 - source-wide developer-orientation comments and a tracked code-structure audit planning document
+- component-specific styles extracted into dedicated Inspector, Analytics, Search, Mapping, and Learn More stylesheet layers, with `index.css` retained as the shared/global CSS contract
+- a deferred Search coverage/scope audit and a separate deferred timeline playback × Analytics audit, both to be handled as behavior passes rather than stylesheet cleanup
 - export tooling for both images and tabular data
 - a true pre-settled **force-directed person-network layout** backed by `d3-force`
 - a **geographic-anchor person layout** that places correspondents by mappable location
@@ -404,8 +437,13 @@ src/
   analyticsChartComponents.jsx
   analyticsConfig.js
   analyticsDerivationHelpers.js
+  AnalyticsPanel.css
   AnalyticsPanel.jsx
   App.jsx
+  InspectorPanel.css
+  PeridotColumnMappingModal.css
+  PeridotLearnMoreWorkspace.css
+  PeridotSearchWorkspace.css
   peridotColorPalette.js
   peridotTheme.js
   peridotThemeRoleMetadata.js
@@ -458,11 +496,28 @@ src/
 
 #### `src/main.jsx`
 
-Bootstraps the React application.
+Bootstraps the React application and establishes the functional stylesheet cascade:
+
+```jsx
+import './index.css';
+import './InspectorPanel.css';
+import './AnalyticsPanel.css';
+import './PeridotSearchWorkspace.css';
+import './PeridotColumnMappingModal.css';
+import './PeridotLearnMoreWorkspace.css';
+```
 
 #### `src/index.css`
 
-Contains the minimal global layer for Tailwind directives, layout rules, and base font settings.
+Shared/global CSS layer for Tailwind directives, document defaults, reusable interface primitives, theme/ornament contracts, Visualizations-stage transitions, timeline choreography, and global reduced-motion behavior. It should not regain component-specific workspace CSS without a deliberate architectural pass.
+
+#### Extracted component stylesheets
+
+- `src/InspectorPanel.css` — compact/full/Explore Inspector shell, interaction hierarchy, reference ground, and filigree divider treatment.
+- `src/AnalyticsPanel.css` — Chart Visualizations builder animation, stacking, interactive control, and Analytics-local reduced-motion rules.
+- `src/PeridotSearchWorkspace.css` — Advanced Search layout, animations, responsive behavior, and ordered scroll/folio-corner containment rules.
+- `src/PeridotColumnMappingModal.css` — role-based mapping and workbook modal presentation.
+- `src/PeridotLearnMoreWorkspace.css` — Learn More reading surfaces, divider choreography, biography expansion, and page-specific responsive behavior.
 
 #### `src/App.jsx`
 
@@ -883,6 +938,12 @@ This repository includes internal maintenance and workflow documents that should
 The full commit history, through the current documented baseline, is preserved in one place in **`CHANGELOG.md`**.
 
 ## 15. Roadmap / near-term priorities
+
+1. Run the dedicated **Search coverage and scope audit** before changing Search behavior: trace loaded rows, applied rows, Browse indexes, Results pagination/limits, Refine facets, capability filters, structured criteria, and Inspector handoff.
+2. Run the dedicated **timeline playback × Analytics audit**: establish how timeline range/playback state and Analytics-local dates combine, then test chart rendering and export behavior.
+3. Perform component dead-rule audits only after the corresponding stylesheet extraction checkpoints are stable.
+4. Refresh screenshots and documentation examples once the next behavior milestones are accepted.
+
 
 Likely near-term priorities include:
 
