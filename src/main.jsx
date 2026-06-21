@@ -9,6 +9,10 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 
+// Analytics styling remains immediately after shared CSS. Its chart-builder
+// rules originally preceded the later Search, Mapping, and Learn More layers.
+import './AnalyticsPanel.css';
+
 // Search styling remains after the shared stylesheet. It contains the ordered
 // Search scroll, clipping, responsive, and animation cascade formerly in index.css.
 import './PeridotSearchWorkspace.css';
