@@ -9,7 +9,11 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 
-// Mapping styling remains after global CSS so its former late-cascade overrides
+// Search styling remains after the shared stylesheet. It contains the ordered
+// Search scroll, clipping, responsive, and animation cascade formerly in index.css.
+import './PeridotSearchWorkspace.css';
+
+// Mapping styling remains after Search so its former late-cascade overrides
 // keep their precedence over shared primitives and other workspace rules.
 import './PeridotColumnMappingModal.css';
 

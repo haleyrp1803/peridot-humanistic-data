@@ -1,0 +1,2902 @@
+/* Advanced Search / Explore workspace
+ * -----------------------------------
+ * Scope: `PeridotSearchWorkspace.jsx` only. This section intentionally replaces
+ * the earlier stack of Explore-only visual override passes with one auditable
+ * class-based system. Keep selectors under `.peridot-search-workspace` so this
+ * file's global CSS does not leak into Upload, Inspector, Visualizations, Home,
+ * charts, or export rendering.
+ */
+.peridot-search-workspace {
+  --explore-shell: #061d12;
+  --explore-shell-deep: #010b07;
+  --explore-shell-mid: #0d2911;
+  --explore-card-dark: #061d12;
+  --explore-card-dark-alt: #071f13;
+
+  --explore-field: #405239;
+  --explore-field-alt: #4c5d43;
+  --explore-field-deep: #31432b;
+
+  --explore-paper: #efe6c8;
+  --explore-paper-soft: #f6efd8;
+  --explore-paper-muted: #ded5b8;
+  --explore-paper-deep: #d2c7a7;
+
+  --explore-text-on-dark: #fff8e8;
+  --explore-muted-on-dark: #e5ddc0;
+  --explore-text-on-light: #071d10;
+  --explore-muted-on-light: #314331;
+  --explore-label-on-light: #5f4214;
+
+  --explore-gold: #c79b3d;
+  --explore-gold-light: #e0bb62;
+  --explore-gold-soft: #ecd38a;
+  --explore-gold-text: #07190c;
+
+  --explore-rule: rgba(221, 187, 105, 0.34);
+  --explore-rule-strong: rgba(221, 187, 105, 0.54);
+  --explore-paper-rule: rgba(84, 99, 68, 0.34);
+  --explore-shadow: rgba(0, 0, 0, 0.34);
+
+  position: relative;
+  isolation: isolate;
+  color: var(--explore-text-on-dark);
+  background:
+    linear-gradient(135deg, rgba(2, 14, 8, 0.68), rgba(2, 14, 8, 0.80)),
+    radial-gradient(circle at 20% 14%, rgba(221, 187, 105, 0.055), transparent 28rem),
+    radial-gradient(circle at 78% 18%, rgba(119, 154, 92, 0.045), transparent 30rem),
+    repeating-linear-gradient(135deg, rgba(221, 187, 105, 0.095) 0 1px, transparent 1px 16px),
+    linear-gradient(135deg, var(--explore-shell) 0%, var(--explore-shell-mid) 48%, #04160f 100%);
+  padding: 1rem 1.4rem;
+}
+
+/* Shell and chrome */
+.peridot-search-workspace .peridot-search-folio-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(221, 187, 105, 0.48);
+  border-radius: 1.55rem;
+  background: var(--explore-shell);
+  color: var(--explore-text-on-dark);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.30),
+    inset 0 0 0 1px rgba(246, 223, 150, 0.16);
+}
+
+.peridot-search-workspace .peridot-search-folio-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0.55rem;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 1.18rem;
+  background:
+    linear-gradient(135deg, rgba(2, 14, 8, 0.68), rgba(2, 14, 8, 0.80)),
+    repeating-linear-gradient(135deg, rgba(221, 187, 105, 0.10) 0 1px, transparent 1px 16px),
+    linear-gradient(135deg, var(--explore-shell) 0%, var(--explore-shell-mid) 48%, #04160f 100%);
+  box-shadow: inset 0 0 0 1px rgba(221, 187, 105, 0.14);
+}
+
+.peridot-search-workspace .peridot-search-folio-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+.peridot-search-workspace .peridot-search-folio-header {
+  border-bottom: 1px solid rgba(221, 187, 105, 0.22);
+  background: var(--explore-shell-mid);
+  padding: 0.82rem clamp(1rem, 2vw, 1.55rem) clamp(0.8rem, 1.4vw, 1.1rem);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    inset 0 -18px 34px rgba(0, 0, 0, 0.12);
+}
+
+.peridot-search-workspace .peridot-search-workspace-kicker,
+.peridot-search-workspace .peridot-search-section-eyebrow {
+  color: var(--explore-gold-soft);
+}
+
+.peridot-search-workspace .peridot-search-workspace-title {
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-workspace-subtitle {
+  color: var(--explore-muted-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-status-message {
+  border-bottom: 1px solid rgba(221, 187, 105, 0.18);
+  background: rgba(199, 155, 61, 0.22);
+  color: var(--explore-text-on-dark);
+  padding: 0.55rem 1.2rem;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+/* Workflow tabs */
+.peridot-search-workspace .peridot-search-step-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.36rem;
+  border-bottom: 1px solid rgba(221, 187, 105, 0.18);
+  background: rgba(6, 29, 18, 0.88);
+  padding: 0.58rem clamp(1rem, 2vw, 1.55rem);
+}
+
+.peridot-search-workspace .peridot-search-step-button {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.34rem;
+  border: 1px solid rgba(104, 116, 77, 0.32);
+  border-radius: 999px;
+  background: #dedbc2;
+  color: var(--explore-text-on-light);
+  padding: 0.44rem 0.62rem;
+  font-size: clamp(0.74rem, 0.82vw, 0.86rem);
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
+    color 150ms ease;
+}
+
+.peridot-search-workspace .peridot-search-step-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(240, 210, 122, 0.62);
+  background: #e8dfc1;
+}
+
+.peridot-search-workspace .peridot-search-step-button:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(246, 230, 167, 0.38),
+    0 10px 22px rgba(86, 52, 22, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+.peridot-search-workspace .peridot-search-step-button-active,
+.peridot-search-workspace .peridot-search-step-button-active:hover {
+  border-color: var(--explore-gold-soft);
+  background: linear-gradient(135deg, var(--explore-gold), var(--explore-gold-light));
+  color: var(--explore-gold-text);
+  box-shadow:
+    0 10px 22px rgba(86, 52, 22, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+}
+
+.peridot-search-workspace .peridot-search-step-number {
+  display: inline-grid;
+  width: 1.22rem;
+  height: 1.22rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(7, 25, 12, 0.12);
+  font-size: 0.66rem;
+  letter-spacing: 0.02em;
+}
+
+.peridot-search-workspace .peridot-search-step-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Active work surface */
+.peridot-search-workspace .peridot-search-folio-body {
+  min-height: 0;
+  border-top: 1px solid rgba(221, 187, 105, 0.26);
+  background: var(--explore-shell-deep);
+  padding: 0.72rem clamp(0.72rem, 1.35vw, 1rem);
+  box-shadow:
+    inset 0 1px 0 rgba(246, 223, 150, 0.08),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.32);
+}
+
+.peridot-search-workspace .peridot-search-tab-card {
+  position: relative;
+  overflow: visible;
+  border: 1px solid rgba(221, 187, 105, 0.42);
+  border-radius: 1.35rem;
+  background: var(--explore-card-dark);
+  color: var(--explore-text-on-dark);
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.peridot-search-workspace .peridot-search-tab-card.p-4 {
+  padding: 0.86rem;
+}
+
+.peridot-search-workspace .peridot-search-section-title {
+  color: var(--explore-text-on-dark);
+  font-size: 1.38rem;
+  line-height: 1.02;
+}
+
+.peridot-search-workspace .peridot-search-section-description {
+  color: var(--explore-muted-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-tab-card :where(.space-y-4 > :not([hidden]) ~ :not([hidden])) {
+  margin-top: 0.72rem;
+}
+
+/* Inspector-sized filigree divider */
+.peridot-search-workspace .peridot-search-divider {
+  position: relative;
+  display: flex;
+  min-height: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  margin: 0.25rem 0 0.35rem;
+  color: var(--explore-gold);
+  opacity: 0.9;
+}
+
+.peridot-search-workspace .peridot-search-divider::before,
+.peridot-search-workspace .peridot-search-divider::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(181, 139, 66, 0.68), transparent);
+}
+
+.peridot-search-workspace .peridot-search-divider::before { margin-right: 0.85rem; }
+.peridot-search-workspace .peridot-search-divider::after { margin-left: 0.85rem; }
+
+.peridot-search-workspace .peridot-search-divider span {
+  display: inline-flex;
+  min-width: min(18rem, 42vw);
+  height: 1.1rem;
+  color: transparent;
+  background: url('/assets/Adobe Stock Filigree 3.png') center / contain no-repeat;
+}
+
+/* Shared controls */
+.peridot-search-workspace .peridot-search-button {
+  border: 1px solid transparent;
+  box-shadow:
+    0 8px 18px rgba(6, 29, 18, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.peridot-search-workspace .peridot-search-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.peridot-search-workspace .peridot-search-button:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(246, 230, 167, 0.36),
+    0 10px 22px rgba(86, 52, 22, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.peridot-search-workspace .peridot-search-button-primary {
+  border-color: var(--explore-gold-soft);
+  background: linear-gradient(135deg, var(--explore-gold), var(--explore-gold-light));
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-button-primary:hover:not(:disabled) {
+  border-color: #f6df96;
+  background: linear-gradient(135deg, #d4aa4c, #e6c36a);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-button-secondary {
+  border-color: rgba(84, 99, 68, 0.34);
+  background: var(--explore-paper);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-button-secondary:hover:not(:disabled) {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-button-dark {
+  border-color: rgba(221, 187, 105, 0.38);
+  background: #07351f;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-button-dark:hover:not(:disabled) {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+/* Shared cream/paper panels. Text on these surfaces must be dark. */
+.peridot-search-workspace .peridot-search-panel {
+  border: 1px solid var(--explore-paper-rule);
+  border-radius: 1rem;
+  background: var(--explore-paper-soft);
+  color: var(--explore-text-on-light);
+  box-shadow:
+    0 6px 16px rgba(6, 29, 18, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.peridot-search-workspace .peridot-search-panel.p-4,
+.peridot-search-workspace .peridot-search-panel.p-3 {
+  padding: 0.72rem 0.86rem;
+}
+
+.peridot-search-workspace .peridot-search-field-label {
+  color: var(--explore-label-on-light);
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-helper-text,
+.peridot-search-workspace .peridot-search-panel p {
+  color: var(--explore-muted-on-light);
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-inline-strong {
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-input {
+  border-color: rgba(84, 99, 68, 0.38);
+  background: var(--explore-paper);
+  color: var(--explore-text-on-light);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.peridot-search-workspace .peridot-search-input::placeholder {
+  color: rgba(49, 67, 49, 0.72);
+}
+
+.peridot-search-workspace .peridot-search-input:hover {
+  border-color: rgba(84, 99, 68, 0.58);
+}
+
+.peridot-search-workspace .peridot-search-input:focus {
+  border-color: var(--explore-gold-soft);
+  box-shadow:
+    0 0 0 3px rgba(246, 230, 167, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44);
+}
+
+/* Autocomplete */
+.peridot-search-workspace .peridot-search-autocomplete-menu {
+  border-color: rgba(84, 99, 68, 0.34);
+  background: var(--explore-paper-soft);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-autocomplete-kicker {
+  color: var(--explore-label-on-light);
+}
+
+.peridot-search-workspace .peridot-search-autocomplete-option {
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-autocomplete-option:hover,
+.peridot-search-workspace .peridot-search-autocomplete-option:focus-visible {
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+/* Build page */
+.peridot-search-workspace .peridot-search-build-panel {
+  background: var(--explore-paper-soft);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-structured-row,
+.peridot-search-workspace .peridot-search-structured-start,
+.peridot-search-workspace .peridot-search-empty-state,
+.peridot-search-workspace .peridot-search-draft-pill {
+  border-color: rgba(84, 99, 68, 0.34);
+  background: var(--explore-paper);
+  color: var(--explore-text-on-light);
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-draft-pill,
+.peridot-search-workspace .peridot-search-count-badge,
+.peridot-search-workspace .peridot-search-chip-count,
+.peridot-search-workspace .peridot-search-small-badge,
+.peridot-search-workspace .peridot-search-result-badge,
+.peridot-search-workspace .peridot-search-heading-pill {
+  border-color: rgba(84, 99, 68, 0.34);
+  background: var(--explore-paper-muted);
+  color: var(--explore-text-on-light);
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle {
+  border-color: rgba(221, 187, 105, 0.28);
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark);
+  box-shadow:
+    0 4px 10px rgba(6, 29, 18, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle:hover {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-field-alt);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle-active {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle-active .peridot-search-count-badge {
+  border-color: rgba(7, 25, 12, 0.18);
+  background: rgba(255, 250, 235, 0.78);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-status-strip {
+  border-color: rgba(221, 187, 105, 0.30);
+  background: var(--explore-field-deep);
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-status-strip-text {
+  color: var(--explore-text-on-dark);
+}
+
+/* Browse */
+.peridot-search-workspace .peridot-search-browse-panel,
+.peridot-search-workspace .peridot-search-facet-panel,
+.peridot-search-workspace .peridot-search-results-grid {
+  border: 1px solid rgba(221, 187, 105, 0.30);
+  border-radius: 1rem;
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.peridot-search-workspace .peridot-search-results-grid {
+  padding: 0.7rem;
+}
+
+.peridot-search-workspace .peridot-search-panel-heading {
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-panel-description {
+  color: var(--explore-muted-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-browse-item {
+  border-color: var(--explore-paper-rule);
+  background: var(--explore-paper);
+  color: var(--explore-text-on-light);
+  box-shadow:
+    0 7px 16px rgba(6, 29, 18, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.peridot-search-workspace .peridot-search-browse-item:hover {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-paper-soft);
+}
+
+.peridot-search-workspace .peridot-search-browse-title {
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-browse-meta,
+.peridot-search-workspace .peridot-search-browse-examples,
+.peridot-search-workspace .peridot-search-browse-examples-label {
+  color: var(--explore-muted-on-light);
+}
+
+/* Results */
+.peridot-search-workspace .peridot-search-result-card {
+  border-color: var(--explore-paper-rule);
+  background: var(--explore-paper-soft);
+  color: var(--explore-text-on-light);
+  box-shadow:
+    0 7px 16px rgba(6, 29, 18, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.peridot-search-workspace .peridot-search-result-card:hover {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-paper);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.peridot-search-workspace .peridot-search-result-date,
+.peridot-search-workspace .peridot-search-result-title,
+.peridot-search-workspace .peridot-search-result-meta-value {
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-result-meta {
+  border: 1px solid rgba(84, 99, 68, 0.22);
+  background: var(--explore-paper-muted);
+}
+
+.peridot-search-workspace .peridot-search-result-meta-label {
+  color: var(--explore-label-on-light);
+}
+
+.peridot-search-workspace .peridot-search-empty-results {
+  border-color: var(--explore-paper-rule);
+  background: var(--explore-paper-soft);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-empty-results-title {
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-empty-results-text {
+  color: var(--explore-muted-on-light);
+}
+
+/* Refine */
+.peridot-search-workspace .peridot-search-refine-grid {
+  align-items: start;
+}
+
+.peridot-search-workspace .peridot-search-facet-chip {
+  border-color: rgba(84, 99, 68, 0.34);
+  background: var(--explore-paper);
+  color: var(--explore-text-on-light);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.peridot-search-workspace .peridot-search-facet-chip:hover,
+.peridot-search-workspace .peridot-search-facet-chip-active {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-facet-chip:hover .peridot-search-chip-count,
+.peridot-search-workspace .peridot-search-facet-chip-active .peridot-search-chip-count {
+  border-color: rgba(7, 25, 12, 0.18);
+  background: rgba(255, 250, 235, 0.78);
+  color: var(--explore-gold-text);
+}
+
+/* Capabilities */
+.peridot-search-workspace .peridot-search-capability-review-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.35fr);
+  gap: 1rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-card,
+.peridot-search-workspace .peridot-search-capability-review-note {
+  border: 1px solid rgba(221, 187, 105, 0.30);
+  border-radius: 1.15rem;
+  background: var(--explore-paper-muted);
+  color: var(--explore-text-on-light);
+  padding: 1rem;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list,
+.peridot-search-workspace .peridot-search-capability-availability-list {
+  margin-top: 0.8rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list div,
+.peridot-search-workspace .peridot-search-capability-availability-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 0.8rem;
+  background: var(--explore-paper);
+  color: var(--explore-text-on-light);
+  padding: 0.48rem 0.65rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list span {
+  color: var(--explore-muted-on-light);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list strong,
+.peridot-search-workspace .peridot-search-capability-availability-row h3,
+.peridot-search-workspace .peridot-search-capability-availability-meta strong {
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row {
+  grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.58fr);
+  padding: 0.62rem 0.72rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row h3 {
+  margin: 0;
+  font-size: 0.93rem;
+  font-weight: 900;
+  letter-spacing: -0.01em;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row p {
+  margin: 0.18rem 0 0;
+  color: var(--explore-muted-on-light);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-meta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-meta strong,
+.peridot-search-workspace .peridot-search-capability-value {
+  min-width: 0;
+  border: 1px solid rgba(84, 99, 68, 0.28);
+  border-radius: 999px;
+  background: var(--explore-paper-deep);
+  color: var(--explore-text-on-light);
+  padding: 0.35rem 0.62rem;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.peridot-search-workspace .peridot-search-capability-status,
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  border: 1px solid rgba(84, 99, 68, 0.30);
+  border-radius: 999px;
+  background: #d9dec4;
+  color: var(--explore-text-on-light);
+  padding: 0.32rem 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  border-color: rgba(199, 155, 61, 0.40);
+  background: #efe0b5;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-capability-review-note .peridot-search-field-label,
+.peridot-search-workspace .peridot-search-capability-review-note p {
+  color: var(--explore-text-on-dark);
+}
+
+
+
+/* Explore Inspector-aligned refinement, 2026-06-19.
+ * This layer keeps the consolidated Explore-only styling system, but aligns the
+ * rendered hierarchy with the full Inspector: dark pine folio/chrome, readable
+ * cream headers on dark surfaces, cream evidence/form cards with dark text, and
+ * dark-green navigational/action rows. It also supports the legacy
+ * `.peridot-search-panel-inset` hook so the visual system remains stable if a
+ * browser/dev-server session is holding an older component bundle.
+ */
+.peridot-search-workspace .peridot-search-status-ribbon,
+.peridot-search-workspace .peridot-search-status-item {
+  display: none;
+}
+
+.peridot-search-workspace .peridot-search-tab-card {
+  background: #061d12;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-section-header,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child {
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-section-eyebrow,
+.peridot-search-workspace .peridot-search-tab-card .peridot-search-section-eyebrow {
+  color: var(--explore-gold-soft);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24);
+}
+
+.peridot-search-workspace .peridot-search-section-title,
+.peridot-search-workspace .peridot-search-tab-card h2.peridot-search-section-title {
+  color: var(--explore-text-on-dark);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24);
+}
+
+.peridot-search-workspace .peridot-search-section-description,
+.peridot-search-workspace .peridot-search-section-header .peridot-search-helper-text,
+.peridot-search-workspace .peridot-search-tab-card > .flex:first-child p,
+.peridot-search-workspace .peridot-search-tab-card > div:first-child p {
+  color: var(--explore-muted-on-dark);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18);
+}
+
+/* Cream evidence/form cards. These mirror the Inspector record cards: local
+ * cream surfaces on the dark folio, with dark ink and dark antique-gold labels.
+ */
+.peridot-search-workspace .peridot-search-panel,
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace .peridot-search-panel-cream,
+.peridot-search-workspace .peridot-search-build-panel {
+  border: 1px solid rgba(221, 187, 105, 0.30);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--explore-paper-soft), var(--explore-paper-muted));
+  color: var(--explore-text-on-light);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+}
+
+.peridot-search-workspace .peridot-search-panel-inset.p-4,
+.peridot-search-workspace .peridot-search-panel-inset.p-3,
+.peridot-search-workspace .peridot-search-panel.p-4,
+.peridot-search-workspace .peridot-search-panel.p-3 {
+  padding: 0.72rem 0.86rem;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-panel-inset :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-panel-cream :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]) {
+  color: #5f4214;
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-panel-inset :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-panel-cream :is(p, .peridot-search-helper-text) {
+  color: var(--explore-muted-on-light);
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-inset :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-panel-cream :is(input, select, textarea),
+.peridot-search-workspace .peridot-search-input {
+  border-color: rgba(84, 99, 68, 0.38);
+  background: #fffaf0;
+  color: var(--explore-text-on-light);
+  text-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.peridot-search-workspace .peridot-search-panel :is(input, textarea)::placeholder,
+.peridot-search-workspace .peridot-search-panel-inset :is(input, textarea)::placeholder,
+.peridot-search-workspace .peridot-search-input::placeholder {
+  color: rgba(49, 67, 49, 0.72);
+}
+
+.peridot-search-workspace .peridot-search-empty-state,
+.peridot-search-workspace .peridot-search-structured-row,
+.peridot-search-workspace .peridot-search-structured-start,
+.peridot-search-workspace .peridot-search-draft-pill,
+.peridot-search-workspace .peridot-search-count-badge,
+.peridot-search-workspace .peridot-search-chip-count,
+.peridot-search-workspace .peridot-search-small-badge,
+.peridot-search-workspace .peridot-search-result-badge,
+.peridot-search-workspace .peridot-search-heading-pill,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-xl.border-dashed,
+.peridot-search-workspace .peridot-search-panel-inset .rounded-full:not(button) {
+  border-color: rgba(84, 99, 68, 0.34);
+  background: #f6efd8;
+  color: var(--explore-text-on-light);
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle {
+  border-color: rgba(221, 187, 105, 0.30);
+  background: #0f3a22;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle .peridot-search-count-badge {
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle:hover,
+.peridot-search-workspace .peridot-search-capability-toggle-active {
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle:hover *,
+.peridot-search-workspace .peridot-search-capability-toggle-active * {
+  color: var(--explore-gold-text);
+}
+
+/* Capability review page: Inspector-like cards instead of dominant beige bars. */
+.peridot-search-workspace .peridot-search-capability-review-card {
+  background: var(--explore-paper-muted);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list div,
+.peridot-search-workspace .peridot-search-capability-availability-row {
+  border: 1px solid rgba(84, 99, 68, 0.24);
+  background: #f6efd8;
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list span,
+.peridot-search-workspace .peridot-search-capability-availability-row p {
+  color: var(--explore-muted-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list strong,
+.peridot-search-workspace .peridot-search-capability-availability-row h3,
+.peridot-search-workspace .peridot-search-capability-availability-meta strong {
+  color: var(--explore-text-on-light);
+}
+
+/* Legacy capability ledger classes from the pre-consolidation component. */
+.peridot-search-workspace .peridot-search-capability-ledger {
+  border-color: rgba(221, 187, 105, 0.30);
+  background: var(--explore-paper-muted);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-row {
+  border-color: rgba(84, 99, 68, 0.24);
+  background: #f6efd8;
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-row :is(h3, strong, div, span),
+.peridot-search-workspace .peridot-search-capability-note {
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-capability-row p {
+  color: var(--explore-muted-on-light);
+}
+
+/* Compact fit and responsive rules */
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace {
+    padding-top: 0.48rem;
+    padding-bottom: 0.48rem;
+  }
+
+  .peridot-search-workspace .peridot-search-folio-header {
+    padding-top: 0.52rem;
+    padding-bottom: 0.48rem;
+  }
+
+  .peridot-search-workspace .peridot-search-workspace-title {
+    margin-top: 0.08rem;
+    font-size: clamp(1.52rem, 2.25vw, 2.05rem);
+    line-height: 0.9;
+  }
+
+  .peridot-search-workspace .peridot-search-workspace-subtitle {
+    margin-top: 0.32rem;
+    font-size: 0.82rem;
+    line-height: 1.28;
+  }
+
+  .peridot-search-workspace .peridot-search-step-rail {
+    padding-top: 0.38rem;
+    padding-bottom: 0.38rem;
+  }
+
+  .peridot-search-workspace .peridot-search-step-button {
+    padding-top: 0.34rem;
+    padding-bottom: 0.34rem;
+  }
+
+  .peridot-search-workspace .peridot-search-folio-body {
+    padding-top: 0.46rem;
+    padding-bottom: 0.54rem;
+  }
+
+  .peridot-search-workspace .peridot-search-tab-card.p-4 {
+    padding: 0.60rem 0.72rem;
+  }
+
+  .peridot-search-workspace .peridot-search-section-title {
+    font-size: 1.22rem;
+  }
+
+  .peridot-search-workspace .peridot-search-field-label,
+  .peridot-search-workspace .peridot-search-section-eyebrow {
+    font-size: 0.58rem;
+    letter-spacing: 0.16em;
+  }
+
+  .peridot-search-workspace .peridot-search-tab-card :where(.space-y-4 > :not([hidden]) ~ :not([hidden])) {
+    margin-top: 0.44rem;
+  }
+
+  .peridot-search-workspace .peridot-search-panel.p-4,
+  .peridot-search-workspace .peridot-search-panel.p-3 {
+    padding: 0.52rem 0.66rem;
+  }
+
+  .peridot-search-workspace .peridot-search-input {
+    padding-top: 0.34rem;
+    padding-bottom: 0.34rem;
+    font-size: 0.84rem;
+  }
+
+  .peridot-search-workspace .peridot-search-helper-text,
+  .peridot-search-workspace .peridot-search-panel p {
+    line-height: 1.28;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-toggle {
+    min-height: 0;
+    padding: 0.30rem 0.44rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.09em;
+  }
+
+  .peridot-search-workspace .peridot-search-count-badge {
+    font-size: 0.58rem;
+  }
+}
+
+@media (max-width: 980px) {
+  .peridot-search-workspace .peridot-search-step-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .peridot-search-workspace .peridot-search-step-button:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-grid,
+  .peridot-search-workspace .peridot-search-capability-availability-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .peridot-search-workspace {
+    padding-inline: 1rem;
+  }
+
+  .peridot-search-workspace .peridot-search-step-rail {
+    grid-template-columns: 1fr;
+  }
+
+  .peridot-search-workspace .peridot-search-step-button:last-child {
+    grid-column: auto;
+  }
+}
+
+/* Explore cream-surface text contrast correction, 2026-06-19.
+ * Keep the Inspector-aligned Explore layout intact, but enforce the standing
+ * contrast rule for cream/parchment surfaces: no white or pale-gold body copy
+ * on cream. Dark text belongs on these local evidence/form cards; cream text is
+ * reserved for dark pine/sage surfaces.
+ */
+.peridot-search-workspace .peridot-search-panel,
+.peridot-search-workspace .peridot-search-panel-inset,
+.peridot-search-workspace .peridot-search-panel-cream,
+.peridot-search-workspace .peridot-search-build-panel,
+.peridot-search-workspace .peridot-search-capability-review-card,
+.peridot-search-workspace .peridot-search-capability-scope-list div,
+.peridot-search-workspace .peridot-search-capability-availability-row,
+.peridot-search-workspace .peridot-search-status-strip,
+.peridot-search-workspace .peridot-search-empty-state,
+.peridot-search-workspace .peridot-search-structured-row {
+  color: var(--explore-text-on-light) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-panel-inset :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-panel-cream :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-build-panel :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-capability-review-card :is(p, .peridot-search-helper-text),
+.peridot-search-workspace .peridot-search-capability-availability-row p,
+.peridot-search-workspace .peridot-search-status-strip :is(p, span),
+.peridot-search-workspace .peridot-search-empty-state,
+.peridot-search-workspace .peridot-search-structured-row :is(p, span, div) {
+  color: var(--explore-muted-on-light) !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-panel :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-panel-inset :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-panel-cream :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-build-panel :is(.peridot-search-field-label, label, [class*="tracking-[0.14em]"], [class*="tracking-[0.15em]"]),
+.peridot-search-workspace .peridot-search-capability-review-card .peridot-search-field-label,
+.peridot-search-workspace .peridot-search-capability-review-note .peridot-search-field-label {
+  color: #5f4214 !important;
+  text-shadow: none !important;
+}
+
+.peridot-search-workspace .peridot-search-inline-strong,
+.peridot-search-workspace .peridot-search-panel strong,
+.peridot-search-workspace .peridot-search-panel-inset strong,
+.peridot-search-workspace .peridot-search-panel-cream strong,
+.peridot-search-workspace .peridot-search-build-panel strong,
+.peridot-search-workspace .peridot-search-capability-scope-list strong,
+.peridot-search-workspace .peridot-search-capability-availability-row :is(h3, strong),
+.peridot-search-workspace .peridot-search-status-strip strong {
+  color: var(--explore-text-on-light) !important;
+  text-shadow: none !important;
+}
+
+/* Preserve intentionally dark-green controls nested inside cream Build panels. */
+.peridot-search-workspace .peridot-search-capability-toggle,
+.peridot-search-workspace .peridot-search-capability-toggle :is(span, strong, div) {
+  color: var(--explore-text-on-dark) !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle .peridot-search-count-badge {
+  color: var(--explore-gold-text) !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-toggle:hover,
+.peridot-search-workspace .peridot-search-capability-toggle:hover *,
+.peridot-search-workspace .peridot-search-capability-toggle-active,
+.peridot-search-workspace .peridot-search-capability-toggle-active * {
+  color: var(--explore-gold-text) !important;
+}
+
+/* Explore Results ledger refinement, 2026-06-19.
+ * Scope: Results tab only. This converts the Results card grid into an
+ * Inspector-like ledger/list without touching Build, Browse, Refine,
+ * Capabilities, search logic, or shared Inspector code. Keep these selectors
+ * below the earlier Explore rules so the ledger can override only the
+ * Results-specific hooks added in PeridotSearchWorkspace.jsx.
+ */
+.peridot-search-workspace .peridot-search-results-ledger {
+  display: block;
+  border: 1px solid rgba(221, 187, 105, 0.30);
+  border-radius: 1rem;
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark);
+  padding: 0.58rem;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header,
+.peridot-search-workspace .peridot-search-results-ledger-row {
+  display: grid;
+  grid-template-columns: minmax(5.6rem, 0.58fr) minmax(13rem, 1.45fr) minmax(10rem, 1fr) minmax(10rem, 1fr) minmax(5.5rem, auto);
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header {
+  padding: 0.18rem 0.68rem 0.42rem;
+  color: var(--explore-gold-soft);
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-body {
+  display: grid;
+  gap: 0.38rem;
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-card,
+.peridot-search-workspace .peridot-search-results-ledger-row {
+  border: 1px solid rgba(84, 99, 68, 0.30);
+  border-radius: 0.82rem;
+  background: linear-gradient(135deg, var(--explore-paper-soft), var(--explore-paper-muted));
+  color: var(--explore-text-on-light);
+  padding: 0.52rem 0.58rem;
+  box-shadow:
+    0 6px 14px rgba(6, 29, 18, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  transition:
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-card:hover,
+.peridot-search-workspace .peridot-search-results-ledger-row:hover {
+  transform: translateY(-1px);
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-paper-soft);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-cell {
+  min-width: 0;
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-result-title,
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date,
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-meta-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--explore-text-on-light);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date {
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-meta-value {
+  color: var(--explore-muted-on-light);
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-action-cell {
+  justify-self: end;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-inspect-action {
+  min-width: 4.9rem;
+  padding: 0.48rem 0.76rem;
+  white-space: nowrap;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-mobile-label {
+  display: none;
+}
+
+@media (max-width: 1020px) {
+  .peridot-search-workspace .peridot-search-results-ledger-header {
+    display: none;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.48rem 0.72rem;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-date-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-record-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-entities-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-places-cell {
+    grid-column: 1 / 2;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-action-cell {
+    grid-column: 2 / 3;
+    grid-row: 1 / span 4;
+    align-self: center;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger-mobile-label {
+    display: block;
+    margin-bottom: 0.08rem;
+    color: #5f4214;
+    font-size: 0.56rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 640px) {
+  .peridot-search-workspace .peridot-search-results-ledger-row {
+    grid-template-columns: 1fr;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-action-cell {
+    grid-column: 1;
+    grid-row: auto;
+    justify-self: stretch;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-inspect-action {
+    width: 100%;
+  }
+}
+
+
+/* Explore Results route-aware ledger refinement, 2026-06-19.
+ * Scope: Results tab only. This pass removes the repeated Record column, mirrors
+ * the Inspector connected-records table model, and adds local pagination/page-size
+ * controls without changing Build, Browse, Refine, Capabilities, or filter logic.
+ */
+.peridot-search-workspace .peridot-search-results-ledger-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-showing {
+  color: var(--explore-muted-on-dark);
+  font-size: 0.78rem;
+  font-weight: 750;
+}
+
+.peridot-search-workspace .peridot-search-results-page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.46rem;
+  color: var(--explore-text-on-dark);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-results-page-size select {
+  border: 1px solid rgba(221, 187, 105, 0.42);
+  border-radius: 0.55rem;
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+  padding: 0.34rem 1.85rem 0.34rem 0.58rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow:
+    0 7px 16px rgba(86, 52, 22, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header,
+.peridot-search-workspace .peridot-search-results-ledger-row {
+  grid-template-columns: unset;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header-route,
+.peridot-search-workspace .peridot-search-results-ledger-row-route {
+  display: grid;
+  grid-template-columns:
+    minmax(5.8rem, 0.52fr)
+    minmax(10rem, 1.05fr)
+    minmax(10rem, 1.05fr)
+    minmax(9rem, 0.92fr)
+    minmax(9rem, 0.92fr)
+    minmax(5.5rem, auto);
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header-point,
+.peridot-search-workspace .peridot-search-results-ledger-row-point {
+  display: grid;
+  grid-template-columns:
+    minmax(5.8rem, 0.48fr)
+    minmax(16rem, 1.45fr)
+    minmax(12rem, 1fr)
+    minmax(5.5rem, auto);
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-entity-cell .peridot-search-result-title,
+.peridot-search-workspace .peridot-search-result-ledger-source-entity-cell .peridot-search-result-title {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--explore-text-on-light);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.42rem;
+  margin-top: 0.6rem;
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button,
+.peridot-search-workspace .peridot-search-results-pagination-current,
+.peridot-search-workspace .peridot-search-results-pagination-ellipsis {
+  display: inline-flex;
+  min-width: 2.2rem;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(221, 187, 105, 0.42);
+  border-radius: 0.65rem;
+  padding: 0.46rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button {
+  background: #07351f;
+  color: var(--explore-text-on-dark);
+  transition:
+    transform 150ms ease,
+    background 150ms ease,
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: var(--explore-gold-soft);
+  background: var(--explore-gold);
+  color: var(--explore-gold-text);
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination-current {
+  border-color: var(--explore-gold-soft) !important;
+  background: var(--explore-gold) !important;
+  color: var(--explore-gold-text) !important;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination-ellipsis {
+  min-width: 1.4rem;
+  border-color: transparent;
+  background: transparent;
+  color: var(--explore-text-on-dark);
+  padding-inline: 0.18rem;
+}
+
+@media (max-width: 1180px) {
+  .peridot-search-workspace .peridot-search-results-ledger-header-route {
+    display: none;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger-row-route {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.48rem 0.72rem;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-date-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-source-entity-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-target-entity-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-source-location-cell,
+  .peridot-search-workspace .peridot-search-result-ledger-target-location-cell {
+    grid-column: 1 / 2;
+  }
+
+  .peridot-search-workspace .peridot-search-result-ledger-action-cell {
+    grid-column: 2 / 3;
+    grid-row: 1 / span 5;
+    align-self: center;
+  }
+
+  .peridot-search-workspace .peridot-search-results-ledger-mobile-label {
+    display: block;
+    margin-bottom: 0.08rem;
+    color: #5f4214;
+    font-size: 0.56rem;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+}
+
+@media (max-width: 760px) {
+  .peridot-search-workspace .peridot-search-results-ledger-toolbar,
+  .peridot-search-workspace .peridot-search-results-pagination {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .peridot-search-workspace .peridot-search-results-page-size {
+    justify-content: space-between;
+  }
+}
+
+
+/* Explore Build divider rhythm refinement, 2026-06-19.
+ * Scope: Build page only. The divider component dimensions remain unchanged;
+ * these rules tune vertical spacing so the repeated ornaments read as a
+ * consistent section rhythm rather than different-sized dividers.
+ */
+.peridot-search-workspace .peridot-search-build-divider-before-criteria {
+  margin-top: 0.08rem;
+  margin-bottom: 0.24rem;
+}
+
+.peridot-search-workspace .peridot-search-build-divider-after-criteria {
+  margin-top: 0.24rem;
+  margin-bottom: 0.28rem;
+}
+
+.peridot-search-workspace .peridot-search-build-divider-after-capabilities {
+  margin-top: 0.34rem;
+  margin-bottom: 0.62rem;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-build-divider-before-criteria {
+    margin-top: 0.02rem;
+    margin-bottom: 0.16rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-divider-after-criteria {
+    margin-top: 0.16rem;
+    margin-bottom: 0.18rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-divider-after-capabilities {
+    margin-top: 0.24rem;
+    margin-bottom: 0.46rem;
+  }
+}
+
+/* Explore Results compact-row fit adjustment, 2026-06-19.
+ * Scope: Results tab only. Reduce ledger row height enough for the default
+ * 10-row view to fit in the Explore viewport without changing pagination,
+ * route-aware columns, Inspect handoff, or other Explore tabs.
+ */
+.peridot-search-workspace .peridot-search-results-ledger {
+  padding: 0.44rem;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-toolbar {
+  margin-bottom: 0.32rem;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-header {
+  padding: 0.10rem 0.52rem 0.28rem;
+  font-size: 0.54rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-body {
+  gap: 0.26rem;
+}
+
+.peridot-search-workspace .peridot-search-result-ledger-card,
+.peridot-search-workspace .peridot-search-results-ledger-row {
+  min-height: 0;
+  border-radius: 0.68rem;
+  padding: 0.34rem 0.48rem;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date {
+  font-size: 0.74rem;
+  line-height: 1.05;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-title {
+  font-size: 0.80rem;
+  line-height: 1.08;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-meta-value {
+  font-size: 0.72rem;
+  line-height: 1.08;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-inspect-action {
+  min-width: 4.65rem;
+  padding: 0.34rem 0.66rem;
+  font-size: 0.70rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination {
+  gap: 0.34rem;
+  margin-top: 0.44rem;
+}
+
+.peridot-search-workspace .peridot-search-results-pagination button,
+.peridot-search-workspace .peridot-search-results-pagination-current,
+.peridot-search-workspace .peridot-search-results-pagination-ellipsis {
+  min-width: 2rem;
+  border-radius: 0.58rem;
+  padding: 0.38rem 0.62rem;
+  font-size: 0.74rem;
+}
+
+.peridot-search-workspace .peridot-search-results-page-size select {
+  padding-top: 0.28rem;
+  padding-bottom: 0.28rem;
+}
+
+/* Explore Results row-weight correction, 2026-06-19.
+ * Scope: Results tab only. Match Date and Source entity weights to the other
+ * row cells so each ledger item reads as a single even table row; headers and
+ * Inspect actions retain their existing emphasis.
+ */
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date,
+.peridot-search-workspace .peridot-search-result-ledger-source-entity-cell .peridot-search-result-title {
+  font-weight: 700;
+}
+
+/* Explore Results descender clipping correction, 2026-06-19.
+ * Scope: Results tab only. The compact row pass made line boxes tight enough
+ * that descenders such as g, y, p, q, and j could be clipped by the ellipsis
+ * spans. Keep the compact table height, but give text a safer line box so
+ * glyphs render cleanly.
+ */
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-date,
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-title,
+.peridot-search-workspace .peridot-search-results-ledger .peridot-search-result-meta-value {
+  line-height: 1.24;
+}
+
+.peridot-search-workspace .peridot-search-results-ledger-cell {
+  overflow: visible;
+}
+
+
+/* Explore Refine fixed-height facet layout, 2026-06-19.
+ * Scope: Refine tab only. Preserve the existing facet panel/chip color system
+ * and add only layout behavior: equal-height collapsed dashboard cards, default
+ * chip caps, and per-panel Show all / Show less expansion. Collapsed cards keep
+ * the no-scroll dashboard view; an expanded card spans the grid width and grows
+ * to reveal all chips instead of overlapping neighboring panels or forcing a
+ * small internal scrollbar.
+ */
+.peridot-search-workspace .peridot-search-refine-grid {
+  align-items: stretch;
+  grid-auto-rows: minmax(9.65rem, auto);
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded {
+  grid-column: 1 / -1;
+  height: auto;
+  min-height: 9.65rem;
+  overflow: visible;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-hidden-count {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.peridot-search-workspace .peridot-search-refine-chip-list {
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: flex-start;
+  overflow: hidden;
+  padding-right: 0.1rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded .peridot-search-refine-chip-list {
+  flex: 0 0 auto;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.peridot-search-workspace .peridot-search-refine-expand-button {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  line-height: 1;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-refine-grid {
+    grid-auto-rows: minmax(8.75rem, auto);
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel {
+    padding: 0.58rem 0.68rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel-expanded {
+    min-height: 8.75rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-chip-list {
+    gap: 0.28rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-expand-button {
+    margin-top: 0.38rem;
+    padding-top: 0.30rem;
+    padding-bottom: 0.30rem;
+  }
+}
+
+@media (max-width: 980px) {
+  .peridot-search-workspace .peridot-search-refine-grid {
+    grid-auto-rows: minmax(10rem, auto);
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel {
+    min-height: 10rem;
+  }
+}
+
+
+/* Explore Refine row-height expansion correction, 2026-06-19.
+ * Scope: Refine tab only. Use the second expansion model: an expanded facet
+ * stays in its original grid column, makes the whole grid row taller, and moves
+ * lower rows down cleanly. This overrides the prior full-row spanning behavior
+ * without touching colors, chip styling, or Refine interaction logic.
+ */
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded {
+  grid-column: auto;
+  width: auto;
+}
+
+
+/* Explore Refine default fit and fuller collapsed boxes, 2026-06-19.
+ * Scope: Refine tab only. Keep the option-2 expansion model: expanded cards
+ * stay in their own column and make the whole grid row taller. The collapsed
+ * dashboard becomes content-sized instead of fixed-tall, shows more chips where
+ * the facet type can reasonably fit them, and keeps the default Refine page
+ * within one viewport at desktop height.
+ */
+.peridot-search-workspace .peridot-search-refine-view > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.56rem !important;
+}
+
+.peridot-search-workspace .peridot-search-refine-view .peridot-search-divider {
+  min-height: 1rem;
+  margin-top: 0.06rem;
+  margin-bottom: 0.12rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-view .peridot-search-panel-inset {
+  padding: 0.54rem 0.72rem !important;
+}
+
+.peridot-search-workspace .peridot-search-refine-grid {
+  align-items: stretch;
+  grid-auto-rows: auto;
+  gap: 0.58rem 0.70rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel {
+  height: 100%;
+  min-height: 0;
+  padding: 0.58rem 0.70rem !important;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel:not(.peridot-search-refine-facet-panel-expanded) {
+  min-height: 7.15rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-header {
+  min-height: 1.12rem;
+}
+
+.peridot-search-workspace .peridot-search-refine-chip-list {
+  flex: 0 1 auto;
+  align-content: flex-start;
+  gap: 0.30rem 0.34rem;
+  margin-top: 0.46rem !important;
+  overflow: hidden;
+  padding-right: 0;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded {
+  grid-column: auto;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.peridot-search-workspace .peridot-search-refine-facet-panel-expanded .peridot-search-refine-chip-list {
+  overflow: visible;
+}
+
+.peridot-search-workspace .peridot-search-refine-expand-button {
+  margin-top: 0.46rem !important;
+  padding: 0.34rem 0.76rem !important;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-refine-view > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.44rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-view .peridot-search-divider {
+    min-height: 0.9rem;
+    margin-top: 0.02rem;
+    margin-bottom: 0.06rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-view .peridot-search-panel-inset {
+    padding: 0.46rem 0.64rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-grid {
+    gap: 0.46rem 0.58rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel {
+    padding: 0.48rem 0.58rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-facet-panel:not(.peridot-search-refine-facet-panel-expanded) {
+    min-height: 6.45rem;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-chip-list {
+    gap: 0.24rem 0.28rem;
+    margin-top: 0.34rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-refine-expand-button {
+    margin-top: 0.34rem !important;
+    padding-top: 0.28rem !important;
+    padding-bottom: 0.28rem !important;
+  }
+}
+
+
+/* Explore Build one-window fit pass, 2026-06-19.
+ * Scope: Build tab only. The goal is a comfortable no-scroll default dashboard:
+ * existing search rows, empty Structured Criteria, Capability Filters, and the
+ * action strip fit in one desktop viewport. If users add structured criteria,
+ * the criteria editor may expand and the page may scroll normally.
+ */
+.peridot-search-workspace .peridot-search-build-view {
+  --build-compact-gap: 0.50rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view > :not([hidden]) ~ :not([hidden]) {
+  margin-top: var(--build-compact-gap) !important;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-section-header {
+  margin-bottom: 0;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-section-title {
+  font-size: 1.18rem;
+  line-height: 0.98;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-section-description,
+.peridot-search-workspace .peridot-search-build-view .peridot-search-section-header p {
+  margin-top: 0.22rem !important;
+  font-size: 0.80rem;
+  line-height: 1.25;
+}
+
+.peridot-search-workspace .peridot-search-build-view > .peridot-search-divider:first-of-type {
+  min-height: 0.95rem;
+  margin-top: 0.02rem;
+  margin-bottom: 0.06rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-before-criteria,
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-after-criteria {
+  min-height: 0.82rem;
+  margin-top: 0.02rem;
+  margin-bottom: 0.06rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
+  padding: 0.52rem 0.72rem !important;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-primary-panel .grid,
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-entity-panel .flex {
+  gap: 0.70rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-field-label {
+  font-size: 0.54rem;
+  line-height: 1;
+  letter-spacing: 0.15em;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-input {
+  margin-top: 0.30rem !important;
+  border-radius: 0.70rem;
+  padding: 0.46rem 0.62rem;
+  font-size: 0.80rem;
+  line-height: 1.10;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-helper-text {
+  line-height: 1.20;
+}
+
+.peridot-search-workspace .peridot-search-build-primary-panel > .peridot-search-helper-text,
+.peridot-search-workspace .peridot-search-build-primary-panel > p {
+  margin-top: 0.42rem !important;
+  font-size: 0.70rem;
+  line-height: 1.20;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty {
+  padding-top: 0.50rem !important;
+  padding-bottom: 0.50rem !important;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-helper-text {
+  margin-top: 0.18rem !important;
+  line-height: 1.18;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-empty-state {
+  margin-top: 0.42rem !important;
+  padding: 0.42rem 0.62rem !important;
+  font-size: 0.80rem;
+  line-height: 1.20;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer {
+  margin-top: 0.44rem !important;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer .peridot-search-helper-text {
+  max-width: min(100%, 48rem);
+  font-size: 0.68rem;
+  line-height: 1.18;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-active .peridot-search-structured-footer {
+  margin-top: 0.62rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-filter-panel {
+  padding-top: 0.50rem !important;
+  padding-bottom: 0.58rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-filter-panel .peridot-search-helper-text {
+  margin-top: 0.16rem !important;
+  font-size: 0.70rem;
+  line-height: 1.15;
+}
+
+.peridot-search-workspace .peridot-search-capability-filter-grid {
+  margin-top: 0.48rem !important;
+  gap: 0.46rem !important;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-capability-toggle {
+  min-height: 0;
+  border-radius: 0.58rem;
+  padding: 0.40rem 0.58rem;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-capability-toggle span span:first-child {
+  font-size: 0.66rem;
+  line-height: 1;
+  letter-spacing: 0.10em;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-count-badge {
+  padding: 0.08rem 0.40rem;
+  font-size: 0.56rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-build-action-strip {
+  min-height: 0;
+  padding: 0.58rem 0.74rem !important;
+}
+
+.peridot-search-workspace .peridot-search-build-action-strip .peridot-search-status-strip-text {
+  font-size: 0.74rem;
+  line-height: 1.20;
+}
+
+.peridot-search-workspace .peridot-search-build-action-strip .peridot-search-button {
+  padding-top: 0.54rem;
+  padding-bottom: 0.54rem;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-build-view {
+    --build-compact-gap: 0.38rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-section-title {
+    font-size: 1.10rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-section-description,
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-section-header p {
+    font-size: 0.76rem;
+    line-height: 1.18;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view > .peridot-search-divider:first-of-type,
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-before-criteria,
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-after-criteria {
+    min-height: 0.72rem;
+    margin-top: 0;
+    margin-bottom: 0.02rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-divider span {
+    height: 0.84rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
+    padding: 0.44rem 0.62rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-input {
+    padding-top: 0.38rem;
+    padding-bottom: 0.38rem;
+    font-size: 0.76rem;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-empty-state {
+    margin-top: 0.32rem !important;
+    padding-top: 0.34rem !important;
+    padding-bottom: 0.34rem !important;
+    font-size: 0.76rem;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer {
+    margin-top: 0.34rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer .peridot-search-helper-text {
+    font-size: 0.64rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-filter-grid {
+    margin-top: 0.38rem !important;
+    gap: 0.36rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-capability-toggle {
+    padding-top: 0.32rem;
+    padding-bottom: 0.32rem;
+  }
+
+  .peridot-search-workspace .peridot-search-build-action-strip {
+    padding-top: 0.48rem !important;
+    padding-bottom: 0.48rem !important;
+  }
+}
+
+
+/* Explore Build empty-criteria removal and comfort restore, 2026-06-19.
+ * Scope: Build page only. The empty Structured Criteria dashed notice duplicated
+ * nearby explanatory text and consumed vertical space. With that JSX element
+ * removed, restore a little comfortable padding while keeping the default Build
+ * page inside one viewport. Active structured-criteria rows can still expand and
+ * introduce scroll when the user adds criteria.
+ */
+.peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
+  padding: 0.60rem 0.80rem !important;
+}
+
+.peridot-search-workspace .peridot-search-build-view .peridot-search-input {
+  padding-top: 0.48rem;
+  padding-bottom: 0.48rem;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty {
+  padding-top: 0.60rem !important;
+  padding-bottom: 0.62rem !important;
+}
+
+.peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer {
+  margin-top: 0.50rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-filter-panel {
+  padding-top: 0.58rem !important;
+  padding-bottom: 0.64rem !important;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
+    padding: 0.50rem 0.68rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-build-view .peridot-search-input {
+    padding-top: 0.40rem;
+    padding-bottom: 0.40rem;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty {
+    padding-top: 0.50rem !important;
+    padding-bottom: 0.52rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-structured-panel-empty .peridot-search-structured-footer {
+    margin-top: 0.40rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-filter-panel {
+    padding-top: 0.50rem !important;
+    padding-bottom: 0.56rem !important;
+  }
+}
+
+/* Explore Capabilities one-window density and review-note contrast, 2026-06-19.
+ * Scope: Capabilities tab only. Tighten the review page's vertical rhythm so the
+ * default capability summary fits in one desktop viewport, while preserving the
+ * existing cream-card/dark-folio color hierarchy. The review note sits on a dark
+ * green surface, so its label and body copy use light text rather than the
+ * cream-card dark-label treatment.
+ */
+.peridot-search-workspace .peridot-search-capabilities-view > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.56rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capabilities-view .peridot-search-divider {
+  min-height: 1rem;
+  margin-top: 0.04rem;
+  margin-bottom: 0.10rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-grid {
+  align-items: start;
+  gap: 0.72rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-card {
+  padding: 0.72rem 0.82rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list,
+.peridot-search-workspace .peridot-search-capability-availability-list {
+  margin-top: 0.52rem;
+  gap: 0.34rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list div {
+  min-height: 0;
+  padding: 0.36rem 0.56rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list span {
+  font-size: 0.78rem;
+  line-height: 1.12;
+}
+
+.peridot-search-workspace .peridot-search-capability-scope-list strong {
+  font-size: 0.92rem;
+  line-height: 1.1;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row {
+  gap: 0.55rem;
+  padding: 0.44rem 0.58rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row h3 {
+  font-size: 0.86rem;
+  line-height: 1.08;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-row p {
+  margin-top: 0.12rem;
+  font-size: 0.70rem;
+  line-height: 1.22;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-meta {
+  gap: 0.34rem;
+}
+
+.peridot-search-workspace .peridot-search-capability-availability-meta strong,
+.peridot-search-workspace .peridot-search-capability-value {
+  padding: 0.28rem 0.52rem;
+  font-size: 0.76rem;
+  line-height: 1.14;
+}
+
+.peridot-search-workspace .peridot-search-capability-status,
+.peridot-search-workspace .peridot-search-capability-status-ready,
+.peridot-search-workspace .peridot-search-capability-status-missing {
+  padding: 0.25rem 0.48rem;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-note {
+  align-items: flex-start;
+  border-color: rgba(221, 187, 105, 0.28);
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark) !important;
+  padding: 0.66rem 0.82rem !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-note .peridot-search-field-label {
+  color: var(--explore-gold-soft) !important;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.24) !important;
+}
+
+.peridot-search-workspace .peridot-search-capability-review-note p {
+  margin: 0.24rem 0 0;
+  color: var(--explore-text-on-dark) !important;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.18) !important;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-capabilities-view > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0.42rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-capabilities-view .peridot-search-divider {
+    min-height: 0.82rem;
+    margin-top: 0;
+    margin-bottom: 0.04rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-grid {
+    gap: 0.58rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-card {
+    padding: 0.58rem 0.68rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-scope-list,
+  .peridot-search-workspace .peridot-search-capability-availability-list {
+    margin-top: 0.42rem;
+    gap: 0.28rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-scope-list div {
+    padding: 0.30rem 0.50rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-availability-row {
+    padding: 0.36rem 0.50rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-availability-row h3 {
+    font-size: 0.82rem;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-availability-row p {
+    font-size: 0.68rem;
+    line-height: 1.18;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-note {
+    padding: 0.54rem 0.70rem !important;
+  }
+
+  .peridot-search-workspace .peridot-search-capability-review-note p {
+    font-size: 0.80rem;
+    line-height: 1.26;
+  }
+}
+
+/* Explore Browse compact-ledger pass, 2026-06-19.
+ * Scope: Browse tab only. Convert the spatially expensive card grid into
+ * compact index ledgers for entities, locations, and route pairs when route
+ * data is actually present. Each panel keeps its own scoped search, a compact
+ * default row count, and Show all / Show less expansion without changing the
+ * draft-filter behavior wired through PeridotSearchWorkspace.jsx.
+ */
+.peridot-search-workspace .peridot-search-browse-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.72rem;
+  align-items: start;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  border: 1px solid rgba(221, 187, 105, 0.30);
+  border-radius: 1rem;
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark);
+  padding: 0.62rem;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-panel-expanded {
+  height: auto;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-title {
+  margin: 0;
+  color: var(--explore-text-on-dark);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-description {
+  margin-top: 0.22rem;
+  color: var(--explore-muted-on-dark);
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-count {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-search-label {
+  margin-top: 0.54rem;
+  color: var(--explore-gold-soft) !important;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-search {
+  margin-top: 0.30rem;
+  padding-top: 0.38rem;
+  padding-bottom: 0.38rem;
+  font-size: 0.78rem;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger {
+  display: grid;
+  gap: 0.24rem;
+  margin-top: 0.54rem;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(3rem, 0.42fr) minmax(3rem, 0.42fr) minmax(3rem, 0.42fr) minmax(4.4rem, auto);
+  gap: 0.32rem;
+  align-items: center;
+  border: 1px solid rgba(84, 99, 68, 0.28);
+  border-radius: 0.62rem;
+  background: linear-gradient(135deg, var(--explore-paper-soft), var(--explore-paper-muted));
+  color: var(--explore-text-on-light);
+  padding: 0.30rem 0.34rem;
+  box-shadow:
+    0 5px 10px rgba(6, 29, 18, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-row-route {
+  grid-template-columns: minmax(0, 1.85fr) minmax(3.2rem, 0.42fr) minmax(4.4rem, auto);
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-head {
+  border-color: transparent;
+  background: transparent;
+  color: var(--explore-gold-soft);
+  padding-top: 0;
+  padding-bottom: 0.04rem;
+  box-shadow: none;
+  font-size: 0.52rem;
+  font-weight: 900;
+  letter-spacing: 0.13em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-name {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--explore-text-on-light);
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-number {
+  color: var(--explore-muted-on-light);
+  font-size: 0.70rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: right;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-action {
+  justify-self: end;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-search-button {
+  min-width: 4.25rem;
+  padding: 0.28rem 0.56rem !important;
+  font-size: 0.64rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-expand {
+  align-self: flex-start;
+  margin-top: 0.52rem;
+  padding: 0.34rem 0.78rem !important;
+  font-size: 0.68rem;
+  line-height: 1;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-empty {
+  border: 1px dashed rgba(221, 187, 105, 0.30);
+  border-radius: 0.72rem;
+  color: var(--explore-muted-on-dark);
+  padding: 0.7rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-browse-grid {
+    gap: 0.54rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-panel {
+    padding: 0.52rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-description {
+    font-size: 0.68rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-search-label {
+    margin-top: 0.42rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-search {
+    margin-top: 0.24rem;
+    padding-top: 0.32rem;
+    padding-bottom: 0.32rem;
+    font-size: 0.74rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger {
+    gap: 0.18rem;
+    margin-top: 0.42rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-row {
+    padding: 0.24rem 0.30rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-name {
+    font-size: 0.74rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-search-button {
+    min-width: 3.9rem;
+    padding: 0.24rem 0.48rem !important;
+    font-size: 0.60rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-expand {
+    margin-top: 0.42rem;
+    padding-top: 0.28rem !important;
+    padding-bottom: 0.28rem !important;
+  }
+}
+
+@media (max-width: 1180px) {
+  .peridot-search-workspace .peridot-search-browse-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Explore Browse index-panel simplification, 2026-06-19.
+ * Scope: Browse tab only. Remove the redundant global Browse search treatment
+ * and make each panel-scoped search input carry the polished cream search-bar
+ * role. The panel subtitles were removed in JSX; this layer only adjusts local
+ * spacing and search-field presentation without changing Browse draft-filter
+ * behavior.
+ */
+.peridot-search-workspace .peridot-search-browse-grid {
+  margin-top: 0.12rem;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-panel-header {
+  align-items: center;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-title {
+  line-height: 1.08;
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-search {
+  width: 100%;
+  margin-top: 0.58rem;
+  border-color: rgba(84, 99, 68, 0.34);
+  border-radius: 0.86rem;
+  background: #fffaf0;
+  color: var(--explore-text-on-light);
+  padding: 0.48rem 0.74rem;
+  font-size: 0.80rem;
+  line-height: 1.2;
+  box-shadow:
+    0 6px 14px rgba(6, 29, 18, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-search::placeholder {
+  color: rgba(49, 67, 49, 0.68);
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger-search:focus {
+  border-color: var(--explore-gold-soft);
+  box-shadow:
+    0 0 0 3px rgba(246, 230, 167, 0.26),
+    0 8px 18px rgba(6, 29, 18, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44);
+}
+
+.peridot-search-workspace .peridot-search-browse-ledger {
+  margin-top: 0.50rem;
+}
+
+@media (min-width: 1100px) and (max-height: 860px) {
+  .peridot-search-workspace .peridot-search-browse-grid {
+    margin-top: 0;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-search {
+    margin-top: 0.46rem;
+    padding-top: 0.40rem;
+    padding-bottom: 0.40rem;
+    font-size: 0.76rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger {
+    margin-top: 0.40rem;
+  }
+}
+
+
+/* Explore workspace gentle entrance and tab-motion pass, 2026-06-19.
+ * Scope: Explore / Advanced Search only. This mirrors the rest of Peridot's
+ * restrained workspace choreography: the folio settles in, the header resolves,
+ * the workflow buttons reveal left-to-right starting with 1 Build, and active
+ * tab contents lightly fade/rise without forcing a dark curtain or distracting
+ * row-by-row movement. Reduced-motion users receive the final state immediately.
+ */
+.peridot-search-workspace-animated .peridot-search-enter-shell,
+.peridot-search-workspace-animated .peridot-search-enter-header,
+.peridot-search-workspace-animated .peridot-search-enter-step-rail,
+.peridot-search-workspace-animated .peridot-search-enter-body,
+.peridot-search-workspace-animated .peridot-search-step-button {
+  opacity: 0;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: opacity, transform;
+}
+
+.peridot-search-workspace-animated .peridot-search-enter-shell {
+  transform: translateY(8px) scale(0.996);
+  animation-name: peridotSearchShellSettle;
+  animation-duration: 1360ms;
+  animation-delay: 80ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-enter-header {
+  transform: translateY(6px);
+  animation-name: peridotSearchSoftRise;
+  animation-duration: 1180ms;
+  animation-delay: 260ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-enter-step-rail {
+  animation-name: peridotSearchSoftFade;
+  animation-duration: 1060ms;
+  animation-delay: 560ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-step-button {
+  transform: translateX(-10px);
+  animation-name: peridotSearchStepReveal;
+  animation-duration: 980ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(1) { animation-delay: 760ms; }
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(2) { animation-delay: 900ms; }
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(3) { animation-delay: 1040ms; }
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(4) { animation-delay: 1180ms; }
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(5) { animation-delay: 1320ms; }
+
+.peridot-search-workspace-animated .peridot-search-enter-body {
+  transform: translateY(7px);
+  animation-name: peridotSearchSoftRise;
+  animation-duration: 1240ms;
+  animation-delay: 1480ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion {
+  position: relative;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: peridotSearchTabResolve 860ms cubic-bezier(0.19, 1, 0.22, 1) 70ms both;
+  will-change: opacity, transform;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion > * {
+  opacity: 0;
+  transform: translateY(5px);
+  animation: peridotSearchTabChildResolve 920ms cubic-bezier(0.19, 1, 0.22, 1) both;
+  will-change: opacity, transform;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(1) { animation-delay: 140ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(2) { animation-delay: 240ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(3) { animation-delay: 340ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(4) { animation-delay: 440ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(5) { animation-delay: 540ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(n+6) { animation-delay: 620ms; }
+
+/* Dense tab contents get only a very light first-screen stagger. This should
+ * help the user orient to the list/table structure without making Browse,
+ * Results, Refine, or Capabilities feel performative during research work.
+ */
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel,
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel,
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-card,
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-note {
+  opacity: 0;
+  transform: translateY(5px);
+  animation: peridotSearchTabChildResolve 900ms cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1),
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(1),
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-card:nth-child(1) {
+  animation-delay: 320ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2),
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(2),
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-card:nth-child(2) {
+  animation-delay: 440ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3),
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(3),
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-note {
+  animation-delay: 560ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(1) { animation-delay: 320ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(2) { animation-delay: 380ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(3) { animation-delay: 440ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(4) { animation-delay: 500ms; }
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(-n+4) {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: peridotSearchTabChildResolve 820ms cubic-bezier(0.19, 1, 0.22, 1) both;
+}
+
+@keyframes peridotSearchShellSettle {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.996);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes peridotSearchSoftRise {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes peridotSearchStepReveal {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes peridotSearchSoftFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes peridotSearchTabResolve {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes peridotSearchTabChildResolve {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-search-workspace-animated .peridot-search-enter-shell,
+  .peridot-search-workspace-animated .peridot-search-enter-header,
+  .peridot-search-workspace-animated .peridot-search-enter-step-rail,
+  .peridot-search-workspace-animated .peridot-search-enter-body,
+  .peridot-search-workspace-animated .peridot-search-step-button,
+  .peridot-search-workspace-animated .peridot-search-tab-motion,
+  .peridot-search-workspace-animated .peridot-search-tab-motion > *,
+  .peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel,
+  .peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel,
+  .peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-card,
+  .peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-note,
+  .peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(-n+4) {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+
+/* Explore animation pacing refinement, 2026-06-19.
+ * Scope: Explore / Advanced Search only. This override keeps the first animation
+ * pass intact but slows the choreography slightly and adds explicit stagger
+ * timing for all Refine facet cards, including Years and Capabilities. Keep this
+ * as a final layer so it can be tuned independently from the structural Explore
+ * CSS above.
+ */
+.peridot-search-workspace-animated .peridot-search-enter-shell {
+  animation-duration: 1640ms;
+  animation-delay: 100ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-enter-header {
+  animation-duration: 1420ms;
+  animation-delay: 340ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-enter-step-rail {
+  animation-duration: 1320ms;
+  animation-delay: 700ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-step-button {
+  animation-duration: 1240ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(1) { animation-delay: 940ms; }
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(2) { animation-delay: 1120ms; }
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(3) { animation-delay: 1300ms; }
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(4) { animation-delay: 1480ms; }
+.peridot-search-workspace-animated .peridot-search-step-button:nth-child(5) { animation-delay: 1660ms; }
+
+.peridot-search-workspace-animated .peridot-search-enter-body {
+  animation-duration: 1500ms;
+  animation-delay: 1840ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion {
+  animation-duration: 1080ms;
+  animation-delay: 110ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion > * {
+  animation-duration: 1120ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(1) { animation-delay: 190ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(2) { animation-delay: 330ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(3) { animation-delay: 470ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(4) { animation-delay: 610ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(5) { animation-delay: 750ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion > *:nth-child(n+6) { animation-delay: 860ms; }
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel,
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel,
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-card,
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-note {
+  animation-duration: 1120ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1),
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(1),
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-card:nth-child(1) {
+  animation-delay: 390ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2),
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(2),
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-card:nth-child(2) {
+  animation-delay: 540ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3),
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(3),
+.peridot-search-workspace-animated .peridot-search-tab-motion-capabilities .peridot-search-capability-review-note {
+  animation-delay: 690ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(4) {
+  animation-delay: 840ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(5) {
+  animation-delay: 990ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-refine .peridot-search-refine-facet-panel:nth-child(6) {
+  animation-delay: 1140ms;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(1) { animation-delay: 390ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(2) { animation-delay: 480ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(3) { animation-delay: 570ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(4) { animation-delay: 660ms; }
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(-n+4) {
+  animation-duration: 1040ms;
+}
+
+/* Explore page-turn row animation and scroll restoration, 2026-06-19.
+ * Scope: Explore / Advanced Search only. This final override preserves the
+ * existing slow folio/header/tab choreography, restores page scrolling inside
+ * the Explore workspace, and extends the subtle page-turn filing motion to the
+ * default visible Results rows and compact Browse ledger rows. Expanded Browse
+ * rows are intentionally not targeted: only the default first eight data rows
+ * in each panel receive the item-level entrance animation.
+ */
+.peridot-search-workspace {
+  height: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.peridot-search-workspace .peridot-search-folio-shell {
+  overflow: visible;
+}
+
+.peridot-search-workspace .peridot-search-folio-body,
+.peridot-search-workspace .peridot-search-active-card,
+.peridot-search-workspace .peridot-search-tab-motion {
+  overflow: visible;
+}
+
+/* Results: extend the filing/page-turn effect from the first four results to
+ * the full default visible page of ten rows. Keep the stagger quick relative to
+ * the slower folio animation so the rows feel like pages settling into a stack.
+ */
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(-n+10) {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: peridotSearchTabChildResolve 1060ms cubic-bezier(0.19, 1, 0.22, 1) both;
+  will-change: opacity, transform;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(1) { animation-delay: 390ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(2) { animation-delay: 465ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(3) { animation-delay: 540ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(4) { animation-delay: 615ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(5) { animation-delay: 690ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(6) { animation-delay: 765ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(7) { animation-delay: 840ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(8) { animation-delay: 915ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(9) { animation-delay: 990ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(10) { animation-delay: 1065ms; }
+
+/* Browse: the three index panels still float in as cards. While that panel-level
+ * motion is underway, its default visible data rows begin filing in. The header
+ * row is excluded, and selectors stop at nth-child(9), which corresponds to the
+ * default eight data rows after the header. Rows revealed by Show all are not
+ * assigned entrance animation.
+ */
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(n+2):nth-child(-n+9) {
+  opacity: 0;
+  transform: translateY(4px);
+  animation: peridotSearchTabChildResolve 1020ms cubic-bezier(0.19, 1, 0.22, 1) both;
+  will-change: opacity, transform;
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(2) { animation-delay: 620ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(3) { animation-delay: 695ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(4) { animation-delay: 770ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(5) { animation-delay: 845ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(6) { animation-delay: 920ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(7) { animation-delay: 995ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(8) { animation-delay: 1070ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(1) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(9) { animation-delay: 1145ms; }
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(2) { animation-delay: 760ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(3) { animation-delay: 835ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(4) { animation-delay: 910ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(5) { animation-delay: 985ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(6) { animation-delay: 1060ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(7) { animation-delay: 1135ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(8) { animation-delay: 1210ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(2) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(9) { animation-delay: 1285ms; }
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(2) { animation-delay: 900ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(3) { animation-delay: 975ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(4) { animation-delay: 1050ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(5) { animation-delay: 1125ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(6) { animation-delay: 1200ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(7) { animation-delay: 1275ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(8) { animation-delay: 1350ms; }
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(3) .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(9) { animation-delay: 1425ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-search-workspace-animated .peridot-search-tab-motion-results .peridot-search-results-ledger-row:nth-child(-n+10),
+  .peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel .peridot-search-browse-ledger-row:not(.peridot-search-browse-ledger-head):nth-child(n+2):nth-child(-n+9) {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
+}
+
+/* Explore folio corner containment repair â€” 2026-06-20
+ * Keep page scrolling on `.peridot-search-workspace`, while the rounded folio
+ * shell remains the clipping boundary for its dark header/body layers.
+ */
+.peridot-search-workspace .peridot-search-folio-shell {
+  overflow: hidden;
+}
