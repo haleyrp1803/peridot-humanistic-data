@@ -1,5 +1,11 @@
 # Project Workflow Charter
 
+## Executive Summary
+
+This charter defines the controlled workflow for changing Peridot safely. It requires one authoritative source of truth, a bounded pass with one change type and acceptance test, full review of current affected files, careful handling of fragile zones, and clean commit/checkpoint discipline.
+
+Use this document before every implementation or documentation pass. Its rules exist to prevent regressions and version drift in a complex research application; the detailed sections below are mandatory operating guidance, not optional suggestions.
+
 ## Purpose
 
 This document defines how changes should be made to the Peridot correspondence visualizer app. Its purpose is to reduce risk, prevent version drift, keep source-of-truth discipline, and make changes easier to review and maintain.
@@ -277,6 +283,12 @@ When documentation is updated, preserve the full development history in `CHANGEL
 Documentation passes should default to adding new milestone/current-state information where reasonable. Subtract or rewrite existing documentation only when the text is clearly obsolete, duplicated by a more accurate retained entry, or actively misleading.
 
 ---
+
+### Executive-summary maintenance rule
+
+Each core document—`README.md`, `MAINTAINERS_GUIDE.md`, `PROJECT_WORKFLOW_CHARTER.md`, and `CHANGELOG.md`—must begin with a one- or two-paragraph **Executive Summary** for human readers.
+
+The Executive Summary is the sole documentation region that may be revised non-additively during a documentation pass. It is a stable orientation layer, not a miniature changelog: update it only when the document’s purpose, audience, or high-level scope has materially changed. All remaining documentation should remain additive, meticulous, and exhaustive by default, subject only to the existing rule allowing clearly obsolete, duplicated, or misleading text to be corrected.
 
 ## 10. Dependency and tooling freeze
 

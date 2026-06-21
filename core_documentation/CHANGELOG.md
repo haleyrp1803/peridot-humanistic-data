@@ -1,5 +1,15 @@
 # Changelog
 
+## Executive Summary
+
+This Changelog is Peridot’s authoritative cumulative record of committed development. Use it to identify the current synchronized checkpoint, trace when a feature or architectural decision entered the project, and distinguish completed milestones from deferred or rolled-back work.
+
+Read the newest checkpoint and milestone notes first for current context, then use the full reverse-chronological history when investigating regressions, reconstructing decisions, or preparing a handoff. The detailed history remains intentionally exhaustive; this summary is only a navigation aid.
+
+## Executive-summary convention
+
+The Executive Summary at the beginning of this document is a human-facing orientation aid. It may be revised during documentation passes when the Changelog’s role, audience, or high-level scope changes. The milestone record and full development-history table below remain additive and authoritative; do not replace detailed history with summary prose.
+
 ## Current stylesheet architecture milestone
 
 Current documented safe baseline:

@@ -1,5 +1,11 @@
 # Maintainer's Guide
 
+## Executive Summary
+
+This guide is the operational architecture reference for maintaining Peridot. It explains the current application structure, ownership boundaries, data and interaction contracts, fragile zones, stylesheet architecture, and the working assumptions a new developer needs before changing the project.
+
+Use it alongside the Project Workflow Charter before implementation and alongside the Changelog when historical context matters. The guide favors complete, durable maintenance knowledge over brevity; the sections that follow are the authoritative detail.
+
 ## Purpose
 
 This document is the architectural reference for the Peridot humanistic-data visualizer app. It should stay aligned with the committed source of truth in the repository and with the workflow rules in `PROJECT_WORKFLOW_CHARTER.md`.
@@ -27,6 +33,14 @@ Current documented baseline:
 This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader data-capability milestone, the visualization workspace/menu/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, the upload-mapping animation passes, the hidden-theme-menu navigation polish, the Learn More card animation pass, and the Search/Explore workspace redesign. The Inspector has compact side-panel summaries for visualization clicks, a full evidence-dossier workspace from Expand/linked-data navigation, shared selection/history, linked-record detail state, clickable linked people/places/records/routes, and directed route row dossier navigation. The Data workflow supports role-based mapping for records, time, places, relationships, evidence/analysis, and capability review, including point/site records and generic chart/evidence records that do not require people/network relationships. The Visualizations workspace now exposes capability-aware map, network, chart, and data-exploration menus; Chart Visualizations use a large tabbed chart workspace with quarter-width controls, a shared chart/legend card layout, complete simplified legends, anchored titles, vertical Bar Chart defaults, method labels, and theme-routed chart series colors; Timeline is integrated as a bottom scrubber; map overlays start minimized; and map/network/chart export is consolidated into the Visualizations header. Recent UI polish adds staged workspace entrance animations, a solid-green visualization transition, a one-time guided Chart Visualizations reveal, clearer chart-builder tab/control colors, initial force-network centering on the densest cluster, and an Inspector reference-entry visual hierarchy that separates lead summaries, connected-place/person lists, directed connections, and connected-record tables. The full Inspector now overlays Visualizations without remounting the underlying workspace; related-person navigation from geographic contexts is fixed; **Unknown** place values are preserved as first-class place-like buckets; and connected-record tables use sorting, filtering, pagination, and capability-aware columns.
 
 
+
+## Executive-summary maintenance convention
+
+Every core document begins with a brief Executive Summary intended for human readers who need orientation before engaging with its exhaustive body. During each documentation pass, review that summary and revise it only when the document’s purpose, audience, or high-level scope has materially changed.
+
+This is the only non-additive documentation region by default. The body of every core document remains additive, meticulous, and exhaustive unless retained text is demonstrably obsolete, duplicated by clearer retained material, or actively misleading. The Project Workflow Charter is the controlling source for this convention.
+
+---
 
 ## Stylesheet architecture and current audit backlog
 

@@ -4,6 +4,16 @@
   <img src="../assets/Peridot%20Logo%20Gilded.png" alt="Peridot logo" width="360" />
 </p>
 
+## Executive Summary
+
+Peridot is an open, research-oriented web application for exploring humanistic tabular data through maps, networks, timelines, charts, search, export, and evidence dossiers. It supports correspondence datasets as a mature use case as well as point/site, chart-first, and broader evidence-oriented datasets through role-based import mapping.
+
+This README is the public orientation document: it explains what Peridot does, the major research workflows it supports, how to run it locally, and where to find deeper technical and maintenance guidance. Readers seeking implementation rules should consult the Project Workflow Charter and Maintainer’s Guide; readers seeking complete development history should consult the Changelog.
+
+## Documentation reading convention
+
+The four core documents are intentionally complementary: this README provides public orientation; the Maintainer’s Guide describes current architecture and maintenance responsibilities; the Project Workflow Charter defines the required process for changes; and the Changelog preserves complete development history. Each begins with a short Executive Summary for human readers, while the detailed body remains additive and exhaustive by default.
+
 ## 1. Project title
 
 **Peridot** is the current app identity for the repository **Correspondence Visualizer**. It is a research-oriented interactive web app for exploring humanistic tabular datasets through maps, networks, timelines, charts, search/filter workflows, exports, and evidence dossiers. Correspondence networks remain the mature first case, but Peridot now also supports point/site datasets, chart-first time-series datasets, and generic evidence records that do not require people or network relationships.
