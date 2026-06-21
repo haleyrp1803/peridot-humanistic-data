@@ -566,114 +566,216 @@ textarea {
 }
 
 
-/* Analytics chart-builder stylesheet ownership — 2026-06-21
- * The scoped Analytics chart-builder cascade, including its reduced-motion
- * reset, now lives in `AnalyticsPanel.css`. It is loaded after index.css and
- * before Search, Mapping, and Learn More so the established workspace cascade
- * remains predictable.
+/* Chart-visualization entrance choreography.
+ * The Visualizations shell, header, timeline, and green stage transition animate
+ * outside AnalyticsPanel. Start this local chart-builder reveal just after the
+ * solid green stage veil has cleared, then keep the top-to-bottom sequence tight
+ * enough to orient the user without making them wait on the animation itself.
+ * Keep the final chart animation opacity-only so SVG export refs and chart layout
+ * measurements remain stable.
  */
-
-/* Inspector side-panel chart-language polish.
- * The Inspector follows the same family as the Chart builder, but it needs more
- * hierarchy because it contains many more interactive rows. Gold is reserved for
- * primary commands; navigable related objects use muted green with gold borders;
- * passive counts use quieter olive/cream surfaces. These scoped selectors add
- * the final interaction polish without changing Inspector routing or shared state.
- */
-.peridot-inspector-shell {
-  background: #142d19;
-  border-color: rgba(221, 187, 105, 0.42);
+.peridot-chart-builder-step,
+.peridot-chart-builder-controls > *,
+.peridot-chart-stage-final {
+  opacity: 0;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  will-change: opacity, transform;
 }
 
-.peridot-inspector-header {
-  background: #0d2911;
-  border-color: rgba(221, 187, 105, 0.38);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.055),
-    inset 0 -18px 34px rgba(0, 0, 0, 0.12);
+.peridot-chart-builder-step,
+.peridot-chart-builder-controls > * {
+  transform: translateY(8px);
+  animation-name: peridotChartBuilderFloatIn;
+  animation-duration: 640ms;
 }
 
-.peridot-inspector-body {
-  background: #142d19;
-  border-color: rgba(221, 187, 105, 0.24);
+.peridot-chart-builder-step-0 { animation-delay: 1120ms; }
+.peridot-chart-builder-step-1 { animation-delay: 1230ms; }
+.peridot-chart-builder-step-2 { animation-delay: 1340ms; }
+
+.peridot-chart-builder-controls > *:nth-child(1) { animation-delay: 1440ms; }
+.peridot-chart-builder-controls > *:nth-child(2) { animation-delay: 1520ms; }
+.peridot-chart-builder-controls > *:nth-child(3) { animation-delay: 1600ms; }
+.peridot-chart-builder-controls > *:nth-child(4) { animation-delay: 1680ms; }
+.peridot-chart-builder-controls > *:nth-child(n+5) { animation-delay: 1760ms; }
+
+.peridot-chart-stage-final {
+  animation-name: peridotChartStageFadeIn;
+  animation-duration: 820ms;
+  animation-delay: 1620ms;
+}
+
+@keyframes peridotChartBuilderFloatIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes peridotChartStageFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+
+
+/* Chart-builder dropdown layering.
+ * Animated control cards create local stacking contexts while the chart builder
+ * settles. Keep the control column scrollable, then elevate whichever card
+ * currently contains focus so custom dropdowns draw over the cards below them
+ * without forcing the whole left panel out of its scroll container.
+ */
+.peridot-chart-builder-controls {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 
-.peridot-inspector-shell :is(button, a) {
-  transition:
-    transform 150ms ease,
-    background-color 150ms ease,
-    border-color 150ms ease,
-    color 150ms ease,
-    box-shadow 150ms ease;
+.peridot-chart-builder-controls > * {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
 }
 
-.peridot-inspector-shell button:not(:disabled):hover {
-  transform: translateY(-1px);
+.peridot-chart-builder-controls > *:focus-within {
+  z-index: 80;
 }
 
-.peridot-inspector-shell button:not(:disabled):focus-visible,
-.peridot-inspector-shell a:focus-visible {
-  outline: none;
+/* Chart-builder color and interaction states.
+ * Keep the builder visually continuous with the green stage transition while
+ * giving the four tab buttons explicit inactive, hover, active, and focus
+ * states. The exact inactive button green comes from the supplied swatch; the
+ * active state uses Peridot gold so selection is unmistakable against the dark
+ * panel.
+ */
+.peridot-chart-builder-tab-button {
+  background: #0d2911;
+  border-color: rgba(221, 187, 105, 0.32);
+  color: #e8d99c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+.peridot-chart-builder-tab-button:hover {
+  background: #17391f;
+  border-color: rgba(232, 199, 116, 0.72);
+  color: #fff3c8;
   box-shadow:
-    0 0 0 3px rgba(246, 230, 167, 0.42),
-    0 10px 22px rgba(86, 52, 22, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.075);
 }
 
-.peridot-inspector-body a {
-  color: #2f6b39;
-}
-
-.peridot-inspector-body a:hover {
-  color: #0d2911;
-}
-
-.peridot-inspector-body :is(input, select, textarea) {
+.peridot-chart-builder-tab-button-active,
+.peridot-chart-builder-tab-button-active:hover {
   background: #c79b3d;
   border-color: #f0d27a;
   color: #0a2110;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
-.peridot-inspector-body :is(input, select, textarea):focus {
-  border-color: #fae9b1;
-  outline: none;
+
+/* Chart-builder cream-card interactables.
+ * Any control that lives inside the cream chart-builder cards should use the
+ * same Peridot gold treatment as the selected builder tab. This keeps dropdowns,
+ * chart-type choices, steppers, category actions, text inputs, and reset buttons
+ * from flashing pale against the dark green panel during the chart reveal.
+ */
+.peridot-chart-builder-controls section select,
+.peridot-chart-builder-controls section input[type='text'],
+.peridot-chart-builder-controls section input[type='number'],
+.peridot-chart-builder-controls section input[type='search'],
+.peridot-chart-builder-controls section button:not(:disabled) {
+  background: #c79b3d !important;
+  border-color: #f0d27a !important;
+  color: #0a2110 !important;
+  box-shadow:
+    0 7px 16px rgba(86, 52, 22, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.peridot-chart-builder-controls section select:hover,
+.peridot-chart-builder-controls section input[type='text']:hover,
+.peridot-chart-builder-controls section input[type='number']:hover,
+.peridot-chart-builder-controls section input[type='search']:hover,
+.peridot-chart-builder-controls section button:not(:disabled):hover {
+  background: #d4aa4c !important;
+  border-color: #f6df96 !important;
+  color: #07190c !important;
+  box-shadow:
+    0 10px 22px rgba(86, 52, 22, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
+}
+
+.peridot-chart-builder-controls section select:focus,
+.peridot-chart-builder-controls section input[type='text']:focus,
+.peridot-chart-builder-controls section input[type='number']:focus,
+.peridot-chart-builder-controls section input[type='search']:focus,
+.peridot-chart-builder-controls section button:not(:disabled):focus-visible {
+  border-color: #fae9b1 !important;
+  outline: none !important;
   box-shadow:
     0 0 0 3px rgba(246, 230, 167, 0.42),
     0 10px 22px rgba(86, 52, 22, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.28) !important;
 }
 
+.peridot-chart-builder-controls section button[aria-pressed='true'],
+.peridot-chart-builder-controls section button[aria-selected='true'] {
+  background: #e0bb62 !important;
+  border-color: #fae9b1 !important;
+  color: #07190c !important;
+  box-shadow:
+    0 10px 22px rgba(86, 52, 22, 0.24),
+    inset 0 0 0 1px rgba(7, 25, 12, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32) !important;
+}
 
-/* Inspector interaction hierarchy.
- * Primary shell commands remain gold. Dense lists of related people, places,
- * routes, and linked records use the secondary green treatment so they remain
- * visibly clickable without flattening the whole dossier into identical gold
- * blocks. Small count badges stay quiet unless the row itself is active/hovered.
+.peridot-chart-builder-controls section button:disabled,
+.peridot-chart-builder-controls section select:disabled,
+.peridot-chart-builder-controls section input:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+.peridot-chart-builder-controls section label > span.relative > span[aria-hidden='true'] {
+  background: rgba(7, 25, 12, 0.14) !important;
+  color: #07190c !important;
+}
+
+.peridot-chart-builder-controls section label > span.grid {
+  border-color: #f0d27a !important;
+  background: #c79b3d !important;
+  box-shadow:
+    0 7px 16px rgba(86, 52, 22, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22) !important;
+}
+
+.peridot-chart-builder-controls section label > span.grid input[type='number'] {
+  background: #d9b55d !important;
+  border-color: transparent !important;
+}
+
+.peridot-chart-builder-controls section input[type='checkbox'] {
+  accent-color: #c79b3d;
+}
+
+/* Once the chart workspace entrance has completed, tab changes should feel
+ * immediate. New active-tab controls mount without replaying the initial
+ * top-to-bottom reveal; that reveal belongs only to the larger visualization
+ * transition into Charts.
  */
-.peridot-inspector-shell [class*="bg-[var(--inspector-clickable-bg)]"] {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.055),
-    0 6px 14px rgba(0, 0, 0, 0.12);
-}
-
-.peridot-inspector-shell [class*="bg-[var(--inspector-clickable-bg)]"]:hover,
-.peridot-inspector-shell .group:hover [class*="bg-[var(--inspector-clickable-bg)]"] {
-  box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.peridot-inspector-shell [class*="bg-[var(--stat-card-bg)]"],
-.peridot-inspector-shell [class*="bg-[var(--badge-bg)]"] {
-  border: 1px solid rgba(176, 132, 50, 0.24);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
-}
-
-.peridot-inspector-shell [class*="bg-[var(--button-bg)]"] {
-  box-shadow:
-    0 8px 18px rgba(86, 52, 22, 0.20),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+.peridot-chart-builder-sequence-settled .peridot-chart-builder-step,
+.peridot-chart-builder-sequence-settled .peridot-chart-builder-controls > * {
+  opacity: 1;
+  transform: none;
+  animation: none;
 }
 
 
@@ -708,7 +810,10 @@ textarea {
   }
 
   .peridot-visualization-timeline-sequence,
-  .peridot-visualization-timeline-step {
+  .peridot-visualization-timeline-step,
+  .peridot-chart-builder-step,
+  .peridot-chart-builder-controls > *,
+  .peridot-chart-stage-final {
     opacity: 1;
     transform: none;
     animation: none;
@@ -962,84 +1067,11 @@ textarea {
 }
 
 
-/* Inspector reference-page ground and section dividers.
- * Layering contract:
- * - The outer full-Inspector shell remains a solid dark green folio frame.
- * - A separate inset stratum sits immediately inside that shell and carries
- *   Peridot's dark green + gold stripe field. This is the visible layer behind
- *   the header and behind the reference cards.
- * - The stripe field is darkened by a transparent overlay so the pattern reads
- *   as subdued ornament rather than visual noise.
- * Keep the image divider optional: if the Adobe Stock Filigree 3 asset is
- * unavailable, the gold rules still provide a quiet ornamental separator.
+/* Inspector stylesheet ownership — 2026-06-21
+ * The compact/full Inspector shell, interaction hierarchy, reference-page ground,
+ * and filigree divider system now live in `InspectorPanel.css`. It is loaded
+ * after the shared stylesheet and before Analytics, Search, Mapping, and Learn More.
  */
-.peridot-inspector-reference-ground {
-  position: relative;
-  isolation: isolate;
-  background: #061d12;
-}
-
-.peridot-inspector-reference-ground::before {
-  content: '';
-  position: absolute;
-  inset: 0.85rem;
-  z-index: 0;
-  pointer-events: none;
-  border-radius: 1.35rem;
-  background:
-    linear-gradient(135deg, rgba(2, 14, 8, 0.70), rgba(2, 14, 8, 0.82)),
-    radial-gradient(circle at 16% 12%, rgba(119, 154, 92, 0.07), transparent 24rem),
-    radial-gradient(circle at 84% 18%, rgba(181, 139, 66, 0.05), transparent 26rem),
-    repeating-linear-gradient(135deg, rgba(221, 187, 105, 0.105) 0 1px, transparent 1px 16px),
-    linear-gradient(135deg, #061d12 0%, #0d2911 46%, #04160f 100%);
-  box-shadow: inset 0 0 0 1px rgba(221, 187, 105, 0.12);
-}
-
-.peridot-inspector-reference-ground > * {
-  position: relative;
-  z-index: 1;
-}
-
-.peridot-inspector-reference-body {
-  background: transparent;
-}
-
-.peridot-inspector-filigree-divider {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 1.25rem;
-  margin: 0.25rem 0 0.35rem;
-  color: var(--detail-label-text, #b58b42);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  opacity: 0.9;
-}
-
-.peridot-inspector-filigree-divider::before,
-.peridot-inspector-filigree-divider::after {
-  content: '';
-  height: 1px;
-  flex: 1;
-  background: linear-gradient(90deg, transparent, rgba(181, 139, 66, 0.68), transparent);
-}
-
-.peridot-inspector-filigree-divider::before { margin-right: 0.85rem; }
-.peridot-inspector-filigree-divider::after { margin-left: 0.85rem; }
-
-.peridot-inspector-filigree-divider span {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: min(18rem, 42vw);
-  height: 1.1rem;
-  color: transparent;
-  background: url('/assets/Adobe Stock Filigree 3.png') center / contain no-repeat;
-}
 
 /* Search / Advanced Search stylesheet ownership — 2026-06-21
  * The scoped Search cascade, including the ordered scroll and folio-corner

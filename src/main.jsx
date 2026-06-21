@@ -9,8 +9,12 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 
-// Analytics styling remains immediately after shared CSS. Its chart-builder
-// rules originally preceded the later Search, Mapping, and Learn More layers.
+// Inspector styling follows the shared layer so the same compact/full dossier
+// system can serve map overlays, the full workspace, and Explore embeds.
+import './InspectorPanel.css';
+
+// Analytics styling is intentionally loaded as a dedicated component layer.
+// This import restores the stylesheet extracted at the Analytics milestone.
 import './AnalyticsPanel.css';
 
 // Search styling remains after the shared stylesheet. It contains the ordered
