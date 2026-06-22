@@ -65,7 +65,12 @@ import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace
 import { PeridotExploreWorkspace } from './PeridotExploreWorkspace';
 import { PeridotLearnMoreWorkspace } from './PeridotLearnMoreWorkspace';
 import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
-import { rowMatchesSearchCapabilityFilter, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
+import {
+  buildPeridotSearchRecords,
+  rowMatchesSearchCapabilityFilter,
+  rowMatchesSearchText,
+  rowMatchesStructuredCriteria,
+} from './peridotSearchResultHelpers.js';
 import {
   DEFAULT_PERIDOT_WORKSPACE_MODE,
   PERIDOT_WORKSPACE_MODES,
@@ -1038,18 +1043,7 @@ function filterRowsBySearchAndEntity(rows, {
       return true;
     }
 
-    return matchesFilterTerm([
-      row.date,
-      row.parsedDate?.monthKey,
-      row.sourceLoc,
-      row.targetLoc,
-      row.sourcePerson,
-      row.targetPerson,
-      row.sourcePlaceId,
-      row.targetPlaceId,
-      placeRouteLabel,
-      personRouteLabel,
-    ], q);
+    return rowMatchesSearchText(row, q);
   });
 }
 
@@ -3453,13 +3447,26 @@ export default function EuropeNetworkMapApp() {
     } : normalizeGeographyRows(geographyRows)),
     [peridotNormalizedData, geographyRows]
   );
-  const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(normalizedRows), [normalizedRows]);
+  /*
+   * Search evaluates a complete research record, not the compact map row alone.
+   * New one-file/mapped imports join through `recordId`; the bundled historical
+   * sample uses the strict validated-parallel compatibility path documented in
+   * `buildPeridotSearchRecords`.
+   */
+  const searchRecords = useMemo(
+    () => buildPeridotSearchRecords(normalizedRows, normalizedLetters, {
+      allowValidatedParallelRows: !peridotNormalizedData,
+    }),
+    [normalizedRows, normalizedLetters, peridotNormalizedData],
+  );
+  const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(searchRecords), [searchRecords]);
 
   // ------------------------------------------------------------
   // Timeline / filter / playback scope contract
   // ------------------------------------------------------------
-  // `normalizedRows` is the loaded dataset after parsing, validation, and
-  // normalization. It is intentionally the broadest row scope in the app.
+  // `searchRecords` is the loaded dataset after parsing, normalization, and
+  // exact metadata linking. It is the broadest row scope evaluated by Search
+  // and remains map-compatible because each record retains its geography row.
   //
   // The active visualization/export scope is narrowed in this order:
   // 1. `timelineWindowRows` applies the global timeline range when Timeline is
@@ -3480,7 +3487,7 @@ export default function EuropeNetworkMapApp() {
   // `AnalyticsPanel.jsx`. That chart-local range is not the same state as the
   // global timeline scrubber below, so do not merge or rename those states
   // without first defining the desired cross-workspace filtering semantics.
-  const timelineMonths = useMemo(() => buildTimelineMonths(normalizedRows), [normalizedRows]);
+  const timelineMonths = useMemo(() => buildTimelineMonths(searchRecords), [searchRecords]);
 
   useEffect(() => {
     if (!timelineMonths.length) {
@@ -3495,8 +3502,8 @@ export default function EuropeNetworkMapApp() {
   }, [timelineMonths.length]);
 
   const timelineWindowRows = useMemo(() => {
-    return filterRowsByTimelineWindow(normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd);
-  }, [normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd]);
+    return filterRowsByTimelineWindow(searchRecords, timelineMode, timelineMonths, rangeStart, rangeEnd);
+  }, [searchRecords, timelineMode, timelineMonths, rangeStart, rangeEnd]);
 
   const filteredRowsForActiveFilters = useMemo(() => {
     return filterRowsBySearchAndEntity(timelineWindowRows, {

@@ -23,7 +23,9 @@ const FIELD_LABELS = {
   date: 'Date',
   displayDate: 'Display date',
   sourcePerson: 'Source entity',
+  source: 'Source entity',
   targetPerson: 'Target entity',
+  target: 'Target entity',
   sourcePlaceLabel: 'Source place',
   targetPlaceLabel: 'Target place',
   sourcePlace: 'Source place',
@@ -32,6 +34,7 @@ const FIELD_LABELS = {
   targetLoc: 'Target place',
   relationshipType: 'Relationship',
   relationship: 'Relationship',
+  archive: 'Archive',
   archivalCollection: 'Archival collection',
   archivalPage: 'Archival page',
   pdfPage: 'PDF page',
@@ -45,12 +48,13 @@ const FIELD_LABELS = {
   title: 'Title',
   citation: 'Citation',
   notes: 'Notes',
+  links: 'Links',
 };
 
 const TITLE_FIELDS = ['title', 'recordTitle', 'Title', 'Record_Title', 'Letter_Title', 'label'];
 const DATE_FIELDS = ['displayDate', 'date', 'Date', 'Date*', 'dateDisplay', 'dateLabel'];
-const SOURCE_PERSON_FIELDS = ['sourcePerson', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender'];
-const TARGET_PERSON_FIELDS = ['targetPerson', 'Target', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient'];
+const SOURCE_PERSON_FIELDS = ['sourcePerson', 'source', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender'];
+const TARGET_PERSON_FIELDS = ['targetPerson', 'target', 'Target', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient'];
 const SOURCE_PLACE_FIELDS = ['sourcePlaceLabel', 'sourcePlace', 'sourceLoc', 'Source_Loc', 'Source_Place', 'sourceLocation'];
 const TARGET_PLACE_FIELDS = ['targetPlaceLabel', 'targetPlace', 'targetLoc', 'Target_Inferred_Loc', 'Target_Loc', 'Target_Place', 'targetLocation'];
 const COORDINATE_FIELDS = ['sourceLat', 'sourceLon', 'targetLat', 'targetLon', 'lat', 'lon', 'latitude', 'longitude'];
@@ -86,6 +90,17 @@ const CORE_FIELDS = new Set([
   'targetPlaceId',
   'mappable',
   'personKey',
+  'dateStart',
+  'dateEnd',
+  'dateDisplay',
+  'pointLoc',
+  'pointCoordinates',
+  'pointLat',
+  'pointLon',
+  'pointPlaceId',
+  'pointRecord',
+  'sourcePoliticalHint',
+  'targetPoliticalHint',
 ]);
 
 /*
@@ -103,6 +118,149 @@ const NON_EVIDENCE_FIELD_KEYS = new Set([
   'originalUploadedRow',
   'originalTemplateRow',
 ]);
+
+
+function normalizeLinkText(value) {
+  const normalized = asText(value).toLowerCase();
+  // The bundled legacy tables use 0 as an empty-cell sentinel in a handful
+  // of source-entity cells. Treat it as blank for record-link validation only.
+  return normalized === '0' ? '' : normalized;
+}
+
+function getRecordId(row) {
+  return asText(row?.recordId || row?.sourceRecordId || row?.sourceRecordKey);
+}
+
+function getSourcePerson(row) {
+  return firstText(row, SOURCE_PERSON_FIELDS);
+}
+
+function getTargetPerson(row) {
+  return firstText(row, TARGET_PERSON_FIELDS);
+}
+
+function getSourcePlace(row) {
+  return firstText(row, SOURCE_PLACE_FIELDS);
+}
+
+function getLegacyRecordSignature(row) {
+  return [
+    normalizeLinkText(firstText(row, DATE_FIELDS)),
+    normalizeLinkText(getSourcePerson(row)),
+    normalizeLinkText(getTargetPerson(row)),
+    normalizeLinkText(getSourcePlace(row)),
+  ].join('\u0000');
+}
+
+function buildUniqueLinkedRecordIndex(linkedRows) {
+  const groups = new Map();
+  (Array.isArray(linkedRows) ? linkedRows : []).forEach((row) => {
+    const recordId = getRecordId(row);
+    if (!recordId) return;
+    const current = groups.get(recordId) || [];
+    current.push(row);
+    groups.set(recordId, current);
+  });
+
+  const unique = new Map();
+  groups.forEach((rows, recordId) => {
+    if (rows.length === 1) unique.set(recordId, rows[0]);
+  });
+  return unique;
+}
+
+function buildValidatedParallelLinkedRecordIndex(geographyRows, linkedRows) {
+  const linkedByIndex = new Map();
+  const geography = Array.isArray(geographyRows) ? geographyRows : [];
+  const linked = Array.isArray(linkedRows) ? linkedRows : [];
+
+  if (!geography.length || geography.length !== linked.length) return linkedByIndex;
+
+  geography.forEach((geographyRow, index) => {
+    const linkedRow = linked[index];
+    if (!linkedRow) return;
+    const geographySignature = getLegacyRecordSignature(geographyRow);
+    const linkedSignature = getLegacyRecordSignature(linkedRow);
+
+    /*
+     * This compatibility route is intentionally strict: it is available only
+     * to the bundled parallel legacy sample tables and only when the record at
+     * the same ordinal position agrees on date, source, target, and source
+     * place. It never performs a loose person/date/place lookup.
+     */
+    if (geographySignature && geographySignature === linkedSignature) {
+      linkedByIndex.set(index, linkedRow);
+    }
+  });
+
+  return linkedByIndex;
+}
+
+function getLinkedResearchMetadata(linkedRow) {
+  if (!linkedRow) return {};
+
+  const metadata = {};
+  Object.entries(linkedRow).forEach(([key, value]) => {
+    if (
+      key === 'id'
+      || key === 'recordId'
+      || key === 'sourceRecordId'
+      || key === 'sourceRecordKey'
+      || key === 'source'
+      || key === 'target'
+      || key === 'sourceLoc'
+      || key === 'targetLoc'
+      || key === 'date'
+      || key === 'parsedDate'
+      || key === 'personKey'
+      || key === 'peridotCapabilities'
+      || key === 'capabilities'
+      || key === 'capabilityFlags'
+      || key === 'ignoredUploadedColumns'
+      || key === 'originalUploadedRow'
+      || key === 'originalTemplateRow'
+      || key === 'customInspectorFields'
+      || !isSearchableScalar(value)
+      || !asText(value)
+    ) {
+      return;
+    }
+    metadata[key] = value;
+  });
+
+  const customInspectorFields = Array.isArray(linkedRow.customInspectorFields)
+    ? linkedRow.customInspectorFields.map((field) => ({ ...field }))
+    : [];
+
+  if (customInspectorFields.length) metadata.customInspectorFields = customInspectorFields;
+  return metadata;
+}
+
+/*
+ * Create the one record shape evaluated by Search. Map and graph consumers
+ * retain the geographic row fields they already require; researcher-facing
+ * metadata is copied from an exactly linked record where that relationship is
+ * known. This helper never guesses a link from an arbitrary matching person,
+ * date, or place value.
+ */
+export function buildPeridotSearchRecords(geographyRows = [], linkedRows = [], options = {}) {
+  const geography = Array.isArray(geographyRows) ? geographyRows : [];
+  const linkedByRecordId = buildUniqueLinkedRecordIndex(linkedRows);
+  const linkedByValidatedIndex = options.allowValidatedParallelRows
+    ? buildValidatedParallelLinkedRecordIndex(geography, linkedRows)
+    : new Map();
+
+  return geography.map((geographyRow, index) => {
+    const recordId = getRecordId(geographyRow);
+    const linkedRow = (recordId && linkedByRecordId.get(recordId)) || linkedByValidatedIndex.get(index) || null;
+    const metadata = getLinkedResearchMetadata(linkedRow);
+
+    return {
+      ...geographyRow,
+      ...metadata,
+    };
+  });
+}
 
 export const CAPABILITY_FILTER_OPTIONS = Object.freeze([
   {
@@ -192,14 +350,60 @@ function isSearchableScalar(value) {
   );
 }
 
-function collectSearchableFields(row) {
-  return Object.entries(row || {})
-    .filter(([, value]) => value !== null && value !== undefined && isSearchableScalar(value) && asText(value))
-    .map(([key, value]) => ({
-      key,
-      label: FIELD_LABELS[key] || key.replace(/_/g, ' '),
-      value: asText(value),
+function getFieldLabel(key) {
+  return FIELD_LABELS[key] || String(key || '').replace(/_/g, ' ');
+}
+
+function collectCustomInspectorFieldEntries(row) {
+  const fields = Array.isArray(row?.customInspectorFields) ? row.customInspectorFields : [];
+  return fields
+    .filter((field) => isSearchableScalar(field?.value) && asText(field?.value))
+    .map((field) => ({
+      key: asText(field?.key || field?.sourceColumn || field?.label),
+      label: asText(field?.label || field?.sourceColumn || field?.key) || 'Custom metadata',
+      value: asText(field?.value),
     }));
+}
+
+/*
+ * Search deliberately operates on researcher-facing scalar values. Internal
+ * geometry, timeline, capability, and original-row payloads are excluded so
+ * technical identifiers cannot create misleading keyword or metadata matches.
+ */
+function collectSearchableFields(row) {
+  const entries = [];
+
+  Object.entries(row || {}).forEach(([key, value]) => {
+    if (
+      NON_EVIDENCE_FIELD_KEYS.has(key)
+      || value === null
+      || value === undefined
+      || !isSearchableScalar(value)
+      || !asText(value)
+    ) {
+      return;
+    }
+    entries.push({ key, label: getFieldLabel(key), value: asText(value) });
+  });
+
+  collectCustomInspectorFieldEntries(row).forEach((entry) => entries.push(entry));
+
+  const deduped = new Map();
+  entries.forEach((entry) => {
+    const dedupeKey = `${entry.key}\u0000${entry.label}\u0000${entry.value}`;
+    if (!deduped.has(dedupeKey)) deduped.set(dedupeKey, entry);
+  });
+
+  return Array.from(deduped.values());
+}
+
+export function rowMatchesSearchText(row, query) {
+  const cleanQuery = asText(query);
+  if (!cleanQuery) return true;
+
+  return collectSearchableFields(row).some((field) => (
+    includesNeedle(field.value, cleanQuery) || includesNeedle(field.label, cleanQuery)
+  ));
 }
 
 /*
@@ -209,19 +413,30 @@ function collectSearchableFields(row) {
  * payloads and nested original-row snapshots.
  */
 export function getSearchableEvidenceFieldEntries(row) {
-  return Object.entries(row || {})
-    .filter(([key, value]) => (
-      !NON_EVIDENCE_FIELD_KEYS.has(key)
-      && value !== null
-      && value !== undefined
-      && isSearchableScalar(value)
-      && asText(value)
-    ))
-    .map(([key, value]) => ({
-      key,
-      label: FIELD_LABELS[key] || key.replace(/_/g, ' '),
-      value: asText(value),
-    }));
+  const entries = [];
+
+  Object.entries(row || {}).forEach(([key, value]) => {
+    if (
+      NON_EVIDENCE_FIELD_KEYS.has(key)
+      || value === null
+      || value === undefined
+      || !isSearchableScalar(value)
+      || !asText(value)
+    ) {
+      return;
+    }
+    entries.push({ key, label: getFieldLabel(key), value: asText(value) });
+  });
+
+  collectCustomInspectorFieldEntries(row).forEach((entry) => entries.push(entry));
+
+  const fieldsByIdentity = new Map();
+  entries.forEach((entry) => {
+    const identity = `${entry.key}\u0000${entry.label}`;
+    if (!fieldsByIdentity.has(identity)) fieldsByIdentity.set(identity, entry);
+  });
+
+  return Array.from(fieldsByIdentity.values());
 }
 
 function hasAnyEvidenceField(row) {

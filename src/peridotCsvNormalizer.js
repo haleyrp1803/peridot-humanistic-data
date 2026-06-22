@@ -219,7 +219,12 @@ function buildPeridotTemplatePlaceMapEntry(placeMap, { label, lat, lon, roleHint
  * Convert one public Peridot template row into the internal geographic-row
  * shape currently consumed by map and graph derivation.
  */
-export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap = new Map()) {
+export function normalizePeridotTemplateRowForGeography(
+  row,
+  index = 0,
+  placeMap = new Map(),
+  recordId = `peridot_record_${index + 1}`,
+) {
   const customInspectorFields = normalizeCustomInspectorFields(row);
   const customInspectorFieldValues = buildCustomInspectorFieldObject(row);
   const pointCoordinate = coordinateFromFields(row, 'Point_Latitude', 'Point_Longitude', 'Point_Coordinates');
@@ -261,6 +266,7 @@ export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap
   return {
     ...customInspectorFieldValues,
     id: `peridot_geo_${index + 1}`,
+    recordId,
     date: getDisplayDateValue(row),
     dateStart: asText(row?.Date_Start),
     dateEnd: asText(row?.Date_End),
@@ -298,7 +304,11 @@ export function normalizePeridotTemplateRowForGeography(row, index = 0, placeMap
  * Convert one public Peridot template row into the internal letter/Inspector
  * metadata shape currently consumed by inspector and Analytics workflows.
  */
-export function normalizePeridotTemplateRowForLetter(row, index = 0) {
+export function normalizePeridotTemplateRowForLetter(
+  row,
+  index = 0,
+  recordId = `peridot_record_${index + 1}`,
+) {
   const customInspectorFields = normalizeCustomInspectorFields(row);
   const customInspectorFieldValues = buildCustomInspectorFieldObject(row);
   const source = asText(row?.Source_Name);
@@ -313,6 +323,7 @@ export function normalizePeridotTemplateRowForLetter(row, index = 0) {
   return {
     ...customInspectorFieldValues,
     id: `peridot_letter_${index + 1}`,
+    recordId,
     archive,
     archivalCollection: collection,
     archivalPage: pages,
@@ -404,8 +415,9 @@ export function normalizePeridotTemplateRows(rows = []) {
   const placeMap = new Map();
 
   const preparedRows = rows.map((row, index) => {
-    const geographyRow = normalizePeridotTemplateRowForGeography(row, index, placeMap);
-    const letterRow = normalizePeridotTemplateRowForLetter(row, index);
+    const recordId = `peridot_record_${index + 1}`;
+    const geographyRow = normalizePeridotTemplateRowForGeography(row, index, placeMap, recordId);
+    const letterRow = normalizePeridotTemplateRowForLetter(row, index, recordId);
     const accepted = isAcceptedPeridotRecord(row);
     const capabilities = getPeridotRowCapabilities(row);
 
