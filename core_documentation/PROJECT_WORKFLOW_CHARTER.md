@@ -2,19 +2,41 @@
 
 ## Executive Summary
 
-This charter defines the controlled workflow for changing Peridot safely. It requires one authoritative source of truth, a bounded pass with one change type and acceptance test, full review of current affected files, careful handling of fragile zones, and clean commit/checkpoint discipline.
+This Charter is Peridot’s controlling process document for safely changing the project. It defines the source-of-truth rule, bounded-pass method, review and delivery safeguards, recovery protocol, testing/commit discipline, documentation policy, and durable decision governance.
 
-Use this document before every implementation or documentation pass. Its rules exist to prevent regressions and version drift in a complex research application; the detailed sections below are mandatory operating guidance, not optional suggestions.
+Use it before every implementation or documentation pass. It governs **how** work is done; the Maintainer’s Guide governs the current architecture, the Changelog governs history, and the Core Documentation Governance Protocol governs preservation and ownership during core-documentation maintenance.
 
-## Purpose
+## Quick Navigation
 
-This document defines how changes should be made to the Peridot correspondence visualizer app. Its purpose is to reduce risk, prevent version drift, keep source-of-truth discipline, and make changes easier to review and maintain.
+- [Non-negotiable operating rules](#1-non-negotiable-operating-rules)
+- [Delivery, testing, and commit protocol](#2-delivery-testing-and-commit-protocol)
+- [Recovery protocol](#3-recovery-protocol)
+- [Documentation maintenance policy](#4-documentation-maintenance-policy)
+- [Dependency and tooling freeze](#5-dependency-and-tooling-freeze)
+- [Project-specific operating cautions](#6-project-specific-operating-cautions)
+- [Decision records by domain](#7-decision-records-by-domain)
+- [Standard handoff and completion template](#8-standard-handoff-and-completion-template)
 
-This charter should be consulted before every implementation pass.
+## Document Role and Boundaries
 
----
+This Charter owns mandatory process rules, source-of-truth continuity, delivery/recovery protocol, commit discipline, tooling constraints, and non-obvious decision governance. It does not own the exhaustive module map, regression matrix, screenshot archive, public product manual, or full commit history.
 
-## 1. Source-of-truth rule
+Current synchronized checkpoint:
+
+```text
+a9b9c81 — Add core documentation restructuring plan
+Branch: main
+Status: local and origin/main aligned after the latest sync ritual
+```
+
+For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
+
+
+## 1. Non-Negotiable Operating Rules
+
+### 1.1 Source of Truth and Applied-File Continuity
+
+
 
 At the start of any pass, establish one authoritative source of truth.
 
@@ -32,11 +54,7 @@ Current project source of truth folder:
 C:\Users\haley\OneDrive\Desktop\Peridot\
 ```
 
-Current clean baseline:
-
-```text
-639e30f — Extract Inspector stylesheet
-```
+Current synchronized checkpoint is recorded in the standardized block above. The Changelog is the authoritative source for detailed checkpoint interpretation and complete chronology.
 
 ### Applied-file continuity rule
 
@@ -53,33 +71,13 @@ Current branch note:
 The current active continuation branch may intentionally differ from experimental branches. MapLibre preview code has been removed from active `main`; the later MapLibre migrated-overlay branch remains archived and should not be treated as the active source of truth unless explicitly resumed.
 ```
 
-Current brand assets:
-
-```text
-assets/Peridot Logo.png
-assets/Peridot Logo Transparent.png
-assets/Peridot Logo Gilded.png
-assets/Peridot Logo Gilded Transparent.png
-assets/Adobe Stock Filigree 1.png
-assets/Adobe Stock Filigree 2.png
-assets/Adobe Stock Filigree 3.png
-assets/Adobe Stock Filigree Divider Set.png
-assets/Adobe Stock Filigree Full Set.png
-assets/Homepage Current 2026-06-16.png
-assets/Homepage Layout Mockup.png
-assets/Homepage Layout Mockup Annotated.png
-assets/Chart Colors Base.jpeg
-assets/Chart Colors Dark.jpeg
-assets/Chart Colors Pale.jpeg
-assets/Peridot Palette Upload Guide 1.png
-assets/Peridot Palette Upload Guide 2.png
-assets/2026_Price_Headshot.jpg
-assets/Price_CV.pdf
-```
+Asset-origin and licensing information must remain preserved in the README and Maintainer’s Guide. This Charter governs the process requirement to protect that information when relevant, not the asset inventory itself.
 
 ---
 
-## 2. Bounded-pass rule
+### 1.2 Bounded-Pass Rule
+
+
 
 Before each coding pass, state:
 
@@ -94,46 +92,9 @@ Do not mix functional changes, visual redesign, broad refactors, and documentati
 
 ---
 
-## 3. Fragile-zones preflight
+### 1.3 Full-File Review and Safe Replacement
 
-Before touching a fragile zone, state:
 
-- affected fragile zone
-- what might break
-- what is intentionally not being touched
-- how the result will be verified afterward
-
-Current fragile zones include:
-
-- map viewport centering/reset behavior
-- dense-map hover/click interaction
-- selection persistence across filters
-- playback/timeline state coupling
-- export rendering/state coupling
-- broad orchestration work inside `src/App.jsx`
-- workspace routing and hamburger-menu behavior
-- map/network viewport measurement after switching between Analytics and map/network visualizations
-- shared side-panel shell behavior
-- inspector-open interactions after map clicks
-- cluster grouping and cluster inspector navigation
-- Advanced Search active-dataset state, including keyword, person, place, route-place, route-people, weight, date-range, capability filters, dataset-wide Browse indexes, result facets, predictive suggestions, structured criteria, Boolean AND / OR / EXCLUDING logic, apply/clear behavior, and future metadata filters
-- Explore workspace visual/animation layer, including step-button sequencing, tab transitions, Results/Browse row filing effects, reduced-motion behavior, scroll restoration after expanded panels, and rounded-folio clipping containment
-- shared `src/index.css` change delivery, particularly Learn More/Explore overrides that can supersede unrelated recently tested rules
-- stylesheet import order in `src/main.jsx`, including the global → Inspector → Analytics → Search → Mapping → Learn More cascade contract
-- extracted Search scroll/folio-corner ordering, Analytics builder/dropdown layering, and compact/full/Explore Inspector presentation styles
-- Learn More section hierarchy, biography expansion/portrait flow, resource-card width reallocation, divider spacing, and staged divider-first entrance choreography
-- Analytics expanded overlay positioning and backdrop contrast
-- Analytics dynamic variable detection
-- Analytics flexible chart-variable controls, record-count metrics, wide numeric-series selection, and chart availability routing
-- Analytics SVG-to-PNG export rendering
-- Analytics summary panels, shared chart/legend layout, axis ticks/gridlines, manual category/series selection, date-axis defaults, and chart color-series handling
-- semantic theme roles, finite default chart color library, chart-targeted palette import scoping, and map/chrome palette assignments
-- stale or insufficient code comments around fragile compatibility and cross-file wiring
-- Data Inputs upload state, one-file CSV normalization, arbitrary CSV/TSV/Excel role mapping, workbook parsing and mapping behavior, unique-ID join configuration, capability-audit reporting, validation summary behavior, point/site import behavior, generic chart/evidence record admission, evidence-field include/ignore checkbox behavior, coordinate-pair parsing, date-range/display-date handling, upload-mapping animation hooks, and legacy upload cleanup
-
----
-
-## 4. Full-file review and replacement rule
 
 Before writing any code edit or patch script, read and review the complete current affected file or files from the real source of truth.
 
@@ -195,48 +156,55 @@ Before making claims that a user-uploaded source file is stale, verify that the 
 
 ---
 
-## 5. Checkpoint and commit distinction
+### 1.4 Fragile-Zone Preflight Requirement
 
-A **checkpoint** is a tested intermediate state that may still be revised soon.
+Before touching a fragile zone, state the affected zone, what could break, what is deliberately out of scope, and how the result will be verified. The authoritative detailed fragile-zone regression matrix is in the Maintainer’s Guide; this Charter requires the preflight, not a duplicate technical inventory.
 
-A **commit** is a coherent completed pass with one clear outcome.
+High-risk examples include `App.jsx` orchestration, workspace routing, compact/full Inspector behavior, Search applied-data state, Timeline/Analytics coupling, upload/mapping behavior, export rendering, shared stylesheets, stylesheet import order, semantic theme roles, and map/chart portal layering.
 
-Use commits for coherent completed passes. Use checkpoints when the user wants recoverability before additional risky work.
+## 2. Delivery, Testing, and Commit Protocol
 
----
+A **checkpoint** is a tested intermediate state that may still be revised soon. A **commit** is a coherent completed pass with one clear outcome. Use commits for coherent completed passes; use checkpoints when the user wants recoverability before additional risk.
 
-## 6. Delivery format rule
+### Delivery format
 
-Use the safest delivery mode for the current pass.
+- Documentation-only passes: provide individual replacement `.txt` or `.md` files generated from the reviewed current documents.
+- Small local edits: use targeted, source-verified blocks only after full-file review.
+- Medium or fragile files: prefer current-source full-file replacements.
+- Default delivery is individual files with exact `Copy-Item` commands from `$HOME\Downloads` into the source-of-truth project folder.
+- For image, brand, screenshot, or other asset passes, include exact copy commands for each asset file as well as for any related source or documentation replacement.
+- Do not use ZIP packages or executable apply scripts unless explicitly requested.
+- Do not use `git add .` while generated artifacts such as `itch_upload/` are untracked.
+- Use targeted `git add <file>...` commands by default. Use `git add -A src` only when an intentional source-file rename or deletion requires it.
 
-Preferred modes:
+### Sync ritual
 
-- documentation-only pass: individual replacement `.txt` or `.md` files generated from the reviewed current documents
-- small local edit: targeted replacement block with clear anchors, only after full-file review
-- medium bounded file area: full replacement file unless a targeted block is demonstrably safer
-- fragile/high-risk file: full replacement from the current source of truth
-- generated source replacement: provide individual `.txt` files that the user can copy into place
+Run after actual commits or major checkpoints:
 
-When delivering files, default to individual `.txt` replacements and direct `Copy-Item` commands from `$HOME\Downloads` into the source-of-truth project folder. Do not deliver ZIP packages or executable apply scripts unless the user explicitly asks for them. A script may be appropriate only when a verified narrow change cannot be safely delivered as a replacement file and its anchors are stable against the real current source.
+```powershell
+git status
+git log --oneline -5
+Get-ChildItem -Name
+Get-ChildItem src -Name
+```
 
-When delivering files, include exact Windows PowerShell copy commands. Image/brand asset passes should provide exact copy commands for the image files as well as source/documentation replacements.
+A clean ritual showing local `HEAD`, `origin/main`, and `origin/HEAD` aligned establishes the synced Git state as the current source of truth.
 
-Do not use `git add .` while `itch_upload/` or other generated artifacts are untracked.
+After a clean aligned sync ritual, do not repeatedly request uploaded source files unless there is a specific reason to believe the relevant file has drifted, the current contents are unavailable, or the task requires an uncommitted local version.
 
-Use targeted adds or `git add -A src` only when a source-file rename/deletion is intentional.
+## 3. Recovery Protocol
 
----
 
-## 7. Recovery protocol
 
 When something goes wrong:
 
 1. Stop further edits.
 2. Identify the current source of truth.
-3. Restore the last good checkpoint/commit.
-4. Restate the goal in one sentence.
-5. Make one bounded fix only, or switch delivery mode to full-file replacement after full-file review.
-6. Rerun the acceptance test.
+3. When a runtime issue appears after user interaction, inspect the F12 browser console early before attempting source edits or speculative fixes.
+4. Restore the last good checkpoint/commit.
+5. Restate the goal in one sentence.
+6. Make one bounded fix only, or switch delivery mode to full-file replacement after full-file review.
+7. Rerun the acceptance test.
 
 Do not stack speculative fixes on top of an unstable state.
 
@@ -250,24 +218,9 @@ Recent examples reinforced this rule:
 
 ---
 
-## 8. Sync ritual
+## 4. Documentation Maintenance Policy
 
-Run the sync ritual after actual commits or major checkpoints, not after discussion-only turns.
 
-Canonical sync ritual:
-
-```powershell
-git status
-git log --oneline -5
-Get-ChildItem -Name
-Get-ChildItem src -Name
-```
-
-After the user provides a clean sync showing local `HEAD`, `origin/main`, and `origin/HEAD` aligned, trust the synced Git state as the current source of truth. Do not repeatedly ask for uploaded files unless there is a specific reason to believe the file has drifted or the needed file content is not otherwise available.
-
----
-
-## 9. Documentation policy
 
 Do not update documentation after every small code commit. That slows development.
 
@@ -290,7 +243,11 @@ Each core document—`README.md`, `MAINTAINERS_GUIDE.md`, `PROJECT_WORKFLOW_CHAR
 
 The Executive Summary is the sole documentation region that may be revised non-additively during a documentation pass. It is a stable orientation layer, not a miniature changelog: update it only when the document’s purpose, audience, or high-level scope has materially changed. All remaining documentation should remain additive, meticulous, and exhaustive by default, subject only to the existing rule allowing clearly obsolete, duplicated, or misleading text to be corrected.
 
-## 10. Dependency and tooling freeze
+For every core-documentation pass, also follow `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md` and the current `planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md`. Read the protocol and all four core documents in full before editing them.
+
+## 5. Dependency and Tooling Freeze
+
+
 
 Do not change dependencies, package manager files, Vite config, Tailwind config, lint/format rules, filenames, or folder structure unless the pass is explicitly about tooling or architecture.
 
@@ -298,25 +255,145 @@ Generated artifacts such as `itch_upload/` should not be committed during ordina
 
 ---
 
-## 11. Modularization roadmap
+## 6. Project-Specific Operating Cautions
 
-Maintain a modularization roadmap for eventual `App.jsx` decomposition, but do not execute it casually.
+### Modularization roadmap
 
-Preferred order:
+Maintain a modularization roadmap for eventual `App.jsx` decomposition, but do not execute it casually. Preferred order: pure data helpers; export helpers; theme/constants; small reusable UI pieces; map interaction helpers; panel and Inspector content components; then app orchestration last. Stop structural cleanup once the file is stable unless there is a concrete bug, a planned architectural pass, or a specific maintenance pain point.
 
-1. pure data helpers
-2. export helpers
-3. theme/constants
-4. small reusable UI pieces
-5. map interaction helpers
-6. panel and inspector content components
-7. app orchestration last
 
-Stop structural cleanup once the file is stable unless there is a concrete bug, a planned architectural pass, or a specific maintenance pain point.
 
----
+### Shared side-panel compatibility path
 
-## 12. Decision records
+The app still contains old compatibility naming around left/right panel visibility in some places. Although the names are misleading, that path currently preserves Inspector auto-open behavior.
+
+Do **not** casually rename these props or setters.
+
+If revisited, explicitly test:
+
+- node click opens Inspector
+- edge click opens Inspector
+- cluster click opens Inspector
+- contained cluster member opens detail
+- Back behavior still works
+
+### Responsive panel sizing
+
+A prior attempt to make the shared side panel absolutely positioned at all viewport sizes was rolled back because it disrupted normal full-size landscape layout.
+
+Future responsive panel work should be a narrow-window-specific override, not a universal positioning replacement.
+
+### Archived MapLibre work
+
+Active `main` no longer contains dormant MapLibre preview files or the `maplibre-gl` dependency.
+
+The later `maplibre-native-geographic-view` branch remains an archived experiment and should not be treated as active production code. Do not reintroduce MapLibre files, dependencies, or preview flags unless the pass is explicitly about resuming MapLibre after a fresh source-of-truth audit.
+
+### Cluster behavior
+
+Cluster behavior is now committed and functional.
+
+Future cluster changes should preserve:
+
+- cluster click opens Inspector
+- cluster inspector lists contained members
+- members are grouped by place
+- member click opens detail
+- Back returns to the cluster view
+- cluster sizing remains visually meaningful
+
+### Data import and mapping caution
+
+Data import is a fragile boundary. Keep the public direction intact: unified CSV / TSV / XLSX / XLS upload, user-confirmed role-based mapping, explicit workbook unique-ID joins, permissive database-first admission, and no silent standardization. Do not reintroduce the legacy three-file workflow without a specific recovery or compatibility reason.
+
+For the current import/workbook contract and detailed regression checks, see the [Maintainer’s Guide — Data Import and Workbook Contract](MAINTAINERS_GUIDE.md#7-data-import-and-workbook-contract).
+
+### Advanced Search and applied-scope caution
+
+Advanced Search is the primary owner of global applied filtering and the Explore surface. Preserve its draft/apply model, explicit route filters, structured criteria, Browse, Results, Refine / Inspect, Capabilities, and Inspector-overlay return behavior. Do not turn draft edits into uncontrolled full-dataset recomputation or combine Search work with unrelated `App.jsx`, Timeline, Analytics, Inspector, or MapLibre changes.
+
+For the current Search contract and detailed regression checks, see the [Maintainer’s Guide — Advanced Search / Explore Contract](MAINTAINERS_GUIDE.md#5-advanced-search--explore-contract).
+
+## 7. Decision Records by Domain
+
+The concise domain summaries below are the active decision index. When recording a new or materially revised non-obvious decision, add it beneath the relevant domain using:
+
+```text
+Decision:
+Context:
+Chosen approach:
+Rejected alternative:
+Reason:
+Maintenance consequence:
+```
+
+Detailed historical decision rationale remains preserved in the archived inventory below.
+
+### 7.1 Data policy and imports
+
+- Peridot is database-first: accepted records may be incomplete, and coordinates/dates are capability-enabling rather than admission requirements.
+- Peridot does not silently standardize, merge, or enforce controlled vocabularies.
+- Arbitrary tables use explicit user-confirmed mapping; multi-sheet workbooks use user-confirmed unique-ID joins rather than row-order matching.
+- Role-based mapping supports identity, time, places, relationships, evidence/analysis, and capability review; point/site and chart/evidence-first datasets are valid when their mapped fields support them.
+
+### 7.2 Routing and workspace model
+
+- The active public model is workspace-first: Home, Data, Visualizations, Explore/Advanced Search, and Learn More are the primary public surfaces.
+- The hamburger menu is the primary public navigation surface; Themes and Accessibility remains implemented but hidden; Export and Timeline are Visualizations-integrated.
+- MapLibre migrated-overlay work is archived. Active `main` continues the D3/SVG path.
+
+### 7.3 Inspector
+
+- Inspector is dual-mode: compact visualization-click summaries and full dossier navigation share selection state and Back history.
+- Full Inspector overlays rather than remounts Visualizations. Linked records, routes, people/entities, and places participate in shared history.
+- `Unknown` remains a first-class place-like bucket; connected-record tables are capability-aware and support date-first sorting/filtering/pagination.
+
+### 7.4 Search and data scope
+
+- Advanced Search is the owner of global applied filtering and the primary Explore surface.
+- Search retains the draft/apply model, predictive discovery, explicit route filters, structured AND / OR / EXCLUDING criteria, Browse, Results, Refine/Inspect, Capabilities, and overlay Inspector handoff.
+- Timeline consumes the active temporal scope; Analytics charts the currently filtered data by default. The exact coverage/scope and Timeline × Analytics contracts remain active audit items.
+
+### 7.5 Analytics
+
+- Chart Visualizations belongs inside Visualizations, with tabbed controls and a large chart surface.
+- Record count is explicit; Year is the default ordered date axis; compatible settings and manual selections should persist where safe.
+- Chart summaries/legends must represent displayed values persistently and export with the chart.
+- Chart series colors come from the finite Peridot palette by default and semantic theme roles when users explicitly target charts.
+
+### 7.6 Themes and visual language
+
+- Color changes should use semantic roles in `peridotTheme.js` and related metadata.
+- Greens/golds remain primary; map/chrome/chart palettes and dropdown layering are semantic/system concerns rather than local cosmetic overrides.
+- Home remains informative-minimalist; Learn More carries expanded project information; licensed Adobe filigree attribution must remain clear.
+
+### 7.7 Export
+
+- Export is an in-place Visualizations header action.
+- Map PNG default output is unbranded map-only content, with optional title/metadata using Peridot typography.
+
+### 7.8 Archived or superseded decisions
+
+- Earlier persistent-rail, standalone Export, standalone Timeline, legacy three-file upload, and MapLibre preview directions are historical or superseded. Their active replacement is identified in the contracts above and in the Changelog.
+
+
+<details>
+<summary><strong>Historical flat decision inventory retained for preservation</strong></summary>
+
+This is a preserved legacy archive of the earlier cumulative decision list. It is not the active organizational model: the concise decision records above are the authoritative categorized index. New or revised decisions must be added under Sections 7.1–7.8, using the stated decision-record format. The archive remains available so no historical rationale is lost during the transition.
+
+The following detailed inventory is retained to preserve the complete decision record that previously existed as a flat list. Future decisions should be added under the domain headings above and, when needed, expanded into the consistent record format below.
+
+```text
+Decision:
+Context:
+Chosen approach:
+Rejected alternative:
+Reason:
+Maintenance consequence:
+```
+
+
 
 For non-obvious implementation choices, record:
 
@@ -437,172 +514,26 @@ Current notable decisions:
 
 ---
 
-## 13. Project-specific cautions
+</details>
 
-### Shared side-panel compatibility path
-
-The app still contains old compatibility naming around left/right panel visibility in some places. Although the names are misleading, that path currently preserves Inspector auto-open behavior.
-
-Do **not** casually rename these props or setters.
-
-If revisited, explicitly test:
-
-- node click opens Inspector
-- edge click opens Inspector
-- cluster click opens Inspector
-- contained cluster member opens detail
-- Back behavior still works
-
-### Responsive panel sizing
-
-A prior attempt to make the shared side panel absolutely positioned at all viewport sizes was rolled back because it disrupted normal full-size landscape layout.
-
-Future responsive panel work should be a narrow-window-specific override, not a universal positioning replacement.
-
-### Archived MapLibre work
-
-Active `main` no longer contains dormant MapLibre preview files or the `maplibre-gl` dependency.
-
-The later `maplibre-native-geographic-view` branch remains an archived experiment and should not be treated as active production code. Do not reintroduce MapLibre files, dependencies, or preview flags unless the pass is explicitly about resuming MapLibre after a fresh source-of-truth audit.
-
-### Cluster behavior
-
-Cluster behavior is now committed and functional.
-
-Future cluster changes should preserve:
-
-- cluster click opens Inspector
-- cluster inspector lists contained members
-- members are grouped by place
-- member click opens detail
-- Back returns to the cluster view
-- cluster sizing remains visually meaningful
-
-### Data Inputs behavior
-
-Data Inputs is now the public owner of the standardized single-CSV upload workflow and the arbitrary table column-mapping workflow.
-
-Committed Data Inputs behavior includes:
-
-- downloadable Peridot CSV template;
-- one unified CSV / TSV / XLSX / XLS table-workbook upload control;
-- arbitrary CSV/TSV/Excel upload staging and role-based column mapping;
-- mapped arbitrary-table import into Peridot data;
-- post-upload validation popup;
-- persistent latest-upload summary in the Data Inputs panel after the popup closes;
-- capability reporting for Inspector, Search, point-map readiness, route-map readiness, network readiness, timeline readiness, Analytics/chart readiness, and Export;
-- public legacy Geography / Raw Data / Person Metadata upload controls superseded by the one-file and mapped-import workflows;
-- workbook parsing, mapping, unique-ID joins, and import assembly for XLSX/XLS workbooks;
-- selected workbook custom fields visible in linked-record and entity-profile Inspector views;
-- generic chart/evidence records admitted into the active dataset where they have usable content;
-- evidence/analysis include/ignore checkboxes that default to Include.
-
-Future Data Inputs changes should explicitly test:
-
-- template download works;
-- uploading a valid template CSV updates the app data;
-- uploading a workbook stages sheets without freezing on reasonably sized files;
-- workbook mapping can configure primary sheet, unique-ID joins, core field mapping, and selected Inspector fields;
-- upload summary popup appears;
-- closing the popup does not erase the persistent side-panel summary;
-- rows lacking coordinates are not silently discarded if otherwise accepted;
-- rows lacking parseable dates are not silently discarded if otherwise accepted;
-- Inspector still opens after upload;
-- Search & Filter resets or remains coherent after upload;
-- Timeline playback does not use stale date scope after upload;
-- Analytics receives the intended uploaded/filtered rows;
-- Export still labels and exports the intended data scope.
-
-Do not reintroduce the legacy three-file upload workflow unless there is a specific recovery or compatibility reason; the active public direction is one-file template upload plus mapped arbitrary-table import.
-
-
-### Advanced Search behavior
-
-Advanced Search is the intended consolidation point for global filters and the primary Explore Your Data surface.
-
-Committed Advanced Search controls include:
-
-- keyword search
-- person filter
-- place filter
-- **Route Filter (Place)**
-- **Route Filter (People)**
-- minimum correspondence weight
-- date range
-- predictive suggestions for person, place, route-place, route-people, start-year, end-year, and structured-criteria value fields
-- structured criteria with AND / OR / EXCLUDING connectors
-- dataset-wide Browse indexes for people/entities, places, routes, and evidence fields
-- result cards with Inspector handoff
-- result facets based on the current applied result set
-- Capabilities tab containing what-this-data-can-do summaries
-- **Apply Filters**
-- **Clear Filters**
-- pre-update status feedback
-
-Future Advanced Search controls may include:
-
-- language/relationship filters
-- mappability filters
-- safe categorical metadata filters
-- inspector actions such as “filter to this person/place/route”
-
-Filter controls should not trigger expensive graph/data recomputation on every keystroke or draft edit. Use draft values with an explicit **Apply Filters** action when the filter can affect the active dataset. Use **Clear Filters** to reset the global filter state. For expensive full-dataset updates, show visible feedback before committing state changes so users understand that the app is updating.
-
-When changing Advanced Search, explicitly test:
-
-- typing in a text field does not freeze the app
-- filters apply only when intended
-- current applied filter scope is clear to the user and remains visible near the top of the workspace
-- Timeline playback remains functional
-- Analytics receives the intended filtered scope
-- Export scope remains clear
-
----
-
-## 14. Standard delivery summary
+## 8. Standard Handoff and Completion Template
 
 Each implementation pass should end with:
 
-- what changed
-- exact files changed
-- one acceptance test
-- whether the result is a checkpoint or commit
-- exact Git commands
-- exact copy commands if files are being moved
-- known residual risks
+- what changed;
+- exact files changed;
+- one acceptance test;
+- whether the result is a checkpoint or commit;
+- exact Git commands;
+- exact copy commands if files are being moved;
+- known residual risks.
 
----
+### Fresh-chat handoff
 
-## 15. Fresh-chat handoff
+A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual. It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents.
 
-For a new chat, start with:
+For core documentation work, provide all four core documents, `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md`, and `planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md` before edits begin.
 
-```text
-Source of truth folder: C:\Users\haley\OneDrive\Desktop\Peridot\
-Current documented clean baseline: `0c5a219` — Add Learn More section dividers. See `CHANGELOG.md` for the most recent documented safe baseline.
-```
+### Documentation-pass completion addition
 
-The new chat should be told:
-
-- Peridot is the current app identity.
-- The current fixed basemap is `countries50m`.
-- The app uses a hamburger-triggered labeled menu with Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot. Themes and Accessibility is currently hidden from public navigation but remains implemented internally.
-- Timeline is implemented as a bottom Visualizations scrubber with collapse/expand behavior and dual range handles.
-- Inspector is dual-mode: compact side-panel summaries are still used for visualization clicks, and the full evidence-dossier workspace is implemented for hamburger/Expand/linked-data navigation.
-- `LeftControlPanel.jsx` owns the compact Inspector side-panel shell for visualization-click Inspector presentation.
-- `InspectorPanel.jsx` is the shared compact/full Inspector content shell.
-- Cluster interaction, volume-based cluster sizing, and grouped cluster inspector behavior are committed features.
-- The compatibility path for inspector auto-open is fragile; do not rename it casually.
-- Documentation updates are batched, not performed after every small code commit.
-- MapLibre preview code has been removed from active `main`; the migrated-overlay branch remains archived while legacy Peridot continuation proceeds.
-- Before any code change, fully read/review the complete current affected GitHub file(s) when local and GitHub are synced.
-- Code comments should be maintained so a new human developer can understand each major section, cross-file relationship, fragile path, and non-obvious decision.
-- Use full-file replacements by default for code changes in affected files, especially dense or fragile files.
-- Avoid brittle snippet-based patching unless the full file has been reviewed and the edit is clearly unambiguous.
-- When the user uploads source files after being asked for current files, treat the most recent uploads as authoritative for that pass unless told otherwise.
-- Search & Filter currently uses a compact advanced-search layout, not the earlier stacked-card layout, and is reached through Explore/workflow actions rather than the top-level hamburger.
-- Data Inputs currently uses a one-file Peridot CSV workflow, arbitrary CSV/TSV column mapping, workbook import with unique-ID joins, validation popup, and persistent latest-upload summary.
-- Analytics chart views currently use a left-control/right-chart workspace with tabbed builder controls, manual series/category selection, year-default date axes, complete simplified summary/legend panels, shared three-quarter chart / one-quarter legend card layout, anchored titles, method labels, major/minor ticks, default finite chart colors with explicit chart-targeted palette overrides, and header-based chart PNG export.
-- Logo, homepage filigree, homepage mockup, and current homepage screenshot assets live in `assets/`; the Home workspace imports the gilded transparent logo and selected Adobe Stock filigree.
-- Inspector person/place profiles currently show reference-entry summaries, compact summary buttons, role-grouped connected people/places, directed connections, selected uploaded fields, shared connected-record detail navigation, clickable linked people/places, route-row dossier navigation, and Unknown-as-place handling.
-
+For core-documentation work, complete the Governance Protocol checklist before delivery: confirm checkpoint, ownership, preservation, navigation, and delivery conditions; record the documentation result in the Changelog; and do not silently delete historical or technical knowledge.

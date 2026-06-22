@@ -2,17 +2,68 @@
 
 ## Executive Summary
 
-This Changelog is Peridot’s authoritative cumulative record of committed development. Use it to identify the current synchronized checkpoint, trace when a feature or architectural decision entered the project, and distinguish completed milestones from deferred or rolled-back work.
+This Changelog is Peridot’s authoritative historical record. Use it to confirm the current synchronized checkpoint, understand what changed recently, distinguish active work from deferred or rolled-back experiments, and trace the complete reverse-chronological commit history when investigating regressions or preparing a handoff.
 
-Read the newest checkpoint and milestone notes first for current context, then use the full reverse-chronological history when investigating regressions, reconstructing decisions, or preparing a handoff. The detailed history remains intentionally exhaustive; this summary is only a navigation aid.
+The Changelog owns chronology and milestone interpretation, not the complete current architecture or workflow rules. For current contracts, use the Maintainer’s Guide; for process, use the Project Workflow Charter.
 
-## Executive-summary convention
+## Quick Navigation
 
-The Executive Summary at the beginning of this document is a human-facing orientation aid. It may be revised during documentation passes when the Changelog’s role, audience, or high-level scope changes. The milestone record and full development-history table below remain additive and authoritative; do not replace detailed history with summary prose.
+- [Current synchronized checkpoint](#1-current-synchronized-checkpoint)
+- [Recent milestones](#2-recent-milestones-newest-first)
+- [Deferred, archived, and rolled-back work](#3-deferred-archived-and-rolled-back-work)
+- [Full development history](#4-full-development-history)
 
-## Current stylesheet architecture milestone
+## Document Role and Boundaries
 
-Current documented safe baseline:
+This document owns the detailed checkpoint, milestone chronology, deferred/archived/rolled-back record, and full commit history. It does not own broad module specifications, public workflows, or process law.
+
+## 1. Current Synchronized Checkpoint
+
+```text
+a9b9c81 — Add core documentation restructuring plan
+Branch: main
+Status: local and origin/main aligned after the latest sync ritual
+```
+
+This checkpoint follows a focused documentation-control sequence:
+
+- `8f2d1ca` — refined the in-app feedback form and visualizations-control layering;
+- `7df46a8` — restored the functional extracted-stylesheet import cascade after a missing-import regression;
+- `58fdd08` — refreshed README screenshots and preserved historical interface records;
+- `dc5f20b` and `6d05409` — added the Core Documentation Governance Protocol;
+- `70d8b31` — moved that protocol into `core_documentation/`;
+- `a9b9c81` — added the Core Documentation Restructuring Plan.
+
+The active stylesheet cascade is:
+
+```jsx
+import './index.css';
+import './InspectorPanel.css';
+import './AnalyticsPanel.css';
+import './PeridotSearchWorkspace.css';
+import './PeridotColumnMappingModal.css';
+import './PeridotLearnMoreWorkspace.css';
+import './PeridotFeedbackForm.css';
+```
+
+`index.css` is the shared/global layer. Component stylesheets own their named presentation domains. The restored import commit is a functional-cascade repair, not a change to the intended architecture.
+
+## 2. Recent Milestones, Newest First
+
+### Documentation governance, screenshot history, feedback, and stylesheet-import restoration — 2026-06-21
+
+- Added a standing Core Documentation Governance Protocol and then moved it to `core_documentation/` so it is reviewed with the four core documents before every documentation pass.
+- Added a Core Documentation Restructuring Plan that maps current sections into their proper long-term document owners and protects historical/technical material during reorganization.
+- Refreshed the README screenshot gallery with dated `2026-06-21` current-interface images in `planning_documents/images/`, while retaining and clearly labeling older rail/side-panel-first images as historical records.
+- Added the persistent feedback form, including optional-email handling, compact modal behavior, Formspree submission, and a layering repair so feedback covers Visualizations controls.
+- Restored missing extracted CSS imports in `main.jsx`, including the feedback-form stylesheet, preserving the established shared → Inspector → Analytics → Search → Mapping → Learn More → Feedback cascade.
+- Removed obsolete local `index.css` backup snapshots as a housekeeping cleanup; Git remains the authoritative recovery history.
+
+### Component stylesheet extraction sequence — historical structural milestone
+
+#### Historical stylesheet architecture milestone
+
+Historical checkpoint at the time of extraction:
 
 - **`639e30f` — `Extract Inspector stylesheet`** on branch **`main`**
 
@@ -26,7 +77,7 @@ The completed structural sequence moved component-owned stylesheet layers out of
 - **`f7e885c` — `Extract Analytics stylesheet`**
 - **`639e30f` — `Extract Inspector stylesheet`**
 
-The active component stylesheet order is:
+At that historical checkpoint, the component stylesheet order was:
 
 ```jsx
 import './index.css';
@@ -37,101 +88,19 @@ import './PeridotColumnMappingModal.css';
 import './PeridotLearnMoreWorkspace.css';
 ```
 
-`index.css` remains responsible for shared/global contracts only. Search, Analytics, Inspector, Mapping, and Learn More now own their component-specific presentation rules. The Search extraction includes the ordered scroll and folio-corner containment cascade; Analytics includes builder/dropdown and reduced-motion behavior; Inspector includes compact/full/Explore dossier presentation; Mapping and Learn More retain their previously extracted visual layers.
+`index.css` was retained as the shared/global layer at that checkpoint. Search, Analytics, Inspector, Mapping, and Learn More owned their component-specific presentation rules. The Search extraction includes the ordered scroll and folio-corner containment cascade; Analytics includes builder/dropdown and reduced-motion behavior; Inspector includes compact/full/Explore dossier presentation; Mapping and Learn More retain their previously extracted visual layers.
 
 The next substantive behavior work is intentionally deferred into two separate audits: Search dataset coverage/scope and timeline playback × Analytics scope. These must not be conflated with stylesheet cleanup.
 
+The detailed records below preserve the earlier `0c5a219` and related checkpoint narratives as historical milestones; they are not active baseline statements.
 
-## Historical documented safe baseline
+### Detailed historical milestone narratives
 
-- **`0c5a219` — `Add Learn More section dividers`** on branch **`main`**
+The following milestone narratives are retained as historical records. They remain useful for regression diagnosis, decision reconstruction, and project-development history. They are not competing current-baseline statements.
 
-This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the Home-style workspace visual pass, the expanded humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the June 2026 theme/color consolidation work, the Analytics chart-layout and chart-theme milestone, the capability-wording cleanup, the map-export options/readability pass, the fixed-ratio Peridot homepage redesign, the Data/workbook mapping-modal redesign, upload-mapping entrance and step-transition animation passes, the final Learn More/menu polish pass, and the Search/Explore workspace redesign. The current app is workspace-first around a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented as an internal/development-facing workspace and can be restored to the hamburger menu later without rebuilding the feature. Visualizations use a collapsible header, a bottom timeline scrubber, minimized map overlays, a dedicated large chart workspace, and in-place header export controls. Chart Visualizations now use a tabbed builder, quarter-width controls, a larger chart card, a shared three-quarter chart / one-quarter legend layout, complete simplified legends, anchored titles/subtitles, method labels, tighter canvas spacing, vertical Bar Chart default behavior, and theme-routed series colors. The curated 30-color Peridot chart library remains the default, but explicit **Charts** palette imports in Themes and Accessibility now override only chart series colors, including bars, histograms, heatmaps, grouped/stacked charts, lines, pies, and sunbursts. The standalone Export workspace route has been removed from the active app path. Explore Your Data opens Advanced Search directly from both the hamburger menu and the Visualizations header, while Advanced Search itself contains Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. Earlier milestones include direct Explore-to-Advanced-Search routing, a tabbed Advanced Search workspace, Inspector handoff from search results, dataset-wide browse indexes, structured criteria with AND / OR / EXCLUDING logic, capability and facet filtering, workbook import, role-based mapping, and the shift from correspondence-only import assumptions toward role-based humanistic-data mapping.
-Recent June 2026 visual and interaction polish added workspace entrance choreography and clarified the current Visualizations/Inspector/Charts experience. The Home, Data, and Visualizations workspaces now use staged entrance animations; visualization switching fades through a solid dark-green interstitial; Chart Visualizations use a guided one-time reveal, muted dark-green builder panel, gold high-contrast tab states, and gold treatment for cream-card interactables while preserving side-panel scroll and dropdown layering; the force-directed network initially centers on the densest information cluster; and the Inspector workspace now follows the chart-builder visual language while suppressing visualization hide/show toggles when the full Inspector is open. The earlier Inspector related-person navigation blank-state bug has been resolved by routing person-detail resolution through the appropriate people-graph fallback while preserving the mounted Visualizations overlay.
+#### Learn More project-information hub, divider choreography, and Explore folio-containment milestone
 
-The most recent completed code cluster replaces the former Learn More placeholder treatment with a public project-information hub and repairs the related shared visual foundations. The current Learn More page now has a compact/expandable creator biography, creator headshot/CV assets, a GitHub/core-documentation resource panel, expandable AI-method disclosure papers, a Tutorials surface, warmer parchment reading cards, and vertical filigree dividers between its major horizontal blocks. The expanded biography may grow while the GitHub panel contracts but remains usable; the portrait belongs to the biography’s reading flow so prose wraps beside it and continues beneath it. Divider choreography is intentionally sequential—divider before following section—rather than synchronous card animation. The same cluster restores the rounded Explore folio containment boundary while preserving its scroll behavior.
-
-The current Data Inputs / import workflow now provides:
-
-- downloadable Peridot CSV template plus one unified CSV/TSV/XLSX/XLS table-workbook upload path;
-- permissive database-first upload handling for incomplete historical correspondence records;
-- validation/capability reporting and persistent upload summaries;
-- a pure data-capability audit helper for Inspector, Search, point-map, route-map, network, timeline, chart, and export readiness;
-- role-based upload mapping organized around records, time, places, relationships, evidence/analysis, and capability review;
-- explicit temporal roles for single date, date start, date end, and display date;
-- point-location roles for point/site datasets that have one location per record;
-- route coordinate roles that support separated latitude/longitude columns and combined source/target coordinate-pair columns;
-- latitude-first coordinate-pair guidance, including `POINT(latitude longitude)` strings;
-- successful point/site dataset mapping and Place Map rendering without requiring people/network relationships;
-- generic chart/evidence rows accepted into the active dataset without requiring map or network roles;
-- evidence/analysis field inclusion controls using explicit Include and Ignore checkboxes that default to Include;
-- arbitrary CSV/TSV staging and column mapping;
-- Excel workbook parsing for `.xlsx` and `.xls` files through the isolated workbook parser helper;
-- multi-sheet workbook staging with workbook and sheet summaries;
-- workbook-aware mapping for primary record sheet selection, core Peridot field mapping, and selected custom Inspector fields;
-- user-configured unique-ID joins across multiple workbook sheets;
-- multi-sheet workbook import assembly into Peridot rows;
-- selected custom Inspector/Analytics metadata from primary and joined workbook sheets;
-- clearer mapping cancel/import actions;
-- removal of the public legacy Geography / Raw Data / Person Metadata three-file upload workflow.
-
-The current Inspector workflow now provides a dual-mode evidence system:
-
-- visualization clicks open a compact side-panel Inspector for at-a-glance evidence;
-- hamburger **Inspector** and compact **Expand** open the full evidence-dossier workspace;
-- compact and full modes share the same selected Inspector state and multi-step Back history;
-- `[x]`, Escape, and blank-map click close the appropriate Inspector surface and return to Visualizations;
-- compact summary tiles open the full workspace for the selected person/place;
-- linked person/place navigation opens the full workspace and resolves against the correct people/place graph;
-- linked-letter detail pages participate in the shared Inspector history;
-- linked-letter source/target people and places are clickable and return through Back;
-- directed route rows open route/edge dossier views with linked letters;
-- person/place profile pages use a scholarly reference-entry layout with lead summaries, optional image placeholders, compact metrics, related people, related places, directed connections, selected uploaded fields, and dedicated connected-record detail pages;
-- unresolved/missing place values are preserved as **Unknown** place-like buckets rather than dropped from connected-place summaries;
-- connected-record tables provide sorting, per-column filtering, 10/25/50 pagination, and capability-aware columns: source/target entity and source/target location for relational datasets, or entity/location for point-only datasets.
-
-The current Advanced Search workflow is the main Explore Your Data surface. It uses a compact animated research-search layout with Build Search, Browse, Results, Refine / Inspect, and Capabilities tabs. It preserves draft/apply global filtering, current applied scope, predictive suggestions, route-place and route-people filters, year text inputs, minimum-weight filtering, capability filters, dataset-wide compact Browse ledgers for people/entities, places/locations, and route pairs when supported; route-aware point-only Browse and Refine surfaces; Results ledgers with Inspector-style pagination; result facets with counts; full Inspector handoff as an overlay on top of Explore; and structured criteria supporting AND, OR, and EXCLUDING logic. Analytics has chart controls, dynamic variable options, compact and expanded chart views, higher-contrast tooltips, and a dark green translucent expanded-view backdrop with the chart itself retained on a white/cream card.
-
-
-The current interface/workspace workflow now provides:
-
-- user-designed Peridot logo, gilded-logo, palette, and filigree assets in `assets/`;
-- the Home workspace uses the gilded transparent Peridot logo variant and selected licensed Adobe Stock filigree as its visible title-card lockup;
-- Home / welcome workspace with a single concise description sentence and **Use sample data** / **Upload your data** start paths;
-- hamburger-triggered labeled menu replacing the persistent icon rail as the primary visible navigation surface;
-- simplified public hamburger stack: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**, with **Themes and Accessibility** hidden from public navigation for now but retained internally;
-- full-window workspaces for Data, Visualizations, Advanced Search, Learn More, an internally retained Themes and Accessibility workspace, and Inspector-compatible evidence review paths, with Explore Your Data routing directly into Advanced Search and Inspector remaining available through visualization/evidence workflows;
-- Visualizations workspace containing Place Map, People Network, Force-Directed, Chart Visualizations, a collapsible visualization header, and a bottom timeline scrubber;
-- Chart Visualizations redesigned as a large chart workspace with controls on the left and the chart canvas on the right;
-- Chart Visualizations now use a tabbed builder with **Chart type**, **X/Y variables**, **Visible categories**, and **Presentation** tabs, plus an optional editable presentation title;
-- Analytics chart rendering now reserves the left three-fourths of the chart card for chart marks and the right fourth for a complete simplified legend/summary column;
-- chart titles/subtitles are anchored near the top of the card, bar charts default to vertical orientation, and dense chart canvases use reduced whitespace;
-- chart export consolidated into the shared Visualizations header Export menu;
-- map and network export consolidated into the same Visualizations header Export menu, replacing the standalone Export workspace route;
-- map PNG export defaults to map-only output, with optional title text above the map and optional metadata below the map using Peridot typography;
-- map legend and map controls minimized by default as bottom-corner buttons;
-- Timeline implemented as a compact bottom Visualizations scrubber with dual range handles, playback controls, and collapse/expand behavior;
-- Explore Your Data now routes directly to Advanced Search, which contains the data-exploration, capability-summary, Browse, Results, Refine / Inspect, and Inspector-adjacent evidence entry points;
-- Learn More about Peridot is now a public project-information hub with creator context, project resources, AI-method disclosures, tutorials, and help material;
-- Theme reframed as **Themes and Accessibility**;
-- Data workspace using the unified CSV/TSV/XLSX/XLS uploader;
-- Inspector implemented as a dual-mode system: compact side-panel summaries for visualization clicks plus a full evidence-dossier workspace from Expand/linked-data navigation, sharing selection and history;
-- capability-aware Visualizations menus grouping tools as Mapping Visualizations, Network Visualizations, Chart Visualizations, and Explore Your Data;
-- unavailable-state explanations for visualization types that the active dataset cannot support;
-- flexible chart variable controls for x-axis, y-axis/metric, grouping/series, aggregation, and selected wide numeric series;
-- explicit Record count support for bar, grouped bar, stacked bar, line, multi-line, histogram, pie, sunburst, and heatmap charts;
-- generic chart/evidence records accepted into the active dataset even when they have no map or network roles;
-- evidence/analysis field inclusion controls using explicit Include and Ignore checkboxes, defaulting to Include.
-
-Early MapLibre preview code has been removed from active `main`; the later `maplibre-native-geographic-view` experiment remains an archived branch experiment rather than part of the active implementation path.
-
----
-
-## Current milestone notes
-
-### Learn More project-information hub, divider choreography, and Explore folio-containment milestone
-
-- Updated the documented safe baseline to **`0c5a219` — `Add Learn More section dividers`**.
+- Recorded the then-current checkpoint as **`0c5a219` — `Add Learn More section dividers`**.
 - Replaced the earlier Learn More placeholder composition with a public project-information hub that gives project context without making the minimal Home workspace carry long onboarding material.
 - Added public creator assets and a compact creator biography with a **Read full bio** expansion path plus a CV entry point.
 - Designed the expanded biography as an editorial reading flow: the portrait appears inside the longer biography, prose wraps beside it at the opening, and later paragraphs continue beneath it.
@@ -143,11 +112,11 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Staged Learn More entrance choreography as a vertical reading sequence: each divider resolves before its following section, while the creator and GitHub cards enter together as a shared row.
 - Preserved the responsive creator/GitHub reallocation model: expanding the biography increases creator reading space while the GitHub resource card contracts but remains usable.
 - Restored the rounded Explore folio clipping boundary after a late scroll-restoration rule allowed dark inner layers to project through square corners; Explore scrolling remains on the workspace rather than the rounded folio shell.
-- Current code sequence: **`9fbd200`**, **`81f6311`**, **`7a115f7`**, **`2307d5a`**, **`39983e3`**, **`59f7d69`**, **`98cccf5`**, **`795f0f7`**, and **`0c5a219`**.
+- Historical code sequence: **`9fbd200`**, **`81f6311`**, **`7a115f7`**, **`2307d5a`**, **`39983e3`**, **`59f7d69`**, **`98cccf5`**, **`795f0f7`**, and **`0c5a219`**.
 
-### Search/Explore compact-ledger, Inspector overlay, and animation milestone
+#### Search/Explore compact-ledger, Inspector overlay, and animation milestone
 
-- Updated the documented safe baseline to **`e5f832c` — `Animate Explore workspace transitions`**.
+- Recorded the then-current checkpoint as **`e5f832c` — `Animate Explore workspace transitions`**.
 - Completed the Search/Explore Workspace redesign around a compact folio interface for **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities**.
 - Refined Build Search so the default page fits in one viewport, removed redundant empty Structured Criteria helper copy, simplified the Structured Criteria card wording, and preserved normal scrolling when users add criteria or otherwise expand the page.
 - Converted Browse into compact index ledgers with panel-scoped search fields for people/entities, places/locations, and route pairs; the Routes panel appears only when the active dataset has meaningful source-target route data.
@@ -159,9 +128,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Added gentle Explore entrance and tab-transition choreography: folio/header reveal, left-to-right step-button sequencing, slower content dissolve/rise, animated Refine panels, Results row “page-turn” filing, Browse index-row filing, and reduced-motion fallbacks.
 - Restored Explore scrolling after animation-layer testing so expanded Refine panels, Results pages, Browse lists, and criteria-heavy Build views can scroll normally.
 
-### Data mapping redesign, workbook controls, upload animation, menu, and Learn More polish milestone
+#### Data mapping redesign, workbook controls, upload animation, menu, and Learn More polish milestone
 
-- Updated the documented safe baseline to **`d04eaf6` — `Hide theme menu entry and animate learn more cards`**.
+- Recorded the then-current checkpoint as **`d04eaf6` — `Hide theme menu entry and animate learn more cards`**.
 - Redesigned the column/workbook mapping modal into a more compact Peridot folio workflow: shorter header chrome, compact step rail, Preview/Sheets/Time/Places/Relations/Evidence/Review sequencing, cream working cards, clearer right-side guidance panels, and consistent gold divider ornaments.
 - Refined Preview so uploaded tables show a compact file-preview strip and an 11-row horizontally scrollable preview table without the older large statistic cards.
 - Reworked Time, Places, Relations, and Review mapping pages so users see role-oriented controls rather than large explanatory stacks, with workbook and single-sheet paths kept visually aligned.
@@ -174,9 +143,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Removed **Themes and Accessibility** from the visible hamburger menu while retaining the internal Theme workspace mode, component, and routing path for future restoration.
 - Added matching entrance animation to the two **Learn More about Peridot** placeholder cards by reusing the existing Data workspace float-in classes.
 
-### Inspector reference-entry layout, mounted overlay, Unknown-as-place, and record-table capability milestone
+#### Inspector reference-entry layout, mounted overlay, Unknown-as-place, and record-table capability milestone
 
-- Updated the documented safe baseline to **`74db963` — `Refine Inspector reference layout and record tables`**.
+- Recorded the then-current checkpoint as **`74db963` — `Refine Inspector reference layout and record tables`**.
 - Kept the Visualizations workspace mounted behind the full Inspector overlay so opening/closing the full Inspector no longer reloads or replays the underlying map/network/chart workspace.
 - Suppressed Visualizations header/timeline hide-show buttons while the full Inspector overlay is open so those controls do not layer above the Inspector.
 - Fixed Inspector related-person navigation from geographic/place contexts by preserving the people-graph fallback through selection resolution; related person and related place navigation now share the same full-workspace Inspector pathway and Back history.
@@ -189,9 +158,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Shifted Inspector wording from correspondence-only language toward generic humanistic-data language: related records / connected records, person/entity, connected places, connected people, and directed connections.
 - Updated Inspector filigree assets and divider styling so the full and compact Inspector can use thin unobtrusive gold ornaments without relying on heavy glow/diamond fallback effects.
 
-### Workspace animation, chart-builder polish, force-network focus, and Inspector styling milestone
+#### Workspace animation, chart-builder polish, force-network focus, and Inspector styling milestone
 
-- Updated the documented safe baseline to **`bd9b807` — `Refine inspector workspace styling`**.
+- Recorded the then-current checkpoint as **`bd9b807` — `Refine inspector workspace styling`**.
 - Added staged entrance choreography for Home, Manage Your Data, Visualizations, Timeline controls, and Chart Visualizations.
 - Added visualization-stage transitions that fade the outgoing view into a solid dark-green field and fade directly into the next visualization without a loading label or intentional hold.
 - Added left-to-right timeline element sequencing after the timeline bar itself floats into place.
@@ -202,9 +171,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Suppressed visualization header/timeline hide-show toggles when the full Inspector workspace is open, while preserving those controls in ordinary Visualizations mode.
 - Recorded an open Inspector behavior issue for a fresh diagnostic pass: related-person navigation from some Inspector contexts opens the blank state; related-place navigation is working. The failed attempted fix touched `interactionHelpers.js` and `InspectorClusterView.jsx` and was rolled back with a clean tree.
 
-### Home title-card, map export options, branding assets, and capability wording milestone
+#### Home title-card, map export options, branding assets, and capability wording milestone
 
-- Updated the documented safe baseline to **`68f99da` — `add some homepage assets`**.
+- Recorded the then-current checkpoint as **`68f99da` — `add some homepage assets`**.
 - Renamed the local source-of-truth folder in documentation to `C:\Users\haley\OneDrive\Desktop\Peridot\`.
 - Updated the repository URL in documentation to `https://github.com/haleyrp1803/peridot-humanistic-data`.
 - Redesigned the Home workspace as an informative-minimalist fixed-ratio title-card composition.
@@ -223,13 +192,13 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Clarified Data/Advanced Search/Visualizations capability wording: internal capability diagnostics were removed from user-facing review; point and route map readiness language was combined/clarified where appropriate; unavailable visualization language now says the visualization is **not available** for the dataset rather than **limited**.
 - Confirmed point/site datasets such as Alaskan Airfields do not incorrectly advertise relational route/network readiness when no source-target relationships are mapped.
 
-### Peridot logo and home-workspace branding milestone
+#### Peridot logo and home-workspace branding milestone
 
 - Added the user-designed Peridot logo assets to `assets/` as `Peridot Logo.png` and `Peridot Logo Transparent.png`.
 - Integrated the transparent-background logo into the Home workspace hero while preserving an accessible hidden `h1` for the app name.
 - Documented the logo asset locations in README, Maintainer Guide, and Workflow Charter so future branding passes keep the app and documentation synchronized.
 
-### Theme, visualization chrome, map palette, and Analytics chart layout/theme milestone
+#### Theme, visualization chrome, map palette, and Analytics chart layout/theme milestone
 
 - Routed Inspector and related evidence surfaces through semantic theme roles so color changes are controlled from the central theme system rather than scattered component constants.
 - Preserved the Peridot ornamental folio language while tightening visualization chrome, including header tabs, edge handles, map utility buttons, collapse/expand affordances, and chart control surfaces.
@@ -255,9 +224,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Restored Bar Chart default orientation to **Vertical**, while keeping horizontal orientation available.
 - Scoped chart-targeted palette imports so **Charts** changes update `analytics.series` without recoloring app chrome.
 - Routed remaining bar, histogram, and heatmap marks through the active chart series palette so every chart type responds to explicit chart-palette imports.
-- Current implemented Analytics/theme baseline: **`e50ebf6` — `Scope chart palette imports to chart series`**.
+- Then-current Analytics/theme baseline: **`e50ebf6` — `Scope chart palette imports to chart series`**.
 
-### Advanced Search / Explore consolidation milestone
+#### Advanced Search / Explore consolidation milestone
 
 - Routed **Explore Your Data** directly to Advanced Search from both the hamburger menu and the Visualizations header.
 - Moved the former "what this data can do" capability summary into a dedicated **Capabilities** tab inside Advanced Search.
@@ -269,9 +238,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Added structured criteria rows with predictive suggestions and an increased five-row cap.
 - Added Boolean structured-search logic with user-facing connectors: first criterion starts the group, later criteria use **AND**, **OR**, or **EXCLUDING**.
 - Preserved the core draft/apply model: typing, suggestions, Browse selections, facet selections, and structured criteria edits change draft state only until **Apply Filters** is pressed.
-- Current implemented Advanced Search baseline: **`d52392a` — `Add capabilities tab to advanced search`**.
+- Then-current Advanced Search baseline: **`d52392a` — `Add capabilities tab to advanced search`**.
 
-### Structural cleanup, commenting, and scope-contract milestone
+#### Structural cleanup, commenting, and scope-contract milestone
 
 - Added developer-orientation comments across the source tree so a new human developer can understand major sections, cross-file responsibilities, fragile compatibility paths, and non-obvious state coupling.
 - Added `planning_documents/PERIDOT_CODE_STRUCTURE_AUDIT.md` as the standing structural audit and cleanup roadmap.
@@ -283,9 +252,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Documented the Analytics chart-extension contract across config, derivation, rendering, panel, and visualization-header files.
 - Removed dormant MapLibre preview files and dependency from active `main`.
 - Documented the loaded/filter/timeline/playback/export scope pipeline and clamped chart-local date ranges so chart animation does not get stuck on stale time selections.
-- Current implemented structural-cleanup baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**.
+- Then-current structural-cleanup baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**.
 
-### Visualization workspace compression, menu simplification, timeline, and export consolidation milestone
+#### Visualization workspace compression, menu simplification, timeline, and export consolidation milestone
 
 - Redesigned Chart Visualizations from a compact chart-picker panel into a large chart workspace with controls on the left and a full-size chart canvas on the right.
 - Removed the redundant chart-workspace header and scaled chart rendering so charts fit the available workspace without internal scrolling.
@@ -299,9 +268,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Moved map/network export actions into the Visualizations header Export menu.
 - Moved chart PNG export out of the chart controls rail and into the same Visualizations header Export menu.
 - Removed the obsolete standalone Export workspace route and deleted `src/PeridotExportWorkspace.jsx` from the active source tree.
-- Current implemented visualization-workspace/export baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**.
+- Then-current visualization-workspace/export baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**.
 
-### Visualization capability and flexible Analytics milestone
+#### Visualization capability and flexible Analytics milestone
 
 - Added capability-aware Visualizations workspace menus for Mapping Visualizations, Network Visualizations, Chart Visualizations, and Explore Your Data.
 - Added readable availability labels, forgiving hover behavior, and unavailable-state explanations when a dataset cannot support a selected map, network, or chart view.
@@ -309,17 +278,17 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Generalized Analytics chart controls around user-selected x-axis/category fields, y-axis/metric fields, aggregation, grouping/series fields, heatmap rows/columns, histogram distributions, and selected wide numeric series.
 - Made **Record count** an explicit metric for aggregate chart types, including histogram and sunburst.
 - Cleaned chart language so generic record/metric charts no longer imply that all values are letters.
-- Current implemented flexible-Analytics baseline: **`ab7affa` — `Clean up flexible Analytics chart controls`**.
+- Then-current flexible-Analytics baseline: **`ab7affa` — `Clean up flexible Analytics chart controls`**.
 
-### Generic chart/evidence record and mapping-field inclusion milestone
+#### Generic chart/evidence record and mapping-field inclusion milestone
 
 - Generalized user-facing app language beyond correspondence-only wording while preserving compatibility terms and legacy internal names where still required.
 - Added generic chart/evidence row admission so chart-first and evidence-first datasets can enter the active dataset without map or network roles.
 - Kept map and network availability capability-based: generic chart records can be chart-ready and export-ready while remaining unmappable and non-network-ready.
 - Replaced the Evidence and analysis include/ignore dropdown control with explicit **Include** and **Ignore** checkboxes per field, defaulting to Include.
-- Current implemented generic-record and evidence-field UI baseline: **`08b628b` — `Use include and ignore checkboxes for evidence fields`**.
+- Then-current generic-record and evidence-field UI baseline: **`08b628b` — `Use include and ignore checkboxes for evidence fields`**.
 
-### Data capability and role-based mapping milestone
+#### Data capability and role-based mapping milestone
 
 - Added `planning_documents/PERIDOT_DATA_CAPABILITY_MODEL_PLAN.md` to define Peridot's broader humanistic-data capability model.
 - Added `src/peridotDataCapabilityAudit.js` as a pure helper for field-role inference and dataset capability reporting.
@@ -330,16 +299,16 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Added combined coordinate-pair mapping roles for point records and source/target route records, using latitude-first pairs.
 - Preserved existing correspondence route/network behavior while allowing non-network point/site datasets to import and render in Place Map.
 - Confirmed that point/site datasets without source-target relationships correctly do not populate People Network or Force-Directed views.
-- Current implemented data-capability baseline: **`e7c3b57` — `Add point-location role mapping`**.
+- Then-current data-capability baseline: **`e7c3b57` — `Add point-location role mapping`**.
 
-### Home/workspace visual-system milestone
+#### Home/workspace visual-system milestone
 
 - Refined the Home workspace layout and menu access.
 - Removed Home navigation from active workspaces.
 - Applied the Home-style visual system to full workspaces.
 - Standardized most workspace button hover/highlight states around the existing gold-brown accent.
 
-### Dual-mode Inspector workspace milestone
+#### Dual-mode Inspector workspace milestone
 
 - Added `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md` to define the compact/full Inspector model.
 - Prepared `InspectorPanel.jsx` as a reusable Inspector content boundary.
@@ -354,9 +323,9 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Made linked-letter source/target people and places clickable.
 - Made compact summary tiles open the full Inspector workspace for the same selected entity.
 - Made directed route rows open route/edge Inspector dossiers with linked letters.
-- Current implemented Inspector baseline: **`b24e19a` — `Link Inspector directed route rows`**.
+- Then-current Inspector baseline: **`b24e19a` — `Link Inspector directed route rows`**.
 
-### Interface redesign and workspace-routing milestone
+#### Interface redesign and workspace-routing milestone
 
 - Added `PERIDOT_INTERFACE_REDESIGN_PLAN.md` to define the shift from a map-first side-panel app toward a multimodal correspondence data exploration workspace.
 - Added internal workspace state and extracted workspace configuration into `src/peridotWorkspaceConfig.js`.
@@ -372,7 +341,7 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Deferred Timeline promotion; the preferred future design is now a bottom timeline/scrubber integrated with Visualizations.
 - Deferred Inspector promotion pending a careful full evidence-dossier design contract.
 
-### Workbook / Excel import and Inspector profile milestone
+#### Workbook / Excel import and Inspector profile milestone
 
 - Added workbook-aware staging and parsing for CSV, TSV, XLSX, and XLS files.
 - Added workbook mapping helpers that model primary record sheets, sheet/column references, core Peridot field mappings, and unique-ID joins.
@@ -386,7 +355,7 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Fixed place-profile fallback behavior so places clicked from profile lists can resolve from linked-record metadata.
 - Removed redundant top-level Inspector fields once the richer profile sections covered the same information.
 
-### Arbitrary column mapping and workbook-parsing milestone
+#### Arbitrary column mapping and workbook-parsing milestone
 
 - Added `src/peridotColumnMapping.js` to define column-mapping helpers for mapping user-uploaded tables into Peridot’s internal field model.
 - Added `src/PeridotColumnMappingModal.jsx` as the large mapping workspace for arbitrary CSV/TSV imports.
@@ -396,7 +365,7 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Added `src/peridotWorkbookParsing.js` as the workbook parsing helper for the planned Excel path.
 - Removed the ordinary legacy three-file upload workflow after the one-file/mapped-import direction became the active public data-ingestion model.
 
-### Standardized single-CSV Data Inputs milestone
+#### Standardized single-CSV Data Inputs milestone
 
 - Added `src/peridotCsvSchema.js` to define the public template columns, field groupings, minimum record rule, capability labels, and upload tips.
 - Added `src/peridotCsvNormalizer.js` to convert the public one-file template into existing internal geography, letter metadata, person metadata, and place row shapes.
@@ -405,7 +374,7 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Added an upload validation popup and kept the same information accessible after close through a persistent side-panel summary.
 - Established the database-first upload policy: accepted rows may be incomplete; coordinates and parseable dates are capability-enabling fields rather than upload-admission requirements; Peridot does not clean, standardize, merge, or enforce controlled vocabularies for uploaded user data.
 
-### Search & Filter implementation and layout milestone
+#### Search & Filter implementation and layout milestone
 
 - Implemented the dedicated **Search & Filter** rail tab and promoted it from planning contract to active global-filtering UI.
 - Search & Filter owns draft/apply controls for keyword search, person filter, place filter, **Route Filter (Place)**, **Route Filter (People)**, minimum correspondence weight, and date range.
@@ -415,14 +384,14 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Pre-update status feedback appears before expensive full-dataset recomputation begins.
 - Later visual refinements converted Search & Filter from stacked explanatory cards into a compact advanced-search form.
 
-### Analytics feature and visual-polish milestone
+#### Analytics feature and visual-polish milestone
 
 - Added the Analytics side-panel tab with chart previews, chart controls, chart descriptions, and PNG export.
 - Added multiple chart types, expanded chart controls, dynamic variable detection, route-place/route-person variables, and an expanded chart overlay.
 - Improved Analytics chart hover-tooltip contrast.
 - Refined the expanded Analytics view: dark green translucent backdrop, cool off-white text/borders, preserved blurred-map effect, and white/cream chart card.
 
-### Side-panel and cluster milestones
+#### Side-panel and cluster milestones
 
 - Consolidated the app around a shared left-side panel shell with a persistent rail.
 - Added dedicated rail tabs for Data Inputs, Search & Filter, Export, Timeline, Analytics, Controls, and Inspector.
@@ -430,115 +399,7 @@ Early MapLibre preview code has been removed from active `main`; the later `mapl
 - Made clusters actionable in the inspector, grouped cluster members by place, and made cluster sizing reflect represented letter volume.
 
 ---
-
-## Current branch status
-
-- **`639e30f` — `Extract Inspector stylesheet`** is the current synced `main` head in the most recent post-commit ritual.
-- **`f7e885c` — `Extract Analytics stylesheet`**, **`19acc89` — `Extract Search workspace stylesheet`**, and the preceding Mapping/Learn More cleanup commits form the immediately preceding structural sequence.
-- The working tree was clean and `main`, `origin/main`, and `origin/HEAD` were aligned after the Inspector extraction.
-
-
-- **`0c5a219` — `Add Learn More section dividers`** is the current documented `main` baseline and code head supplied by the most recent sync ritual.
-- **`795f0f7` — `Restore Explore folio corner containment`** restores rounded Explore folio clipping while retaining workspace scrolling.
-- **`98cccf5` — `Warm Learn More parchment surfaces`** warms the creator, AI-disclosure, and Tutorials reading cards.
-- **`59f7d69` — `Refine Learn More expanded biography layout`** establishes the biography’s editorial portrait/text flow and top-row expansion behavior.
-- **`39983e3` — `Refine Learn More project information layout`** introduces the project-information hub composition.
-- **`2307d5a` — `Stabilize visualization header entrance and Explore folio frame`** preserves one-time Visualizations header entrances and repairs earlier Explore frame behavior.
-- **`7a115f7` — `Fix Explore folio frame clipping`** records the earlier folio frame fix.
-- **`81f6311` — `Add Learn More author assets`** tracks the public creator headshot/CV assets.
-- **`9fbd200` — `Expand Learn More author and GitHub sections`** establishes the expandable creator/GitHub content direction.
-- **`e5f832c` — `Animate Explore workspace transitions`** is the current documented `main` baseline and current head in the provided sync ritual.
-- **`d3e4625` — `Open Inspector over Explore workspace`** keeps Explore mounted underneath full Inspector handoff so researchers can close the Inspector and return to the same Explore state.
-- **`7942fda` — `Convert Explore Browse to compact ledgers`** converts Browse to route-aware entity/place/route ledgers with panel-scoped searches.
-- **`efd6d95` — `Compact Explore Build and Capabilities layouts`** tightens Build and Capabilities spacing and copy after the Explore visual redesign.
-- **`a793c06` — `Make Explore Refine facets route-aware`** removes route-only facet behavior from point-only datasets while preserving route facets for relationship data.
-- **`3e96f59` — `Refine Explore facet panel behavior`** adds compact Refine cards with clean expansion behavior.
-- **`7e5df91` — `Polish Explore Results ledger density`** tunes Results rows after the Inspector-style pagination pass.
-- **`dd09003` — `Match Explore Results pagination to Inspector`** adds Inspector-style pagination to Explore Results.
-- **`1542c04` — `Refine Explore Results ledger`** establishes the compact Results ledger model.
-- **`342e606` — `Simplify upload step transitions`** accepts the opacity-only mapping step transition after carousel/fade experiments.
-- **`35946d4` — `Animate upload mapping transitions`** records the checkpointed upload-mapping entrance/carousel animation pass.
-- **`18419a5` — `Refine workbook sheet assembly layout`** redesigns the workbook Sheets step as a compact two-column assembly page.
-- **`3d2704e` — `Refine workbook mapping controls`** replaces workbook sheet/column stacks with combined field selectors and simplifies workbook Evidence labels.
-- **`e12862c` — `Refine review warning display`** consolidates Review warnings and removes over-prioritized warning styling.
-- **`4330312` — `Refine preview and places mapping details`** finalizes compact Preview and Places mapping treatments.
-- **`b9c113c` — `Refine relationship mapping layout`** compacts the Relations mapping page.
-- **`d3bda6f` — `Refine places mapping layout`** establishes the compact Places mapping structure.
-- **`74db963` — `Refine Inspector reference layout and record tables`** is the preceding documented Inspector/reference baseline.
-- **`d6baedf` — `Refine Inspector reference layout and record tables`** is the preceding Inspector reference-layout commit in the current two-commit sequence.
-- **`05fe40f` — `Keep visualizations mounted behind Inspector overlay`** keeps Visualizations mounted behind the full Inspector overlay and suppresses visualization hide/show controls while the full Inspector is open.
-- **`306650f` — `Fix Inspector person navigation from geographic context`** fixes related-person Inspector navigation from geographic/place contexts.
-- **`2bd6b3a` — `Center force network on dense cluster`** centers the Force-Directed Network on the densest information cluster / strongest local node neighborhood on initial load.
-- **`7c1f9fd` — `Polish chart builder controls`** updates Chart Visualizations tab labels and control styling, adds gold interactable treatment, and preserves side-panel scrolling/dropdown layering.
-- **`6dfd4c6` — `Animate chart workspace reveal`** adds the one-time guided Chart Visualizations reveal and muted chart-builder panel treatment.
-- **`7af288f` — `Refine visualization workspace transitions`** adds staged visualization entrance choreography and the solid-green view transition behavior.
-- **`ef8e188` — `Add workspace entrance animations`** adds shared Home/Data/Visualizations entrance animation utilities and reduced-motion handling.
-- **`3777fbc` — `Correct filigree asset spelling`** standardizes filigree asset filenames and references.
-- **`f8ea541` — `add a filegree asset`** tracks the added filigree design asset.
-- **`6f008ce` — `Redesign data workspace landing page`** redesigns the Manage Your Data landing surface around three primary start paths.
-- **`68f99da` — `add some homepage assets`** remains the preceding homepage-asset baseline.
-- **`bb971a5` — `Redesign Peridot homepage`** implements the fixed-ratio Home title-card composition with the gilded logo, filigree framing, concise sentence, and two CTA buttons.
-- **`e0d2399` — `Finalize map export options and ignore design source files`** finalizes map-only default PNG export, optional title/metadata annotations, and ignored design-source handling.
-- **`499acc7` — `Improve map export annotation readability`** increases annotation readability and anchors title/metadata placement around the exported map image.
-- **`d835953` — `Clarify capability and availability wording`** updates user-facing capability language across Data, Advanced Search, and Visualizations.
-- **`97843c7` — `Refine capability wording for point datasets`** refines point/site dataset capability messages.
-- **`7d2b888` — `Fix route capability wording for point datasets`** prevents point-only datasets from being described as route/relationship-ready.
-- **`212fb4a` — `Track Peridot branding and palette assets`** tracks chart-color, palette-upload-guide, and related branding assets.
-- **`72bcae7` — `Add Peridot logo branding assets`** adds the initial Peridot logo assets.
-- **`954f553` — `Refresh documentation for analytics layout and theme milestone`** is the preceding documentation baseline after the analytics layout/theme pass.
-- **`e50ebf6` — `Scope chart palette imports to chart series`** remains the current implemented chart-palette baseline.
-- **`6334840` — `Route remaining analytics chart marks through theme series`**
-- **`db2bea6` — `Anchor analytics chart titles and restore vertical bar default`**
-- **`a1ce00a` — `Tighten analytics chart canvas spacing`**
-- **`69ea23a` — `Simplify analytics legend rows`**
-- **`b868bb3` — `Add analytics chart method labels`**
-- **`b0a4b65` — `Improve analytics bar labels and metric options`**
-- **`8b3ead9` — `Resize analytics builder for quarter-panel layout`**
-- **`f9a74fd` — `Refine tabbed analytics builder proportions`**
-- **`d7f10c9` — `Add tabbed analytics chart builder`**
-- **`880cfff` — `Add manual analytics series selection`** adds manual category/series selection across chart types and preserves compatible settings while switching chart views.
-- **`cd7dfff` — `Fix grouped chart count buckets`** corrects grouped bar and multi-line record-count buckets.
-- **`699e33a` — `Default chart date axis to year`** makes Year the default ordered date axis while keeping Full date available.
-- **`805f770` — `Harden analytics chart logic`** hardens chart derivation for grouped, stacked, part-to-whole, histogram, heatmap, and line/multi-line cases.
-- **`8f55a47` — `Add finite chart color library`** adds the fixed Peridot chart series palette.
-- **`7396864` — `Add light navy sea map treatment`** and the preceding theme/chrome commits rebalance map palette, visualization chrome, and theme-role routing.
-- **`10f6e19` — `Polish analytics chart axes and summary panels`** is the prior documented Analytics baseline before the tabbed-builder, shared-layout, and chart-theme override milestone.
-- **`3d296cb` — `Route Explore directly to advanced search`** routes Explore entry points from the hamburger menu and Visualizations header directly to Advanced Search.
-- **`37f2755` — `Clarify structured search Boolean labels`** updates structured-search terminology to first criterion plus AND / OR / EXCLUDING connectors.
-- **`13fd533` — `Add Boolean structured search criteria`** adds Boolean structured criteria logic.
-- **`86952c8` — `Improve advanced search moss contrast`** improves Advanced Search visual hierarchy with moss-green card contrast.
-- **`d7b0e2f` — `Add dataset-wide advanced search browse indexes`** adds Browse indexes for people/entities, places, routes, and evidence fields.
-- **`8104739` — `Wire structured criteria filtering`** connects structured criteria to global filtering and match summaries.
-- **`c8cbd5e` — `Add structured search suggestions`** adds predictive suggestions to structured criteria.
-- **`e3c36e1` — `Condense advanced search results layout`** condenses the Results tab.
-- **`a21bbd9` — `Refine advanced search layout and palette`** converts Advanced Search to a tabbed green layout.
-- **`e12ed84` — `Add search facets and capability filters`** adds result facets and capability filters.
-- **`4dc1bdf` — `Add search result Inspector handoff`** adds search result cards and Inspector handoff.
-- **`2135c1b` — `Refresh documentation for structural cleanup milestone`** is the preceding documentation baseline after the structural-cleanup pass.
-- **`fcd2e1f` — `Document timeline scope and clamp chart date range`** is the prior structural-cleanup baseline.
-- **`84e6a4f` — `Add code structure audit planning document`** tracks the structural audit as a planning artifact.
-- **`55a368c` — `Remove dormant MapLibre preview code`** removes the old MapLibre preview files and dependency from active `main`.
-- **`876eb1d` — `Document Analytics chart extension contract`** records the coordinated chart-extension contract across Analytics files.
-- **`0f712b5` — `Add extracted evidence field controls`** adds the extracted evidence/analysis Include/Ignore control component.
-- **`338f204` — `Restore evidence action normalization helper`** fixes the evidence Include/Ignore action normalization after extraction.
-- **`1fe9f82` — `Extract column mapping field controls`** extracts repeated mapping-table field controls from the large modal.
-- **`ce7c092` — `Extract column mapping modal UI config`** extracts static mapping-modal step/group/label config.
-- **`5e8e022` — `Reduce left control panel to compact Inspector shell`** removes obsolete side-panel content while preserving compact Inspector behavior.
-- **`e8ec660` — `Extract embedded sample data from App`** moves bundled sample data out of `App.jsx`.
-- **`133fd91` — `Add developer orientation comments across source`** adds the broad source-commenting pass.
-- **`cfe8207` — `Refresh documentation for visualization workspace consolidation`** documents the visualization workspace consolidation baseline.
-- **`43fa09d` — `Remove obsolete export workspace route`** removed the standalone Export workspace route.
-- **`aca8f1f` — `Update visualization export wiring`** completes the App-level wiring for header-based visualization export.
-- **`b6eb7c0` — `Move chart export into visualization header`** consolidates chart PNG export into the shared Visualizations header Export menu.
-- **`0b0cacd` — `Simplify hamburger menu and add Explore workspace`** adds the simplified product navigation, Explore workspace, Learn More workspace, and Themes and Accessibility framing.
-- **`47aaa03` — `Remove redundant chart workspace header`** removes duplicate chart workspace chrome.
-- **`675a655` — `Fit charts to workspace and minimize map overlays`** scales charts to the available workspace and starts map overlays minimized.
-- **`b10a68b` — `Compact visualization header and timeline controls`** adds collapsible header/timeline controls and the compact dual-handle timeline layout.
-- **`b0d83fb` — `Simplify chart workspace and add bottom timeline scrubber`** introduces the large chart workspace and bottom Visualizations timeline scrubber.
-- **`7fcb348` — `Document flexible data and chart capability milestone`** documented the preceding flexible data/chart capability milestone.
-- Earlier commit history remains preserved in the full development history table below.
-
-## Deferred / rolled-back work
+## 3. Deferred, Archived, and Rolled-Back Work
 
 ### MapLibre migrated-overlay work paused / active preview removed
 
@@ -562,12 +423,21 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 ---
 
-# Full development history
+## 4. Full Development History
 
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table below is transcribed from the full commit log provided across documentation passes, newest first. The newest rows reflect the sync ritual ending at `639e30f`.
+
+
+This is the single authoritative place in the documentation for the cumulative commit trajectory. The table is retained exhaustively, newest first. New rows are appended during synchronized documentation passes.
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-06-21 | `a9b9c81` | Add core documentation restructuring plan | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-21 | `70d8b31` | Move documentation governance protocol to core documentation |  |
+| 2026-06-21 | `6d05409` | Add core documentation governance protocol |  |
+| 2026-06-21 | `dc5f20b` | Add core documentation governance protocol |  |
+| 2026-06-21 | `58fdd08` | Refresh README screenshots and preserve interface history |  |
+| 2026-06-21 | `7df46a8` | Restore extracted workspace stylesheet imports |  |
+| 2026-06-21 | `8f2d1ca` | Refine feedback form and visualization control layering |  |
 | 2026-06-21 | `639e30f` | Extract Inspector stylesheet | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-06-21 | `f7e885c` | Extract Analytics stylesheet |  |
 | 2026-06-21 | `19acc89` | Extract Search workspace stylesheet |  |
