@@ -65,12 +65,7 @@ import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace
 import { PeridotExploreWorkspace } from './PeridotExploreWorkspace';
 import { PeridotLearnMoreWorkspace } from './PeridotLearnMoreWorkspace';
 import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
-import {
-  buildPeridotSearchRecords,
-  rowMatchesSearchCapabilityFilter,
-  rowMatchesSearchText,
-  rowMatchesStructuredCriteria,
-} from './peridotSearchResultHelpers.js';
+import { rowMatchesSearchCapabilityFilter, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
 import {
   DEFAULT_PERIDOT_WORKSPACE_MODE,
   PERIDOT_WORKSPACE_MODES,
@@ -1043,7 +1038,18 @@ function filterRowsBySearchAndEntity(rows, {
       return true;
     }
 
-    return rowMatchesSearchText(row, q);
+    return matchesFilterTerm([
+      row.date,
+      row.parsedDate?.monthKey,
+      row.sourceLoc,
+      row.targetLoc,
+      row.sourcePerson,
+      row.targetPerson,
+      row.sourcePlaceId,
+      row.targetPlaceId,
+      placeRouteLabel,
+      personRouteLabel,
+    ], q);
   });
 }
 
@@ -3447,47 +3453,34 @@ export default function EuropeNetworkMapApp() {
     } : normalizeGeographyRows(geographyRows)),
     [peridotNormalizedData, geographyRows]
   );
-  /*
-   * Search evaluates a complete research record, not the compact map row alone.
-   * New one-file/mapped imports join through `recordId`; the bundled historical
-   * sample uses the strict validated-parallel compatibility path documented in
-   * `buildPeridotSearchRecords`.
-   */
-  const searchRecords = useMemo(
-    () => buildPeridotSearchRecords(normalizedRows, normalizedLetters, {
-      allowValidatedParallelRows: !peridotNormalizedData,
-    }),
-    [normalizedRows, normalizedLetters, peridotNormalizedData],
-  );
-  const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(searchRecords), [searchRecords]);
+  const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(normalizedRows), [normalizedRows]);
 
   // ------------------------------------------------------------
   // Timeline / filter / playback scope contract
   // ------------------------------------------------------------
-  // `searchRecords` is the loaded dataset after parsing, normalization, and
-  // exact metadata linking. It is the broadest row scope evaluated by Search
-  // and remains map-compatible because each record retains its geography row.
+  // `normalizedRows` is the loaded dataset after parsing, validation, and
+  // normalization. It is intentionally the broadest row scope in the app.
   //
-  // The active visualization/export scope is narrowed in this order:
+  // Search scope and visualization scope deliberately diverge after committed
+  // filters are applied:
   // 1. `timelineWindowRows` applies the global timeline range when Timeline is
   //    not in "all dates" mode.
-  // 2. `filteredRowsForActiveFilters` applies the committed Search & Filter
-  //    text/entity filters on top of that timeline window.
-  // 3. `selectedRowsForPlayback` sorts the filtered window into playback order.
-  // 4. `filteredRowsByTime` applies the current playback progress and becomes
-  //    the row scope for graph/map/network rendering.
+  // 2. `filteredRowsForActiveFilters` applies committed Search & Filter
+  //    conditions on top of that timeline window. This is the authoritative
+  //    scope for Advanced Search Results and Refine facets.
+  // 3. `selectedRowsForPlayback` sorts that committed scope into playback order.
+  // 4. `filteredRowsByTime` applies only current playback progress. It is the
+  //    narrower scope for graph/map/network rendering and visualization export.
   //
-  // This ordering is fragile but intentional. Search and timeline both affect
-  // which records are visible; playback only limits visibility within the
-  // already-filtered set. Header export uses the derived graph produced from
-  // `filteredRowsByTime`, so export follows the same visible scope as the
-  // current visualization rather than the full uploaded dataset.
+  // Playback must never redefine Search Results or Refine. Moving the playback
+  // scrubber may change visible map/network content, but it must not change the
+  // count, rows, or facets of the already committed Search scope.
   //
   // Analytics has one additional local date-range concept inside
   // `AnalyticsPanel.jsx`. That chart-local range is not the same state as the
   // global timeline scrubber below, so do not merge or rename those states
   // without first defining the desired cross-workspace filtering semantics.
-  const timelineMonths = useMemo(() => buildTimelineMonths(searchRecords), [searchRecords]);
+  const timelineMonths = useMemo(() => buildTimelineMonths(normalizedRows), [normalizedRows]);
 
   useEffect(() => {
     if (!timelineMonths.length) {
@@ -3502,8 +3495,8 @@ export default function EuropeNetworkMapApp() {
   }, [timelineMonths.length]);
 
   const timelineWindowRows = useMemo(() => {
-    return filterRowsByTimelineWindow(searchRecords, timelineMode, timelineMonths, rangeStart, rangeEnd);
-  }, [searchRecords, timelineMode, timelineMonths, rangeStart, rangeEnd]);
+    return filterRowsByTimelineWindow(normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd);
+  }, [normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd]);
 
   const filteredRowsForActiveFilters = useMemo(() => {
     return filterRowsBySearchAndEntity(timelineWindowRows, {
@@ -4729,7 +4722,10 @@ export default function EuropeNetworkMapApp() {
     setTimelineMode,
     setIsPlaying,
     setPlaybackIndex,
-    searchRows: filteredRowsByTime,
+    // Results and Refine use the committed Search + timeline-window scope.
+    // They intentionally ignore playback progress. The graph prop remains
+    // playback-visible, so map/network animation continues independently.
+    searchRows: filteredRowsForActiveFilters,
     browseRows: normalizedRows,
     evidenceBrowseRows: normalizedLetters,
     onInspectSearchResult: openInspectorSearchResult,
