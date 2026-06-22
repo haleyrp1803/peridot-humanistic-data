@@ -4,16 +4,6 @@
   <img src="../assets/Peridot%20Logo%20Gilded.png" alt="Peridot logo" width="360" />
 </p>
 
-## Executive Summary
-
-Peridot is an open, research-oriented web application for exploring humanistic tabular data through maps, networks, timelines, charts, search, export, and evidence dossiers. It supports correspondence datasets as a mature use case as well as point/site, chart-first, and broader evidence-oriented datasets through role-based import mapping.
-
-This README is the public orientation document: it explains what Peridot does, the major research workflows it supports, how to run it locally, and where to find deeper technical and maintenance guidance. Readers seeking implementation rules should consult the Project Workflow Charter and Maintainer’s Guide; readers seeking complete development history should consult the Changelog.
-
-## Documentation reading convention
-
-The four core documents are intentionally complementary: this README provides public orientation; the Maintainer’s Guide describes current architecture and maintenance responsibilities; the Project Workflow Charter defines the required process for changes; and the Changelog preserves complete development history. Each begins with a short Executive Summary for human readers, while the detailed body remains additive and exhaustive by default.
-
 ## 1. Project title
 
 **Peridot** is the current app identity for the repository **Correspondence Visualizer**. It is a research-oriented interactive web app for exploring humanistic tabular datasets through maps, networks, timelines, charts, search/filter workflows, exports, and evidence dossiers. Correspondence networks remain the mature first case, but Peridot now also supports point/site datasets, chart-first time-series datasets, and generic evidence records that do not require people or network relationships.
@@ -30,42 +20,11 @@ This repository represents an **active prototype / research tool in ongoing deve
 
 The current documented safe baseline is:
 
-- **`639e30f` — `Extract Inspector stylesheet`** on branch **`main`**
+- **`0c5a219` — `Add Learn More section dividers`** on branch **`main`**
 
 This baseline records the active D3/SVG Peridot path after the workspace-routing milestone, the completed dual-mode Inspector implementation cluster, the broader humanistic-data capability milestone, the visualization-workspace compression/navigation/export consolidation pass, the June 2026 structural cleanup/commenting pass, the Advanced Search / Explore consolidation milestone, the theme/color consolidation work, the Analytics chart-layout/theme milestone, the capability-wording cleanup, the map-export options/readability pass, and the fixed-ratio Peridot homepage redesign, plus the subsequent workspace animation, chart-builder polish, force-network centering, mounted-Inspector overlay, Inspector reference-entry, Unknown-as-place, connected-record table, Data/workbook mapping modal redesign, upload animation, hidden-theme-menu, Learn More animation, and Search/Explore workspace redesign passes. The app now uses a simplified public product menu: **Manage Your Data**, **Visualize Your Data**, **Explore Your Data**, and **Learn More about Peridot**. **Themes and Accessibility** remains implemented internally for development and future user-facing restoration, but is hidden from the hamburger menu for now. Visualizations now include a collapsible header, bottom timeline scrubber, minimized map overlays, a large chart workspace, and in-place header export controls. Analytics now uses a tabbed chart builder, quarter-width control rail, shared chart/legend layout, complete simplified legends, tightened chart-card spacing, anchored title/subtitle text, vertical Bar Chart defaults, method labels, and theme-routed chart series colors. The curated 30-color Peridot chart library is the default graph palette, while explicit chart-targeted palette imports can override chart series colors without recoloring unrelated app chrome. The upload workflow uses role-based mapping and can support point/site datasets, chart-first datasets, and generic evidence records without requiring People Network or Force-Directed readiness. Old MapLibre preview files and dependency have been removed from active `main`. The later, more ambitious MapLibre migrated-overlay work remains set aside on its separate branch and should not be treated as the active production direction unless explicitly resumed.
 
 This baseline also records the completed first public **Learn More about Peridot** information hub. Learn More is no longer a placeholder: it contains a compact/expandable creator biography with headshot and CV entry point, an open-source/GitHub resource panel, expandable AI-method disclosures, a Tutorials section, warmer parchment reading surfaces, and staged filigree dividers between major horizontal chunks. The creator biography can expand without removing the GitHub resources; its portrait lives inside the longer biography’s reading flow, with prose wrapping alongside and then beneath it. Learn More dividers use the same restrained Inspector/Explore visual language, receive their own dark-green interval, and enter before the following section. The current baseline also restores rounded clipping to the Explore folio while keeping normal Explore scrolling.
-
-## Current stylesheet architecture milestone
-
-Current documented safe baseline:
-
-- **`639e30f` — `Extract Inspector stylesheet`** on branch **`main`**
-
-The completed structural sequence moved component-owned stylesheet layers out of `src/index.css` while preserving the established stylesheet cascade in `src/main.jsx`:
-
-- **`264e8d9` — `Remove obsolete Data workspace stylesheet rules`**
-- **`7b9ddf3` — `Extract column mapping modal stylesheet`**
-- **`5c0532d` — `Remove residual Learn More global stylesheet rules`**
-- **`407becc` — `Remove obsolete column mapping stylesheet rules`**
-- **`19acc89` — `Extract Search workspace stylesheet`**
-- **`f7e885c` — `Extract Analytics stylesheet`**
-- **`639e30f` — `Extract Inspector stylesheet`**
-
-The active component stylesheet order is:
-
-```jsx
-import './index.css';
-import './InspectorPanel.css';
-import './AnalyticsPanel.css';
-import './PeridotSearchWorkspace.css';
-import './PeridotColumnMappingModal.css';
-import './PeridotLearnMoreWorkspace.css';
-```
-
-`index.css` remains responsible for shared/global contracts only. Search, Analytics, Inspector, Mapping, and Learn More now own their component-specific presentation rules. The Search extraction includes the ordered scroll and folio-corner containment cascade; Analytics includes builder/dropdown and reduced-motion behavior; Inspector includes compact/full/Explore dossier presentation; Mapping and Learn More retain their previously extracted visual layers.
-
-The next substantive behavior work is intentionally deferred into two separate audits: Search dataset coverage/scope and timeline playback × Analytics scope. These must not be conflated with stylesheet cleanup.
 
 The current state of the active `main` project includes:
 
@@ -138,8 +97,6 @@ The current state of the active `main` project includes:
 - clarified capability and unavailable-state wording: visualization types that cannot be supported now say they are **not available** rather than **limited**, point/route map readiness is grouped more intuitively, and the internal capability-diagnostics card has been removed from user-facing review
 - extracted sample data, mapping UI config, mapping field controls, and evidence field controls that reduce pressure on `App.jsx` and `PeridotColumnMappingModal.jsx`
 - source-wide developer-orientation comments and a tracked code-structure audit planning document
-- component-specific styles extracted into dedicated Inspector, Analytics, Search, Mapping, and Learn More stylesheet layers, with `index.css` retained as the shared/global CSS contract
-- a deferred Search coverage/scope audit and a separate deferred timeline playback × Analytics audit, both to be handled as behavior passes rather than stylesheet cleanup
 - export tooling for both images and tabular data
 - a true pre-settled **force-directed person-network layout** backed by `d3-force`
 - a **geographic-anchor person layout** that places correspondents by mappable location
@@ -328,72 +285,190 @@ Screenshots in the repository likely need refresh because the interface has chan
 
 ## 6. Screenshots
 
-### Peridot logo assets
+### Current interface examples — 2026-06-21
+
+The screenshots in this section document the active workspace-first Peridot interface as captured on **2026-06-21**. They illustrate current public navigation, data-entry, visualization, search, Inspector, Learn More, and feedback workflows. The examples use Peridot’s then-current visual system and representative data states; later feature or design refinements may change details without invalidating the underlying workflow descriptions.
+
+#### Start and navigate
+
+![Peridot Home workspace, 2026-06-21](../planning_documents/images/2026-06-21-home-workspace.png)
+
+*Home / welcome workspace, 2026-06-21: a concise entry point with sample-data and upload calls to action.*
+
+![Peridot hamburger navigation menu, 2026-06-21](../planning_documents/images/2026-06-21-hamburger-navigation-menu.png)
+
+*Public workspace navigation, 2026-06-21: the hamburger menu provides access to Data, Visualizations, Explore, and Learn More.*
+
+#### Load and map data
+
+![Peridot Data workspace, 2026-06-21](../planning_documents/images/2026-06-21-data-workspace.png)
+
+*Data workspace, 2026-06-21: the unified entry point for templates, sample data, and table or workbook upload.*
+
+![Peridot workbook mapping preview, 2026-06-21](../planning_documents/images/2026-06-21-workbook-mapping-preview.png)
+
+*Workbook role-mapping preview, 2026-06-21: users review a selected sheet before assigning time, place, relationship, evidence, and other data roles.*
+
+#### Visualize and export
+
+![Peridot Place Map workspace, 2026-06-21](../planning_documents/images/2026-06-21-place-map-visualization.png)
+
+*Place Map workspace, 2026-06-21: geographic nodes, clustered places, routes, map controls, and the integrated timeline scrubber.*
+
+![Peridot Analytics bar chart workspace, 2026-06-21](../planning_documents/images/2026-06-21-analytics-bar-chart.png)
+
+*Chart Visualizations workspace, 2026-06-21: a left-side chart builder pairs with a large chart canvas and ranked-value summary.*
+
+![Peridot chart export menu, 2026-06-21](../planning_documents/images/2026-06-21-analytics-export-menu.png)
+
+*Chart export control, 2026-06-21: Chart PNG export is available through the shared Visualizations header rather than a separate Export workspace.*
+
+![Example exported Peridot bar chart, 2026-06-21](../planning_documents/images/2026-06-21-analytics-bar-chart-export.png)
+
+*Example chart PNG output, 2026-06-21: a researcher-facing bar chart with title, selected date range, labeled values, and ranked-value summary.*
+
+<details>
+<summary><strong>Additional Analytics examples — 2026-06-21</strong></summary>
+
+![Peridot stacked bar chart, 2026-06-21](../planning_documents/images/2026-06-21-analytics-stacked-bar-chart.png)
+
+*Stacked bar chart example: annual correspondence volume segmented by selected categories.*
+
+![Peridot pie chart, 2026-06-21](../planning_documents/images/2026-06-21-analytics-pie-chart.png)
+
+*Pie chart example: selected categories compared with the wider dataset total.*
+
+![Peridot line chart, 2026-06-21](../planning_documents/images/2026-06-21-analytics-line-chart.png)
+
+*Line chart example: a selected person’s annual correspondence trend over a defined historical period.*
+
+</details>
+
+#### Explore data
+
+![Peridot Advanced Search Refine Inspect tab, 2026-06-21](../planning_documents/images/2026-06-21-search-refine-inspect.png)
+
+*Advanced Search Refine / Inspect tab, 2026-06-21: applied-result facets make people, places, routes, years, and capabilities available for further scoped refinement.*
+
+![Peridot Advanced Search structured criteria, 2026-06-21](../planning_documents/images/2026-06-21-search-structured-criteria.png)
+
+*Advanced Search structured criteria, 2026-06-21: up to five conditions can be combined through explicit AND, OR, and EXCLUDING connectors.*
+
+![Peridot Advanced Search suggestions, 2026-06-21](../planning_documents/images/2026-06-21-search-suggestions.png)
+
+*Advanced Search predictive suggestions, 2026-06-21: person/entity fields provide a constrained, scrollable suggestion list rather than a long static dropdown.*
+
+#### Inspect evidence
+
+![Peridot compact cluster Inspector over Place Map, 2026-06-21](../planning_documents/images/2026-06-21-inspector-map-cluster.png)
+
+*Compact Inspector over Place Map, 2026-06-21: a selected geographic cluster summarizes represented people and exposes cluster members in context.*
+
+![Peridot compact person Inspector over Force Directed Network, 2026-06-21](../planning_documents/images/2026-06-21-inspector-network-node.png)
+
+*Compact Inspector over Force-Directed Network, 2026-06-21: a selected person/entity retains network context while exposing connected-record and dossier actions.*
+
+#### Learn and contribute
+
+![Peridot Learn More information hub, 2026-06-21](../planning_documents/images/2026-06-21-learn-more-information-hub.png)
+
+*Learn More information hub, 2026-06-21: creator context, open-source documentation links, AI-method disclosures, and future tutorial space.*
+
+![Peridot in app feedback form, 2026-06-21](../planning_documents/images/2026-06-21-feedback-form.png)
+
+*Persistent in-app feedback form, 2026-06-21: users can submit questions, bug reports, issues, and feature suggestions directly to the project creator.*
+
+### Brand and design-reference assets
 
 ![Peridot gilded logo](../assets/Peridot%20Logo%20Gilded.png)
 
+*Peridot gilded logo asset used by the current Home workspace.*
+
 ![Peridot transparent logo](../assets/Peridot%20Logo%20Transparent.png)
 
-### Current Home workspace
+*Transparent Peridot logo asset retained for adaptable placements.*
 
-![Current Peridot homepage](../assets/Homepage%20Current%202026-06-16.png)
-
-The current Home workspace uses a fixed-ratio title-card layout: logo identity on the left, a concise description and two calls to action on the right, and licensed filigree framing on both sides. The homepage is intentionally minimal; longer onboarding material belongs in **Learn More about Peridot**.
-
-### Home layout design references
+<details>
+<summary><strong>Earlier Home layout design references — June 2026</strong></summary>
 
 ![Homepage layout mockup](../assets/Homepage%20Layout%20Mockup.png)
 
+*Earlier Home layout concept used during the fixed-ratio title-card design process.*
+
 ![Homepage layout mockup annotated](../assets/Homepage%20Layout%20Mockup%20Annotated.png)
 
-### Filigree assets
+*Annotated earlier Home layout concept documenting design decisions during development.*
 
 ![Selected homepage filigree](../assets/Adobe%20Stock%20Filigree%201.png)
 
+*Licensed Adobe Stock filigree selected for current Home framing.*
+
 ![Licensed Adobe Stock filigree full set](../assets/Adobe%20Stock%20Filigree%20Full%20Set.png)
 
-The filigree assets are licensed Adobe Stock design assets. The selected single filigree is used in the Home workspace; the divider set supports thin Inspector divider references; and the full set is retained as a broader future design-reference asset.
+*Licensed filigree reference set retained for design history and future ornamental work.*
 
-### Legacy / older screenshots
+</details>
 
-The screenshots in `docs/images/` may need refresh because the side-panel architecture, Advanced Search layout, Analytics overlay, Data Inputs workflow, cluster inspector behavior, Home workspace, export controls, and current visual design have changed materially since the earlier documentation baseline.
+### Historical interface archive — earlier development stages
 
-Existing older screenshot references:
+The screenshots below document earlier Peridot interface states. They are retained to show the project’s visual and interaction history, including the prior rail/side-panel-first workflow. They should **not** be read as instructions for the current workspace-first navigation model or as a representation of the active public interface.
 
-### Geographic view overview
+<details>
+<summary><strong>Open earlier interface records</strong></summary>
 
-![Geographic view overview](docs/images/geographic-view-overview.png)
+#### Earlier geographic view overview
 
-### Person view overview
+![Earlier geographic view overview](docs/images/geographic-view-overview.png)
 
-![Person view overview](docs/images/person-view-overview.png)
+*Earlier geographic-view interface, retained as a pre-workspace-first development record.*
 
-### Timeline and playback controls
+#### Earlier person view overview
 
-![Timeline and playback controls](docs/images/timeline-playback.png)
+![Earlier person view overview](docs/images/person-view-overview.png)
 
-### Inspector detail view
+*Earlier person-view interface, retained to document the project’s prior person-network presentation.*
 
-![Inspector detail view](docs/images/person-network-inspector.png)
+#### Earlier timeline and playback controls
 
-### Geographic inspector example
+![Earlier timeline and playback controls](docs/images/timeline-playback.png)
 
-![Geographic inspector example](docs/images/geographic-inspector.png)
+*Earlier standalone timeline/playback presentation, retained from before the current integrated Visualizations scrubber.*
 
-### Control panel overview
+#### Earlier Inspector detail view
 
-![Control panel overview](docs/images/control-panel-overview.png)
+![Earlier Inspector detail view](docs/images/person-network-inspector.png)
 
-### Additional control panel state
+*Earlier Inspector presentation, retained from before the current compact-side-panel/full-dossier dual-mode model.*
 
-![Additional control panel state](docs/images/control-panel-secondary.png)
+#### Earlier geographic Inspector example
 
-### Modern theme examples
+![Earlier geographic Inspector example](docs/images/geographic-inspector.png)
 
-![Modern theme example 1](docs/images/modern-theme-1.png)
+*Earlier geographic Inspector state, retained as a record of pre-dossier map interaction design.*
 
-![Modern theme example 2](docs/images/modern-theme-2.png)
+#### Earlier control panel overview
 
+![Earlier control panel overview](docs/images/control-panel-overview.png)
+
+*Earlier persistent control-panel layout, retained from before the current workspace-first navigation and chart-builder model.*
+
+#### Earlier additional control-panel state
+
+![Earlier additional control-panel state](docs/images/control-panel-secondary.png)
+
+*Earlier control-panel variation, retained to document incremental interface development.*
+
+#### Earlier modern-theme examples
+
+![Earlier modern theme example 1](docs/images/modern-theme-1.png)
+
+*Earlier Modern theme example, retained as a color-system development record rather than a current public-interface example.*
+
+![Earlier modern theme example 2](docs/images/modern-theme-2.png)
+
+*Earlier Modern theme example, retained as a companion color-system development record.*
+
+</details>
 
 ---
 
@@ -447,13 +522,8 @@ src/
   analyticsChartComponents.jsx
   analyticsConfig.js
   analyticsDerivationHelpers.js
-  AnalyticsPanel.css
   AnalyticsPanel.jsx
   App.jsx
-  InspectorPanel.css
-  PeridotColumnMappingModal.css
-  PeridotLearnMoreWorkspace.css
-  PeridotSearchWorkspace.css
   peridotColorPalette.js
   peridotTheme.js
   peridotThemeRoleMetadata.js
@@ -506,28 +576,11 @@ src/
 
 #### `src/main.jsx`
 
-Bootstraps the React application and establishes the functional stylesheet cascade:
-
-```jsx
-import './index.css';
-import './InspectorPanel.css';
-import './AnalyticsPanel.css';
-import './PeridotSearchWorkspace.css';
-import './PeridotColumnMappingModal.css';
-import './PeridotLearnMoreWorkspace.css';
-```
+Bootstraps the React application.
 
 #### `src/index.css`
 
-Shared/global CSS layer for Tailwind directives, document defaults, reusable interface primitives, theme/ornament contracts, Visualizations-stage transitions, timeline choreography, and global reduced-motion behavior. It should not regain component-specific workspace CSS without a deliberate architectural pass.
-
-#### Extracted component stylesheets
-
-- `src/InspectorPanel.css` — compact/full/Explore Inspector shell, interaction hierarchy, reference ground, and filigree divider treatment.
-- `src/AnalyticsPanel.css` — Chart Visualizations builder animation, stacking, interactive control, and Analytics-local reduced-motion rules.
-- `src/PeridotSearchWorkspace.css` — Advanced Search layout, animations, responsive behavior, and ordered scroll/folio-corner containment rules.
-- `src/PeridotColumnMappingModal.css` — role-based mapping and workbook modal presentation.
-- `src/PeridotLearnMoreWorkspace.css` — Learn More reading surfaces, divider choreography, biography expansion, and page-specific responsive behavior.
+Contains the minimal global layer for Tailwind directives, layout rules, and base font settings.
 
 #### `src/App.jsx`
 
@@ -948,12 +1001,6 @@ This repository includes internal maintenance and workflow documents that should
 The full commit history, through the current documented baseline, is preserved in one place in **`CHANGELOG.md`**.
 
 ## 15. Roadmap / near-term priorities
-
-1. Run the dedicated **Search coverage and scope audit** before changing Search behavior: trace loaded rows, applied rows, Browse indexes, Results pagination/limits, Refine facets, capability filters, structured criteria, and Inspector handoff.
-2. Run the dedicated **timeline playback × Analytics audit**: establish how timeline range/playback state and Analytics-local dates combine, then test chart rendering and export behavior.
-3. Perform component dead-rule audits only after the corresponding stylesheet extraction checkpoints are stable.
-4. Refresh screenshots and documentation examples once the next behavior milestones are accepted.
-
 
 Likely near-term priorities include:
 
