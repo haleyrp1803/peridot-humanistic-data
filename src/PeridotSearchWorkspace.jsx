@@ -75,6 +75,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   CAPABILITY_FILTER_OPTIONS,
+  buildPeridotMetadataFacetGroups,
   buildPeridotSearchFacets,
   buildPeridotSearchResults,
   getCapabilityFilterLabel,
@@ -104,9 +105,10 @@ const STRUCTURED_FIELD_OPTIONS = Object.freeze([
   { id: 'place', label: 'Place', placeholder: 'Place name' },
   { id: 'routePlace', label: 'Route place', placeholder: 'Rome, Florence, or Rome → Florence' },
   { id: 'routePeople', label: 'Route people', placeholder: 'Sender, recipient, or Sender → Recipient' },
+  { id: 'entityPair', label: 'Connected entity pair', placeholder: 'Two distinct connected entities' },
   { id: 'date', label: 'Date', placeholder: 'Year or date label' },
-  { id: 'evidence', label: 'Evidence / custom field', placeholder: 'Topic, language, note, citation, custom value' },
-  { id: 'evidenceFieldPresent', label: 'Evidence field present', placeholder: 'Evidence/custom field label' },
+  { id: 'metadataValue', label: 'Metadata value', placeholder: 'Italian, Medici, ambassador, or another metadata value' },
+  { id: 'metadataFieldPresent', label: 'Metadata field is present', placeholder: 'Language, Notes, Archival collection, or a custom field' },
   { id: 'capability', label: 'Capability', placeholder: 'Choose a capability' },
 ]);
 
@@ -114,6 +116,30 @@ const STRUCTURED_OPERATOR_OPTIONS = Object.freeze([
   { id: 'must', label: 'AND', shortLabel: 'AND', description: 'Keep records that match the previous criteria and this rule.' },
   { id: 'should', label: 'OR', shortLabel: 'OR', description: 'Keep records that match the previous criteria or this rule.' },
   { id: 'exclude', label: 'EXCLUDING', shortLabel: 'EXCLUDING', description: 'Remove records that match this rule.' },
+]);
+
+const STRUCTURED_GROUP_OPTIONS = Object.freeze([
+  {
+    id: 'must',
+    title: 'Required conditions',
+    description: 'Every condition in this group must match.',
+    emptyLabel: 'No required conditions yet.',
+    addLabel: '+ Add required condition',
+  },
+  {
+    id: 'should',
+    title: 'Any of these conditions',
+    description: 'At least one condition in this group must match. Leave empty to make this group optional.',
+    emptyLabel: 'No alternative conditions yet.',
+    addLabel: '+ Add alternative',
+  },
+  {
+    id: 'exclude',
+    title: 'Excluded conditions',
+    description: 'Records matching any condition in this group are removed.',
+    emptyLabel: 'No excluded conditions yet.',
+    addLabel: '+ Add exclusion',
+  },
 ]);
 
 const STRUCTURED_MATCH_MODE_OPTIONS = Object.freeze([
@@ -290,62 +316,141 @@ function createStructuredCriterion() {
     field: 'any',
     mode: 'contains',
     value: '',
+    firstMode: 'exact',
+    firstValue: '',
+    secondMode: 'contains',
+    secondValue: '',
   };
 }
 
 function normalizeDraftStructuredCriteria(criteria = []) {
   return (Array.isArray(criteria) ? criteria : [])
-    .map((criterion) => ({
-      id: criterion.id || `criterion-${Math.random().toString(16).slice(2)}`,
-      operator: STRUCTURED_OPERATOR_OPTIONS.some((option) => option.id === criterion.operator) ? criterion.operator : 'must',
-      field: criterion.field || 'any',
-      mode: criterion.mode || 'contains',
-      value: String(criterion.value ?? '').trim(),
-    }))
+    .map((criterion) => {
+      const field = criterion.field === 'evidence'
+        ? 'metadataValue'
+        : criterion.field === 'evidenceFieldPresent'
+          ? 'metadataFieldPresent'
+          : criterion.field || 'any';
+      return {
+        id: criterion.id || `criterion-${Math.random().toString(16).slice(2)}`,
+        operator: STRUCTURED_OPERATOR_OPTIONS.some((option) => option.id === criterion.operator) ? criterion.operator : 'must',
+        field,
+        metadataField: String(criterion.metadataField ?? '').trim(),
+        mode: criterion.mode || 'contains',
+        value: String(criterion.value ?? '').trim(),
+        firstMode: criterion.firstMode || 'exact',
+        firstValue: String(criterion.firstValue ?? '').trim(),
+        secondMode: criterion.secondMode || 'contains',
+        secondValue: String(criterion.secondValue ?? '').trim(),
+      };
+    })
     .filter((criterion) => {
+      if (criterion.field === 'entityPair') {
+        return criterion.firstValue && criterion.secondValue;
+      }
       const mode = STRUCTURED_MATCH_MODE_OPTIONS.find((option) => option.id === criterion.mode);
       return mode?.needsValue === false || criterion.value;
     })
     .slice(0, MAX_STRUCTURED_CRITERIA);
 }
 
+
 function StructuredCriterionRow({
   criterion,
-  index,
   onChange,
   onRemove,
   onKeyDown,
   suggestions = [],
+  metadataFieldOptions = [],
+  metadataValueSuggestions = [],
+  personSuggestionsForPair = [],
 }) {
-  const selectedOperator = STRUCTURED_OPERATOR_OPTIONS.find((option) => option.id === criterion.operator) || STRUCTURED_OPERATOR_OPTIONS[0];
   const selectedField = STRUCTURED_FIELD_OPTIONS.find((option) => option.id === criterion.field) || STRUCTURED_FIELD_OPTIONS[0];
   const selectedMode = STRUCTURED_MATCH_MODE_OPTIONS.find((option) => option.id === criterion.mode) || STRUCTURED_MATCH_MODE_OPTIONS[0];
   const needsValue = selectedMode.needsValue !== false;
   const capabilityValue = CAPABILITY_FILTER_OPTIONS.some((option) => option.id === criterion.value) ? criterion.value : '';
-  const isFirstCriterion = index === 0;
+  const isMetadataValue = criterion.field === 'metadataValue';
+  const isEntityPair = criterion.field === 'entityPair';
+  const fieldSuggestions = isMetadataValue ? metadataValueSuggestions : suggestions;
+  const entityMatchOptions = STRUCTURED_MATCH_MODE_OPTIONS.filter((option) => (
+    option.id === 'contains' || option.id === 'exact' || option.id === 'startsWith'
+  ));
 
-  return (
-    <div className="peridot-search-structured-row grid gap-2 rounded-xl border p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[0.9fr_1.15fr_0.95fr_1.35fr_auto] lg:items-end">
-      <div>
-        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-operator-${criterion.id}`}>Logic {index + 1}</label>
-        {isFirstCriterion ? (
-          <div className="peridot-search-structured-start mt-1.5 rounded-xl border px-3 py-2 text-sm font-black uppercase tracking-[0.12em] shadow-inner shadow-white/25" title="The first rule starts the structured search. Add more rules below to search AND, OR, or EXCLUDING another value.">
-            Start with
-          </div>
-        ) : (
+  if (isEntityPair) {
+    return (
+      <div className="peridot-search-structured-row grid gap-2 rounded-xl border p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[1.1fr_0.8fr_1.2fr_0.8fr_1.2fr_auto] lg:items-end">
+        <div>
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field</label>
           <select
-            id={`structured-operator-${criterion.id}`}
-            value={selectedOperator.id}
-            onChange={(event) => onChange({ ...criterion, operator: event.target.value })}
-            title={selectedOperator.description}
+            id={`structured-field-${criterion.id}`}
+            value={criterion.field}
+            onChange={(event) => onChange({ ...criterion, field: event.target.value })}
             className={INPUT_CLASS}
           >
-            {STRUCTURED_OPERATOR_OPTIONS.map((option) => (
+            {STRUCTURED_FIELD_OPTIONS.map((option) => (
               <option key={option.id} value={option.id}>{option.label}</option>
             ))}
           </select>
-        )}
+        </div>
+        <div>
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-first-mode-${criterion.id}`}>First entity</label>
+          <select
+            id={`structured-first-mode-${criterion.id}`}
+            value={criterion.firstMode || 'exact'}
+            onChange={(event) => onChange({ ...criterion, firstMode: event.target.value })}
+            className={INPUT_CLASS}
+          >
+            {entityMatchOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-first-value-${criterion.id}`}>First value</label>
+          <AutocompleteTextInput
+            id={`structured-first-value-${criterion.id}`}
+            label="First value"
+            value={criterion.firstValue || ''}
+            onChange={(nextValue) => onChange({ ...criterion, firstValue: nextValue })}
+            onKeyDown={onKeyDown}
+            placeholder="Ferdinando II de' Medici"
+            suggestions={personSuggestionsForPair || []}
+            inputClassName={INPUT_CLASS}
+            hideLabel
+          />
+        </div>
+        <div>
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-second-mode-${criterion.id}`}>Other entity</label>
+          <select
+            id={`structured-second-mode-${criterion.id}`}
+            value={criterion.secondMode || 'contains'}
+            onChange={(event) => onChange({ ...criterion, secondMode: event.target.value })}
+            className={INPUT_CLASS}
+          >
+            {entityMatchOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+          </select>
+        </div>
+        <div>
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-second-value-${criterion.id}`}>Other value</label>
+          <AutocompleteTextInput
+            id={`structured-second-value-${criterion.id}`}
+            label="Other value"
+            value={criterion.secondValue || ''}
+            onChange={(nextValue) => onChange({ ...criterion, secondValue: nextValue })}
+            onKeyDown={onKeyDown}
+            placeholder="de' Medici"
+            suggestions={personSuggestionsForPair || []}
+            inputClassName={INPUT_CLASS}
+            hideLabel
+          />
+        </div>
+        <button type="button" onClick={() => onRemove(criterion.id)} className={SECONDARY_BUTTON_CLASS + ' justify-self-start px-3 py-2 lg:justify-self-end'}>
+          Remove
+        </button>
       </div>
+    );
+  }
+
+  return (
+    <div className={`peridot-search-structured-row grid gap-2 rounded-xl border p-2.5 shadow-sm shadow-black/5 ${isMetadataValue ? 'lg:grid-cols-[1.08fr_1fr_0.9fr_1.3fr_auto]' : 'lg:grid-cols-[1.15fr_0.95fr_1.4fr_auto]'} lg:items-end`}>
       <div>
         <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field</label>
         <select
@@ -355,8 +460,8 @@ function StructuredCriterionRow({
             const nextField = event.target.value;
             onChange({
               ...criterion,
-              operator: isFirstCriterion ? 'must' : criterion.operator,
               field: nextField,
+              metadataField: nextField === 'metadataValue' ? criterion.metadataField : '',
               value: nextField === 'capability' ? '' : criterion.value,
             });
           }}
@@ -367,12 +472,30 @@ function StructuredCriterionRow({
           ))}
         </select>
       </div>
+
+      {isMetadataValue ? (
+        <div>
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-metadata-field-${criterion.id}`}>Within metadata field</label>
+          <select
+            id={`structured-metadata-field-${criterion.id}`}
+            value={criterion.metadataField || ''}
+            onChange={(event) => onChange({ ...criterion, metadataField: event.target.value })}
+            className={INPUT_CLASS}
+          >
+            <option value="">Any metadata field</option>
+            {metadataFieldOptions.map((option) => (
+              <option key={option.key} value={option.key}>{option.label}</option>
+            ))}
+          </select>
+        </div>
+      ) : null}
+
       <div>
         <label className={FIELD_LABEL_CLASS} htmlFor={`structured-mode-${criterion.id}`}>Match</label>
         <select
           id={`structured-mode-${criterion.id}`}
           value={criterion.mode}
-          onChange={(event) => onChange({ ...criterion, operator: isFirstCriterion ? 'must' : criterion.operator, mode: event.target.value })}
+          onChange={(event) => onChange({ ...criterion, mode: event.target.value })}
           className={INPUT_CLASS}
         >
           {STRUCTURED_MATCH_MODE_OPTIONS.map((option) => (
@@ -380,6 +503,7 @@ function StructuredCriterionRow({
           ))}
         </select>
       </div>
+
       <div>
         <label className={FIELD_LABEL_CLASS} htmlFor={`structured-value-${criterion.id}`}>Value</label>
         {criterion.field === 'capability' ? (
@@ -387,7 +511,7 @@ function StructuredCriterionRow({
             id={`structured-value-${criterion.id}`}
             value={capabilityValue}
             disabled={!needsValue}
-            onChange={(event) => onChange({ ...criterion, operator: isFirstCriterion ? 'must' : criterion.operator, value: event.target.value })}
+            onChange={(event) => onChange({ ...criterion, value: event.target.value })}
             onKeyDown={onKeyDown}
             className={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
           >
@@ -402,10 +526,10 @@ function StructuredCriterionRow({
             label="Value"
             value={criterion.value}
             disabled={!needsValue}
-            onChange={(nextValue) => onChange({ ...criterion, operator: isFirstCriterion ? 'must' : criterion.operator, value: nextValue })}
+            onChange={(nextValue) => onChange({ ...criterion, value: nextValue })}
             onKeyDown={onKeyDown}
             placeholder={needsValue ? selectedField.placeholder : 'No value needed'}
-            suggestions={needsValue ? suggestions : []}
+            suggestions={needsValue ? fieldSuggestions : []}
             inputClassName={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
             hideLabel
           />
@@ -417,6 +541,122 @@ function StructuredCriterionRow({
     </div>
   );
 }
+
+function StructuredCriteriaGroup({
+  group,
+  criteria,
+  onAdd,
+  onChange,
+  onRemove,
+  onKeyDown,
+  getSuggestions,
+  metadataFieldOptions,
+  getMetadataValueSuggestions,
+  canAdd,
+}) {
+  return (
+    <section className="peridot-search-structured-group rounded-xl border p-3">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h3 className="peridot-search-structured-group-title">{group.title}</h3>
+          <p className="peridot-search-helper-text mt-1 text-xs leading-5">{group.description}</p>
+        </div>
+        <span className="peridot-search-count-badge rounded-full border px-2 py-0.5 text-[0.62rem] font-black">
+          {criteria.length}
+        </span>
+      </div>
+
+      {criteria.length ? (
+        <div className="mt-3 space-y-2">
+          {criteria.map((criterion) => (
+            <StructuredCriterionRow
+              key={criterion.id}
+              criterion={criterion}
+              onChange={onChange}
+              onRemove={onRemove}
+              onKeyDown={onKeyDown}
+              suggestions={getSuggestions(criterion.field)}
+              metadataFieldOptions={metadataFieldOptions}
+              metadataValueSuggestions={getMetadataValueSuggestions(criterion.metadataField)}
+              personSuggestionsForPair={getSuggestions('person')}
+            />
+          ))}
+        </div>
+      ) : (
+        <p className="peridot-search-structured-group-empty mt-3">{group.emptyLabel}</p>
+      )}
+
+      <button
+        type="button"
+        onClick={() => onAdd(group.id)}
+        disabled={!canAdd}
+        className={SECONDARY_BUTTON_CLASS + ` mt-3 ${!canAdd ? ' opacity-55' : ''}`}
+      >
+        {group.addLabel}
+      </button>
+    </section>
+  );
+}
+
+function MetadataFacetPanel({ groups, onChooseMetadataFacet }) {
+  const [expanded, setExpanded] = useState(false);
+  const visibleGroups = expanded ? groups : groups.slice(0, 6);
+  const hiddenCount = Math.max(0, groups.length - visibleGroups.length);
+
+  if (!groups.length) return null;
+
+  return (
+    <section className="peridot-search-facet-panel peridot-search-metadata-facet-panel rounded-[1rem] border p-3 shadow-[0_10px_24px_var(--peridot-color-rgba-rgba-34-51-38-0-16)]">
+      <div className="peridot-search-refine-facet-header">
+        <div>
+          <h3 className="peridot-search-panel-heading text-[0.62rem] font-black uppercase tracking-[0.15em]">Metadata</h3>
+          <p className="peridot-search-panel-description mt-1 text-xs leading-5">
+            Select a value to add it as a required metadata refinement.
+          </p>
+        </div>
+        <span className="peridot-search-count-badge rounded-full border px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em]">
+          {groups.length} fields
+        </span>
+      </div>
+
+      <div className="peridot-search-metadata-facet-grid mt-3">
+        {visibleGroups.map((group) => (
+          <section key={group.id} className="peridot-search-metadata-field">
+            <div className="peridot-search-metadata-field-header">
+              <h4>{group.label}</h4>
+              <span>{group.recordCount} records</span>
+            </div>
+            <div className="peridot-search-refine-chip-list mt-2 flex flex-wrap gap-1.5">
+              {group.items.slice(0, 8).map((item) => (
+                <button
+                  key={`${group.id}-${item.value}`}
+                  type="button"
+                  onClick={() => onChooseMetadataFacet(group, item)}
+                  className={`${CHIP_BUTTON_CLASS} peridot-search-facet-chip`}
+                  title={`Add required metadata condition: ${group.label} exactly matches ${item.value}`}
+                >
+                  <span>{item.value}</span>
+                  <span className="peridot-search-chip-count ml-1.5 rounded-full px-1.5 py-0.5 text-[0.6rem]">{item.count}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      {hiddenCount ? (
+        <button
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+          className={DARK_BUTTON_CLASS + ' peridot-search-refine-expand-button mt-3 px-3 py-1 text-[0.62rem]'}
+        >
+          {expanded ? 'Show fewer metadata fields' : `Show all metadata fields +${hiddenCount}`}
+        </button>
+      ) : null}
+    </section>
+  );
+}
+
 
 function AutocompleteTextInput({
   id,
@@ -1153,20 +1393,45 @@ export function PeridotSearchWorkspace({
     return new Map((capabilityGroup?.items || []).map((item) => [item.value, item.count]));
   }, [searchFacetGroups]);
 
-  const evidenceFieldSuggestions = useMemo(() => {
-    const evidenceGroup = browseIndexGroups.find((group) => group.id === 'browse-evidence');
-    return (evidenceGroup?.items || []).map((item) => item.value || item.label).filter(Boolean);
-  }, [browseIndexGroups]);
+  const metadataFacetGroups = useMemo(
+    () => buildPeridotMetadataFacetGroups(searchRows),
+    [searchRows],
+  );
+  const metadataFieldOptions = useMemo(
+    () => buildPeridotMetadataFacetGroups(searchRows).map((group) => ({
+      key: group.key,
+      label: group.label,
+      items: group.items,
+    })),
+    [searchRows],
+  );
+  const metadataFieldSuggestions = useMemo(
+    () => metadataFieldOptions.map((option) => option.label),
+    [metadataFieldOptions],
+  );
 
   const getStructuredCriterionSuggestions = (fieldId) => {
     if (fieldId === 'person') return personSuggestions;
     if (fieldId === 'place') return placeSuggestions;
     if (fieldId === 'routePlace') return routePlaceSuggestions;
-    if (fieldId === 'routePeople') return routePeopleSuggestions;
+    if (fieldId === 'routePeople' || fieldId === 'entityPair') return personSuggestions;
     if (fieldId === 'date') return timelineYearSuggestions;
     if (fieldId === 'capability') return CAPABILITY_FILTER_OPTIONS.map((option) => option.label);
-    if (fieldId === 'evidence' || fieldId === 'evidenceFieldPresent') return evidenceFieldSuggestions;
+    if (fieldId === 'metadataFieldPresent' || fieldId === 'evidenceFieldPresent') return metadataFieldSuggestions;
     return [];
+  };
+
+  const getMetadataValueSuggestions = (metadataField = '') => {
+    const cleanField = String(metadataField || '').toLowerCase();
+    if (cleanField) {
+      const matching = metadataFieldOptions.find((option) => String(option.key || '').toLowerCase() === cleanField);
+      return (matching?.items || []).map((item) => item.value).filter(Boolean);
+    }
+    return metadataFacetGroups
+      .flatMap((group) => group.items || [])
+      .map((item) => item.value)
+      .filter(Boolean)
+      .slice(0, 200);
   };
 
   const activeCapabilityLabel = appliedCapabilityFilters.length
@@ -1184,9 +1449,9 @@ export function PeridotSearchWorkspace({
       counts[operator] += 1;
     });
     const parts = [];
-    if (counts.must) parts.push(`${counts.must} must`);
-    if (counts.should) parts.push(`${counts.should} OR`);
-    if (counts.exclude) parts.push(`${counts.exclude} exclude`);
+    if (counts.must) parts.push(`${counts.must} required`);
+    if (counts.should) parts.push(`${counts.should} any-of`);
+    if (counts.exclude) parts.push(`${counts.exclude} excluded`);
     return parts.join(' · ');
   };
   const activeStructuredLabel = appliedStructuredCriteria.length ? summarizeStructuredOperators(appliedStructuredCriteria) : 'None';
@@ -1316,9 +1581,11 @@ export function PeridotSearchWorkspace({
     ));
   };
 
-  const addDraftStructuredCriterion = () => {
+  const addDraftStructuredCriterion = (operator = 'must') => {
     setDraftStructuredCriteria((current) => (
-      current.length >= MAX_STRUCTURED_CRITERIA ? current : current.concat(createStructuredCriterion())
+      current.length >= MAX_STRUCTURED_CRITERIA
+        ? current
+        : current.concat({ ...createStructuredCriterion(), operator })
     ));
   };
 
@@ -1336,7 +1603,44 @@ export function PeridotSearchWorkspace({
       setDraftEndYear(item.value);
     }
     if (group.type === 'capability') toggleDraftCapabilityFilter(item.value);
-    if (group.type === 'evidenceField') setDraftSearch(item.value);
+    if (group.type === 'metadataFieldPresent' || group.type === 'evidenceField') {
+      addMetadataFieldPresenceCriterion(item.value);
+    }
+    setActiveTab('build');
+  };
+
+  const addMetadataFieldPresenceCriterion = (fieldLabel) => {
+    const nextCriterion = {
+      ...createStructuredCriterion(),
+      operator: 'must',
+      field: 'metadataFieldPresent',
+      mode: 'exact',
+      value: fieldLabel,
+    };
+    setDraftStructuredCriteria((current) => {
+      const safeCurrent = Array.isArray(current) ? current : [];
+      if (safeCurrent.length >= MAX_STRUCTURED_CRITERIA) return safeCurrent;
+      return safeCurrent.concat(nextCriterion);
+    });
+    setFilterStatusMessage('Metadata field added to required draft conditions. Apply Filters to update results.');
+  };
+
+  const chooseMetadataFacet = (group, item) => {
+    if (!group || !item) return;
+    const nextCriterion = {
+      ...createStructuredCriterion(),
+      operator: 'must',
+      field: 'metadataValue',
+      metadataField: group.key,
+      mode: 'exact',
+      value: item.value,
+    };
+    setDraftStructuredCriteria((current) => {
+      const safeCurrent = Array.isArray(current) ? current : [];
+      if (safeCurrent.length >= MAX_STRUCTURED_CRITERIA) return safeCurrent;
+      return safeCurrent.concat(nextCriterion);
+    });
+    setFilterStatusMessage('Metadata value added to required draft conditions. Apply Filters to update results.');
     setActiveTab('build');
   };
 
@@ -1351,8 +1655,8 @@ export function PeridotSearchWorkspace({
       const nextCriterion = {
         ...createStructuredCriterion(),
         operator: 'must',
-        field: 'evidenceFieldPresent',
-        mode: 'contains',
+        field: 'metadataFieldPresent',
+        mode: 'exact',
         value: item.value,
       };
       setDraftStructuredCriteria((current) => {
@@ -1569,42 +1873,41 @@ export function PeridotSearchWorkspace({
       <div className={PANEL_INSET_CLASS + ` peridot-search-build-panel peridot-search-structured-panel ${draftStructuredCriteria.length ? 'peridot-search-structured-panel-active' : 'peridot-search-structured-panel-empty'} p-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className={FIELD_LABEL_CLASS}>Structured criteria</div>
+            <div className={FIELD_LABEL_CLASS}>Structured query</div>
             <p className="peridot-search-helper-text mt-1 text-xs leading-5">
-              Add optional field-specific rules.
+              Build a visible Required / Any-of / Excluded query. Conditions within each group have the meaning stated on that group.
             </p>
           </div>
           <div className="peridot-search-draft-pill rounded-full border px-3 py-1 text-xs font-bold">
             Draft: {draftStructuredLabel}
           </div>
         </div>
-        {draftStructuredCriteria.length ? (
-          <div className="mt-3 space-y-2">
-            {draftStructuredCriteria.map((criterion, index) => (
-              <StructuredCriterionRow
-                key={criterion.id}
-                criterion={criterion}
-                index={index}
+
+        <div className="peridot-search-structured-groups mt-3">
+          {STRUCTURED_GROUP_OPTIONS.map((group) => {
+            const groupCriteria = draftStructuredCriteria.filter((criterion) => criterion.operator === group.id);
+            return (
+              <StructuredCriteriaGroup
+                key={group.id}
+                group={group}
+                criteria={groupCriteria}
+                onAdd={addDraftStructuredCriterion}
                 onChange={updateDraftStructuredCriterion}
                 onRemove={removeDraftStructuredCriterion}
                 onKeyDown={handleDraftKeyDown}
-                suggestions={getStructuredCriterionSuggestions(criterion.field)}
+                getSuggestions={getStructuredCriterionSuggestions}
+                metadataFieldOptions={metadataFieldOptions}
+                getMetadataValueSuggestions={getMetadataValueSuggestions}
+                canAdd={draftStructuredCriteria.length < MAX_STRUCTURED_CRITERIA}
               />
-            ))}
-          </div>
-        ) : null}
-        <div className="peridot-search-structured-footer mt-3 flex flex-wrap items-center justify-between gap-2">
+            );
+          })}
+        </div>
+
+        <div className="peridot-search-structured-footer mt-3">
           <p className="peridot-search-helper-text text-xs leading-5">
             Applied: {activeStructuredLabel}.
           </p>
-          <button
-            type="button"
-            onClick={addDraftStructuredCriterion}
-            disabled={draftStructuredCriteria.length >= MAX_STRUCTURED_CRITERIA}
-            className={SECONDARY_BUTTON_CLASS + (draftStructuredCriteria.length >= MAX_STRUCTURED_CRITERIA ? ' opacity-55' : '')}
-          >
-            + Add criterion
-          </button>
         </div>
       </div>
 
@@ -1896,7 +2199,7 @@ export function PeridotSearchWorkspace({
   const renderRefineInspect = () => (
     <div className="peridot-search-refine-view space-y-4">
       <SectionHeader eyebrow="Step 4" title="Refine / Inspect">
-        Facets summarize the applied result set. Clicking a facet fills draft criteria; Apply commits the refinement.
+        Facets summarize the applied result set. Metadata values remain grouped under their field headings so a Language or custom-category refinement stays precise. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>
       <ExploreDivider />
 
@@ -1908,16 +2211,24 @@ export function PeridotSearchWorkspace({
       </div>
       <ExploreDivider />
 
-      {searchFacetGroups.length ? (
-        <div className="peridot-search-refine-grid grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {searchFacetGroups.map((group) => (
-            <FacetGroup
-              key={group.id}
-              group={group}
-              activeCapabilityFilters={draftCapabilityFilters}
-              onChooseFacet={chooseFacet}
-            />
-          ))}
+      {searchFacetGroups.length || metadataFacetGroups.length ? (
+        <div className="space-y-3">
+          {searchFacetGroups.length ? (
+            <div className="peridot-search-refine-grid grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {searchFacetGroups.map((group) => (
+                <FacetGroup
+                  key={group.id}
+                  group={group}
+                  activeCapabilityFilters={draftCapabilityFilters}
+                  onChooseFacet={chooseFacet}
+                />
+              ))}
+            </div>
+          ) : null}
+          <MetadataFacetPanel
+            groups={metadataFacetGroups}
+            onChooseMetadataFacet={chooseMetadataFacet}
+          />
         </div>
       ) : (
         <div className={PANEL_INSET_CLASS + ' p-4 text-sm leading-6'}>

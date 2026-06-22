@@ -550,7 +550,44 @@ export function getCapabilityFilterLabel(filterId) {
   return CAPABILITY_FILTER_OPTIONS.find((option) => option.id === filterId)?.label || filterId;
 }
 
-function valuesForStructuredField(row, field) {
+function normalizeMetadataFieldId(value) {
+  return asText(value).toLowerCase();
+}
+
+function metadataEntriesForCriterion(row, metadataField = '') {
+  const requestedField = normalizeMetadataFieldId(metadataField);
+  const entries = getSearchableEvidenceFieldEntries(row);
+  if (!requestedField) return entries;
+
+  return entries.filter((entry) => (
+    normalizeMetadataFieldId(entry.key) === requestedField
+    || normalizeMetadataFieldId(entry.label) === requestedField
+  ));
+}
+
+function normalizeEntityPairValue(value) {
+  return asText(value).toLowerCase();
+}
+
+function rowMatchesEntityPairCriterion(row, criterion) {
+  const source = firstText(row, SOURCE_PERSON_FIELDS);
+  const target = firstText(row, TARGET_PERSON_FIELDS);
+  const sourceIdentity = normalizeEntityPairValue(source);
+  const targetIdentity = normalizeEntityPairValue(target);
+  if (!source || !target || !sourceIdentity || sourceIdentity === targetIdentity) return false;
+
+  const firstMode = criterion.firstMode || 'exact';
+  const secondMode = criterion.secondMode || 'contains';
+  const firstValue = criterion.firstValue;
+  const secondValue = criterion.secondValue;
+
+  return (
+    (valueMatchesMode(source, firstMode, firstValue) && valueMatchesMode(target, secondMode, secondValue))
+    || (valueMatchesMode(target, firstMode, firstValue) && valueMatchesMode(source, secondMode, secondValue))
+  );
+}
+
+function valuesForStructuredField(row, field, metadataField = '') {
   if (field === 'person') return SOURCE_PERSON_FIELDS.concat(TARGET_PERSON_FIELDS).map((key) => row?.[key]);
   if (field === 'place') return SOURCE_PLACE_FIELDS.concat(TARGET_PLACE_FIELDS).map((key) => row?.[key]);
   if (field === 'routePlace') {
@@ -560,11 +597,11 @@ function valuesForStructuredField(row, field) {
     return [compactRouteLabel(firstText(row, SOURCE_PERSON_FIELDS), firstText(row, TARGET_PERSON_FIELDS))];
   }
   if (field === 'date') return DATE_FIELDS.map((key) => row?.[key]).concat(row?.parsedDate?.year, row?.parsedDate?.monthKey);
-  if (field === 'evidenceFieldPresent') {
+  if (field === 'evidenceFieldPresent' || field === 'metadataFieldPresent') {
     return getSearchableEvidenceFieldEntries(row).map((entry) => entry.label);
   }
-  if (field === 'evidence') {
-    return getSearchableEvidenceFieldEntries(row).map((entry) => entry.value);
+  if (field === 'evidence' || field === 'metadataValue') {
+    return metadataEntriesForCriterion(row, metadataField).map((entry) => entry.value);
   }
   return collectSearchableFields(row).map((fieldRecord) => fieldRecord.value);
 }
@@ -585,21 +622,42 @@ function valueMatchesMode(value, mode, query) {
 }
 
 function normalizeStructuredOperator(operator) {
+  // `must` and `should` remain the persisted compatibility values. The Search
+  // workspace renders them as explicit Required and Any-of groups rather than
+  // a misleading left-to-right Boolean sequence.
   return ['must', 'should', 'exclude'].includes(operator) ? operator : 'must';
+}
+
+function normalizeStructuredField(field) {
+  if (field === 'evidence') return 'metadataValue';
+  if (field === 'evidenceFieldPresent') return 'metadataFieldPresent';
+  return field || 'any';
 }
 
 function normalizeStructuredCriteria(criteria = []) {
   return (Array.isArray(criteria) ? criteria : [])
     .map((criterion) => ({
       operator: normalizeStructuredOperator(criterion?.operator),
-      field: criterion?.field || 'any',
+      field: normalizeStructuredField(criterion?.field),
+      metadataField: asText(criterion?.metadataField),
       mode: criterion?.mode || 'contains',
       value: asText(criterion?.value),
+      firstMode: criterion?.firstMode || 'exact',
+      firstValue: asText(criterion?.firstValue),
+      secondMode: criterion?.secondMode || 'contains',
+      secondValue: asText(criterion?.secondValue),
     }))
-    .filter((criterion) => !criterionNeedsValue(criterion.mode) || criterion.value);
+    .filter((criterion) => (
+      criterion.field === 'entityPair'
+        ? criterion.firstValue && criterion.secondValue
+        : (!criterionNeedsValue(criterion.mode) || criterion.value)
+    ));
 }
 
 function rowMatchesStructuredCriterion(row, criterion) {
+  if (criterion.field === 'entityPair') {
+    return rowMatchesEntityPairCriterion(row, criterion);
+  }
   if (criterion.field === 'capability') {
     if (!criterionNeedsValue(criterion.mode)) {
       return criterion.mode === 'isNotEmpty';
@@ -612,7 +670,7 @@ function rowMatchesStructuredCriterion(row, criterion) {
     ));
     return matchingOptions.some((option) => rowMatchesSearchCapabilityFilter(row, option.id));
   }
-  const values = valuesForStructuredField(row, criterion.field);
+  const values = valuesForStructuredField(row, criterion.field, criterion.metadataField);
   if (criterion.mode === 'isEmpty') return values.every((value) => !asText(value));
   if (criterion.mode === 'isNotEmpty') return values.some((value) => asText(value));
   return values.some((value) => valueMatchesMode(value, criterion.mode, criterion.value));
@@ -648,12 +706,22 @@ function describeStructuredCriterionMatch(row, criterion) {
     place: 'Structured place',
     routePlace: 'Structured route place',
     routePeople: 'Structured route people',
+    entityPair: 'Connected entity pair',
     date: 'Structured date',
-    evidence: 'Structured evidence',
-    evidenceFieldPresent: 'Structured evidence field',
+    metadataValue: 'Metadata value',
+    metadataFieldPresent: 'Metadata field',
+    evidence: 'Metadata value',
+    evidenceFieldPresent: 'Metadata field',
     capability: 'Structured capability',
   }[criterion.field] || 'Structured criterion';
   const operatorPrefix = structuredOperatorLabel(criterion.operator);
+
+  if (criterion.field === 'entityPair') {
+    return {
+      label: `${operatorPrefix}: ${fieldLabel}`,
+      value: `${criterion.firstValue} + ${criterion.secondValue}`,
+    };
+  }
 
   if (criterion.field === 'capability') {
     const matched = CAPABILITY_FILTER_OPTIONS.find((option) => (
@@ -662,7 +730,7 @@ function describeStructuredCriterionMatch(row, criterion) {
     return { label: `${operatorPrefix}: ${fieldLabel}`, value: matched?.label || criterion.value || criterion.mode };
   }
 
-  const values = valuesForStructuredField(row, criterion.field);
+  const values = valuesForStructuredField(row, criterion.field, criterion.metadataField);
   if (criterion.mode === 'isEmpty') return { label: `${operatorPrefix}: ${fieldLabel}`, value: 'is empty' };
   if (criterion.mode === 'isNotEmpty') {
     const firstValue = values.find((value) => asText(value));
@@ -730,6 +798,64 @@ function buildCapabilityBadges(row) {
   return badges.slice(0, 5);
 }
 
+
+/*
+ * Metadata facets retain the field/value relationship that a flat evidence
+ * inventory loses. Each returned field group can therefore add a precise
+ * refinement such as Language = Italian rather than a broad text search for
+ * “Italian” anywhere in a record.
+ */
+export function buildPeridotMetadataFacetGroups(rows = [], options = {}) {
+  const fieldLimit = Number.isFinite(options.fieldLimit)
+    ? Math.max(1, options.fieldLimit)
+    : Number.POSITIVE_INFINITY;
+  const valueLimit = Number.isFinite(options.valueLimit)
+    ? Math.max(1, options.valueLimit)
+    : Number.POSITIVE_INFINITY;
+  const fields = new Map();
+
+  (Array.isArray(rows) ? rows : []).forEach((row) => {
+    const seenInRow = new Set();
+    getSearchableEvidenceFieldEntries(row).forEach((entry) => {
+      const key = asText(entry.key) || asText(entry.label);
+      const label = asText(entry.label) || key;
+      const value = asText(entry.value);
+      if (!key || !label || !value) return;
+
+      const fieldIdentity = `${key}\u0000${label}`;
+      const valueIdentity = `${fieldIdentity}\u0000${value}`;
+      if (seenInRow.has(valueIdentity)) return;
+      seenInRow.add(valueIdentity);
+
+      if (!fields.has(fieldIdentity)) {
+        fields.set(fieldIdentity, {
+          id: `metadata-${key}`,
+          key,
+          label,
+          values: new Map(),
+          recordCount: 0,
+        });
+      }
+
+      const field = fields.get(fieldIdentity);
+      field.recordCount += 1;
+      field.values.set(value, (field.values.get(value) || 0) + 1);
+    });
+  });
+
+  return Array.from(fields.values())
+    .map((field) => ({
+      id: field.id,
+      key: field.key,
+      label: field.label,
+      recordCount: field.recordCount,
+      items: facetItemsFromMap(field.values, valueLimit),
+    }))
+    .filter((field) => field.items.length > 0)
+    .sort((a, b) => a.label.localeCompare(b.label))
+    .slice(0, fieldLimit);
+}
+
 export function buildPeridotSearchFacets(rows = [], options = {}) {
   const limit = Number.isFinite(options.limit)
     ? Math.max(1, options.limit)
@@ -769,7 +895,7 @@ export function buildPeridotSearchFacets(rows = [], options = {}) {
     { id: 'placeRoutes', label: 'Place routes', type: 'routePlace', items: facetItemsFromMap(placeRoutes, limit) },
     { id: 'years', label: 'Years', type: 'year', items: facetItemsFromMap(years, limit) },
     { id: 'capabilities', label: 'Capabilities', type: 'capability', items: capabilityItems },
-    { id: 'evidenceFields', label: 'Evidence fields present', type: 'evidenceField', items: facetItemsFromMap(evidenceFields, limit) },
+    { id: 'metadataFields', label: 'Metadata fields present', type: 'metadataFieldPresent', items: facetItemsFromMap(evidenceFields, limit) },
   ].filter((group) => group.items.length > 0);
 }
 

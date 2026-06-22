@@ -2954,3 +2954,90 @@
 .peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(4) {
   animation-delay: 840ms;
 }
+
+
+/* Search query groups and metadata refinement — Pass 2.3.
+ * Keep the logical query structure visible: Required, Any-of, and Excluded
+ * groups are separate surfaces rather than a flat sequence with hidden
+ * precedence. Metadata facets retain field/value context so selections are
+ * precise (for example, Language = Italian).
+ */
+.peridot-search-workspace .peridot-search-structured-groups {
+  display: grid;
+  gap: 0.62rem;
+}
+
+.peridot-search-workspace .peridot-search-structured-group {
+  border-color: rgba(84, 99, 68, 0.30);
+  background: rgba(255, 250, 240, 0.72);
+  color: var(--explore-text-on-light);
+}
+
+.peridot-search-workspace .peridot-search-structured-group-title {
+  margin: 0;
+  color: var(--explore-text-on-light);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-structured-group-empty {
+  margin: 0.7rem 0 0;
+  border: 1px dashed rgba(84, 99, 68, 0.34);
+  border-radius: 0.75rem;
+  background: rgba(246, 239, 216, 0.72);
+  color: var(--explore-muted-on-light);
+  padding: 0.52rem 0.66rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.peridot-search-workspace .peridot-search-metadata-facet-panel {
+  background: var(--explore-field);
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-metadata-facet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.56rem;
+}
+
+.peridot-search-workspace .peridot-search-metadata-field {
+  min-width: 0;
+  border: 1px solid rgba(221, 187, 105, 0.26);
+  border-radius: 0.82rem;
+  background: rgba(6, 29, 18, 0.56);
+  padding: 0.62rem;
+}
+
+.peridot-search-workspace .peridot-search-metadata-field-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.peridot-search-workspace .peridot-search-metadata-field-header h4 {
+  min-width: 0;
+  margin: 0;
+  color: var(--explore-gold-soft);
+  font-size: 0.70rem;
+  font-weight: 900;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-metadata-field-header span {
+  flex: 0 0 auto;
+  color: var(--explore-muted-on-dark);
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+@media (max-width: 760px) {
+  .peridot-search-workspace .peridot-search-metadata-facet-grid {
+    grid-template-columns: 1fr;
+  }
+}

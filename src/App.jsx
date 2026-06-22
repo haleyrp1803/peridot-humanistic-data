@@ -65,7 +65,7 @@ import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace
 import { PeridotExploreWorkspace } from './PeridotExploreWorkspace';
 import { PeridotLearnMoreWorkspace } from './PeridotLearnMoreWorkspace';
 import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
-import { rowMatchesSearchCapabilityFilter, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
+import { buildPeridotSearchRecords, rowMatchesSearchCapabilityFilter, rowMatchesSearchText, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
 import {
   DEFAULT_PERIDOT_WORKSPACE_MODE,
   PERIDOT_WORKSPACE_MODES,
@@ -1038,18 +1038,7 @@ function filterRowsBySearchAndEntity(rows, {
       return true;
     }
 
-    return matchesFilterTerm([
-      row.date,
-      row.parsedDate?.monthKey,
-      row.sourceLoc,
-      row.targetLoc,
-      row.sourcePerson,
-      row.targetPerson,
-      row.sourcePlaceId,
-      row.targetPlaceId,
-      placeRouteLabel,
-      personRouteLabel,
-    ], q);
+    return rowMatchesSearchText(row, q);
   });
 }
 
@@ -3453,7 +3442,21 @@ export default function EuropeNetworkMapApp() {
     } : normalizeGeographyRows(geographyRows)),
     [peridotNormalizedData, geographyRows]
   );
-  const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(normalizedRows), [normalizedRows]);
+
+  /*
+   * Search records preserve every geographic field required by maps and graphs,
+   * while attaching metadata only when Peridot can establish an exact source-row
+   * relationship. Search, Results, and Refine must share this enriched row
+   * collection; using normalizedRows directly would silently omit linked
+   * Language, Archival collection, and custom-field values from Refine.
+   */
+  const searchRecords = useMemo(
+    () => buildPeridotSearchRecords(normalizedRows, normalizedLetters, {
+      allowValidatedParallelRows: !peridotNormalizedData,
+    }),
+    [normalizedRows, normalizedLetters, peridotNormalizedData],
+  );
+  const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(searchRecords), [searchRecords]);
 
   // ------------------------------------------------------------
   // Timeline / filter / playback scope contract
@@ -3480,7 +3483,7 @@ export default function EuropeNetworkMapApp() {
   // `AnalyticsPanel.jsx`. That chart-local range is not the same state as the
   // global timeline scrubber below, so do not merge or rename those states
   // without first defining the desired cross-workspace filtering semantics.
-  const timelineMonths = useMemo(() => buildTimelineMonths(normalizedRows), [normalizedRows]);
+  const timelineMonths = useMemo(() => buildTimelineMonths(searchRecords), [searchRecords]);
 
   useEffect(() => {
     if (!timelineMonths.length) {
@@ -3495,7 +3498,7 @@ export default function EuropeNetworkMapApp() {
   }, [timelineMonths.length]);
 
   const timelineWindowRows = useMemo(() => {
-    return filterRowsByTimelineWindow(normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd);
+    return filterRowsByTimelineWindow(searchRecords, timelineMode, timelineMonths, rangeStart, rangeEnd);
   }, [normalizedRows, timelineMode, timelineMonths, rangeStart, rangeEnd]);
 
   const filteredRowsForActiveFilters = useMemo(() => {
