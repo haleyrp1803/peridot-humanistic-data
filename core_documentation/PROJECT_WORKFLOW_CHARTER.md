@@ -530,9 +530,9 @@ Each implementation pass should end with:
 
 ### Fresh-chat handoff
 
-A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual. It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents.
+A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual. It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents. Each new conversation should begin by rereading the four core documents before any development work is done.
 
-For core documentation work, provide all four core documents, `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md`, and `planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md` before edits begin.
+For core documentation work, provide all four core documents and `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md` before edits begin.
 
 ### Documentation-pass completion addition
 
