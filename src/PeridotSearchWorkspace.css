@@ -2900,3 +2900,57 @@
 .peridot-search-workspace .peridot-search-folio-shell {
   overflow: hidden;
 }
+
+
+/* Explore Browse four-ledger completion, 2026-06-22.
+ * Scope: Browse tab only. The Evidence fields ledger is now a first-class
+ * fourth panel. A two-by-two desktop grid and four-row collapsed ledger keep
+ * all Browse categories visible together without forcing a default scroll at
+ * common desktop workspace sizes. Search and Show all still expose the full
+ * underlying indexes on demand.
+ */
+@media (min-width: 1181px) {
+  .peridot-search-workspace .peridot-search-browse-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.58rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-panel {
+    min-height: 0;
+    padding: 0.52rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-search {
+    margin-top: 0.44rem;
+    padding-top: 0.36rem;
+    padding-bottom: 0.36rem;
+    font-size: 0.74rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger {
+    gap: 0.18rem;
+    margin-top: 0.38rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-row {
+    padding: 0.24rem 0.30rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-name {
+    font-size: 0.73rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-number {
+    font-size: 0.66rem;
+  }
+
+  .peridot-search-workspace .peridot-search-browse-ledger-expand {
+    margin-top: 0.40rem;
+    padding-top: 0.28rem !important;
+    padding-bottom: 0.28rem !important;
+  }
+}
+
+.peridot-search-workspace-animated .peridot-search-tab-motion-browse .peridot-search-browse-ledger-panel:nth-child(4) {
+  animation-delay: 840ms;
+}

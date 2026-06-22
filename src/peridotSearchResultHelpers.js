@@ -32,8 +32,16 @@ const FIELD_LABELS = {
   targetLoc: 'Target place',
   relationshipType: 'Relationship',
   relationship: 'Relationship',
+  archivalCollection: 'Archival collection',
+  archivalPage: 'Archival page',
+  pdfPage: 'PDF page',
+  cipher: 'Cipher',
   topic: 'Topic',
   language: 'Language',
+  transcription: 'Transcription',
+  translation: 'Translation',
+  sourceTitle: 'Source title',
+  targetTitle: 'Target title',
   title: 'Title',
   citation: 'Citation',
   notes: 'Notes',
@@ -78,6 +86,22 @@ const CORE_FIELDS = new Set([
   'targetPlaceId',
   'mappable',
   'personKey',
+]);
+
+/*
+ * These fields are implementation payloads rather than researcher-facing
+ * evidence. They must not appear as Browse/Refine evidence fields, and nested
+ * objects must not be stringified into misleading “[object Object]” entries.
+ */
+const NON_EVIDENCE_FIELD_KEYS = new Set([
+  ...CORE_FIELDS,
+  'peridotCapabilities',
+  'capabilities',
+  'capabilityFlags',
+  'customInspectorFields',
+  'ignoredUploadedColumns',
+  'originalUploadedRow',
+  'originalTemplateRow',
 ]);
 
 export const CAPABILITY_FILTER_OPTIONS = Object.freeze([
@@ -160,9 +184,39 @@ function hasAnyCoordinate(row) {
   return COORDINATE_FIELDS.some((field) => hasFiniteCoordinate(row?.[field]));
 }
 
+function isSearchableScalar(value) {
+  return (
+    typeof value === 'string'
+    || typeof value === 'number'
+    || typeof value === 'boolean'
+  );
+}
+
 function collectSearchableFields(row) {
   return Object.entries(row || {})
-    .filter(([, value]) => value !== null && value !== undefined && asText(value))
+    .filter(([, value]) => value !== null && value !== undefined && isSearchableScalar(value) && asText(value))
+    .map(([key, value]) => ({
+      key,
+      label: FIELD_LABELS[key] || key.replace(/_/g, ' '),
+      value: asText(value),
+    }));
+}
+
+/*
+ * A single shared evidence-field inventory keeps Browse, Refine facets, and
+ * structured “evidence field present” criteria aligned. It deliberately keeps
+ * researcher-facing scalar metadata while excluding internal compatibility
+ * payloads and nested original-row snapshots.
+ */
+export function getSearchableEvidenceFieldEntries(row) {
+  return Object.entries(row || {})
+    .filter(([key, value]) => (
+      !NON_EVIDENCE_FIELD_KEYS.has(key)
+      && value !== null
+      && value !== undefined
+      && isSearchableScalar(value)
+      && asText(value)
+    ))
     .map(([key, value]) => ({
       key,
       label: FIELD_LABELS[key] || key.replace(/_/g, ' '),
@@ -171,9 +225,7 @@ function collectSearchableFields(row) {
 }
 
 function hasAnyEvidenceField(row) {
-  if (!row || typeof row !== 'object') return false;
-  if (EVIDENCE_FIELDS.some((field) => asText(row[field]))) return true;
-  return Object.entries(row).some(([key, value]) => !CORE_FIELDS.has(key) && asText(value));
+  return getSearchableEvidenceFieldEntries(row).length > 0;
 }
 
 function hasAnySearchableContent(row) {
@@ -201,14 +253,15 @@ function addFacetCount(map, rawValue) {
   map.set(value, (map.get(value) || 0) + 1);
 }
 
-function facetItemsFromMap(map, limit = 8) {
+function facetItemsFromMap(map, limit = Number.POSITIVE_INFINITY) {
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, limit) : Number.POSITIVE_INFINITY;
   return Array.from(map.entries())
     .map(([value, count]) => ({ value, count }))
     .sort((a, b) => {
       if (b.count !== a.count) return b.count - a.count;
       return a.value.localeCompare(b.value);
     })
-    .slice(0, limit);
+    .slice(0, safeLimit);
 }
 
 function buildResultTitle(row, index) {
@@ -293,16 +346,10 @@ function valuesForStructuredField(row, field) {
   }
   if (field === 'date') return DATE_FIELDS.map((key) => row?.[key]).concat(row?.parsedDate?.year, row?.parsedDate?.monthKey);
   if (field === 'evidenceFieldPresent') {
-    return Object.entries(row || {})
-      .filter(([key, value]) => !CORE_FIELDS.has(key) && asText(value))
-      .map(([key]) => FIELD_LABELS[key] || key.replace(/_/g, ' '));
+    return getSearchableEvidenceFieldEntries(row).map((entry) => entry.label);
   }
   if (field === 'evidence') {
-    const explicitEvidence = EVIDENCE_FIELDS.map((key) => row?.[key]);
-    const customEvidence = Object.entries(row || {})
-      .filter(([key, value]) => !CORE_FIELDS.has(key) && asText(value))
-      .map(([, value]) => value);
-    return explicitEvidence.concat(customEvidence);
+    return getSearchableEvidenceFieldEntries(row).map((entry) => entry.value);
   }
   return collectSearchableFields(row).map((fieldRecord) => fieldRecord.value);
 }
@@ -469,7 +516,9 @@ function buildCapabilityBadges(row) {
 }
 
 export function buildPeridotSearchFacets(rows = [], options = {}) {
-  const limit = Math.max(1, options.limit ?? 8);
+  const limit = Number.isFinite(options.limit)
+    ? Math.max(1, options.limit)
+    : Number.POSITIVE_INFINITY;
   const people = new Map();
   const places = new Map();
   const placeRoutes = new Map();
@@ -488,10 +537,8 @@ export function buildPeridotSearchFacets(rows = [], options = {}) {
     addFacetCount(places, targetPlace);
     if (sourcePlace || targetPlace) addFacetCount(placeRoutes, compactRouteLabel(sourcePlace, targetPlace));
     addFacetCount(years, year ? String(year).slice(0, 4) : '');
-    Object.entries(row || {}).forEach(([key, value]) => {
-      if (!CORE_FIELDS.has(key) && asText(value)) {
-        addFacetCount(evidenceFields, FIELD_LABELS[key] || key.replace(/_/g, ' '));
-      }
+    getSearchableEvidenceFieldEntries(row).forEach((entry) => {
+      addFacetCount(evidenceFields, entry.label);
     });
   });
 

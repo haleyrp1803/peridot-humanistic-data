@@ -78,6 +78,7 @@ import {
   buildPeridotSearchFacets,
   buildPeridotSearchResults,
   getCapabilityFilterLabel,
+  getSearchableEvidenceFieldEntries,
 } from './peridotSearchResultHelpers.js';
 
 const SHELL_CLASS = 'peridot-search-folio-shell';
@@ -125,37 +126,16 @@ const STRUCTURED_MATCH_MODE_OPTIONS = Object.freeze([
 
 const MAX_STRUCTURED_CRITERIA = 5;
 
-const BROWSE_INDEX_LIMIT = 120;
-const BROWSE_PANEL_VISIBLE_LIMIT = 8;
+const BROWSE_PANEL_VISIBLE_LIMIT = 4;
 const BROWSE_SOURCE_PERSON_FIELDS = ['sourcePerson', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender'];
 const BROWSE_TARGET_PERSON_FIELDS = ['targetPerson', 'Target', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient'];
 const BROWSE_SOURCE_PLACE_FIELDS = ['sourcePlaceLabel', 'sourcePlace', 'sourceLoc', 'Source_Loc', 'Source_Place', 'sourceLocation'];
 const BROWSE_TARGET_PLACE_FIELDS = ['targetPlaceLabel', 'targetPlace', 'targetLoc', 'Target_Inferred_Loc', 'Target_Loc', 'Target_Place', 'targetLocation'];
-const BROWSE_CORE_FIELDS = new Set([
-  'id', 'recordId', 'parsedDate', 'date', 'Date', 'Date*', 'displayDate', 'dateDisplay', 'dateLabel',
-  'sourcePerson', 'Source', 'Source_Person', 'Source_Entity', 'sender', 'Sender',
-  'targetPerson', 'Target', 'Target_Person', 'Target_Entity', 'recipient', 'Recipient',
-  'sourcePlaceLabel', 'sourcePlace', 'sourceLoc', 'Source_Loc', 'Source_Place', 'sourceLocation',
-  'targetPlaceLabel', 'targetPlace', 'targetLoc', 'Target_Inferred_Loc', 'Target_Loc', 'Target_Place', 'targetLocation',
-  'sourceLat', 'sourceLon', 'targetLat', 'targetLon', 'lat', 'lon', 'latitude', 'longitude',
-  'sourcePlaceId', 'targetPlaceId', 'mappable', 'personKey', 'recordTitle', 'title', 'label',
-]);
-const BROWSE_FIELD_LABELS = {
-  archivalCollection: 'Archival collection',
-  archivalPage: 'Archival page',
-  pdfPage: 'PDF page',
-  relationship: 'Relationship',
-  relationshipType: 'Relationship',
-  cipher: 'Cipher',
-  topic: 'Topic',
-  language: 'Language',
-  transcription: 'Transcription',
-  translation: 'Translation',
-  notes: 'Notes',
-  citation: 'Citation',
-  sourceTitle: 'Source title',
-  targetTitle: 'Target title',
-};
+/*
+ * Browse evidence fields are derived through the shared search-helper inventory
+ * so Browse, Refine, and structured evidence-field criteria use the same
+ * researcher-facing vocabulary.
+ */
 
 function browseText(value) {
   return String(value ?? '').trim();
@@ -167,10 +147,6 @@ function firstBrowseText(row, fields) {
     if (value) return value;
   }
   return '';
-}
-
-function browseFieldLabel(key) {
-  return BROWSE_FIELD_LABELS[key] || String(key || '').replace(/_/g, ' ');
 }
 
 function addBrowseCount(map, value, detail = {}) {
@@ -196,10 +172,14 @@ function addBrowseCount(map, value, detail = {}) {
   map.set(label, existing);
 }
 
-function sortBrowseItems(map, limit = BROWSE_INDEX_LIMIT) {
+/*
+ * Browse must retain the complete loaded-data vocabulary. Compact panels and
+ * panel-local search handle presentation density after this point; applying a
+ * construction-time alphabetic cap makes later entries undiscoverable.
+ */
+function sortBrowseItems(map) {
   return Array.from(map.values())
-    .sort((a, b) => a.label.localeCompare(b.label))
-    .slice(0, limit);
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 function normalizeBrowsePairValue(value) {
@@ -212,10 +192,11 @@ function hasMeaningfulBrowsePair(sourceValue, targetValue) {
   return Boolean(source && target && source !== target);
 }
 
-function buildBrowseIndexGroups(rows = []) {
+function buildBrowseIndexGroups(rows = [], evidenceRows = rows) {
   const people = new Map();
   const places = new Map();
   const routes = new Map();
+  const evidenceFields = new Map();
 
   (Array.isArray(rows) ? rows : []).forEach((row) => {
     const sourcePerson = firstBrowseText(row, BROWSE_SOURCE_PERSON_FIELDS);
@@ -232,6 +213,18 @@ function buildBrowseIndexGroups(rows = []) {
       const routeLabel = `${sourcePlace} → ${targetPlace}`;
       addBrowseCount(routes, routeLabel, { example: routeLabel });
     }
+  });
+
+  /*
+   * Linked-record rows preserve the evidence vocabulary that the geographic
+   * map rows do not carry. Keep entity/place/route Browse anchored to the
+   * geographic dataset, but build the Evidence fields index from this separate
+   * researcher-facing record collection.
+   */
+  (Array.isArray(evidenceRows) ? evidenceRows : []).forEach((row) => {
+    getSearchableEvidenceFieldEntries(row).forEach((entry) => {
+      addBrowseCount(evidenceFields, entry.label);
+    });
   });
 
   const routeItems = sortBrowseItems(routes);
@@ -255,10 +248,17 @@ function buildBrowseIndexGroups(rows = []) {
         : 'Mapped location index for point or place records.',
       items: sortBrowseItems(places),
     },
+    {
+      id: 'browse-evidence',
+      type: 'evidenceField',
+      label: 'Evidence fields',
+      description: 'Included metadata fields available for structured evidence filtering.',
+      items: sortBrowseItems(evidenceFields),
+    },
   ];
 
   if (hasRoutes) {
-    groups.push({
+    groups.splice(2, 0, {
       id: 'browse-routes',
       type: 'routePlace',
       label: 'Routes',
@@ -678,6 +678,8 @@ function BrowseIndexGroup({ group, onChooseBrowseItem }) {
   const visibleItems = isExpanded ? panelItems : panelItems.slice(0, BROWSE_PANEL_VISIBLE_LIMIT);
   const hiddenCount = Math.max(panelItems.length - visibleItems.length, 0);
   const isRouteGroup = group.type === 'routePlace';
+  const isEvidenceGroup = group.type === 'evidenceField';
+  const usesCondensedColumns = isRouteGroup || isEvidenceGroup;
 
   return (
     <section className={`peridot-search-browse-panel peridot-search-browse-ledger-panel ${isExpanded ? 'peridot-search-browse-ledger-panel-expanded' : ''}`}>
@@ -711,19 +713,19 @@ function BrowseIndexGroup({ group, onChooseBrowseItem }) {
       />
 
       <div className="peridot-search-browse-ledger" role="table" aria-label={`${group.label} browse index`}>
-        <div className={`peridot-search-browse-ledger-row peridot-search-browse-ledger-head ${isRouteGroup ? 'peridot-search-browse-ledger-row-route' : ''}`} role="row">
-          <div role="columnheader">{isRouteGroup ? 'Route' : 'Name'}</div>
+        <div className={`peridot-search-browse-ledger-row peridot-search-browse-ledger-head ${usesCondensedColumns ? 'peridot-search-browse-ledger-row-route' : ''}`} role="row">
+          <div role="columnheader">{isRouteGroup ? 'Route' : isEvidenceGroup ? 'Field' : 'Name'}</div>
           <div role="columnheader">Records</div>
-          {isRouteGroup ? null : <div role="columnheader">Source</div>}
-          {isRouteGroup ? null : <div role="columnheader">Target</div>}
+          {usesCondensedColumns ? null : <div role="columnheader">Source</div>}
+          {usesCondensedColumns ? null : <div role="columnheader">Target</div>}
           <div role="columnheader">Search</div>
         </div>
         {visibleItems.map((item) => (
-          <div key={`${group.id}-${item.value}`} className={`peridot-search-browse-ledger-row ${isRouteGroup ? 'peridot-search-browse-ledger-row-route' : ''}`} role="row">
+          <div key={`${group.id}-${item.value}`} className={`peridot-search-browse-ledger-row ${usesCondensedColumns ? 'peridot-search-browse-ledger-row-route' : ''}`} role="row">
             <div className="peridot-search-browse-ledger-name" role="cell" title={item.label}>{item.label}</div>
             <div className="peridot-search-browse-ledger-number" role="cell">{item.count}</div>
-            {isRouteGroup ? null : <div className="peridot-search-browse-ledger-number" role="cell">{item.sourceCount || '—'}</div>}
-            {isRouteGroup ? null : <div className="peridot-search-browse-ledger-number" role="cell">{item.targetCount || '—'}</div>}
+            {usesCondensedColumns ? null : <div className="peridot-search-browse-ledger-number" role="cell">{item.sourceCount || '—'}</div>}
+            {usesCondensedColumns ? null : <div className="peridot-search-browse-ledger-number" role="cell">{item.targetCount || '—'}</div>}
             <div className="peridot-search-browse-ledger-action" role="cell">
               <button
                 type="button"
@@ -1011,6 +1013,7 @@ export function PeridotSearchWorkspace({
   rowDiagnostics,
   searchRows = [],
   browseRows = searchRows,
+  evidenceBrowseRows = [],
   onInspectSearchResult,
   viewMode,
   minCount,
@@ -1130,12 +1133,19 @@ export function PeridotSearchWorkspace({
     setResultPage((currentPage) => Math.min(currentPage, resultPageCount));
   }, [resultPageCount]);
 
-  const rawSearchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows, { limit: 48 }), [searchRows]);
+  /*
+   * Retain every facet value from the supplied result scope. Facet panels still
+   * begin compact and expand on demand; only the UI display is limited.
+   */
+  const rawSearchFacetGroups = useMemo(() => buildPeridotSearchFacets(searchRows), [searchRows]);
   const searchFacetGroups = useMemo(
     () => normalizeSearchFacetGroupsForRefine(rawSearchFacetGroups, { isRouteCapable: searchResultsAreRouteCapable }),
     [rawSearchFacetGroups, searchResultsAreRouteCapable],
   );
-  const browseIndexGroups = useMemo(() => buildBrowseIndexGroups(browseRows), [browseRows]);
+  const browseIndexGroups = useMemo(
+    () => buildBrowseIndexGroups(browseRows, evidenceBrowseRows),
+    [browseRows, evidenceBrowseRows],
+  );
   const filteredBrowseIndexGroups = browseIndexGroups;
 
   const capabilityFacetCounts = useMemo(() => {
