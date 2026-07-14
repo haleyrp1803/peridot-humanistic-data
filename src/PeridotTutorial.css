@@ -639,3 +639,86 @@
   }
 }
 
+/* Step 8 Export review and completion state. */
+.peridot-tutorial-callout[data-peridot-tutorial-step="export"] {
+  width: min(29rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="export"][data-peridot-tutorial-export-phase="menu-open"] {
+  width: min(27rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="export"][data-peridot-tutorial-export-phase="complete"] {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  width: min(38rem, calc(100vw - 2rem));
+  translate:
+    calc(-50% + var(--peridot-tutorial-drag-x))
+    calc(-50% + var(--peridot-tutorial-drag-y));
+}
+
+.peridot-tutorial-completion {
+  position: relative;
+  z-index: 2;
+  margin: 1.1rem 1.45rem 1.45rem;
+}
+
+.peridot-tutorial-completion-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.62rem;
+}
+
+.peridot-tutorial-completion-item {
+  display: grid;
+  grid-template-columns: 1.8rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.58rem;
+  border: 1px solid rgba(230, 201, 132, 0.34);
+  border-radius: 0.9rem;
+  background: rgba(241, 226, 190, 0.06);
+  padding: 0.66rem 0.72rem;
+  color: #f7eed8;
+  font-size: 0.86rem;
+  line-height: 1.3;
+}
+
+.peridot-tutorial-completion-item span {
+  display: grid;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(214, 169, 68, 0.18);
+  color: #ebc66b;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.peridot-tutorial-completion-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.15rem;
+}
+
+@media (max-width: 760px) {
+  .peridot-tutorial-callout[data-peridot-tutorial-step="export"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="export"][data-peridot-tutorial-export-phase="menu-open"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="export"][data-peridot-tutorial-export-phase="complete"] {
+    width: calc(100vw - 1.5rem);
+  }
+
+  .peridot-tutorial-completion-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .peridot-tutorial-completion-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+

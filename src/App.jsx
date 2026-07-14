@@ -4944,6 +4944,11 @@ export default function EuropeNetworkMapApp() {
             onOpenExplore={openExploreWorkspaceFromMenu}
             onCloseInspector={closeInspectorWorkspace}
             onExpandInspector={expandInspectorToWorkspace}
+            onRestartTutorial={startTutorial}
+            onOpenData={() => {
+              closeTutorial();
+              openDataWorkspace();
+            }}
             onBack={goToPreviousTutorialStep}
             onClose={closeTutorial}
             onContinue={goToNextTutorialStep}
