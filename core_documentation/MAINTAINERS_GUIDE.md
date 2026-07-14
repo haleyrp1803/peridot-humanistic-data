@@ -29,7 +29,7 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-a9b9c81 — Add core documentation restructuring plan
+619bab0 — Restore stable tutorial attention behavior
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -42,6 +42,8 @@ For detailed milestone interpretation and full commit history, see [CHANGELOG.md
 Peridot is a Vite/React/Tailwind research application that has moved from a map-first side-panel model to a workspace-first, multimodal exploration environment. `src/App.jsx` remains the top-level orchestration boundary, while dedicated workspaces and pure/helper modules now own much of the UI, import, visualization, theme, and interaction behavior.
 
 The active public workflow is Home → Manage Your Data → Visualize Your Data → Explore Your Data → Learn More. Themes and Accessibility remains route-compatible but intentionally hidden from the public hamburger menu. Timeline and Export are Visualizations-integrated surfaces; Inspector is a compact/full shared-state evidence system.
+
+A first-time tutorial now overlays this workspace model. Its accepted flow begins in Visualizations and guides the researcher through Visualizations, Timeline, Inspector, Explore, Browse / Apply, Working Set, and Export. The former standalone tutorial Start page has been removed. The tutorial retains draggable panels, minimize/restore docking, step progression and recovery, keyboard-accessible controls, target anchoring/highlighting, and a Home-page entry point.
 
 ### Current source context
 
@@ -65,6 +67,7 @@ The following tracked planning documents remain relevant maintenance references:
 |---|---|---|---|---|
 | Top-level orchestration | `App.jsx` | state, derived data, routing, Inspector history, export wiring | filters, timeline, compact/full Inspector bridge | open each workspace; upload/use sample; click node/edge/cluster |
 | Workspace navigation | `peridotWorkspaceConfig.js`, `PeridotHamburgerMenu.jsx` | public routing and hidden Theme path | active workspace state, Inspector presentation | hamburger routes; Home CTAs; return paths |
+| First-time tutorial | tutorial state, panel, dock, anchor/highlight, and Home-entry boundaries | seven-stage guided workflow, progression, recovery, draggable/minimized presentation | workspace routing, Inspector close behavior, target observation, keyboard focus | launch from Home; complete all stages; drag; minimize/restore; Back/Continue; close Inspector when instructed |
 | Data import | Data workspace + mapping/import helpers | parse, map, validate, normalize, capability audit | upload reset and downstream data scope | template, CSV, TSV, XLSX, XLS, mapped import |
 | Visualizations | `PeridotVisualizationsWorkspace.jsx` | modes, header, stage, Timeline placement, Export menu | stage sizing, Inspector overlay, portal layers | map/network/chart switch; header/timeline controls |
 | Search | `PeridotSearchWorkspace.jsx` | draft/apply search and Explore UI | active dataset, facets, Inspector handoff | Apply/Clear, suggestion, pagination, Inspect return |
@@ -88,6 +91,20 @@ Peridot uses a workspace-first route model. The active public path is **Home →
 | Learn More | project context and help | `PeridotLearnMoreWorkspace.jsx` | preserve editorial reading flow and divider choreography |
 | Themes and Accessibility | internal appearance/settings workspace | `PeridotThemeWorkspace.jsx` | retain route/component even while menu entry is hidden |
 | Inspector | compact selection summary and full dossier | Inspector modules + `App.jsx` | compact/full modes share selection and Back history |
+
+### First-time tutorial contract
+
+The tutorial is a guided overlay system rather than a separate workspace. Its current accepted contract is:
+
+- Begin directly with Visualizations; do not restore the removed standalone Start page.
+- Preserve the seven-stage sequence: Visualizations → Timeline → Inspector → Explore → Browse / Apply → Working Set → Export.
+- Preserve draggable tutorial panels, minimize/restore docking, Back/Continue progression, recovery logic, and keyboard accessibility.
+- Keep the current dialogue composition: large centered title, one sentence per frame, footer progress, and the Adobe Stock Filigree 3 divider treatment.
+- Keep target highlighting and the stabilized observer behavior represented by the `619bab0` baseline.
+- Explicitly require the user to close the Inspector before the tutorial advances from Inspector guidance.
+- Treat stronger attention animation as deferred experimentation, not as current functionality.
+
+Minimum regression checks: launch from Home; progress forward and backward through every stage; drag the panel; minimize and restore it; verify keyboard progression/focus; verify each target anchor; open and close Inspector at the instructed step; recover cleanly from a temporarily unavailable target.
 
 ### Current route and visualization model
 
@@ -652,6 +669,7 @@ Pure export utilities and export row-builder helpers.
 These areas still deserve narrow, explicit passes:
 
 - workspace routing and hamburger-menu behavior
+- first-time tutorial progression, target observation, panel placement, minimize/restore state, and workspace/Inspector transitions
 - shared `src/index.css` delivery: broad replacements can silently overwrite newer unrelated visual rules; treat small styling work as a source-verified local change rather than a convenience full-file handoff
 - map viewport centering/reset behavior
 - map/network viewport measurement after switching between Analytics and map/network modes
@@ -674,6 +692,7 @@ These areas still deserve narrow, explicit passes:
 | Fragile zone | Typical regression | Minimum test |
 |---|---|---|
 | Workspace routing | wrong workspace or lost state | Home CTA and every hamburger route |
+| First-time tutorial | stalled progression, missing target, obscured control, broken restore, or unstable highlight | launch; all seven stages; Back/Continue; drag; minimize/restore; keyboard; Inspector close; target recovery |
 | Inspector bridge | compact Inspector fails to open | node, edge, cluster, contained member, Expand, Back |
 | Search scope | results or facets omit/misstate records | draft suggestion, Apply, Clear, pagination, Inspect handoff |
 | Timeline / Analytics | stale or inconsistent chart scope | alter timeline/date controls, refresh chart, export |
@@ -686,13 +705,21 @@ These areas still deserve narrow, explicit passes:
 
 ## 11. Active Technical Backlog
 
-1. Search coverage and scope audit.
-2. Inspector → Advanced Search actions and safe metadata filters, after the coverage audit.
-3. Timeline playback × Analytics audit.
-4. Accessibility pass.
-5. Clarify data-scope language across the app.
-6. Learn More completion: substantive research-workflow tutorial/help material.
-7. Continue bounded structural work only when a concrete maintenance need exists; `App.jsx` remains concentrated but should not be casually refactored.
+1. First-time tutorial polish, in bounded passes:
+   - attention choreography that sequences dialogue, workspace movement, tutorial placement, and target emphasis;
+   - placement audit for panels that obscure important controls;
+   - minor typography/spacing refinement;
+   - standardized semantic keyword highlighting;
+   - final full UX walkthrough.
+2. Search coverage and scope audit.
+3. Inspector → Advanced Search actions and safe metadata filters, after the coverage audit.
+4. Timeline playback × Analytics audit.
+5. Accessibility pass.
+6. Clarify data-scope language across the app.
+7. Learn More completion: substantive research-workflow tutorial/help material.
+8. Continue bounded structural work only when a concrete maintenance need exists; `App.jsx` remains concentrated but should not be casually refactored.
+
+For the tutorial polish pass, prefer subtle motion over stronger outlines and explicitly review and refine the order and timing of tutorial-related animations during final visual polish. Do not resurrect the rolled-back animation implementation wholesale.
 
 ## 12. Archived and Compatibility Paths
 
@@ -734,11 +761,12 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`a9b9c81` — `Add core documentation restructuring plan`**
+- current synchronized checkpoint: **`619bab0` — `Restore stable tutorial attention behavior`**
 
 A future chat should also be told that:
 
 - the app identity is **Peridot**
+- the first-time tutorial is implemented as a seven-stage guided overlay beginning in Visualizations, with draggable/minimizable panels, Back/Continue progression, recovery logic, keyboard accessibility, target highlighting, and explicit Inspector-close guidance; `619bab0` is the stable baseline for future polish
 - the user-designed Peridot logo, gilded logo, selected Adobe Stock filigree, homepage screenshot, and homepage mockup assets are stored in `assets/`; the Home workspace uses `assets/Peridot Logo Gilded Transparent.png` and `assets/Adobe Stock Filigree 1.png`; the additional licensed filigree assets `Adobe Stock Filigree 2.png`, `Adobe Stock Filigree 3.png`, `Adobe Stock Filigree Divider Set.png`, and `Adobe Stock Filigree Full Set.png` are retained for design reference/use
 - the fixed basemap is `countries50m`
 - itch.io packaging support is already committed

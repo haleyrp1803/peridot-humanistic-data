@@ -20,19 +20,18 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-a9b9c81 — Add core documentation restructuring plan
+619bab0 — Restore stable tutorial attention behavior
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
 
-This checkpoint follows a focused documentation-control sequence:
+This checkpoint establishes the stable first-time tutorial baseline after a substantial onboarding implementation and refinement sequence:
 
-- `8f2d1ca` — refined the in-app feedback form and visualizations-control layering;
-- `7df46a8` — restored the functional extracted-stylesheet import cascade after a missing-import regression;
-- `58fdd08` — refreshed README screenshots and preserved historical interface records;
-- `dc5f20b` and `6d05409` — added the Core Documentation Governance Protocol;
-- `70d8b31` — moved that protocol into `core_documentation/`;
-- `a9b9c81` — added the Core Documentation Restructuring Plan.
+- implemented the complete first-time tutorial framework, including multi-step state, draggable panels, minimize/restore docking, progression, recovery, keyboard accessibility, target anchoring/highlighting, and a Home-page entry;
+- replaced the earlier standalone tutorial Start page with a seven-stage flow beginning directly in Visualizations;
+- accepted the concise dialogue-frame redesign with centered titles, one sentence per frame, footer progress/navigation, and Adobe Stock Filigree 3;
+- added guidance for Visualizations, Timeline, Inspector, Explore, Browse / Apply, Working Set, and Export, including an explicit instruction to close the Inspector before continuing;
+- stabilized target observation/highlighting behavior and restored that stable behavior after rolling back unreliable animation experiments.
 
 The active stylesheet cascade is:
 
@@ -49,6 +48,16 @@ import './PeridotFeedbackForm.css';
 `index.css` is the shared/global layer. Component stylesheets own their named presentation domains. The restored import commit is a functional-cascade repair, not a change to the intended architecture.
 
 ## 2. Recent Milestones, Newest First
+
+### First-time tutorial framework, flow redesign, and stable attention baseline — 2026-07-14
+
+- Implemented a complete first-time tutorial system with a multi-step state machine, draggable panels, minimize/restore docking, step progression, recovery logic, keyboard-accessibility improvements, target anchoring/highlighting, and a Home-page tutorial entry.
+- Removed the former standalone Start page. The accepted tutorial now begins immediately in Visualizations and proceeds through seven major stages: Visualizations, Timeline, Inspector, Explore, Browse / Apply, Working Set, and Export.
+- Redesigned tutorial dialogue around a large centered title, one concise sentence per frame, footer-based Back/progress/Continue controls, and the Adobe Stock Filigree 3 divider.
+- Redesigned the Home tutorial card to align with the workspace-card visual system and removed obsolete title/progress border rules at their source rather than masking them with overrides.
+- Added interaction guidance across the full tutorial path, including explicit instruction to close the Inspector before continuing.
+- Stabilized target highlighting and observer behavior. **`619bab0` — `Restore stable tutorial attention behavior`** is the accepted baseline for later polish.
+- Prepared this bounded core-documentation synchronization against `619bab0`; no source-code, tutorial redesign, or animation experimentation is included in the documentation pass.
 
 ### Documentation governance, screenshot history, feedback, and stylesheet-import restoration — 2026-06-21
 
@@ -401,6 +410,20 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
+### Tutorial attention-animation experiments rolled back before `619bab0`
+
+The following tutorial experiments were intentionally removed and are not current functionality:
+
+- aggressive breathing animations;
+- 5% target scaling;
+- Timeline gesture animation;
+- SVG node animation;
+- replacement of tutorial controls with real-control guidance;
+- animated Inspector close-button guidance;
+- animated Browse controls.
+
+These experiments were rolled back because target behavior was unreliable, source-file coverage was insufficient for a robust implementation, and behavior was inconsistent across stages. Future tutorial motion work must begin from the stable `619bab0` baseline and proceed as bounded experiments. The remaining polish sequence is attention choreography, placement audit, typography spacing, semantic keyword highlighting, and a final UX walkthrough. Final visual polish must include an explicit review of tutorial-animation order and timing.
+
 ### MapLibre migrated-overlay work paused / active preview removed
 
 The later MapLibre migrated-overlay branch is paused and should be retained as an archived experiment, not treated as active `main` code. The old dormant MapLibre preview files and dependency have now been removed from active `main` in `55a368c`.
@@ -431,6 +454,7 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-07-14 | `619bab0` | Restore stable tutorial attention behavior | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-06-21 | `a9b9c81` | Add core documentation restructuring plan | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-06-21 | `70d8b31` | Move documentation governance protocol to core documentation |  |
 | 2026-06-21 | `6d05409` | Add core documentation governance protocol |  |

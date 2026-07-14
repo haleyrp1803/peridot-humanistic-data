@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-a9b9c81 — Add core documentation restructuring plan
+619bab0 — Restore stable tutorial attention behavior
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```

@@ -32,7 +32,7 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-a9b9c81 — Add core documentation restructuring plan
+619bab0 — Restore stable tutorial attention behavior
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -75,6 +75,18 @@ Peridot follows a **database-first** model: a record may remain useful for searc
 ### 3.1 Start
 
 The app opens to Home. Use **Use sample data** to move directly into Visualizations with bundled sample material, or **Upload your data** to begin in Manage Your Data.
+
+Home also provides the entry point for Peridot’s first-time guided tutorial. The accepted tutorial begins immediately in **Visualizations** rather than on a separate introductory page and proceeds through seven major stages:
+
+1. Visualizations
+2. Timeline
+3. Inspector
+4. Explore
+5. Browse / Apply
+6. Working Set
+7. Export
+
+Tutorial dialogue uses a large centered title, one concise sentence per frame, a restrained gold filigree divider, and footer-based **Back**, progress, and **Continue** controls. Tutorial panels can be dragged, minimized, and restored. The guidance highlights relevant interface targets, preserves keyboard-accessible progression and recovery behavior, and explicitly teaches users to close the Inspector before continuing.
 
 ### 3.2 Load and map data
 
@@ -473,6 +485,8 @@ Implemented Advanced Search controls include keyword, person, place, Route Filte
 Peridot is an active research prototype. It can preserve and expose useful incomplete records, but not every dataset supports every visualization. Network views require mapped source-target relationships; map views require usable location information; Timeline and chart behavior depend on available temporal and analytic fields.
 
 Two technical audits remain deferred: Search dataset coverage/scope and Timeline playback × Analytics scope. Until those audits are complete, interface language should distinguish loaded, applied/filtered, timeline-visible, selected, charted, and exported data rather than implying that every surface handles scope identically.
+
+The first-time tutorial is functionally complete at the current checkpoint, but a later visual-polish sequence remains planned for attention choreography, panel placement, typography spacing, semantic keyword highlighting, and a final full UX walkthrough. Experimental breathing, scaling, gesture, and real-control animations were rolled back and are not current behavior.
 
 MapLibre work is archived and should not be treated as part of current `main`. For active technical caveats, regression expectations, and compatibility paths, see the Maintainer’s Guide.
 
