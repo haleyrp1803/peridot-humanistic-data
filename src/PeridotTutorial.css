@@ -226,10 +226,7 @@
   transform: scale(1.04);
 }
 
-.peridot-tutorial-progress,
-.peridot-tutorial-callout h2,
 .peridot-tutorial-callout > p,
-
 .peridot-tutorial-anchor-fallback {
   border: 1px dashed rgba(230, 194, 108, 0.4);
   border-radius: 0.85rem;
@@ -811,6 +808,725 @@
       rgba(4, 31, 18, 0.98) 28%
     );
     padding-top: 0.85rem;
+  }
+}
+
+/* Tutorial dialogue-frame presentation and window controls. */
+.peridot-tutorial-callout {
+  overflow: hidden;
+}
+
+.peridot-tutorial-header {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.8rem;
+  border-bottom: 1px solid rgba(232, 205, 137, 0.24);
+  background:
+    linear-gradient(180deg, rgba(238, 214, 151, 0.08), rgba(238, 214, 151, 0));
+  padding: 1rem 1rem 0.88rem 1.25rem;
+}
+
+.peridot-tutorial-title-drag {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  cursor: move;
+  touch-action: none;
+}
+
+.peridot-tutorial-title-drag:focus-visible {
+  border-radius: 0.65rem;
+  outline: 3px solid #f2cf73;
+  outline-offset: 3px;
+}
+
+.peridot-tutorial-title-drag .peridot-tutorial-drag-grip {
+  align-self: start;
+  margin-top: 0.42rem;
+  color: rgba(230, 198, 111, 0.7);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  writing-mode: vertical-rl;
+}
+
+.peridot-tutorial-header h2 {
+  margin: 0;
+  color: #fff1c8;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
+}
+
+.peridot-tutorial-window-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.peridot-tutorial-window-button {
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  border: 1px solid rgba(235, 208, 139, 0.36);
+  border-radius: 999px;
+  background: rgba(3, 25, 14, 0.72);
+  color: #f1d994;
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.peridot-tutorial-window-button:hover {
+  border-color: rgba(245, 218, 145, 0.78);
+  background: rgba(222, 179, 77, 0.15);
+}
+
+.peridot-tutorial-window-button.is-close {
+  font-size: 1.3rem;
+}
+
+.peridot-tutorial-dialogue {
+  position: relative;
+  z-index: 2;
+  min-height: 5.8rem;
+  padding: 1.2rem 1.45rem 1rem;
+  animation: peridot-tutorial-dialogue-enter 180ms ease-out both;
+}
+
+.peridot-tutorial-dialogue p {
+  margin: 0;
+  color: #f4ecd8;
+  font-size: 1.02rem;
+  line-height: 1.58;
+  text-wrap: pretty;
+}
+
+@keyframes peridot-tutorial-dialogue-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.28rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.peridot-tutorial-inline-action {
+  margin-top: 0;
+  margin-bottom: 0.95rem;
+}
+
+.peridot-tutorial-actions {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  grid-template-columns: auto minmax(6.2rem, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  border-top: 1px solid rgba(232, 205, 137, 0.22);
+  background: rgba(3, 27, 15, 0.9);
+  margin: 0;
+  padding: 0.78rem 1rem;
+}
+
+.peridot-tutorial-progress {
+  margin: 0;
+  color: rgba(236, 222, 187, 0.67);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.peridot-tutorial-progress.is-complete {
+  border-top: 1px solid rgba(232, 205, 137, 0.22);
+  padding: 0.8rem 1rem;
+}
+
+.peridot-tutorial-footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.peridot-tutorial-button.is-quiet {
+  padding-inline: 0.7rem;
+}
+
+.peridot-tutorial-minimized {
+  position: fixed;
+  right: 0;
+  bottom: 1.15rem;
+  z-index: 10060;
+  display: flex;
+  align-items: stretch;
+  border: 1px solid rgba(230, 197, 111, 0.72);
+  border-right: 0;
+  border-radius: 0.85rem 0 0 0.85rem;
+  background:
+    linear-gradient(180deg, rgba(13, 55, 34, 0.99), rgba(4, 31, 18, 0.99));
+  box-shadow:
+    0 0.8rem 2.2rem rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 244, 207, 0.1);
+  color: #f8edcf;
+}
+
+.peridot-tutorial-minimized-restore,
+.peridot-tutorial-minimized-close {
+  border: 0;
+  background: transparent;
+  color: #f3daa0;
+  cursor: pointer;
+}
+
+.peridot-tutorial-minimized-restore {
+  display: flex;
+  align-items: center;
+  gap: 0.48rem;
+  border-radius: 0.78rem 0 0 0.78rem;
+  padding: 0.58rem 0.78rem 0.58rem 0.85rem;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.peridot-tutorial-minimized-restore:hover {
+  background: rgba(222, 179, 77, 0.13);
+  color: #fff0bf;
+}
+
+.peridot-tutorial-minimized-mark {
+  color: #dcb34e;
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.peridot-tutorial-minimized-close {
+  display: grid;
+  width: 2rem;
+  place-items: center;
+  border-left: 1px solid rgba(233, 207, 139, 0.26);
+  border-radius: 0;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.peridot-tutorial-minimized-close:hover {
+  background: rgba(222, 179, 77, 0.13);
+  color: #fff0bf;
+}
+
+.peridot-tutorial-minimized :where(button):focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 3px solid #f2cf73;
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-tutorial-dialogue {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .peridot-tutorial-header {
+    padding-inline: 1rem 0.78rem;
+  }
+
+  .peridot-tutorial-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .peridot-tutorial-dialogue {
+    min-height: 5rem;
+    padding-inline: 1.1rem;
+  }
+
+  .peridot-tutorial-actions {
+    grid-template-columns: auto 1fr;
+  }
+
+  .peridot-tutorial-progress {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .peridot-tutorial-footer-actions {
+    justify-self: end;
+  }
+
+  .peridot-tutorial-minimized {
+    right: 0;
+    bottom: 0.75rem;
+    width: auto;
+  }
+}
+
+/* Minimal dialogue-card redesign based on the approved mockup. */
+.peridot-tutorial-callout {
+  width: min(31rem, calc(100vw - 2rem));
+  border: 1px solid rgba(220, 182, 83, 0.78);
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(8, 47, 28, 0.99), rgba(3, 29, 17, 0.995));
+  box-shadow:
+    0 1.15rem 3rem rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 244, 207, 0.09);
+  color: #f5ecd7;
+}
+
+.peridot-tutorial-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  border: 0;
+  background: transparent;
+  padding: 1.15rem 1.05rem 0.2rem 1.35rem;
+}
+
+.peridot-tutorial-title-drag {
+  display: block;
+  min-width: 0;
+  cursor: move;
+  touch-action: none;
+}
+
+.peridot-tutorial-title-drag h2,
+.peridot-tutorial-header h2 {
+  margin: 0;
+  color: #f7ebc8;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: clamp(1.55rem, 2.7vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.peridot-tutorial-window-controls {
+  display: flex;
+  gap: 0.24rem;
+  margin-top: -0.18rem;
+}
+
+.peridot-tutorial-window-button {
+  width: 1.72rem;
+  height: 1.72rem;
+  border: 1px solid rgba(231, 201, 122, 0.42);
+  background: rgba(2, 23, 13, 0.5);
+  color: #e9cf8c;
+  font-size: 1rem;
+}
+
+.peridot-tutorial-window-button.is-close {
+  font-size: 1.12rem;
+}
+
+.peridot-tutorial-divider {
+  display: grid;
+  grid-template-columns: auto minmax(1rem, 1fr) auto minmax(1rem, 1fr) auto;
+  align-items: center;
+  gap: 0.38rem;
+  margin: 0.35rem 1.35rem 0;
+  color: #c99c38;
+}
+
+.peridot-tutorial-divider-line {
+  display: block;
+  height: 1px;
+  background:
+    linear-gradient(90deg, transparent, rgba(213, 171, 70, 0.78), transparent);
+}
+
+.peridot-tutorial-divider-flourish {
+  display: inline-block;
+  color: #d7ad4a;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.peridot-tutorial-divider-flourish.is-reversed {
+  transform: scaleX(-1);
+}
+
+.peridot-tutorial-divider-diamond {
+  color: #e1b955;
+  font-size: 0.54rem;
+  line-height: 1;
+}
+
+.peridot-tutorial-dialogue {
+  min-height: 7rem;
+  padding: 1.2rem 1.55rem 1.15rem;
+}
+
+.peridot-tutorial-dialogue p {
+  margin: 0;
+  color: #f3ead5;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: clamp(1.05rem, 1.85vw, 1.22rem);
+  line-height: 1.55;
+  letter-spacing: 0.005em;
+}
+
+.peridot-tutorial-keyword {
+  color: #e0ab36;
+  font-weight: 700;
+}
+
+.peridot-tutorial-inline-action {
+  display: block;
+  width: calc(100% - 3.1rem);
+  margin: -0.1rem auto 1rem;
+  border-color: rgba(219, 177, 73, 0.62);
+  background: rgba(214, 165, 56, 0.1);
+  color: #f1d58d;
+}
+
+.peridot-tutorial-working-set-flow,
+.peridot-tutorial-completion {
+  margin-inline: 1.55rem;
+}
+
+.peridot-tutorial-actions {
+  display: grid;
+  grid-template-columns: minmax(5rem, auto) 1fr minmax(5rem, auto);
+  align-items: center;
+  gap: 0.7rem;
+  border-top: 1px solid rgba(221, 183, 85, 0.24);
+  background: transparent;
+  padding: 0.78rem 1.05rem 0.95rem;
+}
+
+.peridot-tutorial-actions > .peridot-tutorial-button {
+  min-width: 0;
+}
+
+.peridot-tutorial-button {
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.peridot-tutorial-button.is-secondary {
+  justify-self: start;
+  border-color: rgba(225, 197, 126, 0.4);
+  background: rgba(3, 27, 15, 0.34);
+  color: #e8d9b5;
+}
+
+.peridot-tutorial-button.is-primary {
+  justify-self: end;
+  border-color: rgba(225, 177, 57, 0.78);
+  background:
+    linear-gradient(180deg, #e5ba56, #c8942d);
+  color: #17301e;
+  box-shadow: none;
+}
+
+.peridot-tutorial-progress {
+  justify-self: center;
+  margin: 0;
+  color: rgba(237, 220, 177, 0.72);
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: none;
+}
+
+.peridot-tutorial-progress.is-complete {
+  border-top-color: rgba(221, 183, 85, 0.24);
+}
+
+.peridot-tutorial-callout .peridot-tutorial-anchor-fallback,
+.peridot-tutorial-callout .peridot-tutorial-recovery {
+  margin-inline: 1.55rem;
+}
+
+@media (max-width: 760px) {
+  .peridot-tutorial-callout {
+    width: calc(100vw - 1.25rem);
+  }
+
+  .peridot-tutorial-header {
+    padding-inline: 1rem 0.8rem;
+  }
+
+  .peridot-tutorial-title-drag h2,
+  .peridot-tutorial-header h2 {
+    font-size: 1.4rem;
+  }
+
+  .peridot-tutorial-divider {
+    margin-inline: 1rem;
+  }
+
+  .peridot-tutorial-dialogue {
+    min-height: 6rem;
+    padding-inline: 1.1rem;
+  }
+
+  .peridot-tutorial-dialogue p {
+    font-size: 1.03rem;
+  }
+
+  .peridot-tutorial-actions {
+    grid-template-columns: auto 1fr auto;
+    padding-inline: 0.8rem;
+  }
+}
+
+/* Tutorial renumbering/card unification correction. */
+.peridot-home-tutorial-invitation::after,
+.peridot-tutorial-callout::after {
+  display: none !important;
+}
+
+.peridot-home-tutorial-invitation *,
+.peridot-tutorial-callout * {
+  border-style: solid;
+}
+
+.peridot-tutorial-title-drag,
+.peridot-home-tutorial-title-drag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.peridot-tutorial-header {
+  grid-template-columns: 2.1rem minmax(0, 1fr) 4.15rem;
+}
+
+.peridot-tutorial-title-drag {
+  grid-column: 2;
+}
+
+.peridot-tutorial-window-controls {
+  grid-column: 3;
+  justify-self: end;
+}
+
+.peridot-tutorial-title-drag h2,
+.peridot-tutorial-header h2 {
+  width: 100%;
+  text-align: center;
+}
+
+.peridot-tutorial-divider,
+.peridot-home-tutorial-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: transparent;
+}
+
+.peridot-tutorial-divider {
+  height: 1.45rem;
+  margin: 0.32rem 1.35rem 0;
+}
+
+.peridot-tutorial-divider-image,
+.peridot-home-tutorial-divider-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  object-position: center;
+  filter:
+    drop-shadow(0 0 0.1rem rgba(210, 165, 59, 0.18))
+    saturate(0.92);
+  pointer-events: none;
+  user-select: none;
+}
+
+.peridot-tutorial-divider-flourish,
+.peridot-tutorial-divider-line,
+.peridot-tutorial-divider-diamond {
+  display: none !important;
+}
+
+/* Home invitation now uses the same minimal dialogue-card language. */
+.peridot-home-tutorial-invitation {
+  width: min(31rem, 44%);
+  border: 1px solid rgba(220, 182, 83, 0.78);
+  border-radius: 1.15rem;
+  background:
+    linear-gradient(180deg, rgba(8, 47, 28, 0.99), rgba(3, 29, 17, 0.995));
+  box-shadow:
+    0 1.15rem 3rem rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 244, 207, 0.09);
+  color: #f5ecd7;
+}
+
+.peridot-home-tutorial-header {
+  display: grid;
+  grid-template-columns: 2.1rem minmax(0, 1fr) 2.1rem;
+  align-items: start;
+  gap: 0.75rem;
+  padding: 1.15rem 1.05rem 0.2rem;
+}
+
+.peridot-home-tutorial-title-drag {
+  grid-column: 2;
+  min-width: 0;
+  cursor: move;
+  touch-action: none;
+}
+
+.peridot-home-tutorial-title-drag h2 {
+  width: 100%;
+  margin: 0;
+  color: #f7ebc8;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: clamp(1.55rem, 2.7vw, 2rem);
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.peridot-home-tutorial-close {
+  grid-column: 3;
+  display: grid;
+  width: 1.72rem;
+  height: 1.72rem;
+  place-items: center;
+  justify-self: end;
+  border: 1px solid rgba(231, 201, 122, 0.42);
+  border-radius: 999px;
+  background: rgba(2, 23, 13, 0.5);
+  color: #e9cf8c;
+  font-size: 1.12rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.peridot-home-tutorial-close:hover {
+  border-color: rgba(245, 218, 145, 0.78);
+  background: rgba(222, 179, 77, 0.15);
+}
+
+.peridot-home-tutorial-divider {
+  height: 1.45rem;
+  margin: 0.32rem 1.35rem 0;
+}
+
+.peridot-home-tutorial-dialogue {
+  min-height: 6.2rem;
+  padding: 1.2rem 1.55rem 1.15rem;
+}
+
+.peridot-home-tutorial-dialogue p {
+  margin: 0;
+  color: #f3ead5;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: clamp(1rem, 1.6vw, 1.16rem);
+  line-height: 1.55;
+}
+
+.peridot-home-tutorial-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.7rem;
+  border-top: 1px solid rgba(221, 183, 85, 0.24);
+  background: transparent;
+  margin: 0;
+  padding: 0.78rem 1.05rem 0.95rem;
+}
+
+.peridot-home-tutorial-start,
+.peridot-home-tutorial-dismiss {
+  width: auto;
+  min-width: 0;
+  border-radius: 999px;
+  padding: 0.72rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.peridot-home-tutorial-start {
+  justify-self: end;
+  border: 1px solid rgba(225, 177, 57, 0.78);
+  background:
+    linear-gradient(180deg, #e5ba56, #c8942d);
+  color: #17301e;
+}
+
+.peridot-home-tutorial-dismiss {
+  justify-self: start;
+  border: 1px solid rgba(225, 197, 126, 0.4);
+  background: rgba(3, 27, 15, 0.34);
+  color: #e8d9b5;
+}
+
+.peridot-home-tutorial-start:hover,
+.peridot-home-tutorial-dismiss:hover {
+  transform: translateY(-1px);
+}
+
+.peridot-home-tutorial-title-drag:focus-visible,
+.peridot-home-tutorial-close:focus-visible {
+  outline: 3px solid #f2cf73;
+  outline-offset: 3px;
+}
+
+@media (max-width: 900px) {
+  .peridot-home-tutorial-invitation {
+    width: min(31rem, calc(100vw - 2rem));
+  }
+}
+
+@media (max-width: 640px) {
+  .peridot-home-tutorial-header {
+    padding-inline: 0.9rem 0.75rem;
+  }
+
+  .peridot-home-tutorial-title-drag h2 {
+    font-size: 1.4rem;
+  }
+
+  .peridot-home-tutorial-divider {
+    margin-inline: 1rem;
+  }
+
+  .peridot-home-tutorial-dialogue {
+    min-height: 5.6rem;
+    padding-inline: 1.1rem;
+  }
+
+  .peridot-home-tutorial-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .peridot-home-tutorial-start,
+  .peridot-home-tutorial-dismiss {
+    width: 100%;
+    justify-self: stretch;
   }
 }
 

@@ -11,6 +11,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PERIDOT_TUTORIAL_TOTAL_STEPS } from './peridotTutorialConfig.js';
 import { useDraggableTutorialPanel } from './useDraggableTutorialPanel.js';
 
+import tutorialFiligreeDivider from '../assets/Adobe Stock Filigree 3.png';
+
 function isTimelineInteractionTarget(target, anchorElement) {
   if (!target || !anchorElement || !anchorElement.contains(target)) return false;
 
@@ -90,6 +92,58 @@ function isBrowseIndexChoice(button) {
   return false;
 }
 
+
+const TUTORIAL_HIGHLIGHT_TERMS = Object.freeze([
+  'Apply Filters',
+  'Open Export',
+  'Open Browse',
+  'Explore Your Data',
+  'Continue',
+  'Back',
+  'Timeline',
+  'Inspector',
+  'Explore',
+  'Browse',
+  'Results',
+  'Export',
+  'working set',
+  'applied search',
+  'data visualization',
+  'visualization',
+  'map',
+  'maps',
+  'network',
+  'networks',
+  'records',
+  'record',
+]);
+
+function renderTutorialSentence(sentence) {
+  const source = String(sentence || '');
+  if (!source) return null;
+
+  const escapedTerms = TUTORIAL_HIGHLIGHT_TERMS
+    .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .sort((a, b) => b.length - a.length);
+
+  const matcher = new RegExp(`(${escapedTerms.join('|')})`, 'gi');
+  const parts = source.split(matcher);
+
+  return parts.map((part, index) => {
+    const isHighlighted = TUTORIAL_HIGHLIGHT_TERMS.some(
+      (term) => term.toLowerCase() === part.toLowerCase(),
+    );
+
+    return isHighlighted ? (
+      <span key={`${part}-${index}`} className="peridot-tutorial-keyword">
+        {part}
+      </span>
+    ) : (
+      part
+    );
+  });
+}
+
 export function PeridotTutorial({
   step,
   canGoBack = true,
@@ -116,12 +170,29 @@ export function PeridotTutorial({
   const [searchTutorialPhase, setSearchTutorialPhase] = useState('browse');
   const [exportTutorialPhase, setExportTutorialPhase] = useState('closed');
   const [hasActivatedExploreRoute, setHasActivatedExploreRoute] = useState(false);
+  const [dialogueFrameIndex, setDialogueFrameIndex] = useState(0);
+  const [isMinimized, setIsMinimized] = useState(false);
   const isTimelineStep = step?.interactionType === 'timeline';
   const isInspectorStep = step?.interactionType === 'inspector';
   const isExploreNavigationStep = step?.interactionType === 'explore-navigation';
   const isSearchBrowseApplyStep = step?.interactionType === 'search-browse-apply';
   const isWorkingSetExplanationStep = step?.interactionType === 'working-set-explanation';
   const isExportCompletionStep = step?.interactionType === 'export-completion';
+  const dialogueFrames = Array.isArray(step?.frames) && step.frames.length
+    ? step.frames
+    : [step?.description, step?.note].filter(Boolean);
+  const hasDialogueInteractionStage = Boolean(
+    isTimelineStep
+    || isInspectorStep
+    || isExploreNavigationStep
+    || isSearchBrowseApplyStep
+    || isWorkingSetExplanationStep
+    || isExportCompletionStep
+  );
+  const isDialogueIntro = dialogueFrameIndex < dialogueFrames.length;
+  const isDialogueAnchorReady = hasDialogueInteractionStage
+    ? dialogueFrameIndex >= dialogueFrames.length
+    : dialogueFrameIndex >= Math.max(0, dialogueFrames.length - 1);
   const expectedWorkspace = step?.workspace || '';
   const isWorkspaceMismatch = Boolean(
     expectedWorkspace
@@ -153,7 +224,10 @@ export function PeridotTutorial({
     && Boolean(inspectorSelection);
   const hasActiveInspectorSelection = isCompactInspectorOpen || isFullInspectorOpen;
 
-  const activeAnchorConfig = isWorkspaceMismatch || isCapabilityUnavailable
+  const activeAnchorConfig = isMinimized
+    || !isDialogueAnchorReady
+    || isWorkspaceMismatch
+    || isCapabilityUnavailable
     ? { selector: '', placement: 'center' }
     : isExportCompletionStep
     ? exportTutorialPhase === 'menu-open'
@@ -264,9 +338,9 @@ export function PeridotTutorial({
     anchorAncestorText: activeAnchorConfig.ancestorText,
     anchorAncestorMinWidthRatio: activeAnchorConfig.ancestorMinWidthRatio,
     anchorPlacement: activeAnchorConfig.placement,
-    highlightAnchor: step?.highlightAnchor,
+    highlightAnchor: !isMinimized && isDialogueAnchorReady && step?.highlightAnchor,
     describedById: 'peridot-tutorial-description',
-    resetKey: `${step?.id}:${inspectorPresentationMode}:${hasActiveInspectorSelection ? 'selected' : 'unselected'}:${workspaceMode}:${isMainMenuOpen ? 'menu-open' : 'menu-closed'}:${hasActivatedExploreRoute ? 'explore-activated' : 'explore-pending'}:${isCapabilityUnavailable ? 'unavailable' : 'available'}`,
+    resetKey: `${step?.id}:${dialogueFrameIndex}:${isMinimized ? 'minimized' : 'open'}:${inspectorPresentationMode}:${hasActiveInspectorSelection ? 'selected' : 'unselected'}:${workspaceMode}:${isMainMenuOpen ? 'menu-open' : 'menu-closed'}:${hasActivatedExploreRoute ? 'explore-activated' : 'explore-pending'}:${isCapabilityUnavailable ? 'unavailable' : 'available'}`,
   });
 
   const timelineAvailability = useMemo(() => {
@@ -282,6 +356,8 @@ export function PeridotTutorial({
     setSearchTutorialPhase('browse');
     setExportTutorialPhase('closed');
     setHasActivatedExploreRoute(false);
+    setDialogueFrameIndex(0);
+    setIsMinimized(false);
 
     window.requestAnimationFrame(() => {
       (primaryButtonRef.current || dialogRef.current)?.focus();
@@ -436,7 +512,66 @@ export function PeridotTutorial({
 
   if (!step) return null;
 
-  const showGenericAnchorFallback = !isAnchorAvailable
+  const isExportComplete = isExportCompletionStep && exportTutorialPhase === 'complete';
+  const displayTitle = isExportComplete ? step.completeTitle : step.title;
+
+  const currentSentence = (() => {
+    if (isWorkspaceMismatch) {
+      return 'This tutorial step belongs to another workspace, and returning will preserve your current work.';
+    }
+
+    if (isCapabilityUnavailable) {
+      return step.unavailableText || 'This tutorial activity is unavailable for the current dataset.';
+    }
+
+    if (isExportComplete) return step.completeText;
+
+    if (isDialogueIntro) {
+      return dialogueFrames[dialogueFrameIndex] || step.description || '';
+    }
+
+    if (isTimelineStep) {
+      return hasCompletedInteraction
+        ? step.interactionCompleteText
+        : step.interactionPrompt;
+    }
+
+    if (isInspectorStep) {
+      if (isFullInspectorOpen) return step.expandedText;
+      if (isCompactInspectorOpen) return step.interactionCompleteText;
+      return step.interactionPrompt;
+    }
+
+    if (isExploreNavigationStep) {
+      if (isInspectorOpenDuringExplore) return step.inspectorPrompt;
+      if (hasReachedExplore) return step.reachedText;
+      return isMainMenuOpen ? step.menuOpenPrompt : step.menuClosedPrompt;
+    }
+
+    if (isSearchBrowseApplyStep) {
+      if (searchTutorialPhase === 'draft') return step.draftPrompt;
+      if (searchTutorialPhase === 'applied') return step.appliedText;
+      return step.browsePrompt;
+    }
+
+    if (isWorkingSetExplanationStep) {
+      return 'The applied search sits between the full collection and the research tools that use the resulting working set.';
+    }
+
+    if (isExportCompletionStep) {
+      return exportTutorialPhase === 'menu-open' ? step.openText : step.closedPrompt;
+    }
+
+    return dialogueFrames.at(-1) || step.description || '';
+  })();
+
+  const canAdvanceDialogue = isDialogueIntro && (
+    dialogueFrameIndex < dialogueFrames.length - 1
+    || hasDialogueInteractionStage
+  );
+
+  const showGenericAnchorFallback = isDialogueAnchorReady
+    && !isAnchorAvailable
     && activeAnchorConfig.selector
     && !isTimelineStep
     && !isInspectorStep
@@ -444,35 +579,145 @@ export function PeridotTutorial({
     && !isSearchBrowseApplyStep
     && !isWorkingSetExplanationStep
     && !isExportCompletionStep;
-  const showTimelineUnavailable = !isWorkspaceMismatch && isTimelineStep && !timelineAvailability.available;
-  const showCapabilityUnavailable = !isWorkspaceMismatch && isCapabilityUnavailable && !showTimelineUnavailable;
+
+  const showTimelineUnavailable = isDialogueAnchorReady
+    && !isWorkspaceMismatch
+    && isTimelineStep
+    && !timelineAvailability.available;
+
   const primaryLabel = isWorkspaceMismatch
     ? 'Return to this tutorial step'
     : isCapabilityUnavailable
       ? isExportCompletionStep ? 'Finish tutorial' : 'Continue'
-      : isExportCompletionStep
-    ? exportTutorialPhase === 'closed'
-      ? 'Open Export'
-      : exportTutorialPhase === 'menu-open'
-        ? 'Finish tutorial'
-        : 'Continue exploring'
-    : isLastStep
-      ? 'Finish tutorial'
-      : isTimelineStep && !hasCompletedInteraction && timelineAvailability.available
-      ? step.skipLabel || 'Continue without changing it'
-      : isInspectorStep && !hasActiveInspectorSelection
-        ? step.skipLabel || 'Continue without selecting'
-        : isInspectorStep && isCompactInspectorOpen
-          ? 'Continue with summary'
-          : isExploreNavigationStep && isInspectorOpenDuringExplore
-            ? step.inspectorCloseLabel || 'Close Inspector'
-            : isExploreNavigationStep && !hasReachedExplore
-              ? step.fallbackLabel || 'Open Explore directly'
-              : isSearchBrowseApplyStep && searchTutorialPhase === 'browse'
-                ? step.useCurrentResultsLabel || 'Use current results'
-                : isSearchBrowseApplyStep && searchTutorialPhase === 'draft'
-                  ? step.applyLabel || 'Apply Filters'
-                  : 'Next';
+      : canAdvanceDialogue
+        ? 'Continue'
+        : isExportCompletionStep
+          ? exportTutorialPhase === 'closed'
+            ? 'Open Export'
+            : exportTutorialPhase === 'menu-open'
+              ? 'Finish tutorial'
+              : 'Continue exploring'
+          : isLastStep
+            ? 'Finish tutorial'
+            : isTimelineStep && !hasCompletedInteraction && timelineAvailability.available
+              ? step.skipLabel || 'Continue without changing it'
+              : isInspectorStep && !hasActiveInspectorSelection
+                ? step.skipLabel || 'Continue without selecting'
+                : isInspectorStep && isCompactInspectorOpen
+                  ? 'Continue with summary'
+                  : isExploreNavigationStep && isInspectorOpenDuringExplore
+                    ? step.inspectorCloseLabel || 'Close Inspector'
+                    : isExploreNavigationStep && !hasReachedExplore
+                      ? step.fallbackLabel || 'Open Explore directly'
+                      : isSearchBrowseApplyStep && searchTutorialPhase === 'browse'
+                        ? step.useCurrentResultsLabel || 'Use current results'
+                        : isSearchBrowseApplyStep && searchTutorialPhase === 'draft'
+                          ? step.applyLabel || 'Apply Filters'
+                          : 'Next';
+
+  const handleBackAction = () => {
+    if (dialogueFrameIndex > 0 && !isExportComplete) {
+      setDialogueFrameIndex((current) => Math.max(0, current - 1));
+      return;
+    }
+    onBack?.();
+  };
+
+  const handlePrimaryAction = () => {
+    if (isWorkspaceMismatch) {
+      onReturnToStepWorkspace?.();
+      return;
+    }
+
+    if (isCapabilityUnavailable) {
+      if (isExportCompletionStep) setExportTutorialPhase('complete');
+      else onContinue?.();
+      return;
+    }
+
+    if (canAdvanceDialogue) {
+      setDialogueFrameIndex((current) => current + 1);
+      return;
+    }
+
+    if (isExploreNavigationStep && isInspectorOpenDuringExplore) {
+      onCloseInspector?.();
+      return;
+    }
+
+    if (isExploreNavigationStep && !hasReachedExplore) {
+      onOpenExplore?.();
+      return;
+    }
+
+    if (isSearchBrowseApplyStep && searchTutorialPhase === 'browse') {
+      setSearchTutorialPhase('applied');
+      setHasCompletedInteraction(true);
+      return;
+    }
+
+    if (isSearchBrowseApplyStep && searchTutorialPhase === 'draft') {
+      findVisibleButtonByText(step.applyAnchorMatchText)?.click();
+      return;
+    }
+
+    if (isExportCompletionStep && exportTutorialPhase === 'closed') {
+      findVisibleButtonByText(step.closedAnchorMatchText)?.click();
+      return;
+    }
+
+    if (isExportCompletionStep && exportTutorialPhase === 'menu-open') {
+      setExportTutorialPhase('complete');
+      return;
+    }
+
+    if (isExportComplete) {
+      onClose?.();
+      return;
+    }
+
+    if (isExploreNavigationStep && hasReachedExplore && workspaceMode === 'explore') {
+      onOpenExplore?.();
+      onContinue?.();
+      return;
+    }
+
+    onContinue?.();
+  };
+
+  if (isMinimized) {
+    return (
+      <aside
+        ref={(element) => {
+          dialogRef.current = element;
+          panelRef.current = element;
+        }}
+        className="peridot-tutorial-minimized"
+        role="dialog"
+        aria-label={`Tutorial minimized during ${displayTitle}`}
+      >
+        <button
+          type="button"
+          className="peridot-tutorial-minimized-restore"
+          onClick={() => setIsMinimized(false)}
+          aria-label={`Restore tutorial at ${displayTitle}`}
+          title={`Restore tutorial: ${displayTitle}`}
+        >
+          <span className="peridot-tutorial-minimized-mark" aria-hidden="true">◆</span>
+          <span>Tutorial</span>
+        </button>
+        <button
+          type="button"
+          className="peridot-tutorial-minimized-close"
+          onClick={onClose}
+          aria-label="Close tutorial"
+          title="Close tutorial"
+        >
+          ×
+        </button>
+      </aside>
+    );
+  }
 
   return (
     <aside
@@ -487,6 +732,7 @@ export function PeridotTutorial({
       aria-labelledby="peridot-tutorial-heading"
       aria-describedby="peridot-tutorial-description peridot-tutorial-status"
       data-peridot-tutorial-step={step.id}
+      data-peridot-tutorial-dialogue-frame={dialogueFrameIndex}
       data-peridot-tutorial-anchor-available={isAnchorAvailable ? 'true' : 'false'}
       data-peridot-tutorial-interaction-complete={hasCompletedInteraction ? 'true' : 'false'}
       data-peridot-tutorial-inspector-presentation={isInspectorStep ? inspectorPresentationMode : undefined}
@@ -508,39 +754,49 @@ export function PeridotTutorial({
       data-peridot-tutorial-capability-unavailable={isCapabilityUnavailable ? 'true' : 'false'}
       tabIndex={-1}
     >
-      <div
-        className="peridot-tutorial-drag-handle"
-        {...dragHandleProps}
-        aria-label="Move tutorial panel. Use arrow keys to reposition it."
-      >
-        <span className="peridot-tutorial-drag-grip" aria-hidden="true">••••</span>
-        <span>Drag or use arrow keys to move</span>
+      <header className="peridot-tutorial-header">
+        <div
+          className="peridot-tutorial-title-drag"
+          {...dragHandleProps}
+          aria-label="Move tutorial panel with pointer dragging or arrow keys"
+        >
+          <h2 id="peridot-tutorial-heading">{displayTitle}</h2>
+        </div>
+
+        <div className="peridot-tutorial-window-controls">
+          <button
+            type="button"
+            className="peridot-tutorial-window-button"
+            onClick={() => setIsMinimized(true)}
+            aria-label="Minimize tutorial"
+            title="Minimize tutorial"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            className="peridot-tutorial-window-button is-close"
+            onClick={onClose}
+            aria-label="Close tutorial and return focus to where the tutorial started"
+            title="Close tutorial"
+          >
+            ×
+          </button>
+        </div>
+      </header>
+
+      <div className="peridot-tutorial-divider" aria-hidden="true">
+        <img
+          src={tutorialFiligreeDivider}
+          alt=""
+          className="peridot-tutorial-divider-image"
+          draggable="false"
+        />
       </div>
 
-      <button
-        type="button"
-        className="peridot-tutorial-close"
-        onClick={onClose}
-        aria-label="Close tutorial and return focus to where the tutorial started"
-        title="Close tutorial"
-      >
-        ×
-      </button>
-
-      <p className="peridot-tutorial-progress">
-        {isExportCompletionStep && exportTutorialPhase === 'complete'
-          ? 'Tour complete'
-          : `Step ${step.number} of ${PERIDOT_TUTORIAL_TOTAL_STEPS}`}
-      </p>
-      <h2 id="peridot-tutorial-heading">
-        {isExportCompletionStep && exportTutorialPhase === 'complete' ? step.completeTitle : step.title}
-      </h2>
-      <p id="peridot-tutorial-description">
-        {isExportCompletionStep && exportTutorialPhase === 'complete' ? step.completeText : step.description}
-      </p>
-      {step.note && !(isExportCompletionStep && exportTutorialPhase === 'complete') ? (
-        <p className="peridot-tutorial-note">{step.note}</p>
-      ) : null}
+      <div className="peridot-tutorial-dialogue" key={`${step.id}:${dialogueFrameIndex}:${currentSentence}`}>
+        <p id="peridot-tutorial-description">{renderTutorialSentence(currentSentence)}</p>
+      </div>
 
       <div
         id="peridot-tutorial-status"
@@ -549,132 +805,50 @@ export function PeridotTutorial({
         aria-live="polite"
         aria-atomic="true"
       >
-        {isWorkspaceMismatch
-          ? 'Tutorial paused because this step is in another workspace.'
-          : isCapabilityUnavailable
-            ? step.unavailableText || 'This tutorial activity is unavailable.'
-            : `Tutorial step ${step.number} of ${PERIDOT_TUTORIAL_TOTAL_STEPS}: ${step.title}`}
+        {`Tutorial step ${step.number} of ${PERIDOT_TUTORIAL_TOTAL_STEPS}: ${displayTitle}. ${currentSentence}`}
       </div>
 
-      {isTimelineStep && timelineAvailability.available && !hasCompletedInteraction ? (
-        <p className="peridot-tutorial-interaction-prompt">
-          {step.interactionPrompt}
-        </p>
+      {!isDialogueIntro && !isWorkspaceMismatch && !isCapabilityUnavailable && isInspectorStep && isCompactInspectorOpen ? (
+        <button
+          type="button"
+          className="peridot-tutorial-inline-action"
+          onClick={onExpandInspector}
+        >
+          Expand Inspector
+        </button>
       ) : null}
 
-      {isTimelineStep && hasCompletedInteraction ? (
-        <p className="peridot-tutorial-interaction-status" role="status">
-          <span aria-hidden="true">✓</span>
-          {step.interactionCompleteText}
-        </p>
+      {!isDialogueIntro && !isWorkspaceMismatch && !isCapabilityUnavailable && isExploreNavigationStep && isInspectorOpenDuringExplore ? (
+        <button
+          type="button"
+          className="peridot-tutorial-inline-action"
+          onClick={onCloseInspector}
+        >
+          {step.inspectorCloseLabel || 'Close Inspector'}
+        </button>
       ) : null}
 
-      {isInspectorStep && !hasActiveInspectorSelection ? (
-        <p className="peridot-tutorial-interaction-prompt">
-          {step.interactionPrompt}
-        </p>
+      {!isDialogueIntro && !isWorkspaceMismatch && !isCapabilityUnavailable && isExploreNavigationStep && !isInspectorOpenDuringExplore && !hasReachedExplore && !isMainMenuOpen ? (
+        <button
+          type="button"
+          className="peridot-tutorial-inline-action"
+          onClick={onOpenMainMenu}
+        >
+          Open main menu
+        </button>
       ) : null}
 
-      {isInspectorStep && isCompactInspectorOpen ? (
-        <>
-          <p className="peridot-tutorial-interaction-status" role="status">
-            <span aria-hidden="true">✓</span>
-            {step.interactionCompleteText}
-          </p>
-          <button
-            type="button"
-            className="peridot-tutorial-inline-action"
-            onClick={onExpandInspector}
-          >
-            Expand Inspector
-          </button>
-        </>
+      {!isDialogueIntro && !isWorkspaceMismatch && !isCapabilityUnavailable && isSearchBrowseApplyStep && searchTutorialPhase === 'browse' ? (
+        <button
+          type="button"
+          className="peridot-tutorial-inline-action"
+          onClick={() => findVisibleButtonByText(step.browseAnchorMatchText)?.click()}
+        >
+          {step.openBrowseLabel || 'Open Browse'}
+        </button>
       ) : null}
 
-      {isInspectorStep && isFullInspectorOpen ? (
-        <p className="peridot-tutorial-interaction-status" role="status">
-          <span aria-hidden="true">✓</span>
-          {step.expandedText}
-        </p>
-      ) : null}
-
-      {isExploreNavigationStep && isInspectorOpenDuringExplore ? (
-        <>
-          <p className="peridot-tutorial-interaction-prompt">
-            {step.inspectorPrompt}
-          </p>
-          <button
-            type="button"
-            className="peridot-tutorial-inline-action"
-            onClick={onCloseInspector}
-          >
-            {step.inspectorCloseLabel || 'Close Inspector'}
-          </button>
-        </>
-      ) : null}
-
-      {isExploreNavigationStep && !isInspectorOpenDuringExplore && !hasReachedExplore ? (
-        <>
-          <p className="peridot-tutorial-interaction-prompt">
-            {isMainMenuOpen ? step.menuOpenPrompt : step.menuClosedPrompt}
-          </p>
-          {!isMainMenuOpen ? (
-            <button
-              type="button"
-              className="peridot-tutorial-inline-action"
-              onClick={onOpenMainMenu}
-            >
-              Open main menu
-            </button>
-          ) : null}
-        </>
-      ) : null}
-
-      {isExploreNavigationStep && hasReachedExplore ? (
-        <p className="peridot-tutorial-interaction-status" role="status">
-          <span aria-hidden="true">✓</span>
-          {step.reachedText}
-        </p>
-      ) : null}
-
-      {isWorkspaceMismatch ? (
-        <div className="peridot-tutorial-recovery" role="status">
-          <strong>This tutorial step is in another workspace.</strong>
-          <span>Your work has not been cleared. Return to the expected workspace to continue this step.</span>
-        </div>
-      ) : null}
-
-      {showCapabilityUnavailable ? (
-        <p className="peridot-tutorial-anchor-fallback" role="status">
-          {step.unavailableText || 'This activity is unavailable for the current dataset. You can continue.'}
-        </p>
-      ) : null}
-
-      {!isWorkspaceMismatch && !isCapabilityUnavailable && isSearchBrowseApplyStep && searchTutorialPhase === 'browse' ? (
-        <>
-          <p className="peridot-tutorial-interaction-prompt">{step.browsePrompt}</p>
-          <button
-            type="button"
-            className="peridot-tutorial-inline-action"
-            onClick={() => findVisibleButtonByText(step.browseAnchorMatchText)?.click()}
-          >
-            {step.openBrowseLabel || 'Open Browse'}
-          </button>
-        </>
-      ) : null}
-
-      {!isWorkspaceMismatch && !isCapabilityUnavailable && isSearchBrowseApplyStep && searchTutorialPhase === 'draft' ? (
-        <p className="peridot-tutorial-interaction-prompt">{step.draftPrompt}</p>
-      ) : null}
-
-      {!isWorkspaceMismatch && !isCapabilityUnavailable && isSearchBrowseApplyStep && searchTutorialPhase === 'applied' ? (
-        <p className="peridot-tutorial-interaction-status" role="status">
-          <span aria-hidden="true">✓</span>
-          {step.appliedText}
-        </p>
-      ) : null}
-
-      {!isWorkspaceMismatch && isWorkingSetExplanationStep ? (
+      {!isDialogueIntro && !isWorkspaceMismatch && !isCapabilityUnavailable && isWorkingSetExplanationStep ? (
         <div
           className="peridot-tutorial-working-set-flow"
           aria-label={`${step.flowStart}, then ${step.flowMiddle}, then ${step.flowEnd}`}
@@ -696,27 +870,17 @@ export function PeridotTutorial({
         </div>
       ) : null}
 
-      {!isWorkspaceMismatch && !isCapabilityUnavailable && isExportCompletionStep && exportTutorialPhase === 'closed' ? (
-        <>
-          <p className="peridot-tutorial-interaction-prompt">{step.closedPrompt}</p>
-          <button
-            type="button"
-            className="peridot-tutorial-inline-action"
-            onClick={() => findVisibleButtonByText(step.closedAnchorMatchText)?.click()}
-          >
-            Open Export
-          </button>
-        </>
+      {!isDialogueIntro && !isWorkspaceMismatch && !isCapabilityUnavailable && isExportCompletionStep && exportTutorialPhase === 'closed' ? (
+        <button
+          type="button"
+          className="peridot-tutorial-inline-action"
+          onClick={() => findVisibleButtonByText(step.closedAnchorMatchText)?.click()}
+        >
+          Open Export
+        </button>
       ) : null}
 
-      {!isWorkspaceMismatch && !isCapabilityUnavailable && isExportCompletionStep && exportTutorialPhase === 'menu-open' ? (
-        <p className="peridot-tutorial-interaction-status" role="status">
-          <span aria-hidden="true">✓</span>
-          {step.openText}
-        </p>
-      ) : null}
-
-      {isExportCompletionStep && exportTutorialPhase === 'complete' ? (
+      {isExportComplete ? (
         <div className="peridot-tutorial-completion">
           <div className="peridot-tutorial-completion-grid" aria-label="Peridot tutorial workflow summary">
             {[
@@ -755,64 +919,43 @@ export function PeridotTutorial({
 
       {showGenericAnchorFallback ? (
         <p className="peridot-tutorial-anchor-fallback" role="status">
-          The related control is not available in this view, so this guide remains in a safe screen position.
+          The related control is unavailable in this view, so the guide remains in a safe screen position.
         </p>
       ) : null}
 
-      {!(isExportCompletionStep && exportTutorialPhase === 'complete') ? (
-      <div className="peridot-tutorial-actions">
-        <button
-          type="button"
-          className="peridot-tutorial-button is-secondary"
-          onClick={onBack}
-          disabled={!canGoBack}
-        >
-          Back
-        </button>
-        <button type="button" className="peridot-tutorial-button is-quiet" onClick={onClose}>
-          End tutorial
-        </button>
-        <button
-          ref={primaryButtonRef}
-          type="button"
-          className="peridot-tutorial-button is-primary"
-          aria-label={`${primaryLabel}. Tutorial step ${step.number} of ${PERIDOT_TUTORIAL_TOTAL_STEPS}.`}
-          onClick={
-            isWorkspaceMismatch
-              ? onReturnToStepWorkspace
-              : isCapabilityUnavailable
-                ? isExportCompletionStep
-                  ? () => setExportTutorialPhase('complete')
-                  : onContinue
-                : isExploreNavigationStep && isInspectorOpenDuringExplore
-              ? onCloseInspector
-              : isExploreNavigationStep && !hasReachedExplore
-                ? onOpenExplore
-                : isSearchBrowseApplyStep && searchTutorialPhase === 'browse'
-                  ? () => {
-                      setSearchTutorialPhase('applied');
-                      setHasCompletedInteraction(true);
-                    }
-                  : isSearchBrowseApplyStep && searchTutorialPhase === 'draft'
-                    ? () => findVisibleButtonByText(step.applyAnchorMatchText)?.click()
-                    : isExportCompletionStep && exportTutorialPhase === 'closed'
-                      ? () => findVisibleButtonByText(step.closedAnchorMatchText)?.click()
-                      : isExportCompletionStep && exportTutorialPhase === 'menu-open'
-                        ? () => setExportTutorialPhase('complete')
-                        : isExportCompletionStep && exportTutorialPhase === 'complete'
-                          ? onClose
-                          : isExploreNavigationStep && hasReachedExplore && workspaceMode === 'explore'
-                            ? () => {
-                                onOpenExplore?.();
-                                onContinue?.();
-                              }
-                            : onContinue
-          }
-        >
-          {primaryLabel}
-        </button>
-      </div>
-      ) : null}
+      {!isExportComplete ? (
+        <footer className="peridot-tutorial-actions">
+          <button
+            type="button"
+            className="peridot-tutorial-button is-secondary"
+            onClick={handleBackAction}
+            disabled={!canGoBack && dialogueFrameIndex === 0}
+            aria-label={
+              dialogueFrameIndex > 0
+                ? 'Back to the previous tutorial sentence'
+                : `Back to tutorial step ${Math.max(1, step.number - 1)}`
+            }
+          >
+            Back
+          </button>
+
+          <p className="peridot-tutorial-progress">
+            {step.number} / {PERIDOT_TUTORIAL_TOTAL_STEPS}
+          </p>
+
+          <button
+            ref={primaryButtonRef}
+            type="button"
+            className="peridot-tutorial-button is-primary"
+            aria-label={`${primaryLabel}. Tutorial step ${step.number} of ${PERIDOT_TUTORIAL_TOTAL_STEPS}.`}
+            onClick={handlePrimaryAction}
+          >
+            {primaryLabel}
+          </button>
+        </footer>
+      ) : (
+        <p className="peridot-tutorial-progress is-complete">Tour complete</p>
+      )}
     </aside>
   );
 }

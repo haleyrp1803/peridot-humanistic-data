@@ -5,21 +5,6 @@
  * intentionally sparse: it establishes the tool's identity, gives a one-sentence
  * description, and routes users toward either the embedded sample dataset or
  * their own uploaded data.
- *
- * Important relationships:
- * - `onUseSampleData` opens Visualizations with the embedded sample data managed
- *   by `App.jsx`.
- * - `onUploadData` opens the Data workspace for CSV/TSV/XLSX/XLS upload and
- *   mapping.
- *
- * Maintenance cautions:
- * - Keep detailed onboarding out of this component. Longer explanations belong
- *   in Learn More about Peridot so returning users can move past the homepage
- *   quickly.
- * - The desktop homepage is implemented as a fixed-ratio title-card stage. The
- *   logo and text/action group are the primary content. The filigree ornaments
- *   are decorative frame objects anchored outside the neighboring content
- *   groups, not layout columns that can drift into the content.
  */
 
 import React, { useState } from 'react';
@@ -28,6 +13,7 @@ import { useDraggableTutorialPanel } from './useDraggableTutorialPanel.js';
 
 import peridotLogoTransparent from '../assets/Peridot Logo Gilded Transparent.png';
 import homepageFiligree from '../assets/Adobe Stock Filigree 1.png';
+import tutorialFiligreeDivider from '../assets/Adobe Stock Filigree 3.png';
 
 function HomeTextureBackdrop() {
   return (
@@ -135,35 +121,56 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData, onStartTut
               className="peridot-home-tutorial-invitation peridot-appear-rise peridot-appear-delay-4"
               aria-labelledby="peridot-home-tutorial-heading"
             >
-              <div
-                className="peridot-home-tutorial-drag-handle"
-                {...tutorialInvitationDragHandleProps}
-              >
-                <span className="peridot-tutorial-drag-grip" aria-hidden="true">••••</span>
-                <span>Drag to move</span>
+              <header className="peridot-home-tutorial-header">
+                <div
+                  className="peridot-home-tutorial-title-drag"
+                  {...tutorialInvitationDragHandleProps}
+                  aria-label="Move tutorial invitation with pointer dragging or arrow keys"
+                >
+                  <h2 id="peridot-home-tutorial-heading">TUTORIAL</h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowTutorialInvitation(false)}
+                  className="peridot-home-tutorial-close"
+                  aria-label="Dismiss tutorial invitation"
+                  title="Dismiss tutorial invitation"
+                >
+                  ×
+                </button>
+              </header>
+
+              <div className="peridot-home-tutorial-divider" aria-hidden="true">
+                <img
+                  src={tutorialFiligreeDivider}
+                  alt=""
+                  className="peridot-home-tutorial-divider-image"
+                  draggable="false"
+                />
               </div>
 
-              <div className="peridot-home-tutorial-content">
-                <div className="peridot-home-tutorial-copy">
-                  <p className="peridot-home-tutorial-kicker">New to Peridot?</p>
-                  <h2 id="peridot-home-tutorial-heading">Take a guided tour</h2>
-                  <p>
-                    Explore sample data while Peridot introduces its main tools in concise, plain language.
-                  </p>
-                </div>
-                <div className="peridot-home-tutorial-actions">
-                  <button type="button" onClick={onStartTutorial} className="peridot-home-tutorial-start">
-                    Start tutorial
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowTutorialInvitation(false)}
-                    className="peridot-home-tutorial-dismiss"
-                  >
-                    Explore on my own
-                  </button>
-                </div>
+              <div className="peridot-home-tutorial-dialogue">
+                <p>
+                  Explore <span className="peridot-tutorial-keyword">sample data</span> while Peridot introduces its main tools one idea at a time.
+                </p>
               </div>
+
+              <footer className="peridot-home-tutorial-actions">
+                <button
+                  type="button"
+                  onClick={() => setShowTutorialInvitation(false)}
+                  className="peridot-home-tutorial-dismiss"
+                >
+                  Explore on my own
+                </button>
+                <button
+                  type="button"
+                  onClick={onStartTutorial}
+                  className="peridot-home-tutorial-start"
+                >
+                  Start tutorial
+                </button>
+              </footer>
             </aside>
           ) : null}
         </div>
