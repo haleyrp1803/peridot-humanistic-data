@@ -57,6 +57,7 @@ import './PeridotFeedbackForm.css';
 - Redesigned the Home tutorial card to align with the workspace-card visual system and removed obsolete title/progress border rules at their source rather than masking them with overrides.
 - Added interaction guidance across the full tutorial path, including explicit instruction to close the Inspector before continuing.
 - Stabilized target highlighting and observer behavior. **`619bab0` — `Restore stable tutorial attention behavior`** is the accepted baseline for later polish.
+- Preserved the exact implementation sequence in the full history: `84fe3cc`, `da0a472`, `ed6466f`, `48f680a`, `67fc073`, `783acc1`, `a52b9ca`, `16cf7cc`, `8241f3a`, `297430f`, `d3c3c24`, and `619bab0`.
 - Prepared this bounded core-documentation synchronization against `619bab0`; no source-code, tutorial redesign, or animation experimentation is included in the documentation pass.
 
 ### Documentation governance, screenshot history, feedback, and stylesheet-import restoration — 2026-06-21
@@ -455,11 +456,31 @@ This is the single authoritative place in the documentation for the cumulative c
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
 | 2026-07-14 | `619bab0` | Restore stable tutorial attention behavior | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-21 | `a9b9c81` | Add core documentation restructuring plan | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-21 | `70d8b31` | Move documentation governance protocol to core documentation |  |
-| 2026-06-21 | `6d05409` | Add core documentation governance protocol |  |
-| 2026-06-21 | `dc5f20b` | Add core documentation governance protocol |  |
-| 2026-06-21 | `58fdd08` | Refresh README screenshots and preserve interface history |  |
+| 2026-07-14 | `d3c3c24` | Refine tutorial presentation and dialogue layout |  |
+| 2026-07-14 | `297430f` | Improve tutorial accessibility and focus handling |  |
+| 2026-07-14 | `8241f3a` | Harden tutorial recovery and anchor resolution |  |
+| 2026-07-14 | `16cf7cc` | Complete tutorial export and finish flow |  |
+| 2026-07-14 | `a52b9ca` | Add working set tutorial explanation |  |
+| 2026-07-14 | `783acc1` | Add Browse and applied search tutorial guidance |  |
+| 2026-07-14 | `67fc073` | Guide tutorial navigation into Explore |  |
+| 2026-07-14 | `48f680a` | Add Inspector tutorial guidance and placement |  |
+| 2026-07-14 | `ed6466f` | Add interactive timeline tutorial guidance |  |
+| 2026-07-14 | `da0a472` | Anchor tutorial to visualization and timeline controls |  |
+| 2026-07-14 | `84fe3cc` | Add tutorial foundation and step state machine |  |
+| 2026-06-22 | `42149ab` | Add metadata refinement and connected entity search |  |
+| 2026-06-22 | `14aa380` | Separate Search scope from playback visibility |  |
+| 2026-06-22 | `f01ed59` | Build unified Search metadata records |  |
+| 2026-06-22 | `b1a32b6` | Expand Browse and Refine index coverage |  |
+| 2026-06-22 | `e7dfb3d` | Update PROJECT_WORKFLOW_CHARTER.md |  |
+| 2026-06-22 | `8a5c6f3` | Update README.md with AI disclosure |  |
+| 2026-06-22 | `07cb6be` | Update README.md |  |
+| 2026-06-22 | `03e3e82` | Create README.md redirect for GitHub users |  |
+| 2026-06-22 | `3fc7331` | Restructure and audit core documentation |  |
+| 2026-06-22 | `a9b9c81` | Add core documentation restructuring plan |  |
+| 2026-06-22 | `70d8b31` | Move documentation governance protocol to core documentation |  |
+| 2026-06-22 | `6d05409` | Add core documentation governance protocol |  |
+| 2026-06-22 | `dc5f20b` | Add core documentation governance protocol |  |
+| 2026-06-22 | `58fdd08` | Refresh README screenshots and preserve interface history |  |
 | 2026-06-21 | `7df46a8` | Restore extracted workspace stylesheet imports |  |
 | 2026-06-21 | `8f2d1ca` | Refine feedback form and visualization control layering |  |
 | 2026-06-21 | `639e30f` | Extract Inspector stylesheet | (HEAD -> main, origin/main, origin/HEAD) |
