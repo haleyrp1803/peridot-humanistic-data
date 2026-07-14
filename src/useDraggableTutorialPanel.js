@@ -15,6 +15,8 @@ const KEYBOARD_DRAG_STEP = 18;
 const VIEWPORT_MARGIN = 20;
 const ANCHOR_GAP = 18;
 const TUTORIAL_HIGHLIGHT_CLASS = 'peridot-tutorial-target-highlight';
+const TUTORIAL_ATTENTION_CLASS = 'peridot-tutorial-target-attention';
+const TUTORIAL_TIMELINE_GESTURE_CLASS = 'peridot-tutorial-target-timeline-gesture';
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -153,6 +155,8 @@ export function useDraggableTutorialPanel({
   anchorAncestorMinWidthRatio = 0,
   anchorPlacement = 'bottom-right',
   highlightAnchor = false,
+  attentionActive = false,
+  attentionMode = 'breathe',
   describedById = '',
   resetKey = '',
 } = {}) {
@@ -167,8 +171,14 @@ export function useDraggableTutorialPanel({
   const clearAnchorDecoration = useCallback(() => {
     if (typeof document === 'undefined') return;
 
-    document.querySelectorAll(`.${TUTORIAL_HIGHLIGHT_CLASS}`).forEach((element) => {
-      element.classList.remove(TUTORIAL_HIGHLIGHT_CLASS);
+    document.querySelectorAll(
+      `.${TUTORIAL_HIGHLIGHT_CLASS}, .${TUTORIAL_ATTENTION_CLASS}, .${TUTORIAL_TIMELINE_GESTURE_CLASS}`,
+    ).forEach((element) => {
+      element.classList.remove(
+        TUTORIAL_HIGHLIGHT_CLASS,
+        TUTORIAL_ATTENTION_CLASS,
+        TUTORIAL_TIMELINE_GESTURE_CLASS,
+      );
       if (describedById && element.getAttribute('aria-describedby') === describedById) {
         element.removeAttribute('aria-describedby');
       }
@@ -181,9 +191,21 @@ export function useDraggableTutorialPanel({
     if (!element || !highlightAnchor) return;
 
     element.classList.add(TUTORIAL_HIGHLIGHT_CLASS);
+    if (attentionActive) {
+      element.classList.add(TUTORIAL_ATTENTION_CLASS);
+      if (attentionMode === 'timeline-gesture') {
+        element.classList.add(TUTORIAL_TIMELINE_GESTURE_CLASS);
+      }
+    }
     if (describedById) element.setAttribute('aria-describedby', describedById);
     highlightedElementRef.current = element;
-  }, [clearAnchorDecoration, describedById, highlightAnchor]);
+  }, [
+    attentionActive,
+    attentionMode,
+    clearAnchorDecoration,
+    describedById,
+    highlightAnchor,
+  ]);
 
   const positionPanel = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -235,8 +257,25 @@ export function useDraggableTutorialPanel({
       });
     };
 
-    const observer = new MutationObserver(schedulePositionUpdate);
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+    const observer = new MutationObserver((mutations) => {
+      const hasRelevantMutation = mutations.some((mutation) => {
+        if (mutation.type === 'childList') return true;
+        if (mutation.type !== 'attributes') return false;
+
+        return ['hidden', 'style', 'aria-expanded', 'aria-hidden'].includes(
+          mutation.attributeName,
+        );
+      });
+
+      if (hasRelevantMutation) schedulePositionUpdate();
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['hidden', 'style', 'aria-expanded', 'aria-hidden'],
+    });
     const handleVisibilityChange = () => {
       if (document.hidden) {
         clearAnchorDecoration();

@@ -399,13 +399,111 @@
   position: relative;
   z-index: 2;
   border-radius: 1.15rem;
-  outline: 3px solid rgba(244, 211, 128, 0.98) !important;
-  outline-offset: 5px !important;
+  outline: 2px solid rgba(236, 198, 102, 0.82) !important;
+  outline-offset: 4px !important;
   box-shadow:
-    0 0 0 9px rgba(7, 31, 19, 0.82),
-    0 0 34px 14px rgba(226, 184, 79, 0.42) !important;
-  filter: drop-shadow(0 0 8px rgba(244, 211, 128, 0.42));
-  transition: outline-color 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    0 0 0 6px rgba(7, 31, 19, 0.58),
+    0 0 18px 7px rgba(226, 184, 79, 0.2) !important;
+  filter: drop-shadow(0 0 5px rgba(244, 211, 128, 0.24));
+  transition:
+    outline-color 220ms ease,
+    box-shadow 220ms ease,
+    filter 220ms ease,
+    scale 220ms ease,
+    translate 220ms ease;
+}
+
+.peridot-tutorial-target-attention {
+  animation: peridot-tutorial-region-breathe 1.9s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.peridot-tutorial-target-attention:is(
+  button,
+  [role="button"],
+  input,
+  select,
+  a
+) {
+  animation-name: peridot-tutorial-control-breathe;
+}
+
+@keyframes peridot-tutorial-region-breathe {
+  0%,
+  100% {
+    outline-color: rgba(236, 198, 102, 0.72);
+    box-shadow:
+      0 0 0 6px rgba(7, 31, 19, 0.54),
+      0 0 15px 6px rgba(226, 184, 79, 0.16);
+    filter: drop-shadow(0 0 4px rgba(244, 211, 128, 0.2));
+  }
+  50% {
+    outline-color: rgba(246, 216, 137, 0.98);
+    box-shadow:
+      0 0 0 7px rgba(7, 31, 19, 0.62),
+      0 0 24px 10px rgba(226, 184, 79, 0.3);
+    filter: drop-shadow(0 0 7px rgba(244, 211, 128, 0.34));
+  }
+}
+
+@keyframes peridot-tutorial-control-breathe {
+  0%,
+  100% {
+    scale: 1;
+    translate: 0 0;
+    outline-color: rgba(236, 198, 102, 0.76);
+    box-shadow:
+      0 0 0 5px rgba(7, 31, 19, 0.5),
+      0 0 14px 5px rgba(226, 184, 79, 0.16);
+  }
+  50% {
+    scale: 1.025;
+    translate: 0 -1px;
+    outline-color: rgba(248, 221, 151, 1);
+    box-shadow:
+      0 0 0 6px rgba(7, 31, 19, 0.58),
+      0 0 23px 9px rgba(226, 184, 79, 0.31);
+  }
+}
+
+.peridot-tutorial-target-timeline-gesture::after {
+  content: "↔";
+  position: absolute;
+  left: 50%;
+  bottom: 0.55rem;
+  z-index: 20;
+  display: grid;
+  min-width: 3.1rem;
+  height: 1.65rem;
+  place-items: center;
+  border: 1px solid rgba(244, 211, 128, 0.72);
+  border-radius: 999px;
+  background: rgba(4, 31, 18, 0.9);
+  color: #f0cb70;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  translate: -50% 0;
+  animation: peridot-tutorial-timeline-gesture 1.45s ease-in-out 1 both;
+}
+
+@keyframes peridot-tutorial-timeline-gesture {
+  0% {
+    opacity: 0;
+    translate: calc(-50% - 1.2rem) 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+    translate: calc(-50% + 1.2rem) 0;
+  }
+  100% {
+    opacity: 0;
+    translate: calc(-50% + 1.2rem) 0;
+  }
 }
 
 .peridot-tutorial-callout[data-peridot-tutorial-step="visualizations"][data-peridot-tutorial-anchor-available="true"] {
@@ -418,7 +516,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .peridot-tutorial-target-highlight {
+  .peridot-tutorial-target-highlight,
+  .peridot-tutorial-target-attention,
+  .peridot-tutorial-target-timeline-gesture::after {
+    animation: none !important;
     transition: none !important;
   }
 }
@@ -1527,6 +1628,35 @@
   .peridot-home-tutorial-dismiss {
     width: 100%;
     justify-self: stretch;
+  }
+}
+
+/* Attention choreography: read first, then look, then act. */
+.peridot-tutorial-callout {
+  transition:
+    left 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    top 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease;
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-attention="reading"] {
+  border-color: rgba(220, 182, 83, 0.68);
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-attention="target"] {
+  border-color: rgba(226, 190, 96, 0.82);
+}
+
+.peridot-tutorial-dialogue {
+  animation-duration: 210ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-tutorial-callout {
+    transition: none !important;
   }
 }
 

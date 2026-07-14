@@ -172,6 +172,7 @@ export function PeridotTutorial({
   const [hasActivatedExploreRoute, setHasActivatedExploreRoute] = useState(false);
   const [dialogueFrameIndex, setDialogueFrameIndex] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isAttentionCueVisible, setIsAttentionCueVisible] = useState(false);
   const isTimelineStep = step?.interactionType === 'timeline';
   const isInspectorStep = step?.interactionType === 'inspector';
   const isExploreNavigationStep = step?.interactionType === 'explore-navigation';
@@ -223,6 +224,17 @@ export function PeridotTutorial({
     && ['workspace', 'empty-workspace'].includes(inspectorPresentationMode)
     && Boolean(inspectorSelection);
   const hasActiveInspectorSelection = isCompactInspectorOpen || isFullInspectorOpen;
+  const isInteractionPending = Boolean(
+    (step?.id === 'visualizations')
+    || (isTimelineStep && !hasCompletedInteraction)
+    || (isInspectorStep && !hasActiveInspectorSelection)
+    || (isExploreNavigationStep && (isInspectorOpenDuringExplore || !hasReachedExplore))
+    || (isSearchBrowseApplyStep && searchTutorialPhase !== 'applied')
+    || (isExportCompletionStep && exportTutorialPhase === 'closed')
+  );
+  const attentionMode = isTimelineStep && !hasCompletedInteraction
+    ? 'timeline-gesture'
+    : 'breathe';
 
   const activeAnchorConfig = isMinimized
     || !isDialogueAnchorReady
@@ -338,10 +350,51 @@ export function PeridotTutorial({
     anchorAncestorText: activeAnchorConfig.ancestorText,
     anchorAncestorMinWidthRatio: activeAnchorConfig.ancestorMinWidthRatio,
     anchorPlacement: activeAnchorConfig.placement,
-    highlightAnchor: !isMinimized && isDialogueAnchorReady && step?.highlightAnchor,
+    highlightAnchor: isAttentionCueVisible
+      && !isMinimized
+      && isDialogueAnchorReady
+      && step?.highlightAnchor,
+    attentionActive: isAttentionCueVisible && isInteractionPending,
+    attentionMode,
     describedById: 'peridot-tutorial-description',
     resetKey: `${step?.id}:${dialogueFrameIndex}:${isMinimized ? 'minimized' : 'open'}:${inspectorPresentationMode}:${hasActiveInspectorSelection ? 'selected' : 'unselected'}:${workspaceMode}:${isMainMenuOpen ? 'menu-open' : 'menu-closed'}:${hasActivatedExploreRoute ? 'explore-activated' : 'explore-pending'}:${isCapabilityUnavailable ? 'unavailable' : 'available'}`,
   });
+
+  useEffect(() => {
+    setIsAttentionCueVisible(false);
+
+    if (
+      isMinimized
+      || !isDialogueAnchorReady
+      || isWorkspaceMismatch
+      || isCapabilityUnavailable
+      || !activeAnchorConfig.selector
+    ) {
+      return undefined;
+    }
+
+    const cueDelay = window.setTimeout(() => {
+      setIsAttentionCueVisible(true);
+    }, 520);
+
+    return () => window.clearTimeout(cueDelay);
+  }, [
+    activeAnchorConfig.selector,
+    activeAnchorConfig.matchText,
+    activeAnchorConfig.ancestorText,
+    dialogueFrameIndex,
+    exportTutorialPhase,
+    hasActiveInspectorSelection,
+    hasReachedExplore,
+    isCapabilityUnavailable,
+    isDialogueAnchorReady,
+    isMainMenuOpen,
+    isMinimized,
+    isWorkspaceMismatch,
+    searchTutorialPhase,
+    step?.id,
+    workspaceMode,
+  ]);
 
   const timelineAvailability = useMemo(() => {
     if (!isTimelineStep) return { available: true, reason: '' };
@@ -752,6 +805,7 @@ export function PeridotTutorial({
       data-peridot-tutorial-export-phase={isExportCompletionStep ? exportTutorialPhase : undefined}
       data-peridot-tutorial-interrupted={isWorkspaceMismatch ? 'true' : 'false'}
       data-peridot-tutorial-capability-unavailable={isCapabilityUnavailable ? 'true' : 'false'}
+      data-peridot-tutorial-attention={isAttentionCueVisible ? 'target' : 'reading'}
       tabIndex={-1}
     >
       <header className="peridot-tutorial-header">
