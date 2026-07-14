@@ -2994,7 +2994,7 @@ function LegacyD3MapStage({
   hoverCard,
 }) {
   return (
-    <div ref={mapViewportRef} className="relative min-h-0 flex-1">
+    <div ref={mapViewportRef} className="relative min-h-0 flex-1" data-peridot-tutorial-anchor="visualization-stage">
       {mapViewportSize.width > 0 && mapViewportSize.height > 0 ? (
         <SvgMap
           width={mapViewportSize.width}
@@ -4936,6 +4936,9 @@ export default function EuropeNetworkMapApp() {
             step={activeTutorialStep}
             canGoBack
             isLastStep={tutorialStepIndex === PERIDOT_TUTORIAL_STEPS.length - 1}
+            inspectorSelection={selectedProps}
+            inspectorPresentationMode={inspectorPresentationMode}
+            onExpandInspector={expandInspectorToWorkspace}
             onBack={goToPreviousTutorialStep}
             onClose={closeTutorial}
             onContinue={goToNextTutorialStep}

@@ -459,3 +459,65 @@
   font-size: 1rem;
   font-weight: 900;
 }
+
+
+/* Inspector tutorial action. This remains visually subordinate to the main
+   progression controls while making the optional full-dossier path explicit. */
+.peridot-tutorial-inline-action {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: calc(100% - 2.9rem);
+  margin: 0.72rem 1.45rem 0;
+  border: 1px solid rgba(239, 209, 137, 0.68);
+  border-radius: 999px;
+  background: rgba(229, 194, 111, 0.12);
+  padding: 0.72rem 1rem;
+  color: #fff1cf;
+  font-size: 0.84rem;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+}
+
+.peridot-tutorial-inline-action:hover {
+  transform: translateY(-1px);
+  border-color: rgba(245, 220, 158, 0.92);
+  background: rgba(229, 194, 111, 0.2);
+}
+
+.peridot-tutorial-inline-action:focus-visible {
+  outline: 2px solid var(--peridot-role-interface-focus-ring);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-tutorial-inline-action {
+    transition: none !important;
+  }
+}
+
+/* Inspector tutorial placement refinement.
+ *
+ * Step 4 uses a narrower card so the explanation remains visible without
+ * masking the Inspector surface. Compact mode docks to the right of the side
+ * Inspector; full-workspace mode uses the lower-right viewport region, away
+ * from the Inspector title and summary.
+ */
+.peridot-tutorial-callout[data-peridot-tutorial-step="inspector"] {
+  width: min(27rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="inspector"][data-peridot-tutorial-inspector-presentation="workspace"],
+.peridot-tutorial-callout[data-peridot-tutorial-step="inspector"][data-peridot-tutorial-inspector-presentation="empty-workspace"] {
+  width: min(25rem, calc(100vw - 2rem));
+}
+
+@media (max-width: 900px) {
+  .peridot-tutorial-callout[data-peridot-tutorial-step="inspector"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="inspector"][data-peridot-tutorial-inspector-presentation="workspace"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="inspector"][data-peridot-tutorial-inspector-presentation="empty-workspace"] {
+    width: min(24rem, calc(100vw - 1.5rem));
+  }
+}
+

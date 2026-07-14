@@ -58,12 +58,51 @@ export function PeridotTutorial({
   step,
   canGoBack = true,
   isLastStep = false,
+  inspectorSelection = null,
+  inspectorPresentationMode = 'closed',
+  onExpandInspector,
   onBack,
   onClose,
   onContinue,
 }) {
   const dialogRef = useRef(null);
   const [hasCompletedInteraction, setHasCompletedInteraction] = useState(false);
+  const isInspectorStep = step?.interactionType === 'inspector';
+  const isCompactInspectorOpen = isInspectorStep
+    && inspectorPresentationMode === 'compact'
+    && Boolean(inspectorSelection);
+  const isFullInspectorOpen = isInspectorStep
+    && ['workspace', 'empty-workspace'].includes(inspectorPresentationMode)
+    && Boolean(inspectorSelection);
+  const hasActiveInspectorSelection = isCompactInspectorOpen || isFullInspectorOpen;
+
+  const activeAnchorConfig = isInspectorStep
+    ? isFullInspectorOpen
+      ? {
+          selector: step?.fullAnchorSelector,
+          placement: step?.fullAnchorPlacement,
+        }
+      : isCompactInspectorOpen
+        ? {
+            selector: step?.compactAnchorSelector,
+            matchText: step?.compactAnchorMatchText,
+            ancestorText: step?.compactAnchorAncestorText,
+            ancestorMinWidthRatio: step?.compactAnchorAncestorMinWidthRatio,
+            placement: step?.compactAnchorPlacement,
+          }
+        : {
+            selector: step?.selectionAnchorSelector,
+            placement: step?.selectionAnchorPlacement,
+          }
+    : {
+        selector: step?.anchorSelector,
+        matchText: step?.anchorMatchText,
+        closestSelector: step?.anchorClosestSelector,
+        ancestorText: step?.anchorAncestorText,
+        ancestorMinWidthRatio: step?.anchorAncestorMinWidthRatio,
+        placement: step?.anchorPlacement,
+      };
+
   const {
     panelRef,
     panelStyle,
@@ -71,14 +110,15 @@ export function PeridotTutorial({
     anchorElement,
     isAnchorAvailable,
   } = useDraggableTutorialPanel({
-    anchorSelector: step?.anchorSelector,
-    anchorClosestSelector: step?.anchorClosestSelector,
-    anchorAncestorText: step?.anchorAncestorText,
-    anchorAncestorMinWidthRatio: step?.anchorAncestorMinWidthRatio,
-    anchorPlacement: step?.anchorPlacement,
+    anchorSelector: activeAnchorConfig.selector,
+    anchorMatchText: activeAnchorConfig.matchText,
+    anchorClosestSelector: activeAnchorConfig.closestSelector,
+    anchorAncestorText: activeAnchorConfig.ancestorText,
+    anchorAncestorMinWidthRatio: activeAnchorConfig.ancestorMinWidthRatio,
+    anchorPlacement: activeAnchorConfig.placement,
     highlightAnchor: step?.highlightAnchor,
     describedById: 'peridot-tutorial-description',
-    resetKey: step?.id,
+    resetKey: `${step?.id}:${inspectorPresentationMode}:${hasActiveInspectorSelection ? 'selected' : 'unselected'}`,
   });
 
   const isTimelineStep = step?.interactionType === 'timeline';
@@ -95,13 +135,16 @@ export function PeridotTutorial({
   useEffect(() => {
     const handleEscape = (event) => {
       if (event.key !== 'Escape') return;
+      if (isInspectorStep && ['compact', 'workspace', 'empty-workspace'].includes(inspectorPresentationMode)) {
+        return;
+      }
       event.preventDefault();
       onClose?.();
     };
 
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
-  }, [onClose]);
+  }, [inspectorPresentationMode, isInspectorStep, onClose]);
 
   useEffect(() => {
     if (!isTimelineStep || !anchorElement || !timelineAvailability.available) return undefined;
@@ -125,14 +168,19 @@ export function PeridotTutorial({
   if (!step) return null;
 
   const showGenericAnchorFallback = !isAnchorAvailable
-    && step.anchorSelector
-    && !isTimelineStep;
+    && activeAnchorConfig.selector
+    && !isTimelineStep
+    && !isInspectorStep;
   const showTimelineUnavailable = isTimelineStep && !timelineAvailability.available;
   const primaryLabel = isLastStep
     ? 'Finish tutorial'
     : isTimelineStep && !hasCompletedInteraction && timelineAvailability.available
       ? step.skipLabel || 'Continue without changing it'
-      : 'Next';
+      : isInspectorStep && !hasActiveInspectorSelection
+        ? step.skipLabel || 'Continue without selecting'
+        : isInspectorStep && isCompactInspectorOpen
+          ? 'Continue with summary'
+          : 'Next';
 
   return (
     <aside
@@ -149,6 +197,7 @@ export function PeridotTutorial({
       data-peridot-tutorial-step={step.id}
       data-peridot-tutorial-anchor-available={isAnchorAvailable ? 'true' : 'false'}
       data-peridot-tutorial-interaction-complete={hasCompletedInteraction ? 'true' : 'false'}
+      data-peridot-tutorial-inspector-presentation={isInspectorStep ? inspectorPresentationMode : undefined}
       tabIndex={-1}
     >
       <div className="peridot-tutorial-drag-handle" {...dragHandleProps}>
@@ -183,6 +232,35 @@ export function PeridotTutorial({
         <p className="peridot-tutorial-interaction-status" role="status">
           <span aria-hidden="true">✓</span>
           {step.interactionCompleteText}
+        </p>
+      ) : null}
+
+      {isInspectorStep && !hasActiveInspectorSelection ? (
+        <p className="peridot-tutorial-interaction-prompt">
+          {step.interactionPrompt}
+        </p>
+      ) : null}
+
+      {isInspectorStep && isCompactInspectorOpen ? (
+        <>
+          <p className="peridot-tutorial-interaction-status" role="status">
+            <span aria-hidden="true">✓</span>
+            {step.interactionCompleteText}
+          </p>
+          <button
+            type="button"
+            className="peridot-tutorial-inline-action"
+            onClick={onExpandInspector}
+          >
+            Expand Inspector
+          </button>
+        </>
+      ) : null}
+
+      {isInspectorStep && isFullInspectorOpen ? (
+        <p className="peridot-tutorial-interaction-status" role="status">
+          <span aria-hidden="true">✓</span>
+          {step.expandedText}
         </p>
       ) : null}
 

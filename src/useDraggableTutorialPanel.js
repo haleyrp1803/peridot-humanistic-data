@@ -76,13 +76,23 @@ function resolveTextAncestor(element, ancestorText, minWidthRatio = 0) {
 
 function resolveAnchorElement({
   anchorSelector,
+  anchorMatchText,
   anchorClosestSelector,
   anchorAncestorText,
   anchorAncestorMinWidthRatio,
 }) {
   if (!anchorSelector || typeof document === 'undefined') return null;
 
-  const matchedElement = document.querySelector(anchorSelector);
+  const normalizedMatchText = String(anchorMatchText || '').trim().toLowerCase();
+  const matchedElement = normalizedMatchText
+    ? Array.from(document.querySelectorAll(anchorSelector)).find((element) => {
+        const searchableText = `${element.textContent || ''} ${element.getAttribute?.('aria-label') || ''}`
+          .replace(/\s+/g, ' ')
+          .trim()
+          .toLowerCase();
+        return searchableText.includes(normalizedMatchText);
+      })
+    : document.querySelector(anchorSelector);
   if (!matchedElement) return null;
 
   if (anchorClosestSelector) {
@@ -104,6 +114,7 @@ function resolveAnchorElement({
 
 export function useDraggableTutorialPanel({
   anchorSelector = '',
+  anchorMatchText = '',
   anchorClosestSelector = '',
   anchorAncestorText = '',
   anchorAncestorMinWidthRatio = 0,
@@ -148,6 +159,7 @@ export function useDraggableTutorialPanel({
 
     const resolvedAnchor = resolveAnchorElement({
       anchorSelector,
+      anchorMatchText,
       anchorClosestSelector,
       anchorAncestorText,
       anchorAncestorMinWidthRatio,
@@ -165,6 +177,7 @@ export function useDraggableTutorialPanel({
     anchorAncestorMinWidthRatio,
     anchorAncestorText,
     anchorClosestSelector,
+    anchorMatchText,
     anchorPlacement,
     anchorSelector,
     decorateAnchor,
