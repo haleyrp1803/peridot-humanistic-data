@@ -60,6 +60,11 @@ export function PeridotTutorial({
   isLastStep = false,
   inspectorSelection = null,
   inspectorPresentationMode = 'closed',
+  workspaceMode = '',
+  isMainMenuOpen = false,
+  onOpenMainMenu,
+  onOpenExplore,
+  onCloseInspector,
   onExpandInspector,
   onBack,
   onClose,
@@ -68,6 +73,12 @@ export function PeridotTutorial({
   const dialogRef = useRef(null);
   const [hasCompletedInteraction, setHasCompletedInteraction] = useState(false);
   const isInspectorStep = step?.interactionType === 'inspector';
+  const isExploreNavigationStep = step?.interactionType === 'explore-navigation';
+  const isInspectorOpenDuringExplore = isExploreNavigationStep
+    && ['compact', 'workspace', 'empty-workspace'].includes(inspectorPresentationMode);
+  const hasReachedExplore = isExploreNavigationStep
+    && !isInspectorOpenDuringExplore
+    && workspaceMode === 'search';
   const isCompactInspectorOpen = isInspectorStep
     && inspectorPresentationMode === 'compact'
     && Boolean(inspectorSelection);
@@ -76,8 +87,38 @@ export function PeridotTutorial({
     && Boolean(inspectorSelection);
   const hasActiveInspectorSelection = isCompactInspectorOpen || isFullInspectorOpen;
 
-  const activeAnchorConfig = isInspectorStep
-    ? isFullInspectorOpen
+  const activeAnchorConfig = isExploreNavigationStep
+    ? isInspectorOpenDuringExplore
+      ? ['workspace', 'empty-workspace'].includes(inspectorPresentationMode)
+        ? {
+            selector: step?.inspectorFullAnchorSelector,
+            placement: step?.inspectorFullAnchorPlacement,
+          }
+        : {
+            selector: step?.inspectorCompactAnchorSelector,
+            matchText: step?.inspectorCompactAnchorMatchText,
+            ancestorText: step?.inspectorCompactAnchorAncestorText,
+            ancestorMinWidthRatio: step?.inspectorCompactAnchorAncestorMinWidthRatio,
+            placement: step?.inspectorCompactAnchorPlacement,
+          }
+      : hasReachedExplore
+        ? {
+          selector: step?.reachedAnchorSelector,
+          placement: step?.reachedAnchorPlacement,
+        }
+      : isMainMenuOpen
+        ? {
+            selector: step?.openAnchorSelector,
+            matchText: step?.openAnchorMatchText,
+            placement: step?.openAnchorPlacement,
+          }
+          : {
+              selector: step?.closedAnchorSelector,
+              matchText: step?.closedAnchorMatchText,
+              placement: step?.closedAnchorPlacement,
+            }
+    : isInspectorStep
+      ? isFullInspectorOpen
       ? {
           selector: step?.fullAnchorSelector,
           placement: step?.fullAnchorPlacement,
@@ -118,7 +159,7 @@ export function PeridotTutorial({
     anchorPlacement: activeAnchorConfig.placement,
     highlightAnchor: step?.highlightAnchor,
     describedById: 'peridot-tutorial-description',
-    resetKey: `${step?.id}:${inspectorPresentationMode}:${hasActiveInspectorSelection ? 'selected' : 'unselected'}`,
+    resetKey: `${step?.id}:${inspectorPresentationMode}:${hasActiveInspectorSelection ? 'selected' : 'unselected'}:${workspaceMode}:${isMainMenuOpen ? 'menu-open' : 'menu-closed'}`,
   });
 
   const isTimelineStep = step?.interactionType === 'timeline';
@@ -170,7 +211,8 @@ export function PeridotTutorial({
   const showGenericAnchorFallback = !isAnchorAvailable
     && activeAnchorConfig.selector
     && !isTimelineStep
-    && !isInspectorStep;
+    && !isInspectorStep
+    && !isExploreNavigationStep;
   const showTimelineUnavailable = isTimelineStep && !timelineAvailability.available;
   const primaryLabel = isLastStep
     ? 'Finish tutorial'
@@ -180,7 +222,11 @@ export function PeridotTutorial({
         ? step.skipLabel || 'Continue without selecting'
         : isInspectorStep && isCompactInspectorOpen
           ? 'Continue with summary'
-          : 'Next';
+          : isExploreNavigationStep && isInspectorOpenDuringExplore
+            ? step.inspectorCloseLabel || 'Close Inspector'
+            : isExploreNavigationStep && !hasReachedExplore
+              ? step.fallbackLabel || 'Open Explore directly'
+              : 'Next';
 
   return (
     <aside
@@ -198,6 +244,17 @@ export function PeridotTutorial({
       data-peridot-tutorial-anchor-available={isAnchorAvailable ? 'true' : 'false'}
       data-peridot-tutorial-interaction-complete={hasCompletedInteraction ? 'true' : 'false'}
       data-peridot-tutorial-inspector-presentation={isInspectorStep ? inspectorPresentationMode : undefined}
+      data-peridot-tutorial-navigation-state={
+        isExploreNavigationStep
+          ? isInspectorOpenDuringExplore
+            ? 'inspector-open'
+            : hasReachedExplore
+              ? 'reached'
+              : isMainMenuOpen
+                ? 'menu-open'
+                : 'menu-closed'
+          : undefined
+      }
       tabIndex={-1}
     >
       <div className="peridot-tutorial-drag-handle" {...dragHandleProps}>
@@ -264,6 +321,45 @@ export function PeridotTutorial({
         </p>
       ) : null}
 
+      {isExploreNavigationStep && isInspectorOpenDuringExplore ? (
+        <>
+          <p className="peridot-tutorial-interaction-prompt">
+            {step.inspectorPrompt}
+          </p>
+          <button
+            type="button"
+            className="peridot-tutorial-inline-action"
+            onClick={onCloseInspector}
+          >
+            {step.inspectorCloseLabel || 'Close Inspector'}
+          </button>
+        </>
+      ) : null}
+
+      {isExploreNavigationStep && !isInspectorOpenDuringExplore && !hasReachedExplore ? (
+        <>
+          <p className="peridot-tutorial-interaction-prompt">
+            {isMainMenuOpen ? step.menuOpenPrompt : step.menuClosedPrompt}
+          </p>
+          {!isMainMenuOpen ? (
+            <button
+              type="button"
+              className="peridot-tutorial-inline-action"
+              onClick={onOpenMainMenu}
+            >
+              Open main menu
+            </button>
+          ) : null}
+        </>
+      ) : null}
+
+      {isExploreNavigationStep && hasReachedExplore ? (
+        <p className="peridot-tutorial-interaction-status" role="status">
+          <span aria-hidden="true">✓</span>
+          {step.reachedText}
+        </p>
+      ) : null}
+
       {showTimelineUnavailable ? (
         <p className="peridot-tutorial-anchor-fallback" role="status">
           {timelineAvailability.reason}
@@ -288,7 +384,17 @@ export function PeridotTutorial({
         <button type="button" className="peridot-tutorial-button is-quiet" onClick={onClose}>
           End tutorial
         </button>
-        <button type="button" className="peridot-tutorial-button is-primary" onClick={onContinue}>
+        <button
+          type="button"
+          className="peridot-tutorial-button is-primary"
+          onClick={
+            isExploreNavigationStep && isInspectorOpenDuringExplore
+              ? onCloseInspector
+              : isExploreNavigationStep && !hasReachedExplore
+                ? onOpenExplore
+                : onContinue
+          }
+        >
           {primaryLabel}
         </button>
       </div>

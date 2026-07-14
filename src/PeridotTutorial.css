@@ -521,3 +521,33 @@
   }
 }
 
+/* Step 5 navigation placement.
+ *
+ * The callout stays clear of the upper-left hamburger/menu surface. When the
+ * menu is open, the card remains compact enough that the highlighted Explore
+ * destination is visible and clickable.
+ */
+.peridot-tutorial-callout[data-peridot-tutorial-step="explore"] {
+  width: min(27rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="explore"][data-peridot-tutorial-navigation-state="menu-open"] {
+  width: min(25rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="explore"][data-peridot-tutorial-navigation-state="reached"] {
+  width: min(28rem, calc(100vw - 2rem));
+}
+
+@media (max-width: 760px) {
+  .peridot-tutorial-callout[data-peridot-tutorial-step="explore"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="explore"][data-peridot-tutorial-navigation-state="menu-open"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="explore"][data-peridot-tutorial-navigation-state="reached"] {
+    width: calc(100vw - 1.5rem);
+  }
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="explore"][data-peridot-tutorial-navigation-state="inspector-open"] {
+  width: min(26rem, calc(100vw - 2rem));
+}
+

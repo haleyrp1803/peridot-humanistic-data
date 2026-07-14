@@ -4938,6 +4938,11 @@ export default function EuropeNetworkMapApp() {
             isLastStep={tutorialStepIndex === PERIDOT_TUTORIAL_STEPS.length - 1}
             inspectorSelection={selectedProps}
             inspectorPresentationMode={inspectorPresentationMode}
+            workspaceMode={workspaceMode}
+            isMainMenuOpen={isMainMenuOpen}
+            onOpenMainMenu={() => setIsMainMenuOpen(true)}
+            onOpenExplore={openExploreWorkspaceFromMenu}
+            onCloseInspector={closeInspectorWorkspace}
             onExpandInspector={expandInspectorToWorkspace}
             onBack={goToPreviousTutorialStep}
             onClose={closeTutorial}
