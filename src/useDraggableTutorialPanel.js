@@ -1,10 +1,12 @@
 /*
- * Shared drag and anchor behavior for tutorial surfaces.
+ * Shared drag, anchor, and target-highlight behavior for tutorial surfaces.
  *
  * Pointer dragging is constrained to the visible browser viewport. The drag
  * handle also supports arrow-key movement. When an anchor selector is supplied,
  * the panel starts near that element and falls back to a safe viewport position
- * when the target is unavailable.
+ * when the target is unavailable. A step may resolve a small control to its
+ * nearest semantic container, such as the Visualizations header, before
+ * positioning and highlighting it.
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -12,6 +14,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 const KEYBOARD_DRAG_STEP = 18;
 const VIEWPORT_MARGIN = 20;
 const ANCHOR_GAP = 18;
+const TUTORIAL_HIGHLIGHT_CLASS = 'peridot-tutorial-target-highlight';
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
@@ -33,7 +36,6 @@ function getAnchoredPosition(anchorRect, panelRect, placement) {
   const rightOfAnchor = anchorRect.right + ANCHOR_GAP;
   const leftOfAnchor = anchorRect.left - panelRect.width - ANCHOR_GAP;
   const alignedRight = anchorRect.right - panelRect.width;
-  const alignedBottom = anchorRect.bottom - panelRect.height;
   const centeredTop = anchorRect.top + (anchorRect.height - panelRect.height) / 2;
 
   const candidates = {
@@ -52,16 +54,91 @@ function getAnchoredPosition(anchorRect, panelRect, placement) {
   };
 }
 
+function resolveTextAncestor(element, ancestorText, minWidthRatio = 0) {
+  const normalizedNeedle = String(ancestorText || '').trim().toLowerCase();
+  if (!element || !normalizedNeedle || typeof window === 'undefined') return null;
+
+  let current = element;
+  while (current && current !== document.body) {
+    const normalizedText = String(current.innerText || current.textContent || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+    const rect = current.getBoundingClientRect();
+    const meetsWidth = !minWidthRatio || rect.width >= window.innerWidth * minWidthRatio;
+
+    if (normalizedText.includes(normalizedNeedle) && meetsWidth) return current;
+    current = current.parentElement;
+  }
+
+  return null;
+}
+
+function resolveAnchorElement({
+  anchorSelector,
+  anchorClosestSelector,
+  anchorAncestorText,
+  anchorAncestorMinWidthRatio,
+}) {
+  if (!anchorSelector || typeof document === 'undefined') return null;
+
+  const matchedElement = document.querySelector(anchorSelector);
+  if (!matchedElement) return null;
+
+  if (anchorClosestSelector) {
+    const closestElement = matchedElement.closest(anchorClosestSelector);
+    if (closestElement) return closestElement;
+  }
+
+  if (anchorAncestorText) {
+    const textAncestor = resolveTextAncestor(
+      matchedElement,
+      anchorAncestorText,
+      anchorAncestorMinWidthRatio,
+    );
+    if (textAncestor) return textAncestor;
+  }
+
+  return matchedElement;
+}
+
 export function useDraggableTutorialPanel({
   anchorSelector = '',
+  anchorClosestSelector = '',
+  anchorAncestorText = '',
+  anchorAncestorMinWidthRatio = 0,
   anchorPlacement = 'bottom-right',
+  highlightAnchor = false,
+  describedById = '',
   resetKey = '',
 } = {}) {
   const panelRef = useRef(null);
   const dragStateRef = useRef(null);
   const hasManualPositionRef = useRef(false);
+  const highlightedElementRef = useRef(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [anchorPosition, setAnchorPosition] = useState({ left: null, top: null });
+  const [anchorElement, setAnchorElement] = useState(null);
+
+  const clearAnchorDecoration = useCallback(() => {
+    const previousElement = highlightedElementRef.current;
+    if (!previousElement) return;
+
+    previousElement.classList.remove(TUTORIAL_HIGHLIGHT_CLASS);
+    if (describedById && previousElement.getAttribute('aria-describedby') === describedById) {
+      previousElement.removeAttribute('aria-describedby');
+    }
+    highlightedElementRef.current = null;
+  }, [describedById]);
+
+  const decorateAnchor = useCallback((element) => {
+    clearAnchorDecoration();
+    if (!element || !highlightAnchor) return;
+
+    element.classList.add(TUTORIAL_HIGHLIGHT_CLASS);
+    if (describedById) element.setAttribute('aria-describedby', describedById);
+    highlightedElementRef.current = element;
+  }, [clearAnchorDecoration, describedById, highlightAnchor]);
 
   const positionPanel = useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -69,14 +146,29 @@ export function useDraggableTutorialPanel({
     const panel = panelRef.current;
     if (!panel) return;
 
+    const resolvedAnchor = resolveAnchorElement({
+      anchorSelector,
+      anchorClosestSelector,
+      anchorAncestorText,
+      anchorAncestorMinWidthRatio,
+    });
+    setAnchorElement(resolvedAnchor);
+    decorateAnchor(resolvedAnchor);
+
     const panelRect = panel.getBoundingClientRect();
-    const anchor = anchorSelector ? document.querySelector(anchorSelector) : null;
-    const nextPosition = anchor
-      ? getAnchoredPosition(anchor.getBoundingClientRect(), panelRect, anchorPlacement)
+    const nextPosition = resolvedAnchor
+      ? getAnchoredPosition(resolvedAnchor.getBoundingClientRect(), panelRect, anchorPlacement)
       : getFallbackPosition(panelRect, anchorPlacement);
 
     setAnchorPosition(nextPosition);
-  }, [anchorPlacement, anchorSelector]);
+  }, [
+    anchorAncestorMinWidthRatio,
+    anchorAncestorText,
+    anchorClosestSelector,
+    anchorPlacement,
+    anchorSelector,
+    decorateAnchor,
+  ]);
 
   useLayoutEffect(() => {
     hasManualPositionRef.current = false;
@@ -85,11 +177,34 @@ export function useDraggableTutorialPanel({
   }, [positionPanel, resetKey]);
 
   useEffect(() => {
-    const handleViewportChange = () => {
-      if (!hasManualPositionRef.current) {
-        positionPanel();
-        return;
-      }
+    if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+
+    let frameId = null;
+    const schedulePositionUpdate = () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        if (!hasManualPositionRef.current) positionPanel();
+      });
+    };
+
+    const observer = new MutationObserver(schedulePositionUpdate);
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+    window.addEventListener('resize', schedulePositionUpdate);
+    window.addEventListener('scroll', schedulePositionUpdate, true);
+
+    return () => {
+      if (frameId) window.cancelAnimationFrame(frameId);
+      observer.disconnect();
+      window.removeEventListener('resize', schedulePositionUpdate);
+      window.removeEventListener('scroll', schedulePositionUpdate, true);
+      clearAnchorDecoration();
+    };
+  }, [clearAnchorDecoration, positionPanel]);
+
+  useEffect(() => {
+    const keepManuallyPositionedPanelVisible = () => {
+      if (!hasManualPositionRef.current) return;
 
       const element = panelRef.current;
       if (!element) return;
@@ -110,13 +225,9 @@ export function useDraggableTutorialPanel({
       }
     };
 
-    window.addEventListener('resize', handleViewportChange);
-    window.addEventListener('scroll', handleViewportChange, true);
-    return () => {
-      window.removeEventListener('resize', handleViewportChange);
-      window.removeEventListener('scroll', handleViewportChange, true);
-    };
-  }, [positionPanel]);
+    window.addEventListener('resize', keepManuallyPositionedPanelVisible);
+    return () => window.removeEventListener('resize', keepManuallyPositionedPanelVisible);
+  }, []);
 
   const moveBy = useCallback((deltaX, deltaY) => {
     const element = panelRef.current;
@@ -146,8 +257,6 @@ export function useDraggableTutorialPanel({
 
     dragStateRef.current = {
       pointerId: event.pointerId,
-      startClientX: event.clientX,
-      startClientY: event.clientY,
       lastClientX: event.clientX,
       lastClientY: event.clientY,
     };
@@ -197,7 +306,7 @@ export function useDraggableTutorialPanel({
       '--peridot-tutorial-drag-x': `${offset.x}px`,
       '--peridot-tutorial-drag-y': `${offset.y}px`,
     },
-    isAnchorAvailable: Boolean(anchorSelector && typeof document !== 'undefined' && document.querySelector(anchorSelector)),
+    isAnchorAvailable: Boolean(anchorElement),
     dragHandleProps: {
       onPointerDown: handlePointerDown,
       onPointerMove: handlePointerMove,

@@ -27,7 +27,12 @@ export function PeridotTutorial({
     isAnchorAvailable,
   } = useDraggableTutorialPanel({
     anchorSelector: step?.anchorSelector,
+    anchorClosestSelector: step?.anchorClosestSelector,
+    anchorAncestorText: step?.anchorAncestorText,
+    anchorAncestorMinWidthRatio: step?.anchorAncestorMinWidthRatio,
     anchorPlacement: step?.anchorPlacement,
+    highlightAnchor: step?.highlightAnchor,
+    describedById: 'peridot-tutorial-description',
     resetKey: step?.id,
   });
 

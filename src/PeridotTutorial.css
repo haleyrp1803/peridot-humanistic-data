@@ -394,3 +394,34 @@
     transition: none !important;
   }
 }
+
+/* Step 2: reusable anchored-target emphasis. The class is applied and removed
+   by useDraggableTutorialPanel so no permanent Visualizations styling changes
+   are required. */
+.peridot-tutorial-target-highlight {
+  position: relative;
+  z-index: 2;
+  border-radius: 1.15rem;
+  outline: 3px solid rgba(244, 211, 128, 0.98) !important;
+  outline-offset: 5px !important;
+  box-shadow:
+    0 0 0 9px rgba(7, 31, 19, 0.82),
+    0 0 34px 14px rgba(226, 184, 79, 0.42) !important;
+  filter: drop-shadow(0 0 8px rgba(244, 211, 128, 0.42));
+  transition: outline-color 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="visualizations"][data-peridot-tutorial-anchor-available="true"] {
+  border-color: rgba(238, 204, 122, 0.92);
+  box-shadow:
+    0 28px 78px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(238, 204, 122, 0.24),
+    inset 0 1px 0 rgba(255, 248, 232, 0.12),
+    inset 0 0 48px rgba(193, 151, 49, 0.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-tutorial-target-highlight {
+    transition: none !important;
+  }
+}
