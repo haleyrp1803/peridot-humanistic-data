@@ -22,6 +22,7 @@ import './AnalyticsPanel.css';
 import './PeridotSearchWorkspace.css';
 import './PeridotColumnMappingModal.css';
 import './PeridotLearnMoreWorkspace.css';
+import './PeridotTutorial.css';
 import './PeridotFeedbackForm.css';
 
 import { applyPeridotThemeVariables } from './peridotTheme.js';

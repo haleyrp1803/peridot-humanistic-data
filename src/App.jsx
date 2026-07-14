@@ -64,6 +64,12 @@ import { PeridotThemeWorkspace } from './PeridotThemeWorkspace';
 import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace';
 import { PeridotExploreWorkspace } from './PeridotExploreWorkspace';
 import { PeridotLearnMoreWorkspace } from './PeridotLearnMoreWorkspace';
+import { PeridotTutorial } from './PeridotTutorial';
+import {
+  getPeridotTutorialStep,
+  PERIDOT_TUTORIAL_START_INDEX,
+  PERIDOT_TUTORIAL_STEPS,
+} from './peridotTutorialConfig.js';
 import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
 import { buildPeridotSearchRecords, rowMatchesSearchCapabilityFilter, rowMatchesSearchText, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
 import {
@@ -3124,7 +3130,7 @@ function AppMainWorkspace({
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.THEME ? (
         <PeridotThemeWorkspace {...themeWorkspaceProps} />
       ) : workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS ? (
-        <div className="relative h-full overflow-hidden" data-peridot-visualizations-with-inspector={isInspectorWorkspaceOpen ? 'true' : 'false'}>
+        <div className="relative h-full overflow-hidden" data-peridot-visualizations-with-inspector={isInspectorWorkspaceOpen ? 'true' : 'false'} data-peridot-tutorial-anchor="visualizations-workspace">
           <PeridotVisualizationsWorkspace
             {...visualizationWorkspaceProps}
             suppressFloatingFrameToggles={isInspectorWorkspaceOpen}
@@ -3179,6 +3185,8 @@ export default function EuropeNetworkMapApp() {
   // routes because the simplified product menu now presents a smaller stack.
   const [workspaceMode, setWorkspaceMode] = useState(DEFAULT_PERIDOT_WORKSPACE_MODE);
   const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('place-map');
+  const [isTutorialActive, setIsTutorialActive] = useState(false);
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(PERIDOT_TUTORIAL_START_INDEX);
   const setResolvedWorkspaceMode = (nextMode) => {
     setWorkspaceMode((currentMode) => resolvePeridotWorkspaceMode(nextMode, currentMode));
   };
@@ -4597,9 +4605,63 @@ export default function EuropeNetworkMapApp() {
     openAnalyticsWorkspace();
   };
 
+  const routeTutorialStepToWorkspace = (step) => {
+    if (!step) return;
+
+    if (step.workspace === 'home') {
+      openHomeWorkspace();
+      return;
+    }
+
+    if (step.workspace === 'search') {
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
+      setIsSidePanelOpen(false);
+      return;
+    }
+
+    openVisualizationsWorkspace();
+  };
+
+  const startTutorial = () => {
+    const startStep = getPeridotTutorialStep(PERIDOT_TUTORIAL_START_INDEX);
+    setTutorialStepIndex(PERIDOT_TUTORIAL_START_INDEX);
+    setIsTutorialActive(true);
+    routeTutorialStepToWorkspace(startStep);
+  };
+
+  const closeTutorial = () => {
+    setIsTutorialActive(false);
+  };
+
+  const goToPreviousTutorialStep = () => {
+    if (tutorialStepIndex <= PERIDOT_TUTORIAL_START_INDEX) {
+      closeTutorial();
+      openHomeWorkspace();
+      return;
+    }
+
+    const nextIndex = tutorialStepIndex - 1;
+    setTutorialStepIndex(nextIndex);
+    routeTutorialStepToWorkspace(getPeridotTutorialStep(nextIndex));
+  };
+
+  const goToNextTutorialStep = () => {
+    if (tutorialStepIndex >= PERIDOT_TUTORIAL_STEPS.length - 1) {
+      closeTutorial();
+      return;
+    }
+
+    const nextIndex = tutorialStepIndex + 1;
+    setTutorialStepIndex(nextIndex);
+    routeTutorialStepToWorkspace(getPeridotTutorialStep(nextIndex));
+  };
+
+  const activeTutorialStep = getPeridotTutorialStep(tutorialStepIndex);
+
   const homeWorkspaceProps = {
     onUploadData: openDataWorkspace,
     onUseSampleData: openVisualizationsWorkspace,
+    onStartTutorial: startTutorial,
   };
 
   const dataWorkspaceProps = {
@@ -4780,6 +4842,7 @@ export default function EuropeNetworkMapApp() {
 
   const learnMoreWorkspaceProps = {
     onOpenVisualizations: openVisualizationsWorkspace,
+    onStartTutorial: startTutorial,
   };
 
   return (
@@ -4868,6 +4931,16 @@ export default function EuropeNetworkMapApp() {
           searchWorkspaceProps={searchWorkspaceProps}
           inspectorWorkspaceProps={inspectorWorkspaceProps}
         />
+        {isTutorialActive ? (
+          <PeridotTutorial
+            step={activeTutorialStep}
+            canGoBack
+            isLastStep={tutorialStepIndex === PERIDOT_TUTORIAL_STEPS.length - 1}
+            onBack={goToPreviousTutorialStep}
+            onClose={closeTutorial}
+            onContinue={goToNextTutorialStep}
+          />
+        ) : null}
       </div>
     </div>
   );

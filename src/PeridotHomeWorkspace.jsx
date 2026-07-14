@@ -22,7 +22,9 @@
  *   groups, not layout columns that can drift into the content.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+
+import { useDraggableTutorialPanel } from './useDraggableTutorialPanel.js';
 
 import peridotLogoTransparent from '../assets/Peridot Logo Gilded Transparent.png';
 import homepageFiligree from '../assets/Adobe Stock Filigree 1.png';
@@ -68,7 +70,14 @@ const homeActionClass = [
   'hover:-translate-y-0.5 hover:border-[var(--peridot-color-rgba-rgba-245-236-210-0-88)] hover:bg-[var(--peridot-role-button-primary-hover-bg)] hover:text-[var(--peridot-color-hex-fff8e8)] hover:shadow-[0_22px_58px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]',
 ].join(' ');
 
-export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
+export function PeridotHomeWorkspace({ onUploadData, onUseSampleData, onStartTutorial }) {
+  const [showTutorialInvitation, setShowTutorialInvitation] = useState(true);
+  const {
+    panelRef: tutorialInvitationRef,
+    panelStyle: tutorialInvitationStyle,
+    dragHandleProps: tutorialInvitationDragHandleProps,
+  } = useDraggableTutorialPanel();
+
   return (
     <section className="relative h-full min-h-0 overflow-hidden bg-[var(--peridot-color-hex-03120c)] text-[var(--peridot-color-hex-f4f6df)]">
       <HomeTextureBackdrop />
@@ -118,6 +127,45 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
               </button>
             </div>
           </div>
+
+          {showTutorialInvitation ? (
+            <aside
+              ref={tutorialInvitationRef}
+              style={tutorialInvitationStyle}
+              className="peridot-home-tutorial-invitation peridot-appear-rise peridot-appear-delay-4"
+              aria-labelledby="peridot-home-tutorial-heading"
+            >
+              <div
+                className="peridot-home-tutorial-drag-handle"
+                {...tutorialInvitationDragHandleProps}
+              >
+                <span className="peridot-tutorial-drag-grip" aria-hidden="true">••••</span>
+                <span>Drag to move</span>
+              </div>
+
+              <div className="peridot-home-tutorial-content">
+                <div className="peridot-home-tutorial-copy">
+                  <p className="peridot-home-tutorial-kicker">New to Peridot?</p>
+                  <h2 id="peridot-home-tutorial-heading">Take a guided tour</h2>
+                  <p>
+                    Explore sample data while Peridot introduces its main tools in concise, plain language.
+                  </p>
+                </div>
+                <div className="peridot-home-tutorial-actions">
+                  <button type="button" onClick={onStartTutorial} className="peridot-home-tutorial-start">
+                    Start tutorial
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowTutorialInvitation(false)}
+                    className="peridot-home-tutorial-dismiss"
+                  >
+                    Explore on my own
+                  </button>
+                </div>
+              </div>
+            </aside>
+          ) : null}
         </div>
       </div>
     </section>

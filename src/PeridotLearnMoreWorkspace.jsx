@@ -82,7 +82,7 @@ function ExpandableDisclosure({ title, children }) {
   );
 }
 
-export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
+export function PeridotLearnMoreWorkspace({ onOpenVisualizations, onStartTutorial }) {
   const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   return (
@@ -215,11 +215,16 @@ export function PeridotLearnMoreWorkspace({ onOpenVisualizations }) {
           <LearnMoreSectionDivider delayClass="peridot-appear-delay-5" />
           <section className="peridot-appear-rise peridot-appear-delay-6 peridot-learn-more-tutorial-card" aria-labelledby="peridot-tutorials-heading">
           <p className="peridot-section-label">Tutorials</p>
-          <h2 id="peridot-tutorials-heading">Video tutorials are in preparation</h2>
+          <h2 id="peridot-tutorials-heading">Learn Peridot with a guided tour</h2>
           <p>
-            Future video tutorials will guide researchers through preparing a dataset, exploring records, building visualizations, searching and refining evidence, and exporting research outputs from Peridot.
+            Start with sample data and follow concise, plain-language guidance through Peridot’s main exploration workflow. The tutorial can be closed at any time.
           </p>
-          <span className="peridot-learn-more-coming-soon">Coming soon</span>
+          <div className="peridot-learn-more-tutorial-actions">
+            <button type="button" onClick={onStartTutorial} className="peridot-button-primary">
+              Start guided tutorial
+            </button>
+            <span className="peridot-learn-more-coming-soon">Video tutorials are also in preparation</span>
+          </div>
           </section>
         </div>
       </div>
