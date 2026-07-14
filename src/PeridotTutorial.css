@@ -551,3 +551,24 @@
   width: min(26rem, calc(100vw - 2rem));
 }
 
+/* Step 6 Browse → draft → applied working-set tutorial. */
+.peridot-tutorial-callout[data-peridot-tutorial-step="working-set"] {
+  width: min(28rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="working-set"][data-peridot-tutorial-search-phase="draft"] {
+  width: min(27rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-callout[data-peridot-tutorial-step="working-set"][data-peridot-tutorial-search-phase="applied"] {
+  width: min(29rem, calc(100vw - 2rem));
+}
+
+@media (max-width: 760px) {
+  .peridot-tutorial-callout[data-peridot-tutorial-step="working-set"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="working-set"][data-peridot-tutorial-search-phase="draft"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="working-set"][data-peridot-tutorial-search-phase="applied"] {
+    width: calc(100vw - 1.5rem);
+  }
+}
+

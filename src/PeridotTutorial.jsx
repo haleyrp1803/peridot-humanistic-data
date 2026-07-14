@@ -54,6 +54,42 @@ function getTimelineAvailability(anchorElement) {
   return { available: true, reason: '' };
 }
 
+
+function findVisibleButtonByText(text) {
+  if (typeof document === 'undefined') return null;
+  const needle = String(text || '').trim().toLowerCase();
+  return Array.from(document.querySelectorAll('button')).find((button) => {
+    if (button.disabled) return false;
+    const rect = button.getBoundingClientRect();
+    if (!rect.width || !rect.height) return false;
+    return String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase().includes(needle);
+  }) || null;
+}
+
+function isBrowseIndexChoice(button) {
+  if (!button) return false;
+  const excludedLabels = [
+    'build search',
+    'browse',
+    'results',
+    'refine',
+    'capabilities',
+    'apply filters',
+    'clear filters',
+    'open visualizations',
+  ];
+  const label = String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  if (!label || excludedLabels.some((excluded) => label === excluded || label.includes(excluded))) return false;
+
+  let current = button.parentElement;
+  while (current && current !== document.body) {
+    const text = String(current.textContent || '').replace(/\s+/g, ' ').toLowerCase();
+    if (text.includes('browse uses the full loaded dataset')) return true;
+    current = current.parentElement;
+  }
+  return false;
+}
+
 export function PeridotTutorial({
   step,
   canGoBack = true,
@@ -72,8 +108,10 @@ export function PeridotTutorial({
 }) {
   const dialogRef = useRef(null);
   const [hasCompletedInteraction, setHasCompletedInteraction] = useState(false);
+  const [searchTutorialPhase, setSearchTutorialPhase] = useState('browse');
   const isInspectorStep = step?.interactionType === 'inspector';
   const isExploreNavigationStep = step?.interactionType === 'explore-navigation';
+  const isSearchBrowseApplyStep = step?.interactionType === 'search-browse-apply';
   const isInspectorOpenDuringExplore = isExploreNavigationStep
     && ['compact', 'workspace', 'empty-workspace'].includes(inspectorPresentationMode);
   const hasReachedExplore = isExploreNavigationStep
@@ -87,7 +125,25 @@ export function PeridotTutorial({
     && Boolean(inspectorSelection);
   const hasActiveInspectorSelection = isCompactInspectorOpen || isFullInspectorOpen;
 
-  const activeAnchorConfig = isExploreNavigationStep
+  const activeAnchorConfig = isSearchBrowseApplyStep
+    ? searchTutorialPhase === 'applied'
+      ? {
+          selector: step?.resultsAnchorSelector,
+          matchText: step?.resultsAnchorMatchText,
+          placement: step?.resultsAnchorPlacement,
+        }
+      : searchTutorialPhase === 'draft'
+        ? {
+            selector: step?.applyAnchorSelector,
+            matchText: step?.applyAnchorMatchText,
+            placement: step?.applyAnchorPlacement,
+          }
+        : {
+            selector: step?.browseAnchorSelector,
+            matchText: step?.browseAnchorMatchText,
+            placement: step?.browseAnchorPlacement,
+          }
+    : isExploreNavigationStep
     ? isInspectorOpenDuringExplore
       ? ['workspace', 'empty-workspace'].includes(inspectorPresentationMode)
         ? {
@@ -170,6 +226,7 @@ export function PeridotTutorial({
 
   useEffect(() => {
     setHasCompletedInteraction(false);
+    setSearchTutorialPhase('browse');
     dialogRef.current?.focus();
   }, [step?.id]);
 
@@ -206,13 +263,40 @@ export function PeridotTutorial({
     };
   }, [anchorElement, isTimelineStep, timelineAvailability.available]);
 
+  useEffect(() => {
+    if (!isSearchBrowseApplyStep) return undefined;
+
+    const handleSearchTutorialClick = (event) => {
+      const button = event.target?.closest?.('button');
+      if (!button) return;
+
+      const label = String(button.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+      if (isBrowseIndexChoice(button)) {
+        window.setTimeout(() => setSearchTutorialPhase('draft'), 0);
+        return;
+      }
+
+      if (label.includes('apply filters')) {
+        window.setTimeout(() => {
+          setSearchTutorialPhase('applied');
+          setHasCompletedInteraction(true);
+        }, 0);
+      }
+    };
+
+    document.addEventListener('click', handleSearchTutorialClick, true);
+    return () => document.removeEventListener('click', handleSearchTutorialClick, true);
+  }, [isSearchBrowseApplyStep]);
+
   if (!step) return null;
 
   const showGenericAnchorFallback = !isAnchorAvailable
     && activeAnchorConfig.selector
     && !isTimelineStep
     && !isInspectorStep
-    && !isExploreNavigationStep;
+    && !isExploreNavigationStep
+    && !isSearchBrowseApplyStep;
   const showTimelineUnavailable = isTimelineStep && !timelineAvailability.available;
   const primaryLabel = isLastStep
     ? 'Finish tutorial'
@@ -226,7 +310,11 @@ export function PeridotTutorial({
             ? step.inspectorCloseLabel || 'Close Inspector'
             : isExploreNavigationStep && !hasReachedExplore
               ? step.fallbackLabel || 'Open Explore directly'
-              : 'Next';
+              : isSearchBrowseApplyStep && searchTutorialPhase === 'browse'
+                ? step.useCurrentResultsLabel || 'Use current results'
+                : isSearchBrowseApplyStep && searchTutorialPhase === 'draft'
+                  ? step.applyLabel || 'Apply Filters'
+                  : 'Next';
 
   return (
     <aside
@@ -255,6 +343,7 @@ export function PeridotTutorial({
                 : 'menu-closed'
           : undefined
       }
+      data-peridot-tutorial-search-phase={isSearchBrowseApplyStep ? searchTutorialPhase : undefined}
       tabIndex={-1}
     >
       <div className="peridot-tutorial-drag-handle" {...dragHandleProps}>
@@ -360,6 +449,30 @@ export function PeridotTutorial({
         </p>
       ) : null}
 
+      {isSearchBrowseApplyStep && searchTutorialPhase === 'browse' ? (
+        <>
+          <p className="peridot-tutorial-interaction-prompt">{step.browsePrompt}</p>
+          <button
+            type="button"
+            className="peridot-tutorial-inline-action"
+            onClick={() => findVisibleButtonByText(step.browseAnchorMatchText)?.click()}
+          >
+            {step.openBrowseLabel || 'Open Browse'}
+          </button>
+        </>
+      ) : null}
+
+      {isSearchBrowseApplyStep && searchTutorialPhase === 'draft' ? (
+        <p className="peridot-tutorial-interaction-prompt">{step.draftPrompt}</p>
+      ) : null}
+
+      {isSearchBrowseApplyStep && searchTutorialPhase === 'applied' ? (
+        <p className="peridot-tutorial-interaction-status" role="status">
+          <span aria-hidden="true">✓</span>
+          {step.appliedText}
+        </p>
+      ) : null}
+
       {showTimelineUnavailable ? (
         <p className="peridot-tutorial-anchor-fallback" role="status">
           {timelineAvailability.reason}
@@ -392,7 +505,14 @@ export function PeridotTutorial({
               ? onCloseInspector
               : isExploreNavigationStep && !hasReachedExplore
                 ? onOpenExplore
-                : onContinue
+                : isSearchBrowseApplyStep && searchTutorialPhase === 'browse'
+                  ? () => {
+                      setSearchTutorialPhase('applied');
+                      setHasCompletedInteraction(true);
+                    }
+                  : isSearchBrowseApplyStep && searchTutorialPhase === 'draft'
+                    ? () => findVisibleButtonByText(step.applyAnchorMatchText)?.click()
+                    : onContinue
           }
         >
           {primaryLabel}
