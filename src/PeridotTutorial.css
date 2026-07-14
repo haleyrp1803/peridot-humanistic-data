@@ -552,22 +552,89 @@
 }
 
 /* Step 6 Browse → draft → applied working-set tutorial. */
-.peridot-tutorial-callout[data-peridot-tutorial-step="working-set"] {
+.peridot-tutorial-callout[data-peridot-tutorial-step="browse-apply"] {
   width: min(28rem, calc(100vw - 2rem));
 }
 
-.peridot-tutorial-callout[data-peridot-tutorial-step="working-set"][data-peridot-tutorial-search-phase="draft"] {
+.peridot-tutorial-callout[data-peridot-tutorial-step="browse-apply"][data-peridot-tutorial-search-phase="draft"] {
   width: min(27rem, calc(100vw - 2rem));
 }
 
-.peridot-tutorial-callout[data-peridot-tutorial-step="working-set"][data-peridot-tutorial-search-phase="applied"] {
+.peridot-tutorial-callout[data-peridot-tutorial-step="browse-apply"][data-peridot-tutorial-search-phase="applied"] {
   width: min(29rem, calc(100vw - 2rem));
 }
 
 @media (max-width: 760px) {
-  .peridot-tutorial-callout[data-peridot-tutorial-step="working-set"],
-  .peridot-tutorial-callout[data-peridot-tutorial-step="working-set"][data-peridot-tutorial-search-phase="draft"],
-  .peridot-tutorial-callout[data-peridot-tutorial-step="working-set"][data-peridot-tutorial-search-phase="applied"] {
+  .peridot-tutorial-callout[data-peridot-tutorial-step="browse-apply"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="browse-apply"][data-peridot-tutorial-search-phase="draft"],
+  .peridot-tutorial-callout[data-peridot-tutorial-step="browse-apply"][data-peridot-tutorial-search-phase="applied"] {
+    width: calc(100vw - 1.5rem);
+  }
+}
+
+/* Step 7 conceptual working-set bridge. */
+.peridot-tutorial-callout[data-peridot-tutorial-step="working-set"] {
+  width: min(30rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-working-set-flow {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 1.45rem 0;
+}
+
+.peridot-tutorial-working-set-node {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.72rem;
+  border: 1px solid rgba(238, 214, 155, 0.34);
+  border-radius: 0.95rem;
+  background: rgba(242, 229, 194, 0.065);
+  padding: 0.72rem 0.82rem;
+  color: #f5edd7;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.peridot-tutorial-working-set-node.is-applied {
+  border-color: rgba(230, 194, 105, 0.76);
+  background:
+    linear-gradient(90deg, rgba(211, 167, 68, 0.16), rgba(242, 229, 194, 0.07));
+  color: #fff2ca;
+}
+
+.peridot-tutorial-working-set-node.is-tools {
+  border-color: rgba(169, 204, 154, 0.5);
+  background:
+    linear-gradient(90deg, rgba(109, 151, 101, 0.14), rgba(242, 229, 194, 0.055));
+}
+
+.peridot-tutorial-working-set-number {
+  display: grid;
+  width: 1.85rem;
+  height: 1.85rem;
+  place-items: center;
+  border: 1px solid rgba(239, 213, 148, 0.5);
+  border-radius: 999px;
+  background: rgba(4, 27, 16, 0.58);
+  color: #e9c66e;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.peridot-tutorial-working-set-arrow {
+  color: #d8af50;
+  font-size: 1.25rem;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
+@media (max-width: 760px) {
+  .peridot-tutorial-callout[data-peridot-tutorial-step="working-set"] {
     width: calc(100vw - 1.5rem);
   }
 }

@@ -112,6 +112,7 @@ export function PeridotTutorial({
   const isInspectorStep = step?.interactionType === 'inspector';
   const isExploreNavigationStep = step?.interactionType === 'explore-navigation';
   const isSearchBrowseApplyStep = step?.interactionType === 'search-browse-apply';
+  const isWorkingSetExplanationStep = step?.interactionType === 'working-set-explanation';
   const isInspectorOpenDuringExplore = isExploreNavigationStep
     && ['compact', 'workspace', 'empty-workspace'].includes(inspectorPresentationMode);
   const hasReachedExplore = isExploreNavigationStep
@@ -296,7 +297,8 @@ export function PeridotTutorial({
     && !isTimelineStep
     && !isInspectorStep
     && !isExploreNavigationStep
-    && !isSearchBrowseApplyStep;
+    && !isSearchBrowseApplyStep
+    && !isWorkingSetExplanationStep;
   const showTimelineUnavailable = isTimelineStep && !timelineAvailability.available;
   const primaryLabel = isLastStep
     ? 'Finish tutorial'
@@ -344,6 +346,7 @@ export function PeridotTutorial({
           : undefined
       }
       data-peridot-tutorial-search-phase={isSearchBrowseApplyStep ? searchTutorialPhase : undefined}
+      data-peridot-tutorial-concept={isWorkingSetExplanationStep ? 'working-set' : undefined}
       tabIndex={-1}
     >
       <div className="peridot-tutorial-drag-handle" {...dragHandleProps}>
@@ -471,6 +474,28 @@ export function PeridotTutorial({
           <span aria-hidden="true">✓</span>
           {step.appliedText}
         </p>
+      ) : null}
+
+      {isWorkingSetExplanationStep ? (
+        <div
+          className="peridot-tutorial-working-set-flow"
+          aria-label={`${step.flowStart}, then ${step.flowMiddle}, then ${step.flowEnd}`}
+        >
+          <div className="peridot-tutorial-working-set-node">
+            <span className="peridot-tutorial-working-set-number" aria-hidden="true">1</span>
+            <strong>{step.flowStart}</strong>
+          </div>
+          <div className="peridot-tutorial-working-set-arrow" aria-hidden="true">↓</div>
+          <div className="peridot-tutorial-working-set-node is-applied">
+            <span className="peridot-tutorial-working-set-number" aria-hidden="true">2</span>
+            <strong>{step.flowMiddle}</strong>
+          </div>
+          <div className="peridot-tutorial-working-set-arrow" aria-hidden="true">↓</div>
+          <div className="peridot-tutorial-working-set-node is-tools">
+            <span className="peridot-tutorial-working-set-number" aria-hidden="true">3</span>
+            <strong>{step.flowEnd}</strong>
+          </div>
+        </div>
       ) : null}
 
       {showTimelineUnavailable ? (
