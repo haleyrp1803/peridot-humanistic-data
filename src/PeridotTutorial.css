@@ -722,3 +722,37 @@
   }
 }
 
+/* Tutorial interruption and capability fallbacks. */
+.peridot-tutorial-callout[data-peridot-tutorial-interrupted="true"],
+.peridot-tutorial-callout[data-peridot-tutorial-capability-unavailable="true"] {
+  width: min(29rem, calc(100vw - 2rem));
+}
+
+.peridot-tutorial-recovery {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.34rem;
+  margin: 1rem 1.45rem 0;
+  border: 1px solid rgba(230, 194, 105, 0.62);
+  border-radius: 0.95rem;
+  background: rgba(211, 167, 68, 0.11);
+  padding: 0.82rem 0.9rem;
+  color: #f5edd7;
+  font-size: 0.91rem;
+  line-height: 1.45;
+}
+
+.peridot-tutorial-recovery strong {
+  color: #ffe7a8;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", Palatino, serif;
+  font-size: 1rem;
+}
+
+@media (max-width: 760px) {
+  .peridot-tutorial-callout[data-peridot-tutorial-interrupted="true"],
+  .peridot-tutorial-callout[data-peridot-tutorial-capability-unavailable="true"] {
+    width: calc(100vw - 1.5rem);
+  }
+}
+

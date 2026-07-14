@@ -54,20 +54,55 @@ function getAnchoredPosition(anchorRect, panelRect, placement) {
   };
 }
 
+function normalizeAnchorText(value) {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function isRenderedAnchorCandidate(element) {
+  if (!element || typeof window === 'undefined') return false;
+
+  const rect = element.getBoundingClientRect();
+  if (!rect.width || !rect.height) return false;
+
+  const style = window.getComputedStyle(element);
+  return style.display !== 'none'
+    && style.visibility !== 'hidden'
+    && style.opacity !== '0'
+    && !element.hidden
+    && element.getAttribute('aria-hidden') !== 'true';
+}
+
+function getAnchorCandidateText(element) {
+  if (!element) return '';
+
+  return normalizeAnchorText([
+    element.getAttribute('aria-label'),
+    element.getAttribute('title'),
+    element.innerText,
+    element.textContent,
+  ].filter(Boolean).join(' '));
+}
+
 function resolveTextAncestor(element, ancestorText, minWidthRatio = 0) {
-  const normalizedNeedle = String(ancestorText || '').trim().toLowerCase();
+  const normalizedNeedle = normalizeAnchorText(ancestorText);
   if (!element || !normalizedNeedle || typeof window === 'undefined') return null;
 
   let current = element;
   while (current && current !== document.body) {
-    const normalizedText = String(current.innerText || current.textContent || '')
-      .replace(/\s+/g, ' ')
-      .trim()
-      .toLowerCase();
+    const normalizedText = normalizeAnchorText(current.innerText || current.textContent);
     const rect = current.getBoundingClientRect();
     const meetsWidth = !minWidthRatio || rect.width >= window.innerWidth * minWidthRatio;
 
-    if (normalizedText.includes(normalizedNeedle) && meetsWidth) return current;
+    if (
+      normalizedText.includes(normalizedNeedle)
+      && meetsWidth
+      && isRenderedAnchorCandidate(current)
+    ) {
+      return current;
+    }
     current = current.parentElement;
   }
 
@@ -83,21 +118,19 @@ function resolveAnchorElement({
 }) {
   if (!anchorSelector || typeof document === 'undefined') return null;
 
-  const normalizedMatchText = String(anchorMatchText || '').trim().toLowerCase();
+  const normalizedMatchText = normalizeAnchorText(anchorMatchText);
+  const candidates = Array.from(document.querySelectorAll(anchorSelector))
+    .filter(isRenderedAnchorCandidate);
+
   const matchedElement = normalizedMatchText
-    ? Array.from(document.querySelectorAll(anchorSelector)).find((element) => {
-        const searchableText = `${element.textContent || ''} ${element.getAttribute?.('aria-label') || ''}`
-          .replace(/\s+/g, ' ')
-          .trim()
-          .toLowerCase();
-        return searchableText.includes(normalizedMatchText);
-      })
-    : document.querySelector(anchorSelector);
+    ? candidates.find((candidate) => getAnchorCandidateText(candidate).includes(normalizedMatchText))
+    : candidates[0];
+
   if (!matchedElement) return null;
 
   if (anchorClosestSelector) {
     const closestElement = matchedElement.closest(anchorClosestSelector);
-    if (closestElement) return closestElement;
+    if (closestElement && isRenderedAnchorCandidate(closestElement)) return closestElement;
   }
 
   if (anchorAncestorText) {
@@ -132,13 +165,14 @@ export function useDraggableTutorialPanel({
   const [anchorElement, setAnchorElement] = useState(null);
 
   const clearAnchorDecoration = useCallback(() => {
-    const previousElement = highlightedElementRef.current;
-    if (!previousElement) return;
+    if (typeof document === 'undefined') return;
 
-    previousElement.classList.remove(TUTORIAL_HIGHLIGHT_CLASS);
-    if (describedById && previousElement.getAttribute('aria-describedby') === describedById) {
-      previousElement.removeAttribute('aria-describedby');
-    }
+    document.querySelectorAll(`.${TUTORIAL_HIGHLIGHT_CLASS}`).forEach((element) => {
+      element.classList.remove(TUTORIAL_HIGHLIGHT_CLASS);
+      if (describedById && element.getAttribute('aria-describedby') === describedById) {
+        element.removeAttribute('aria-describedby');
+      }
+    });
     highlightedElementRef.current = null;
   }, [describedById]);
 
@@ -203,14 +237,27 @@ export function useDraggableTutorialPanel({
 
     const observer = new MutationObserver(schedulePositionUpdate);
     observer.observe(document.body, { childList: true, subtree: true, attributes: true });
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearAnchorDecoration();
+        return;
+      }
+      schedulePositionUpdate();
+    };
+    const handlePageHide = () => clearAnchorDecoration();
+
     window.addEventListener('resize', schedulePositionUpdate);
     window.addEventListener('scroll', schedulePositionUpdate, true);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
 
     return () => {
       if (frameId) window.cancelAnimationFrame(frameId);
       observer.disconnect();
       window.removeEventListener('resize', schedulePositionUpdate);
       window.removeEventListener('scroll', schedulePositionUpdate, true);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
       clearAnchorDecoration();
     };
   }, [clearAnchorDecoration, positionPanel]);

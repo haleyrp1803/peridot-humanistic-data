@@ -4939,7 +4939,19 @@ export default function EuropeNetworkMapApp() {
             inspectorSelection={selectedProps}
             inspectorPresentationMode={inspectorPresentationMode}
             workspaceMode={workspaceMode}
+            tutorialCapabilities={{
+              hasTimelineDates: timelineMonths.length > 0,
+              hasSelectableVisualization: Boolean(graph.nodes.length || graph.edges.length),
+              hasSearchRows: searchRecords.length > 0,
+              hasExportableVisualization: Boolean(
+                visualizationAvailability.hasPointMap
+                || visualizationAvailability.hasRouteMap
+                || visualizationAvailability.hasNetwork
+                || visualizationAvailability.hasCharts
+              ),
+            }}
             isMainMenuOpen={isMainMenuOpen}
+            onReturnToStepWorkspace={() => routeTutorialStepToWorkspace(activeTutorialStep)}
             onOpenMainMenu={() => setIsMainMenuOpen(true)}
             onOpenExplore={openExploreWorkspaceFromMenu}
             onCloseInspector={closeInspectorWorkspace}
