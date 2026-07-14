@@ -756,3 +756,61 @@
   }
 }
 
+/* Tutorial accessibility refinements. */
+.peridot-tutorial-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.peridot-tutorial-callout :where(button, [tabindex="0"]):focus-visible {
+  outline: 3px solid #f2cf73;
+  outline-offset: 3px;
+}
+
+.peridot-tutorial-drag-handle[tabindex="0"] {
+  cursor: move;
+}
+
+.peridot-tutorial-drag-handle[tabindex="0"]:focus-visible {
+  border-radius: 0.7rem 0.7rem 0 0;
+  background: rgba(232, 198, 108, 0.12);
+}
+
+.peridot-tutorial-callout {
+  max-height: min(92vh, 52rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-tutorial-callout,
+  .peridot-tutorial-highlight {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+@media (max-width: 760px), (max-height: 620px) {
+  .peridot-tutorial-callout {
+    max-height: calc(100vh - 1rem);
+  }
+
+  .peridot-tutorial-actions,
+  .peridot-tutorial-completion-actions {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(
+      180deg,
+      rgba(4, 31, 18, 0.2),
+      rgba(4, 31, 18, 0.98) 28%
+    );
+    padding-top: 0.85rem;
+  }
+}
+

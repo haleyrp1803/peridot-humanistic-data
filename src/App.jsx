@@ -3187,6 +3187,7 @@ export default function EuropeNetworkMapApp() {
   const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('place-map');
   const [isTutorialActive, setIsTutorialActive] = useState(false);
   const [tutorialStepIndex, setTutorialStepIndex] = useState(PERIDOT_TUTORIAL_START_INDEX);
+  const tutorialReturnFocusRef = useRef(null);
   const setResolvedWorkspaceMode = (nextMode) => {
     setWorkspaceMode((currentMode) => resolvePeridotWorkspaceMode(nextMode, currentMode));
   };
@@ -4623,6 +4624,9 @@ export default function EuropeNetworkMapApp() {
   };
 
   const startTutorial = () => {
+    tutorialReturnFocusRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
     const startStep = getPeridotTutorialStep(PERIDOT_TUTORIAL_START_INDEX);
     setTutorialStepIndex(PERIDOT_TUTORIAL_START_INDEX);
     setIsTutorialActive(true);
@@ -4631,6 +4635,11 @@ export default function EuropeNetworkMapApp() {
 
   const closeTutorial = () => {
     setIsTutorialActive(false);
+    window.requestAnimationFrame(() => {
+      const returnTarget = tutorialReturnFocusRef.current;
+      if (returnTarget?.isConnected) returnTarget.focus();
+      tutorialReturnFocusRef.current = null;
+    });
   };
 
   const goToPreviousTutorialStep = () => {

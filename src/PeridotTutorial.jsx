@@ -111,6 +111,7 @@ export function PeridotTutorial({
   onContinue,
 }) {
   const dialogRef = useRef(null);
+  const primaryButtonRef = useRef(null);
   const [hasCompletedInteraction, setHasCompletedInteraction] = useState(false);
   const [searchTutorialPhase, setSearchTutorialPhase] = useState('browse');
   const [exportTutorialPhase, setExportTutorialPhase] = useState('closed');
@@ -281,7 +282,10 @@ export function PeridotTutorial({
     setSearchTutorialPhase('browse');
     setExportTutorialPhase('closed');
     setHasActivatedExploreRoute(false);
-    dialogRef.current?.focus();
+
+    window.requestAnimationFrame(() => {
+      (primaryButtonRef.current || dialogRef.current)?.focus();
+    });
   }, [step?.id]);
 
   useEffect(() => {
@@ -386,6 +390,50 @@ export function PeridotTutorial({
     return () => document.removeEventListener('click', handleExportTutorialClick, true);
   }, [isCapabilityUnavailable, isExportCompletionStep, isWorkspaceMismatch]);
 
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return undefined;
+
+    const handleDialogKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose?.();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const focusable = Array.from(
+        dialog.querySelectorAll(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      });
+
+      if (!focusable.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    dialog.addEventListener('keydown', handleDialogKeyDown);
+    return () => dialog.removeEventListener('keydown', handleDialogKeyDown);
+  }, [onClose, step?.id]);
+
   if (!step) return null;
 
   const showGenericAnchorFallback = !isAnchorAvailable
@@ -437,7 +485,7 @@ export function PeridotTutorial({
       role="dialog"
       aria-modal="false"
       aria-labelledby="peridot-tutorial-heading"
-      aria-describedby="peridot-tutorial-description"
+      aria-describedby="peridot-tutorial-description peridot-tutorial-status"
       data-peridot-tutorial-step={step.id}
       data-peridot-tutorial-anchor-available={isAnchorAvailable ? 'true' : 'false'}
       data-peridot-tutorial-interaction-complete={hasCompletedInteraction ? 'true' : 'false'}
@@ -460,16 +508,20 @@ export function PeridotTutorial({
       data-peridot-tutorial-capability-unavailable={isCapabilityUnavailable ? 'true' : 'false'}
       tabIndex={-1}
     >
-      <div className="peridot-tutorial-drag-handle" {...dragHandleProps}>
+      <div
+        className="peridot-tutorial-drag-handle"
+        {...dragHandleProps}
+        aria-label="Move tutorial panel. Use arrow keys to reposition it."
+      >
         <span className="peridot-tutorial-drag-grip" aria-hidden="true">••••</span>
-        <span>Drag to move</span>
+        <span>Drag or use arrow keys to move</span>
       </div>
 
       <button
         type="button"
         className="peridot-tutorial-close"
         onClick={onClose}
-        aria-label="Close tutorial"
+        aria-label="Close tutorial and return focus to where the tutorial started"
         title="Close tutorial"
       >
         ×
@@ -489,6 +541,20 @@ export function PeridotTutorial({
       {step.note && !(isExportCompletionStep && exportTutorialPhase === 'complete') ? (
         <p className="peridot-tutorial-note">{step.note}</p>
       ) : null}
+
+      <div
+        id="peridot-tutorial-status"
+        className="peridot-tutorial-sr-only"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+      >
+        {isWorkspaceMismatch
+          ? 'Tutorial paused because this step is in another workspace.'
+          : isCapabilityUnavailable
+            ? step.unavailableText || 'This tutorial activity is unavailable.'
+            : `Tutorial step ${step.number} of ${PERIDOT_TUTORIAL_TOTAL_STEPS}: ${step.title}`}
+      </div>
 
       {isTimelineStep && timelineAvailability.available && !hasCompletedInteraction ? (
         <p className="peridot-tutorial-interaction-prompt">
@@ -707,8 +773,10 @@ export function PeridotTutorial({
           End tutorial
         </button>
         <button
+          ref={primaryButtonRef}
           type="button"
           className="peridot-tutorial-button is-primary"
+          aria-label={`${primaryLabel}. Tutorial step ${step.number} of ${PERIDOT_TUTORIAL_TOTAL_STEPS}.`}
           onClick={
             isWorkspaceMismatch
               ? onReturnToStepWorkspace
