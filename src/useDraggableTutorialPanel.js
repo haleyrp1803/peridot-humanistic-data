@@ -306,6 +306,7 @@ export function useDraggableTutorialPanel({
       '--peridot-tutorial-drag-x': `${offset.x}px`,
       '--peridot-tutorial-drag-y': `${offset.y}px`,
     },
+    anchorElement,
     isAnchorAvailable: Boolean(anchorElement),
     dragHandleProps: {
       onPointerDown: handlePointerDown,

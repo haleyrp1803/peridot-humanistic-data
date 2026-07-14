@@ -425,3 +425,37 @@
     transition: none !important;
   }
 }
+
+/* Timeline interaction guidance. */
+.peridot-tutorial-interaction-prompt,
+.peridot-tutorial-interaction-status {
+  position: relative;
+  z-index: 2;
+  margin: 0.9rem 1.45rem 0;
+  border-radius: 0.85rem;
+  padding: 0.72rem 0.82rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.peridot-tutorial-interaction-prompt {
+  border: 1px dashed rgba(230, 194, 111, 0.48);
+  background: rgba(230, 194, 111, 0.08);
+  color: #f0e4c4;
+}
+
+.peridot-tutorial-interaction-status {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  border: 1px solid rgba(171, 208, 170, 0.52);
+  background: rgba(103, 152, 103, 0.14);
+  color: #edf2dc;
+}
+
+.peridot-tutorial-interaction-status > span {
+  flex: 0 0 auto;
+  color: #d8c16f;
+  font-size: 1rem;
+  font-weight: 900;
+}
