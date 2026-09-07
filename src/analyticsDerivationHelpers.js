@@ -362,17 +362,19 @@ function collectSeriesTotalValues(nested = new Map(), xLabel) {
   return values;
 }
 
-function filterRowsByAnalyticsDateRange(rows, startYear, endYear) {
+function filterRowsByAnalyticsDateRange(rows, startYear, endYear, excludeUndated = false) {
   const start = Number(startYear);
   const end = Number(endYear);
+  const hasRange = Number.isFinite(start) && Number.isFinite(end);
 
-  if (!Number.isFinite(start) || !Number.isFinite(end)) return rows;
-  const minYear = Math.min(start, end);
-  const maxYear = Math.max(start, end);
+  if (!hasRange && !excludeUndated) return rows;
+  const minYear = hasRange ? Math.min(start, end) : null;
+  const maxYear = hasRange ? Math.max(start, end) : null;
 
   return rows.filter((row) => {
     const parts = getDatePartsFromRow(row);
-    if (!parts) return false;
+    if (!parts) return !excludeUndated;
+    if (!hasRange) return true;
     return parts.year >= minYear && parts.year <= maxYear;
   });
 }
@@ -619,8 +621,8 @@ export function getAnalyticsPeriodGranularity(startYear, endYear) {
   return getPeriodGranularity(startYear, endYear);
 }
 
-export function getAnalyticsCategoryValues(rows = [], fieldKey = 'sourcePerson', startYear, endYear) {
-  const filteredRows = filterRowsByAnalyticsDateRange(rows, startYear, endYear);
+export function getAnalyticsCategoryValues(rows = [], fieldKey = 'sourcePerson', startYear, endYear, excludeUndated = false) {
+  const filteredRows = filterRowsByAnalyticsDateRange(rows, startYear, endYear, excludeUndated);
   const counts = new Map();
 
   filteredRows.forEach((row) => {
@@ -1190,8 +1192,9 @@ export function buildAnalyticsChartData({
   categorySelection = {},
   startYear,
   endYear,
+  excludeUndated = false,
 } = {}) {
-  const filteredRows = filterRowsByAnalyticsDateRange(rows, startYear, endYear);
+  const filteredRows = filterRowsByAnalyticsDateRange(rows, startYear, endYear, excludeUndated);
   const rangeSuffix = startYear && endYear ? ` Selected range: ${Math.min(startYear, endYear)}–${Math.max(startYear, endYear)}.` : '';
   const effectiveAggregation = effectiveAggregationForChart(chartType, yField, aggregation);
   const metricLabel = metricLabelFor(yField, effectiveAggregation);

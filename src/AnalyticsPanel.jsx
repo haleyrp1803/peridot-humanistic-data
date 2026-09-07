@@ -658,11 +658,13 @@ export function AnalyticsPanelContent({
   const yearRange = useMemo(() => getAnalyticsYearRange(rows), [rows]);
   const [startYear, setStartYear] = useState('');
   const [endYear, setEndYear] = useState('');
+  const [excludeUndatedRecords, setExcludeUndatedRecords] = useState(false);
 
   useEffect(() => {
     if (!yearRange.years.length) {
       setStartYear('');
       setEndYear('');
+      setExcludeUndatedRecords(false);
       return;
     }
 
@@ -763,9 +765,15 @@ export function AnalyticsPanelContent({
   const manualSelectionSupported = Boolean(manualSelectionField);
   const manualCategoryOptions = useMemo(
     () => manualSelectionField
-      ? getAnalyticsCategoryValues(rows, manualSelectionField.key, startYear || yearRange.minYear, endYear || yearRange.maxYear)
+      ? getAnalyticsCategoryValues(
+        rows,
+        manualSelectionField.key,
+        startYear || yearRange.minYear,
+        endYear || yearRange.maxYear,
+        excludeUndatedRecords,
+      )
       : [],
-    [endYear, manualSelectionField, rows, startYear, yearRange.maxYear, yearRange.minYear]
+    [endYear, excludeUndatedRecords, manualSelectionField, rows, startYear, yearRange.maxYear, yearRange.minYear]
   );
   const manualSelectionFieldKey = manualSelectionField?.key || '';
   const validManualCategoryKeys = useMemo(() => new Set(manualCategoryOptions.map((option) => option.key)), [manualCategoryOptions]);
@@ -862,8 +870,9 @@ export function AnalyticsPanelContent({
       categorySelection,
       startYear: startYear || yearRange.minYear,
       endYear: endYear || yearRange.maxYear,
+      excludeUndated: excludeUndatedRecords,
     }),
-    [aggregation, barGroupBy, barOrientation, categorySelection, chartType, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, lineFilterBy, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedLineFilterField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, resolvedMultiLineMetricField, resolvedMultiLineAggregation, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
+    [aggregation, barGroupBy, barOrientation, categorySelection, chartType, excludeUndatedRecords, groupedBarGroupBy, heatmapColumnBy, heatmapRowBy, histogramGroupBy, histogramValueField, lineFilterBy, multiLineGroupBy, multiLineMode, pieGroupBy, rows, selectedBarField, selectedGroupedBarField, selectedHeatmapColumnField, selectedHeatmapRowField, selectedHistogramField, selectedHistogramGroupField, selectedLineFilterField, selectedMultiLineField, selectedPieField, selectedStackField, selectedSunburstChildField, selectedSunburstParentField, selectedWideSeriesFields, resolvedMultiLineMetricField, resolvedMultiLineAggregation, stackSegmentBy, sunburstChildBy, sunburstParentBy, topN, xField, yField, startYear, endYear, yearRange.maxYear, yearRange.minYear]
   );
 
   const displayChartData = useMemo(() => {
@@ -912,14 +921,23 @@ export function AnalyticsPanelContent({
     return (
       <ControlSection
         eyebrow="Step 2"
-        title="Set the date window"
-        description="Use derived years when available."
+        title="Local date window"
+        description="Choose the year range for dated records."
         compact
       >
         <div className="grid grid-cols-2 gap-3">
           <SelectControl label="Start year" value={startYear || String(yearRange.minYear)} onChange={setStartYear} options={yearRange.years.map((year) => ({ key: String(year), label: String(year) }))} />
           <SelectControl label="End year" value={endYear || String(yearRange.maxYear)} onChange={setEndYear} options={yearRange.years.map((year) => ({ key: String(year), label: String(year) }))} />
         </div>
+        <label className="mt-2 flex items-center gap-2 text-xs font-semibold text-[var(--panel-card-text)]">
+          <input
+            type="checkbox"
+            checked={excludeUndatedRecords}
+            onChange={(event) => setExcludeUndatedRecords(event.target.checked)}
+            className="h-3.5 w-3.5 shrink-0 accent-[var(--peridot-role-ornament-line)]"
+          />
+          <span>Exclude undated records?</span>
+        </label>
       </ControlSection>
     );
   };
@@ -1169,7 +1187,7 @@ export function AnalyticsPanelContent({
         )}
         {manualSelectionSupported && categorySelectionMode === 'manual' ? (
           <div className="rounded-[14px] bg-[var(--utility-tint-bg)] p-2.5 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
-            Category choices apply to <strong>{manualSelectionField?.label || 'the active category field'}</strong> in the current date window.
+            Category choices apply to <strong>{manualSelectionField?.label || 'the active category field'}</strong> in the current chart scope.
           </div>
         ) : null}
       </VariableControlsShell>
@@ -1203,6 +1221,7 @@ export function AnalyticsPanelContent({
     setManualComparisonMode('selectedPlusOther');
     setManualCategorySearch('');
     setPresentationTitle('');
+    setExcludeUndatedRecords(false);
     setStartYear(yearRange.minYear ? String(yearRange.minYear) : '');
     setEndYear(yearRange.maxYear ? String(yearRange.maxYear) : '');
     setActiveBuilderTab('chart');

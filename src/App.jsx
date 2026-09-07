@@ -82,7 +82,7 @@ import {
   PERIDOT_TUTORIAL_STEPS,
 } from './peridotTutorialConfig.js';
 import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
-import { buildPeridotSearchRecords, rowMatchesSearchCapabilityFilter, rowMatchesSearchText, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
+import { buildPeridotSearchRecords, getCapabilityFilterLabel, rowMatchesSearchCapabilityFilter, rowMatchesSearchText, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
 import {
   DEFAULT_PERIDOT_WORKSPACE_MODE,
   PERIDOT_WORKSPACE_MODES,
@@ -1022,6 +1022,44 @@ function matchesFilterTerm(values, filterTerm) {
   return values
     .filter((value) => value !== null && value !== undefined)
     .some((value) => String(value).toLowerCase().includes(q));
+}
+
+function summarizeStructuredCriterionForExport(criterion = {}) {
+  const fieldLabels = {
+    any: 'Any record text',
+    person: 'Person / entity',
+    place: 'Place',
+    routePlace: 'Route place',
+    routePeople: 'Entity relationship',
+    entityPair: 'Connected entity pair',
+    date: 'Date',
+    metadataValue: 'Evidence value',
+    metadataFieldPresent: 'Evidence field is present',
+    capability: 'Capability',
+  };
+  const modeLabels = {
+    contains: 'contains',
+    exact: 'exactly matches',
+    startsWith: 'starts with',
+    isEmpty: 'is empty',
+    isNotEmpty: 'is not empty',
+  };
+  const operatorLabels = { must: 'Required', should: 'Any-of', exclude: 'Excluded' };
+  const field = criterion.field || 'any';
+  const operator = operatorLabels[criterion.operator] || 'AND';
+
+  if (field === 'entityPair') {
+    const first = String(criterion.firstValue || '').trim();
+    const second = String(criterion.secondValue || '').trim();
+    return [operator, fieldLabels.entityPair, first && second ? `${first} + ${second}` : first || second].filter(Boolean).join(' ');
+  }
+
+  const fieldLabel = fieldLabels[field] || field;
+  const metadataField = field === 'metadataValue' ? String(criterion.metadataField || '').trim() : '';
+  const modeLabel = modeLabels[criterion.mode] || criterion.mode || 'contains';
+  const value = String(criterion.value || '').trim();
+  const scopedFieldLabel = metadataField ? `${fieldLabel} (${metadataField})` : fieldLabel;
+  return [operator, scopedFieldLabel, modeLabel, value].filter(Boolean).join(' ');
 }
 
 function filterRowsBySearchAndEntity(rows, {
@@ -3481,10 +3519,11 @@ export default function EuropeNetworkMapApp() {
   // scrubber may change visible map/network content, but it must not change the
   // count, rows, or facets of the already committed Search scope.
   //
-  // Analytics has one additional local date-range concept inside
-  // `AnalyticsPanel.jsx`. That chart-local range is not the same state as the
-  // global timeline scrubber below, so do not merge or rename those states
-  // without first defining the desired cross-workspace filtering semantics.
+  // Inspector entity/place dossiers consume `filteredRowsForActiveFilters` so
+  // playback animation cannot silently shrink an evidence profile. Analytics
+  // keeps playback-visible dated rows but restores Search-filtered rows that have
+  // no usable temporal position. Its local date controls can therefore constrain
+  // dated records without silently discarding undated evidence.
   const availableTemporalRoles = useMemo(() => getAvailableTemporalRoles(searchRecords), [searchRecords]);
   const temporalRoleSignature = availableTemporalRoles.join('\u0001');
 
@@ -3593,6 +3632,24 @@ export default function EuropeNetworkMapApp() {
     });
   }, [filteredRowsForActiveFilters, playbackIndex, selectedRowsForPlayback, timelinePlaybackMode]);
 
+  // Analytics treats records with no usable temporal position as legitimate
+  // non-temporal evidence rather than silently dropping them at the global
+  // Timeline boundary. Search criteria still apply because these rows come from
+  // the pre-Timeline committed Search scope. Dated rows continue to obey both
+  // the global Timeline window and playback visibility.
+  const undatedAnalyticsRows = useMemo(
+    () => entityRelationshipStructureRows.filter((row) => !getRowTimelineCapability(row).timelineReady),
+    [entityRelationshipStructureRows]
+  );
+  const analyticsAvailabilityRows = useMemo(
+    () => Array.from(new Set([...filteredRowsForActiveFilters, ...undatedAnalyticsRows])),
+    [filteredRowsForActiveFilters, undatedAnalyticsRows]
+  );
+  const analyticsRows = useMemo(
+    () => Array.from(new Set([...filteredRowsByTime, ...undatedAnalyticsRows])),
+    [filteredRowsByTime, undatedAnalyticsRows]
+  );
+
   // ------------------------------------------------------------
   // Graph derivations
   // ------------------------------------------------------------
@@ -3675,11 +3732,11 @@ export default function EuropeNetworkMapApp() {
     [entityRelationshipStructureRows, filteredRowsForActiveFilters]
   );
   const availabilityAnalyticsFields = useMemo(
-    () => getAvailableAnalyticsFields(filteredRowsForActiveFilters),
-    [filteredRowsForActiveFilters]
+    () => getAvailableAnalyticsFields(analyticsAvailabilityRows),
+    [analyticsAvailabilityRows]
   );
 
-  const analyticsFields = useMemo(() => getAvailableAnalyticsFields(filteredRowsByTime), [filteredRowsByTime]);
+  const analyticsFields = useMemo(() => getAvailableAnalyticsFields(analyticsRows), [analyticsRows]);
   useEffect(() => {
     if (analyticsChartType !== 'bar') return;
     const available = analyticsFields.barGroupOptions || [];
@@ -3690,16 +3747,17 @@ export default function EuropeNetworkMapApp() {
   }, [analyticsBarGroupBy, analyticsChartType, analyticsFields]);
   const analyticsChartData = useMemo(
     () => buildAnalyticsChartData({
-      rows: filteredRowsByTime,
+      rows: analyticsRows,
       chartType: analyticsChartType,
       barGroupBy: analyticsBarGroupBy,
       topN: analyticsTopN,
     }),
-    [filteredRowsByTime, analyticsChartType, analyticsBarGroupBy, analyticsTopN]
+    [analyticsRows, analyticsChartType, analyticsBarGroupBy, analyticsTopN]
   );
 
   const visualizationAvailability = useMemo(() => {
     const rowCount = filteredRowsForActiveFilters.length;
+    const chartRowCount = analyticsAvailabilityRows.length;
     const pointCount = places.length;
     const routeCount = availabilityFilteredAggregatedEdges.length;
     // Network availability is semantic, not layout-dependent. A dataset can
@@ -3765,10 +3823,10 @@ export default function EuropeNetworkMapApp() {
       hasNetwork: networkNodeCount > 0 && networkEdgeCount > 0,
       hasForceNetwork: networkNodeCount > 0 && networkEdgeCount > 0,
       hasEntityNetwork: geographicNetworkNodeCount > 0 && geographicNetworkEdgeCount > 0,
-      hasCharts: rowCount > 0 && chartFieldCount > 0,
+      hasCharts: chartRowCount > 0 && chartFieldCount > 0,
       hasExploreData: rowCount > 0,
     };
-  }, [availabilityAnalyticsFields, availabilityEntityNetworkSemantics, availabilityGeographicEntityNetworkSemantics, availabilityFilteredAggregatedEdges.length, filteredRowsForActiveFilters.length, minCount, places.length]);
+  }, [analyticsAvailabilityRows.length, availabilityAnalyticsFields, availabilityEntityNetworkSemantics, availabilityGeographicEntityNetworkSemantics, availabilityFilteredAggregatedEdges.length, filteredRowsForActiveFilters.length, minCount, places.length]);
   const viewResetKey = useMemo(() => {
     const layoutKey = viewMode === 'person' ? `${viewMode}:${personLayoutMode}` : viewMode;
     return `${layoutKey}:${timelineMode}:${rangeStart}:${rangeEnd}`;
@@ -3794,7 +3852,7 @@ export default function EuropeNetworkMapApp() {
       personGraphFallback: personGraph,
       personMetadataById,
       viewMode,
-      inspectorRows: filteredRowsByTime,
+      inspectorRows: filteredRowsForActiveFilters,
       inspectorRelationshipRows: inspectorStructuralRelationshipRows,
     });
 
@@ -3823,7 +3881,7 @@ export default function EuropeNetworkMapApp() {
       ...(canonicalDisplayLabel ? { label: canonicalDisplayLabel, detailLabel: canonicalDisplayLabel } : {}),
       canonicalEntityEvidence,
     };
-  }, [selectedSelection, graph, personMetadataByName, personMetadataById, personGraph, viewMode, filteredRowsByTime, inspectorStructuralRelationshipRows, entityDisplayLabelById, entityEvidenceById]);
+  }, [selectedSelection, graph, personMetadataByName, personMetadataById, personGraph, viewMode, filteredRowsForActiveFilters, inspectorStructuralRelationshipRows, entityDisplayLabelById, entityEvidenceById]);
 
   const selectedLetterMetadata = useMemo(() => {
     if (selectedProps?.__kind === 'letter-detail') return [];
@@ -3909,6 +3967,8 @@ export default function EuropeNetworkMapApp() {
       placeFilter.trim() ? `Place: ${placeFilter.trim()}` : '',
       routePlaceFilter.trim() ? `Route place: ${routePlaceFilter.trim()}` : '',
       routePeopleFilter.trim() ? `Route people: ${routePeopleFilter.trim()}` : '',
+      ...capabilityFilters.map((filterId) => `Capability: ${getCapabilityFilterLabel(filterId)}`),
+      ...structuredCriteria.map((criterion) => `Structured: ${summarizeStructuredCriterionForExport(criterion)}`),
       minCount > 1 ? `Minimum weight: ${currentMinCountLabel}` : '',
     ].filter(Boolean);
 
@@ -3917,7 +3977,7 @@ export default function EuropeNetworkMapApp() {
       `Visible dates: ${exportVisibleDateLabel}`,
       activeFilterLabels.length ? `Filters: ${activeFilterLabels.join(' · ')}` : '',
     ].filter(Boolean);
-  }, [viewMode, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, minCount, currentMinCountLabel, exportVisibleDateLabel]);
+  }, [viewMode, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters, structuredCriteria, minCount, currentMinCountLabel, exportVisibleDateLabel]);
 
   const buildMapPngExportFooterLines = (exportOptions = {}) => {
     const footerLines = [];
@@ -3933,6 +3993,8 @@ export default function EuropeNetworkMapApp() {
         placeFilter.trim() ? `Place: ${placeFilter.trim()}` : '',
         routePlaceFilter.trim() ? `Route place: ${routePlaceFilter.trim()}` : '',
         routePeopleFilter.trim() ? `Route people: ${routePeopleFilter.trim()}` : '',
+        ...capabilityFilters.map((filterId) => `Capability: ${getCapabilityFilterLabel(filterId)}`),
+        ...structuredCriteria.map((criterion) => `Structured: ${summarizeStructuredCriterionForExport(criterion)}`),
         minCount > 1 ? `Minimum weight: ${currentMinCountLabel}` : '',
       ].filter(Boolean);
 
@@ -5039,7 +5101,7 @@ export default function EuropeNetworkMapApp() {
     handleExportPng,
     handleExportEdgesCsv,
     handleExportNodesCsv,
-    graph, exportStatus, analyticsChartType, setAnalyticsChartType, analyticsBarGroupBy, setAnalyticsBarGroupBy, analyticsTopN, setAnalyticsTopN, analyticsFields, analyticsChartData, analyticsRows: filteredRowsByTime, }); const inspectorPanelProps = buildInspectorPanelProps({
+    graph, exportStatus, analyticsChartType, setAnalyticsChartType, analyticsBarGroupBy, setAnalyticsBarGroupBy, analyticsTopN, setAnalyticsTopN, analyticsFields, analyticsChartData, analyticsRows, }); const inspectorPanelProps = buildInspectorPanelProps({
     showRightSidebar,
     setShowRightSidebar,
     setShowLeftSidebar,
@@ -5273,7 +5335,7 @@ export default function EuropeNetworkMapApp() {
       setTopN: setAnalyticsTopN,
       availableFields: analyticsFields,
       chartData: analyticsChartData,
-      rows: filteredRowsByTime,
+      rows: analyticsRows,
     },
   };
 
