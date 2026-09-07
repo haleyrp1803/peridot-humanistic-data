@@ -82,7 +82,7 @@ import {
   PERIDOT_TUTORIAL_STEPS,
 } from './peridotTutorialConfig.js';
 import { PeridotSearchWorkspace } from './PeridotSearchWorkspace';
-import { buildPeridotSearchRecords, getCapabilityFilterLabel, rowMatchesSearchCapabilityFilter, rowMatchesSearchText, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
+import { buildPeridotSearchRecords, buildStructuredCountContext, getCapabilityFilterLabel, rowMatchesSearchCapabilityFilter, rowMatchesSearchText, rowMatchesStructuredCriteria } from './peridotSearchResultHelpers.js';
 import {
   DEFAULT_PERIDOT_WORKSPACE_MODE,
   PERIDOT_WORKSPACE_MODES,
@@ -787,7 +787,7 @@ function computePersonEdgeWidth(count) {
 // Person-network graph builder shared by geographic and force-directed layouts.
 // Relationship semantics are derived in peridotEntityNetwork.js so layout no
 // longer determines (or reconstructs) what the user's relationships mean.
-function buildPersonGraph(rows, width, height, layoutMode, minCount = 1, searchQuery = '', semanticOptions = null) {
+function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', semanticOptions = null) {
   const personMap = new Map();
   const { relationships, locations } = layoutMode === 'geographic' && semanticOptions
     ? derivePeridotGeographicEntityNetworkSemantics(
@@ -877,7 +877,6 @@ function buildPersonGraph(rows, width, height, layoutMode, minCount = 1, searchQ
 
   const q = searchQuery.trim().toLowerCase();
   const filteredEdgeRecords = relationships.filter((edge) => {
-    if (edge.count < minCount) return false;
     if (!q) return true;
     const haystack = [
       edge.source,
@@ -1054,12 +1053,31 @@ function summarizeStructuredCriterionForExport(criterion = {}) {
     return [operator, fieldLabels.entityPair, first && second ? `${first} + ${second}` : first || second].filter(Boolean).join(' ');
   }
 
+
   const fieldLabel = fieldLabels[field] || field;
   const metadataField = field === 'metadataValue' ? String(criterion.metadataField || '').trim() : '';
   const modeLabel = modeLabels[criterion.mode] || criterion.mode || 'contains';
   const value = String(criterion.value || '').trim();
   const scopedFieldLabel = metadataField ? `${fieldLabel} (${metadataField})` : fieldLabel;
-  return [operator, scopedFieldLabel, modeLabel, value].filter(Boolean).join(' ');
+  const primarySummary = [operator, scopedFieldLabel, modeLabel, value].filter(Boolean).join(' ');
+  const countCondition = criterion?.countCondition;
+  if (!countCondition) return primarySummary;
+
+  const parsedThreshold = Number.parseInt(String(countCondition.threshold ?? '').trim(), 10);
+  const threshold = Number.isFinite(parsedThreshold) ? Math.max(1, parsedThreshold) : 2;
+  const anchorLabel = field === 'person'
+    ? 'this person'
+    : field === 'place'
+      ? 'this place'
+      : countCondition.anchor === 'placesInRecord'
+        ? 'places in these records'
+        : 'people in these records';
+  const metricLabel = {
+    connectedEntities: 'connected entities',
+    connectedPlaces: 'connected places',
+    records: 'records',
+  }[countCondition.metric] || 'records';
+  return `${primarySummary}; ${anchorLabel} has at least ${threshold} ${metricLabel}`;
 }
 
 function filterRowsBySearchAndEntity(rows, {
@@ -1070,6 +1088,7 @@ function filterRowsBySearchAndEntity(rows, {
   routePeopleQuery = '',
     capabilityFilters = [],
     structuredCriteria = [],
+    countRows = rows,
 } = {}) {
   const q = normalizeFilterTerm(searchQuery);
   const personQ = normalizeFilterTerm(personQuery);
@@ -1078,12 +1097,15 @@ function filterRowsBySearchAndEntity(rows, {
   const routePeopleQ = normalizeFilterTerm(routePeopleQuery);
   const activeCapabilityFilters = Array.isArray(capabilityFilters) ? capabilityFilters.filter(Boolean) : [];
   const activeStructuredCriteria = Array.isArray(structuredCriteria) ? structuredCriteria : [];
+  const structuredCountContext = activeStructuredCriteria.some((criterion) => Boolean(criterion?.countCondition))
+    ? buildStructuredCountContext(countRows)
+    : null;
 
   if (!q && !personQ && !placeQ && !routePlaceQ && !routePeopleQ && !activeCapabilityFilters.length && !activeStructuredCriteria.length) {
     return rows;
   }
 
-  return rows.filter((row) => {
+  const baseRows = rows.filter((row) => {
     const placeRouteLabel = [row.sourceLoc, row.targetLoc].filter(Boolean).join(' → ');
     const mappedPlaceValues = buildPeridotRecordStructure(row).places
       .map((entry) => entry.value)
@@ -1102,7 +1124,7 @@ function filterRowsBySearchAndEntity(rows, {
       ...networkParticipants,
     ];
 
-    if (activeStructuredCriteria.length && !rowMatchesStructuredCriteria(row, activeStructuredCriteria)) {
+    if (activeStructuredCriteria.length && !rowMatchesStructuredCriteria(row, activeStructuredCriteria, { countContext: structuredCountContext })) {
       return false;
     }
 
@@ -1132,6 +1154,8 @@ function filterRowsBySearchAndEntity(rows, {
 
     return rowMatchesSearchText(row, q);
   });
+
+  return baseRows;
 }
 
 
@@ -1910,10 +1934,6 @@ function buildLeftControlPanelProps(args) {
       placeSuggestions: args.searchFilterSuggestions?.places || [],
       routePlaceSuggestions: args.searchFilterSuggestions?.placeRoutes || [],
       routePeopleSuggestions: args.searchFilterSuggestions?.peopleRoutes || [],
-      currentMinCountLabel: args.currentMinCountLabel,
-      minCountOptions: args.minCountOptions,
-      minCount: args.minCount,
-      setMinCount: args.setMinCount,
     },
     timelineState: {
       timelineMode: args.timelineMode,
@@ -3066,7 +3086,7 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
       </div>
       {showInspectorInfo ? (
         <div className="mt-3 w-full rounded-2xl border border-[var(--peridot-role-inspector-card-border)] bg-[var(--peridot-role-inspector-card-bg)] p-3 text-sm leading-relaxed text-[var(--peridot-role-inspector-body-text)] shadow-inner shadow-[var(--peridot-role-card-shadow)]">
-          Summary details in this panel reflect the currently selected view, date window, search filter, and minimum-weight threshold, not the full dataset.
+          Summary details in this panel reflect the currently selected view and applied Search / Timeline scope, not the full dataset.
         </div>
       ) : null}
     </div>
@@ -3206,7 +3226,6 @@ export default function EuropeNetworkMapApp() {
   // User interaction and view state
   // ------------------------------------------------------------
   const [showLabels, setShowLabels] = useState(true);
-  const [minCount, setMinCount] = useState(1);
   const [search, setSearch] = useState('');
   const [personFilter, setPersonFilter] = useState('');
   const [placeFilter, setPlaceFilter] = useState('');
@@ -3398,20 +3417,6 @@ export default function EuropeNetworkMapApp() {
   const [themeTuning, setThemeTuning] = useState(THEME_DEFAULTS);
   const [themePresetKey, setThemePresetKey] = useState('peridot');
 
-  const minCountOptions = [
-    { label: '1', value: 1 },
-    { label: '2', value: 2 },
-    { label: '3', value: 3 },
-    { label: '4', value: 4 },
-    { label: '5', value: 5 },
-    { label: '6â€“10', value: 6 },
-    { label: '11â€“15', value: 11 },
-    { label: '16â€“20', value: 16 },
-    { label: '21â€“25', value: 21 },
-    { label: '26â€“30', value: 26 },
-    { label: '31+', value: 31 },
-  ];
-
   const playbackSpeedOptions = [
     { label: 'Very Slow', value: 1200 },
     { label: 'Slow', value: 700 },
@@ -3568,6 +3573,7 @@ export default function EuropeNetworkMapApp() {
       routePeopleQuery: routePeopleFilter,
       capabilityFilters,
       structuredCriteria,
+      countRows: searchRecords,
     });
   }, [searchRecords, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters, structuredCriteria]);
 
@@ -3593,6 +3599,7 @@ export default function EuropeNetworkMapApp() {
       routePeopleQuery: routePeopleFilter,
       capabilityFilters,
       structuredCriteria,
+      countRows: searchRecords,
     });
   }, [timelineWindowRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters, structuredCriteria]);
 
@@ -3655,9 +3662,10 @@ export default function EuropeNetworkMapApp() {
   // ------------------------------------------------------------
   const aggregatedEdges = useMemo(() => aggregateEdgesFromRows(filteredRowsByTime, normalizedLetters), [filteredRowsByTime, normalizedLetters]);
 
-  const filteredAggregatedEdges = useMemo(() => {
-    return aggregatedEdges.filter((edge) => edge.count >= minCount);
-  }, [aggregatedEdges, minCount]);
+  // Edge counts remain available for visual encoding and inspection, but the
+  // legacy global minimum-weight threshold has been retired. Count-based
+  // refinement now lives in explicit Structured Search criteria.
+  const filteredAggregatedEdges = aggregatedEdges;
 
   const placeIdsInUse = useMemo(() => {
     const ids = new Set();
@@ -3696,13 +3704,12 @@ export default function EuropeNetworkMapApp() {
       mapViewportSize.width,
       mapViewportSize.height,
       personGraphLayoutMode,
-      minCount,
       '',
       personGraphLayoutMode === 'geographic'
         ? { relationshipRows: entityRelationshipStructureRows, locationRows: filteredRowsByTime, entityLabelById: entityDisplayLabelById }
         : { entityLabelById: entityDisplayLabelById }
     ),
-    [entityRelationshipStructureRows, filteredRowsByTime, mapViewportSize.width, mapViewportSize.height, personGraphLayoutMode, minCount, entityDisplayLabelById]
+    [entityRelationshipStructureRows, filteredRowsByTime, mapViewportSize.width, mapViewportSize.height, personGraphLayoutMode, entityDisplayLabelById]
   );
   const graph = viewMode === 'geographic' ? geographicGraph : personGraph;
 
@@ -3716,10 +3723,7 @@ export default function EuropeNetworkMapApp() {
     () => aggregateEdgesFromRows(filteredRowsForActiveFilters, normalizedLetters),
     [filteredRowsForActiveFilters, normalizedLetters]
   );
-  const availabilityFilteredAggregatedEdges = useMemo(
-    () => availabilityAggregatedEdges.filter((edge) => edge.count >= minCount),
-    [availabilityAggregatedEdges, minCount]
-  );
+  const availabilityFilteredAggregatedEdges = availabilityAggregatedEdges;
   const availabilityEntityNetworkSemantics = useMemo(
     () => derivePeridotEntityNetworkSemantics(filteredRowsForActiveFilters),
     [filteredRowsForActiveFilters]
@@ -3765,8 +3769,7 @@ export default function EuropeNetworkMapApp() {
     // geographic anchor. In that case the force-directed network must remain
     // available while the geographic person/entity layout may have nothing to
     // position.
-    const availableNetworkRelationships = (availabilityEntityNetworkSemantics.relationships || [])
-      .filter((edge) => edge.count >= minCount);
+    const availableNetworkRelationships = availabilityEntityNetworkSemantics.relationships || [];
     const availableNetworkEntities = new Set();
     availableNetworkRelationships.forEach((edge) => {
       if (edge.source) availableNetworkEntities.add(edge.source);
@@ -3785,8 +3788,7 @@ export default function EuropeNetworkMapApp() {
         .map((location) => location.person)
         .filter(Boolean)
     );
-    const availableGeographicRelationships = (availabilityGeographicEntityNetworkSemantics.relationships || [])
-      .filter((edge) => edge.count >= minCount);
+    const availableGeographicRelationships = availabilityGeographicEntityNetworkSemantics.relationships || [];
     const geographicNetworkEdgeCount = availableGeographicRelationships.filter((edge) => (
       geographicallyMappableEntities.has(edge.source)
       && geographicallyMappableEntities.has(edge.target)
@@ -3826,7 +3828,7 @@ export default function EuropeNetworkMapApp() {
       hasCharts: chartRowCount > 0 && chartFieldCount > 0,
       hasExploreData: rowCount > 0,
     };
-  }, [analyticsAvailabilityRows.length, availabilityAnalyticsFields, availabilityEntityNetworkSemantics, availabilityGeographicEntityNetworkSemantics, availabilityFilteredAggregatedEdges.length, filteredRowsForActiveFilters.length, minCount, places.length]);
+  }, [analyticsAvailabilityRows.length, availabilityAnalyticsFields, availabilityEntityNetworkSemantics, availabilityGeographicEntityNetworkSemantics, availabilityFilteredAggregatedEdges.length, filteredRowsForActiveFilters.length, places.length]);
   const viewResetKey = useMemo(() => {
     const layoutKey = viewMode === 'person' ? `${viewMode}:${personLayoutMode}` : viewMode;
     return `${layoutKey}:${timelineMode}:${rangeStart}:${rangeEnd}`;
@@ -3912,7 +3914,6 @@ export default function EuropeNetworkMapApp() {
   const currentPlaybackLabel = playbackIndex >= 0 && selectedRowsForPlayback[playbackIndex] ? (selectedRowsForPlayback[playbackIndex].displayLabel || selectedRowsForPlayback[playbackIndex].row?.date || 'dated record') : 'not running';
   const hasActivePlayback = playbackIndex >= 0 && Boolean(selectedRowsForPlayback[playbackIndex]);
   const currentPlaybackSpeedLabel = playbackSpeedOptions.find((option) => option.value === playbackSpeed)?.label || 'Slow';
-  const currentMinCountLabel = minCountOptions.find((option) => option.value === minCount)?.label || String(minCount);
 
   // ------------------------------------------------------------
   // Diagnostics and export helpers
@@ -3969,7 +3970,6 @@ export default function EuropeNetworkMapApp() {
       routePeopleFilter.trim() ? `Route people: ${routePeopleFilter.trim()}` : '',
       ...capabilityFilters.map((filterId) => `Capability: ${getCapabilityFilterLabel(filterId)}`),
       ...structuredCriteria.map((criterion) => `Structured: ${summarizeStructuredCriterionForExport(criterion)}`),
-      minCount > 1 ? `Minimum weight: ${currentMinCountLabel}` : '',
     ].filter(Boolean);
 
     return [
@@ -3977,7 +3977,7 @@ export default function EuropeNetworkMapApp() {
       `Visible dates: ${exportVisibleDateLabel}`,
       activeFilterLabels.length ? `Filters: ${activeFilterLabels.join(' · ')}` : '',
     ].filter(Boolean);
-  }, [viewMode, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters, structuredCriteria, minCount, currentMinCountLabel, exportVisibleDateLabel]);
+  }, [viewMode, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters, structuredCriteria, exportVisibleDateLabel]);
 
   const buildMapPngExportFooterLines = (exportOptions = {}) => {
     const footerLines = [];
@@ -3995,8 +3995,7 @@ export default function EuropeNetworkMapApp() {
         routePeopleFilter.trim() ? `Route people: ${routePeopleFilter.trim()}` : '',
         ...capabilityFilters.map((filterId) => `Capability: ${getCapabilityFilterLabel(filterId)}`),
         ...structuredCriteria.map((criterion) => `Structured: ${summarizeStructuredCriterionForExport(criterion)}`),
-        minCount > 1 ? `Minimum weight: ${currentMinCountLabel}` : '',
-      ].filter(Boolean);
+        ].filter(Boolean);
 
       if (activeFilterLabels.length) {
         footerLines.push(`Filters: ${activeFilterLabels.join(' · ')}`);
@@ -4122,7 +4121,6 @@ export default function EuropeNetworkMapApp() {
     setPlaceFilter('');
     setRoutePlaceFilter('');
     setRoutePeopleFilter('');
-    setMinCount(1);
     setTimelineMode('range');
     setIsPlaying(false);
     setPlaybackIndex(-1);
@@ -5073,10 +5071,6 @@ export default function EuropeNetworkMapApp() {
     routePeopleFilter,
     setRoutePeopleFilter,
     searchFilterSuggestions,
-    currentMinCountLabel,
-    minCountOptions,
-    minCount,
-    setMinCount,
     timelineMode,
     setTimelineMode,
     currentRangeLabel,
@@ -5420,13 +5414,10 @@ export default function EuropeNetworkMapApp() {
     placeSuggestions: searchFilterSuggestions?.places || [],
     routePlaceSuggestions: searchFilterSuggestions?.placeRoutes || [],
     routePeopleSuggestions: searchFilterSuggestions?.peopleRoutes || [],
-    currentMinCountLabel,
     currentRangeLabel,
     graph,
     rowDiagnostics,
     viewMode,
-    minCount,
-    setMinCount,
     timelineMonths,
     rangeStart,
     setRangeStart,

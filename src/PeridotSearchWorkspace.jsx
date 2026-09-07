@@ -115,6 +115,23 @@ const STRUCTURED_FIELD_OPTIONS = Object.freeze([
   { id: 'capability', label: 'Capability', placeholder: 'Choose a capability' },
 ]);
 
+const STRUCTURED_COUNT_ANCHOR_OPTIONS = Object.freeze([
+  { id: 'peopleInRecord', label: 'People in these records' },
+  { id: 'placesInRecord', label: 'Places in these records' },
+]);
+
+const STRUCTURED_PERSON_COUNT_METRICS = Object.freeze([
+  { id: 'connectedEntities', label: 'connected entities' },
+  { id: 'connectedPlaces', label: 'connected places' },
+  { id: 'records', label: 'records' },
+]);
+
+const STRUCTURED_PLACE_COUNT_METRICS = Object.freeze([
+  { id: 'connectedPlaces', label: 'connected places' },
+  { id: 'connectedEntities', label: 'connected entities' },
+  { id: 'records', label: 'records' },
+]);
+
 const STRUCTURED_OPERATOR_OPTIONS = Object.freeze([
   { id: 'must', label: 'AND', shortLabel: 'AND', description: 'Keep records that match the previous criteria and this rule.' },
   { id: 'should', label: 'OR', shortLabel: 'OR', description: 'Keep records that match the previous criteria or this rule.' },
@@ -336,6 +353,41 @@ function filterBrowseGroups(groups, query) {
     .filter((group) => group.items.length > 0);
 }
 
+function defaultCountConditionForField(field, existing = null) {
+  if (!existing) return null;
+  const parsedThreshold = Number.parseInt(String(existing.threshold ?? '').trim(), 10);
+  const threshold = Number.isFinite(parsedThreshold) ? String(Math.max(1, parsedThreshold)) : '2';
+
+  if (field === 'person') {
+    const metric = STRUCTURED_PERSON_COUNT_METRICS.some((option) => option.id === existing.metric)
+      ? existing.metric
+      : 'connectedEntities';
+    return { anchor: 'thisPerson', metric, threshold };
+  }
+
+  if (field === 'place') {
+    const metric = STRUCTURED_PLACE_COUNT_METRICS.some((option) => option.id === existing.metric)
+      ? existing.metric
+      : 'connectedPlaces';
+    return { anchor: 'thisPlace', metric, threshold };
+  }
+
+  const anchor = STRUCTURED_COUNT_ANCHOR_OPTIONS.some((option) => option.id === existing.anchor)
+    ? existing.anchor
+    : 'peopleInRecord';
+  const metricOptions = anchor === 'placesInRecord' ? STRUCTURED_PLACE_COUNT_METRICS : STRUCTURED_PERSON_COUNT_METRICS;
+  const metric = metricOptions.some((option) => option.id === existing.metric)
+    ? existing.metric
+    : (anchor === 'placesInRecord' ? 'connectedPlaces' : 'connectedEntities');
+  return { anchor, metric, threshold };
+}
+
+function createCountCondition(field) {
+  if (field === 'person') return { anchor: 'thisPerson', metric: 'connectedEntities', threshold: '2' };
+  if (field === 'place') return { anchor: 'thisPlace', metric: 'connectedPlaces', threshold: '2' };
+  return { anchor: 'peopleInRecord', metric: 'connectedEntities', threshold: '2' };
+}
+
 function createStructuredCriterion() {
   return {
     id: `criterion-${Date.now()}-${Math.random().toString(16).slice(2)}`,
@@ -347,6 +399,7 @@ function createStructuredCriterion() {
     firstValue: '',
     secondMode: 'contains',
     secondValue: '',
+    countCondition: null,
   };
 }
 
@@ -369,9 +422,11 @@ function normalizeDraftStructuredCriteria(criteria = []) {
         firstValue: String(criterion.firstValue ?? '').trim(),
         secondMode: criterion.secondMode || 'contains',
         secondValue: String(criterion.secondValue ?? '').trim(),
+        countCondition: defaultCountConditionForField(field, criterion.countCondition),
       };
     })
     .filter((criterion) => {
+      if (criterion.field === 'frequency') return false;
       if (criterion.field === 'entityPair') {
         return criterion.firstValue && criterion.secondValue;
       }
@@ -381,6 +436,114 @@ function normalizeDraftStructuredCriteria(criteria = []) {
     .slice(0, MAX_STRUCTURED_CRITERIA);
 }
 
+
+function AttachedCountCondition({ criterion, onChange, onKeyDown }) {
+  const condition = criterion.countCondition;
+  if (!condition) {
+    return (
+      <button
+        type="button"
+        onClick={() => onChange({ ...criterion, countCondition: createCountCondition(criterion.field) })}
+        className={SECONDARY_BUTTON_CLASS + ' mt-2 px-3 py-1.5 text-[0.65rem]'}
+      >
+        + Add count condition
+      </button>
+    );
+  }
+
+  const isPersonCriterion = criterion.field === 'person';
+  const isPlaceCriterion = criterion.field === 'place';
+  const anchor = isPersonCriterion
+    ? 'thisPerson'
+    : isPlaceCriterion
+      ? 'thisPlace'
+      : (condition.anchor || 'peopleInRecord');
+  const metricOptions = anchor === 'thisPlace' || anchor === 'placesInRecord'
+    ? STRUCTURED_PLACE_COUNT_METRICS
+    : STRUCTURED_PERSON_COUNT_METRICS;
+  const metric = metricOptions.some((option) => option.id === condition.metric)
+    ? condition.metric
+    : metricOptions[0].id;
+
+  const updateCondition = (patch) => {
+    const next = { ...condition, ...patch };
+    if (patch.anchor) {
+      const nextMetricOptions = patch.anchor === 'placesInRecord'
+        ? STRUCTURED_PLACE_COUNT_METRICS
+        : STRUCTURED_PERSON_COUNT_METRICS;
+      if (!nextMetricOptions.some((option) => option.id === next.metric)) {
+        next.metric = nextMetricOptions[0].id;
+      }
+    }
+    onChange({ ...criterion, countCondition: next });
+  };
+
+  return (
+    <div className="mt-2 rounded-xl border border-dashed px-3 py-2">
+      <div className="flex flex-wrap items-end gap-2">
+        {!isPersonCriterion && !isPlaceCriterion ? (
+          <div className="min-w-[12rem] flex-1">
+            <label className={FIELD_LABEL_CLASS} htmlFor={`structured-count-anchor-${criterion.id}`}>Also require</label>
+            <select
+              id={`structured-count-anchor-${criterion.id}`}
+              value={anchor}
+              onChange={(event) => updateCondition({ anchor: event.target.value })}
+              className={INPUT_CLASS}
+            >
+              {STRUCTURED_COUNT_ANCHOR_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="pb-2 text-xs font-bold">
+            {isPersonCriterion ? 'This person has at least' : 'This place has at least'}
+          </div>
+        )}
+
+        {!isPersonCriterion && !isPlaceCriterion ? (
+          <div className="pb-2 text-xs font-bold">have at least</div>
+        ) : null}
+
+        <div className="w-24">
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-count-threshold-${criterion.id}`}>Count</label>
+          <input
+            id={`structured-count-threshold-${criterion.id}`}
+            type="number"
+            min="1"
+            step="1"
+            value={condition.threshold || '2'}
+            onChange={(event) => updateCondition({ threshold: event.target.value })}
+            onKeyDown={onKeyDown}
+            className={INPUT_CLASS}
+          />
+        </div>
+
+        <div className="min-w-[11rem] flex-1">
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-count-metric-${criterion.id}`}>Connected / associated</label>
+          <select
+            id={`structured-count-metric-${criterion.id}`}
+            value={metric}
+            onChange={(event) => updateCondition({ metric: event.target.value })}
+            className={INPUT_CLASS}
+          >
+            {metricOptions.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => onChange({ ...criterion, countCondition: null })}
+          className={SECONDARY_BUTTON_CLASS + ' px-3 py-2'}
+        >
+          Remove count condition
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function StructuredCriterionRow({
   criterion,
@@ -403,15 +566,101 @@ function StructuredCriterionRow({
     option.id === 'contains' || option.id === 'exact' || option.id === 'startsWith'
   ));
 
+  const changeField = (nextField) => {
+    onChange({
+      ...criterion,
+      field: nextField,
+      metadataField: nextField === 'metadataValue' ? criterion.metadataField : '',
+      value: nextField === 'capability' ? '' : criterion.value,
+      countCondition: defaultCountConditionForField(nextField, criterion.countCondition),
+    });
+  };
+
   if (isEntityPair) {
     return (
-      <div className="peridot-search-structured-row grid gap-2 rounded-xl border p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[1.1fr_0.8fr_1.2fr_0.8fr_1.2fr_auto] lg:items-end">
+      <div>
+        <div className="peridot-search-structured-row grid gap-2 rounded-xl border p-2.5 shadow-sm shadow-black/5 lg:grid-cols-[1.1fr_0.8fr_1.2fr_0.8fr_1.2fr_auto] lg:items-end">
+          <div>
+            <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field</label>
+            <select
+              id={`structured-field-${criterion.id}`}
+              value={criterion.field}
+              onChange={(event) => changeField(event.target.value)}
+              className={INPUT_CLASS}
+            >
+              {STRUCTURED_FIELD_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className={FIELD_LABEL_CLASS} htmlFor={`structured-first-mode-${criterion.id}`}>First entity</label>
+            <select
+              id={`structured-first-mode-${criterion.id}`}
+              value={criterion.firstMode || 'exact'}
+              onChange={(event) => onChange({ ...criterion, firstMode: event.target.value })}
+              className={INPUT_CLASS}
+            >
+              {entityMatchOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={FIELD_LABEL_CLASS} htmlFor={`structured-first-value-${criterion.id}`}>First value</label>
+            <AutocompleteTextInput
+              id={`structured-first-value-${criterion.id}`}
+              label="First value"
+              value={criterion.firstValue || ''}
+              onChange={(nextValue) => onChange({ ...criterion, firstValue: nextValue })}
+              onKeyDown={onKeyDown}
+              placeholder="Ferdinando II de' Medici"
+              suggestions={personSuggestionsForPair || []}
+              inputClassName={INPUT_CLASS}
+              hideLabel
+            />
+          </div>
+          <div>
+            <label className={FIELD_LABEL_CLASS} htmlFor={`structured-second-mode-${criterion.id}`}>Other entity</label>
+            <select
+              id={`structured-second-mode-${criterion.id}`}
+              value={criterion.secondMode || 'contains'}
+              onChange={(event) => onChange({ ...criterion, secondMode: event.target.value })}
+              className={INPUT_CLASS}
+            >
+              {entityMatchOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className={FIELD_LABEL_CLASS} htmlFor={`structured-second-value-${criterion.id}`}>Other value</label>
+            <AutocompleteTextInput
+              id={`structured-second-value-${criterion.id}`}
+              label="Other value"
+              value={criterion.secondValue || ''}
+              onChange={(nextValue) => onChange({ ...criterion, secondValue: nextValue })}
+              onKeyDown={onKeyDown}
+              placeholder="de' Medici"
+              suggestions={personSuggestionsForPair || []}
+              inputClassName={INPUT_CLASS}
+              hideLabel
+            />
+          </div>
+          <button type="button" onClick={() => onRemove(criterion.id)} className={SECONDARY_BUTTON_CLASS + ' justify-self-start px-3 py-2 lg:justify-self-end'}>
+            Remove
+          </button>
+        </div>
+        <AttachedCountCondition criterion={criterion} onChange={onChange} onKeyDown={onKeyDown} />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className={`peridot-search-structured-row grid gap-2 rounded-xl border p-2.5 shadow-sm shadow-black/5 ${isMetadataValue ? 'lg:grid-cols-[1.08fr_1fr_0.9fr_1.3fr_auto]' : 'lg:grid-cols-[1.15fr_0.95fr_1.4fr_auto]'} lg:items-end`}>
         <div>
           <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field</label>
           <select
             id={`structured-field-${criterion.id}`}
             value={criterion.field}
-            onChange={(event) => onChange({ ...criterion, field: event.target.value })}
+            onChange={(event) => changeField(event.target.value)}
             className={INPUT_CLASS}
           >
             {STRUCTURED_FIELD_OPTIONS.map((option) => (
@@ -419,155 +668,78 @@ function StructuredCriterionRow({
             ))}
           </select>
         </div>
+
+        {isMetadataValue ? (
+          <div>
+            <label className={FIELD_LABEL_CLASS} htmlFor={`structured-metadata-field-${criterion.id}`}>Within Evidence field</label>
+            <select
+              id={`structured-metadata-field-${criterion.id}`}
+              value={criterion.metadataField || ''}
+              onChange={(event) => onChange({ ...criterion, metadataField: event.target.value })}
+              className={INPUT_CLASS}
+            >
+              <option value="">Any Evidence field</option>
+              {metadataFieldOptions.map((option) => (
+                <option key={option.key} value={option.key}>{option.label}</option>
+              ))}
+            </select>
+          </div>
+        ) : null}
+
         <div>
-          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-first-mode-${criterion.id}`}>First entity</label>
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-mode-${criterion.id}`}>Match</label>
           <select
-            id={`structured-first-mode-${criterion.id}`}
-            value={criterion.firstMode || 'exact'}
-            onChange={(event) => onChange({ ...criterion, firstMode: event.target.value })}
+            id={`structured-mode-${criterion.id}`}
+            value={criterion.mode}
+            onChange={(event) => onChange({ ...criterion, mode: event.target.value })}
             className={INPUT_CLASS}
           >
-            {entityMatchOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
+            {STRUCTURED_MATCH_MODE_OPTIONS.map((option) => (
+              <option key={option.id} value={option.id}>{option.label}</option>
+            ))}
           </select>
         </div>
+
         <div>
-          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-first-value-${criterion.id}`}>First value</label>
-          <AutocompleteTextInput
-            id={`structured-first-value-${criterion.id}`}
-            label="First value"
-            value={criterion.firstValue || ''}
-            onChange={(nextValue) => onChange({ ...criterion, firstValue: nextValue })}
-            onKeyDown={onKeyDown}
-            placeholder="Ferdinando II de' Medici"
-            suggestions={personSuggestionsForPair || []}
-            inputClassName={INPUT_CLASS}
-            hideLabel
-          />
-        </div>
-        <div>
-          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-second-mode-${criterion.id}`}>Other entity</label>
-          <select
-            id={`structured-second-mode-${criterion.id}`}
-            value={criterion.secondMode || 'contains'}
-            onChange={(event) => onChange({ ...criterion, secondMode: event.target.value })}
-            className={INPUT_CLASS}
-          >
-            {entityMatchOptions.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-second-value-${criterion.id}`}>Other value</label>
-          <AutocompleteTextInput
-            id={`structured-second-value-${criterion.id}`}
-            label="Other value"
-            value={criterion.secondValue || ''}
-            onChange={(nextValue) => onChange({ ...criterion, secondValue: nextValue })}
-            onKeyDown={onKeyDown}
-            placeholder="de' Medici"
-            suggestions={personSuggestionsForPair || []}
-            inputClassName={INPUT_CLASS}
-            hideLabel
-          />
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-value-${criterion.id}`}>Value</label>
+          {criterion.field === 'capability' ? (
+            <select
+              id={`structured-value-${criterion.id}`}
+              value={capabilityValue}
+              disabled={!needsValue}
+              onChange={(event) => onChange({ ...criterion, value: event.target.value })}
+              onKeyDown={onKeyDown}
+              className={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
+            >
+              <option value="">Choose capability</option>
+              {CAPABILITY_FILTER_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
+            </select>
+          ) : (
+            <AutocompleteTextInput
+              id={`structured-value-${criterion.id}`}
+              label="Value"
+              value={criterion.value}
+              disabled={!needsValue}
+              onChange={(nextValue) => onChange({ ...criterion, value: nextValue })}
+              onKeyDown={onKeyDown}
+              placeholder={needsValue ? selectedField.placeholder : 'No value needed'}
+              suggestions={needsValue ? fieldSuggestions : []}
+              inputClassName={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
+              hideLabel
+            />
+          )}
         </div>
         <button type="button" onClick={() => onRemove(criterion.id)} className={SECONDARY_BUTTON_CLASS + ' justify-self-start px-3 py-2 lg:justify-self-end'}>
           Remove
         </button>
       </div>
-    );
-  }
-
-  return (
-    <div className={`peridot-search-structured-row grid gap-2 rounded-xl border p-2.5 shadow-sm shadow-black/5 ${isMetadataValue ? 'lg:grid-cols-[1.08fr_1fr_0.9fr_1.3fr_auto]' : 'lg:grid-cols-[1.15fr_0.95fr_1.4fr_auto]'} lg:items-end`}>
-      <div>
-        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-field-${criterion.id}`}>Field</label>
-        <select
-          id={`structured-field-${criterion.id}`}
-          value={criterion.field}
-          onChange={(event) => {
-            const nextField = event.target.value;
-            onChange({
-              ...criterion,
-              field: nextField,
-              metadataField: nextField === 'metadataValue' ? criterion.metadataField : '',
-              value: nextField === 'capability' ? '' : criterion.value,
-            });
-          }}
-          className={INPUT_CLASS}
-        >
-          {STRUCTURED_FIELD_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>{option.label}</option>
-          ))}
-        </select>
-      </div>
-
-      {isMetadataValue ? (
-        <div>
-          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-metadata-field-${criterion.id}`}>Within Evidence field</label>
-          <select
-            id={`structured-metadata-field-${criterion.id}`}
-            value={criterion.metadataField || ''}
-            onChange={(event) => onChange({ ...criterion, metadataField: event.target.value })}
-            className={INPUT_CLASS}
-          >
-            <option value="">Any Evidence field</option>
-            {metadataFieldOptions.map((option) => (
-              <option key={option.key} value={option.key}>{option.label}</option>
-            ))}
-          </select>
-        </div>
-      ) : null}
-
-      <div>
-        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-mode-${criterion.id}`}>Match</label>
-        <select
-          id={`structured-mode-${criterion.id}`}
-          value={criterion.mode}
-          onChange={(event) => onChange({ ...criterion, mode: event.target.value })}
-          className={INPUT_CLASS}
-        >
-          {STRUCTURED_MATCH_MODE_OPTIONS.map((option) => (
-            <option key={option.id} value={option.id}>{option.label}</option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className={FIELD_LABEL_CLASS} htmlFor={`structured-value-${criterion.id}`}>Value</label>
-        {criterion.field === 'capability' ? (
-          <select
-            id={`structured-value-${criterion.id}`}
-            value={capabilityValue}
-            disabled={!needsValue}
-            onChange={(event) => onChange({ ...criterion, value: event.target.value })}
-            onKeyDown={onKeyDown}
-            className={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
-          >
-            <option value="">Choose capability</option>
-            {CAPABILITY_FILTER_OPTIONS.map((option) => (
-              <option key={option.id} value={option.id}>{option.label}</option>
-            ))}
-          </select>
-        ) : (
-          <AutocompleteTextInput
-            id={`structured-value-${criterion.id}`}
-            label="Value"
-            value={criterion.value}
-            disabled={!needsValue}
-            onChange={(nextValue) => onChange({ ...criterion, value: nextValue })}
-            onKeyDown={onKeyDown}
-            placeholder={needsValue ? selectedField.placeholder : 'No value needed'}
-            suggestions={needsValue ? fieldSuggestions : []}
-            inputClassName={INPUT_CLASS + (!needsValue ? ' opacity-60' : '')}
-            hideLabel
-          />
-        )}
-      </div>
-      <button type="button" onClick={() => onRemove(criterion.id)} className={SECONDARY_BUTTON_CLASS + ' justify-self-start px-3 py-2 lg:justify-self-end'}>
-        Remove
-      </button>
+      <AttachedCountCondition criterion={criterion} onChange={onChange} onKeyDown={onKeyDown} />
     </div>
   );
 }
+
 
 function StructuredCriteriaGroup({
   group,
@@ -1260,7 +1432,6 @@ export function PeridotSearchWorkspace({
   setCapabilityFilters,
   structuredCriteria = [],
   setStructuredCriteria,
-  currentMinCountLabel,
   currentRangeLabel,
   graph,
   rowDiagnostics,
@@ -1269,8 +1440,6 @@ export function PeridotSearchWorkspace({
   evidenceBrowseRows = [],
   onInspectSearchResult,
   viewMode,
-  minCount,
-  setMinCount,
   timelineMonths,
   rangeStart,
   setRangeStart,
@@ -1296,7 +1465,6 @@ export function PeridotSearchWorkspace({
   const [draftStructuredCriteria, setDraftStructuredCriteria] = useState(
     Array.isArray(structuredCriteria) ? structuredCriteria : [],
   );
-  const [draftMinCount, setDraftMinCount] = useState(String(minCount ?? 1));
   const [draftStartYear, setDraftStartYear] = useState(getAppliedStartYear());
   const [draftEndYear, setDraftEndYear] = useState(getAppliedEndYear());
   const [filterStatusMessage, setFilterStatusMessage] = useState('');
@@ -1311,7 +1479,6 @@ export function PeridotSearchWorkspace({
     setDraftRoutePeopleFilter(routePeopleFilter ?? '');
     setDraftCapabilityFilters(Array.isArray(capabilityFilters) ? capabilityFilters : []);
     setDraftStructuredCriteria(Array.isArray(structuredCriteria) ? structuredCriteria : []);
-    setDraftMinCount(String(minCount ?? 1));
     setDraftStartYear(getAppliedStartYear());
     setDraftEndYear(getAppliedEndYear());
   }, [
@@ -1322,7 +1489,6 @@ export function PeridotSearchWorkspace({
     routePeopleFilter,
     capabilityFilters,
     structuredCriteria,
-    minCount,
     rangeStart,
     rangeEnd,
     timelineMonths.length,
@@ -1456,15 +1622,17 @@ export function PeridotSearchWorkspace({
   const appliedStructuredCriteria = normalizeDraftStructuredCriteria(structuredCriteria);
   const normalizedDraftStructuredCriteria = normalizeDraftStructuredCriteria(draftStructuredCriteria);
   const summarizeStructuredOperators = (criteria) => {
-    const counts = { must: 0, should: 0, exclude: 0 };
+    const counts = { must: 0, should: 0, exclude: 0, countConditions: 0 };
     criteria.forEach((criterion) => {
       const operator = STRUCTURED_OPERATOR_OPTIONS.some((option) => option.id === criterion.operator) ? criterion.operator : 'must';
       counts[operator] += 1;
+      if (criterion.countCondition) counts.countConditions += 1;
     });
     const parts = [];
     if (counts.must) parts.push(`${counts.must} required`);
     if (counts.should) parts.push(`${counts.should} any-of`);
     if (counts.exclude) parts.push(`${counts.exclude} excluded`);
+    if (counts.countConditions) parts.push(`${counts.countConditions} count ${counts.countConditions === 1 ? 'condition' : 'conditions'}`);
     return parts.join(' · ');
   };
   const activeStructuredLabel = appliedStructuredCriteria.length ? summarizeStructuredOperators(appliedStructuredCriteria) : 'None';
@@ -1569,7 +1737,6 @@ export function PeridotSearchWorkspace({
     || String(draftPlaceFilter ?? '') !== String(placeFilter ?? '')
     || String(draftRoutePlaceFilter ?? '') !== String(routePlaceFilter ?? '')
     || String(draftRoutePeopleFilter ?? '') !== String(routePeopleFilter ?? '')
-    || String(draftMinCount ?? '') !== String(minCount ?? 1)
     || String(draftStartYear ?? '') !== getAppliedStartYear()
     || String(draftEndYear ?? '') !== getAppliedEndYear()
     || JSON.stringify(draftCapabilityFilters) !== JSON.stringify(appliedCapabilityFilters)
@@ -1701,7 +1868,6 @@ export function PeridotSearchWorkspace({
       setDraftRoutePeopleFilter('');
       setDraftCapabilityFilters([]);
       setDraftStructuredCriteria([]);
-      setDraftMinCount('1');
       setDraftStartYear(getDefaultStartYear());
       setDraftEndYear(getDefaultEndYear());
       setSearch('');
@@ -1711,7 +1877,6 @@ export function PeridotSearchWorkspace({
       setRoutePeopleFilter('');
       setCapabilityFilters?.([]);
       setStructuredCriteria?.([]);
-      setMinCount(1);
       setTimelineMode('all');
       setRangeStart(0);
       setRangeEnd(defaultEndIndex);
@@ -1721,8 +1886,6 @@ export function PeridotSearchWorkspace({
   };
 
   const applyDraftFilters = () => {
-    const parsedMinCount = Number.parseInt(String(draftMinCount).trim(), 10);
-    const nextMinCount = Number.isFinite(parsedMinCount) ? Math.max(1, parsedMinCount) : minCount;
     const nextSearch = String(draftSearch ?? '').trim();
     const nextPersonFilter = String(draftPersonFilter ?? '').trim();
     const nextPlaceFilter = String(draftPlaceFilter ?? '').trim();
@@ -1743,8 +1906,6 @@ export function PeridotSearchWorkspace({
       setCapabilityFilters?.(nextCapabilityFilters);
       setStructuredCriteria?.(nextStructuredCriteria);
       setDraftStructuredCriteria(nextStructuredCriteria);
-      setMinCount(nextMinCount);
-      setDraftMinCount(String(nextMinCount));
       if (nextStartIndex >= 0 && nextEndIndex >= 0) {
         const safeStart = Math.min(nextStartIndex, nextEndIndex);
         const safeEnd = Math.max(nextStartIndex, nextEndIndex);
@@ -1778,7 +1939,7 @@ export function PeridotSearchWorkspace({
 
       <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel peridot-search-build-primary-panel p-4'}>
         <div className="grid gap-3 lg:grid-cols-12">
-          <div className="lg:col-span-4">
+          <div className="lg:col-span-6">
             <label htmlFor="advanced-search-keyword" className={FIELD_LABEL_CLASS}>Keyword search</label>
             <input
               id="advanced-search-keyword"
@@ -1789,7 +1950,7 @@ export function PeridotSearchWorkspace({
               className={INPUT_CLASS}
             />
           </div>
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <AutocompleteTextInput
               id="advanced-search-start-year"
               label="Start year"
@@ -1800,7 +1961,7 @@ export function PeridotSearchWorkspace({
               suggestions={timelineYearSuggestions}
             />
           </div>
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-3">
             <AutocompleteTextInput
               id="advanced-search-end-year"
               label="End year"
@@ -1809,20 +1970,6 @@ export function PeridotSearchWorkspace({
               onKeyDown={handleDraftKeyDown}
               placeholder="End"
               suggestions={timelineYearSuggestions}
-            />
-          </div>
-          <div className="lg:col-span-4">
-            <label htmlFor="advanced-search-minimum" className={FIELD_LABEL_CLASS}>
-              Minimum {viewMode === 'geographic' ? 'route weight' : 'connection weight'}
-            </label>
-            <input
-              id="advanced-search-minimum"
-              type="number"
-              min="1"
-              value={draftMinCount}
-              onChange={(event) => setDraftMinCount(event.target.value)}
-              onKeyDown={handleDraftKeyDown}
-              className={INPUT_CLASS}
             />
           </div>
         </div>
@@ -1915,6 +2062,7 @@ export function PeridotSearchWorkspace({
             );
           })}
         </div>
+
 
         <div className="peridot-search-structured-footer mt-3">
           <p className="peridot-search-helper-text text-xs leading-5">
@@ -2138,10 +2286,6 @@ export function PeridotSearchWorkspace({
               <div>
                 <span>Timeline</span>
                 <strong>{currentRangeLabel}</strong>
-              </div>
-              <div>
-                <span>Minimum route weight</span>
-                <strong>{currentMinCountLabel}</strong>
               </div>
               <div>
                 <span>Draft state</span>

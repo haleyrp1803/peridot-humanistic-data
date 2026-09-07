@@ -1,5 +1,5 @@
 import { getRowTimelineCapability, getRowTemporalSearchValues, getRowTemporalYears, getRowTemporalDisplayLabels } from './timelinePlaybackHelpers.js';
-import { getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
+import { getPeridotRowEntityParticipantEntries, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
 import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 import { buildPeridotCanonicalSearchEvidenceBySourceRow } from './peridotEntityEvidence.js';
 
@@ -631,6 +631,201 @@ function normalizeEntityPairValue(value) {
   return asText(value).toLowerCase();
 }
 
+const STRUCTURED_COUNT_ANCHOR_IDS = new Set(['peopleInRecord', 'placesInRecord']);
+const STRUCTURED_COUNT_METRIC_IDS = new Set(['connectedEntities', 'connectedPlaces', 'records']);
+
+function normalizeCountIdentity(value) {
+  return asText(value).toLowerCase();
+}
+
+function personIdentityKey(participant = {}) {
+  const id = normalizeCountIdentity(participant?.id || participant?.entityId);
+  if (id) return `id:${id}`;
+  const label = normalizeCountIdentity(participant?.label || participant?.value);
+  return label ? `label:${label}` : '';
+}
+
+function placeIdentityKey(value) {
+  const label = normalizeCountIdentity(value);
+  return label ? `place:${label}` : '';
+}
+
+function ensureCountMetricEntry(map, key) {
+  if (!key) return null;
+  if (!map.has(key)) {
+    map.set(key, {
+      connectedEntities: new Set(),
+      connectedPlaces: new Set(),
+      records: new Set(),
+    });
+  }
+  return map.get(key);
+}
+
+function normalizeAttachedCountCondition(condition, field) {
+  if (!condition || typeof condition !== 'object') return null;
+
+  const parsedThreshold = Number.parseInt(String(condition.threshold ?? '').trim(), 10);
+  const threshold = Number.isFinite(parsedThreshold) ? Math.max(1, parsedThreshold) : 2;
+  const anchor = field === 'person'
+    ? 'thisPerson'
+    : field === 'place'
+      ? 'thisPlace'
+      : (STRUCTURED_COUNT_ANCHOR_IDS.has(condition.anchor) ? condition.anchor : 'peopleInRecord');
+  const metric = STRUCTURED_COUNT_METRIC_IDS.has(condition.metric)
+    ? condition.metric
+    : (anchor === 'thisPlace' || anchor === 'placesInRecord' ? 'connectedPlaces' : 'connectedEntities');
+
+  return { anchor, metric, threshold };
+}
+
+export function buildStructuredCountContext(rows = []) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const personMetrics = new Map();
+  const placeMetrics = new Map();
+  const personAliasToKey = new Map();
+
+  safeRows.forEach((row, rowIndex) => {
+    const rowKey = asText(row?.id || row?.recordId || row?.Record_ID || row?.Letter_ID) || `row:${rowIndex}`;
+    const participantEntries = getPeridotRowEntityParticipantEntries(row);
+
+    participantEntries.forEach((participant) => {
+      const key = personIdentityKey(participant);
+      if (!key) return;
+      const label = normalizeCountIdentity(participant?.label || participant?.value);
+      if (label && !personAliasToKey.has(label)) personAliasToKey.set(label, key);
+      ensureCountMetricEntry(personMetrics, key)?.records.add(rowKey);
+    });
+
+    getPeridotRowEntityRelationships(row).forEach((relationship) => {
+      const sourceKey = personIdentityKey({ id: relationship?.sourceId, label: relationship?.source });
+      const targetKey = personIdentityKey({ id: relationship?.targetId, label: relationship?.target });
+      if (!sourceKey || !targetKey || sourceKey === targetKey) return;
+      ensureCountMetricEntry(personMetrics, sourceKey)?.connectedEntities.add(targetKey);
+      ensureCountMetricEntry(personMetrics, targetKey)?.connectedEntities.add(sourceKey);
+    });
+
+    const structure = buildPeridotRecordStructure(row);
+    structure.places.forEach((place) => {
+      const pKey = placeIdentityKey(place?.value);
+      if (!pKey) return;
+      ensureCountMetricEntry(placeMetrics, pKey)?.records.add(rowKey);
+
+      const subjectLabel = normalizeCountIdentity(place?.subject);
+      const subjectId = normalizeCountIdentity(place?.subjectId);
+      const subjectKey = subjectId
+        ? `id:${subjectId}`
+        : (personAliasToKey.get(subjectLabel) || (subjectLabel ? `label:${subjectLabel}` : ''));
+      if (!subjectKey) return;
+
+      ensureCountMetricEntry(personMetrics, subjectKey)?.connectedPlaces.add(pKey);
+      ensureCountMetricEntry(placeMetrics, pKey)?.connectedEntities.add(subjectKey);
+    });
+
+    // Place-to-place connectivity remains conservative: only explicit Source/Target
+    // route compatibility fields create a place connection. Multiple generalized
+    // place assertions in one record are never paired automatically.
+    const sourcePlace = firstText(row, SOURCE_PLACE_FIELDS);
+    const targetPlace = firstText(row, TARGET_PLACE_FIELDS);
+    const sourcePlaceKey = placeIdentityKey(sourcePlace);
+    const targetPlaceKey = placeIdentityKey(targetPlace);
+    if (sourcePlaceKey && targetPlaceKey && sourcePlaceKey !== targetPlaceKey) {
+      ensureCountMetricEntry(placeMetrics, sourcePlaceKey)?.connectedPlaces.add(targetPlaceKey);
+      ensureCountMetricEntry(placeMetrics, targetPlaceKey)?.connectedPlaces.add(sourcePlaceKey);
+    }
+
+    // Compatibility rows without participant-attributed place assertions can still
+    // establish entity/place association through explicit Source/Target pairing.
+    getPeridotRowEntityRelationships(row).forEach((relationship) => {
+      const sourceKey = personIdentityKey({ id: relationship?.sourceId, label: relationship?.source });
+      const targetKey = personIdentityKey({ id: relationship?.targetId, label: relationship?.target });
+      if (sourcePlaceKey && sourceKey) {
+        ensureCountMetricEntry(personMetrics, sourceKey)?.connectedPlaces.add(sourcePlaceKey);
+        ensureCountMetricEntry(placeMetrics, sourcePlaceKey)?.connectedEntities.add(sourceKey);
+      }
+      if (targetPlaceKey && targetKey) {
+        ensureCountMetricEntry(personMetrics, targetKey)?.connectedPlaces.add(targetPlaceKey);
+        ensureCountMetricEntry(placeMetrics, targetPlaceKey)?.connectedEntities.add(targetKey);
+      }
+    });
+  });
+
+  const metricCount = (anchorType, key, metric) => {
+    const map = anchorType === 'place' ? placeMetrics : personMetrics;
+    return map.get(key)?.[metric]?.size || 0;
+  };
+
+  return Object.freeze({
+    personAliasToKey,
+    personMetrics,
+    placeMetrics,
+    metricCount,
+  });
+}
+
+function personKeysForRow(row, context) {
+  return Array.from(new Set(
+    getPeridotRowEntityParticipantEntries(row)
+      .map((participant) => {
+        const directKey = personIdentityKey(participant);
+        const label = normalizeCountIdentity(participant?.label || participant?.value);
+        return directKey || context?.personAliasToKey?.get(label) || '';
+      })
+      .filter(Boolean),
+  ));
+}
+
+function placeKeysForRow(row) {
+  return Array.from(new Set(getMappedPlaceValues(row).map(placeIdentityKey).filter(Boolean)));
+}
+
+function matchedPersonKeysForCriterion(row, criterion, context) {
+  return Array.from(new Set(
+    getPeridotRowEntityParticipantEntries(row)
+      .filter((participant) => valueMatchesMode(participant?.label, criterion.mode, criterion.value))
+      .map((participant) => {
+        const directKey = personIdentityKey(participant);
+        const label = normalizeCountIdentity(participant?.label || participant?.value);
+        return directKey || context?.personAliasToKey?.get(label) || '';
+      })
+      .filter(Boolean),
+  ));
+}
+
+function matchedPlaceKeysForCriterion(row, criterion) {
+  return Array.from(new Set(
+    getMappedPlaceValues(row)
+      .filter((value) => valueMatchesMode(value, criterion.mode, criterion.value))
+      .map(placeIdentityKey)
+      .filter(Boolean),
+  ));
+}
+
+function rowMatchesAttachedCountCondition(row, criterion, context) {
+  const condition = normalizeAttachedCountCondition(criterion?.countCondition, criterion?.field);
+  if (!condition) return true;
+  if (!context?.metricCount) return false;
+
+  let anchorType = 'person';
+  let anchorKeys = [];
+
+  if (condition.anchor === 'thisPerson') {
+    anchorType = 'person';
+    anchorKeys = matchedPersonKeysForCriterion(row, criterion, context);
+  } else if (condition.anchor === 'thisPlace') {
+    anchorType = 'place';
+    anchorKeys = matchedPlaceKeysForCriterion(row, criterion);
+  } else if (condition.anchor === 'placesInRecord') {
+    anchorType = 'place';
+    anchorKeys = placeKeysForRow(row);
+  } else {
+    anchorType = 'person';
+    anchorKeys = personKeysForRow(row, context);
+  }
+
+  return anchorKeys.some((key) => context.metricCount(anchorType, key, condition.metric) >= condition.threshold);
+}
+
 function rowMatchesEntityPairCriterion(row, criterion) {
   const firstMode = criterion.firstMode || 'exact';
   const secondMode = criterion.secondMode || 'contains';
@@ -699,25 +894,29 @@ function normalizeStructuredField(field) {
 
 function normalizeStructuredCriteria(criteria = []) {
   return (Array.isArray(criteria) ? criteria : [])
-    .map((criterion) => ({
-      operator: normalizeStructuredOperator(criterion?.operator),
-      field: normalizeStructuredField(criterion?.field),
-      metadataField: asText(criterion?.metadataField),
-      mode: criterion?.mode || 'contains',
-      value: asText(criterion?.value),
-      firstMode: criterion?.firstMode || 'exact',
-      firstValue: asText(criterion?.firstValue),
-      secondMode: criterion?.secondMode || 'contains',
-      secondValue: asText(criterion?.secondValue),
-    }))
-    .filter((criterion) => (
-      criterion.field === 'entityPair'
-        ? criterion.firstValue && criterion.secondValue
-        : (!criterionNeedsValue(criterion.mode) || criterion.value)
-    ));
+    .map((criterion) => {
+      const field = normalizeStructuredField(criterion?.field);
+      return {
+        operator: normalizeStructuredOperator(criterion?.operator),
+        field,
+        metadataField: asText(criterion?.metadataField),
+        mode: criterion?.mode || 'contains',
+        value: asText(criterion?.value),
+        firstMode: criterion?.firstMode || 'exact',
+        firstValue: asText(criterion?.firstValue),
+        secondMode: criterion?.secondMode || 'contains',
+        secondValue: asText(criterion?.secondValue),
+        countCondition: normalizeAttachedCountCondition(criterion?.countCondition, field),
+      };
+    })
+    .filter((criterion) => {
+      if (criterion.field === 'frequency') return false;
+      if (criterion.field === 'entityPair') return criterion.firstValue && criterion.secondValue;
+      return !criterionNeedsValue(criterion.mode) || criterion.value;
+    });
 }
 
-function rowMatchesStructuredCriterion(row, criterion) {
+function rowMatchesStructuredCriterionPrimary(row, criterion) {
   if (criterion.field === 'entityPair') {
     return rowMatchesEntityPairCriterion(row, criterion);
   }
@@ -739,17 +938,23 @@ function rowMatchesStructuredCriterion(row, criterion) {
   return values.some((value) => valueMatchesMode(value, criterion.mode, criterion.value));
 }
 
-export function rowMatchesStructuredCriteria(row, criteria = []) {
+function rowMatchesStructuredCriterion(row, criterion, countContext = null) {
+  if (!rowMatchesStructuredCriterionPrimary(row, criterion)) return false;
+  return rowMatchesAttachedCountCondition(row, criterion, countContext);
+}
+
+export function rowMatchesStructuredCriteria(row, criteria = [], options = {}) {
   const normalizedCriteria = normalizeStructuredCriteria(criteria);
   if (!normalizedCriteria.length) return true;
+  const countContext = options?.countContext || null;
 
   const mustCriteria = normalizedCriteria.filter((criterion) => criterion.operator === 'must');
   const shouldCriteria = normalizedCriteria.filter((criterion) => criterion.operator === 'should');
   const excludeCriteria = normalizedCriteria.filter((criterion) => criterion.operator === 'exclude');
 
-  const passesMust = mustCriteria.every((criterion) => rowMatchesStructuredCriterion(row, criterion));
-  const passesShould = shouldCriteria.length === 0 || shouldCriteria.some((criterion) => rowMatchesStructuredCriterion(row, criterion));
-  const passesExclude = excludeCriteria.every((criterion) => !rowMatchesStructuredCriterion(row, criterion));
+  const passesMust = mustCriteria.every((criterion) => rowMatchesStructuredCriterion(row, criterion, countContext));
+  const passesShould = shouldCriteria.length === 0 || shouldCriteria.some((criterion) => rowMatchesStructuredCriterion(row, criterion, countContext));
+  const passesExclude = excludeCriteria.every((criterion) => !rowMatchesStructuredCriterion(row, criterion, countContext));
 
   return passesMust && passesShould && passesExclude;
 }
@@ -762,7 +967,7 @@ function structuredOperatorLabel(operator) {
 
 function describeStructuredCriterionMatch(row, criterion) {
   if (criterion.operator === 'exclude') return null;
-  if (!rowMatchesStructuredCriterion(row, criterion)) return null;
+  if (!rowMatchesStructuredCriterionPrimary(row, criterion)) return null;
   const fieldLabel = {
     any: 'Structured criterion',
     person: 'Structured person',
@@ -778,6 +983,7 @@ function describeStructuredCriterionMatch(row, criterion) {
     capability: 'Structured capability',
   }[criterion.field] || 'Structured criterion';
   const operatorPrefix = structuredOperatorLabel(criterion.operator);
+
 
   if (criterion.field === 'entityPair') {
     return {
