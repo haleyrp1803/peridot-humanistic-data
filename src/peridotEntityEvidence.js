@@ -84,6 +84,85 @@ export function getPeridotCanonicalEntityEvidence(evidenceByEntityId, entityId) 
   return evidenceByEntityId.get(key) || [];
 }
 
+/**
+ * Build canonical mapped-Evidence fields keyed by their source-row number for
+ * record-oriented consumers such as Search.
+ *
+ * Unlike the entity projection above, this keeps both Record-owned and
+ * Entity-owned assertions from the same imported row. Subject attribution is
+ * preserved on each field so Search can remain record-oriented without
+ * flattening participant-owned Evidence back into generic row metadata.
+ */
+export function buildPeridotCanonicalSearchEvidenceBySourceRow(canonicalDataset = null) {
+  const entityLabelsById = new Map(
+    (canonicalDataset?.entities || [])
+      .map((entity) => [asText(entity?.id), asText(entity?.label || entity?.displayLabel || entity?.name)])
+      .filter(([id]) => Boolean(id)),
+  );
+  const recordIds = new Set(
+    (canonicalDataset?.records || [])
+      .map((record) => asText(record?.id))
+      .filter(Boolean),
+  );
+  const evidenceBySourceRow = new Map();
+
+  (canonicalDataset?.assertions || []).forEach((assertion) => {
+    if (!isMappedEvidenceAssertion(assertion)) return;
+
+    const sourceRowNumber = Number(assertion?.provenance?.source?.sourceRowNumber);
+    if (!Number.isFinite(sourceRowNumber)) return;
+
+    const label = mappedEvidenceLabel(assertion);
+    const value = mappedEvidenceValue(assertion);
+    if (!label || !value) return;
+
+    const subjectId = asText(assertion?.subjectId);
+    const subjectType = entityLabelsById.has(subjectId)
+      ? 'entity'
+      : recordIds.has(subjectId)
+        ? 'record'
+        : 'unknown';
+    const subjectLabel = subjectType === 'entity'
+      ? entityLabelsById.get(subjectId)
+      : subjectType === 'record'
+        ? 'Record'
+        : '';
+
+    if (!evidenceBySourceRow.has(sourceRowNumber)) evidenceBySourceRow.set(sourceRowNumber, []);
+    evidenceBySourceRow.get(sourceRowNumber).push(Object.freeze({
+      key: asText(assertion?.attributes?.sourceColumn) || label,
+      label,
+      value,
+      subjectId,
+      subjectType,
+      subjectLabel,
+      sourceColumn: asText(assertion?.attributes?.sourceColumn),
+      assertionId: asText(assertion?.id),
+      evidenceSourceIds: Object.freeze([...(assertion?.evidenceSourceIds || [])]),
+      sourceRowNumber,
+      sourceSheet: asText(assertion?.provenance?.source?.sourceSheet),
+    }));
+  });
+
+  evidenceBySourceRow.forEach((fields, sourceRowNumber) => {
+    const seen = new Set();
+    const uniqueFields = fields.filter((field) => {
+      const key = [
+        field.key.toLowerCase(),
+        field.label.toLowerCase(),
+        field.value,
+        field.subjectId,
+      ].join('::');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    evidenceBySourceRow.set(sourceRowNumber, Object.freeze(uniqueFields));
+  });
+
+  return evidenceBySourceRow;
+}
+
 
 export function filterPeridotCanonicalEntityEvidenceToRows(fields = [], rows = []) {
   const visibleSourceRowNumbers = new Set(

@@ -3453,6 +3453,8 @@ export default function EuropeNetworkMapApp() {
   const searchRecords = useMemo(
     () => buildPeridotSearchRecords(normalizedRows, normalizedLetters, {
       allowValidatedParallelRows: !peridotNormalizedData,
+      canonicalDataset: peridotNormalizedData?.canonicalDataset || null,
+      canonicalEvidenceAuthoritative: normalizedRows.some((row) => Boolean(row?.generalizedObservation)),
     }),
     [normalizedRows, normalizedLetters, peridotNormalizedData],
   );
@@ -5376,7 +5378,7 @@ export default function EuropeNetworkMapApp() {
     // playback-visible, so map/network animation continues independently.
     searchRows: filteredRowsForActiveFilters,
     browseRows: normalizedRows,
-    evidenceBrowseRows: normalizedLetters,
+    evidenceBrowseRows: searchRecords,
     onInspectSearchResult: openInspectorSearchResult,
     onOpenVisualizations: openVisualizationsWorkspace,
   };

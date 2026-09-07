@@ -1,6 +1,7 @@
 import { getRowTimelineCapability, getRowTemporalSearchValues, getRowTemporalYears, getRowTemporalDisplayLabels } from './timelinePlaybackHelpers.js';
 import { getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
 import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
+import { buildPeridotCanonicalSearchEvidenceBySourceRow } from './peridotEntityEvidence.js';
 
 /*
  * Search-result helpers for Peridot's Advanced Search workspace.
@@ -117,6 +118,7 @@ const NON_EVIDENCE_FIELD_KEYS = new Set([
   'capabilities',
   'capabilityFlags',
   'customInspectorFields',
+  'peridotCanonicalEvidenceFields',
   'ignoredUploadedColumns',
   'originalUploadedRow',
   'originalTemplateRow',
@@ -268,15 +270,26 @@ export function buildPeridotSearchRecords(geographyRows = [], linkedRows = [], o
   const linkedByValidatedIndex = options.allowValidatedParallelRows
     ? buildValidatedParallelLinkedRecordIndex(geography, linkedRows)
     : new Map();
+  const canonicalEvidenceBySourceRow = options.canonicalEvidenceBySourceRow instanceof Map
+    ? options.canonicalEvidenceBySourceRow
+    : buildPeridotCanonicalSearchEvidenceBySourceRow(options.canonicalDataset || null);
+  const canonicalEvidenceAuthoritative = Boolean(options.canonicalEvidenceAuthoritative);
 
   return geography.map((geographyRow, index) => {
     const recordId = getRecordId(geographyRow);
     const linkedRow = (recordId && linkedByRecordId.get(recordId)) || linkedByValidatedIndex.get(index) || null;
     const metadata = getLinkedResearchMetadata(linkedRow);
+    const sourceRowNumber = Number(geographyRow?.generalizedObservation?.rowIndex) + 2;
+    const canonicalEvidence = Number.isFinite(sourceRowNumber)
+      ? canonicalEvidenceBySourceRow.get(sourceRowNumber) || []
+      : [];
 
     return {
       ...geographyRow,
       ...metadata,
+      ...(canonicalEvidenceAuthoritative || canonicalEvidence.length
+        ? { peridotCanonicalEvidenceFields: canonicalEvidence }
+        : {}),
     };
   });
 }
@@ -316,7 +329,7 @@ export const CAPABILITY_FILTER_OPTIONS = Object.freeze([
     id: 'evidence-ready',
     label: 'Evidence-rich',
     shortLabel: 'Evidence',
-    description: 'Rows with notes, topics, citations, transcription, or custom metadata.',
+    description: 'Rows with researcher-mapped Evidence assertions.',
   },
   {
     id: 'missing-date',
@@ -384,6 +397,26 @@ function collectCustomInspectorFieldEntries(row) {
     }));
 }
 
+function collectCanonicalEvidenceFieldEntries(row) {
+  const fields = Array.isArray(row?.peridotCanonicalEvidenceFields)
+    ? row.peridotCanonicalEvidenceFields
+    : null;
+  if (!fields) return null;
+
+  return fields
+    .filter((field) => isSearchableScalar(field?.value) && asText(field?.value))
+    .map((field) => ({
+      key: asText(field?.key || field?.sourceColumn || field?.label),
+      label: asText(field?.label || field?.sourceColumn || field?.key) || 'Evidence',
+      value: asText(field?.value),
+      subjectId: asText(field?.subjectId),
+      subjectType: asText(field?.subjectType),
+      subjectLabel: asText(field?.subjectLabel),
+      assertionId: asText(field?.assertionId),
+      sourceColumn: asText(field?.sourceColumn),
+    }));
+}
+
 /*
  * Search deliberately operates on researcher-facing scalar values. Internal
  * geometry, timeline, capability, and original-row payloads are excluded so
@@ -405,7 +438,12 @@ function collectSearchableFields(row) {
     entries.push({ key, label: getFieldLabel(key), value: asText(value) });
   });
 
-  collectCustomInspectorFieldEntries(row).forEach((entry) => entries.push(entry));
+  const canonicalEvidence = collectCanonicalEvidenceFieldEntries(row);
+  if (canonicalEvidence) {
+    canonicalEvidence.forEach((entry) => entries.push(entry));
+  } else {
+    collectCustomInspectorFieldEntries(row).forEach((entry) => entries.push(entry));
+  }
 
   const deduped = new Map();
   entries.forEach((entry) => {
@@ -426,12 +464,15 @@ export function rowMatchesSearchText(row, query) {
 }
 
 /*
- * A single shared evidence-field inventory keeps Browse, Refine facets, and
- * structured “evidence field present” criteria aligned. It deliberately keeps
- * researcher-facing scalar metadata while excluding internal compatibility
- * payloads and nested original-row snapshots.
+ * A single shared Evidence-field inventory keeps Browse, Refine facets, and
+ * structured “Evidence field present” criteria aligned. Canonical mapped
+ * Evidence assertions are authoritative when attached to the Search record;
+ * legacy scalar metadata remains only as a compatibility fallback.
  */
 export function getSearchableEvidenceFieldEntries(row) {
+  const canonicalEvidence = collectCanonicalEvidenceFieldEntries(row);
+  if (canonicalEvidence) return canonicalEvidence;
+
   const entries = [];
 
   Object.entries(row || {}).forEach(([key, value]) => {
@@ -730,10 +771,10 @@ function describeStructuredCriterionMatch(row, criterion) {
     routePeople: 'Structured route people',
     entityPair: 'Connected entity pair',
     date: 'Structured date',
-    metadataValue: 'Metadata value',
-    metadataFieldPresent: 'Metadata field',
-    evidence: 'Metadata value',
-    evidenceFieldPresent: 'Metadata field',
+    metadataValue: 'Evidence value',
+    metadataFieldPresent: 'Evidence field',
+    evidence: 'Evidence value',
+    evidenceFieldPresent: 'Evidence field',
     capability: 'Structured capability',
   }[criterion.field] || 'Structured criterion';
   const operatorPrefix = structuredOperatorLabel(criterion.operator);
@@ -820,8 +861,8 @@ function buildCapabilityBadges(row) {
 
 
 /*
- * Metadata facets retain the field/value relationship that a flat evidence
- * inventory loses. Each returned field group can therefore add a precise
+ * Evidence facets retain the field/value relationship of canonical mapped
+ * Evidence assertions. Each returned field group can therefore add a precise
  * refinement such as Language = Italian rather than a broad text search for
  * “Italian” anywhere in a record.
  */
@@ -835,7 +876,8 @@ export function buildPeridotMetadataFacetGroups(rows = [], options = {}) {
   const fields = new Map();
 
   (Array.isArray(rows) ? rows : []).forEach((row) => {
-    const seenInRow = new Set();
+    const seenValuesInRow = new Set();
+    const seenFieldsInRow = new Set();
     getSearchableEvidenceFieldEntries(row).forEach((entry) => {
       const key = asText(entry.key) || asText(entry.label);
       const label = asText(entry.label) || key;
@@ -844,8 +886,8 @@ export function buildPeridotMetadataFacetGroups(rows = [], options = {}) {
 
       const fieldIdentity = `${key}\u0000${label}`;
       const valueIdentity = `${fieldIdentity}\u0000${value}`;
-      if (seenInRow.has(valueIdentity)) return;
-      seenInRow.add(valueIdentity);
+      if (seenValuesInRow.has(valueIdentity)) return;
+      seenValuesInRow.add(valueIdentity);
 
       if (!fields.has(fieldIdentity)) {
         fields.set(fieldIdentity, {
@@ -858,7 +900,10 @@ export function buildPeridotMetadataFacetGroups(rows = [], options = {}) {
       }
 
       const field = fields.get(fieldIdentity);
-      field.recordCount += 1;
+      if (!seenFieldsInRow.has(fieldIdentity)) {
+        field.recordCount += 1;
+        seenFieldsInRow.add(fieldIdentity);
+      }
       field.values.set(value, (field.values.get(value) || 0) + 1);
     });
   });
@@ -897,8 +942,12 @@ export function buildPeridotSearchFacets(rows = [], options = {}) {
     getMappedPlaceValues(row).forEach((place) => addFacetCount(places, place));
     if (sourcePlace || targetPlace) addFacetCount(placeRoutes, compactRouteLabel(sourcePlace, targetPlace));
     Array.from(new Set(temporalYears)).forEach((year) => addFacetCount(years, String(year).slice(0, 4)));
-    getSearchableEvidenceFieldEntries(row).forEach((entry) => {
-      addFacetCount(evidenceFields, entry.label);
+    Array.from(new Set(
+      getSearchableEvidenceFieldEntries(row)
+        .map((entry) => asText(entry.label))
+        .filter(Boolean),
+    )).forEach((label) => {
+      addFacetCount(evidenceFields, label);
     });
   });
 
@@ -915,7 +964,7 @@ export function buildPeridotSearchFacets(rows = [], options = {}) {
     { id: 'entityRelationships', label: 'Entity relationships', type: 'routePeople', items: facetItemsFromMap(entityRelationships, limit) },
     { id: 'years', label: 'Years', type: 'year', items: facetItemsFromMap(years, limit) },
     { id: 'capabilities', label: 'Capabilities', type: 'capability', items: capabilityItems },
-    { id: 'metadataFields', label: 'Metadata fields present', type: 'metadataFieldPresent', items: facetItemsFromMap(evidenceFields, limit) },
+    { id: 'metadataFields', label: 'Evidence fields present', type: 'metadataFieldPresent', items: facetItemsFromMap(evidenceFields, limit) },
   ].filter((group) => group.items.length > 0);
 }
 

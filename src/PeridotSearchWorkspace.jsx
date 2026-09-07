@@ -110,8 +110,8 @@ const STRUCTURED_FIELD_OPTIONS = Object.freeze([
   { id: 'routePeople', label: 'Entity relationship', placeholder: 'Person A — Person B, Person A → Person B, or either entity' },
   { id: 'entityPair', label: 'Connected entity pair', placeholder: 'Two distinct connected entities' },
   { id: 'date', label: 'Date', placeholder: 'Year or date label' },
-  { id: 'metadataValue', label: 'Metadata value', placeholder: 'Italian, Medici, ambassador, or another metadata value' },
-  { id: 'metadataFieldPresent', label: 'Metadata field is present', placeholder: 'Language, Notes, Archival collection, or a custom field' },
+  { id: 'metadataValue', label: 'Evidence value', placeholder: 'Italian, Medici, ambassador, or another mapped Evidence value' },
+  { id: 'metadataFieldPresent', label: 'Evidence field is present', placeholder: 'Language, Notes, Archival collection, or another mapped Evidence field' },
   { id: 'capability', label: 'Capability', placeholder: 'Choose a capability' },
 ]);
 
@@ -261,8 +261,13 @@ function buildBrowseIndexGroups(rows = [], evidenceRows = rows) {
    * researcher-facing record collection.
    */
   (Array.isArray(evidenceRows) ? evidenceRows : []).forEach((row) => {
-    getSearchableEvidenceFieldEntries(row).forEach((entry) => {
-      addBrowseCount(evidenceFields, entry.label);
+    const labels = Array.from(new Set(
+      getSearchableEvidenceFieldEntries(row)
+        .map((entry) => browseText(entry.label))
+        .filter(Boolean),
+    ));
+    labels.forEach((label) => {
+      addBrowseCount(evidenceFields, label);
     });
   });
 
@@ -300,7 +305,7 @@ function buildBrowseIndexGroups(rows = [], evidenceRows = rows) {
       id: 'browse-evidence',
       type: 'evidenceField',
       label: 'Evidence fields',
-      description: 'Included metadata fields available for structured evidence filtering.',
+      description: 'Mapped Evidence fields available for structured Evidence filtering.',
       items: sortBrowseItems(evidenceFields),
     },
   ];
@@ -497,14 +502,14 @@ function StructuredCriterionRow({
 
       {isMetadataValue ? (
         <div>
-          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-metadata-field-${criterion.id}`}>Within metadata field</label>
+          <label className={FIELD_LABEL_CLASS} htmlFor={`structured-metadata-field-${criterion.id}`}>Within Evidence field</label>
           <select
             id={`structured-metadata-field-${criterion.id}`}
             value={criterion.metadataField || ''}
             onChange={(event) => onChange({ ...criterion, metadataField: event.target.value })}
             className={INPUT_CLASS}
           >
-            <option value="">Any metadata field</option>
+            <option value="">Any Evidence field</option>
             {metadataFieldOptions.map((option) => (
               <option key={option.key} value={option.key}>{option.label}</option>
             ))}
@@ -631,9 +636,9 @@ function MetadataFacetPanel({ groups, onChooseMetadataFacet }) {
     <section className="peridot-search-facet-panel peridot-search-metadata-facet-panel rounded-[1rem] border p-3 shadow-[0_10px_24px_var(--peridot-color-rgba-rgba-34-51-38-0-16)]">
       <div className="peridot-search-refine-facet-header">
         <div>
-          <h3 className="peridot-search-panel-heading text-[0.62rem] font-black uppercase tracking-[0.15em]">Metadata</h3>
+          <h3 className="peridot-search-panel-heading text-[0.62rem] font-black uppercase tracking-[0.15em]">Evidence</h3>
           <p className="peridot-search-panel-description mt-1 text-xs leading-5">
-            Select a value to add it as a required metadata refinement.
+            Select a value to add it as a required Evidence refinement.
           </p>
         </div>
         <span className="peridot-search-count-badge rounded-full border px-2 py-0.5 text-[0.58rem] font-black uppercase tracking-[0.08em]">
@@ -655,7 +660,7 @@ function MetadataFacetPanel({ groups, onChooseMetadataFacet }) {
                   type="button"
                   onClick={() => onChooseMetadataFacet(group, item)}
                   className={`${CHIP_BUTTON_CLASS} peridot-search-facet-chip`}
-                  title={`Add required metadata condition: ${group.label} exactly matches ${item.value}`}
+                  title={`Add required Evidence condition: ${group.label} exactly matches ${item.value}`}
                 >
                   <span>{item.value}</span>
                   <span className="peridot-search-chip-count ml-1.5 rounded-full px-1.5 py-0.5 text-[0.6rem]">{item.count}</span>
@@ -672,7 +677,7 @@ function MetadataFacetPanel({ groups, onChooseMetadataFacet }) {
           onClick={() => setExpanded((current) => !current)}
           className={DARK_BUTTON_CLASS + ' peridot-search-refine-expand-button mt-3 px-3 py-1 text-[0.62rem]'}
         >
-          {expanded ? 'Show fewer metadata fields' : `Show all metadata fields +${hiddenCount}`}
+          {expanded ? 'Show fewer Evidence fields' : `Show all Evidence fields +${hiddenCount}`}
         </button>
       ) : null}
     </section>
@@ -1628,7 +1633,7 @@ export function PeridotSearchWorkspace({
       if (safeCurrent.length >= MAX_STRUCTURED_CRITERIA) return safeCurrent;
       return safeCurrent.concat(nextCriterion);
     });
-    setFilterStatusMessage('Metadata field added to required draft conditions. Apply Filters to update results.');
+    setFilterStatusMessage('Evidence field added to required draft conditions. Apply Filters to update results.');
   };
 
   const chooseMetadataFacet = (group, item) => {
@@ -1646,7 +1651,7 @@ export function PeridotSearchWorkspace({
       if (safeCurrent.length >= MAX_STRUCTURED_CRITERIA) return safeCurrent;
       return safeCurrent.concat(nextCriterion);
     });
-    setFilterStatusMessage('Metadata value added to required draft conditions. Apply Filters to update results.');
+    setFilterStatusMessage('Evidence value added to required draft conditions. Apply Filters to update results.');
     setActiveTab('build');
   };
 
@@ -2188,7 +2193,7 @@ export function PeridotSearchWorkspace({
   const renderRefineInspect = () => (
     <div className="peridot-search-refine-view space-y-4">
       <SectionHeader eyebrow="Step 4" title="Refine / Inspect">
-        Facets summarize the applied result set. Metadata values remain grouped under their field headings so a Language or custom-category refinement stays precise. Clicking a facet fills draft criteria; Apply commits the refinement.
+        Facets summarize the applied result set. Evidence values remain grouped under their mapped field headings so a Language or custom-category refinement stays precise. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>
       <ExploreDivider />
 
