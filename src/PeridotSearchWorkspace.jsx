@@ -1174,70 +1174,51 @@ function resultLooksRouteCapable(result) {
   return (hasMeaningfulSourceEntity && hasMeaningfulTargetEntity) || hasDistinctMeaningfulLocations;
 }
 
-function SearchResultCard({ result, onInspectSearchResult, isRouteCapable }) {
-  const parts = getResultDisplayParts(result);
+function uniqueResultTexts(values = []) {
+  const seen = new Set();
+  return values.filter((value) => {
+    const text = cleanResultText(value);
+    if (!isMeaningfulResultValue(text)) return false;
+    const key = text.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).map(cleanResultText);
+}
 
-  if (!isRouteCapable) {
-    return (
-      <article className="peridot-search-result-card peridot-search-result-ledger-card peridot-search-results-ledger-row peridot-search-results-ledger-row-point">
-        <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-date-cell">
-          <span className="peridot-search-results-ledger-mobile-label">Date</span>
-          <span className="peridot-search-result-date">{parts.date}</span>
-        </div>
+function getGeneralizedResultDisplayParts(result) {
+  const fallback = getResultDisplayParts(result);
+  const structure = buildPeridotRecordStructure(result?.row || result || {});
+  const mappedEntities = uniqueResultTexts((structure.participants || []).map((entry) => entry?.value));
+  const mappedPlaces = uniqueResultTexts((structure.places || []).map((entry) => entry?.value));
+  const fallbackEntities = uniqueResultTexts([fallback.sourceEntity, fallback.targetEntity, fallback.entity]);
+  const fallbackPlaces = uniqueResultTexts([fallback.sourceLocation, fallback.targetLocation, fallback.location]);
 
-        <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-entity-cell">
-          <span className="peridot-search-results-ledger-mobile-label">Entity</span>
-          <span className="peridot-search-result-title" title={parts.entity}>{parts.entity}</span>
-        </div>
+  return {
+    date: fallback.date,
+    entities: (mappedEntities.length ? mappedEntities : fallbackEntities).join(' · ') || 'Unknown entity',
+    places: (mappedPlaces.length ? mappedPlaces : fallbackPlaces).join(' · ') || 'Unknown',
+  };
+}
 
-        <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-location-cell">
-          <span className="peridot-search-results-ledger-mobile-label">Location</span>
-          <span className="peridot-search-result-meta-value" title={parts.location}>{parts.location}</span>
-        </div>
-
-        <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-action-cell">
-          <button
-            type="button"
-            onClick={() => onInspectSearchResult?.(result)}
-            className={DARK_BUTTON_CLASS + ' peridot-search-result-inspect-action'}
-          >
-            Inspect
-          </button>
-        </div>
-        <PeridotRecordStructure row={result?.row || result} compact />
-      </article>
-    );
-  }
+function SearchResultCard({ result, onInspectSearchResult }) {
+  const parts = getGeneralizedResultDisplayParts(result);
 
   return (
-    <article className="peridot-search-result-card peridot-search-result-ledger-card peridot-search-results-ledger-row peridot-search-results-ledger-row-route">
+    <article className="peridot-search-result-card peridot-search-result-ledger-card peridot-search-results-ledger-row peridot-search-results-ledger-row-point">
       <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-date-cell">
         <span className="peridot-search-results-ledger-mobile-label">Date</span>
         <span className="peridot-search-result-date">{parts.date}</span>
       </div>
 
-      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-source-entity-cell">
-        <span className="peridot-search-results-ledger-mobile-label">Focal / source entity</span>
-        <span className="peridot-search-result-title" title={parts.sourceEntity}>{parts.sourceEntity}</span>
+      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-entity-cell">
+        <span className="peridot-search-results-ledger-mobile-label">People / entities</span>
+        <span className="peridot-search-result-title" title={parts.entities}>{parts.entities}</span>
       </div>
 
-      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-target-entity-cell">
-        <span className="peridot-search-results-ledger-mobile-label">Related / target entities</span>
-        <span className="peridot-search-result-meta-value" title={parts.targetEntity || 'Unknown target'}>
-          {parts.targetEntity || 'Unknown target'}
-        </span>
-      </div>
-
-      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-source-location-cell">
-        <span className="peridot-search-results-ledger-mobile-label">Source location</span>
-        <span className="peridot-search-result-meta-value" title={parts.sourceLocation}>{parts.sourceLocation}</span>
-      </div>
-
-      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-target-location-cell">
-        <span className="peridot-search-results-ledger-mobile-label">Target location</span>
-        <span className="peridot-search-result-meta-value" title={parts.targetLocation || 'Unknown'}>
-          {parts.targetLocation || 'Unknown'}
-        </span>
+      <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-location-cell">
+        <span className="peridot-search-results-ledger-mobile-label">Places</span>
+        <span className="peridot-search-result-meta-value" title={parts.places}>{parts.places}</span>
       </div>
 
       <div className="peridot-search-results-ledger-cell peridot-search-result-ledger-action-cell">
@@ -1249,7 +1230,7 @@ function SearchResultCard({ result, onInspectSearchResult, isRouteCapable }) {
           Inspect
         </button>
       </div>
-        <PeridotRecordStructure row={result?.row || result} compact />
+      <PeridotRecordStructure row={result?.row || result} compact />
     </article>
   );
 }
@@ -2058,37 +2039,19 @@ export function PeridotSearchWorkspace({
               </div>
 
               <div
-                className={
-                  searchResultsAreRouteCapable
-                    ? 'peridot-search-results-ledger-header peridot-search-results-ledger-header-route'
-                    : 'peridot-search-results-ledger-header peridot-search-results-ledger-header-point'
-                }
+                className="peridot-search-results-ledger-header peridot-search-results-ledger-header-point"
                 aria-hidden="true"
               >
-                {searchResultsAreRouteCapable ? (
-                  <>
-                    <span>Date</span>
-                    <span>Focal / source entity</span>
-                    <span>Related / target entities</span>
-                    <span>Source location</span>
-                    <span>Target location</span>
-                    <span>Inspect</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Date</span>
-                    <span>Entity</span>
-                    <span>Location</span>
-                    <span>Inspect</span>
-                  </>
-                )}
+                <span>Date</span>
+                <span>People / entities</span>
+                <span>Places</span>
+                <span>Inspect</span>
               </div>
               <div className="peridot-search-results-ledger-body">
                 {searchResultCards.map((result) => (
                   <SearchResultCard
                     key={result.id}
                     result={result}
-                    isRouteCapable={searchResultsAreRouteCapable}
                     onInspectSearchResult={onInspectSearchResult}
                   />
                 ))}
