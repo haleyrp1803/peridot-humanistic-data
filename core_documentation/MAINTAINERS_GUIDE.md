@@ -29,7 +29,7 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-b7482cb — Add homepage tutorial placeholder
+1810a40 — Replace minimum weight with count conditions
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -51,7 +51,7 @@ Mapped uploads are now editable after import. The Data workspace can reopen the 
 
 Sample data is now first-class generalized data rather than hidden embedded fallback state. Peridot starts with **no active dataset**. A researcher must explicitly select a sample or upload their own data. `public/sample_data/` contains three ordinary downloadable source files—correspondence network, family tree, and cardinals—and `src/peridotSampleDatasets.js` pairs each with a preserved generalized mapping. Sample mappings can be edited for learning/QA without mutating the shipped mapping; **Reset to sample mapping** restores the canonical interpretation.
 
-Canonical temporal semantics remain fully authoritative across active consumers. The former `parsedDate`, `parseHistoricalDate`, duplicate capability parser, and lexical date-sorting fallbacks are retired from active `src`. Search and Network relationship semantics are substantially generalized, while place/facet generalization, geographic Network event/anchor semantics, and several scope/performance audits remain active follow-up work.
+Canonical temporal semantics remain fully authoritative across active consumers. The former `parsedDate`, `parseHistoricalDate`, duplicate capability parser, and lexical date-sorting fallbacks are retired from active `src`. Search now consumes generalized relationships and places plus canonical subject-aware Evidence; its Results ledger is generalized rather than route-shaped, and the Search/Timeline/Analytics scope audit is complete. Geographic Network event/anchor semantics and remaining Network presentation/layout work are the next major consumer boundary.
 
 The active public workflow remains Home → Manage Your Data → Visualize Your Data → Explore Your Data → Learn More. Themes and Accessibility remains route-compatible but intentionally hidden from the public hamburger menu. Timeline and Export are Visualizations-integrated surfaces; Inspector is a compact/full shared-state evidence system. Home now includes a fixed, visually secondary **Tutorial** button beneath the two primary data-entry actions; it is currently disabled with **“Tutorial coming soon.”** on hover/focus. The prior floating tutorial invitation is removed, while the existing tutorial implementation remains in source for later revision.
 
@@ -129,13 +129,13 @@ Use these terms consistently:
 |---|---|---|---|---|
 | loaded data | all records currently loaded in the app | sample-data or import path | Search, visualization derivation, Analytics, export | may contain incomplete but accepted records |
 | mapped/normalized data | accepted source interpretations represented in the canonical model, plus compatibility/runtime projections where a consumer still requires them | profile/universal mapping, canonical normalizers, and runtime adapters | graph, capability, search, Inspector, genealogy, and future universal consumers | mapping remains user-owned; not every canonical-only universal dataset has a current runtime consumer |
-| applied/filtered data | records included after Advanced Search criteria are committed | Search Apply Filters | visualizations, Inspector, Analytics, exports | formal coverage audit remains pending |
-| timeline-visible data | records inside current timeline range/playback state | Timeline controls | active stage and related consumers | Timeline × Analytics audit remains pending |
-| selected data | node, edge, cluster, entity, place, route, or record under inspection | interaction/Inspector state | compact/full Inspector | must preserve Back history |
-| charted data | records or derived values supplied to a chart | Analytics derivation helpers | chart renderer and chart export | may be further constrained by chart-local settings |
-| exported data | output explicitly described by an export action | export helpers/header actions | image/CSV file | labels must identify relevant scope |
+| applied/filtered data | records remaining after the active Timeline range and committed Advanced Search criteria; stable across playback | Timeline range + Search Apply Filters | Search Results/Refine, visualizations, Inspector dossiers, Analytics inputs, exports | Browse intentionally uses loaded data instead |
+| timeline-visible data | applied/filtered records visible at the current playback moment | Timeline playback | active map/network stage and visible graph exports | Analytics adds genuinely undated/non-positionable records back to chart scope unless explicitly excluded |
+| selected data | node, edge, cluster, entity, place, route, or record under inspection | interaction/Inspector state | compact/full Inspector | entity/place dossiers use applied/filtered linked-record scope rather than shrinking with playback |
+| charted data | records or derived values supplied to a chart | Analytics derivation helpers | chart renderer and chart export | dated rows obey Timeline/playback and chart-local date range; undated rows remain by default unless **Exclude undated records?** is checked |
+| exported data | output explicitly described by an export action | export helpers/header actions | image/CSV file | graph exports reflect the visible graph; chart export reflects charted data; provenance includes structured and capability Search filters |
 
-The authoritative Advanced Search contract appears in [Section 5](#5-advanced-search--explore-contract). The scope vocabulary above must be used precisely until the dedicated coverage and Timeline × Analytics audits are complete.
+The Search/Timeline/Analytics scope audit is complete at `656010d`. Preserve these distinctions rather than collapsing applied/filtered, playback-visible, selected, charted, and exported data into one implied scope.
 
 ## 4. Visualizations, Timeline, Inspector, and Export Contracts
 
@@ -145,12 +145,12 @@ The Inspector is a dual-mode evidence system. Visualization clicks open compact 
 
 The linked-data navigation model remains a hard preservation contract. Researchers must be able to move through chains such as node → connected person → another connected person → connected place → connected record, then use **Back** several times and branch from an earlier dossier without losing the previous sequence. Full Inspector continues to overlay the mounted Visualizations or Explore workspace rather than remounting it.
 
-At `b7482cb`, generalized Inspector semantics plus canonical identity/Evidence projection are the accepted current model:
+Generalized Inspector semantics plus canonical identity/Evidence projection established before the Search audit remain the accepted model through `1810a40`:
 
 - `PeridotRecordStructure.jsx` / `peridotRecordStructure.js` expose mapped temporal assertions, generalized relationship participants, participant-attached places, semantic relationship counterparts, and evidence without forcing records into Source/Target display.
 - `peridotIdentityRuntime.js`, the generalized mapping runtime, `peridotEntityNetwork.js`, and Inspector selection/aggregation paths preserve authoritative mapped entity IDs when available. Same-label people remain distinct when their mapped identities differ; one recurring entity remains unified across different mapped roles.
 - `peridotEntityDisplayLabels.js` resolves presentation labels from canonical entities so downstream consumers do not independently choose between raw reference IDs and human-readable names; unresolved references remain source-faithful IDs.
-- `peridotEntityEvidence.js` projects canonical `mapped-evidence:*` assertions onto the selected canonical entity and filters them to the current linked-record scope. Record-only Evidence remains on records rather than being inherited by every participant.
+- `peridotEntityEvidence.js` projects canonical `mapped-evidence:*` assertions onto the selected canonical entity and filters them to the current applied/filtered linked-record scope. Record-only Evidence remains on records rather than being inherited by every participant; playback does not silently shrink entity/place dossiers.
 - Person/entity dossiers derive Connected People from explicit generalized relationships and include later Part C/D/etc. participants rather than truncating to a legacy pair.
 - Place and temporal information respect mapped subjects. A row that contains both a child and mother may legitimately provide the child’s birth date/place and the mother’s childbirth date/place without attaching both assertions to both people.
 - Place profiles derive connected people through participant-place associations. A place may therefore connect to people even when there is no correspondence-style source/target route.
@@ -184,18 +184,23 @@ Advanced Search is the primary Explore Your Data surface and the owner of global
 
 ### Responsibilities
 
-- Build Search supports keyword, person/entity, place, route-place, route-people, date, minimum-weight, capability, and structured criteria inputs.
-- Browse exposes route-aware dataset indexes for people/entities, places/locations, and routes when relationship data exists.
-- Results provides compact route-aware ledgers, pagination, and Inspector handoff.
-- Refine / Inspect exposes applied-result facets; expansions fill draft controls for later Apply rather than silently changing scope.
+- Build Search supports keyword, person/entity, place, explicit route-place, entity-relationship, date, capability, and structured criteria inputs.
+- Structured criteria support Required / Any-of / Excluded groups plus optional **count conditions attached to a specific criterion**. Count conditions use plain language such as **This person has at least N connected entities**, **This place has at least N connected places**, or **People in these records have at least N connected entities**.
+- Count-condition reference counts are derived from the loaded/mapped Search dataset; the primary criterion determines which records are returned. Place-to-place connection counts use explicit directed place connections and never infer a route merely because several mapped places occur in one record.
+- Browse indexes the loaded dataset. Generalized Places and canonical Evidence are included; explicit Routes remain separate and appear only when meaningful route data exists.
+- Results presents generalized Date / People or entities / Places ledger rows, pagination, mapped-information drilldown, and Inspector handoff rather than requiring every record to be a Source/Target route.
+- Refine / Inspect exposes applied-result facets; generalized place and canonical Evidence facets fill draft controls for later Apply rather than silently changing scope.
 - Capabilities presents the active dataset’s supported research surfaces.
 - Inspect opens the full Inspector above the current Explore state, so closing it returns the researcher to the same search context.
+- The legacy global minimum correspondence/connection weight is retired. Do not restore it as a universal dataset filter; the generalized replacement is criterion-attached count conditions.
 
 ### Scope and regression contract
 
-Search is a fragile active-data boundary. After changes, verify draft suggestions, Apply, Clear, criteria connectors, Browse/facet behavior, Results pagination, Inspector return-to-state behavior, and interaction with Timeline, Analytics, and Export.
+Search is a fragile active-data boundary. Browse intentionally uses loaded data; Results and Refine use applied/filtered data and remain stable while playback advances. Entity/place Inspector dossiers opened from Search use the same applied/filtered scope rather than playback visibility.
 
-The dedicated Search coverage/scope audit remains pending. Do not state that every consumer applies loaded, filtered, timeline-visible, and chart-local scope identically until that audit is complete.
+After changes, verify draft suggestions, Apply, Clear, Boolean criteria, attached count conditions, generalized Place behavior, canonical Evidence behavior, Browse/facet behavior, Results pagination, Inspector return-to-state behavior, and interaction with Timeline, Analytics, and Export.
+
+Known bounded follow-up: **Any record text** does not yet guarantee that every generalized mapped semantic value is indexed. Explicit fielded criteria such as Place correctly search generalized assertions.
 
 
 ### Preserved detailed Search regression expectations
@@ -214,7 +219,6 @@ Committed Advanced Search controls include:
 - place filter
 - **Route Filter (Place)**
 - **Route Filter (People)**
-- minimum correspondence weight
 - date range
 - predictive suggestions for person, place, route-place, route-people, start-year, end-year, and structured-criteria value fields
 - structured criteria with AND / OR / EXCLUDING connectors
@@ -260,7 +264,9 @@ Core ownership:
 - `analyticsDerivationHelpers.js` owns variable detection, bucketing, filtering, aggregation, and chart-ready data.
 - `analyticsChartComponents.jsx` owns SVG rendering, card/legend geometry, visible summaries, ticks/gridlines, theme-series marks, and exportable SVG surface.
 
-The current accepted chart model uses a quarter-width control rail and three-quarter chart/legend card. Bar charts default to vertical orientation. Use semantic chart series roles rather than local hardcoded colors. Preserve the deferred Timeline playback × Analytics scope audit rather than asserting universal scope consistency.
+The current accepted chart model uses a quarter-width control rail and three-quarter chart/legend card. Bar charts default to vertical orientation. Use semantic chart series roles rather than local hardcoded colors.
+
+Analytics receives the Search-filtered/playback-visible dated scope while preserving genuinely undated/non-positionable Search-matching records for charting. Its local Start/End Year controls constrain dated records; **Exclude undated records?** is a separate explicit checkbox and is off by default. This contract was verified during the `656010d` scope pass and must remain aligned across chart derivation, visible totals/legends, category inventories, and PNG export.
 
 ## 7. Data Import and Workbook Contract
 
@@ -530,7 +536,7 @@ Full Visualizations workspace. It contains capability-aware dropdown groups for 
 
 #### `src/PeridotSearchWorkspace.jsx`
 
-Full Advanced Search workspace and primary Explore surface. It renders active-scope summary plus the animated **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs. It owns the UI for keyword/person/place/route/date/weight filters, predictive suggestions, capability filters, structured AND / OR / EXCLUDING criteria, compact dataset-wide Browse ledgers, route-aware Results ledgers, result facets, Apply Filters, Clear Filters, Explore-scoped page animations, and search-result Inspector handoff. Inspect actions from Explore now open the full Inspector above the current Explore page so the researcher returns to the same tab/state when the Inspector closes.
+Full Advanced Search workspace and primary Explore surface. It renders active-scope summary plus the animated **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs. It owns the UI for keyword/person/place/explicit-route/date filters, predictive suggestions, capability filters, structured Required / Any-of / Excluded criteria, criterion-attached count conditions, compact dataset-wide Browse ledgers, generalized Results ledgers, result facets, Apply Filters, Clear Filters, Explore-scoped page animations, and search-result Inspector handoff. Inspect actions from Explore open the full Inspector above the current Explore page so the researcher returns to the same tab/state when the Inspector closes.
 
 #### `src/PeridotThemeWorkspace.jsx`
 
@@ -923,8 +929,8 @@ These areas still deserve narrow, explicit passes:
 | Workspace routing | wrong workspace or lost state | Home CTA and every hamburger route |
 | First-time tutorial | placeholder disappears/becomes primary, or future launcher regresses overlay behavior | now: disabled secondary Home button + tooltip + no floating invitation; when re-enabled: full seven-stage suite |
 | Inspector bridge | compact Inspector fails to open | node, edge, cluster, contained member, Expand, Back |
-| Search scope | results or facets omit/misstate records | draft suggestion, Apply, Clear, pagination, Inspect handoff |
-| Timeline / Analytics | stale or inconsistent chart scope | alter timeline/date controls, refresh chart, export |
+| Search scope | generalized place/Evidence values disappear, count conditions mis-scope, or Results/facets use playback visibility | draft suggestion, Apply, Clear, attached count conditions, Place/Evidence criteria, pagination, Inspect handoff during playback |
+| Timeline / Analytics | dated/undated scope diverges or playback silently changes non-temporal evidence | alter timeline/playback, local chart years, **Exclude undated records?**, visible totals, chart export |
 | Data import | loss of accepted rows, hidden default data, or bad joins | no-data first launch; template/upload; workbook join; validation |
 | Sample system | canonical sample mutated or implicit fallback restored | choose each sample; download; edit/cancel/reset mapping; hard refresh with no selected source |
 | Identity/runtime | duplicate-label conflation or one entity split by role/row | same-label ID fixture; untouched suggestion; explicit blank; Source/Target composite identity |
@@ -940,23 +946,25 @@ These areas still deserve narrow, explicit passes:
 
 ## 11. Active Technical Backlog
 
-1. **Generalized Search audit — recommended next task.**
-   - Trace canonical entities, generalized relationships, all mapped place associations, canonical temporal assertions, and subject-aware Evidence assertions through Search indexing, Browse, structured criteria, facets, Results, pagination, and Inspector handoff.
-   - Identify where Search still reconstructs semantics from compatibility rows or flattened `customInspectorFields` before editing.
-   - Preserve the explicit draft/apply model and current Explore overlay return behavior.
+1. **Generalized Network audit — recommended next task.**
+   - Trace generalized relationship eligibility, geographic relationship/event scoping, participant-place associations, Timeline playback, capability predicates, Inspector handoff, and export through the current Network/Map paths before editing.
+   - Identify remaining correspondence-shaped Source/Target assumptions and distinguish legitimate explicit directed routes from generalized participant/place assertions.
+   - Preserve the multipart-relationship rule: explicit mapped counterparts may connect to the primary participant, but co-occurring participants must not become an automatic clique.
 
-2. **Implement only the Search consumer changes demonstrated by that audit.**
-   - Place Browse/facet/criteria/result semantics remain the clearest known under-generalized area.
-   - Subject-aware Evidence now exists canonically; decide during the audit how/when Search should distinguish record-level Evidence from entity-attributed assertions without breaking broad metadata search.
-
-3. **Timeline playback × Analytics scope audit.**
-   - Verify timeline range/playback scope against chart input rows, chart-local date controls, rendering updates, titles/counts/legends, and exported chart output.
-
-4. **Complete generalized Network geographic/event semantics.**
+2. **Implement Network semantic corrections demonstrated by the audit.**
    - Correct relationship/event scoping so selected Timeline event types do not combine with unrelated structural relationships.
-   - Replace crude most-frequent-place anchoring with transparent/user-selected participant-place associations.
-   - Generalize playback highlighting so active records can highlight all mapped relationships.
-   - Address Force-Directed fit-to-viewport and arrowhead termination only after semantic correctness is preserved.
+   - Replace opaque automatic person-place anchoring with transparent/user-selected participant-place associations where the dataset provides several plausible locations.
+   - Generalize playback highlighting so active records can highlight all mapped relationships without inventing relationships.
+
+3. **Network node/cluster sizing and scaling controls — dedicated presentation pass after semantic correctness.**
+   - Audit current node-size, cluster-size, edge-width, and viewport-fitting formulas across small and dense datasets.
+   - Tune defaults so represented volume remains legible without overwhelming sparse networks or collapsing dense ones.
+   - Evaluate a small Visualization-workspace controller that lets researchers adjust node/cluster scaling interactively while leaving data, counts, identities, and relationship semantics unchanged.
+   - Revisit Force-Directed fit-to-viewport and arrowhead termination in the same presentation sequence only if they can remain bounded and independently testable.
+
+4. **Search generalized-text follow-up.**
+   - `Any record text` does not yet guarantee indexing of every generalized mapped semantic value; explicit Place and canonical Evidence criteria already work.
+   - Audit the general text corpus before broadening it so canonical values are added without duplicating compatibility projections or inflating matches.
 
 5. **Universal data architecture — Phase 3 Chart Builder.**
    - Build chart controls from saved variables and generalized mapped fields.
@@ -973,16 +981,16 @@ These areas still deserve narrow, explicit passes:
    - Preserve the current hierarchy: **Use sample data** and **Upload your data** are the primary Home actions; **Tutorial** is a shorter secondary button beneath them.
    - The Tutorial placeholder remains disabled with **“Tutorial coming soon.”** until the guided workflow is deliberately revised/re-enabled.
    - A larger future Home/Data integration may still merge the strongest branded landing-page and sample-selection patterns, but do not combine that redesign with consumer/data-model passes.
-   - Tutorial attention choreography, panel placement, typography spacing, accessibility, semantic keyword highlighting, and a final UX walkthrough remain later bounded work.
+   - Tutorial attention choreography, panel placement, typography spacing, accessibility, semantic keyword highlighting, animation order/timing, and a final UX walkthrough remain later bounded work.
 
 8. **Optional Timeline temporal-structure controls.**
    - Consider filters for approximate, partial, open-ended, or inconsistent temporal structures only if analytically useful and human-readable.
 
-9. **Inspector → Advanced Search actions and safe metadata filters**, after the Search coverage/generalization audit.
+9. **Inspector → Advanced Search actions and safe metadata filters**, after current Network work unless a concrete Search need arises first.
 
 10. Continue bounded structural work only when a concrete maintenance need exists; `App.jsx` remains concentrated but should not be casually refactored.
 
-Cardinality, integrated Identity, multi-subject Time/Place/Evidence attribution, canonical Evidence assertions, canonical entity display labels, and entity-Inspector Evidence projection are accepted architecture at `b7482cb`. Treat them as regression contracts rather than reopening them during the next consumer audit unless testing exposes a concrete defect.
+Generalized mapping, cardinality, integrated Identity, multi-subject Time/Place/Evidence attribution, canonical Evidence assertions, canonical entity display labels, generalized Search places/Results/Evidence, scope alignment, and criterion-attached count conditions are accepted architecture at `1810a40`. Treat them as regression contracts rather than reopening them during Network work unless testing exposes a concrete defect.
 
 ## 12. Archived and Compatibility Paths
 
@@ -1028,7 +1036,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`b7482cb` — `Add homepage tutorial placeholder`**
+- current synchronized checkpoint: **`1810a40` — `Replace minimum weight with count conditions`**
 - local development command on the user's machine: **`npm.cmd run dev`**
 
 A future chat should also be told that:
@@ -1042,11 +1050,13 @@ A future chat should also be told that:
 - Evidence supports the same cardinality and subject selection. Canonical mapped-Evidence assertions link to the existing EvidenceSource, while broad compatibility custom fields remain deduplicated;
 - entity Inspector consumes canonical subject-aware Evidence assertions in the current linked-record scope; record-only Evidence does not become entity metadata;
 - the Family Tree sample includes mother **Place of childbirth** semantics derived from the child's birthplace source and is an important attribution QA case;
-- Search relationship semantics are substantially generalized, but Search places/facets and broader canonical-consumer coverage still require a dedicated audit;
-- the **recommended next task is the generalized Search audit**, not more cardinality/attribution expansion;
-- after Search work, perform the Timeline × Analytics scope audit, then proceed toward Phase 3 Chart Builder; generalized Network semantic/layout work and the no-loss compatibility retirement audit remain active parallel follow-ups;
+- generalized Search Passes 1–5 are complete: mapped places feed Place search/Browse/Refine, Results use neutral generalized columns, canonical Evidence powers Evidence search/facets, and the old global minimum weight has been replaced by criterion-attached count conditions;
+- Search Results/Refine and entity/place Inspector dossiers use stable applied/filtered scope rather than playback visibility; Analytics preserves undated records by default and can explicitly exclude them locally;
+- one bounded Search text gap remains: **Any record text** does not yet guarantee every generalized mapped semantic value;
+- the **recommended next task is the generalized Network audit**, followed by bounded semantic corrections and then a separate node/cluster sizing pass that may add a small researcher-facing scaling controller;
+- Phase 3 Chart Builder and the no-loss compatibility retirement audit remain later major tasks;
 - the Home now has a fixed smaller **Tutorial** button beneath the primary data-entry CTAs. It is disabled and says **“Tutorial coming soon.”** on hover/focus; the old floating invitation is removed and the existing tutorial code remains for later revision;
 - MapLibre remains archived.
 
-Before implementing the Search audit, reread the current complete Search/runtime/canonical files from the synchronized repo rather than relying on this handoff alone. Preserve the accepted cardinality, Identity, attribution, canonical-label, and canonical-Evidence behavior while auditing consumers.
+Before implementing the Network audit, reread the current complete Network/runtime/interaction files from the synchronized repo rather than relying on this handoff alone. Preserve accepted Search, cardinality, Identity, attribution, canonical-label, canonical-Evidence, and scope behavior while auditing Network consumers.
 

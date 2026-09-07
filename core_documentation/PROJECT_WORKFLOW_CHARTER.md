@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-b7482cb — Add homepage tutorial placeholder
+1810a40 — Replace minimum weight with count conditions
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -98,7 +98,9 @@ Do not mix functional changes, visual redesign, broad refactors, and documentati
 
 Before writing any code edit or patch script, read and review the complete current affected file or files from the real source of truth.
 
-When the user has confirmed local and GitHub are synced, use the current GitHub files as the source for full-file review unless the user explicitly states that local files have diverged.
+**Exact raw-source rule:** Before editing a Peridot source file, the entire exact current source-of-truth file must be read, and the replacement file must be derived directly from that exact raw file. Repository/GitHub snapshots, retrieval excerpts, normalized text, or reconstructed file content may support verification or historical context but may not serve as the sole implementation source.
+
+A clean synchronized Git checkpoint establishes which revision is authoritative, but it does not waive the raw-file requirement for implementation. If exact current raw bytes are unavailable to the execution environment, stop rather than reconstructing a replacement from indexed/retrieved text. Any temporary exception requires explicit user agreement and must be described as a fallback rather than equivalent to raw-file access.
 
 For code changes, prefer full-file replacements by default, especially when working in dense or fragile files such as:
 
@@ -511,12 +513,17 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 ### 7.4 Search and data scope
 
 - Advanced Search is the owner of global applied filtering and the primary Explore surface.
-- Search retains the draft/apply model, predictive discovery, explicit route filters, structured AND / OR / EXCLUDING criteria, Browse, Results, Refine/Inspect, Capabilities, and overlay Inspector handoff.
-- Timeline consumes the active temporal scope through canonical temporal assertions, including selected Time types and Cumulative/Co-current playback. Analytics charts the currently filtered data by default. The exact Search coverage/scope and Timeline × Analytics contracts remain active audit items.
+- Search retains the draft/apply model, predictive discovery, explicit route filters, structured Required / Any-of / Excluded criteria, Browse, generalized Results, Refine/Inspect, Capabilities, and overlay Inspector handoff.
+- Generalized Place semantics use mapped place assertions without inventing routes from co-occurrence. Search Evidence uses canonical subject-aware mapped-Evidence assertions. Results presentation is neutral/generalized rather than universally Source/Target.
+- The legacy global minimum correspondence/connection weight is retired. Optional count conditions attach to an individual structured criterion and state explicitly what is counted—for example **This place has at least N connected places** or **People in these records have at least N connected entities**. Reference counts come from loaded/mapped Search data; the primary criterion determines returned records.
+- Browse uses loaded data. Search Results/Refine use applied/filtered data and remain stable during playback. Entity/place Inspector dossiers also use applied/filtered linked-record scope rather than shrinking with playback.
+- One bounded follow-up remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value.
 
 ### 7.5 Analytics
 
 - Chart Visualizations belongs inside Visualizations, with tabbed controls and a large chart surface.
+- Dated chart records obey the global Timeline/playback scope; genuinely undated/non-positionable Search-matching records remain available to Analytics by default.
+- The local Start/End Year controls constrain dated chart records. **Exclude undated records?** is a separate explicit option and is off by default.
 - Record count is explicit; Year is the default ordered date axis; compatible settings and manual selections should persist where safe.
 - Chart summaries/legends must represent displayed values persistently and export with the chart.
 - Chart series colors come from the finite Peridot palette by default and semantic theme roles when users explicitly target charts.

@@ -20,33 +20,46 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-b7482cb — Add homepage tutorial placeholder
+1810a40 — Replace minimum weight with count conditions
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
 
-This checkpoint closes the cardinality and richer-subject-attribution architecture sequence begun after the first-class sample-data milestone and adds the current Home tutorial-entry placeholder. Since `8290696`, Peridot has generalized per-field multi-value handling, integrated Identity controls into the mappings where recurring entities are declared, established canonical entity display-label authority, generalized record/participant subject attribution across Time, Places, and Evidence, projected subject-aware Evidence through canonical assertions into entity Inspector dossiers, and moved the tutorial entry from a floating invitation to a fixed secondary Home button that is currently disabled pending tutorial revision.
+This checkpoint closes the five-pass generalized Search and scope sequence that followed the subject-aware Evidence milestone. Search now reads generalized place assertions, presents neutral generalized Results rather than forcing every record into Source/Target route columns, consumes canonical subject-aware Evidence, aligns Inspector/Analytics/export scope behavior, and replaces the legacy global minimum-weight control with optional count conditions attached directly to structured criteria.
 
 Current architectural significance:
 
-- per-mapped-item cardinality is implemented for suitable generalized mappings: the researcher declares one versus multiple values and supplies the delimiter rather than Peridot guessing punctuation;
-- delimiter handling accepts literal delimiters and common quoted forms such as `" "`, `' '`, `"/"`, and `'/'`; split values are trimmed appropriately, while the original source cell remains preserved;
-- structured component dates and separate period endpoints remain structured units rather than parallel arrays, and Peridot does not zip list-valued columns positionally;
-- multi-valued place cells cannot use one row-level coordinate pair, preventing several split places from silently inheriting the same coordinates; single-valued place mappings retain coordinate support;
-- recurring-entity Identity is no longer a separate required mapping page. Simple mappings default to the displayed name/label; relationships and places expose Identity controls only where stronger recognition rules are needed;
-- Identity supports stable source IDs and complex alternate identity recipes such as `(Name A + Title A) OR (Name B + Title B)`, with the `OR` meaning preserved as alternate complete recognition recipes rather than partial-match merging;
-- canonical entity display labels are resolved once from canonical entities and reused by Network and Inspector. A known reference ID such as `XVPKE` can therefore display `Elizabeth von Habsburg`, while genuinely unresolved source references remain visible as their IDs rather than being fabricated;
-- mapping-level subject attribution can include the record, one or more mapped participants, or both. Time and Place mappings fan out into atomic single-subject assertions while keeping the source mapping compact;
-- participant-specific temporal assertions are scoped to the appropriate canonical participation rather than indiscriminately attaching to every participant in the same record;
-- Evidence fields now carry the same subject-selection semantics, including cardinality-first then subject-fan-out behavior for multi-valued cells;
-- canonical subject-aware Evidence assertions link back to the existing per-record EvidenceSource while preserving the legacy/custom-field compatibility projection without duplicating source evidence merely because several subjects were selected;
-- entity Inspector Evidence is projected from canonical subject-aware assertions keyed by canonical entity ID and limited to the currently visible linked-record scope; record-only Evidence does not leak onto unrelated entities;
-- the Family Tree sample now demonstrates place-of-childbirth attribution to mothers from the child birthplace source, exposing historically meaningful court-mobility patterns while preserving the child's distinct birthplace assertion;
-- the Home workspace now includes a centered, visually secondary **Tutorial** button beneath **Use sample data** and **Upload your data**. The floating tutorial invitation is removed. The button is currently disabled and exposes **“Tutorial coming soon.”** on hover/focus; the existing tutorial implementation remains in source for later revision.
+- generalized place search, suggestions, structured Place criteria, Browse, Refine facets, and map-readiness checks use mapped place assertions without inventing routes from co-occurring places;
+- Search Results now present generalized Date / People or entities / Places records, while explicit route semantics remain available only where the source mapping genuinely supplies a directed pair;
+- Search Evidence uses canonical `mapped-evidence:*` assertions, preserving record-versus-entity attribution while preventing subject fan-out from inflating Browse/Refine counts;
+- Search Results and Refine operate on stable applied/filtered data rather than playback-visible data;
+- entity/place Inspector dossiers use the applied/filtered scope rather than shrinking with Timeline playback;
+- Analytics keeps undated records available by default even when dated records are constrained by Timeline/playback, and its local date controls expose a separate **Exclude undated records?** option;
+- export provenance now reports committed structured criteria and capability filters as well as the older direct Search fields;
+- the former global minimum correspondence/connection weight is retired from active Search and graph filtering;
+- structured Search can instead attach an optional plain-language count condition to a specific criterion—for example, **This place has at least 20 connected places** or **People in these records have at least 40 connected entities**—with counts derived from the loaded/mapped dataset and the primary criterion determining returned records;
+- the `Any record text` criterion is still not guaranteed to index every generalized semantic value (for example a partial mapped-place string can require an explicit Place criterion); this remains a bounded Search follow-up rather than a blocker;
+- cardinality, Identity, subject-aware Time/Places/Evidence, canonical display labels, and the Home tutorial placeholder remain preserved from the preceding milestone.
 
-The next major implementation question is no longer cardinality or subject attribution. The recommended continuation begins with a dedicated **generalized Search audit**, followed by any required Search consumer passes, the Timeline × Analytics scope audit, and then Phase 3 Chart Builder work. Generalized Network semantic/layout follow-ups and the repository-wide compatibility retirement audit remain active bounded work.
+The recommended continuation is now a dedicated **generalized Network audit** covering relationship/event scoping, participant-place anchoring, playback semantics, and remaining correspondence-shaped assumptions. Follow that semantic audit with bounded Network implementation passes, including a dedicated node/cluster sizing pass that can consider a small researcher-facing scaling controller in the Visualization workspace. Phase 3 Chart Builder, the no-loss compatibility retirement audit, and deferred Home/tutorial work remain later major tasks.
 
 ## 2. Recent Milestones, Newest First
+
+### Generalized Search, scope alignment, and count-condition redesign — 2026-09-07
+
+- **`5e3289c` — `Synchronize documentation through subject-aware evidence`** preserved the documentation baseline after canonical subject-aware Evidence reached Inspector.
+- **`e697bd2` — `Refine timeline slider interaction`** refined the Timeline scrubber immediately before the Search generalization sequence.
+- **`aabc8bb` — `Generalize Search place semantics`** made ordinary Place filtering, suggestions, structured Place criteria, Browse Places, Refine Places, and map-readiness consume generalized mapped place assertions while preserving conservative explicit-route behavior.
+- **`2fd0084` — `Generalize Search results presentation`** replaced the route-shaped Search Results ledger with generalized Date / People or entities / Places presentation. Detailed mapped information and legitimate directed-route semantics remain available without forcing every record into Source/Target columns.
+- **`f1a6942` — `Generalize Search evidence semantics`** moved Search Evidence inventory, structured Evidence criteria, Browse, Refine, Evidence-rich capability, and Evidence text search onto canonical subject-aware `mapped-evidence:*` assertions. Record- and entity-attributed assertions remain distinct internally, while per-record Browse/Refine counts are deduplicated.
+- **`656010d` — `Align Search scope across Inspector and Analytics`** completed the Search/Timeline/Analytics scope audit. Entity/place Inspector dossiers use applied/filtered rather than playback-visible scope; Analytics retains genuinely undated records by default while dated records continue to obey Timeline/playback; its local date controls can explicitly exclude undated records; export provenance now includes structured and capability filters.
+- The audit confirmed the scope distinction: Search Results/Refine represent applied/filtered data and remain stable during playback, while visualization graph exports represent the playback-visible graph and chart export represents charted data.
+- **`1810a40` — `Replace minimum weight with count conditions`** retired the old global minimum correspondence/connection weight from Search and graph filtering. The useful analytical idea survives as optional count conditions attached to individual structured criteria, using plain language such as **This person has at least N connected entities**, **This place has at least N connected places**, or **People in these records have at least N connected entities**.
+- Count-condition reference counts come from the loaded/mapped Search dataset; the primary structured criterion determines which records are returned. Place-to-place connection counts remain conservative and use explicit directed place connections rather than inferred co-occurrence.
+- Live QA across Family Tree and correspondence-style data confirmed generalized Place search, neutral Results presentation, canonical Evidence search, stable Inspector scope, Analytics undated-record behavior, and the attached count-condition interaction.
+- One bounded Search follow-up remains: **Any record text** does not yet guarantee inclusion of every generalized mapped semantic value; explicit fielded criteria such as Place work correctly.
+- The next large project is the generalized Network audit. A later bounded Network presentation pass should tune node/cluster sizing and evaluate a small user-facing scaling controller rather than hard-coding one visual scale.
+- Prepared this bounded core-documentation synchronization against clean checkpoint `1810a40`. The Charter now states the exact-raw-source implementation rule explicitly; the Governance Protocol itself remains unchanged.
 
 ### Cardinality, integrated Identity, subject-aware assertions, and Home tutorial placeholder — 2026-08-31
 
@@ -523,13 +536,12 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
-### Current deferred consumer, Network, Chart, compatibility, and tutorial work after `b7482cb`
+### Current deferred Network, Chart, compatibility, Search follow-up, and tutorial work after `1810a40`
 
-- **Generalized Search audit is the recommended next task.** Trace canonical entities, relationships, places, temporal assertions, and subject-aware Evidence assertions through Search indexing, Browse, structured criteria, facets, Results, and Inspector handoff. Determine where Search still reconstructs meaning from compatibility rows or flattened custom fields before implementing changes.
-- **Search places/facets remain less generalized than relationship semantics.** Migrate Browse/facet/criteria/result paths to all mapped place associations as the audit demonstrates the need.
-- **Search coverage/scope** remains a dedicated audit concern. Verify loaded dataset versus applied result set versus Browse, Results, Refine/facets, pagination, capability filters, structured criteria, Inspector handoff, and export scope.
-- **Timeline playback × Analytics** remains a separate dedicated audit. Do not claim identical filtered/timeline-visible/charted/exported scope behavior until it is complete.
-- **Generalized Network follow-up remains active.** Correct geographic relationship/event scoping, transparent/user-selected participant-place anchors, generalized playback highlighting, Force-Directed viewport fitting, and arrowhead termination remain separate bounded work.
+- **Generalized Search Passes 1–5 and the Search/Timeline/Analytics scope audit are complete.** Preserve generalized place semantics, neutral Results, canonical Evidence search, applied-scope Inspector dossiers, Analytics undated-record handling, export provenance, and attached count conditions as regression contracts.
+- **One bounded Search text follow-up remains.** `Any record text` does not yet guarantee inclusion of every generalized mapped semantic value; explicit fielded criteria such as Place already work.
+- **Generalized Network follow-up is the recommended next major task.** Audit geographic relationship/event scoping, transparent/user-selected participant-place anchors, generalized playback highlighting, and any remaining Source/Target assumptions before implementation.
+- **Network presentation/sizing should be a separate bounded pass after semantic correctness.** Tune node and cluster sizing, revisit viewport fitting and arrowhead termination, and evaluate a small Visualization-workspace controller that lets researchers adjust scaling without changing the underlying network semantics.
 - **Phase 3 Chart Builder remains deferred** until the consumer audits are stable. Build it from saved/generalized variables through structured human-readable controls and the scholarly-sentence/autocomplete direction rather than unrestricted natural-language prompting; retain the wide/transposed stock-price case as a required regression target.
 - **Repository-wide legacy/compatibility retirement audit remains required.** Retire only code proven unnecessary and preserve legitimate specialization. In particular, an older correspondence-oriented `customInspectorFields` path can collapse repeated duplicate labels through object construction while the authoritative generalized Evidence path preserves repeated values; do not patch or delete that path independently before the no-loss audit.
 - **Homepage redesign remains deferred, but the tutorial entry placeholder is now implemented.** The current branded Home retains its two primary data-entry CTAs plus a smaller disabled **Tutorial** button with **“Tutorial coming soon.”** The larger future Home/Data integration and tutorial-content/polish work remain separate visual/product passes.
@@ -581,7 +593,14 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
-| 2026-08-31 | `b7482cb` | Add homepage tutorial placeholder | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-09-07 | `1810a40` | Replace minimum weight with count conditions | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-09-07 | `656010d` | Align Search scope across Inspector and Analytics |  |
+| 2026-09-07 | `f1a6942` | Generalize Search evidence semantics |  |
+| 2026-09-07 | `2fd0084` | Generalize Search results presentation |  |
+| 2026-09-07 | `aabc8bb` | Generalize Search place semantics |  |
+| 2026-08-31 | `e697bd2` | Refine timeline slider interaction |  |
+| 2026-08-31 | `5e3289c` | Synchronize documentation through subject-aware evidence |  |
+| 2026-08-31 | `b7482cb` | Add homepage tutorial placeholder |  |
 | 2026-08-31 | `ef1c95f` | Project subject-aware Evidence into Inspector |  |
 | 2026-08-31 | `c7069da` | Add canonical subject-aware Evidence assertions |  |
 | 2026-08-31 | `8e69bb6` | Add subject-aware Evidence mapping |  |

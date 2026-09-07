@@ -32,7 +32,7 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-b7482cb — Add homepage tutorial placeholder
+1810a40 — Replace minimum weight with count conditions
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -134,6 +134,8 @@ Timeline is a compact bottom scrubber within Visualizations. It derives availabl
 ### 3.4 Explore and inspect
 
 Explore Your Data opens Advanced Search, organized around **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities**. Search uses an explicit draft/apply model: entering text or selecting a suggestion changes draft criteria until **Apply Filters** is pressed.
+
+Search now works directly with generalized mapped Places and canonical subject-aware Evidence. Results use neutral **Date / People or entities / Places** presentation rather than treating every record as a Source→Target route. Structured Required / Any-of / Excluded criteria can also carry an optional plain-language count condition attached to that specific criterion—for example, **This place has at least 20 connected places** or **People in these records have at least 40 connected entities**. The older global minimum correspondence/connection-weight control has been retired.
 
 The Inspector opens compactly after visualization node, edge, or cluster clicks. **Expand**, linked data, and deeper record navigation open the full evidence-dossier workspace while preserving the underlying visualization or Explore state.
 
@@ -510,24 +512,24 @@ loaded data
 Under that model:
 
 - **Data** defines what is loaded.
-- **Advanced Search** defines the applied/filtered research scope.
+- **Advanced Search** defines the applied/filtered research scope; Browse intentionally indexes the full loaded dataset.
 - **Visualizations** defines how that scope is displayed.
-- **Timeline** controls chronological visibility/playback within Visualizations.
-- **Analytics** charts the intended active scope, subject to the still-pending Timeline × Analytics audit.
-- **Inspector** remains selection-driven.
-- **Export** should identify whether it is exporting loaded, filtered, visible, selected, or charted data.
+- **Timeline** controls chronological range and playback visibility within Visualizations.
+- **Inspector** is selection-driven, but entity/place dossiers use the stable applied/filtered linked-record scope rather than shrinking as playback advances.
+- **Analytics** uses the Search/Timeline/playback scope for dated records while keeping genuinely undated records available by default; its local **Exclude undated records?** control can remove them explicitly.
+- **Export** identifies the relevant visible or charted output and records committed structured/capability Search filters in provenance where applicable.
 
-The exact Search coverage/scope and Timeline × Analytics contracts remain dedicated audits; documentation should not imply that every consumer applies those scopes identically until those audits are complete.
+These scope distinctions were audited and synchronized through `656010d`; do not treat applied/filtered, playback-visible, selected, charted, and exported data as interchangeable.
 
 ## 8. Known User-Facing Limitations
 
 Peridot is an active research prototype. It can preserve and expose useful incomplete records, but not every dataset supports every visualization. Network views require usable mapped entity relationships; map views require usable location information; Timeline and chart behavior depend on available temporal and analytic fields.
 
-Generalized Relations, Identity, Time, Places, Evidence, and Inspector participant attribution are now authoritative across the current import/runtime path. Compatibility projections still exist for older consumers and should be retired only after a repository-wide audit proves that their behavior has been replaced without loss.
+Generalized Relations, Identity, Time, Places, Evidence, Inspector participant attribution, and the principal Search place/Evidence/Results paths are now authoritative across the current import/runtime path. Compatibility projections still exist for older consumers and should be retired only after a repository-wide audit proves that their behavior has been replaced without loss.
 
-The generalized Network path still has follow-up work around geographic relationship/event scoping, transparent person-to-place anchoring, generalized playback highlighting, Force-Directed viewport fitting, and edge-arrowhead placement. Search place/facet semantics also remain less generalized than relationship semantics.
+The generalized Network path is the next major architecture project. Follow-up work includes geographic relationship/event scoping, transparent person-to-place anchoring, generalized playback highlighting, and a later presentation pass for Force-Directed viewport fitting, arrowhead placement, node/cluster sizing, and possible researcher-adjustable scaling controls.
 
-Two broader technical audits remain deferred: Search dataset coverage/scope and Timeline playback × Analytics scope. Until those audits are complete, interface language should distinguish loaded, applied/filtered, timeline-visible, selected, charted, and exported data rather than implying that every surface handles scope identically.
+One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 
 Phase 3 of the universal data work—the generalized Chart Builder—also remains deferred. The intended direction is to build charts from saved/generalized variables through structured, human-readable controls rather than unrestricted natural-language prompting.
 
