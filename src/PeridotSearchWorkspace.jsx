@@ -83,6 +83,7 @@ import {
 } from './peridotSearchResultHelpers.js';
 import { getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
 import { PeridotRecordStructure } from './PeridotRecordStructure.jsx';
+import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 
 const SHELL_CLASS = 'peridot-search-folio-shell';
 const CARD_CLASS = 'peridot-search-tab-card';
@@ -230,6 +231,7 @@ function buildBrowseIndexGroups(rows = [], evidenceRows = rows) {
   (Array.isArray(rows) ? rows : []).forEach((row) => {
     const sourcePlace = firstBrowseText(row, BROWSE_SOURCE_PLACE_FIELDS);
     const targetPlace = firstBrowseText(row, BROWSE_TARGET_PLACE_FIELDS);
+    const mappedPlaces = buildPeridotRecordStructure(row).places;
 
     getPeridotRowEntityParticipants(row).forEach((participant) => {
       addBrowseCount(people, participant);
@@ -237,8 +239,14 @@ function buildBrowseIndexGroups(rows = [], evidenceRows = rows) {
     getPeridotRowEntityRelationshipLabels(row).forEach((relationshipLabel) => {
       addBrowseCount(relationships, relationshipLabel, { example: relationshipLabel });
     });
-    addBrowseCount(places, sourcePlace, { source: true });
-    addBrowseCount(places, targetPlace, { target: true });
+    mappedPlaces.forEach((place) => {
+      const placeValue = browseText(place?.value);
+      if (!placeValue) return;
+      addBrowseCount(places, placeValue, {
+        source: Boolean(sourcePlace) && normalizeBrowsePairValue(placeValue) === normalizeBrowsePairValue(sourcePlace),
+        target: Boolean(targetPlace) && normalizeBrowsePairValue(placeValue) === normalizeBrowsePairValue(targetPlace),
+      });
+    });
 
     if (hasMeaningfulBrowsePair(sourcePlace, targetPlace)) {
       const routeLabel = `${sourcePlace} → ${targetPlace}`;
@@ -277,8 +285,8 @@ function buildBrowseIndexGroups(rows = [], evidenceRows = rows) {
       type: 'place',
       label: hasRoutes ? 'Places' : 'Locations',
       description: hasRoutes
-        ? 'Source and target place index.'
-        : 'Mapped location index for point or place records.',
+        ? 'All mapped place assertions; Source and Target counts appear where explicit route fields are available.'
+        : 'All mapped place assertions in the loaded records.',
       items: sortBrowseItems(places),
     },
     {

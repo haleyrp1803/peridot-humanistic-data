@@ -14,6 +14,12 @@ function asText(value) {
   return String(value ?? '').trim();
 }
 
+function mappedCoordinateNumber(value) {
+  if (value === null || value === undefined || value === '') return null;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 function uniqueEntries(entries = [], keyBuilder = (entry) => JSON.stringify(entry)) {
   const seen = new Set();
   return entries.filter((entry) => {
@@ -116,6 +122,8 @@ function buildPlaces(row, participants, observation) {
       value: asText(place?.label),
       subject: participantLabel(participants, place?.subjectParticipantIndex),
       subjectId: participantEntityId(participants, place?.subjectParticipantIndex),
+      latitude: mappedCoordinateNumber(place?.latitude),
+      longitude: mappedCoordinateNumber(place?.longitude),
     })).filter((entry) => entry.value)
     : [];
   if (generalized.length) return generalized;

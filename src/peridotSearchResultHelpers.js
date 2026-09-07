@@ -1,5 +1,6 @@
 import { getRowTimelineCapability, getRowTemporalSearchValues, getRowTemporalYears, getRowTemporalDisplayLabels } from './timelinePlaybackHelpers.js';
 import { getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
+import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 
 /*
  * Search-result helpers for Peridot's Advanced Search workspace.
@@ -143,6 +144,23 @@ function getTargetPerson(row) {
 
 function getSourcePlace(row) {
   return firstText(row, SOURCE_PLACE_FIELDS);
+}
+
+function getMappedPlaceEntries(row) {
+  return buildPeridotRecordStructure(row || {}).places || [];
+}
+
+function getMappedPlaceValues(row) {
+  return getMappedPlaceEntries(row)
+    .map((entry) => asText(entry?.value))
+    .filter(Boolean);
+}
+
+function hasMappedPlaceCoordinates(row) {
+  return getMappedPlaceEntries(row).some((entry) => (
+    Number.isFinite(entry?.latitude)
+    && Number.isFinite(entry?.longitude)
+  ));
 }
 
 function getLegacyRecordSignature(row) {
@@ -497,13 +515,14 @@ function getRowCapabilityState(row) {
   const participants = getPeridotRowEntityParticipants(row);
   const sourcePlace = firstText(row, SOURCE_PLACE_FIELDS);
   const targetPlace = firstText(row, TARGET_PLACE_FIELDS);
+  const mappedPlaces = getMappedPlaceValues(row);
   const hasPeople = participants.length > 0;
   const hasEntityRoute = rowHasPeridotEntityRelationship(row);
-  const hasPlaces = Boolean(sourcePlace || targetPlace);
+  const hasPlaces = mappedPlaces.length > 0;
   const hasPlaceRoute = Boolean(sourcePlace && targetPlace);
   const temporalCapability = getRowTimelineCapability(row);
   const hasDate = temporalCapability.hasTemporalEvidence;
-  const hasCoordinates = hasAnyCoordinate(row);
+  const hasCoordinates = hasAnyCoordinate(row) || hasMappedPlaceCoordinates(row);
   const hasEvidence = hasAnyEvidenceField(row);
   return {
     hasPeople,
@@ -592,7 +611,7 @@ function rowMatchesEntityPairCriterion(row, criterion) {
 
 function valuesForStructuredField(row, field, metadataField = '') {
   if (field === 'person') return getPeridotRowEntityParticipants(row);
-  if (field === 'place') return SOURCE_PLACE_FIELDS.concat(TARGET_PLACE_FIELDS).map((key) => row?.[key]);
+  if (field === 'place') return getMappedPlaceValues(row);
   if (field === 'routePlace') {
     return [compactRouteLabel(firstText(row, SOURCE_PLACE_FIELDS), firstText(row, TARGET_PLACE_FIELDS))];
   }
@@ -759,12 +778,11 @@ function buildMatchedFields(row, appliedFilters) {
     if (participant) matches.push({ label: 'Person / entity', value: participant });
   }
 
-  const placeMatch = findFirstFieldMatch(
-    row,
-    appliedFilters.placeFilter,
-    SOURCE_PLACE_FIELDS.concat(TARGET_PLACE_FIELDS),
-  );
-  if (placeMatch) matches.push({ label: `Place in ${placeMatch.label}`, value: placeMatch.value });
+  const placeQuery = asText(appliedFilters.placeFilter);
+  if (placeQuery) {
+    const placeMatch = getMappedPlaceEntries(row).find((entry) => includesNeedle(entry?.value, placeQuery));
+    if (placeMatch) matches.push({ label: `Place in ${asText(placeMatch.label) || 'mapped place'}`, value: asText(placeMatch.value) });
+  }
 
   const routePlaceQuery = asText(appliedFilters.routePlaceFilter);
   if (routePlaceQuery) {
@@ -876,8 +894,7 @@ export function buildPeridotSearchFacets(rows = [], options = {}) {
     const temporalYears = getRowTemporalYears(row);
     participants.forEach((participant) => addFacetCount(people, participant));
     getPeridotRowEntityRelationshipLabels(row).forEach((relationshipLabel) => addFacetCount(entityRelationships, relationshipLabel));
-    addFacetCount(places, sourcePlace);
-    addFacetCount(places, targetPlace);
+    getMappedPlaceValues(row).forEach((place) => addFacetCount(places, place));
     if (sourcePlace || targetPlace) addFacetCount(placeRoutes, compactRouteLabel(sourcePlace, targetPlace));
     Array.from(new Set(temporalYears)).forEach((year) => addFacetCount(years, String(year).slice(0, 4)));
     getSearchableEvidenceFieldEntries(row).forEach((entry) => {

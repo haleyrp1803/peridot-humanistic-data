@@ -1047,6 +1047,9 @@ function filterRowsBySearchAndEntity(rows, {
 
   return rows.filter((row) => {
     const placeRouteLabel = [row.sourceLoc, row.targetLoc].filter(Boolean).join(' → ');
+    const mappedPlaceValues = buildPeridotRecordStructure(row).places
+      .map((entry) => entry.value)
+      .filter(Boolean);
     const networkParticipants = getPeridotRowEntityParticipants(row);
     const networkRelationshipLabels = getPeridotRowEntityRelationshipLabels(row);
     const placeRouteSearchText = [
@@ -1073,7 +1076,7 @@ function filterRowsBySearchAndEntity(rows, {
       return false;
     }
 
-    if (placeQ && !matchesFilterTerm([row.sourceLoc, row.targetLoc], placeQ)) {
+    if (placeQ && !matchesFilterTerm(mappedPlaceValues, placeQ)) {
       return false;
     }
 
@@ -1106,8 +1109,8 @@ function buildSearchFilterSuggestions(rows) {
       if (label) people.add(label);
     });
 
-    [row.sourceLoc, row.targetLoc].forEach((value) => {
-      const label = asText(value);
+    buildPeridotRecordStructure(row).places.forEach((entry) => {
+      const label = asText(entry?.value);
       if (label) places.add(label);
     });
 
