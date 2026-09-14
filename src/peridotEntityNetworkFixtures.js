@@ -1,4 +1,4 @@
-import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, derivePeridotGeographicPersonAnchors, getPeridotGeographicAnchorRoles, getPeridotRowEntityParticipantEntries, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
+import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, derivePeridotGeographicPersonAnchors, derivePeridotGeographicRelationshipLineSegments, getPeridotGeographicAnchorRoles, getPeridotRowEntityParticipantEntries, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -217,6 +217,66 @@ export function runPeridotEntityNetworkSelfAudit() {
   const cristinaFrequencyAnchors = tiedFrequencyAnchors.filter((anchor) => anchor.personId === 'cristina-id');
   assert(cristinaFrequencyAnchors.length === 2, 'A true tie for most-frequent place should preserve every tied location rather than choosing one arbitrarily.');
   assert(cristinaFrequencyAnchors.every((anchor) => anchor.reasons.some((reason) => reason.type === 'most-frequent-place' && reason.tied)), 'Tied most-frequent anchors should expose their tie provenance.');
+
+  const explicitEventRow = {
+    id: 'event-1',
+    generalizedObservation: {
+      participants: [
+        { value: 'Maria', entityId: 'maria-id', role: 'sender' },
+        { value: 'Cristina', entityId: 'cristina-id', role: 'recipient' },
+      ],
+      places: [
+        { label: 'Florence', latitude: 43.77, longitude: 11.25, role: 'Letter sent from', subjectParticipantIndex: 0 },
+        { label: 'Graz', latitude: 47.07, longitude: 15.44, role: 'Letter sent to', subjectParticipantIndex: 1 },
+      ],
+      relationship: { type: 'letter', direction: 'directed' },
+    },
+  };
+  const explicitEventSemantics = derivePeridotEntityNetworkSemantics([explicitEventRow]);
+  const fallbackLocations = [
+    { person: 'Maria', personId: 'maria-id', label: 'Rome', latitude: 41.9, longitude: 12.5, role: 'Residence' },
+    { person: 'Maria', personId: 'maria-id', label: 'Rome', latitude: 41.9, longitude: 12.5, role: 'Residence' },
+    { person: 'Cristina', personId: 'cristina-id', label: 'Paris', latitude: 48.86, longitude: 2.35, role: 'Residence' },
+    { person: 'Cristina', personId: 'cristina-id', label: 'Paris', latitude: 48.86, longitude: 2.35, role: 'Residence' },
+  ];
+  const explicitEventSegments = derivePeridotGeographicRelationshipLineSegments(
+    explicitEventSemantics.relationships,
+    fallbackLocations,
+    { lineAnchorRule: 'event-location', fallbackRule: 'most-frequent' },
+  );
+  assert(explicitEventSegments.length === 1, 'One explicitly located relationship event should create one geographic line segment.');
+  assert(explicitEventSegments[0]?.sourceLocation?.label === 'Florence' && explicitEventSegments[0]?.targetLocation?.label === 'Graz', 'Explicit participant-specific event geography should override representative fallback anchors.');
+  assert(explicitEventSegments[0]?.geographicSources?.includes('connection-event'), 'Explicit event line segments should preserve their geographic provenance.');
+
+  const incompleteEventRow = {
+    id: 'event-2',
+    generalizedObservation: {
+      participants: [
+        { value: 'Maria', entityId: 'maria-id', role: 'sender' },
+        { value: 'Cristina', entityId: 'cristina-id', role: 'recipient' },
+      ],
+      places: [
+        { label: 'Vienna', latitude: 48.21, longitude: 16.37, role: 'Letter sent from', subjectParticipantIndex: 0 },
+      ],
+      relationship: { type: 'letter', direction: 'directed' },
+    },
+  };
+  const incompleteSemantics = derivePeridotEntityNetworkSemantics([incompleteEventRow]);
+  const fallbackSegments = derivePeridotGeographicRelationshipLineSegments(
+    incompleteSemantics.relationships,
+    fallbackLocations,
+    { lineAnchorRule: 'event-location', fallbackRule: 'most-frequent' },
+  );
+  assert(fallbackSegments.length === 1, 'Incomplete event geography should use one explicit fallback pair rather than multiplying anchors.');
+  assert(fallbackSegments[0]?.sourceLocation?.label === 'Rome' && fallbackSegments[0]?.targetLocation?.label === 'Paris', 'Fallback geography should apply to both endpoints together when the event pair is incomplete.');
+  assert(fallbackSegments[0]?.geographicSources?.includes('fallback:most-frequent'), 'Fallback line segments should preserve fallback provenance.');
+
+  const roleSegments = derivePeridotGeographicRelationshipLineSegments(
+    explicitEventSemantics.relationships,
+    fallbackLocations,
+    { lineAnchorRule: 'role:Residence', fallbackRule: 'none' },
+  );
+  assert(roleSegments.length === 1 && roleSegments[0]?.sourceLocation?.label === 'Rome' && roleSegments[0]?.targetLocation?.label === 'Paris', 'A selected relationship-line place role should resolve one representative place per endpoint.');
 
   return {
     multipartEdgeCount: multipart.relationships.length,

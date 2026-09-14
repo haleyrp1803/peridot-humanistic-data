@@ -308,6 +308,154 @@ function geographicAnchorCoordinateKey(location = {}) {
   return `${Number(location.latitude)}__${Number(location.longitude)}`;
 }
 
+
+function normalizeGeographicLineAnchorRule(value) {
+  const normalized = asText(value);
+  if (!normalized) return 'most-frequent';
+  if (normalized === 'event-location' || normalized === 'most-frequent' || normalized === 'none') return normalized;
+  return normalized.startsWith('role:') ? normalized : `role:${normalized}`;
+}
+
+function geographicLineRepresentativeAnchors(locations = [], rule = 'most-frequent') {
+  const normalizedRule = normalizeGeographicLineAnchorRule(rule);
+  const representatives = new Map();
+  if (normalizedRule === 'none' || normalizedRule === 'event-location') return representatives;
+
+  const roleKey = normalizedRule.startsWith('role:')
+    ? normalizedRule.slice(5).trim().toLowerCase()
+    : '';
+  const people = new Map();
+
+  (Array.isArray(locations) ? locations : []).forEach((location) => {
+    const personKey = geographicAnchorPersonKey(location);
+    const coordinateKey = geographicAnchorCoordinateKey(location);
+    if (!personKey || !coordinateKey) return;
+    if (!people.has(personKey)) people.set(personKey, new Map());
+    const placeMap = people.get(personKey);
+    if (!placeMap.has(coordinateKey)) {
+      placeMap.set(coordinateKey, {
+        personKey,
+        person: asText(location.person) || personKey,
+        personId: asText(location.personId),
+        label: asText(location.label),
+        latitude: Number(location.latitude),
+        longitude: Number(location.longitude),
+        totalCount: 0,
+        roleCount: 0,
+      });
+    }
+    const place = placeMap.get(coordinateKey);
+    place.totalCount += 1;
+    if (roleKey && asText(location.role).toLowerCase() === roleKey) place.roleCount += 1;
+  });
+
+  people.forEach((placeMap, personKey) => {
+    const candidates = Array.from(placeMap.values())
+      .map((place) => ({ ...place, score: roleKey ? place.roleCount : place.totalCount }))
+      .filter((place) => place.score > 0)
+      .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
+    if (!candidates.length) return;
+    const maximum = candidates[0].score;
+    const tied = candidates.filter((candidate) => candidate.score === maximum);
+    if (tied.length !== 1) return;
+    representatives.set(personKey, tied[0]);
+  });
+
+  return representatives;
+}
+
+function geographicLocationMatchesEndpoint(location, endpointId, endpointLabel) {
+  const normalizedEndpointId = asText(endpointId);
+  if (normalizedEndpointId) return asText(location.personId) === normalizedEndpointId;
+  return asText(location.person) === asText(endpointLabel);
+}
+
+function geographicRelationshipEventPair(row, relationship) {
+  const rowLocations = locationsFromRow(row);
+  const sourceCandidates = rowLocations.filter((location) => geographicLocationMatchesEndpoint(location, relationship.sourceId, relationship.source));
+  const targetCandidates = rowLocations.filter((location) => geographicLocationMatchesEndpoint(location, relationship.targetId, relationship.target));
+  if (sourceCandidates.length !== 1 || targetCandidates.length !== 1) return null;
+  return { source: sourceCandidates[0], target: targetCandidates[0] };
+}
+
+function geographicLineSegmentKey(relationshipId, source, target) {
+  return [relationshipId, geographicAnchorCoordinateKey(source), geographicAnchorCoordinateKey(target)].join('::');
+}
+
+/**
+ * Project semantic relationships into geographic line segments without
+ * multiplying one relationship across every visible anchor combination.
+ */
+export function derivePeridotGeographicRelationshipLineSegments(relationships = [], locations = [], options = {}) {
+  const lineAnchorRule = normalizeGeographicLineAnchorRule(options?.lineAnchorRule || 'event-location');
+  const fallbackRule = normalizeGeographicLineAnchorRule(options?.fallbackRule || 'most-frequent');
+  const primaryRepresentatives = geographicLineRepresentativeAnchors(locations, lineAnchorRule);
+  const fallbackRepresentatives = geographicLineRepresentativeAnchors(locations, fallbackRule);
+  const segmentMap = new Map();
+
+  const addSegment = (relationship, sourceLocation, targetLocation, rows, geographicSource) => {
+    if (!sourceLocation || !targetLocation) return;
+    const key = geographicLineSegmentKey(relationship.id, sourceLocation, targetLocation);
+    if (!segmentMap.has(key)) {
+      segmentMap.set(key, {
+        ...relationship,
+        id: `${relationship.id}:geo:${geographicAnchorCoordinateKey(sourceLocation)}:${geographicAnchorCoordinateKey(targetLocation)}`,
+        semanticEdgeId: relationship.id,
+        count: 0,
+        rows: [],
+        sourceLocation: { label: asText(sourceLocation.label), latitude: Number(sourceLocation.latitude), longitude: Number(sourceLocation.longitude) },
+        targetLocation: { label: asText(targetLocation.label), latitude: Number(targetLocation.latitude), longitude: Number(targetLocation.longitude) },
+        geographicSources: new Set(),
+      });
+    }
+    const segment = segmentMap.get(key);
+    const contributionRows = Array.isArray(rows) ? rows.filter(Boolean) : [];
+    segment.count += contributionRows.length || 1;
+    contributionRows.forEach((row) => {
+      if (!segment.rows.includes(row)) segment.rows.push(row);
+    });
+    segment.geographicSources.add(geographicSource);
+  };
+
+  (Array.isArray(relationships) ? relationships : []).forEach((relationship) => {
+    const sourceKey = asText(relationship.sourceId) || asText(relationship.source);
+    const targetKey = asText(relationship.targetId) || asText(relationship.target);
+    const relationshipRows = Array.isArray(relationship.rows) && relationship.rows.length ? relationship.rows : [null];
+
+    if (lineAnchorRule !== 'event-location') {
+      addSegment(
+        relationship,
+        primaryRepresentatives.get(sourceKey),
+        primaryRepresentatives.get(targetKey),
+        relationshipRows,
+        `anchor:${lineAnchorRule}`,
+      );
+      return;
+    }
+
+    relationshipRows.forEach((row) => {
+      const eventPair = row ? geographicRelationshipEventPair(row, relationship) : null;
+      if (eventPair) {
+        addSegment(relationship, eventPair.source, eventPair.target, [row], 'connection-event');
+        return;
+      }
+      addSegment(
+        relationship,
+        fallbackRepresentatives.get(sourceKey),
+        fallbackRepresentatives.get(targetKey),
+        row ? [row] : [],
+        `fallback:${fallbackRule}`,
+      );
+    });
+  });
+
+  return Array.from(segmentMap.values()).map((segment) => ({
+    ...segment,
+    geographicSources: Array.from(segment.geographicSources),
+    dates: Array.from(new Set((segment.rows || []).map((row) => asText(getRowPrimaryTemporalDisplay(row))).filter(Boolean))),
+  }));
+}
+
 /**
  * Return the explicit place roles currently available for person/entity anchors.
  * Role matching is case-insensitive, while the first source spelling is retained

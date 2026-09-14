@@ -60,7 +60,7 @@ import {
   revokeObjectUrl,
 } from './exportHelpers';
 import { buildForcePersonPositions } from './personForceLayoutHelpers';
-import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, getPeridotGeographicAnchorRoles, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships } from './peridotEntityNetwork.js';
+import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, derivePeridotGeographicPersonAnchors, derivePeridotGeographicRelationshipLineSegments, getPeridotGeographicAnchorRoles, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships } from './peridotEntityNetwork.js';
 import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespondents';
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
@@ -899,6 +899,108 @@ function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', sem
     peopleInUse.add(edge.targetId || edge.target);
   });
 
+  if (layoutMode === 'geographic') {
+    const anchorSettings = semanticOptions?.geographicAnchorSettings || {
+      selectedRoles: [],
+      includeMostFrequent: true,
+    };
+    const relationshipLineSettings = semanticOptions?.geographicRelationshipLineSettings || {
+      lineAnchorRule: 'event-location',
+      fallbackRule: 'most-frequent',
+    };
+    const resolvedAnchors = derivePeridotGeographicPersonAnchors(locations, anchorSettings);
+    const degreeByEntity = new Map();
+    filteredEdgeRecords.forEach((edge) => {
+      const sourceKey = edge.sourceId || edge.source;
+      const targetKey = edge.targetId || edge.target;
+      degreeByEntity.set(sourceKey, (degreeByEntity.get(sourceKey) || 0) + edge.count);
+      degreeByEntity.set(targetKey, (degreeByEntity.get(targetKey) || 0) + edge.count);
+    });
+
+    const people = resolvedAnchors
+      .filter((anchor) => peopleInUse.has(anchor.personKey))
+      .map((anchor) => {
+        const projected = projectToSvg(anchor.longitude, anchor.latitude, width, height);
+        return {
+          id: anchor.id,
+          entityKey: anchor.personKey,
+          entityId: anchor.personId || '',
+          label: canonicalPersonLabel(anchor.personId, anchor.person || anchor.personKey),
+          appearances: degreeByEntity.get(anchor.personKey) || 0,
+          locationCounts: new Map(),
+          x: projected.x,
+          y: projected.y,
+          anchorLabel: anchor.label,
+          anchorLatitude: anchor.latitude,
+          anchorLongitude: anchor.longitude,
+          anchorReasons: anchor.reasons || [],
+          anchorRoles: anchor.roles || [],
+          anchorOccurrenceCount: anchor.occurrenceCount || 0,
+          isMostFrequentPlace: Boolean(anchor.isMostFrequentPlace),
+          isMappable: true,
+          degree: degreeByEntity.get(anchor.personKey) || 0,
+          radius: 6,
+        };
+      });
+
+    const radiusForPersonDegree = createAdaptiveNodeRadiusScale(
+      people.map((person) => person.degree),
+      5.5,
+      34
+    );
+    people.forEach((person) => {
+      person.radius = radiusForPersonDegree(person.degree);
+    });
+
+    const nodeByEntityCoordinate = new Map();
+    people.forEach((person) => {
+      nodeByEntityCoordinate.set(
+        `${person.entityKey}::${Number(person.anchorLatitude)}__${Number(person.anchorLongitude)}`,
+        person,
+      );
+    });
+
+    const geographicSegments = derivePeridotGeographicRelationshipLineSegments(
+      filteredEdgeRecords,
+      locations,
+      relationshipLineSettings,
+    );
+    const edges = geographicSegments.map((edge) => {
+      const sourcePoint = projectToSvg(edge.sourceLocation.longitude, edge.sourceLocation.latitude, width, height);
+      const targetPoint = projectToSvg(edge.targetLocation.longitude, edge.targetLocation.latitude, width, height);
+      const sourceKey = edge.sourceId || edge.source;
+      const targetKey = edge.targetId || edge.target;
+      const sourceNode = nodeByEntityCoordinate.get(`${sourceKey}::${Number(edge.sourceLocation.latitude)}__${Number(edge.sourceLocation.longitude)}`);
+      const targetNode = nodeByEntityCoordinate.get(`${targetKey}::${Number(edge.targetLocation.latitude)}__${Number(edge.targetLocation.longitude)}`);
+      const sourceLabel = canonicalPersonLabel(edge.sourceId, edge.source);
+      const targetLabel = canonicalPersonLabel(edge.targetId, edge.target);
+      const directionalGlyph = edge.direction === 'directed' ? '→' : '—';
+      return {
+        ...edge,
+        sourceLabel,
+        targetLabel,
+        sourceEntityId: edge.sourceId || '',
+        targetEntityId: edge.targetId || '',
+        sourceNodeId: sourceNode?.id || sourceKey,
+        targetNodeId: targetNode?.id || targetKey,
+        path: curvedPath(sourcePoint, targetPoint, 0.12),
+        width: computePersonEdgeWidth(edge.count),
+        letterMetadata: edge.rows,
+        samplePairs: [`${sourceLabel} ${directionalGlyph} ${targetLabel}`],
+        sources: [sourceLabel],
+        targets: [targetLabel],
+        sourceAnchorLabel: edge.sourceLocation.label,
+        targetAnchorLabel: edge.targetLocation.label,
+        sourceX: sourcePoint.x,
+        sourceY: sourcePoint.y,
+        targetX: targetPoint.x,
+        targetY: targetPoint.y,
+      };
+    });
+
+    return { nodes: people, edges };
+  }
+
   let people = Array.from(personMap.values())
     .filter((person) => peopleInUse.has(person.id))
     .map((person) => {
@@ -1655,13 +1757,13 @@ function SidebarToggle({ side, open, onToggle }) {
 
 function buildNodeHoverSummary(node, viewMode) {
   if (node.isCluster) {
-    const singularLabel = viewMode === 'geographic' ? 'place' : 'person';
-    const pluralLabel = viewMode === 'geographic' ? 'places' : 'people';
+    const singularLabel = viewMode === 'geographic' ? 'node' : 'person';
+    const pluralLabel = viewMode === 'geographic' ? 'nodes' : 'people';
     return `${node.clusterSize} ${node.clusterSize === 1 ? singularLabel : pluralLabel}`;
   }
 
   return viewMode === 'geographic'
-    ? `Weighted degree: ${node.degree}`
+    ? `${node.placeLabel || node.anchorLabel || 'Mapped location'} · Weighted connections: ${node.degree}`
     : `Weighted connections: ${node.degree}`;
 }
 
@@ -2055,7 +2157,18 @@ function SvgMap({
       return buildDenseForceNetworkView(nodes, edges, width, height, clampScale);
     }
 
-    return buildDefaultMapView(nodes, width, height, clampScale);
+    const geographicEdgeEndpoints = edges.flatMap((edge) => {
+      const points = [];
+      if (Number.isFinite(edge.sourceX) && Number.isFinite(edge.sourceY)) {
+        points.push({ x: edge.sourceX, y: edge.sourceY, radius: 0, degree: 0 });
+      }
+      if (Number.isFinite(edge.targetX) && Number.isFinite(edge.targetY)) {
+        points.push({ x: edge.targetX, y: edge.targetY, radius: 0, degree: 0 });
+      }
+      return points;
+    });
+
+    return buildDefaultMapView([...nodes, ...geographicEdgeEndpoints], width, height, clampScale);
   }, [edges, initialFocusStrategy, nodes, width, height]);
 
   const basemapPathGenerator = useMemo(() => geoPath(projection), [projection]);
@@ -3034,8 +3147,8 @@ function LegacyD3MapStage({
           showLabels={showLabels}
           activeAnimationEdgeId={activeAnimationEdgeId}
           activeAnimationNodeIds={activeAnimationNodeIds}
-          clusterSingularLabel={viewMode === 'geographic' ? 'place' : 'person'}
-          clusterPluralLabel={viewMode === 'geographic' ? 'places' : 'people'}
+          clusterSingularLabel={viewMode === 'geographic' ? 'node' : 'person'}
+          clusterPluralLabel={viewMode === 'geographic' ? 'nodes' : 'people'}
           showBasemap={viewMode === 'geographic' || personLayoutMode === 'geographic'}
           showGeographicBackdrop={viewMode === 'geographic' || personLayoutMode === 'geographic'}
           onBlankClick={handleBlankMapClick}
@@ -3214,7 +3327,7 @@ export default function EuropeNetworkMapApp() {
   // as full workspace modes. Search and Inspector remain internal/compatibility
   // routes because the simplified product menu now presents a smaller stack.
   const [workspaceMode, setWorkspaceMode] = useState(DEFAULT_PERIDOT_WORKSPACE_MODE);
-  const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('place-map');
+  const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('geographic-map');
   const [isTutorialActive, setIsTutorialActive] = useState(false);
   const [tutorialStepIndex, setTutorialStepIndex] = useState(PERIDOT_TUTORIAL_START_INDEX);
   const tutorialReturnFocusRef = useRef(null);
@@ -3337,6 +3450,14 @@ export default function EuropeNetworkMapApp() {
   const [geographicAnchorSettings, setGeographicAnchorSettings] = useState({
     selectedRoles: [],
     includeMostFrequent: true,
+  });
+  const [geographicRelationshipLineSettings, setGeographicRelationshipLineSettings] = useState({
+    lineAnchorRule: 'event-location',
+    fallbackRule: 'most-frequent',
+  });
+  const [geographicNodeLabelSettings, setGeographicNodeLabelSettings] = useState({
+    showPlaces: true,
+    showEntities: false,
   });
   const [analyticsChartType, setAnalyticsChartType] = useState(DEFAULT_ANALYTICS_STATE.chartType); const [analyticsBarGroupBy, setAnalyticsBarGroupBy] = useState(DEFAULT_ANALYTICS_STATE.barGroupBy); const [analyticsTopN, setAnalyticsTopN] = useState(DEFAULT_ANALYTICS_STATE.topN);
 
@@ -3508,12 +3629,11 @@ export default function EuropeNetworkMapApp() {
   );
   const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(searchRecords), [searchRecords]);
 
-  // Geographic person-map anchor controls intentionally derive their available
-  // place roles from the full mapped Search dataset rather than from the current
-  // Timeline/Search/playback scope. A researcher's anchor choices should stay
-  // stable while they filter or animate the visualization. Pass 2B1 records
-  // these settings as view state only; graph placement is activated in the next
-  // bounded network pass.
+  // Geographic person-map controls intentionally derive their available place
+  // roles from the full mapped Search dataset rather than the current
+  // Timeline/Search/playback scope. The choices remain stable while the
+  // researcher filters or animates the visualization; the resolved geographic
+  // anchors themselves still come from the current visualization row scope.
   const geographicAnchorDatasetSemantics = useMemo(
     () => derivePeridotEntityNetworkSemantics(searchRecords, { entityLabelById: entityDisplayLabelById }),
     [searchRecords, entityDisplayLabelById]
@@ -3529,6 +3649,11 @@ export default function EuropeNetworkMapApp() {
   // visualization override so settings cannot leak from one upload into another.
   useEffect(() => {
     setGeographicAnchorSettings({ selectedRoles: [], includeMostFrequent: true });
+    setGeographicRelationshipLineSettings({
+      lineAnchorRule: 'event-location',
+      fallbackRule: 'most-frequent',
+    });
+    setGeographicNodeLabelSettings({ showPlaces: true, showEntities: false });
   }, [searchRecords]);
 
   const setGeographicAnchorRoleEnabled = (role, enabled) => {
@@ -3536,8 +3661,15 @@ export default function EuropeNetworkMapApp() {
     if (!normalizedRole) return;
     setGeographicAnchorSettings((current) => {
       const selectedRoles = new Set(current.selectedRoles || []);
-      if (enabled) selectedRoles.add(normalizedRole);
-      else selectedRoles.delete(normalizedRole);
+      if (enabled) {
+        selectedRoles.add(normalizedRole);
+      } else {
+        const wouldRemoveLastAnchorRule = selectedRoles.size === 1
+          && selectedRoles.has(normalizedRole)
+          && !current.includeMostFrequent;
+        if (wouldRemoveLastAnchorRule) return current;
+        selectedRoles.delete(normalizedRole);
+      }
       return { ...current, selectedRoles: Array.from(selectedRoles) };
     });
   };
@@ -3766,10 +3898,18 @@ export default function EuropeNetworkMapApp() {
   // workspace. A lightweight semantic graph is sufficient for off-stage
   // Inspector/export fallbacks; geometry is derived only for the active person
   // visualization.
-  const isPersonNetworkGeometryActive = workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
-    && ['people-network', 'force-directed'].includes(visualizationsWorkspacePanel)
-    && viewMode === 'person';
-  const personGraphLayoutMode = isPersonNetworkGeometryActive ? personLayoutMode : 'semantic';
+  const isGeographicMapGeometryActive = workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
+    && visualizationsWorkspacePanel === 'geographic-map'
+    && viewMode === 'geographic';
+  const isForceNetworkGeometryActive = workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
+    && visualizationsWorkspacePanel === 'force-directed'
+    && viewMode === 'person'
+    && personLayoutMode === 'force';
+  const personGraphLayoutMode = isGeographicMapGeometryActive
+    ? 'geographic'
+    : isForceNetworkGeometryActive
+      ? 'force'
+      : 'semantic';
   const personGraph = useMemo(
     () => buildPersonGraph(
       filteredRowsByTime,
@@ -3778,12 +3918,44 @@ export default function EuropeNetworkMapApp() {
       personGraphLayoutMode,
       '',
       personGraphLayoutMode === 'geographic'
-        ? { relationshipRows: geographicRelationshipRows, locationRows: filteredRowsByTime, entityLabelById: entityDisplayLabelById }
+        ? {
+            relationshipRows: geographicRelationshipRows,
+            locationRows: filteredRowsByTime,
+            entityLabelById: entityDisplayLabelById,
+            geographicAnchorSettings,
+            geographicRelationshipLineSettings,
+          }
         : { entityLabelById: entityDisplayLabelById }
     ),
-    [filteredRowsByTime, geographicRelationshipRows, mapViewportSize.width, mapViewportSize.height, personGraphLayoutMode, entityDisplayLabelById]
+    [filteredRowsByTime, geographicRelationshipRows, mapViewportSize.width, mapViewportSize.height, personGraphLayoutMode, entityDisplayLabelById, geographicAnchorSettings, geographicRelationshipLineSettings]
   );
-  const graph = viewMode === 'geographic' ? geographicGraph : personGraph;
+  const unifiedGeographicGraph = useMemo(() => {
+    // Generalized entity/place semantics are authoritative whenever they can
+    // produce a geographic projection. The older place-route graph remains a
+    // compatibility fallback for point/site and route-only datasets that do
+    // not yet expose participant-owned geographic assertions.
+    const baseGraph = (personGraphLayoutMode === 'geographic' && (personGraph.nodes.length || personGraph.edges.length))
+      ? personGraph
+      : geographicGraph;
+    const showPlaces = Boolean(geographicNodeLabelSettings.showPlaces);
+    const showEntities = Boolean(geographicNodeLabelSettings.showEntities);
+    const nodes = baseGraph.nodes.map((node) => {
+      const entityLabel = String(node.entityKey || node.entityId ? (node.label || '') : '').trim();
+      const placeLabel = String(node.anchorLabel || (!entityLabel ? node.label : '') || '').trim();
+      const labelParts = [];
+      if (showEntities && entityLabel) labelParts.push(entityLabel);
+      if (showPlaces && placeLabel && !labelParts.includes(placeLabel)) labelParts.push(placeLabel);
+      return {
+        ...node,
+        entityLabel,
+        placeLabel,
+        label: labelParts.join(' · '),
+        entityType: entityLabel ? 'person' : 'place',
+      };
+    });
+    return { ...baseGraph, nodes };
+  }, [personGraph, geographicGraph, personGraphLayoutMode, geographicNodeLabelSettings]);
+  const graph = viewMode === 'person' && personLayoutMode === 'force' ? personGraph : unifiedGeographicGraph;
 
   // Playback visibility and visualization capability are intentionally separate.
   // Co-current playback can legitimately reach a moment with zero active rows;
@@ -3903,8 +4075,11 @@ export default function EuropeNetworkMapApp() {
   }, [analyticsAvailabilityRows.length, availabilityAnalyticsFields, availabilityEntityNetworkSemantics, availabilityGeographicEntityNetworkSemantics, availabilityFilteredAggregatedEdges.length, filteredRowsForActiveFilters.length, places.length]);
   const viewResetKey = useMemo(() => {
     const layoutKey = viewMode === 'person' ? `${viewMode}:${personLayoutMode}` : viewMode;
-    return `${layoutKey}:${timelineMode}:${rangeStart}:${rangeEnd}`;
-  }, [viewMode, personLayoutMode, timelineMode, rangeStart, rangeEnd]);
+    const anchorKey = viewMode === 'person' && personLayoutMode === 'geographic'
+      ? `${[...(geographicAnchorSettings.selectedRoles || [])].sort().join('|')}:${geographicAnchorSettings.includeMostFrequent ? 'mf' : 'no-mf'}:${geographicRelationshipLineSettings.lineAnchorRule}:${geographicRelationshipLineSettings.fallbackRule}`
+      : '';
+    return `${layoutKey}:${timelineMode}:${rangeStart}:${rangeEnd}:${anchorKey}`;
+  }, [viewMode, personLayoutMode, timelineMode, rangeStart, rangeEnd, geographicAnchorSettings, geographicRelationshipLineSettings]);
 
   // ------------------------------------------------------------
   // Selection and inspector derivations
@@ -4511,6 +4686,7 @@ export default function EuropeNetworkMapApp() {
       setIsColumnMappingModalOpen(false);
       setIsSampleChooserOpen(false);
       resetActiveDataInteractionState();
+      setVisualizationsWorkspacePanel('geographic-map');
       setViewMode('geographic');
       setPersonLayoutMode('geographic');
       setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
@@ -4758,6 +4934,7 @@ export default function EuropeNetworkMapApp() {
         setColumnMappingStaging(null);
         setIsColumnMappingModalOpen(false);
         resetActiveDataInteractionState();
+        setVisualizationsWorkspacePanel('geographic-map');
         setViewMode('geographic');
         setPersonLayoutMode('geographic');
         setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
@@ -4835,6 +5012,7 @@ export default function EuropeNetworkMapApp() {
       setColumnMappingStaging(null);
       setIsColumnMappingModalOpen(false);
       resetActiveDataInteractionState();
+      setVisualizationsWorkspacePanel('geographic-map');
       setViewMode('geographic');
       setPersonLayoutMode('geographic');
       setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
@@ -5240,7 +5418,7 @@ export default function EuropeNetworkMapApp() {
   };
 
   const openVisualizationsWorkspace = () => {
-    setVisualizationsWorkspacePanel('place-map');
+    setVisualizationsWorkspacePanel('geographic-map');
     setViewMode('geographic');
     setPersonLayoutMode('geographic');
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
@@ -5253,17 +5431,9 @@ export default function EuropeNetworkMapApp() {
     setIsSidePanelOpen(false);
   };
 
-  const selectPlaceMapVisualization = () => {
-    setVisualizationsWorkspacePanel('place-map');
+  const selectGeographicMapVisualization = () => {
+    setVisualizationsWorkspacePanel('geographic-map');
     setViewMode('geographic');
-    setPersonLayoutMode('geographic');
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
-    setIsSidePanelOpen(false);
-  };
-
-  const selectPeopleNetworkVisualization = () => {
-    setVisualizationsWorkspacePanel('people-network');
-    setViewMode('person');
     setPersonLayoutMode('geographic');
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
     setIsSidePanelOpen(false);
@@ -5440,8 +5610,7 @@ export default function EuropeNetworkMapApp() {
     personLayoutMode,
     visualizationsWorkspacePanel,
     analyticsWorkspaceProps,
-    onSelectPlaceMap: selectPlaceMapVisualization,
-    onSelectPeopleNetwork: selectPeopleNetworkVisualization,
+    onSelectGeographicMap: selectGeographicMapVisualization,
     onSelectForceDirected: selectForceDirectedVisualization,
     onOpenAnalytics: openAnalyticsWorkspace,
     onOpenChartVisualization: openChartVisualization,
@@ -5471,10 +5640,29 @@ export default function EuropeNetworkMapApp() {
       includeMostFrequent: geographicAnchorSettings.includeMostFrequent,
       defaultSelectedRoles: [],
       defaultIncludeMostFrequent: true,
+      lineAnchorRule: geographicRelationshipLineSettings.lineAnchorRule,
+      lineFallbackRule: geographicRelationshipLineSettings.fallbackRule,
+      showPlaceLabels: geographicNodeLabelSettings.showPlaces,
+      showEntityLabels: geographicNodeLabelSettings.showEntities,
+      hasEntityGeography: Boolean(availabilityGeographicEntityNetworkSemantics.locations.length || availabilityGeographicEntityNetworkSemantics.relationships.length),
+      onTogglePlaceLabels: (enabled) => setGeographicNodeLabelSettings((current) => ({ ...current, showPlaces: Boolean(enabled) })),
+      onToggleEntityLabels: (enabled) => setGeographicNodeLabelSettings((current) => ({ ...current, showEntities: Boolean(enabled) })),
       onToggleRole: setGeographicAnchorRoleEnabled,
-      onToggleMostFrequent: (enabled) => setGeographicAnchorSettings((current) => ({
+      onToggleMostFrequent: (enabled) => setGeographicAnchorSettings((current) => {
+        const includeMostFrequent = Boolean(enabled);
+        if (!includeMostFrequent && !(current.selectedRoles || []).length) return current;
+        return {
+          ...current,
+          includeMostFrequent,
+        };
+      }),
+      onSetLineAnchorRule: (lineAnchorRule) => setGeographicRelationshipLineSettings((current) => ({
         ...current,
-        includeMostFrequent: Boolean(enabled),
+        lineAnchorRule,
+      })),
+      onSetLineFallbackRule: (fallbackRule) => setGeographicRelationshipLineSettings((current) => ({
+        ...current,
+        fallbackRule,
       })),
       onReset: resetGeographicAnchorSettings,
     },

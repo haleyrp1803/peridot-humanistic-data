@@ -31,27 +31,13 @@ import { createPortal } from 'react-dom';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 import { VisualizationTimelineScrubber } from './timelinePlaybackComponents.jsx';
-import { ANALYTICS_CHART_DEFINITIONS } from './analyticsConfig.js';
 
 const VISUALIZATION_TOOLS = Object.freeze({
-  LOCATION_MAP: 'location-map',
-  ENTITY_NETWORK: 'entity-network',
+  GEOGRAPHIC_MAP: 'geographic-map',
   FORCE_NETWORK: 'force-network',
   CHART_WORKSPACE: 'chart-workspace',
   CAPABILITY_SUMMARY: 'capability-summary',
 });
-
-/*
- * Chart menu bridge
- * -----------------
- * Visualizations exposes each Analytics chart as a top-header menu item, while
- * `AnalyticsPanel.jsx` owns the actual chart controls and render stage. The
- * `chart:<type>` tool key keeps the workspace menu decoupled from Analytics
- * internals but still lets a selected menu item open the correct chart type.
- */
-function chartToolKey(chartType) {
-  return `chart:${chartType}`;
-}
 
 function chartTypeFromToolKey(toolKey) {
   return String(toolKey || '').startsWith('chart:') ? String(toolKey).slice(6) : null;
@@ -186,8 +172,9 @@ function FloatingVisualizationMenu({
   );
 }
 
-function PeopleMapSettingsPanel({ controls }) {
+function GeographicMapSettingsPanel({ controls }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [relationshipLinesOpen, setRelationshipLinesOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
 
   if (!controls) return null;
@@ -195,6 +182,22 @@ function PeopleMapSettingsPanel({ controls }) {
   const availableRoles = Array.isArray(controls.availableRoles) ? controls.availableRoles : [];
   const selectedRoles = new Set(Array.isArray(controls.selectedRoles) ? controls.selectedRoles : []);
   const includeMostFrequent = Boolean(controls.includeMostFrequent);
+  const lineAnchorRule = controls.lineAnchorRule || 'event-location';
+  const lineFallbackRule = controls.lineFallbackRule || 'most-frequent';
+  const showPlaceLabels = controls.showPlaceLabels !== false;
+  const showEntityLabels = Boolean(controls.showEntityLabels);
+  const hasEntityGeography = Boolean(controls.hasEntityGeography);
+  const lineRuleOptions = [
+    { value: 'event-location', label: 'Where the connection event occurred' },
+    { value: 'most-frequent', label: 'Most frequent place' },
+    ...availableRoles.map((role) => ({ value: `role:${role}`, label: role })),
+  ];
+  const fallbackRuleOptions = [
+    { value: 'none', label: 'Do not draw the line' },
+    { value: 'most-frequent', label: 'Most frequent place' },
+    ...availableRoles.map((role) => ({ value: `role:${role}`, label: role })),
+  ];
+  const anchorRuleCount = selectedRoles.size + (includeMostFrequent ? 1 : 0);
 
   return (
     <div className="pointer-events-auto absolute right-6 top-6 z-[120] flex flex-col items-end gap-1.5">
@@ -236,21 +239,61 @@ function PeopleMapSettingsPanel({ controls }) {
           <section className="mt-2 rounded-[14px] border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fbf7ea)] p-2.5">
             <div className="flex items-center gap-2">
               <h4 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[15px] font-bold leading-tight text-[var(--peridot-color-hex-172b20)]">
+                Node labels
+              </h4>
+              <span
+                className="flex h-4 w-4 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d8c79a)] text-[9px] font-bold text-[var(--peridot-color-hex-6f6554)]"
+                title="Choose which identities are printed on geographic nodes. Both may be shown together."
+                aria-label="About node labels"
+              >
+                i
+              </span>
+            </div>
+            <p className="mt-1 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-52675a)]">
+              Geographic points are shared. Choose whether their labels foreground places, people / entities, or both.
+            </p>
+            <div className="mt-2 grid gap-0.5">
+              <label className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-semibold text-[var(--peridot-color-hex-26382b)] hover:bg-[var(--peridot-color-hex-edf4df)]">
+                <input
+                  type="checkbox"
+                  checked={showPlaceLabels}
+                  onChange={(event) => controls.onTogglePlaceLabels?.(event.target.checked)}
+                  className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
+                />
+                <span>Places</span>
+              </label>
+              <label className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-semibold text-[var(--peridot-color-hex-26382b)] hover:bg-[var(--peridot-color-hex-edf4df)]">
+                <input
+                  type="checkbox"
+                  checked={showEntityLabels}
+                  disabled={!hasEntityGeography}
+                  onChange={(event) => controls.onToggleEntityLabels?.(event.target.checked)}
+                  className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)] disabled:cursor-not-allowed disabled:opacity-50"
+                />
+                <span>People / entities</span>
+              </label>
+            </div>
+          </section>
+
+          {hasEntityGeography ? (
+          <section className="mt-2 rounded-[14px] border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fbf7ea)] p-2.5">
+            <div className="flex items-center gap-2">
+              <h4 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[15px] font-bold leading-tight text-[var(--peridot-color-hex-172b20)]">
                 Geographic anchors
               </h4>
               <span
                 className="flex h-4 w-4 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d8c79a)] text-[9px] font-bold text-[var(--peridot-color-hex-6f6554)]"
-                title="Choose which mapped place roles can be used as person locations."
+                title="Choose which mapped place roles can position people or entities geographically."
                 aria-label="About geographic anchors"
               >
                 i
               </span>
             </div>
             <div className="mt-1.5 text-[9px] font-extrabold uppercase tracking-[0.15em] text-[var(--peridot-color-hex-6f6554)]">
-              People locations
+              Locations shown
             </div>
             <p className="mt-0.5 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-52675a)]">
-              Choose one or more mapped place roles to use as geographic anchors.
+              Choose one or more mapped place roles to position people or entities on the shared geographic map.
             </p>
 
             <div className="mt-2 grid gap-0.5">
@@ -259,8 +302,9 @@ function PeopleMapSettingsPanel({ controls }) {
                   <input
                     type="checkbox"
                     checked={selectedRoles.has(role)}
+                    disabled={selectedRoles.has(role) && anchorRuleCount === 1}
                     onChange={(event) => controls.onToggleRole?.(role, event.target.checked)}
-                    className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
+                    className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)] disabled:cursor-not-allowed disabled:opacity-60"
                   />
                   <span>{role}</span>
                 </label>
@@ -270,16 +314,21 @@ function PeopleMapSettingsPanel({ controls }) {
                 <input
                   type="checkbox"
                   checked={includeMostFrequent}
+                  disabled={includeMostFrequent && anchorRuleCount === 1}
                   onChange={(event) => controls.onToggleMostFrequent?.(event.target.checked)}
-                  className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
+                  className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)] disabled:cursor-not-allowed disabled:opacity-60"
                 />
                 <span>Most frequent place</span>
               </label>
             </div>
 
+            <p className="mt-1.5 text-[9px] leading-[1.4] text-[var(--peridot-color-hex-7d725f)]">
+              The temporary one-anchor minimum remains until the transactional map-settings pass; node layers will then be allowed to turn fully off.
+            </p>
+
             {!availableRoles.length ? (
               <div className="mt-2 rounded-lg border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f3ecd9)] px-2.5 py-1.5 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-6f6554)]">
-                No named place roles are mapped in this dataset. Most frequent place remains available when person locations can be resolved.
+                No named place roles are mapped in this dataset. Most frequent place remains available when entity locations can be resolved.
               </div>
             ) : null}
 
@@ -293,6 +342,59 @@ function PeopleMapSettingsPanel({ controls }) {
               </button>
             </div>
           </section>
+          ) : null}
+
+          {hasEntityGeography ? (
+          <section className="mt-2 border-t border-[var(--peridot-color-hex-d8c79a)] pt-2">
+            <button
+              type="button"
+              onClick={() => setRelationshipLinesOpen((value) => !value)}
+              className="flex w-full items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
+              aria-expanded={relationshipLinesOpen}
+            >
+              <span className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[15px] font-bold leading-tight text-[var(--peridot-color-hex-172b20)]">
+                Relationship lines
+              </span>
+              <span aria-hidden="true" className="text-sm text-[var(--peridot-color-hex-6f6554)]">{relationshipLinesOpen ? '⌃' : '⌄'}</span>
+            </button>
+            {relationshipLinesOpen ? (
+              <div className="mt-1.5 rounded-[14px] border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fbf7ea)] p-2.5">
+                <label className="block text-[9px] font-extrabold uppercase tracking-[0.15em] text-[var(--peridot-color-hex-6f6554)]">
+                  Draw relationship lines from
+                  <select
+                    value={lineAnchorRule}
+                    onChange={(event) => controls.onSetLineAnchorRule?.(event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fffaf0)] px-2 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-[var(--peridot-color-hex-26382b)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
+                  >
+                    {lineRuleOptions.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </select>
+                </label>
+
+                {lineAnchorRule === 'event-location' ? (
+                  <label className="mt-2 block text-[9px] font-extrabold uppercase tracking-[0.15em] text-[var(--peridot-color-hex-6f6554)]">
+                    If unavailable
+                    <select
+                      value={lineFallbackRule}
+                      onChange={(event) => controls.onSetLineFallbackRule?.(event.target.value)}
+                      className="mt-1 w-full rounded-lg border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fffaf0)] px-2 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-[var(--peridot-color-hex-26382b)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
+                    >
+                      {fallbackRuleOptions.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
+
+                <p className="mt-2 text-[10px] leading-[1.4] text-[var(--peridot-color-hex-6f6554)]">
+                  Event geography is used only when a relationship record gives one explicit location for each endpoint. Peridot never multiplies one relationship across every visible anchor combination.
+                </p>
+              </div>
+            ) : null}
+          </section>
+
+          ) : null}
 
           <section className="mt-2 border-t border-[var(--peridot-color-hex-d8c79a)] pt-2">
             <button
@@ -810,8 +912,7 @@ export function PeridotVisualizationsWorkspace({
   analyticsWorkspaceProps,
   visualizationAvailability,
   geographicAnchorControls,
-  onSelectPlaceMap,
-  onSelectPeopleNetwork,
+  onSelectGeographicMap,
   onSelectForceDirected,
   onOpenAnalytics,
   onOpenChartVisualization,
@@ -842,11 +943,9 @@ export function PeridotVisualizationsWorkspace({
 
   const initialTool = visualizationsWorkspacePanel === 'analytics'
     ? VISUALIZATION_TOOLS.CHART_WORKSPACE
-    : viewMode === 'geographic'
-      ? VISUALIZATION_TOOLS.LOCATION_MAP
-      : personLayoutMode === 'force'
-        ? VISUALIZATION_TOOLS.FORCE_NETWORK
-        : VISUALIZATION_TOOLS.ENTITY_NETWORK;
+    : personLayoutMode === 'force' && viewMode === 'person'
+      ? VISUALIZATION_TOOLS.FORCE_NETWORK
+      : VISUALIZATION_TOOLS.GEOGRAPHIC_MAP;
 
   const [selectedTool, setSelectedTool] = useState(initialTool);
   const [openMenuCategory, setOpenMenuCategory] = useState(null);
@@ -935,45 +1034,24 @@ export function PeridotVisualizationsWorkspace({
   };
 
   /*
-   * Build the active visualization-menu registry.
-   *
-   * Map/network entries are handwritten because they switch App-owned view modes.
-   * Chart entries are derived from `ANALYTICS_CHART_DEFINITIONS` so adding a
-   * chart in the Analytics registry automatically surfaces it in the
-   * Visualizations header, provided the derivation and renderer branches also
-   * exist.
+   * Build the active visualization registry. Mapping, Network, Charts, and
+   * Explore are direct header actions; Export remains the only dropdown.
    */
   const toolDefinitions = useMemo(() => ({
     /*
-     * User-facing map language is intentionally broader than the renderer branch.
-     * Point and route maps share the same geographic map stage, so the header
-     * exposes one "Map by Location" choice and lets the capability audit decide
-     * whether the current rows contribute points, routes, or both.
+     * Geographic mapping is now one user-facing visualization. Generalized
+     * entity/place geography is authoritative when available, with the older
+     * point/route projection retained only as a compatibility fallback.
      */
-    [VISUALIZATION_TOOLS.LOCATION_MAP]: {
-      label: 'Map by Location',
-      category: 'Mapping Visualizations',
-      available: availability.hasPointMap || availability.hasRouteMap,
-      action: onSelectPlaceMap,
-      unavailableTitle: 'Map by Location is not available for this dataset.',
-      why: 'This dataset does not contain mapped point-place, point-coordinate, source-target place, or source-target coordinate-pair roles in the current scope. Records may still be valid for networks, charts, search, Inspector, or export.',
+    [VISUALIZATION_TOOLS.GEOGRAPHIC_MAP]: {
+      label: 'Geographic Map',
+      category: 'Mapping',
+      available: availability.hasPointMap || availability.hasRouteMap || availability.hasEntityNetwork,
+      action: onSelectGeographicMap,
+      unavailableTitle: 'Geographic Map is not available for this dataset.',
+      why: 'No usable mapped geographic coordinates are available in the current scope.',
       availableInstead: [
-        availability.hasEntityNetwork ? 'Map by Person / Entity' : null,
-        availability.hasCharts ? 'Chart Visualizations' : null,
-        availability.hasExploreData ? 'Explore Your Data' : null,
-      ].filter(Boolean),
-    },
-    [VISUALIZATION_TOOLS.ENTITY_NETWORK]: {
-      label: 'Map by Person / Entity',
-      category: 'Network Visualizations',
-      available: availability.hasEntityNetwork,
-      action: onSelectPeopleNetwork,
-      unavailableTitle: 'Map by Person / Entity is not available for this dataset.',
-      why: availability.hasNetwork
-        ? 'This dataset contains entity relationships, but no relationship currently has usable mapped geographic anchors for both connected entities. Use the Force-Directed Network to explore the relationships without geographic positioning.'
-        : 'This dataset does not contain explicitly mapped entity relationships in the current scope. That is expected for point/site, catalogue, and time-series datasets, which may still be valid for location maps, charts, search, Inspector, and export.',
-      availableInstead: [
-        availability.hasPointMap || availability.hasRouteMap ? 'Map by Location' : null,
+        availability.hasForceNetwork ? 'Force-Directed Network' : null,
         availability.hasCharts ? 'Chart Visualizations' : null,
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
@@ -986,7 +1064,7 @@ export function PeridotVisualizationsWorkspace({
       unavailableTitle: 'Force-Directed Network is not available for this dataset.',
       why: 'Force-directed layouts require explicitly mapped entity relationships. This dataset can still be valid for location maps, charts, search, Inspector, and export even when it does not contain network data.',
       availableInstead: [
-        availability.hasPointMap || availability.hasRouteMap ? 'Map by Location' : null,
+        availability.hasPointMap || availability.hasRouteMap || availability.hasEntityNetwork ? 'Geographic Map' : null,
         availability.hasCharts ? 'Chart Visualizations' : null,
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
@@ -999,8 +1077,7 @@ export function PeridotVisualizationsWorkspace({
       unavailableTitle: 'Chart Visualizations are not available for this dataset.',
       why: 'No active records or chartable fields are available for charting in the current scope.',
       availableInstead: [
-        availability.hasPointMap || availability.hasRouteMap ? 'Map by Location' : null,
-        availability.hasEntityNetwork ? 'Map by Person / Entity' : null,
+        availability.hasPointMap || availability.hasRouteMap || availability.hasEntityNetwork ? 'Geographic Map' : null,
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
     },
@@ -1013,33 +1090,26 @@ export function PeridotVisualizationsWorkspace({
       why: '',
       availableInstead: [],
     },
-  }), [availability.hasCharts, availability.hasEntityNetwork, availability.hasExploreData, availability.hasForceNetwork, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onOpenExplore, onSelectForceDirected, onSelectPeopleNetwork, onSelectPlaceMap]);
+  }), [availability.hasCharts, availability.hasEntityNetwork, availability.hasExploreData, availability.hasForceNetwork, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onOpenExplore, onSelectForceDirected, onSelectGeographicMap]);
 
   const selectedDefinition = toolDefinitions[selectedTool] || toolDefinitions[VISUALIZATION_TOOLS.CAPABILITY_SUMMARY];
   const activeVisualizationLabel = selectedDefinition.label;
 
   const categories = [
     {
-      label: 'Mapping Visualizations',
-      description: 'Location and entity maps',
-      tools: [VISUALIZATION_TOOLS.LOCATION_MAP, VISUALIZATION_TOOLS.ENTITY_NETWORK],
-      selectionTools: [VISUALIZATION_TOOLS.LOCATION_MAP],
+      label: 'Mapping',
+      tool: VISUALIZATION_TOOLS.GEOGRAPHIC_MAP,
     },
     {
-      label: 'Network Visualizations',
-      description: 'Entity relationship views',
-      tools: [VISUALIZATION_TOOLS.ENTITY_NETWORK, VISUALIZATION_TOOLS.FORCE_NETWORK],
-      selectionTools: [VISUALIZATION_TOOLS.ENTITY_NETWORK, VISUALIZATION_TOOLS.FORCE_NETWORK],
+      label: 'Network',
+      tool: VISUALIZATION_TOOLS.FORCE_NETWORK,
     },
     {
-      label: 'Chart Visualizations',
-      description: 'Choose a chart type',
-      tools: [VISUALIZATION_TOOLS.CHART_WORKSPACE],
+      label: 'Charts',
+      tool: VISUALIZATION_TOOLS.CHART_WORKSPACE,
     },
     {
-      label: 'Explore Your Data',
-      description: 'Advanced search and capabilities',
-      tools: [VISUALIZATION_TOOLS.CAPABILITY_SUMMARY],
+      label: 'Explore',
       directAction: onOpenExplore,
     },
   ];
@@ -1085,12 +1155,13 @@ export function PeridotVisualizationsWorkspace({
     }, 1000);
   };
 
-  const isCategorySelected = (category) => (category.selectionTools || category.tools).some((toolKey) => {
-    if (toolKey === VISUALIZATION_TOOLS.CHART_WORKSPACE) {
+  const isCategorySelected = (category) => {
+    if (!category.tool) return false;
+    if (category.tool === VISUALIZATION_TOOLS.CHART_WORKSPACE) {
       return selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || Boolean(chartTypeFromToolKey(selectedTool));
     }
-    return selectedTool === toolKey;
-  });
+    return selectedTool === category.tool;
+  };
 
   const headerTabBaseClass = [
     'inline-flex h-10 w-[144px] items-center justify-center rounded-full border px-3 text-center',
@@ -1168,11 +1239,8 @@ export function PeridotVisualizationsWorkspace({
     return (
       <div className="peridot-map-plate relative flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--map-water)] shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
         <MapStageComponent {...mapStageProps} />
-        {(
-          selectedTool === VISUALIZATION_TOOLS.LOCATION_MAP
-          || (selectedTool === VISUALIZATION_TOOLS.ENTITY_NETWORK && personLayoutMode === 'geographic')
-        ) ? (
-          <PeopleMapSettingsPanel controls={geographicAnchorControls} />
+        {selectedTool === VISUALIZATION_TOOLS.GEOGRAPHIC_MAP ? (
+          <GeographicMapSettingsPanel controls={geographicAnchorControls} />
         ) : null}
       </div>
     );
@@ -1203,86 +1271,35 @@ export function PeridotVisualizationsWorkspace({
                     <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
                     <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
                   </svg>
-                  {categories.filter((category) => !category.directAction).map((category) => {
-                    const isOpen = openMenuCategory === category.label;
+                  {categories.map((category) => {
                     const selected = isCategorySelected(category);
-                    const handleCategoryClick = (event) => {
-                      if (isOpen) {
-                        closeMenu();
-                      } else {
-                        openMenu(category.label, event.currentTarget.closest('[data-visualization-menu-anchor]'));
+                    const delay = {
+                      Mapping: '1040ms',
+                      Network: '920ms',
+                      Charts: '800ms',
+                      Explore: '680ms',
+                    }[category.label];
+                    const handleClick = () => {
+                      closeMenu();
+                      if (category.directAction) {
+                        category.directAction();
+                        return;
                       }
+                      if (category.tool) selectTool(category.tool);
                     };
                     return (
-                      <div
+                      <button
                         key={category.label}
-                        data-visualization-menu-anchor="true"
-                        /* Initial header entrance is deliberately mount-only. Once settled, the
-                         * category wrapper carries no opacity-zero animation class, so stage changes
-                         * cannot make Charts, Network, or Mapping disappear during a body transition.
-                         */
-                        className={categoryClass()}
-                        style={headerEntranceStyle({
-                          'Mapping Visualizations': '1040ms',
-                          'Network Visualizations': '920ms',
-                          'Chart Visualizations': '800ms',
-                        }[category.label])}
-                        onMouseEnter={(event) => openMenu(category.label, event.currentTarget)}
-                        onMouseLeave={scheduleMenuClose}
-                        onFocus={(event) => openMenu(category.label, event.currentTarget)}
+                        type="button"
+                        className={[headerEntranceClass(), `${headerTabBaseClass} ${headerTabStateClass(false, selected)}`].filter(Boolean).join(' ')}
+                        style={headerEntranceStyle(delay)}
+                        onClick={handleClick}
+                        aria-current={selected ? 'page' : undefined}
                       >
-                        <button
-                          type="button"
-                          className={`${headerTabBaseClass} ${headerTabStateClass(isOpen, selected)} focus:outline-none`}
-                          onClick={handleCategoryClick}
-                          aria-expanded={isOpen}
-                          aria-current={selected ? 'page' : undefined}
-                        >
-                          {category.label.replace(' Visualizations', '').replace('Chart', 'Charts')}
-                        </button>
-                        {isOpen ? (
-                          <FloatingVisualizationMenu
-                            anchorRect={openMenuAnchorRect}
-                            isOpen={isOpen}
-                            width={280}
-                            onMouseEnter={() => openMenu(category.label)}
-                            onMouseLeave={scheduleMenuClose}
-                            onFocus={() => openMenu(category.label)}
-                          >
-                            {category.tools.map((toolKey) => {
-                              const tool = toolDefinitions[toolKey];
-                              const isActiveTool = selectedTool === toolKey || (toolKey === VISUALIZATION_TOOLS.CHART_WORKSPACE && Boolean(chartTypeFromToolKey(selectedTool)));
-                              return (
-                                <button
-                                  key={toolKey}
-                                  type="button"
-                                  onClick={() => selectTool(toolKey)}
-                                  className={menuItemClass(isActiveTool, tool.available)}
-                                >
-                                  <span className="pr-2 leading-snug">{tool.label}</span>
-                                  <CompatibilityStatusPill available={tool.available} light />
-                                </button>
-                              );
-                            })}
-                          </FloatingVisualizationMenu>
-                        ) : null}
-                      </div>
+                        {category.label}
+                      </button>
                     );
                   })}
-                  {categories.filter((category) => category.directAction).map((category) => (
-                    <button
-                      key={category.label}
-                      type="button"
-                      className={[headerEntranceClass(), headerActionClass].filter(Boolean).join(' ')}
-                      style={headerEntranceStyle('680ms')}
-                      onClick={() => {
-                        closeMenu();
-                        category.directAction();
-                      }}
-                    >
-                      Explore
-                    </button>
-                  ))}
                   <div className={headerEntranceClass()} style={headerEntranceStyle('560ms')}>
                     <VisualizationExportMenu
                       exportControls={activeExportControls}

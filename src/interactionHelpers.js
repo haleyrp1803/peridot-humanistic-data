@@ -588,10 +588,20 @@ export function resolveSelection(selectedSelection, graph, personMetadataByName,
     const node = graph.nodes.find((item) => item.id === selectedSelection.id && !item.isCluster);
     if (!node) return null;
     const selection = buildNodeSelection(node, graph, personMetadataByName, options.personMetadataById);
-    const entityType = node.entityType === 'place' || options.viewMode === 'geographic' ? 'place' : 'person';
+    const hasEntityIdentity = Boolean(node.entityId || node.entityKey || node.entityLabel);
+    const entityType = node.entityType === 'place'
+      ? 'place'
+      : hasEntityIdentity
+        ? 'person'
+        : options.viewMode === 'geographic'
+          ? 'place'
+          : 'person';
+    const entityLabel = entityType === 'person'
+      ? (node.entityLabel || node.label)
+      : (node.placeLabel || node.anchorLabel || node.label);
     return enrichSelectionWithInspectorRows(selection, options, {
       entityType,
-      entityLabel: node.label,
+      entityLabel,
       entityId: entityType === 'person' ? (node.entityId || '') : '',
     });
   }

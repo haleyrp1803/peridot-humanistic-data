@@ -45,9 +45,10 @@ function MapUtilityControlsIcon() {
 export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCardClassName }) {
   const [isOpen, setIsOpen] = useState(true);
   const isPlaceMap = clusterPluralLabel === 'places';
-  const clusterLabel = isPlaceMap ? 'Place cluster' : 'People / entity cluster';
-  const singleLabel = isPlaceMap ? 'Single place' : 'Single person / entity';
-  const edgeLabel = isPlaceMap ? 'Geographic route' : 'Relationship';
+  const isPeopleMap = clusterPluralLabel === 'people';
+  const clusterLabel = isPlaceMap ? 'Place cluster' : isPeopleMap ? 'People / entity cluster' : 'Node cluster';
+  const singleLabel = isPlaceMap ? 'Single place' : isPeopleMap ? 'Single person / entity' : 'Single node';
+  const edgeLabel = isPlaceMap ? 'Geographic route' : isPeopleMap ? 'Relationship' : 'Connection';
   const edgeCountLabel = isPlaceMap ? 'Routes' : 'Connections';
 
   if (!isOpen) {
