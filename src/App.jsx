@@ -3558,12 +3558,13 @@ export default function EuropeNetworkMapApp() {
     setPlaybackIndex(-1);
   }, [timelineMonths.length]);
 
-  // Entity relationships can be structural and therefore legitimately undated
-  // (genealogy parent/partner assertions are the clearest example). Geographic
-  // People Map layout should not lose that structure merely because Timeline
-  // filtering is operating on date-bearing event/place rows. We therefore keep
-  // a Search-filtered relationship scope before Timeline, while geographic
-  // anchors continue to come from the Timeline/playback-visible row scope.
+  // Entity relationships can be structural and therefore legitimately lack a
+  // usable Timeline position (genealogy parent/partner assertions are the
+  // clearest example). Keep a Search-filtered pre-Timeline relationship scope
+  // here so those structural rows can be restored explicitly later. Dated,
+  // Timeline-positionable relationships must still obey the active Timeline
+  // range and playback state; this broader scope is never passed directly to
+  // the geographic People Network.
   const entityRelationshipStructureRows = useMemo(() => {
     return filterRowsBySearchAndEntity(searchRecords, {
       searchQuery: search,
@@ -3639,6 +3640,34 @@ export default function EuropeNetworkMapApp() {
     });
   }, [filteredRowsForActiveFilters, playbackIndex, selectedRowsForPlayback, timelinePlaybackMode]);
 
+  // Geographic People Network relationship scope follows the same temporal
+  // contract as the visible visualization rows, with one deliberate exception:
+  // explicit relationship rows that cannot be positioned on Timeline remain as
+  // structural context because Peridot has no temporal evidence with which to
+  // exclude them. This prevents undated genealogy structure from disappearing
+  // without allowing dated out-of-range relationships to leak back in.
+  const nonPositionableStructuralRelationshipRows = useMemo(
+    () => entityRelationshipStructureRows.filter((row) => (
+      getPeridotRowEntityRelationships(row).length > 0
+      && !getRowTimelineCapability(row).timelineReady
+    )),
+    [entityRelationshipStructureRows]
+  );
+  const geographicRelationshipRows = useMemo(
+    () => Array.from(new Set([
+      ...filteredRowsByTime,
+      ...nonPositionableStructuralRelationshipRows,
+    ])),
+    [filteredRowsByTime, nonPositionableStructuralRelationshipRows]
+  );
+  const geographicAvailabilityRelationshipRows = useMemo(
+    () => Array.from(new Set([
+      ...filteredRowsForActiveFilters,
+      ...nonPositionableStructuralRelationshipRows,
+    ])),
+    [filteredRowsForActiveFilters, nonPositionableStructuralRelationshipRows]
+  );
+
   // Analytics treats records with no usable temporal position as legitimate
   // non-temporal evidence rather than silently dropping them at the global
   // Timeline boundary. Search criteria still apply because these rows come from
@@ -3706,10 +3735,10 @@ export default function EuropeNetworkMapApp() {
       personGraphLayoutMode,
       '',
       personGraphLayoutMode === 'geographic'
-        ? { relationshipRows: entityRelationshipStructureRows, locationRows: filteredRowsByTime, entityLabelById: entityDisplayLabelById }
+        ? { relationshipRows: geographicRelationshipRows, locationRows: filteredRowsByTime, entityLabelById: entityDisplayLabelById }
         : { entityLabelById: entityDisplayLabelById }
     ),
-    [entityRelationshipStructureRows, filteredRowsByTime, mapViewportSize.width, mapViewportSize.height, personGraphLayoutMode, entityDisplayLabelById]
+    [filteredRowsByTime, geographicRelationshipRows, mapViewportSize.width, mapViewportSize.height, personGraphLayoutMode, entityDisplayLabelById]
   );
   const graph = viewMode === 'geographic' ? geographicGraph : personGraph;
 
@@ -3730,10 +3759,10 @@ export default function EuropeNetworkMapApp() {
   );
   const availabilityGeographicEntityNetworkSemantics = useMemo(
     () => derivePeridotGeographicEntityNetworkSemantics(
-      entityRelationshipStructureRows,
+      geographicAvailabilityRelationshipRows,
       filteredRowsForActiveFilters
     ),
-    [entityRelationshipStructureRows, filteredRowsForActiveFilters]
+    [geographicAvailabilityRelationshipRows, filteredRowsForActiveFilters]
   );
   const availabilityAnalyticsFields = useMemo(
     () => getAvailableAnalyticsFields(analyticsAvailabilityRows),
