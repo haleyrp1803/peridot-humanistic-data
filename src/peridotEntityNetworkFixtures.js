@@ -1,4 +1,4 @@
-import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, getPeridotRowEntityParticipantEntries, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
+import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, derivePeridotGeographicPersonAnchors, getPeridotGeographicAnchorRoles, getPeridotRowEntityParticipantEntries, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, rowHasPeridotEntityRelationship } from './peridotEntityNetwork.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -181,6 +181,43 @@ export function runPeridotEntityNetworkSelfAudit() {
   assert(splitScopeGeography.locations.some((location) => location.person === 'Mother' && location.role === 'childbirth'), 'Mother childbirth place should remain attached to Mother.');
   assert(splitScopeGeography.locations.some((location) => location.person === 'Person A' && location.role === 'birth'), 'Person A birth place should remain attached to Person A.');
 
+  const anchorLocations = [
+    { person: 'Maria', personId: 'maria-id', label: 'Florence', latitude: 43.77, longitude: 11.25, role: 'Residence', sourceRow: { id: 'm1' } },
+    { person: 'Maria', personId: 'maria-id', label: 'Florence', latitude: 43.77, longitude: 11.25, role: 'Court', sourceRow: { id: 'm2' } },
+    { person: 'Maria', personId: 'maria-id', label: 'Florence', latitude: 43.77, longitude: 11.25, role: 'Residence', sourceRow: { id: 'm3' } },
+    { person: 'Maria', personId: 'maria-id', label: 'Vienna', latitude: 48.21, longitude: 16.37, role: 'Court', sourceRow: { id: 'm4' } },
+    { person: 'Cristina', personId: 'cristina-id', label: 'Paris', latitude: 48.86, longitude: 2.35, role: 'Residence', sourceRow: { id: 'c1' } },
+    { person: 'Cristina', personId: 'cristina-id', label: 'Madrid', latitude: 40.42, longitude: -3.7, role: 'Court', sourceRow: { id: 'c2' } },
+  ];
+  const anchorRoles = getPeridotGeographicAnchorRoles(anchorLocations);
+  assert(anchorRoles.join('|') === 'Court|Residence', 'Anchor-role discovery should preserve mapped role labels without inventing unlabelled roles.');
+
+  const roleAndFrequencyAnchors = derivePeridotGeographicPersonAnchors(anchorLocations, {
+    selectedRoles: ['Residence', 'Court'],
+    includeMostFrequent: true,
+  });
+  const mariaFlorence = roleAndFrequencyAnchors.find((anchor) => anchor.personId === 'maria-id' && anchor.label === 'Florence');
+  assert(roleAndFrequencyAnchors.filter((anchor) => anchor.personId === 'maria-id').length === 2, 'Multiple selected place roles should allow one canonical entity to resolve to multiple geographic anchors.');
+  assert(mariaFlorence?.reasons.some((reason) => reason.type === 'place-role' && reason.role === 'Residence'), 'Deduplicated anchor should preserve Residence provenance.');
+  assert(mariaFlorence?.reasons.some((reason) => reason.type === 'place-role' && reason.role === 'Court'), 'Deduplicated anchor should preserve Court provenance at the same physical location.');
+  assert(mariaFlorence?.reasons.some((reason) => reason.type === 'most-frequent-place' && reason.occurrenceCount === 3), 'Most-frequent-place provenance should coexist with mapped role provenance.');
+  assert(mariaFlorence?.occurrenceCount === 3, 'Anchor occurrence count should represent all mapped assertions at that person-place coordinate.');
+
+  const residenceOnlyAnchors = derivePeridotGeographicPersonAnchors(anchorLocations, {
+    selectedRoles: ['Residence'],
+    includeMostFrequent: false,
+  });
+  assert(residenceOnlyAnchors.some((anchor) => anchor.personId === 'maria-id' && anchor.label === 'Florence'), 'Selected mapped roles should resolve their supported person-place anchors.');
+  assert(!residenceOnlyAnchors.some((anchor) => anchor.personId === 'maria-id' && anchor.label === 'Vienna'), 'Unselected mapped roles should not create visible anchor instances.');
+
+  const tiedFrequencyAnchors = derivePeridotGeographicPersonAnchors(anchorLocations, {
+    selectedRoles: [],
+    includeMostFrequent: true,
+  });
+  const cristinaFrequencyAnchors = tiedFrequencyAnchors.filter((anchor) => anchor.personId === 'cristina-id');
+  assert(cristinaFrequencyAnchors.length === 2, 'A true tie for most-frequent place should preserve every tied location rather than choosing one arbitrarily.');
+  assert(cristinaFrequencyAnchors.every((anchor) => anchor.reasons.some((reason) => reason.type === 'most-frequent-place' && reason.tied)), 'Tied most-frequent anchors should expose their tie provenance.');
+
   return {
     multipartEdgeCount: multipart.relationships.length,
     genealogyEdgeCount: genealogy.relationships.length,
@@ -188,5 +225,7 @@ export function runPeridotEntityNetworkSelfAudit() {
     locationAssertionCount: places.locations.length,
     splitScopeGeographicRelationshipCount: splitScopeGeography.relationships.length,
     splitScopeGeographicLocationCount: splitScopeGeography.locations.length,
+    geographicAnchorRoleCount: anchorRoles.length,
+    geographicAnchorInstanceCount: roleAndFrequencyAnchors.length,
   };
 }

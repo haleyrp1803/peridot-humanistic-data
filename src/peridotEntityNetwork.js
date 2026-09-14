@@ -299,6 +299,154 @@ export function derivePeridotGeographicEntityNetworkSemantics(relationshipRows =
   });
 }
 
+function geographicAnchorPersonKey(location = {}) {
+  return asText(location.personId) || asText(location.person);
+}
+
+function geographicAnchorCoordinateKey(location = {}) {
+  if (!validCoordinatePair(location.latitude, location.longitude)) return '';
+  return `${Number(location.latitude)}__${Number(location.longitude)}`;
+}
+
+/**
+ * Return the explicit place roles currently available for person/entity anchors.
+ * Role matching is case-insensitive, while the first source spelling is retained
+ * for researcher-facing labels. Unlabelled places remain eligible for the
+ * derived "Most frequent place" rule but do not become a selectable role.
+ */
+export function getPeridotGeographicAnchorRoles(locations = []) {
+  const roleByKey = new Map();
+  (Array.isArray(locations) ? locations : []).forEach((location) => {
+    const role = asText(location?.role);
+    if (!role) return;
+    const key = role.toLowerCase();
+    if (!roleByKey.has(key)) roleByKey.set(key, role);
+  });
+  return Array.from(roleByKey.values()).sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Resolve person/entity geographic anchors independently from relationship-line
+ * geography. Multiple selected place roles may produce multiple anchor instances
+ * for one canonical entity. "Most frequent place" is an independent derived rule
+ * and may be enabled alongside any role selection.
+ *
+ * Identical coordinates for the same person are deduplicated. The resulting
+ * anchor preserves every qualifying reason so later hover/Inspector consumers can
+ * explain why the location is visible. A tie for most-frequent place is preserved
+ * honestly: every location tied at the maximum occurrence count qualifies.
+ */
+export function derivePeridotGeographicPersonAnchors(locations = [], options = {}) {
+  const selectedRoleKeys = new Set(
+    (Array.isArray(options?.selectedRoles) ? options.selectedRoles : [])
+      .map((role) => asText(role).toLowerCase())
+      .filter(Boolean),
+  );
+  const includeMostFrequent = Boolean(options?.includeMostFrequent);
+  const people = new Map();
+
+  (Array.isArray(locations) ? locations : []).forEach((location) => {
+    const personKey = geographicAnchorPersonKey(location);
+    const coordinateKey = geographicAnchorCoordinateKey(location);
+    if (!personKey || !coordinateKey) return;
+
+    if (!people.has(personKey)) {
+      people.set(personKey, {
+        personKey,
+        person: asText(location.person) || personKey,
+        personId: asText(location.personId),
+        places: new Map(),
+      });
+    }
+
+    const person = people.get(personKey);
+    if (!person.personId && asText(location.personId)) person.personId = asText(location.personId);
+    if ((!person.person || person.person === personKey) && asText(location.person)) person.person = asText(location.person);
+
+    if (!person.places.has(coordinateKey)) {
+      person.places.set(coordinateKey, {
+        coordinateKey,
+        label: asText(location.label),
+        latitude: Number(location.latitude),
+        longitude: Number(location.longitude),
+        occurrenceCount: 0,
+        labels: new Map(),
+        roles: new Map(),
+        sourceRows: [],
+      });
+    }
+
+    const place = person.places.get(coordinateKey);
+    place.occurrenceCount += 1;
+    const label = asText(location.label);
+    if (label) place.labels.set(label, (place.labels.get(label) || 0) + 1);
+    const role = asText(location.role);
+    if (role) {
+      const roleKey = role.toLowerCase();
+      if (!place.roles.has(roleKey)) {
+        place.roles.set(roleKey, { label: role, occurrenceCount: 0 });
+      }
+      place.roles.get(roleKey).occurrenceCount += 1;
+    }
+    if (location.sourceRow && !place.sourceRows.includes(location.sourceRow)) {
+      place.sourceRows.push(location.sourceRow);
+    }
+  });
+
+  const anchors = [];
+  people.forEach((person) => {
+    const places = Array.from(person.places.values());
+    const maxOccurrenceCount = places.reduce(
+      (maximum, place) => Math.max(maximum, place.occurrenceCount),
+      0,
+    );
+
+    places.forEach((place) => {
+      const roleReasons = Array.from(place.roles.entries())
+        .filter(([roleKey]) => selectedRoleKeys.has(roleKey))
+        .map(([, role]) => ({
+          type: 'place-role',
+          role: role.label,
+          occurrenceCount: role.occurrenceCount,
+        }));
+      const isMostFrequentPlace = includeMostFrequent
+        && maxOccurrenceCount > 0
+        && place.occurrenceCount === maxOccurrenceCount;
+      const reasons = [...roleReasons];
+      if (isMostFrequentPlace) {
+        reasons.push({
+          type: 'most-frequent-place',
+          occurrenceCount: place.occurrenceCount,
+          tied: places.filter((candidate) => candidate.occurrenceCount === maxOccurrenceCount).length > 1,
+        });
+      }
+      if (!reasons.length) return;
+
+      const preferredLabel = Array.from(place.labels.entries())
+        .sort((a, b) => b[1] - a[1])[0]?.[0] || place.label || `${place.latitude}, ${place.longitude}`;
+      anchors.push({
+        id: `geo-anchor:${person.personKey}:${place.coordinateKey}`,
+        personKey: person.personKey,
+        person: person.person,
+        personId: person.personId,
+        label: preferredLabel,
+        latitude: place.latitude,
+        longitude: place.longitude,
+        occurrenceCount: place.occurrenceCount,
+        roles: Array.from(place.roles.values()).map((role) => role.label),
+        roleOccurrenceCounts: Object.fromEntries(
+          Array.from(place.roles.values()).map((role) => [role.label, role.occurrenceCount]),
+        ),
+        reasons,
+        isMostFrequentPlace,
+        sourceRows: place.sourceRows.slice(),
+      });
+    });
+  });
+
+  return anchors;
+}
+
 /**
  * Resolve one runtime row through the same relationship semantics used by the
  * People and Force-Directed network builders. Search, Inspector, playback, and
