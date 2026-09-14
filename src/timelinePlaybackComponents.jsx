@@ -239,6 +239,7 @@ export function VisualizationTimelineScrubber({
     end: committedEnd,
   }));
   const [isAdjustingRange, setIsAdjustingRange] = useState(false);
+  const [timeTypeMenuOpen, setTimeTypeMenuOpen] = useState(false);
   const previewRangeRef = useRef(previewRange);
   const rangeInteractionRef = useRef(false);
 
@@ -260,13 +261,11 @@ export function VisualizationTimelineScrubber({
   const previewEnd = Math.max(previewRange.start, previewRange.end);
   const startLabel = hasTimeline ? timelineMonths[previewStart] : '—';
   const endLabel = hasTimeline ? timelineMonths[previewEnd] : '—';
-  const playbackLastIndex = Math.max((selectedRowsForPlayback?.length || 1) - 1, 0);
-  const visiblePlaybackIndex = Math.max(0, playbackIndex);
-  const playbackProgress = selectedRowsForPlayback?.length
-    ? Math.round(((visiblePlaybackIndex + 1) / selectedRowsForPlayback.length) * 100)
-    : 0;
   const startPercent = lastTimelineIndex ? (previewStart / lastTimelineIndex) * 100 : 0;
   const endPercent = lastTimelineIndex ? (previewEnd / lastTimelineIndex) * 100 : 100;
+  const enabledRoleSet = new Set(enabledTemporalRoles || []);
+  const hasTemporalRoles = availableTemporalRoles.length > 0;
+
   const stopPlayback = () => {
     setIsPlaying(false);
     setPlaybackIndex(-1);
@@ -275,8 +274,6 @@ export function VisualizationTimelineScrubber({
   const beginRangeInteraction = () => {
     rangeInteractionRef.current = true;
     setIsAdjustingRange(true);
-    // Pause an active animation immediately, but leave the visible playback
-    // position intact until the new range is committed on release.
     setIsPlaying(false);
   };
 
@@ -292,10 +289,7 @@ export function VisualizationTimelineScrubber({
 
   const previewStartChange = (value) => {
     const nextStart = Math.min(Number(value), previewRangeRef.current.end);
-    const nextPreview = {
-      ...previewRangeRef.current,
-      start: nextStart,
-    };
+    const nextPreview = { ...previewRangeRef.current, start: nextStart };
     previewRangeRef.current = nextPreview;
     setPreviewRange(nextPreview);
     setIsAdjustingRange(true);
@@ -303,10 +297,7 @@ export function VisualizationTimelineScrubber({
 
   const previewEndChange = (value) => {
     const nextEnd = Math.max(Number(value), previewRangeRef.current.start);
-    const nextPreview = {
-      ...previewRangeRef.current,
-      end: nextEnd,
-    };
+    const nextPreview = { ...previewRangeRef.current, end: nextEnd };
     previewRangeRef.current = nextPreview;
     setPreviewRange(nextPreview);
     setIsAdjustingRange(true);
@@ -336,14 +327,16 @@ export function VisualizationTimelineScrubber({
     stopPlayback();
   };
 
-  const playTimeline = () => {
+  const togglePlay = () => {
+    if (isPlaying) {
+      setIsPlaying(false);
+      return;
+    }
     if (!selectedRowsForPlayback?.length) return;
     setPlaybackIndex((current) => (current < 0 ? 0 : current));
     setIsPlaying(true);
   };
-  const statusLabel = isPlaying ? 'Playing' : playbackIndex >= 0 ? 'Paused' : 'Ready';
-  const enabledRoleSet = new Set(enabledTemporalRoles || []);
-  const hasTemporalRoles = availableTemporalRoles.length > 0;
+
   const toggleTemporalRole = (role) => {
     if (!setEnabledTemporalRoles) return;
     setEnabledTemporalRoles((currentRoles) => {
@@ -354,161 +347,146 @@ export function VisualizationTimelineScrubber({
     });
     stopPlayback();
   };
+
   const enableAllTemporalRoles = () => {
     if (!setEnabledTemporalRoles) return;
     setEnabledTemporalRoles([...availableTemporalRoles]);
     stopPlayback();
   };
+
+  const activeTimeTypeLabel = !enabledTemporalRoles.length
+    ? 'None selected'
+    : enabledTemporalRoles.length === 1
+      ? enabledTemporalRoles[0]
+      : `${enabledTemporalRoles.length} selected`;
+
   return (
-    <div className="shrink-0 rounded-[24px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-96),var(--peridot-color-rgba-rgba-5-29-19-0-98))] px-4 py-3 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_14px_34px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]">
+    <div className="rounded-[18px] border border-[var(--peridot-role-ornament-line-muted)] bg-[var(--peridot-color-hex-102c20)] px-3 py-2 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]">
       <style>{`
         .peridot-dual-range input[type='range'] {
           -webkit-appearance: none;
           appearance: none;
           background: transparent;
-          height: 40px;
+          height: 30px;
           pointer-events: none;
           position: absolute;
           inset: 0;
           touch-action: pan-y;
           width: 100%;
         }
-        .peridot-dual-range input[type='range']::-webkit-slider-runnable-track {
-          background: transparent;
-          height: 4px;
-        }
-        .peridot-dual-range input[type='range']::-moz-range-track {
-          background: transparent;
-          height: 4px;
-        }
+        .peridot-dual-range input[type='range']::-webkit-slider-runnable-track { background: transparent; height: 3px; }
+        .peridot-dual-range input[type='range']::-moz-range-track { background: transparent; height: 3px; }
         .peridot-dual-range input[type='range']::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
           background: var(--peridot-color-hex-d6a36a);
           border: 2px solid var(--peridot-color-hex-fff8e8);
           border-radius: 9999px;
-          box-shadow: 0 4px 12px var(--peridot-color-rgba-rgba-0-0-0-0-32);
+          box-shadow: 0 3px 9px var(--peridot-color-rgba-rgba-0-0-0-0-32);
           cursor: grab;
-          height: 22px;
-          margin-top: -9px;
+          height: 18px;
+          margin-top: -7px;
           pointer-events: auto;
-          width: 22px;
+          width: 18px;
         }
         .peridot-dual-range input[type='range']::-moz-range-thumb {
           background: var(--peridot-color-hex-d6a36a);
           border: 2px solid var(--peridot-color-hex-fff8e8);
           border-radius: 9999px;
-          box-shadow: 0 4px 12px var(--peridot-color-rgba-rgba-0-0-0-0-32);
+          box-shadow: 0 3px 9px var(--peridot-color-rgba-rgba-0-0-0-0-32);
           cursor: grab;
-          height: 22px;
+          height: 18px;
           pointer-events: auto;
-          width: 22px;
-        }
-        .peridot-dual-range input[type='range']:active::-webkit-slider-thumb {
-          cursor: grabbing;
-        }
-        .peridot-dual-range input[type='range']:active::-moz-range-thumb {
-          cursor: grabbing;
+          width: 18px;
         }
       `}</style>
-      <div className="mb-3 flex flex-wrap items-start justify-between gap-3 border-b border-[var(--peridot-color-hex-dfe9c8-a20)] pb-3">
-        {hasTemporalRoles ? (
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-dfe9c8)]">Time types</span>
-            {availableTemporalRoles.map((role) => {
-              const enabled = enabledRoleSet.has(role);
-              return (
-                <button
-                  key={role}
-                  type="button"
-                  aria-pressed={enabled}
-                  onClick={() => toggleTemporalRole(role)}
-                  className={[
-                    'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
-                    enabled
-                      ? 'border-[var(--peridot-color-hex-d6a36a)] bg-[var(--peridot-color-hex-edf4df)] text-[var(--peridot-color-hex-203429)]'
-                      : 'border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-102c20)] text-[var(--peridot-color-hex-c8d7bd)] hover:bg-[var(--peridot-color-hex-214332)]',
-                  ].join(' ')}
-                >
-                  <span aria-hidden="true" className="mr-1.5">{enabled ? '✓' : '○'}</span>
-                  {role}
-                </button>
-              );
-            })}
-            {enabledTemporalRoles.length !== availableTemporalRoles.length ? (
-              <button
-                type="button"
-                onClick={enableAllTemporalRoles}
-                className="ml-1 text-xs font-semibold text-[var(--peridot-color-hex-d6a36a)] underline underline-offset-4 hover:text-[var(--peridot-color-hex-f5ecd2)]"
-              >
-                Select all
-              </button>
-            ) : null}
-            {!enabledTemporalRoles.length ? (
-              <span className="text-[11px] text-[var(--peridot-color-hex-c8d7bd)]">No time types selected; Timeline filtering and playback are paused.</span>
-            ) : null}
+
+      <div className="grid min-h-[50px] gap-3 xl:grid-cols-[250px_150px_180px_minmax(280px,1fr)_auto] xl:items-center">
+        <div className="flex min-w-0 items-center gap-3 border-[var(--peridot-color-hex-dfe9c8-a20)] xl:border-r xl:pr-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a45)] text-[15px] text-[var(--peridot-color-hex-f5ecd2)]">
+            ◷
           </div>
-        ) : <div />}
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <span className="mr-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-dfe9c8)]">Event mode</span>
-          <button
-            type="button"
-            aria-pressed={timelinePlaybackMode === 'cumulative'}
-            title="Shows events and records once their date or period has begun or occurred, and keeps them visible as playback advances."
-            onClick={() => {
-              if (!setTimelinePlaybackMode) return;
-              setTimelinePlaybackMode('cumulative');
-              stopPlayback();
-            }}
-            className={[
-              'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
-              timelinePlaybackMode === 'cumulative'
-                ? 'border-[var(--peridot-color-hex-d6a36a)] bg-[var(--peridot-color-hex-edf4df)] text-[var(--peridot-color-hex-203429)]'
-                : 'border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-102c20)] text-[var(--peridot-color-hex-c8d7bd)] hover:bg-[var(--peridot-color-hex-214332)]',
-            ].join(' ')}
-          >
-            Cumulative Events
-          </button>
-          <button
-            type="button"
-            aria-pressed={timelinePlaybackMode === 'co-current'}
-            title="Shows only events and records whose date or period is active at the current point in time; records with periods disappear when those periods end."
-            onClick={() => {
-              if (!setTimelinePlaybackMode) return;
-              setTimelinePlaybackMode('co-current');
-              stopPlayback();
-            }}
-            className={[
-              'rounded-full border px-3 py-1.5 text-xs font-semibold transition',
-              timelinePlaybackMode === 'co-current'
-                ? 'border-[var(--peridot-color-hex-d6a36a)] bg-[var(--peridot-color-hex-edf4df)] text-[var(--peridot-color-hex-203429)]'
-                : 'border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-102c20)] text-[var(--peridot-color-hex-c8d7bd)] hover:bg-[var(--peridot-color-hex-214332)]',
-            ].join(' ')}
-          >
-            Co-current Events
-          </button>
-        </div>
-      </div>
-      <div className="grid gap-3 xl:grid-cols-[170px_minmax(260px,1fr)_minmax(410px,520px)] xl:items-center">
-        <div className="min-w-0">
-          <p className="peridot-kicker !mb-0 text-[10px] text-[var(--peridot-color-hex-dfe9c8)]">Timeline</p>
-          <div className="mt-1 text-sm font-semibold text-[var(--peridot-color-hex-f5ecd2)]">
-            {timelineMode === 'all' && !isAdjustingRange ? 'All dates' : `${startLabel}–${endLabel}`}
-          </div>
-          <div className="mt-1 text-[11px] text-[var(--peridot-color-hex-c8d7bd)]">
-            {isAdjustingRange ? 'Previewing • release to apply' : `Applied: ${currentRangeLabel}`}
-          </div>
-        </div>
-        {hasTimeline ? (
           <div className="min-w-0">
-            <div className="mb-1 flex items-center justify-between text-[11px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]">
+            <div className="truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[16px] font-bold text-[var(--peridot-color-hex-f5ecd2)]">
+              Timeline &amp; playback
+            </div>
+            <div className="truncate text-[10px] text-[var(--peridot-color-hex-c8d7bd)]">
+              {isAdjustingRange ? 'Release to apply range' : 'Explore how locations change over time'}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">Time types</div>
+          <button
+            type="button"
+            onClick={() => setTimeTypeMenuOpen((value) => !value)}
+            className="mt-0.5 inline-flex w-full items-center justify-between gap-2 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-3 py-1.5 text-[10px] font-semibold text-[var(--peridot-color-hex-203429)]"
+            aria-expanded={timeTypeMenuOpen}
+          >
+            <span className="truncate">{activeTimeTypeLabel}</span>
+            <span aria-hidden="true" className="text-[9px]">⌄</span>
+          </button>
+
+          {timeTypeMenuOpen ? (
+            <div className="absolute bottom-[calc(100%+8px)] left-0 z-[180] w-[230px] rounded-xl border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-fffaf0)] p-2.5 text-[var(--peridot-color-hex-203429)] shadow-[0_14px_30px_rgba(0,0,0,0.3)]">
+              <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-6f6554)]">Time types</div>
+              {hasTemporalRoles ? (
+                <div className="grid gap-0.5">
+                  {availableTemporalRoles.map((role) => (
+                    <label key={role} className="flex items-center gap-2 rounded-lg px-1 py-1 text-[12px] font-semibold hover:bg-[var(--peridot-color-hex-edf4df)]">
+                      <input
+                        type="checkbox"
+                        checked={enabledRoleSet.has(role)}
+                        onChange={() => toggleTemporalRole(role)}
+                        className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
+                      />
+                      <span>{role}</span>
+                    </label>
+                  ))}
+                  {enabledTemporalRoles.length !== availableTemporalRoles.length ? (
+                    <button
+                      type="button"
+                      onClick={enableAllTemporalRoles}
+                      className="mt-1 justify-self-start text-[10px] font-semibold text-[var(--peridot-color-hex-9b6f2f)] underline underline-offset-4"
+                    >
+                      Select all
+                    </button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="text-[11px] text-[var(--peridot-color-hex-6f6554)]">No mapped time types are available.</div>
+              )}
+            </div>
+          ) : null}
+        </div>
+
+        <label className="block">
+          <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">Event mode</div>
+          <select
+            value={timelinePlaybackMode}
+            onChange={(event) => {
+              if (!setTimelinePlaybackMode) return;
+              setTimelinePlaybackMode(event.target.value);
+              stopPlayback();
+            }}
+            className="mt-0.5 w-full rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-3 py-1.5 text-[10px] font-semibold text-[var(--peridot-color-hex-203429)]"
+          >
+            <option value="cumulative">Cumulative Events</option>
+            <option value="co-current">Co-current Events</option>
+          </select>
+        </label>
+
+        {hasTimeline ? (
+          <div className="min-w-0 border-[var(--peridot-color-hex-dfe9c8-a20)] xl:border-x xl:px-4">
+            <div className="mb-0.5 flex items-center justify-between text-[10px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]">
               <span>{startLabel}</span>
               <span>{endLabel}</span>
             </div>
-            <div className="peridot-dual-range relative h-10">
-              <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--peridot-color-hex-dfe9c8-a25)]" />
+            <div className="peridot-dual-range relative h-8">
+              <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[var(--peridot-color-hex-dfe9c8-a25)]" />
               <div
-                className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-[var(--peridot-color-hex-d6a36a)]"
+                className="absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[var(--peridot-color-hex-d6a36a)]"
                 style={{ left: `${startPercent}%`, right: `${100 - endPercent}%` }}
               />
               <input
@@ -544,64 +522,40 @@ export function VisualizationTimelineScrubber({
             </div>
           </div>
         ) : (
-          <div className="rounded-2xl border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-2 text-sm text-[var(--peridot-color-hex-dfe9c8)]">
-            No usable dates are available for timeline playback.
+          <div className="rounded-xl border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-2 text-xs text-[var(--peridot-color-hex-dfe9c8)]">
+            No usable dates are available.
           </div>
         )}
-        <div className="grid gap-2 lg:grid-cols-[auto_150px_minmax(120px,1fr)] lg:items-center xl:justify-end">
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={playTimeline}
-              disabled={!selectedRowsForPlayback?.length}
-              className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-edf4df)] px-3 py-1.5 text-xs font-bold text-[var(--peridot-color-hex-203429)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] disabled:cursor-not-allowed disabled:opacity-55"
-            >
-              Play
-            </button>
-            <button
-              type="button"
-              onClick={() => setIsPlaying(false)}
-              className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-102c20)] px-3 py-1.5 text-xs font-bold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-214332)]"
-            >
-              Pause
-            </button>
-            <button
-              type="button"
-              onClick={resetTimeline}
-              className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a40)] bg-[var(--peridot-color-hex-102c20)] px-3 py-1.5 text-xs font-bold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-214332)]"
-            >
-              Reset
-            </button>
-          </div>
-          <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-dfe9c8)]">
+
+        <div className="flex shrink-0 items-end justify-end gap-2">
+          <button
+            type="button"
+            onClick={togglePlay}
+            disabled={!selectedRowsForPlayback?.length}
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d6a36a)] bg-[var(--peridot-color-hex-f5ecd2)] text-sm font-bold text-[var(--peridot-color-hex-203429)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] disabled:cursor-not-allowed disabled:opacity-50"
+            aria-label={isPlaying ? 'Pause timeline playback' : 'Play timeline'}
+            title={isPlaying ? 'Pause' : 'Play'}
+          >
+            {isPlaying ? 'Ⅱ' : '▶'}
+          </button>
+          <button
+            type="button"
+            onClick={resetTimeline}
+            className="mb-0.5 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-102c20)] px-3 py-1.5 text-[9px] font-bold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-214332)]"
+          >
+            Reset
+          </button>
+          <label className="min-w-[118px] text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">
             Speed
             <select
               value={playbackSpeed}
               onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
-              className="mt-1 w-full rounded-xl border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-2 py-1.5 text-xs text-[var(--peridot-color-hex-203429)]"
+              className="mt-0.5 w-full rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-2.5 py-1.5 text-[10px] normal-case tracking-normal text-[var(--peridot-color-hex-203429)]"
             >
               {playbackSpeedOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
-          </label>
-          <label className="block text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--peridot-color-hex-dfe9c8)]">
-            Playback
-            <input
-              type="range"
-              min="0"
-              max={playbackLastIndex}
-              value={visiblePlaybackIndex}
-              disabled={!selectedRowsForPlayback?.length}
-              onChange={(event) => {
-                setIsPlaying(false);
-                setPlaybackIndex(Number(event.target.value));
-              }}
-              className="mt-1 w-full accent-[var(--peridot-color-hex-d6a36a)] disabled:opacity-50"
-            />
-            <span className="mt-0.5 block normal-case tracking-normal text-[var(--peridot-color-hex-f5ecd2)]">
-              {statusLabel} • {currentPlaybackSpeedLabel} • {playbackProgress}%
-            </span>
           </label>
         </div>
       </div>

@@ -60,7 +60,7 @@ import {
   revokeObjectUrl,
 } from './exportHelpers';
 import { buildForcePersonPositions } from './personForceLayoutHelpers';
-import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships } from './peridotEntityNetwork.js';
+import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, getPeridotGeographicAnchorRoles, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships } from './peridotEntityNetwork.js';
 import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespondents';
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
@@ -3333,7 +3333,12 @@ export default function EuropeNetworkMapApp() {
   const [showAllLinkedLetters, setShowAllLinkedLetters] = useState(false);
   const [expandedLetterSections, setExpandedLetterSections] = useState({});
   const [viewMode, setViewMode] = useState('person');
-  const [personLayoutMode, setPersonLayoutMode] = useState('geographic'); const [analyticsChartType, setAnalyticsChartType] = useState(DEFAULT_ANALYTICS_STATE.chartType); const [analyticsBarGroupBy, setAnalyticsBarGroupBy] = useState(DEFAULT_ANALYTICS_STATE.barGroupBy); const [analyticsTopN, setAnalyticsTopN] = useState(DEFAULT_ANALYTICS_STATE.topN);
+  const [personLayoutMode, setPersonLayoutMode] = useState('geographic');
+  const [geographicAnchorSettings, setGeographicAnchorSettings] = useState({
+    selectedRoles: [],
+    includeMostFrequent: true,
+  });
+  const [analyticsChartType, setAnalyticsChartType] = useState(DEFAULT_ANALYTICS_STATE.chartType); const [analyticsBarGroupBy, setAnalyticsBarGroupBy] = useState(DEFAULT_ANALYTICS_STATE.barGroupBy); const [analyticsTopN, setAnalyticsTopN] = useState(DEFAULT_ANALYTICS_STATE.topN);
 
   
   // CONTROL PANEL OPEN/CLOSED STATE FOR INDIVIDUAL SECTIONS
@@ -3502,6 +3507,44 @@ export default function EuropeNetworkMapApp() {
     [normalizedRows, normalizedLetters, peridotNormalizedData],
   );
   const searchFilterSuggestions = useMemo(() => buildSearchFilterSuggestions(searchRecords), [searchRecords]);
+
+  // Geographic person-map anchor controls intentionally derive their available
+  // place roles from the full mapped Search dataset rather than from the current
+  // Timeline/Search/playback scope. A researcher's anchor choices should stay
+  // stable while they filter or animate the visualization. Pass 2B1 records
+  // these settings as view state only; graph placement is activated in the next
+  // bounded network pass.
+  const geographicAnchorDatasetSemantics = useMemo(
+    () => derivePeridotEntityNetworkSemantics(searchRecords, { entityLabelById: entityDisplayLabelById }),
+    [searchRecords, entityDisplayLabelById]
+  );
+  const geographicAnchorRoleOptions = useMemo(
+    () => getPeridotGeographicAnchorRoles(geographicAnchorDatasetSemantics.locations),
+    [geographicAnchorDatasetSemantics]
+  );
+
+  // Until mapping-time anchor defaults are added, preserve the existing
+  // geographic People Network convention as the compatibility default: one
+  // representative most-frequent place. Dataset changes reset the temporary
+  // visualization override so settings cannot leak from one upload into another.
+  useEffect(() => {
+    setGeographicAnchorSettings({ selectedRoles: [], includeMostFrequent: true });
+  }, [searchRecords]);
+
+  const setGeographicAnchorRoleEnabled = (role, enabled) => {
+    const normalizedRole = String(role || '').trim();
+    if (!normalizedRole) return;
+    setGeographicAnchorSettings((current) => {
+      const selectedRoles = new Set(current.selectedRoles || []);
+      if (enabled) selectedRoles.add(normalizedRole);
+      else selectedRoles.delete(normalizedRole);
+      return { ...current, selectedRoles: Array.from(selectedRoles) };
+    });
+  };
+
+  const resetGeographicAnchorSettings = () => {
+    setGeographicAnchorSettings({ selectedRoles: [], includeMostFrequent: true });
+  };
 
   // ------------------------------------------------------------
   // Timeline / filter / playback scope contract
@@ -5422,6 +5465,19 @@ export default function EuropeNetworkMapApp() {
       defaultExportTitle: pageTitle,
     },
     visualizationAvailability,
+    geographicAnchorControls: {
+      availableRoles: geographicAnchorRoleOptions,
+      selectedRoles: geographicAnchorSettings.selectedRoles,
+      includeMostFrequent: geographicAnchorSettings.includeMostFrequent,
+      defaultSelectedRoles: [],
+      defaultIncludeMostFrequent: true,
+      onToggleRole: setGeographicAnchorRoleEnabled,
+      onToggleMostFrequent: (enabled) => setGeographicAnchorSettings((current) => ({
+        ...current,
+        includeMostFrequent: Boolean(enabled),
+      })),
+      onReset: resetGeographicAnchorSettings,
+    },
   };
 
   const searchWorkspaceProps = {

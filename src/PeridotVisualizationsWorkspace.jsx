@@ -186,6 +186,141 @@ function FloatingVisualizationMenu({
   );
 }
 
+function PeopleMapSettingsPanel({ controls }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [appearanceOpen, setAppearanceOpen] = useState(false);
+
+  if (!controls) return null;
+
+  const availableRoles = Array.isArray(controls.availableRoles) ? controls.availableRoles : [];
+  const selectedRoles = new Set(Array.isArray(controls.selectedRoles) ? controls.selectedRoles : []);
+  const includeMostFrequent = Boolean(controls.includeMostFrequent);
+
+  return (
+    <div className="pointer-events-auto absolute right-6 top-6 z-[120] flex flex-col items-end gap-1.5">
+      <button
+        type="button"
+        onClick={() => setIsOpen((value) => !value)}
+        className={[
+          'inline-flex h-9 items-center gap-2 rounded-full border px-4 text-[11px] font-extrabold tracking-[0.04em] shadow-[0_9px_22px_rgba(0,0,0,0.22)] backdrop-blur-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
+          isOpen
+            ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-102c20)] text-[var(--peridot-color-hex-fff8e8)]'
+            : 'border-[var(--peridot-role-ornament-line-muted)] bg-[var(--peridot-color-hex-102c20)] text-[var(--peridot-color-hex-fff8e8)] hover:border-[var(--peridot-role-ornament-line)] hover:text-[var(--peridot-role-ornament-sparkle)]',
+        ].join(' ')}
+        aria-expanded={isOpen}
+        aria-controls="peridot-people-map-settings-panel"
+      >
+        <span aria-hidden="true">⚙</span>
+        <span>Map settings</span>
+      </button>
+
+      {isOpen ? (
+        <div
+          id="peridot-people-map-settings-panel"
+          className="max-h-[min(27rem,calc(100vh-12rem))] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2.5 text-[var(--peridot-color-hex-203429)] shadow-[0_16px_38px_rgba(0,0,0,0.3)]"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[19px] font-bold leading-tight text-[var(--peridot-color-hex-172b20)]">
+              Map settings
+            </h3>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f5ecd2)] text-sm font-bold text-[var(--peridot-color-hex-6f6554)] transition hover:bg-[var(--peridot-color-hex-dfe9c8)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
+              aria-label="Close map settings"
+            >
+              ×
+            </button>
+          </div>
+
+          <section className="mt-2 rounded-[14px] border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fbf7ea)] p-2.5">
+            <div className="flex items-center gap-2">
+              <h4 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[15px] font-bold leading-tight text-[var(--peridot-color-hex-172b20)]">
+                Geographic anchors
+              </h4>
+              <span
+                className="flex h-4 w-4 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d8c79a)] text-[9px] font-bold text-[var(--peridot-color-hex-6f6554)]"
+                title="Choose which mapped place roles can be used as person locations."
+                aria-label="About geographic anchors"
+              >
+                i
+              </span>
+            </div>
+            <div className="mt-1.5 text-[9px] font-extrabold uppercase tracking-[0.15em] text-[var(--peridot-color-hex-6f6554)]">
+              People locations
+            </div>
+            <p className="mt-0.5 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-52675a)]">
+              Choose one or more mapped place roles to use as geographic anchors.
+            </p>
+
+            <div className="mt-2 grid gap-0.5">
+              {availableRoles.map((role) => (
+                <label key={role} className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-semibold text-[var(--peridot-color-hex-26382b)] hover:bg-[var(--peridot-color-hex-edf4df)]">
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.has(role)}
+                    onChange={(event) => controls.onToggleRole?.(role, event.target.checked)}
+                    className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
+                  />
+                  <span>{role}</span>
+                </label>
+              ))}
+
+              <label className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-semibold text-[var(--peridot-color-hex-26382b)] hover:bg-[var(--peridot-color-hex-edf4df)]">
+                <input
+                  type="checkbox"
+                  checked={includeMostFrequent}
+                  onChange={(event) => controls.onToggleMostFrequent?.(event.target.checked)}
+                  className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
+                />
+                <span>Most frequent place</span>
+              </label>
+            </div>
+
+            {!availableRoles.length ? (
+              <div className="mt-2 rounded-lg border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f3ecd9)] px-2.5 py-1.5 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-6f6554)]">
+                No named place roles are mapped in this dataset. Most frequent place remains available when person locations can be resolved.
+              </div>
+            ) : null}
+
+            <div className="mt-2 flex justify-end border-t border-[var(--peridot-color-hex-d8c79a)] pt-2">
+              <button
+                type="button"
+                onClick={() => controls.onReset?.()}
+                className="rounded-full border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-f5ecd2)] px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-6f6554)] transition hover:bg-[var(--peridot-color-hex-dfe9c8)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
+              >
+                Reset
+              </button>
+            </div>
+          </section>
+
+          <section className="mt-2 border-t border-[var(--peridot-color-hex-d8c79a)] pt-2">
+            <button
+              type="button"
+              onClick={() => setAppearanceOpen((value) => !value)}
+              className="flex w-full items-center justify-between gap-3 rounded-lg px-1 py-0.5 text-left focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
+              aria-expanded={appearanceOpen}
+            >
+              <span className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[15px] font-bold leading-tight text-[var(--peridot-color-hex-172b20)]">
+                Appearance <em className="font-normal text-[var(--peridot-color-hex-6f6554)]">(Coming soon)</em>
+              </span>
+              <span aria-hidden="true" className="text-sm text-[var(--peridot-color-hex-6f6554)]">{appearanceOpen ? '⌃' : '⌄'}</span>
+            </button>
+            <p className="px-1 text-[10px] text-[var(--peridot-color-hex-6f6554)]">
+              Node size, cluster size, edge width…
+            </p>
+            {appearanceOpen ? (
+              <div className="mt-1.5 rounded-lg border border-dashed border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-fbf7ea)] px-2.5 py-1.5 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-6f6554)]">
+                Appearance controls will be added in the later sizing and clustering pass.
+              </div>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function CompatibilityStatusPill({ available, light = false }) {
   return (
     <span
@@ -674,6 +809,7 @@ export function PeridotVisualizationsWorkspace({
   visualizationsWorkspacePanel,
   analyticsWorkspaceProps,
   visualizationAvailability,
+  geographicAnchorControls,
   onSelectPlaceMap,
   onSelectPeopleNetwork,
   onSelectForceDirected,
@@ -716,9 +852,7 @@ export function PeridotVisualizationsWorkspace({
   const [openMenuCategory, setOpenMenuCategory] = useState(null);
   const [openMenuAnchorRect, setOpenMenuAnchorRect] = useState(null);
   const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
-  const [isTimelineExpanded, setIsTimelineExpanded] = useState(true);
   const headerToggleAnchorRef = useRef(null);
-  const timelineToggleAnchorRef = useRef(null);
   const [chartExportControls, setChartExportControls] = useState(null);
   const [isStageSwitching, setIsStageSwitching] = useState(false);
   const [stageRenderKey, setStageRenderKey] = useState(0);
@@ -1032,8 +1166,14 @@ export function PeridotVisualizationsWorkspace({
     }
 
     return (
-      <div className="peridot-map-plate flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--map-water)] shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
+      <div className="peridot-map-plate relative flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--map-water)] shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
         <MapStageComponent {...mapStageProps} />
+        {(
+          selectedTool === VISUALIZATION_TOOLS.LOCATION_MAP
+          || (selectedTool === VISUALIZATION_TOOLS.ENTITY_NETWORK && personLayoutMode === 'geographic')
+        ) ? (
+          <PeopleMapSettingsPanel controls={geographicAnchorControls} />
+        ) : null}
       </div>
     );
   };
@@ -1202,29 +1342,8 @@ export function PeridotVisualizationsWorkspace({
               </div>
             </div>
             {timelineControlsProps ? (
-              <div ref={timelineToggleAnchorRef} className="peridot-appear-rise peridot-appear-delay-3 relative shrink-0 pt-2">
-                {!suppressFloatingFrameToggles ? (
-                  <FloatingOrnamentArrowToggle
-                    anchorRef={timelineToggleAnchorRef}
-                    placement="top"
-                    expanded={isTimelineExpanded}
-                    onClick={() => setIsTimelineExpanded((value) => !value)}
-                    expandedLabel="Hide timeline"
-                    collapsedLabel="Show timeline"
-                    expandedArrow="⌄"
-                    collapsedArrow="⌃"
-                  />
-                ) : null}
-                {isTimelineExpanded ? (
-                  <div className="peridot-visualization-timeline-sequence">
-                    <VisualizationTimelineScrubber {...timelineControlsProps} />
-                  </div>
-                ) : (
-                  <div className="peridot-visualization-timeline-sequence flex h-10 items-center justify-between rounded-[24px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-96),var(--peridot-color-rgba-rgba-5-29-19-0-98))] px-5 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_12px_32px_var(--peridot-color-rgba-rgba-0-0-0-0-26)]">
-                    <span className="peridot-visualization-timeline-step peridot-kicker !mb-0 text-[10px] text-[var(--peridot-color-hex-dfe9c8)]">Timeline</span>
-                    <span className="peridot-visualization-timeline-step text-sm font-semibold text-[var(--peridot-color-hex-f5ecd2)]">{timelineControlsProps.currentRangeLabel}</span>
-                  </div>
-                )}
+              <div className="peridot-appear-rise peridot-appear-delay-3 peridot-visualization-timeline-sequence shrink-0">
+                <VisualizationTimelineScrubber {...timelineControlsProps} />
               </div>
             ) : null}
           </div>

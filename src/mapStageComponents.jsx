@@ -15,14 +15,12 @@
 import React, { useState } from 'react';
 
 function mapUtilityButtonClassName(position = 'left') {
-  const attachedSide = position === 'right' ? 'rounded-r-[18px]' : 'rounded-l-[18px]';
   return [
-    'absolute bottom-4 z-20 inline-flex items-center gap-2 border border-[var(--peridot-role-ornament-line-muted)]',
-    'bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_84%,transparent)] px-3.5 py-2 text-[11px] font-bold uppercase tracking-[0.14em]',
+    'absolute bottom-6 z-20 inline-flex items-center gap-2 rounded-full border border-[var(--peridot-role-ornament-line-muted)]',
+    'bg-[var(--peridot-color-hex-102c20)] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em]',
     'text-[var(--peridot-role-interface-text-on-dark)] shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-[1px]',
     'transition duration-150 hover:border-[var(--peridot-role-ornament-line)] hover:text-[var(--peridot-role-ornament-sparkle)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-text-on-dark)]',
-    attachedSide,
-    position === 'right' ? 'right-4' : 'left-4',
+    position === 'right' ? 'right-6' : 'left-6',
   ].join(' ');
 }
 
@@ -45,7 +43,12 @@ function MapUtilityControlsIcon() {
 }
 
 export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCardClassName }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
+  const isPlaceMap = clusterPluralLabel === 'places';
+  const clusterLabel = isPlaceMap ? 'Place cluster' : 'People / entity cluster';
+  const singleLabel = isPlaceMap ? 'Single place' : 'Single person / entity';
+  const edgeLabel = isPlaceMap ? 'Geographic route' : 'Relationship';
+  const edgeCountLabel = isPlaceMap ? 'Routes' : 'Connections';
 
   if (!isOpen) {
     return (
@@ -57,94 +60,106 @@ export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCar
       >
         <MapUtilityLegendIcon />
         <span>Legend</span>
+        <span aria-hidden="true" className="text-[10px]">⌃</span>
       </button>
     );
   }
 
   return (
-    <div className={`absolute bottom-4 left-4 z-20 p-3 text-xs ${floatingCardClassName()}`}>
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div className="text-[var(--muted-text)]">Nodes: {nodes.length} | Routes: {edges.length}</div>
+    <div className={`absolute bottom-6 left-6 z-20 w-[220px] p-3 text-xs ${floatingCardClassName()}`}>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[14px] font-bold text-[var(--text-main)]">Legend</div>
         <button
           type="button"
           onClick={() => setIsOpen(false)}
-          className="rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]"
-          aria-label="Minimize map legend"
-          title="Minimize map legend"
+          className="flex h-5 w-5 items-center justify-center rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] text-[10px] font-bold text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]"
+          aria-label="Collapse map legend"
+          title="Collapse map legend"
         >
-          −
+          ⌃
         </button>
       </div>
-      <div className="mb-1 font-semibold text-[var(--text-main)]">Legend</div>
-      <div className="space-y-1 text-[var(--muted-text)]">
-        <div><span className="font-medium">Primary circles</span>: {clusterPluralLabel}</div>
-        <div><span className="font-medium">Cluster circles</span>: low-zoom {clusterPluralLabel} clusters</div>
-        <div><span className="font-medium">Curved paths</span>: aggregated {clusterPluralLabel === 'places' ? 'geographic routes' : 'person-to-person connections'}</div>
-        <div><span className="font-medium">Thicker line</span>: more letters on that route</div>
-        <div><span className="font-medium">Mouse wheel</span>: zoom</div>
-        <div><span className="font-medium">Drag</span>: pan</div>
+
+      <div className="space-y-2 text-[11px] leading-[1.25] text-[var(--muted-text)]">
+        <div className="flex items-center gap-2.5">
+          <span className="h-7 w-7 shrink-0 rounded-full border-2 border-[var(--peridot-color-hex-fff8e8)] bg-[var(--peridot-color-hex-b58b42)] shadow-[0_2px_5px_rgba(0,0,0,0.14)]" aria-hidden="true" />
+          <span><span className="font-semibold text-[var(--text-main)]">{clusterLabel}</span><br /><span>(number = {clusterPluralLabel})</span></span>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <svg aria-hidden="true" viewBox="0 0 20 20" className="h-5 w-5 shrink-0">
+            <circle cx="10" cy="10" r="7" fill="var(--peridot-color-hex-214f2f)" stroke="var(--peridot-color-hex-fff8e8)" strokeWidth="2.2" />
+          </svg>
+          <span className="font-semibold text-[var(--text-main)]">{singleLabel}</span>
+        </div>
+        <div className="flex items-center gap-2.5">
+          <span className="h-[2px] w-8 shrink-0 rounded-full bg-[var(--peridot-color-hex-b58b42)]" aria-hidden="true" />
+          <span><span className="font-semibold text-[var(--text-main)]">{edgeLabel}</span><br /><span>(aggregated)</span></span>
+        </div>
+      </div>
+
+      <div className="mt-2.5 flex items-center gap-3 border-t border-[var(--peridot-color-hex-d8c79a)] pt-2 text-[10px] font-semibold text-[var(--muted-text)]">
+        <span>Nodes: {nodes.length}</span>
+        <span className="h-3 w-px bg-[var(--peridot-color-hex-d8c79a)]" aria-hidden="true" />
+        <span>{edgeCountLabel}: {edges.length}</span>
       </div>
     </div>
   );
 }
 
 export function MapControlsOverlay({
-  floatingCardClassName,
-  buttonClassName,
-  onPanUp,
-  onPanLeft,
-  onPanDown,
-  onPanRight,
   onZoomIn,
   onZoomOut,
   onStop,
   onReset,
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  if (!isOpen) {
-    return (
-      <button
-        type="button"
-        onClick={() => setIsOpen(true)}
-        className={mapUtilityButtonClassName('right')}
-        aria-label="Open map controls"
-      >
-        <MapUtilityControlsIcon />
-        <span>Controls</span>
-      </button>
-    );
-  }
+  const controlClassName = 'flex h-9 w-9 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[color-mix(in_srgb,var(--peridot-color-hex-fffaf0)_94%,transparent)] text-[var(--peridot-color-hex-203429)] shadow-[0_7px_18px_rgba(0,0,0,0.22)] backdrop-blur-sm transition hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-f5ecd2)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]';
 
   return (
-    <div className={`absolute bottom-4 right-4 z-20 p-3 ${floatingCardClassName()}`}>
-      <div className="mb-2 flex items-center justify-between gap-3 px-1">
-        <div className="[font-family:Georgia,&quot;Palatino_Linotype&quot;,&quot;Book_Antiqua&quot;,Palatino,serif] text-[13px] font-bold uppercase tracking-[0.12em] text-[var(--group-heading-text)]">Map controls</div>
-        <button
-          type="button"
-          onClick={() => setIsOpen(false)}
-          className="rounded-full border border-[var(--button-secondary-border)] bg-[var(--button-secondary-bg)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--button-secondary-text)] hover:bg-[var(--button-secondary-hover)]"
-          aria-label="Minimize map controls"
-          title="Minimize map controls"
-        >
-          −
-        </button>
-      </div>
-      <div className="flex flex-col gap-2">
-        <div className="flex justify-center">
-          <button onMouseDown={onPanUp} onMouseUp={onStop} onMouseLeave={onStop} onTouchStart={onPanUp} onTouchEnd={onStop} aria-label="Pan up" className={`${buttonClassName()} min-w-[52px] shadow-sm`}>↑</button>
-        </div>
-        <div className="flex gap-2">
-          <button onMouseDown={onPanLeft} onMouseUp={onStop} onMouseLeave={onStop} onTouchStart={onPanLeft} onTouchEnd={onStop} aria-label="Pan left" className={`${buttonClassName()} min-w-[52px] shadow-sm`}>←</button>
-          <button onMouseDown={onPanDown} onMouseUp={onStop} onMouseLeave={onStop} onTouchStart={onPanDown} onTouchEnd={onStop} aria-label="Pan down" className={`${buttonClassName()} min-w-[52px] shadow-sm`}>↓</button>
-          <button onMouseDown={onPanRight} onMouseUp={onStop} onMouseLeave={onStop} onTouchStart={onPanRight} onTouchEnd={onStop} aria-label="Pan right" className={`${buttonClassName()} min-w-[52px] shadow-sm`}>→</button>
-        </div>
-        <div className="flex gap-2">
-          <button onMouseDown={onZoomIn} onMouseUp={onStop} onMouseLeave={onStop} onTouchStart={onZoomIn} onTouchEnd={onStop} aria-label="Zoom in" className={`${buttonClassName()} min-w-[52px] shadow-sm`}>+</button>
-          <button onMouseDown={onZoomOut} onMouseUp={onStop} onMouseLeave={onStop} onTouchStart={onZoomOut} onTouchEnd={onStop} aria-label="Zoom out" className={`${buttonClassName()} min-w-[52px] shadow-sm`}>−</button>
-          <button onClick={onReset} aria-label="Reset map view" className={`${buttonClassName()} shadow-sm`}>Reset</button>
-        </div>
-      </div>
+    <div className="pointer-events-auto absolute right-[196px] top-6 z-[110] flex items-center gap-2.5" aria-label="Map view controls">
+      <button
+        type="button"
+        onMouseDown={onZoomOut}
+        onMouseUp={onStop}
+        onMouseLeave={onStop}
+        onTouchStart={onZoomOut}
+        onTouchEnd={onStop}
+        className={controlClassName}
+        aria-label="Zoom out"
+        title="Zoom out"
+      >
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <circle cx="8.5" cy="8.5" r="5" />
+          <path d="M5.8 8.5h5.4M12.2 12.2l4 4" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onMouseDown={onZoomIn}
+        onMouseUp={onStop}
+        onMouseLeave={onStop}
+        onTouchStart={onZoomIn}
+        onTouchEnd={onStop}
+        className={controlClassName}
+        aria-label="Zoom in"
+        title="Zoom in"
+      >
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <circle cx="8.5" cy="8.5" r="5" />
+          <path d="M5.8 8.5h5.4M8.5 5.8v5.4M12.2 12.2l4 4" />
+        </svg>
+      </button>
+      <button
+        type="button"
+        onClick={onReset}
+        className={controlClassName}
+        aria-label="Reset map view"
+        title="Reset map view"
+      >
+        <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M7 3.5H3.5V7M13 3.5h3.5V7M7 16.5H3.5V13M13 16.5h3.5V13" />
+          <path d="M6.2 10h7.6" opacity="0.55" />
+        </svg>
+      </button>
     </div>
   );
 }
