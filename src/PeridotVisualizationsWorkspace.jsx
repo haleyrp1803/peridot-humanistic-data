@@ -177,16 +177,46 @@ function GeographicMapSettingsPanel({ controls }) {
   const [relationshipLinesOpen, setRelationshipLinesOpen] = useState(false);
   const [appearanceOpen, setAppearanceOpen] = useState(false);
 
-  if (!controls) return null;
+  const safeControls = controls || {};
 
-  const availableRoles = Array.isArray(controls.availableRoles) ? controls.availableRoles : [];
-  const selectedRoles = new Set(Array.isArray(controls.selectedRoles) ? controls.selectedRoles : []);
-  const includeMostFrequent = Boolean(controls.includeMostFrequent);
-  const lineAnchorRule = controls.lineAnchorRule || 'event-location';
-  const lineFallbackRule = controls.lineFallbackRule || 'most-frequent';
-  const showPlaceLabels = controls.showPlaceLabels !== false;
-  const showEntityLabels = Boolean(controls.showEntityLabels);
-  const hasEntityGeography = Boolean(controls.hasEntityGeography);
+  const availableRoles = Array.isArray(safeControls.availableRoles) ? safeControls.availableRoles : [];
+  const hasEntityGeography = Boolean(safeControls.hasEntityGeography);
+  const appliedSettings = {
+    selectedRoles: Array.isArray(safeControls.selectedRoles) ? safeControls.selectedRoles : [],
+    includeMostFrequent: Boolean(safeControls.includeMostFrequent),
+    lineAnchorRule: safeControls.lineAnchorRule || 'event-location',
+    lineFallbackRule: safeControls.lineFallbackRule || 'most-frequent',
+    showPlaceLabels: safeControls.showPlaceLabels !== false,
+    showEntityLabels: Boolean(safeControls.showEntityLabels),
+  };
+  const defaultSettings = {
+    selectedRoles: Array.isArray(safeControls.defaultSelectedRoles) ? safeControls.defaultSelectedRoles : [],
+    includeMostFrequent: safeControls.defaultIncludeMostFrequent !== false,
+    lineAnchorRule: safeControls.defaultLineAnchorRule || 'event-location',
+    lineFallbackRule: safeControls.defaultLineFallbackRule || 'most-frequent',
+    showPlaceLabels: safeControls.defaultShowPlaceLabels !== false,
+    showEntityLabels: Boolean(safeControls.defaultShowEntityLabels),
+  };
+  const appliedSignature = JSON.stringify({
+    ...appliedSettings,
+    selectedRoles: [...appliedSettings.selectedRoles].sort(),
+  });
+  const [draftSettings, setDraftSettings] = useState(appliedSettings);
+
+  useEffect(() => {
+    setDraftSettings(appliedSettings);
+  // `appliedSignature` intentionally collapses parent rerenders that do not
+  // change the committed map settings. Draft edits therefore survive Timeline,
+  // playback, hover, and other workspace updates until Apply or Reset.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedSignature]);
+
+  const selectedRoles = new Set(Array.isArray(draftSettings.selectedRoles) ? draftSettings.selectedRoles : []);
+  const includeMostFrequent = Boolean(draftSettings.includeMostFrequent);
+  const lineAnchorRule = draftSettings.lineAnchorRule || 'event-location';
+  const lineFallbackRule = draftSettings.lineFallbackRule || 'most-frequent';
+  const showPlaceLabels = draftSettings.showPlaceLabels !== false;
+  const showEntityLabels = Boolean(draftSettings.showEntityLabels);
   const lineRuleOptions = [
     { value: 'event-location', label: 'Where the connection event occurred' },
     { value: 'most-frequent', label: 'Most frequent place' },
@@ -197,7 +227,34 @@ function GeographicMapSettingsPanel({ controls }) {
     { value: 'most-frequent', label: 'Most frequent place' },
     ...availableRoles.map((role) => ({ value: `role:${role}`, label: role })),
   ];
-  const anchorRuleCount = selectedRoles.size + (includeMostFrequent ? 1 : 0);
+  const normalizeComparableSettings = (settings) => ({
+    ...settings,
+    selectedRoles: [...(settings.selectedRoles || [])].sort(),
+  });
+  const isDirty = JSON.stringify(normalizeComparableSettings(draftSettings)) !== JSON.stringify(normalizeComparableSettings(appliedSettings));
+
+  const updateDraft = (updates) => {
+    setDraftSettings((current) => ({ ...current, ...updates }));
+  };
+  const toggleDraftRole = (role, enabled) => {
+    setDraftSettings((current) => {
+      const nextRoles = new Set(current.selectedRoles || []);
+      if (enabled) nextRoles.add(role);
+      else nextRoles.delete(role);
+      return { ...current, selectedRoles: Array.from(nextRoles) };
+    });
+  };
+  const resetDraft = () => setDraftSettings(defaultSettings);
+  const applyDraft = () => safeControls.onApply?.({
+    selectedRoles: Array.from(new Set(draftSettings.selectedRoles || [])),
+    includeMostFrequent: Boolean(draftSettings.includeMostFrequent),
+    lineAnchorRule: draftSettings.lineAnchorRule || 'event-location',
+    lineFallbackRule: draftSettings.lineFallbackRule || 'most-frequent',
+    showPlaceLabels: draftSettings.showPlaceLabels !== false,
+    showEntityLabels: Boolean(draftSettings.showEntityLabels),
+  });
+
+  if (!controls) return null;
 
   return (
     <div className="pointer-events-auto absolute right-6 top-6 z-[120] flex flex-col items-end gap-1.5">
@@ -223,9 +280,14 @@ function GeographicMapSettingsPanel({ controls }) {
           className="max-h-[min(27rem,calc(100vh-12rem))] w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-fffaf0)] p-2.5 text-[var(--peridot-color-hex-203429)] shadow-[0_16px_38px_rgba(0,0,0,0.3)]"
         >
           <div className="flex items-center justify-between gap-3">
-            <h3 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[19px] font-bold leading-tight text-[var(--peridot-color-hex-172b20)]">
-              Map settings
-            </h3>
+            <div>
+              <h3 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[19px] font-bold leading-tight text-[var(--peridot-color-hex-172b20)]">
+                Map settings
+              </h3>
+              <p className="mt-0.5 text-[9px] leading-[1.35] text-[var(--peridot-color-hex-6f6554)]">
+                Changes are previewed here and applied together.
+              </p>
+            </div>
             <button
               type="button"
               onClick={() => setIsOpen(false)}
@@ -243,21 +305,21 @@ function GeographicMapSettingsPanel({ controls }) {
               </h4>
               <span
                 className="flex h-4 w-4 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d8c79a)] text-[9px] font-bold text-[var(--peridot-color-hex-6f6554)]"
-                title="Choose which identities are printed on geographic nodes. Both may be shown together."
+                title="Choose which identities are printed on geographic nodes. Both may be shown together, or both may be hidden."
                 aria-label="About node labels"
               >
                 i
               </span>
             </div>
             <p className="mt-1 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-52675a)]">
-              Geographic points are shared. Choose whether their labels foreground places, people / entities, or both.
+              Geographic points are shared. Choose whether labels foreground places, people / entities, both, or neither.
             </p>
             <div className="mt-2 grid gap-0.5">
               <label className="flex items-center gap-2 rounded-lg px-1 py-1 text-[13px] font-semibold text-[var(--peridot-color-hex-26382b)] hover:bg-[var(--peridot-color-hex-edf4df)]">
                 <input
                   type="checkbox"
                   checked={showPlaceLabels}
-                  onChange={(event) => controls.onTogglePlaceLabels?.(event.target.checked)}
+                  onChange={(event) => updateDraft({ showPlaceLabels: event.target.checked })}
                   className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
                 />
                 <span>Places</span>
@@ -267,7 +329,7 @@ function GeographicMapSettingsPanel({ controls }) {
                   type="checkbox"
                   checked={showEntityLabels}
                   disabled={!hasEntityGeography}
-                  onChange={(event) => controls.onToggleEntityLabels?.(event.target.checked)}
+                  onChange={(event) => updateDraft({ showEntityLabels: event.target.checked })}
                   className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)] disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <span>People / entities</span>
@@ -293,7 +355,7 @@ function GeographicMapSettingsPanel({ controls }) {
               Locations shown
             </div>
             <p className="mt-0.5 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-52675a)]">
-              Choose one or more mapped place roles to position people or entities on the shared geographic map.
+              Choose any mapped place roles to position people or entities. All anchor rules may be turned off.
             </p>
 
             <div className="mt-2 grid gap-0.5">
@@ -302,9 +364,8 @@ function GeographicMapSettingsPanel({ controls }) {
                   <input
                     type="checkbox"
                     checked={selectedRoles.has(role)}
-                    disabled={selectedRoles.has(role) && anchorRuleCount === 1}
-                    onChange={(event) => controls.onToggleRole?.(role, event.target.checked)}
-                    className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)] disabled:cursor-not-allowed disabled:opacity-60"
+                    onChange={(event) => toggleDraftRole(role, event.target.checked)}
+                    className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
                   />
                   <span>{role}</span>
                 </label>
@@ -314,33 +375,18 @@ function GeographicMapSettingsPanel({ controls }) {
                 <input
                   type="checkbox"
                   checked={includeMostFrequent}
-                  disabled={includeMostFrequent && anchorRuleCount === 1}
-                  onChange={(event) => controls.onToggleMostFrequent?.(event.target.checked)}
-                  className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)] disabled:cursor-not-allowed disabled:opacity-60"
+                  onChange={(event) => updateDraft({ includeMostFrequent: event.target.checked })}
+                  className="h-4 w-4 rounded border-[var(--peridot-color-hex-cbdab2)]"
                 />
                 <span>Most frequent place</span>
               </label>
             </div>
-
-            <p className="mt-1.5 text-[9px] leading-[1.4] text-[var(--peridot-color-hex-7d725f)]">
-              The temporary one-anchor minimum remains until the transactional map-settings pass; node layers will then be allowed to turn fully off.
-            </p>
 
             {!availableRoles.length ? (
               <div className="mt-2 rounded-lg border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-f3ecd9)] px-2.5 py-1.5 text-[10px] leading-[1.45] text-[var(--peridot-color-hex-6f6554)]">
                 No named place roles are mapped in this dataset. Most frequent place remains available when entity locations can be resolved.
               </div>
             ) : null}
-
-            <div className="mt-2 flex justify-end border-t border-[var(--peridot-color-hex-d8c79a)] pt-2">
-              <button
-                type="button"
-                onClick={() => controls.onReset?.()}
-                className="rounded-full border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-f5ecd2)] px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-6f6554)] transition hover:bg-[var(--peridot-color-hex-dfe9c8)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
-              >
-                Reset
-              </button>
-            </div>
           </section>
           ) : null}
 
@@ -363,7 +409,7 @@ function GeographicMapSettingsPanel({ controls }) {
                   Draw relationship lines from
                   <select
                     value={lineAnchorRule}
-                    onChange={(event) => controls.onSetLineAnchorRule?.(event.target.value)}
+                    onChange={(event) => updateDraft({ lineAnchorRule: event.target.value })}
                     className="mt-1 w-full rounded-lg border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fffaf0)] px-2 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-[var(--peridot-color-hex-26382b)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
                   >
                     {lineRuleOptions.map((option) => (
@@ -377,7 +423,7 @@ function GeographicMapSettingsPanel({ controls }) {
                     If unavailable
                     <select
                       value={lineFallbackRule}
-                      onChange={(event) => controls.onSetLineFallbackRule?.(event.target.value)}
+                      onChange={(event) => updateDraft({ lineFallbackRule: event.target.value })}
                       className="mt-1 w-full rounded-lg border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fffaf0)] px-2 py-1.5 text-[11px] font-semibold normal-case tracking-normal text-[var(--peridot-color-hex-26382b)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
                     >
                       {fallbackRuleOptions.map((option) => (
@@ -393,7 +439,6 @@ function GeographicMapSettingsPanel({ controls }) {
               </div>
             ) : null}
           </section>
-
           ) : null}
 
           <section className="mt-2 border-t border-[var(--peridot-color-hex-d8c79a)] pt-2">
@@ -417,6 +462,24 @@ function GeographicMapSettingsPanel({ controls }) {
               </div>
             ) : null}
           </section>
+
+          <div className="sticky bottom-0 mt-2 flex items-center justify-between gap-2 border-t border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-fffaf0)] pt-2">
+            <button
+              type="button"
+              onClick={resetDraft}
+              className="rounded-full border border-[var(--peridot-color-hex-bfa46d)] bg-[var(--peridot-color-hex-f5ecd2)] px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-6f6554)] transition hover:bg-[var(--peridot-color-hex-dfe9c8)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]"
+            >
+              Reset
+            </button>
+            <button
+              type="button"
+              onClick={applyDraft}
+              disabled={!isDirty}
+              className="rounded-full border border-[var(--peridot-color-hex-b58b42)] bg-[var(--peridot-color-hex-173120)] px-4 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-fff8e8)] transition hover:bg-[var(--peridot-color-hex-254934)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Apply
+            </button>
+          </div>
         </div>
       ) : null}
     </div>
@@ -954,7 +1017,6 @@ export function PeridotVisualizationsWorkspace({
   const headerToggleAnchorRef = useRef(null);
   const [chartExportControls, setChartExportControls] = useState(null);
   const [isStageSwitching, setIsStageSwitching] = useState(false);
-  const [stageRenderKey, setStageRenderKey] = useState(0);
   const menuCloseTimerRef = useRef(null);
   const stageSwitchTimerRef = useRef(null);
   const stageRevealFrameRef = useRef(null);
@@ -1134,12 +1196,11 @@ export function PeridotVisualizationsWorkspace({
     }
 
     /*
-     * View-switch choreography: fade through a fully opaque, solid dark-green
-     * field instead of swapping map/network/chart stages abruptly. The current
-     * visualization fades out for about one second; once the green field covers
-     * the stage, the next visualization mounts and starts fading in on the
-     * next animation frame. This avoids a fixed green hold while still giving
-     * React one paint cycle to mount the new stage under cover.
+     * Keep a brief transition veil so an expensive visualization can mount
+     * without flashing intermediate geometry, but do not impose the previous
+     * one-second artificial wait. The stage itself is no longer force-remounted;
+     * preserving the component boundary lets map viewport memory and memoized
+     * derivations survive ordinary visualization switches.
      */
     setIsStageSwitching(true);
     stageSwitchTimerRef.current = window.setTimeout(() => {
@@ -1147,12 +1208,11 @@ export function PeridotVisualizationsWorkspace({
       if (tool?.available && typeof tool.action === 'function') {
         tool.action();
       }
-      setStageRenderKey((value) => value + 1);
       stageRevealFrameRef.current = window.requestAnimationFrame(() => {
         stageRevealFrameRef.current = null;
         setIsStageSwitching(false);
       });
-    }, 1000);
+    }, 120);
   };
 
   const isCategorySelected = (category) => {
@@ -1354,7 +1414,7 @@ export function PeridotVisualizationsWorkspace({
                 isStageSwitching ? 'peridot-visualization-stage-transition-active' : '',
               ].join(' ')}
             >
-              <div key={stageRenderKey} className="peridot-visualization-stage-transition-content min-h-0 flex flex-1">
+              <div className="peridot-visualization-stage-transition-content min-h-0 flex flex-1">
                 {renderWorkspaceBody()}
               </div>
             </div>

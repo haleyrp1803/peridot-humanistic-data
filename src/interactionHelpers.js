@@ -45,7 +45,7 @@ export function buildNearbyCandidates(point, screenNodes, screenEdges, clusterSi
         id: `edge:${edge.id}`,
         kind: 'edge',
         label: `${edge.sourceLabel} ${edge.direction === 'directed' ? '→' : '—'} ${edge.targetLabel}`,
-        subtitle: `Weight: ${edge.count}`,
+        subtitle: `${edge.count || 0} ${(edge.count || 0) === 1 ? 'occurrence' : 'occurrences'}`, 
         distance,
         payload: edge,
       };

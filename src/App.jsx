@@ -965,37 +965,45 @@ function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', sem
       locations,
       relationshipLineSettings,
     );
-    const edges = geographicSegments.map((edge) => {
-      const sourcePoint = projectToSvg(edge.sourceLocation.longitude, edge.sourceLocation.latitude, width, height);
-      const targetPoint = projectToSvg(edge.targetLocation.longitude, edge.targetLocation.latitude, width, height);
+    const edges = geographicSegments.flatMap((edge) => {
       const sourceKey = edge.sourceId || edge.source;
       const targetKey = edge.targetId || edge.target;
       const sourceNode = nodeByEntityCoordinate.get(`${sourceKey}::${Number(edge.sourceLocation.latitude)}__${Number(edge.sourceLocation.longitude)}`);
       const targetNode = nodeByEntityCoordinate.get(`${targetKey}::${Number(edge.targetLocation.latitude)}__${Number(edge.targetLocation.longitude)}`);
+
+      // Geographic connections are a visible-node layer, not an independent
+      // route overlay. Only render a connection when both resolved endpoint
+      // anchor instances are currently visible under the applied map settings.
+      // This also ensures relationship-line settings move the rendered edge to
+      // the same node instances that the researcher can actually see.
+      if (!sourceNode || !targetNode) return [];
+
+      const sourcePoint = { x: sourceNode.x, y: sourceNode.y };
+      const targetPoint = { x: targetNode.x, y: targetNode.y };
       const sourceLabel = canonicalPersonLabel(edge.sourceId, edge.source);
       const targetLabel = canonicalPersonLabel(edge.targetId, edge.target);
       const directionalGlyph = edge.direction === 'directed' ? '→' : '—';
-      return {
+      return [{
         ...edge,
         sourceLabel,
         targetLabel,
         sourceEntityId: edge.sourceId || '',
         targetEntityId: edge.targetId || '',
-        sourceNodeId: sourceNode?.id || sourceKey,
-        targetNodeId: targetNode?.id || targetKey,
+        sourceNodeId: sourceNode.id,
+        targetNodeId: targetNode.id,
         path: curvedPath(sourcePoint, targetPoint, 0.12),
         width: computePersonEdgeWidth(edge.count),
         letterMetadata: edge.rows,
         samplePairs: [`${sourceLabel} ${directionalGlyph} ${targetLabel}`],
         sources: [sourceLabel],
         targets: [targetLabel],
-        sourceAnchorLabel: edge.sourceLocation.label,
-        targetAnchorLabel: edge.targetLocation.label,
+        sourceAnchorLabel: sourceNode.anchorLabel || edge.sourceLocation.label,
+        targetAnchorLabel: targetNode.anchorLabel || edge.targetLocation.label,
         sourceX: sourcePoint.x,
         sourceY: sourcePoint.y,
         targetX: targetPoint.x,
         targetY: targetPoint.y,
-      };
+      }];
     });
 
     return { nodes: people, edges };
@@ -1755,16 +1763,86 @@ function SidebarToggle({ side, open, onToggle }) {
 // component so the top-level React state reads more clearly.
 
 
+function formatRelationshipEndpointPair(edge) {
+  const glyph = edge?.direction === 'directed' ? '→' : '—';
+  return `${edge?.sourceLabel || 'Unknown'} ${glyph} ${edge?.targetLabel || 'Unknown'}`;
+}
+
+function buildEdgeHoverSummary(edge) {
+  const parts = [];
+  const relationshipLabel = String(edge?.relationshipLabel || edge?.relationshipType || '').trim();
+  if (relationshipLabel) parts.push(relationshipLabel);
+
+  const sourceAnchorLabel = String(edge?.sourceAnchorLabel || '').trim();
+  const targetAnchorLabel = String(edge?.targetAnchorLabel || '').trim();
+  if (sourceAnchorLabel && targetAnchorLabel) {
+    const glyph = edge?.direction === 'directed' ? '→' : '—';
+    parts.push(`${sourceAnchorLabel} ${glyph} ${targetAnchorLabel}`);
+  }
+
+  const occurrenceCount = Number(edge?.count || 0);
+  if (occurrenceCount > 0) {
+    parts.push(`${occurrenceCount} ${occurrenceCount === 1 ? 'occurrence' : 'occurrences'}`);
+  }
+
+  return parts.join(' · ');
+}
+
+function buildNodeHoverTitle(node, viewMode) {
+  if (node?.isCluster) {
+    const topLabel = String(node?.topLabel || '').trim();
+    if (topLabel) {
+      const remainder = Math.max(0, Number(node?.clusterSize || 0) - 1);
+      return remainder > 0 ? `${topLabel} +${remainder}` : topLabel;
+    }
+    return viewMode === 'geographic' ? 'Node cluster' : 'Entity cluster';
+  }
+
+  const entityLabel = String(node?.entityLabel || '').trim();
+  const placeLabel = String(node?.placeLabel || node?.anchorLabel || '').trim();
+  if (entityLabel && placeLabel && entityLabel !== placeLabel) {
+    return `${entityLabel} · ${placeLabel}`;
+  }
+  if (entityLabel) return entityLabel;
+  if (placeLabel) return placeLabel;
+
+  const visibleLabel = String(node?.label || '').trim();
+  if (visibleLabel) return visibleLabel;
+  return viewMode === 'geographic' ? 'Geographic node' : 'Mapped entity';
+}
+
 function buildNodeHoverSummary(node, viewMode) {
   if (node.isCluster) {
-    const singularLabel = viewMode === 'geographic' ? 'node' : 'person';
-    const pluralLabel = viewMode === 'geographic' ? 'nodes' : 'people';
+    const singularLabel = viewMode === 'geographic' ? 'node' : 'entity';
+    const pluralLabel = viewMode === 'geographic' ? 'nodes' : 'entities';
     return `${node.clusterSize} ${node.clusterSize === 1 ? singularLabel : pluralLabel}`;
   }
 
-  return viewMode === 'geographic'
-    ? `${node.placeLabel || node.anchorLabel || 'Mapped location'} · Weighted connections: ${node.degree}`
-    : `Weighted connections: ${node.degree}`;
+  const parts = [];
+  const placeLabel = String(node?.placeLabel || node?.anchorLabel || '').trim();
+  const visibleLabel = String(node?.label || '').trim();
+  if (viewMode === 'geographic' && placeLabel && !visibleLabel.includes(placeLabel)) {
+    parts.push(`Location: ${placeLabel}`);
+  }
+
+  const anchorRoles = Array.from(new Set((node?.anchorRoles || []).map((role) => String(role || '').trim()).filter(Boolean)));
+  if (anchorRoles.length) {
+    parts.push(`${anchorRoles.length === 1 ? 'Role' : 'Roles'}: ${anchorRoles.join(', ')}`);
+  }
+
+  if (node?.isMostFrequentPlace) {
+    const occurrenceCount = Number(node?.anchorOccurrenceCount || 0);
+    parts.push(occurrenceCount > 0
+      ? `Most frequent mapped place · ${occurrenceCount} ${occurrenceCount === 1 ? 'occurrence' : 'occurrences'}`
+      : 'Most frequent mapped place');
+  }
+
+  const relationshipOccurrences = Number(node?.degree || 0);
+  if (relationshipOccurrences > 0) {
+    parts.push(`${relationshipOccurrences} relationship ${relationshipOccurrences === 1 ? 'occurrence' : 'occurrences'}`);
+  }
+
+  return parts.join(' · ') || (viewMode === 'geographic' ? 'Mapped geographic node' : 'Mapped entity');
 }
 
 function buildHoverCardState(title, subtitle, point) {
@@ -1965,6 +2043,7 @@ function buildMapStageProps(args) {
     selectedProps: args.selectedProps,
     zoomTuning: args.zoomTuning,
     viewResetKey: args.viewResetKey,
+    viewStateRef: args.viewStateRef,
     initialFocusStrategy: args.initialFocusStrategy,
     hoverCard: args.hoverCard,
   };
@@ -2135,16 +2214,21 @@ function SvgMap({
   selectedFeature,
   zoomTuning = {},
   viewResetKey = 'default',
+  viewStateRef = null,
   initialFocusStrategy = 'fit-all',
 }) {
   const svgRef = useRef(null);
-  const [view, setView] = useState({ scale: 1, tx: 0, ty: 0 });
+  const rememberedInitialView = viewStateRef?.current?.resetKey === viewResetKey
+    ? viewStateRef.current.view
+    : null;
+  const [view, setView] = useState(rememberedInitialView || { scale: 1, tx: 0, ty: 0 });
   const [dragState, setDragState] = useState(null);
   const [basemapError, setBasemapError] = useState('');
   const animationFrameRef = useRef(null);
   const holdActionRef = useRef(null);
   const hasInitializedViewRef = useRef(false);
   const lastViewResetKeyRef = useRef('');
+  const skipViewPersistenceRef = useRef(false);
   const lastViewportSizeRef = useRef({ width: 0, height: 0 });
 
   const clampScale = (scale) => Math.max(0.6, Math.min(160, scale));
@@ -2249,7 +2333,7 @@ function SvgMap({
   }, [basemapFeatures.length]);
 
   useEffect(() => {
-    if (!nodes.length || !width || !height) return;
+    if ((!nodes.length && !edges.length) || !width || !height) return;
 
     const shouldRecenter =
       !hasInitializedViewRef.current ||
@@ -2257,11 +2341,24 @@ function SvgMap({
 
     if (!shouldRecenter) return;
 
-    setView(defaultView);
+    const remembered = viewStateRef?.current?.resetKey === viewResetKey
+      ? viewStateRef.current.view
+      : null;
+    skipViewPersistenceRef.current = true;
+    setView(remembered || defaultView);
     hasInitializedViewRef.current = true;
     lastViewResetKeyRef.current = viewResetKey;
     lastViewportSizeRef.current = { width, height };
-  }, [defaultView, nodes.length, viewResetKey, width, height]);
+  }, [defaultView, edges.length, nodes.length, viewResetKey, viewStateRef, width, height]);
+
+  useEffect(() => {
+    if (!viewStateRef || !hasInitializedViewRef.current) return;
+    if (skipViewPersistenceRef.current) {
+      skipViewPersistenceRef.current = false;
+      return;
+    }
+    viewStateRef.current = { resetKey: viewResetKey, view };
+  }, [view, viewResetKey, viewStateRef]);
 
   useEffect(() => {
     const previous = lastViewportSizeRef.current;
@@ -3125,6 +3222,7 @@ function LegacyD3MapStage({
   selectedProps,
   zoomTuning,
   viewResetKey,
+  viewStateRef,
   initialFocusStrategy,
   hoverCard,
 }) {
@@ -3155,6 +3253,7 @@ function LegacyD3MapStage({
           selectedFeature={selectedProps}
           zoomTuning={zoomTuning}
           viewResetKey={viewResetKey}
+          viewStateRef={viewStateRef}
           initialFocusStrategy={initialFocusStrategy}
         />
       ) : null}
@@ -3527,6 +3626,10 @@ export default function EuropeNetworkMapApp() {
   const [pageTitle, setPageTitle] = useState('Correspondence Visualizer');
   const [exportStatus, setExportStatus] = useState(null);
   const mapViewportRef = useRef(null);
+  const geographicMapViewStateRef = useRef(null);
+  const forceNetworkViewStateRef = useRef(null);
+  const geographicPersonGraphCacheRef = useRef(null);
+  const forcePersonGraphCacheRef = useRef(null);
   const [mapViewportSize, setMapViewportSize] = useState({ width: 0, height: 0 });
 
   const [zoomTuning] = useState({
@@ -3654,28 +3757,29 @@ export default function EuropeNetworkMapApp() {
       fallbackRule: 'most-frequent',
     });
     setGeographicNodeLabelSettings({ showPlaces: true, showEntities: false });
+    geographicMapViewStateRef.current = null;
+    forceNetworkViewStateRef.current = null;
+    geographicPersonGraphCacheRef.current = null;
+    forcePersonGraphCacheRef.current = null;
   }, [searchRecords]);
 
-  const setGeographicAnchorRoleEnabled = (role, enabled) => {
-    const normalizedRole = String(role || '').trim();
-    if (!normalizedRole) return;
-    setGeographicAnchorSettings((current) => {
-      const selectedRoles = new Set(current.selectedRoles || []);
-      if (enabled) {
-        selectedRoles.add(normalizedRole);
-      } else {
-        const wouldRemoveLastAnchorRule = selectedRoles.size === 1
-          && selectedRoles.has(normalizedRole)
-          && !current.includeMostFrequent;
-        if (wouldRemoveLastAnchorRule) return current;
-        selectedRoles.delete(normalizedRole);
-      }
-      return { ...current, selectedRoles: Array.from(selectedRoles) };
+  const applyGeographicMapSettings = (nextSettings = {}) => {
+    setGeographicAnchorSettings({
+      selectedRoles: Array.from(new Set(
+        (Array.isArray(nextSettings.selectedRoles) ? nextSettings.selectedRoles : [])
+          .map((role) => String(role || '').trim())
+          .filter(Boolean)
+      )),
+      includeMostFrequent: Boolean(nextSettings.includeMostFrequent),
     });
-  };
-
-  const resetGeographicAnchorSettings = () => {
-    setGeographicAnchorSettings({ selectedRoles: [], includeMostFrequent: true });
+    setGeographicRelationshipLineSettings({
+      lineAnchorRule: nextSettings.lineAnchorRule || 'event-location',
+      fallbackRule: nextSettings.lineFallbackRule || 'most-frequent',
+    });
+    setGeographicNodeLabelSettings({
+      showPlaces: nextSettings.showPlaceLabels !== false,
+      showEntities: Boolean(nextSettings.showEntityLabels),
+    });
   };
 
   // ------------------------------------------------------------
@@ -3910,31 +4014,112 @@ export default function EuropeNetworkMapApp() {
     : isForceNetworkGeometryActive
       ? 'force'
       : 'semantic';
-  const personGraph = useMemo(
+  const semanticPersonGraph = useMemo(
     () => buildPersonGraph(
       filteredRowsByTime,
       mapViewportSize.width,
       mapViewportSize.height,
-      personGraphLayoutMode,
+      'semantic',
       '',
-      personGraphLayoutMode === 'geographic'
-        ? {
-            relationshipRows: geographicRelationshipRows,
-            locationRows: filteredRowsByTime,
-            entityLabelById: entityDisplayLabelById,
-            geographicAnchorSettings,
-            geographicRelationshipLineSettings,
-          }
-        : { entityLabelById: entityDisplayLabelById }
+      { entityLabelById: entityDisplayLabelById }
     ),
-    [filteredRowsByTime, geographicRelationshipRows, mapViewportSize.width, mapViewportSize.height, personGraphLayoutMode, entityDisplayLabelById, geographicAnchorSettings, geographicRelationshipLineSettings]
+    [filteredRowsByTime, mapViewportSize.width, mapViewportSize.height, entityDisplayLabelById]
   );
+  const personGraph = useMemo(() => {
+    if (personGraphLayoutMode === 'geographic') {
+      const cached = geographicPersonGraphCacheRef.current;
+      if (
+        cached
+        && cached.rows === filteredRowsByTime
+        && cached.relationshipRows === geographicRelationshipRows
+        && cached.width === mapViewportSize.width
+        && cached.height === mapViewportSize.height
+        && cached.entityLabelById === entityDisplayLabelById
+        && cached.anchorSettings === geographicAnchorSettings
+        && cached.relationshipLineSettings === geographicRelationshipLineSettings
+      ) {
+        return cached.graph;
+      }
+
+      const graphResult = buildPersonGraph(
+        filteredRowsByTime,
+        mapViewportSize.width,
+        mapViewportSize.height,
+        'geographic',
+        '',
+        {
+          relationshipRows: geographicRelationshipRows,
+          locationRows: filteredRowsByTime,
+          entityLabelById: entityDisplayLabelById,
+          geographicAnchorSettings,
+          geographicRelationshipLineSettings,
+        }
+      );
+      geographicPersonGraphCacheRef.current = {
+        rows: filteredRowsByTime,
+        relationshipRows: geographicRelationshipRows,
+        width: mapViewportSize.width,
+        height: mapViewportSize.height,
+        entityLabelById: entityDisplayLabelById,
+        anchorSettings: geographicAnchorSettings,
+        relationshipLineSettings: geographicRelationshipLineSettings,
+        graph: graphResult,
+      };
+      return graphResult;
+    }
+
+    if (personGraphLayoutMode === 'force') {
+      const cached = forcePersonGraphCacheRef.current;
+      if (
+        cached
+        && cached.rows === filteredRowsByTime
+        && cached.width === mapViewportSize.width
+        && cached.height === mapViewportSize.height
+        && cached.entityLabelById === entityDisplayLabelById
+      ) {
+        return cached.graph;
+      }
+
+      const graphResult = buildPersonGraph(
+        filteredRowsByTime,
+        mapViewportSize.width,
+        mapViewportSize.height,
+        'force',
+        '',
+        { entityLabelById: entityDisplayLabelById }
+      );
+      forcePersonGraphCacheRef.current = {
+        rows: filteredRowsByTime,
+        width: mapViewportSize.width,
+        height: mapViewportSize.height,
+        entityLabelById: entityDisplayLabelById,
+        graph: graphResult,
+      };
+      return graphResult;
+    }
+
+    return semanticPersonGraph;
+  }, [
+    personGraphLayoutMode,
+    semanticPersonGraph,
+    filteredRowsByTime,
+    geographicRelationshipRows,
+    mapViewportSize.width,
+    mapViewportSize.height,
+    entityDisplayLabelById,
+    geographicAnchorSettings,
+    geographicRelationshipLineSettings,
+  ]);
   const unifiedGeographicGraph = useMemo(() => {
     // Generalized entity/place semantics are authoritative whenever they can
     // produce a geographic projection. The older place-route graph remains a
     // compatibility fallback for point/site and route-only datasets that do
     // not yet expose participant-owned geographic assertions.
-    const baseGraph = (personGraphLayoutMode === 'geographic' && (personGraph.nodes.length || personGraph.edges.length))
+    const hasGeneralizedGeographicProjection = Boolean(
+      (geographicAnchorDatasetSemantics.relationships || []).length
+      && (geographicAnchorDatasetSemantics.locations || []).length
+    );
+    const baseGraph = personGraphLayoutMode === 'geographic' && hasGeneralizedGeographicProjection
       ? personGraph
       : geographicGraph;
     const showPlaces = Boolean(geographicNodeLabelSettings.showPlaces);
@@ -3954,7 +4139,7 @@ export default function EuropeNetworkMapApp() {
       };
     });
     return { ...baseGraph, nodes };
-  }, [personGraph, geographicGraph, personGraphLayoutMode, geographicNodeLabelSettings]);
+  }, [personGraph, geographicGraph, personGraphLayoutMode, geographicNodeLabelSettings, geographicAnchorDatasetSemantics]);
   const graph = viewMode === 'person' && personLayoutMode === 'force' ? personGraph : unifiedGeographicGraph;
 
   // Playback visibility and visualization capability are intentionally separate.
@@ -4073,13 +4258,17 @@ export default function EuropeNetworkMapApp() {
       hasExploreData: rowCount > 0,
     };
   }, [analyticsAvailabilityRows.length, availabilityAnalyticsFields, availabilityEntityNetworkSemantics, availabilityGeographicEntityNetworkSemantics, availabilityFilteredAggregatedEdges.length, filteredRowsForActiveFilters.length, places.length]);
-  const viewResetKey = useMemo(() => {
-    const layoutKey = viewMode === 'person' ? `${viewMode}:${personLayoutMode}` : viewMode;
-    const anchorKey = viewMode === 'person' && personLayoutMode === 'geographic'
-      ? `${[...(geographicAnchorSettings.selectedRoles || [])].sort().join('|')}:${geographicAnchorSettings.includeMostFrequent ? 'mf' : 'no-mf'}:${geographicRelationshipLineSettings.lineAnchorRule}:${geographicRelationshipLineSettings.fallbackRule}`
-      : '';
-    return `${layoutKey}:${timelineMode}:${rangeStart}:${rangeEnd}:${anchorKey}`;
-  }, [viewMode, personLayoutMode, timelineMode, rangeStart, rangeEnd, geographicAnchorSettings, geographicRelationshipLineSettings]);
+  const activeMapLayoutKey = viewMode === 'person' && personLayoutMode === 'force'
+    ? 'force'
+    : 'geographic';
+  const mapViewDatasetKey = peridotNormalizedData || normalizedRows;
+  const viewResetKey = useMemo(
+    () => ({ dataset: mapViewDatasetKey, layout: activeMapLayoutKey }),
+    [mapViewDatasetKey, activeMapLayoutKey]
+  );
+  const activeMapViewStateRef = activeMapLayoutKey === 'force'
+    ? forceNetworkViewStateRef
+    : geographicMapViewStateRef;
 
   // ------------------------------------------------------------
   // Selection and inspector derivations
@@ -5153,7 +5342,7 @@ export default function EuropeNetworkMapApp() {
 
   const handleEdgeEnter = (edge, point) => {
     setHoveredEdgeId(edge.id);
-    setHoverCard(buildHoverCardState(`${edge.sourceLabel} → ${edge.targetLabel}`, `Weight: ${edge.count}`, point));
+    setHoverCard(buildHoverCardState(formatRelationshipEndpointPair(edge), buildEdgeHoverSummary(edge), point));
   };
 
   const handleEdgeLeave = () => {
@@ -5175,7 +5364,10 @@ export default function EuropeNetworkMapApp() {
     setShowAllLinkedLetters,
     setShowRightSidebar,
     buildHoverCardState,
+    buildNodeHoverTitle,
     buildNodeHoverSummary,
+    buildEdgeHoverSummary,
+    formatRelationshipEndpointPair,
     viewMode,
   });
 
@@ -5264,6 +5456,7 @@ export default function EuropeNetworkMapApp() {
     selectedProps,
     zoomTuning,
     viewResetKey,
+    viewStateRef: activeMapViewStateRef,
     initialFocusStrategy: viewMode === 'person' && personLayoutMode === 'force' ? 'force-dense-cluster' : 'fit-all',
     hoverCard,
     personLayoutMode,
@@ -5642,29 +5835,14 @@ export default function EuropeNetworkMapApp() {
       defaultIncludeMostFrequent: true,
       lineAnchorRule: geographicRelationshipLineSettings.lineAnchorRule,
       lineFallbackRule: geographicRelationshipLineSettings.fallbackRule,
+      defaultLineAnchorRule: 'event-location',
+      defaultLineFallbackRule: 'most-frequent',
       showPlaceLabels: geographicNodeLabelSettings.showPlaces,
       showEntityLabels: geographicNodeLabelSettings.showEntities,
+      defaultShowPlaceLabels: true,
+      defaultShowEntityLabels: false,
       hasEntityGeography: Boolean(availabilityGeographicEntityNetworkSemantics.locations.length || availabilityGeographicEntityNetworkSemantics.relationships.length),
-      onTogglePlaceLabels: (enabled) => setGeographicNodeLabelSettings((current) => ({ ...current, showPlaces: Boolean(enabled) })),
-      onToggleEntityLabels: (enabled) => setGeographicNodeLabelSettings((current) => ({ ...current, showEntities: Boolean(enabled) })),
-      onToggleRole: setGeographicAnchorRoleEnabled,
-      onToggleMostFrequent: (enabled) => setGeographicAnchorSettings((current) => {
-        const includeMostFrequent = Boolean(enabled);
-        if (!includeMostFrequent && !(current.selectedRoles || []).length) return current;
-        return {
-          ...current,
-          includeMostFrequent,
-        };
-      }),
-      onSetLineAnchorRule: (lineAnchorRule) => setGeographicRelationshipLineSettings((current) => ({
-        ...current,
-        lineAnchorRule,
-      })),
-      onSetLineFallbackRule: (fallbackRule) => setGeographicRelationshipLineSettings((current) => ({
-        ...current,
-        fallbackRule,
-      })),
-      onReset: resetGeographicAnchorSettings,
+      onApply: applyGeographicMapSettings,
     },
   };
 

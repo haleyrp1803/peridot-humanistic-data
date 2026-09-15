@@ -16,7 +16,10 @@ export function buildMapInteractionHandlers({
   setShowAllLinkedLetters,
   setShowRightSidebar,
   buildHoverCardState,
+  buildNodeHoverTitle,
   buildNodeHoverSummary,
+  buildEdgeHoverSummary,
+  formatRelationshipEndpointPair,
   viewMode,
 }) {
   const handleBlankMapClick = () => {
@@ -31,8 +34,8 @@ export function buildMapInteractionHandlers({
     setShowAllLinkedLetters(false);
     setHoverCard(
       buildHoverCardState(
-        `${edge.sourceLabel} → ${edge.targetLabel}`,
-        `Weight: ${edge.count}`,
+        formatRelationshipEndpointPair(edge),
+        buildEdgeHoverSummary(edge),
         point
       )
     );
@@ -40,14 +43,14 @@ export function buildMapInteractionHandlers({
 
   const handleNodeHover = (node, point) => {
     setHoverCard(
-      buildHoverCardState(node.label, buildNodeHoverSummary(node, viewMode), point)
+      buildHoverCardState(buildNodeHoverTitle(node, viewMode), buildNodeHoverSummary(node, viewMode), point)
     );
   };
 
   const handleNodeClick = (node, point) => {
     setShowRightSidebar(true);
     setHoverCard(
-      buildHoverCardState(node.label, buildNodeHoverSummary(node, viewMode), point)
+      buildHoverCardState(buildNodeHoverTitle(node, viewMode), buildNodeHoverSummary(node, viewMode), point)
     );
     setSelectedSelection({
       kind: node.isCluster ? 'cluster' : 'node',
