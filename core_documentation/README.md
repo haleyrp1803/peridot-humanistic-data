@@ -32,7 +32,7 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-1810a40 — Replace minimum weight with count conditions
+ddc0aca — Generalize network playback highlighting
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -127,9 +127,13 @@ For suitable mapped fields, researchers can declare whether one cell contains on
 
 ### 3.3 Visualize
 
-Visualize Your Data provides capability-aware access to Place Map, People Network, Force-Directed Network, and Chart Visualizations. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
+Visualize Your Data provides capability-aware access to one unified **Geographic Map**, a separate **Force-Directed Network**, and Chart Visualizations. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
 
-Timeline is a compact bottom scrubber within Visualizations. It derives available **Time types** from the mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Empty co-current moments are valid empty visualization states rather than capability failures. Export is a shared header menu rather than a separate workspace. Map PNG export defaults to an unbranded map-only image, with optional title and metadata annotations.
+The Geographic Map includes compact **Map settings** for visible node identities, researcher-selected geographic anchor roles, relationship-line location rules, and fallback behavior. Settings are transactional: changes are drafted, **Apply** commits them, and **Reset** affects the draft rather than silently recomputing the graph. Geographic edges render only when both exact endpoint node instances are visible under the applied settings.
+
+Timeline is a compact bottom control within Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
+
+The current Timeline still has range-clamping controls but does **not** yet expose the desired draggable playback playhead/scrubber. Restoring that playhead inside the existing Timeline control is queued interface work. Export remains a shared header menu rather than a separate workspace. Map PNG export defaults to an unbranded map-only image, with optional title and metadata annotations.
 
 ### 3.4 Explore and inspect
 
@@ -527,7 +531,11 @@ Peridot is an active research prototype. It can preserve and expose useful incom
 
 Generalized Relations, Identity, Time, Places, Evidence, Inspector participant attribution, and the principal Search place/Evidence/Results paths are now authoritative across the current import/runtime path. Compatibility projections still exist for older consumers and should be retired only after a repository-wide audit proves that their behavior has been replaced without loss.
 
-The generalized Network path is the next major architecture project. Follow-up work includes geographic relationship/event scoping, transparent person-to-place anchoring, generalized playback highlighting, and a later presentation pass for Force-Directed viewport fitting, arrowhead placement, node/cluster sizing, and possible researcher-adjustable scaling controls.
+The principal generalized Network semantic migration is now complete through playback highlighting. Geographic relationship scope, generalized anchor semantics, the unified Geographic Map, transactional Map settings, generalized hover/provenance, and generalized playback highlighting are active on `main`. Remaining Network work is narrower: consumer/vocabulary cleanup, geometry/presentation correctness such as Force-Directed framing and arrowhead termination, and a dedicated visual-tuning pass for node/cluster/edge sizing and possible researcher-adjustable Appearance controls.
+
+Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior.
+
+Three small interface redesign items are also queued: harmonize the open sample-selection state with the dark-green Data workspace rather than the current disruptive light panel; restore a draggable playback playhead/scrubber inside the existing Timeline range control; and substantially reduce the Visualizations header height to return vertical space to the visualization stage.
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 

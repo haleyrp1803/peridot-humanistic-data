@@ -29,7 +29,7 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-1810a40 — Replace minimum weight with count conditions
+ddc0aca — Generalize network playback highlighting
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -51,7 +51,9 @@ Mapped uploads are now editable after import. The Data workspace can reopen the 
 
 Sample data is now first-class generalized data rather than hidden embedded fallback state. Peridot starts with **no active dataset**. A researcher must explicitly select a sample or upload their own data. `public/sample_data/` contains three ordinary downloadable source files—correspondence network, family tree, and cardinals—and `src/peridotSampleDatasets.js` pairs each with a preserved generalized mapping. Sample mappings can be edited for learning/QA without mutating the shipped mapping; **Reset to sample mapping** restores the canonical interpretation.
 
-Canonical temporal semantics remain fully authoritative across active consumers. The former `parsedDate`, `parseHistoricalDate`, duplicate capability parser, and lexical date-sorting fallbacks are retired from active `src`. Search now consumes generalized relationships and places plus canonical subject-aware Evidence; its Results ledger is generalized rather than route-shaped, and the Search/Timeline/Analytics scope audit is complete. Geographic Network event/anchor semantics and remaining Network presentation/layout work are the next major consumer boundary.
+Canonical temporal semantics remain fully authoritative across active consumers. The former `parsedDate`, `parseHistoricalDate`, duplicate capability parser, and lexical date-sorting fallbacks are retired from active `src`. Search consumes generalized relationships and places plus canonical subject-aware Evidence; its Results ledger is generalized rather than route-shaped, and the Search/Timeline/Analytics scope audit is complete.
+
+Network semantics have now crossed the principal generalized boundary as well. Geographic relationship scope respects Timeline-visible dated relationship observations while retaining genuinely undated structural relationships; `peridotEntityNetwork.js` provides generalized geographic anchor semantics; the old separate place/person map distinction has been collapsed into one Geographic Map; Map settings apply anchor roles, display identities, relationship-line location rules, and fallbacks transactionally; geographic edges require both exact visible endpoint node instances; hover/provenance language is generalized; and playback highlighting consumes the rendered generalized graph rather than rebuilding a correspondence-shaped Source→Target pair. The current source at `ddc0aca` intentionally contains **no playback animation system** beyond static highlight-state presentation: later tween/geometry animation experiments were rolled back.
 
 The active public workflow remains Home → Manage Your Data → Visualize Your Data → Explore Your Data → Learn More. Themes and Accessibility remains route-compatible but intentionally hidden from the public hamburger menu. Timeline and Export are Visualizations-integrated surfaces; Inspector is a compact/full shared-state evidence system. Home now includes a fixed, visually secondary **Tutorial** button beneath the two primary data-entry actions; it is currently disabled with **“Tutorial coming soon.”** on hover/focus. The prior floating tutorial invitation is removed, while the existing tutorial implementation remains in source for later revision.
 
@@ -113,8 +115,11 @@ Current minimum regression check: Home renders the secondary disabled Tutorial b
 
 ### Current route and visualization model
 
-- Visualizations exposes capability-aware Place Map, People Network, Force-Directed Network, and Chart Visualizations views.
-- Timeline is a year-based bottom scrubber within Visualizations; Export is a shared Visualizations header menu rather than a separate workspace.
+- Visualizations exposes one unified **Geographic Map**, a separate **Force-Directed Network**, and Chart Visualizations. The former Place Map / People Map split is superseded.
+- Geographic Map settings can label nodes as Places, People / entities, or both; choose one or more mapped geographic anchor roles; choose relationship-line event geography plus explicit fallback behavior; and reserve an Appearance section for later sizing/scaling work.
+- Map settings use a draft/Apply model. Reset affects draft state; graph recomputation occurs on Apply; Geographic and Force viewport state is preserved separately; Fit View is explicit.
+- Geographic edges render only when both resolved endpoint node instances are currently visible. Never draw a floating edge to a hidden endpoint or manufacture Cartesian products across several visible anchors.
+- Timeline is a compact bottom control within Visualizations. It currently supports range clamping and playback but lacks the desired draggable playback playhead/scrubber; restoring that control inside the existing timeline is queued. Export is a shared Visualizations header menu rather than a separate workspace.
 - Advanced Search is the primary Explore surface and owns global applied filtering.
 - Legacy rail and panel paths exist only as compatibility bridges where they preserve visualization-click Inspector behavior.
 - MapLibre work is archived; active `main` uses the D3/SVG path.
@@ -170,9 +175,15 @@ Minimum regression checks: node, edge, and cluster click; compact close; Expand;
 
 ### Visualizations and Timeline
 
-Visualizations owns capability-aware map, network, force-directed, and chart entry points; header collapse behavior; the bottom timeline scrubber; and the shared Export menu. Timeline remains a Visualizations-integrated control rather than a separate workspace. Its active chronology is derived from canonical `temporalAssertions[]` on runtime rows. The former `parsedDate` fallback has been retired from active source. A record may contribute multiple assertion-level timeline entries, and interval filtering uses temporal intersection rather than only an interval start.
+Visualizations owns the unified Geographic Map, Force-Directed Network, chart entry points, header presentation, the bottom Timeline control, and the shared Export menu. Timeline remains Visualizations-integrated rather than a separate workspace. Its active chronology is derived from canonical `temporalAssertions[]` on runtime rows. The former `parsedDate` fallback has been retired from active source. A record may contribute multiple assertion-level timeline entries, and interval filtering uses temporal intersection rather than only an interval start.
 
-The Timeline derives available **Time types** from mapped temporal roles and keeps the controls visible even when only one role is available. Playback supports **Cumulative Events** and **Co-current Events**. Cumulative mode retains records after their date or period begins/occurs; co-current mode recalculates visibility at the current moment, removes ended intervals, bounds point dates to their temporal unit, and inserts interval-end checkpoints so disappearing records are observable. A co-current moment with zero active rows is a valid empty visualization state and must not cause capability routing to replace the workspace with an unavailable-state screen.
+The Geographic Map is one projection over generalized entity/place assertions rather than two separate place/person maps. `peridotEntityNetwork.js` resolves researcher-selected anchor roles plus an independent **Most frequent place** rule, deduplicates identical entity/place coordinates, and retains role/provenance information. Relationship-line geography follows the explicit hierarchy **relationship/event geography → selected fallback anchor → no defensible location, no line**. Several source-supported geographic manifestations may exist when several explicit relationship observations support them; Peridot must not generate a Cartesian product across unrelated visible anchors.
+
+Map settings are transactional. Draft changes do not eagerly rebuild the graph; **Apply** commits node-label, anchor, and relationship-line rules together, while **Reset** changes only the draft. Geographic and Force viewport state are remembered independently. Fit/recenter occurs for initial/new data or an explicit user action rather than every settings or playback change. A geographic edge may render only when both exact endpoint node instances are visible under the applied settings.
+
+Playback highlighting is generalized at `ddc0aca`. The active playback record set is matched against provenance already stored on rendered graph edges; every rendered edge supported by the active record(s) can highlight, and highlighted endpoint node IDs come from those actual rendered edges. This supports multipart relationships without inventing links among co-participants. Co-current playback highlights the full set of relationships active at the current moment; cumulative playback emphasizes the newly reached record. Relationship-free temporal assertions can still highlight relevant visible entity nodes. Cluster display can inherit active-member highlighting. The implementation deliberately does **not** contain the later experimental pulse/tween/geometry-animation systems: those prototypes were rolled back before `ddc0aca`.
+
+The Timeline derives available **Time types** from mapped temporal roles and keeps controls visible even when only one role is available. Playback supports **Cumulative Events** and **Co-current Events**. Cumulative mode retains records after their date or period begins/occurs; co-current mode recalculates visibility at the current moment, removes ended intervals, bounds point dates to their temporal unit, and inserts interval-end checkpoints so disappearing records are observable. A co-current moment with zero active rows is a valid empty visualization state and must not cause capability routing to replace the workspace with an unavailable-state screen. The current bottom control has range-clamping handles but the desired draggable playback playhead/scrubber is queued for restoration inside that same control rather than as a second timeline element.
 
 ### Export
 
@@ -532,7 +543,7 @@ Full Data workspace for the three explicit entry paths: **Start with a Template*
 
 #### `src/PeridotVisualizationsWorkspace.jsx`
 
-Full Visualizations workspace. It contains capability-aware dropdown groups for mapping, network, chart, and data-exploration views; renders unavailable-state explanations when a dataset cannot support a selected view; hosts the large chart workspace; owns the collapsible visualization header, the bottom Timeline scrubber placement, and the shared header Export menu; and wraps the live map/network stage.
+Full Visualizations workspace. The visualization header now uses direct single-destination navigation for Mapping, Network, Charts, and Explore; Export remains a menu. It renders unavailable-state explanations when a dataset cannot support a selected view, hosts the large chart workspace, owns the current large/collapsible visualization header, places the compact bottom Timeline control, exposes Map settings, and wraps the live map/network stage. The header is a queued redesign target because it still consumes too much vertical space; future work should compact it rather than relying on users to hide it. The Timeline should regain a playback playhead/scrubber inside the existing range control rather than adding a second timeline surface.
 
 #### `src/PeridotSearchWorkspace.jsx`
 
@@ -781,7 +792,7 @@ Timeline/playback panel UI boundary. It renders dataset-derived Time types, the 
 
 #### `src/peridotEntityNetwork.js`
 
-Shared generalized person/entity relationship semantic layer used by Search and Network consumers. It resolves n-part generalized observations without inventing pairwise relationships among every co-occurring participant, preserves direction/type/label/participant roles, and now carries canonical source/target IDs when available. Search relationship facets and Network availability use this generalized boundary. Geographic Network derivation is still incomplete: structural relationship scope, visible event/place scope, transparent geographic anchoring, and playback highlighting require further work.
+Owns generalized entity-network derivation and geographic anchor/relationship-line semantics. It preserves canonical entity identity and semantic relationship direction/type/label, derives multipart relationships without creating co-occurrence cliques, resolves one or more participant-place anchor roles plus the independent **Most frequent place** option, deduplicates identical entity/place coordinates, retains anchor role/provenance, and derives source-supported geographic relationship-line segments. Geographic consumers must still verify that both exact endpoint node instances are visible before rendering an edge.
 
 #### `src/peridotEntityNetworkFixtures.js`
 
@@ -904,6 +915,9 @@ These areas still deserve narrow, explicit passes:
 - map viewport centering/reset behavior and map/network viewport measurement after switching visualization modes;
 - dense map hover/click interaction and selection persistence across filters;
 - timeline/playback state coupling;
+- unified Geographic Map settings: draft/applied settings, anchor-role resolution, endpoint visibility, and separate Geographic/Force viewport persistence;
+- playback highlighting provenance: rendered generalized edge IDs and node endpoint IDs must remain authoritative; do not reintroduce legacy `sourcePerson`/`targetPerson` or `sourcePlaceId`/`targetPlaceId` reconstruction;
+- playback animation experiments are rolled back at `ddc0aca`; if animation work resumes, begin with a fresh design audit rather than resurrecting discarded screen-space geometry tween code;
 - export rendering/state coupling;
 - broad orchestration work in `src/App.jsx`;
 - generalized Data state: genuine no-data startup, explicit sample selection, researcher upload replacement, and active-source reset behavior;
@@ -930,6 +944,7 @@ These areas still deserve narrow, explicit passes:
 | First-time tutorial | placeholder disappears/becomes primary, or future launcher regresses overlay behavior | now: disabled secondary Home button + tooltip + no floating invitation; when re-enabled: full seven-stage suite |
 | Inspector bridge | compact Inspector fails to open | node, edge, cluster, contained member, Expand, Back |
 | Search scope | generalized place/Evidence values disappear, count conditions mis-scope, or Results/facets use playback visibility | draft suggestion, Apply, Clear, attached count conditions, Place/Evidence criteria, pagination, Inspect handoff during playback |
+| Geographic Map / Network | hidden endpoints, wrong anchor role, viewport reset, or correspondence-shaped playback | toggle node labels/anchors; Apply/Reset; relationship-line fallback; pan/zoom; multipart playback; Force/Geographic switch |
 | Timeline / Analytics | dated/undated scope diverges or playback silently changes non-temporal evidence | alter timeline/playback, local chart years, **Exclude undated records?**, visible totals, chart export |
 | Data import | loss of accepted rows, hidden default data, or bad joins | no-data first launch; template/upload; workbook join; validation |
 | Sample system | canonical sample mutated or implicit fallback restored | choose each sample; download; edit/cancel/reset mapping; hard refresh with no selected source |
@@ -946,51 +961,61 @@ These areas still deserve narrow, explicit passes:
 
 ## 11. Active Technical Backlog
 
-1. **Generalized Network audit — recommended next task.**
-   - Trace generalized relationship eligibility, geographic relationship/event scoping, participant-place associations, Timeline playback, capability predicates, Inspector handoff, and export through the current Network/Map paths before editing.
-   - Identify remaining correspondence-shaped Source/Target assumptions and distinguish legitimate explicit directed routes from generalized participant/place assertions.
-   - Preserve the multipart-relationship rule: explicit mapped counterparts may connect to the primary participant, but co-occurring participants must not become an automatic clique.
+1. **Network Pass 4 — consumer and vocabulary cleanup.**
+   - Audit remaining Network/Map consumers for correspondence-shaped presentation or compatibility assumptions after the semantic migration through `ddc0aca`.
+   - Remove or generalize stale user-facing `Weight`, `linked_letters`, sender/recipient, Source/Target, route, or directional wording where the current mapping does not actually declare those semantics.
+   - Preserve correspondence-specific language where a correspondence mapping genuinely supplies it.
+   - Include exports, capability wording, comments, hover/Inspector bridges, and any remaining compatibility field names that leak into generalized presentation.
 
-2. **Implement Network semantic corrections demonstrated by the audit.**
-   - Correct relationship/event scoping so selected Timeline event types do not combine with unrelated structural relationships.
-   - Replace opaque automatic person-place anchoring with transparent/user-selected participant-place associations where the dataset provides several plausible locations.
-   - Generalize playback highlighting so active records can highlight all mapped relationships without inventing relationships.
+2. **Network Pass 5 — geometry / presentation correctness.**
+   - Audit Force-Directed initial framing/fit behavior after the semantic work.
+   - Terminate directed arrowheads at node boundaries instead of allowing them to disappear into node centers.
+   - Correct bounded edge/path geometry issues without changing generalized relationship semantics or Map settings.
 
-3. **Network node/cluster sizing and scaling controls — dedicated presentation pass after semantic correctness.**
-   - Audit current node-size, cluster-size, edge-width, and viewport-fitting formulas across small and dense datasets.
-   - Tune defaults so represented volume remains legible without overwhelming sparse networks or collapsing dense ones.
-   - Evaluate a small Visualization-workspace controller that lets researchers adjust node/cluster scaling interactively while leaving data, counts, identities, and relationship semantics unchanged.
-   - Revisit Force-Directed fit-to-viewport and arrowhead termination in the same presentation sequence only if they can remain bounded and independently testable.
+3. **Network Pass 6 — visual tuning and Appearance controls.**
+   - Audit and tune individual node size, cluster size, edge width, clustering threshold/sensitivity, and dense-versus-sparse defaults.
+   - Decide explicitly what cluster size encodes (member count, represented relationship volume, or another documented quantity) rather than relying on opaque historical scaling.
+   - Evaluate researcher-facing controls in the reserved **Appearance** section of Map settings for node size, cluster size, edge width, and possibly clustering sensitivity.
+   - Keep visual scaling controls presentation-only: they must not alter data counts, identities, relationship membership, or scholarly semantics.
 
-4. **Search generalized-text follow-up.**
+4. **Visualization interface polish — queued small redesigns.**
+   - **Data/sample-selection harmony:** the no-data Data workspace is visually coherent, but opening sample selection currently introduces a large light panel that conflicts with the dark-green page. Restyle/compose the chooser so it feels like an expansion of the same Data workspace rather than a separate white modal. Preserve the existing sample content and generalized sample-data contract.
+   - **Timeline playhead/scrubber:** restore direct scrubbing by adding a distinct playback playhead to the existing Timeline range control. Keep the left/right handles as timeframe clamps; the playhead should move within that allowed range and update playback position directly. Do not add a second timeline component.
+   - **Compact Visualizations header:** substantially reduce header height so the visualization stage regains vertical space. Prefer a persistent compact toolbar over an oversized header that users must hide. Preserve direct single-destination Mapping/Network/Charts/Explore navigation and the Export menu.
+
+5. **Search generalized-text follow-up.**
    - `Any record text` does not yet guarantee indexing of every generalized mapped semantic value; explicit Place and canonical Evidence criteria already work.
    - Audit the general text corpus before broadening it so canonical values are added without duplicating compatibility projections or inflating matches.
 
-5. **Universal data architecture — Phase 3 Chart Builder.**
+6. **Universal data architecture — Phase 3 Chart Builder.**
    - Build chart controls from saved variables and generalized mapped fields.
    - Retain the structured scholarly-sentence/autocomplete direction rather than unrestricted natural-language prompting.
    - Use the wide/transposed multi-company stock-price case as a required regression dataset.
 
-6. **Repository-wide legacy/compatibility retirement audit.**
+7. **Repository-wide legacy/compatibility retirement audit.**
    - Inventory old Source/Target-only mapping code, obsolete profile routing, correspondence-shaped assembly logic, compatibility adapters, stale fixtures/comments, and old sample/data fallback paths.
    - Classify each item as **delete now**, **still-required compatibility layer**, **legitimate specialization**, or **uncertain/retain**.
    - Include the older `customInspectorFields` duplicate-label collapse: the authoritative generalized Evidence path preserves repeated values, while the older correspondence-oriented object-construction path can collapse duplicate labels.
    - Do not remove code simply because the public generalized workflow no longer exposes it.
 
-7. **Homepage/tutorial follow-up — deferred visual/content work.**
+8. **Homepage/tutorial follow-up — deferred visual/content work.**
    - Preserve the current hierarchy: **Use sample data** and **Upload your data** are the primary Home actions; **Tutorial** is a shorter secondary button beneath them.
    - The Tutorial placeholder remains disabled with **“Tutorial coming soon.”** until the guided workflow is deliberately revised/re-enabled.
-   - A larger future Home/Data integration may still merge the strongest branded landing-page and sample-selection patterns, but do not combine that redesign with consumer/data-model passes.
+   - A larger future Home/Data integration may still merge the strongest branded landing-page and sample-selection patterns, but do not combine that broader redesign with Network consumer/data-model passes.
    - Tutorial attention choreography, panel placement, typography spacing, accessibility, semantic keyword highlighting, animation order/timing, and a final UX walkthrough remain later bounded work.
 
-8. **Optional Timeline temporal-structure controls.**
+9. **Optional Timeline temporal-structure controls.**
    - Consider filters for approximate, partial, open-ended, or inconsistent temporal structures only if analytically useful and human-readable.
 
-9. **Inspector → Advanced Search actions and safe metadata filters**, after current Network work unless a concrete Search need arises first.
+10. **Inspector → Advanced Search actions and safe metadata filters**, after current Network work unless a concrete Search need arises first.
 
-10. Continue bounded structural work only when a concrete maintenance need exists; `App.jsx` remains concentrated but should not be casually refactored.
+11. Continue bounded structural work only when a concrete maintenance need exists; `App.jsx` remains concentrated but should not be casually refactored.
 
-Generalized mapping, cardinality, integrated Identity, multi-subject Time/Place/Evidence attribution, canonical Evidence assertions, canonical entity display labels, generalized Search places/Results/Evidence, scope alignment, and criterion-attached count conditions are accepted architecture at `1810a40`. Treat them as regression contracts rather than reopening them during Network work unless testing exposes a concrete defect.
+### Rolled-back playback-animation experiments — do not resume from discarded code
+
+After generalized playback highlighting was implemented, several local-only animation prototypes explored SVG entrance animation, `requestAnimationFrame` tweening, screen-space geometry interpolation, dormant assets, and transient node/cluster/edge effects. Testing showed repeated semantic and rendering problems: high-speed playback became erratic; clusters could retrigger or appear to re-enter; screen-space geometry tweening caused nodes to detach from a panned map and snap back; and rapid graph-state changes did not support the intended cinematic animation language reliably.
+
+The project deliberately rolled back to the clean generalized **pre-animation** `App.jsx` and committed that state as `ddc0aca`. None of the experimental playback-animation machinery is part of current `main`. If playback animation is reconsidered, start from `ddc0aca` (or its descendant) and a new architecture/design audit. Do not copy code from the abandoned animation ZIPs or assume their dormant-scene/tween approaches are accepted architecture.
 
 ## 12. Archived and Compatibility Paths
 
@@ -1036,8 +1061,9 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`1810a40` — `Replace minimum weight with count conditions`**
+- current synchronized checkpoint: **`ddc0aca` — `Generalize network playback highlighting`**
 - local development command on the user's machine: **`npm.cmd run dev`**
+- current Network state: generalized relationship scope, geographic anchors, unified Geographic Map, transactional Map settings, generalized hover/provenance, and generalized playback highlighting are complete; playback animation experiments were rolled back and are not part of current `main`.
 
 A future chat should also be told that:
 

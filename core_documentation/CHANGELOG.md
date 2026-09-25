@@ -20,30 +20,47 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-1810a40 — Replace minimum weight with count conditions
+ddc0aca — Generalize network playback highlighting
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
 
-This checkpoint closes the five-pass generalized Search and scope sequence that followed the subject-aware Evidence milestone. Search now reads generalized place assertions, presents neutral generalized Results rather than forcing every record into Source/Target route columns, consumes canonical subject-aware Evidence, aligns Inspector/Analytics/export scope behavior, and replaces the legacy global minimum-weight control with optional count conditions attached directly to structured criteria.
+This checkpoint closes the principal generalized Network semantic sequence that followed the Search generalization milestone. Network/Map relationship scope, geographic anchor semantics, the user-facing Geographic Map model, transactional Map settings, generalized hover/provenance, and playback highlighting now consume generalized/canonical structures rather than assuming one correspondence-shaped Source→Target route.
 
 Current architectural significance:
 
-- generalized place search, suggestions, structured Place criteria, Browse, Refine facets, and map-readiness checks use mapped place assertions without inventing routes from co-occurring places;
-- Search Results now present generalized Date / People or entities / Places records, while explicit route semantics remain available only where the source mapping genuinely supplies a directed pair;
-- Search Evidence uses canonical `mapped-evidence:*` assertions, preserving record-versus-entity attribution while preventing subject fan-out from inflating Browse/Refine counts;
-- Search Results and Refine operate on stable applied/filtered data rather than playback-visible data;
-- entity/place Inspector dossiers use the applied/filtered scope rather than shrinking with Timeline playback;
-- Analytics keeps undated records available by default even when dated records are constrained by Timeline/playback, and its local date controls expose a separate **Exclude undated records?** option;
-- export provenance now reports committed structured criteria and capability filters as well as the older direct Search fields;
-- the former global minimum correspondence/connection weight is retired from active Search and graph filtering;
-- structured Search can instead attach an optional plain-language count condition to a specific criterion—for example, **This place has at least 20 connected places** or **People in these records have at least 40 connected entities**—with counts derived from the loaded/mapped dataset and the primary criterion determining returned records;
-- the `Any record text` criterion is still not guaranteed to index every generalized semantic value (for example a partial mapped-place string can require an explicit Place criterion); this remains a bounded Search follow-up rather than a blocker;
-- cardinality, Identity, subject-aware Time/Places/Evidence, canonical display labels, and the Home tutorial placeholder remain preserved from the preceding milestone.
-
-The recommended continuation is now a dedicated **generalized Network audit** covering relationship/event scoping, participant-place anchoring, playback semantics, and remaining correspondence-shaped assumptions. Follow that semantic audit with bounded Network implementation passes, including a dedicated node/cluster sizing pass that can consider a small researcher-facing scaling controller in the Visualization workspace. Phase 3 Chart Builder, the no-loss compatibility retirement audit, and deferred Home/tutorial work remain later major tasks.
+- dated geographic relationship observations obey Timeline/playback scope while genuinely undated structural relationships can remain visible;
+- generalized multipart relationships retain the established rule that the primary mapped participant connects to each explicitly mapped counterpart without turning co-occurrence into an automatic clique;
+- `peridotEntityNetwork.js` provides generalized geographic anchor semantics, including multiple researcher-selected place roles plus an independent **Most frequent place** option, coordinate deduplication, and retained role/provenance information;
+- the former separate place/person geographic maps are unified into one **Geographic Map**. Places and People / entities are display identities over the same geographic evidence and may be shown together;
+- Map settings use draft state plus explicit **Apply**. Reset changes the draft only; expensive graph derivation is not meant to run eagerly for each checkbox/select edit;
+- geographic relationship lines follow explicit event/relationship geography first, then the selected fallback anchor, and disappear when no defensible endpoint location exists; an edge renders only when both exact endpoint node instances are visible;
+- Geographic and Force viewport state is preserved separately, and applying settings does not intentionally recenter the stage;
+- node/edge hover presentation uses generalized relationship labels/types, conditional direction, occurrence counts, geographic anchor provenance, and canonical entity/place identity rather than universal `Weight` or forced arrow semantics;
+- playback highlighting now consumes provenance on the **rendered generalized graph**. Cumulative playback highlights the newly reached record’s rendered relationships; co-current playback highlights the relationships active at the current moment; multipart records may therefore highlight several explicit edges and their actual endpoint nodes;
+- later playback-animation/tweening experiments were tested locally and rejected. They are **not present in `ddc0aca`**. Current `main` intentionally returns to generalized static highlighting with stable map geometry;
+- remaining Network work is Pass 4 consumer/vocabulary cleanup, Pass 5 geometry/presentation correctness, and Pass 6 node/cluster/edge visual tuning plus possible Appearance controls;
+- queued interface polish now includes harmonizing the Data sample chooser with the dark-green Data workspace, restoring a draggable playback playhead/scrubber inside the existing Timeline range control, and substantially compacting the Visualizations header to recover stage height;
+- the Search `Any record text` follow-up, Phase 3 Chart Builder, repository-wide compatibility retirement audit, and broader Home/tutorial work remain later tasks.
 
 ## 2. Recent Milestones, Newest First
+
+### Generalized Network scope, unified Geographic Map, Map settings, and playback highlighting — 2026-09-14 to 2026-09-25
+
+- **`9166e3e` — `Synchronize documentation through Search generalization`** established the documentation handoff immediately before the dedicated Network sequence.
+- **`9ecb4f8` — `Align geographic network relationship scope`** separated Timeline/playback-visible dated relationship observations from genuinely undated structural relationships so historical structural data can remain while dated relationships outside the active temporal scope disappear.
+- **`e0fd1c0` — `Add generalized geographic anchor model`** added generalized entity/place anchor resolution with multiple selected place roles, an independent **Most frequent place** rule, coordinate deduplication, retained occurrence counts, and preserved role/provenance semantics.
+- **`19345df` — `Add map settings and compact visualization controls`** introduced compact Map settings, a map-first Visualizations workspace, a compact Timeline/playback bar, map utilities, compact legend, and the reserved **Appearance (Coming soon)** area for later node/cluster/edge tuning.
+- The relationship-line design established an explicit hierarchy: use where the relationship/event occurred when defensible; otherwise use the researcher-selected fallback anchor; otherwise draw no geographic line. Multiple explicit source-supported geographic manifestations are allowed, but the map must never manufacture a Cartesian product across several visible anchors.
+- **`0afd2dd` — `Unify geographic map projection`** collapsed the old Place Map / Person-or-Entity Map distinction into one **Geographic Map**. The researcher can show/label Places, People / entities, or both over the same geographic evidence. Force-Directed Network remains a distinct non-geographic visualization. The Visualizations header also moved single-destination Mapping, Network, Charts, and Explore actions to direct clicks; Export remains a menu.
+- Transactional Map-settings work following `0afd2dd` separated draft from applied settings, made **Reset** draft-only, reduced unnecessary graph recomputation, preserved Geographic and Force viewport state separately, and stopped settings/Timeline/Search/playback updates from intentionally refitting the map.
+- Geographic edge/node coherence became a hard invariant: an edge renders only when both exact endpoint node instances are visible under the applied map settings. Changing a relationship-line rule therefore resolves against the exact visible node pair rather than leaving floating or stale lines.
+- **`cab2ffc` — `Stabilize geographic map settings and hover semantics`** checkpointed the transactional settings/viewport work plus generalized hover/provenance. Hover no longer universally reports `Weight`; direction is displayed only when mapped, occurrence counts replace correspondence-shaped weight language, and node hover identity remains meaningful even if map labels are hidden.
+- **`ddc0aca` — `Generalize network playback highlighting`** replaced legacy playback reconstruction from `sourcePerson`/`targetPerson` or source/target place IDs with provenance-based matching against the actual rendered graph. Multipart records can highlight every explicit rendered relationship, and co-current playback can highlight the complete active relationship set without inventing edges.
+- A subsequent local-only playback-animation exploration tested mount-based SVG animation, `requestAnimationFrame` tweening, screen-space geometry interpolation, stable/dormant scene ideas, sage node pulses, dusty-rose cluster pulses, and directed/undirected edge-reveal concepts. Testing exposed severe high-speed jitter, cluster retrigger ambiguity, and map-detachment/snap behavior when geometry was tweened in screen coordinates. The experiments were deliberately rolled back; `ddc0aca` is the accepted pre-animation baseline and contains no experimental tween/geometry animation system.
+- User-facing interface observations from this sequence are queued rather than mixed into Network semantics: redesign the open sample chooser so it harmonizes with the dark-green Data workspace; restore a draggable playback playhead/scrubber inside the existing Timeline range clamp; and compress the oversized Visualizations header to return vertical space to the stage.
+- Remaining Network plan: **Pass 4 consumer/vocabulary cleanup**, **Pass 5 geometry/presentation correctness**, then **Pass 6 visual tuning / Appearance controls**.
+- Prepared the bounded core-documentation synchronization against clean checkpoint `ddc0aca`; the Governance Protocol remains unchanged because documentation ownership/process rules did not change.
 
 ### Generalized Search, scope alignment, and count-condition redesign — 2026-09-07
 
@@ -536,16 +553,19 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
-### Current deferred Network, Chart, compatibility, Search follow-up, and tutorial work after `1810a40`
+### Current deferred Network, interface, Chart, compatibility, Search follow-up, and tutorial work after `ddc0aca`
 
-- **Generalized Search Passes 1–5 and the Search/Timeline/Analytics scope audit are complete.** Preserve generalized place semantics, neutral Results, canonical Evidence search, applied-scope Inspector dossiers, Analytics undated-record handling, export provenance, and attached count conditions as regression contracts.
-- **One bounded Search text follow-up remains.** `Any record text` does not yet guarantee inclusion of every generalized mapped semantic value; explicit fielded criteria such as Place already work.
-- **Generalized Network follow-up is the recommended next major task.** Audit geographic relationship/event scoping, transparent/user-selected participant-place anchors, generalized playback highlighting, and any remaining Source/Target assumptions before implementation.
-- **Network presentation/sizing should be a separate bounded pass after semantic correctness.** Tune node and cluster sizing, revisit viewport fitting and arrowhead termination, and evaluate a small Visualization-workspace controller that lets researchers adjust scaling without changing the underlying network semantics.
-- **Phase 3 Chart Builder remains deferred** until the consumer audits are stable. Build it from saved/generalized variables through structured human-readable controls and the scholarly-sentence/autocomplete direction rather than unrestricted natural-language prompting; retain the wide/transposed stock-price case as a required regression target.
-- **Repository-wide legacy/compatibility retirement audit remains required.** Retire only code proven unnecessary and preserve legitimate specialization. In particular, an older correspondence-oriented `customInspectorFields` path can collapse repeated duplicate labels through object construction while the authoritative generalized Evidence path preserves repeated values; do not patch or delete that path independently before the no-loss audit.
-- **Homepage redesign remains deferred, but the tutorial entry placeholder is now implemented.** The current branded Home retains its two primary data-entry CTAs plus a smaller disabled **Tutorial** button with **“Tutorial coming soon.”** The larger future Home/Data integration and tutorial-content/polish work remain separate visual/product passes.
-- Optional Timeline structure filters for approximate/partial/open values remain deferred if they can be made analytically useful and human-readable.
+- **Network Pass 4 — consumer/vocabulary cleanup:** audit remaining exports, capability text, comments, Inspector/hover bridges, and compatibility-facing presentation for stale `Weight`, `linked_letters`, Source/Target, sender/recipient, route, or forced-direction language. Preserve correspondence-specific vocabulary only where the mapping genuinely supplies it.
+- **Network Pass 5 — geometry/presentation correctness:** revisit Force-Directed initial framing/fit where still needed, terminate directed arrowheads at node boundaries, and repair bounded path/geometry issues without reopening semantic scope.
+- **Network Pass 6 — visual tuning / Appearance controls:** tune node size, cluster size, edge width, clustering threshold/sensitivity, and dense-versus-sparse defaults; decide explicitly what cluster size encodes; evaluate researcher-facing scaling controls in the reserved Map settings **Appearance** area.
+- **Playback animation is rolled back:** the local-only animation/tweening prototypes after generalized playback were rejected and are not in `ddc0aca`. Do not resume from their generated ZIPs or screen-space geometry code. Any future animation project should begin with a fresh architecture/design audit from the accepted checkpoint.
+- **Data/sample-selection visual polish:** the open sample chooser currently introduces a large light panel that conflicts with the otherwise coherent dark-green Data workspace. Redesign the open state so it feels like the same page expanding rather than a generic modal.
+- **Timeline scrubber restoration:** current Timeline controls can clamp the allowed timeframe but the desired direct draggable playback playhead/scrubber is absent. Add the playhead to the existing control rather than creating another timeline.
+- **Visualizations header compression:** the current header consumes excessive vertical space. Redesign it as a substantially more compact persistent toolbar while preserving direct Mapping/Network/Charts/Explore actions and the Export menu.
+- **Search generalized-text follow-up:** `Any record text` still does not guarantee indexing of every generalized mapped semantic value.
+- **Phase 3 Chart Builder:** build chart controls from saved/generalized variables with structured human-readable sentence/autocomplete interaction; keep the wide/transposed stock case as a required regression dataset.
+- **Repository-wide compatibility retirement audit:** classify old Source/Target/profile/adapter/sample-fallback paths as delete now, still-required compatibility, legitimate specialization, or uncertain/retain.
+- **Broader Home/tutorial redesign:** retain the current primary Home CTAs and static disabled Tutorial placeholder until a deliberate redesign; later work may merge the strongest Home/Data patterns and revisit tutorial attention choreography, placement, typography, accessibility, animation order/timing, and the full UX walkthrough.
 
 ### Tutorial attention-animation experiments rolled back before `619bab0`
 
@@ -593,6 +613,13 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-09-25 | `ddc0aca` | Generalize network playback highlighting | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-09-14 | `cab2ffc` | Stabilize geographic map settings and hover semantics |  |
+| 2026-09-14 | `0afd2dd` | Unify geographic map projection |  |
+| 2026-09-14 | `19345df` | Add map settings and compact visualization controls |  |
+| 2026-09-14 | `e0fd1c0` | Add generalized geographic anchor model |  |
+| 2026-09-14 | `9ecb4f8` | Align geographic network relationship scope |  |
+| 2026-09-07 | `9166e3e` | Synchronize documentation through Search generalization |  |
 | 2026-09-07 | `1810a40` | Replace minimum weight with count conditions | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-09-07 | `656010d` | Align Search scope across Inspector and Analytics |  |
 | 2026-09-07 | `f1a6942` | Generalize Search evidence semantics |  |

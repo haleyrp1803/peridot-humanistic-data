@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-1810a40 — Replace minimum weight with count conditions
+ddc0aca — Generalize network playback highlighting
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
