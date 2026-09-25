@@ -60,7 +60,7 @@ import {
   revokeObjectUrl,
 } from './exportHelpers';
 import { buildForcePersonPositions } from './personForceLayoutHelpers';
-import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, derivePeridotGeographicPersonAnchors, derivePeridotGeographicRelationshipLineSegments, getPeridotGeographicAnchorRoles, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships } from './peridotEntityNetwork.js';
+import { derivePeridotEntityNetworkSemantics, derivePeridotGeographicEntityNetworkSemantics, derivePeridotGeographicPersonAnchors, derivePeridotGeographicRelationshipLineSegments, getPeridotGeographicAnchorRoles, getPeridotRowEntityParticipantEntries, getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels, getPeridotRowEntityRelationships } from './peridotEntityNetwork.js';
 import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespondents';
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
@@ -769,6 +769,8 @@ function buildGraph(places, aggregatedEdges, width, height) {
         ...edge,
         sourceLabel: source.label,
         targetLabel: target.label,
+        sourceNodeId: source.id,
+        targetNodeId: target.id,
         path: curvedPath(a, b),
         midX: (a.x + b.x) / 2,
         midY: (a.y + b.y) / 2,
@@ -1704,9 +1706,6 @@ function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   return `${base} ${variants[variant] || variants.secondary}`;
 }
 
-function edgeKeyFromRow(row) {
-  return row?.mappable ? `${row.sourcePlaceId}-->${row.targetPlaceId}` : '';
-}
 
 // Sidebar toggle behavior:
 // - when collapsed, Controls shows a cog and Inspector shows a hamburger/menu icon
@@ -2035,7 +2034,7 @@ function buildMapStageProps(args) {
     handleNodeLeave: args.handleNodeLeave,
     handleNodeClick: args.handleNodeClick,
     showLabels: args.showLabels,
-    activeAnimationEdgeId: args.activeAnimationEdgeId,
+    activeAnimationEdgeIds: args.activeAnimationEdgeIds,
     activeAnimationNodeIds: args.activeAnimationNodeIds,
     viewMode: args.viewMode,
     personLayoutMode: args.personLayoutMode,
@@ -2204,7 +2203,7 @@ function SvgMap({
   onNodeLeave,
   onNodeClick,
   showLabels,
-  activeAnimationEdgeId,
+  activeAnimationEdgeIds,
   activeAnimationNodeIds,
   clusterSingularLabel = 'place',
   clusterPluralLabel = 'places',
@@ -2821,7 +2820,7 @@ function SvgMap({
             ) : null}
             <g>
               {screenEdges.map((edge) => {
-                const isAnimated = edge.id === activeAnimationEdgeId;
+                const isAnimated = activeAnimationEdgeIds?.has(edge.id);
                 const isSelected = selectedKind === 'edge' && selectedId === edge.id;
                 const edgeStroke = isSelected
                   ? 'var(--map-edge-selected)'
@@ -2867,7 +2866,9 @@ function SvgMap({
           </g>
           <g>
             {screenNodes.map((node) => {
-              const isAnimated = !node.isCluster && activeAnimationNodeIds?.has(node.id);
+              const isAnimated = node.isCluster
+                ? (node.members || []).some((member) => activeAnimationNodeIds?.has(member.id))
+                : activeAnimationNodeIds?.has(node.id);
               const isSelected =
                 (selectedKind === 'node' && selectedId === node.id) ||
                 (selectedKind === 'cluster' && selectedId === node.id);
@@ -3214,7 +3215,7 @@ function LegacyD3MapStage({
   handleNodeLeave,
   handleNodeClick,
   showLabels,
-  activeAnimationEdgeId,
+  activeAnimationEdgeIds,
   activeAnimationNodeIds,
   viewMode,
   personLayoutMode,
@@ -3243,7 +3244,7 @@ function LegacyD3MapStage({
           onNodeLeave={handleNodeLeave}
           onNodeClick={handleNodeClick}
           showLabels={showLabels}
-          activeAnimationEdgeId={activeAnimationEdgeId}
+          activeAnimationEdgeIds={activeAnimationEdgeIds}
           activeAnimationNodeIds={activeAnimationNodeIds}
           clusterSingularLabel={viewMode === 'geographic' ? 'node' : 'person'}
           clusterPluralLabel={viewMode === 'geographic' ? 'nodes' : 'people'}
@@ -4461,14 +4462,75 @@ export default function EuropeNetworkMapApp() {
 
   const exportNodesRows = useMemo(() => buildExportNodeRows(graph.nodes), [graph.nodes]);
 
-  const activePlaybackRow = hasActivePlayback ? selectedRowsForPlayback[playbackIndex]?.row || null : null;
-  const activeAnimationEdgeId = activePlaybackRow ? (viewMode === 'geographic' ? edgeKeyFromRow(activePlaybackRow) : `${activePlaybackRow.sourcePerson}-->${activePlaybackRow.targetPerson}`) : '';
+  const activePlaybackEntry = hasActivePlayback ? selectedRowsForPlayback[playbackIndex] || null : null;
+  const activePlaybackRows = useMemo(() => {
+    if (!activePlaybackEntry) return [];
+    if (timelinePlaybackMode === PERIDOT_TIMELINE_PLAYBACK_MODES.CO_CURRENT) {
+      // Co-current playback emphasizes the complete set of records active at
+      // this playback moment, matching the graph membership shown on screen.
+      return filteredRowsByTime;
+    }
+    // Cumulative playback emphasizes only the newly reached assertion's source
+    // record rather than every record accumulated so far.
+    return activePlaybackEntry.row ? [activePlaybackEntry.row] : [];
+  }, [activePlaybackEntry, filteredRowsByTime, timelinePlaybackMode]);
+
+  const activePlaybackRowIds = useMemo(() => (
+    new Set(activePlaybackRows.map((row) => row?.id).filter(Boolean))
+  ), [activePlaybackRows]);
+  const activePlaybackRowRefs = useMemo(() => new Set(activePlaybackRows), [activePlaybackRows]);
+
+  const activeAnimationEdgeIds = useMemo(() => {
+    if (!activePlaybackRows.length) return new Set();
+    const activeIds = new Set();
+    graph.edges.forEach((edge) => {
+      const provenanceRows = Array.isArray(edge?.rows) && edge.rows.length
+        ? edge.rows
+        : Array.isArray(edge?.letterMetadata)
+          ? edge.letterMetadata
+          : [];
+      const isActive = provenanceRows.some((row) => (
+        activePlaybackRowRefs.has(row)
+        || (row?.id && activePlaybackRowIds.has(row.id))
+      ));
+      if (isActive) activeIds.add(edge.id);
+    });
+    return activeIds;
+  }, [graph.edges, activePlaybackRows, activePlaybackRowIds, activePlaybackRowRefs]);
+
   const activeAnimationNodeIds = useMemo(() => {
-    if (!activePlaybackRow) return new Set();
-    return viewMode === 'geographic'
-      ? new Set([activePlaybackRow.sourcePlaceId, activePlaybackRow.targetPlaceId].filter(Boolean))
-      : new Set([activePlaybackRow.sourcePerson, activePlaybackRow.targetPerson].filter(Boolean));
-  }, [activePlaybackRow, viewMode]);
+    if (!activePlaybackRows.length) return new Set();
+    const activeNodeIds = new Set();
+
+    // Rendered generalized edges already know their exact rendered endpoints.
+    // Consume those IDs instead of reconstructing source/target identities from
+    // correspondence-shaped row fields. Multipart records therefore highlight
+    // every explicit rendered relationship without inventing co-participant edges.
+    graph.edges.forEach((edge) => {
+      if (!activeAnimationEdgeIds.has(edge.id)) return;
+      if (edge.sourceNodeId) activeNodeIds.add(edge.sourceNodeId);
+      if (edge.targetNodeId) activeNodeIds.add(edge.targetNodeId);
+    });
+
+    // Temporal assertions can belong to an entity even when the source row does
+    // not assert a relationship (birth/death/lifespan events are common cases).
+    // Preserve those visible entity nodes as active without manufacturing edges.
+    const participantKeys = new Set();
+    activePlaybackRows.forEach((row) => {
+      getPeridotRowEntityParticipantEntries(row).forEach((participant) => {
+        if (participant?.id) participantKeys.add(String(participant.id));
+        if (participant?.label) participantKeys.add(String(participant.label));
+      });
+    });
+    graph.nodes.forEach((node) => {
+      const nodeKeys = [node?.entityId, node?.entityKey, node?.id, node?.entityLabel, node?.label]
+        .filter(Boolean)
+        .map(String);
+      if (nodeKeys.some((key) => participantKeys.has(key))) activeNodeIds.add(node.id);
+    });
+
+    return activeNodeIds;
+  }, [graph.edges, graph.nodes, activeAnimationEdgeIds, activePlaybackRows]);
 
   const clearSelection = () => {
     setSelectedSelection(null);
@@ -5449,7 +5511,7 @@ export default function EuropeNetworkMapApp() {
     handleNodeLeave: clearHoveredNodeHighlight,
     handleNodeClick,
     showLabels,
-    activeAnimationEdgeId,
+    activeAnimationEdgeIds,
     activeAnimationNodeIds,
     viewMode,
     handleBlankMapClick,
