@@ -189,19 +189,12 @@ export function PeridotDataWorkspace({
                         }}
                       >
                         <div className="flex items-start gap-4">
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => onExploreSample?.(sample.id)}
-                            disabled={isLoading}
-                            className="min-w-0 flex-1 text-left disabled:cursor-wait disabled:opacity-60"
-                          >
+                          <div className="min-w-0 flex-1">
                             <span className="block text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--peridot-role-ornament-sparkle)]/75">{sample.format}</span>
-                            <span className="mt-1 block text-base font-bold text-[var(--peridot-color-hex-fbf7ea)] transition hover:text-[var(--peridot-role-ornament-sparkle)]">
+                            <span className="mt-1 block text-base font-bold text-[var(--peridot-color-hex-fbf7ea)]">
                               {isLoading ? 'Loading…' : sample.title}
-                              <span aria-hidden="true" className="ml-2 text-[var(--peridot-role-ornament-sparkle)]">›</span>
                             </span>
-                          </button>
+                          </div>
                           <button
                             type="button"
                             onClick={() => setExpandedSampleId(isExpanded ? '' : sample.id)}
@@ -212,27 +205,43 @@ export function PeridotDataWorkspace({
                           </button>
                         </div>
 
+                        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-semibold">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => onExploreSample?.(sample.id)}
+                            disabled={isLoading}
+                            className="text-[var(--peridot-role-ornament-sparkle)] underline-offset-4 hover:underline disabled:cursor-wait disabled:opacity-60"
+                          >
+                            Use
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => {
+                              setSampleMenuRequestedHere(false);
+                              onCloseSampleChooser?.();
+                              onEditSampleMapping?.(sample.id);
+                            }}
+                            disabled={isLoading}
+                            className="text-[var(--peridot-role-ornament-sparkle)] underline-offset-4 hover:underline disabled:cursor-wait disabled:opacity-60"
+                          >
+                            Edit
+                          </button>
+                          <a
+                            role="menuitem"
+                            href={sample.downloadUrl}
+                            download={sample.fileName}
+                            className="text-[var(--peridot-role-ornament-sparkle)] underline-offset-4 hover:underline"
+                          >
+                            Download
+                          </a>
+                        </div>
+
                         {isExpanded ? (
                           <div className="mt-3 border-l border-[var(--peridot-role-ornament-line)]/60 pl-4">
                             <p className="text-sm leading-6 text-[var(--peridot-role-interface-text-on-dark)]/88">{sample.description}</p>
                             <p className="mt-2 text-xs leading-5 text-[var(--peridot-role-interface-text-on-dark)]/65">{sample.teachingNote}</p>
-                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold">
-                              <button
-                                type="button"
-                                onClick={() => onEditSampleMapping?.(sample.id)}
-                                disabled={isLoading}
-                                className="text-[var(--peridot-role-ornament-sparkle)] underline-offset-4 hover:underline disabled:cursor-wait disabled:opacity-60"
-                              >
-                                Edit mapping
-                              </button>
-                              <a
-                                href={sample.downloadUrl}
-                                download={sample.fileName}
-                                className="text-[var(--peridot-role-ornament-sparkle)] underline-offset-4 hover:underline"
-                              >
-                                Download source
-                              </a>
-                            </div>
                           </div>
                         ) : null}
                       </div>
