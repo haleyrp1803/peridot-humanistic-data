@@ -17,7 +17,7 @@
  *   experimental mapper entry points now that generalized mapping is authoritative.
  */
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import dataDividerFiligree from '../assets/Adobe Stock Filigree 3.png';
 
 export function PeridotDataWorkspace({
@@ -38,14 +38,65 @@ export function PeridotDataWorkspace({
   sampleLoadingId = '',
   activeSampleDataSource = null,
 }) {
+  const sampleMenuRef = useRef(null);
+  const [expandedSampleId, setExpandedSampleId] = useState('');
+  const [sampleCascadeActive, setSampleCascadeActive] = useState(false);
+  const [sampleMenuRequestedHere, setSampleMenuRequestedHere] = useState(false);
+  const sampleMenuVisible = sampleChooserOpen && sampleMenuRequestedHere;
+
+  useEffect(() => {
+    if (!sampleMenuVisible) {
+      setExpandedSampleId('');
+      setSampleCascadeActive(false);
+      return undefined;
+    }
+
+    const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    let cascadeFrame = null;
+
+    if (prefersReducedMotion) {
+      setSampleCascadeActive(true);
+    } else {
+      setSampleCascadeActive(false);
+      cascadeFrame = window.requestAnimationFrame(() => {
+        setSampleCascadeActive(true);
+      });
+    }
+
+    const handlePointerDown = (event) => {
+      if (sampleMenuRef.current && !sampleMenuRef.current.contains(event.target)) {
+        onCloseSampleChooser?.();
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onCloseSampleChooser?.();
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      if (cascadeFrame) window.cancelAnimationFrame(cascadeFrame);
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [sampleMenuVisible, onCloseSampleChooser]);
+
   return (
     <section className="peridot-workspace-field flex min-h-full items-center text-[var(--peridot-color-hex-fbf7ea)]">
-      <div className="peridot-workspace-frame w-full">
-        <div className="peridot-appear-rise peridot-appear-delay-0 peridot-hero-card">
+      <div className={`peridot-workspace-frame w-full transform-gpu transition-transform duration-[1150ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        sampleMenuVisible
+          ? "-translate-y-[4.75rem] md:-translate-y-[5.5rem]"
+          : "translate-y-0"
+      }`}>
+        <div className="peridot-appear-rise peridot-appear-delay-0 peridot-hero-card !py-8 md:!py-9">
           <div>
             <p className="peridot-kicker">Data workspace</p>
             <h1 className="peridot-title-medium">Choose what data to use.</h1>
-            <div className="mt-6 w-full space-y-5 text-base leading-8 text-[var(--peridot-role-interface-text-on-dark)]/90">
+            <div className="mt-4 w-full space-y-3 text-base leading-7 text-[var(--peridot-role-interface-text-on-dark)]/90">
               <p>
                 To use your own data in Peridot, please upload it as a CSV, TSV, XLS, or XLSX file. We'll help you assign variable roles that work best for your project, whether you are working with qualitative or quantitative information.
               </p>
@@ -56,7 +107,7 @@ export function PeridotDataWorkspace({
           </div>
         </div>
 
-        <div className="relative left-1/2 mt-10 mb-10 w-[calc(100%+4rem)] max-w-[calc(100vw-3rem)] -translate-x-1/2" aria-hidden="true">
+        <div className="relative left-1/2 mt-6 mb-6 w-[calc(100%+4rem)] max-w-[calc(100vw-3rem)] -translate-x-1/2" aria-hidden="true">
           <img
             src={dataDividerFiligree}
             alt=""
@@ -81,10 +132,20 @@ export function PeridotDataWorkspace({
             </button>
           </div>
 
-          <div className="peridot-appear-rise peridot-appear-delay-3">
+          <div ref={sampleMenuRef} className="peridot-appear-rise peridot-appear-delay-3 relative z-30">
             <button
               type="button"
-              onClick={onUseSampleData}
+              onClick={() => {
+                if (sampleMenuVisible) {
+                  setSampleMenuRequestedHere(false);
+                  onCloseSampleChooser?.();
+                } else {
+                  setSampleMenuRequestedHere(true);
+                  if (!sampleChooserOpen) onUseSampleData?.();
+                }
+              }}
+              aria-expanded={sampleMenuVisible}
+              aria-haspopup="menu"
               className="peridot-button-cream min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
               style={{
                 '--peridot-data-button-bg': '#0f2912',
@@ -92,8 +153,94 @@ export function PeridotDataWorkspace({
                 '--peridot-data-button-text': 'color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%)',
               }}
             >
-              Start with Sample Data
+              Start with Sample Data <span aria-hidden="true" className="ml-1 text-sm">{sampleMenuVisible ? '▴' : '▾'}</span>
             </button>
+
+            {sampleMenuVisible ? (
+              <div
+                role="menu"
+                aria-label="Choose sample data"
+                className="absolute left-1/2 top-[calc(100%+0.5rem)] z-40 w-[min(38rem,calc(100vw-2rem))] -translate-x-1/2 overflow-hidden rounded-2xl border border-[var(--peridot-role-ornament-corner-muted)] bg-[#0b2f12] text-left text-[var(--peridot-role-interface-text-on-dark)] shadow-[0_20px_45px_var(--peridot-role-card-shadow)]"
+              >
+                <div
+                  className="border-b border-[var(--peridot-role-ornament-line)]/45 px-5 py-4 motion-reduce:!translate-y-0 motion-reduce:!opacity-100 motion-reduce:!transition-none"
+                  style={{
+                    opacity: sampleCascadeActive ? 1 : 0,
+                    transform: `translateY(${sampleCascadeActive ? '0' : '-12px'})`,
+                    transition: 'opacity 420ms ease-out 70ms, transform 620ms cubic-bezier(0.22, 0.72, 0.22, 1) 70ms',
+                  }}
+                >
+                  <p className="peridot-kicker !mb-0">Choose sample data</p>
+                </div>
+
+                <div className="divide-y divide-[var(--peridot-role-ornament-line)]/30">
+                  {sampleDatasets.map((sample, sampleIndex) => {
+                    const isLoading = sampleLoadingId === sample.id;
+                    const isExpanded = expandedSampleId === sample.id;
+                    return (
+                      <div
+                        key={sample.id}
+                        role="none"
+                        className="px-5 py-4 transition hover:bg-white/[0.035] motion-reduce:!translate-y-0 motion-reduce:!opacity-100 motion-reduce:!transition-none"
+                        style={{
+                          opacity: sampleCascadeActive ? 1 : 0,
+                          transform: `translateY(${sampleCascadeActive ? '0' : '-18px'})`,
+                          transition: `opacity 520ms ease-out ${260 + sampleIndex * 245}ms, transform 760ms cubic-bezier(0.22, 0.72, 0.22, 1) ${220 + sampleIndex * 245}ms, background-color 180ms ease`,
+                        }}
+                      >
+                        <div className="flex items-start gap-4">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => onExploreSample?.(sample.id)}
+                            disabled={isLoading}
+                            className="min-w-0 flex-1 text-left disabled:cursor-wait disabled:opacity-60"
+                          >
+                            <span className="block text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--peridot-role-ornament-sparkle)]/75">{sample.format}</span>
+                            <span className="mt-1 block text-base font-bold text-[var(--peridot-color-hex-fbf7ea)] transition hover:text-[var(--peridot-role-ornament-sparkle)]">
+                              {isLoading ? 'Loading…' : sample.title}
+                              <span aria-hidden="true" className="ml-2 text-[var(--peridot-role-ornament-sparkle)]">›</span>
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setExpandedSampleId(isExpanded ? '' : sample.id)}
+                            aria-expanded={isExpanded}
+                            className="shrink-0 rounded-full border border-[var(--peridot-role-ornament-line)]/70 px-3 py-1.5 text-xs font-semibold text-[var(--peridot-color-hex-fbf7ea)] transition hover:border-[var(--peridot-role-ornament-sparkle)] hover:bg-white/[0.05]"
+                          >
+                            {isExpanded ? 'Less' : 'Details'}
+                          </button>
+                        </div>
+
+                        {isExpanded ? (
+                          <div className="mt-3 border-l border-[var(--peridot-role-ornament-line)]/60 pl-4">
+                            <p className="text-sm leading-6 text-[var(--peridot-role-interface-text-on-dark)]/88">{sample.description}</p>
+                            <p className="mt-2 text-xs leading-5 text-[var(--peridot-role-interface-text-on-dark)]/65">{sample.teachingNote}</p>
+                            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs font-semibold">
+                              <button
+                                type="button"
+                                onClick={() => onEditSampleMapping?.(sample.id)}
+                                disabled={isLoading}
+                                className="text-[var(--peridot-role-ornament-sparkle)] underline-offset-4 hover:underline disabled:cursor-wait disabled:opacity-60"
+                              >
+                                Edit mapping
+                              </button>
+                              <a
+                                href={sample.downloadUrl}
+                                download={sample.fileName}
+                                className="text-[var(--peridot-role-ornament-sparkle)] underline-offset-4 hover:underline"
+                              >
+                                Download source
+                              </a>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
           </div>
 
           <div className="peridot-appear-rise peridot-appear-delay-4">
@@ -111,59 +258,7 @@ export function PeridotDataWorkspace({
           </div>
         </div>
 
-        {sampleChooserOpen ? (
-          <div className="mx-auto mt-8 max-w-5xl peridot-cream-card peridot-card-inner">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="peridot-section-label">Sample data</p>
-                <h2 className="mt-2 text-2xl font-bold text-[var(--peridot-color-hex-26352b)]">Choose an ordinary sample file.</h2>
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[var(--peridot-color-hex-42533f)]">
-                  Each sample passes through the same generalized mapping system as your own uploads. Explore it with its saved mapping, edit that interpretation to see how different choices change the result, or download the original source file and adapt it for your own project.
-                </p>
-              </div>
-              <button type="button" onClick={onCloseSampleChooser} className="peridot-button-cream">Close samples</button>
-            </div>
 
-            <div className="mt-6 grid gap-4 lg:grid-cols-3">
-              {sampleDatasets.map((sample) => {
-                const isLoading = sampleLoadingId === sample.id;
-                return (
-                  <article key={sample.id} className="rounded-2xl border border-[var(--peridot-role-card-border)] bg-[var(--peridot-role-card-bg)] p-5">
-                    <p className="peridot-section-label">{sample.format}</p>
-                    <h3 className="mt-2 text-xl font-bold text-[var(--peridot-color-hex-26352b)]">{sample.title}</h3>
-                    <p className="mt-3 text-sm leading-6 text-[var(--peridot-color-hex-42533f)]">{sample.description}</p>
-                    <p className="mt-3 text-xs leading-5 text-[var(--peridot-color-hex-42533f)]/80">{sample.teachingNote}</p>
-                    <div className="mt-5 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => onExploreSample?.(sample.id)}
-                        disabled={isLoading}
-                        className="peridot-button-primary disabled:cursor-wait disabled:opacity-60"
-                      >
-                        {isLoading ? 'Loading…' : 'Explore sample'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => onEditSampleMapping?.(sample.id)}
-                        disabled={isLoading}
-                        className="peridot-button-cream disabled:cursor-wait disabled:opacity-60"
-                      >
-                        Edit mapping
-                      </button>
-                      <a
-                        href={sample.downloadUrl}
-                        download={sample.fileName}
-                        className="peridot-button-cream inline-flex items-center justify-center"
-                      >
-                        Download source
-                      </a>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-        ) : null}
 
         {columnMappingStaging ? (
           <div className="mx-auto mt-8 max-w-3xl peridot-cream-card peridot-card-inner">
