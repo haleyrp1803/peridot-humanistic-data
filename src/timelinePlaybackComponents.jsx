@@ -240,8 +240,12 @@ export function VisualizationTimelineScrubber({
   }));
   const [isAdjustingRange, setIsAdjustingRange] = useState(false);
   const [timeTypeMenuOpen, setTimeTypeMenuOpen] = useState(false);
+  const [previewPlaybackIndex, setPreviewPlaybackIndex] = useState(() => Math.max(playbackIndex, 0));
+  const [isAdjustingPlayback, setIsAdjustingPlayback] = useState(false);
   const previewRangeRef = useRef(previewRange);
   const rangeInteractionRef = useRef(false);
+  const previewPlaybackIndexRef = useRef(previewPlaybackIndex);
+  const playbackInteractionRef = useRef(false);
 
   useEffect(() => {
     previewRangeRef.current = previewRange;
@@ -256,6 +260,16 @@ export function VisualizationTimelineScrubber({
     previewRangeRef.current = nextPreview;
     setPreviewRange(nextPreview);
   }, [committedStart, committedEnd, lastTimelineIndex, isAdjustingRange]);
+
+  useEffect(() => {
+    if (isAdjustingPlayback) return;
+    const nextPreviewPlaybackIndex = Math.max(
+      0,
+      Math.min(playbackIndex, Math.max((selectedRowsForPlayback?.length || 1) - 1, 0)),
+    );
+    previewPlaybackIndexRef.current = nextPreviewPlaybackIndex;
+    setPreviewPlaybackIndex(nextPreviewPlaybackIndex);
+  }, [playbackIndex, selectedRowsForPlayback?.length, isAdjustingPlayback]);
 
   const previewStart = Math.min(previewRange.start, previewRange.end);
   const previewEnd = Math.max(previewRange.start, previewRange.end);
@@ -314,6 +328,36 @@ export function VisualizationTimelineScrubber({
     setRangeEnd(nextEnd);
     stopPlayback();
   }
+
+  const beginPlaybackInteraction = () => {
+    playbackInteractionRef.current = true;
+    setIsAdjustingPlayback(true);
+    setIsPlaying(false);
+  };
+
+  const beginKeyboardPlaybackInteraction = (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) return;
+    beginPlaybackInteraction();
+  };
+
+  const previewPlaybackChange = (value) => {
+    const nextPlaybackIndex = Number(value);
+    previewPlaybackIndexRef.current = nextPlaybackIndex;
+    setPreviewPlaybackIndex(nextPlaybackIndex);
+    setIsAdjustingPlayback(true);
+  };
+
+  function commitPreviewPlayback() {
+    if (!playbackInteractionRef.current) return;
+    playbackInteractionRef.current = false;
+    setIsAdjustingPlayback(false);
+    setPlaybackIndex(previewPlaybackIndexRef.current);
+  }
+
+  const commitKeyboardPlaybackInteraction = (event) => {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(event.key)) return;
+    commitPreviewPlayback();
+  };
 
   const resetTimeline = () => {
     const nextPreview = { start: 0, end: lastTimelineIndex };
@@ -398,6 +442,28 @@ export function VisualizationTimelineScrubber({
           height: 18px;
           pointer-events: auto;
           width: 18px;
+        }
+        .peridot-dual-range input.peridot-playback-scrubber {
+          z-index: 20;
+        }
+        .peridot-dual-range input.peridot-playback-scrubber::-webkit-slider-thumb {
+          background: var(--peridot-color-hex-d6a36a);
+          border: 1px solid var(--peridot-color-hex-fff8e8);
+          border-radius: 2px;
+          box-shadow: 0 2px 7px var(--peridot-color-rgba-rgba-0-0-0-0-32);
+          cursor: ew-resize;
+          height: 26px;
+          margin-top: -11px;
+          width: 6px;
+        }
+        .peridot-dual-range input.peridot-playback-scrubber::-moz-range-thumb {
+          background: var(--peridot-color-hex-d6a36a);
+          border: 1px solid var(--peridot-color-hex-fff8e8);
+          border-radius: 2px;
+          box-shadow: 0 2px 7px var(--peridot-color-rgba-rgba-0-0-0-0-32);
+          cursor: ew-resize;
+          height: 26px;
+          width: 6px;
         }
       `}</style>
 
@@ -519,6 +585,35 @@ export function VisualizationTimelineScrubber({
                 aria-label="Timeline end year"
                 aria-valuetext={endLabel}
               />
+              {selectedRowsForPlayback?.length ? (
+                <input
+                  className="peridot-playback-scrubber"
+                  type="range"
+                  min="0"
+                  max={Math.max(selectedRowsForPlayback.length - 1, 0)}
+                  value={Math.max(0, Math.min(previewPlaybackIndex, selectedRowsForPlayback.length - 1))}
+                  onPointerDown={beginPlaybackInteraction}
+                  onChange={(event) => previewPlaybackChange(event.target.value)}
+                  onPointerUp={commitPreviewPlayback}
+                  onPointerCancel={commitPreviewPlayback}
+                  onKeyDown={beginKeyboardPlaybackInteraction}
+                  onKeyUp={commitKeyboardPlaybackInteraction}
+                  onBlur={commitPreviewPlayback}
+                  aria-label="Timeline playback position"
+                  aria-valuetext={
+                    isAdjustingPlayback && selectedRowsForPlayback[previewPlaybackIndex]
+                      ? (selectedRowsForPlayback[previewPlaybackIndex].displayLabel || 'dated record')
+                      : playbackIndex >= 0
+                        ? currentPlaybackLabel
+                        : `Start at ${startLabel}`
+                  }
+                  style={{
+                    left: `${startPercent}%`,
+                    right: `${100 - endPercent}%`,
+                    width: 'auto',
+                  }}
+                />
+              ) : null}
             </div>
           </div>
         ) : (
