@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+
 import {
   buildPeridotTimelineCategoryFields,
   buildPeridotTimelineWorkspaceEvents,
@@ -185,7 +187,7 @@ export function runPeridotTimelineWorkspaceFixtureAudit() {
   });
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const result = runPeridotTimelineWorkspaceFixtureAudit();
   console.log(JSON.stringify(result, null, 2));
   if (!result.pass) process.exitCode = 1;

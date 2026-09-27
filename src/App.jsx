@@ -73,6 +73,7 @@ import { PeridotHomeWorkspace } from './PeridotHomeWorkspace';
 import { PeridotDataWorkspace } from './PeridotDataWorkspace';
 import { PeridotThemeWorkspace } from './PeridotThemeWorkspace';
 import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace';
+import { buildPeridotTimelineWorkspaceEvents } from './peridotTimelineWorkspaceModel.js';
 import { PeridotExploreWorkspace } from './PeridotExploreWorkspace';
 import { PeridotLearnMoreWorkspace } from './PeridotLearnMoreWorkspace';
 import { PeridotTutorial } from './PeridotTutorial';
@@ -94,6 +95,7 @@ import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmpty
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';
 import { InspectorNodeView as InspectorNodeViewView } from './InspectorNodeView';
+import { InspectorTimelineEventView as InspectorTimelineEventViewView } from './InspectorTimelineEventView';
 import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
 import { buildPeridotCanonicalRuntimeModel } from './peridotCanonicalRuntimeModel.js';
 import {
@@ -3623,7 +3625,7 @@ export default function EuropeNetworkMapApp() {
 
   useEffect(() => {
     if (!inspectorNavigationRef.current) {
-      if (!selectedSelection || ['node', 'edge', 'cluster'].includes(selectedSelection.kind)) {
+      if (!selectedSelection || ['node', 'edge', 'cluster', 'timeline-event'].includes(selectedSelection.kind)) {
         setInspectorHistory([]);
       }
     }
@@ -4365,6 +4367,18 @@ export default function EuropeNetworkMapApp() {
     [analyticsRows, analyticsChartType, analyticsBarGroupBy, analyticsTopN]
   );
 
+  const timelineWorkspaceAvailabilityEvents = useMemo(() => (
+    buildPeridotTimelineWorkspaceEvents(filteredRowsForActiveFilters, {
+      enabledRoles: enabledTemporalRoleSet,
+    })
+  ), [filteredRowsForActiveFilters, enabledTemporalRoleSet]);
+
+  const timelineWorkspaceEvents = useMemo(() => (
+    buildPeridotTimelineWorkspaceEvents(filteredRowsByTime, {
+      enabledRoles: enabledTemporalRoleSet,
+    })
+  ), [filteredRowsByTime, enabledTemporalRoleSet]);
+
   const visualizationAvailability = useMemo(() => {
     const rowCount = filteredRowsForActiveFilters.length;
     const chartRowCount = analyticsAvailabilityRows.length;
@@ -4426,6 +4440,8 @@ export default function EuropeNetworkMapApp() {
       geographicNetworkNodeCount,
       geographicNetworkEdgeCount,
       chartFieldCount,
+      timelineEventCount: timelineWorkspaceAvailabilityEvents.length,
+      hasTimeline: timelineWorkspaceAvailabilityEvents.length > 0,
       hasPointMap: pointCount > 0,
       hasRouteMap: routeCount > 0,
       hasNetwork: networkNodeCount > 0 && networkEdgeCount > 0,
@@ -4434,7 +4450,7 @@ export default function EuropeNetworkMapApp() {
       hasCharts: chartRowCount > 0 && chartFieldCount > 0,
       hasExploreData: rowCount > 0,
     };
-  }, [analyticsAvailabilityRows.length, availabilityAnalyticsFields, availabilityEntityNetworkSemantics, availabilityGeographicEntityNetworkSemantics, availabilityFilteredAggregatedEdges.length, filteredRowsForActiveFilters.length, places.length]);
+  }, [analyticsAvailabilityRows.length, availabilityAnalyticsFields, availabilityEntityNetworkSemantics, availabilityGeographicEntityNetworkSemantics, availabilityFilteredAggregatedEdges.length, filteredRowsForActiveFilters.length, places.length, timelineWorkspaceAvailabilityEvents.length]);
   const activeMapLayoutKey = viewMode === 'person' && personLayoutMode === 'force'
     ? 'force'
     : 'geographic';
@@ -4451,6 +4467,20 @@ export default function EuropeNetworkMapApp() {
   // Selection and inspector derivations
   // ------------------------------------------------------------
   const selectedProps = useMemo(() => {
+    if (selectedSelection?.kind === 'timeline-event') {
+      const event = selectedSelection.event || null;
+      const row = event?.row || selectedSelection.row || null;
+      if (!event || !row) return null;
+      return {
+        __kind: 'timeline-event',
+        id: selectedSelection.id || event.id,
+        label: event.temporalRole || 'Timeline event',
+        detailLabel: event.temporalRole || 'Timeline event',
+        event,
+        row,
+      };
+    }
+
     if (selectedSelection?.kind === 'letter-detail') {
       const uniqueId = selectedSelection.label || getLinkedLetterUniqueId(selectedSelection.letter, selectedSelection.index || 0);
       return {
@@ -5827,6 +5857,13 @@ export default function EuropeNetworkMapApp() {
         InspectorClearSelectionButtonComponent={InspectorClearSelectionButton}
       />
     ),
+    InspectorTimelineEventView: (props) => (
+      <InspectorTimelineEventViewView
+        {...props}
+        InspectorSummaryCardComponent={InspectorSummaryCard}
+        InspectorClearSelectionButtonComponent={InspectorClearSelectionButton}
+      />
+    ),
     InspectorEdgeView: (props) => (
       <InspectorEdgeViewView
         {...props}
@@ -5876,6 +5913,25 @@ export default function EuropeNetworkMapApp() {
     setPersonLayoutMode('force');
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
     setIsSidePanelOpen(false);
+  };
+
+  const selectTimelineVisualization = () => {
+    setVisualizationsWorkspacePanel('timeline');
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+    setIsSidePanelOpen(false);
+  };
+
+  const handleTimelineEventClick = (event) => {
+    const row = event?.row || null;
+    if (!event || !row) return;
+    setShowRightSidebar(true);
+    setSelectedSelection({
+      kind: 'timeline-event',
+      id: `timeline-event:${event.id}`,
+      event,
+      row,
+    });
+    setShowAllLinkedLetters(false);
   };
 
   const openAnalyticsWorkspace = () => {
@@ -6043,6 +6099,11 @@ export default function EuropeNetworkMapApp() {
     analyticsWorkspaceProps,
     onSelectGeographicMap: selectGeographicMapVisualization,
     onSelectForceDirected: selectForceDirectedVisualization,
+    onSelectTimeline: selectTimelineVisualization,
+    timelineWorkspaceProps: {
+      events: timelineWorkspaceEvents,
+      onEventClick: handleTimelineEventClick,
+    },
     onOpenAnalytics: openAnalyticsWorkspace,
     onOpenChartVisualization: openChartVisualization,
     onOpenSearch: () => {

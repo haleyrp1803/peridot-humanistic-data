@@ -46,6 +46,7 @@ export function InspectorBodyRouter({
     InspectorClusterView,
     InspectorNodeView,
     InspectorEdgeView,
+    InspectorTimelineEventView,
     InspectorLetterView,
   } = viewComponents;
 
@@ -102,6 +103,18 @@ export function InspectorBodyRouter({
     return <InspectorNodeView {...nodeViewProps} />;
   }
   if (selectedKind === 'edge') return <InspectorEdgeView {...edgeViewProps} />;
+  if (selectedKind === 'timeline-event') {
+    return (
+      <InspectorTimelineEventView
+        selectedProps={selectedProps}
+        clearSelection={clearSelection}
+        onExpandInspector={onExpandInspector}
+        onOpenPersonDetail={onOpenPersonDetail}
+        onOpenPlaceDetail={onOpenPlaceDetail}
+        isCompact={isCompact}
+      />
+    );
+  }
   if (selectedKind === 'letter-detail') {
     return (
       <InspectorLetterView

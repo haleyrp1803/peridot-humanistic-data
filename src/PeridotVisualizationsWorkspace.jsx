@@ -30,12 +30,14 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
+import { PeridotTimelineWorkspace } from './PeridotTimelineWorkspace.jsx';
 import { VisualizationTimelineScrubber } from './timelinePlaybackComponents.jsx';
 
 const VISUALIZATION_TOOLS = Object.freeze({
   GEOGRAPHIC_MAP: 'geographic-map',
   FORCE_NETWORK: 'force-network',
   CHART_WORKSPACE: 'chart-workspace',
+  TIMELINE_WORKSPACE: 'timeline-workspace',
   CAPABILITY_SUMMARY: 'capability-summary',
 });
 
@@ -977,6 +979,8 @@ export function PeridotVisualizationsWorkspace({
   geographicAnchorControls,
   onSelectGeographicMap,
   onSelectForceDirected,
+  onSelectTimeline,
+  timelineWorkspaceProps,
   onOpenAnalytics,
   onOpenChartVisualization,
   onOpenSearch,
@@ -994,19 +998,23 @@ export function PeridotVisualizationsWorkspace({
     geographicNetworkNodeCount: 0,
     geographicNetworkEdgeCount: 0,
     chartFieldCount: 0,
+    timelineEventCount: 0,
     hasPointMap: false,
     hasRouteMap: false,
     hasNetwork: false,
     hasForceNetwork: false,
     hasEntityNetwork: false,
     hasCharts: false,
+    hasTimeline: false,
     hasExploreData: false,
     ...(visualizationAvailability || {}),
   };
 
   const initialTool = visualizationsWorkspacePanel === 'analytics'
     ? VISUALIZATION_TOOLS.CHART_WORKSPACE
-    : personLayoutMode === 'force' && viewMode === 'person'
+    : visualizationsWorkspacePanel === 'timeline'
+      ? VISUALIZATION_TOOLS.TIMELINE_WORKSPACE
+      : personLayoutMode === 'force' && viewMode === 'person'
       ? VISUALIZATION_TOOLS.FORCE_NETWORK
       : VISUALIZATION_TOOLS.GEOGRAPHIC_MAP;
 
@@ -1049,6 +1057,12 @@ export function PeridotVisualizationsWorkspace({
   useEffect(() => {
     if (visualizationsWorkspacePanel === 'analytics') {
       setSelectedTool(VISUALIZATION_TOOLS.CHART_WORKSPACE);
+    } else if (visualizationsWorkspacePanel === 'timeline') {
+      setSelectedTool(VISUALIZATION_TOOLS.TIMELINE_WORKSPACE);
+    } else if (visualizationsWorkspacePanel === 'force-directed') {
+      setSelectedTool(VISUALIZATION_TOOLS.FORCE_NETWORK);
+    } else if (visualizationsWorkspacePanel === 'geographic-map') {
+      setSelectedTool(VISUALIZATION_TOOLS.GEOGRAPHIC_MAP);
     }
   }, [visualizationsWorkspacePanel]);
 
@@ -1131,6 +1145,20 @@ export function PeridotVisualizationsWorkspace({
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
     },
+    [VISUALIZATION_TOOLS.TIMELINE_WORKSPACE]: {
+      label: 'Timeline',
+      category: 'Timeline',
+      available: availability.hasTimeline,
+      action: onSelectTimeline,
+      unavailableTitle: 'Timeline is not available for this dataset.',
+      why: 'No usable mapped temporal assertions are available in the current scope.',
+      availableInstead: [
+        availability.hasPointMap || availability.hasRouteMap || availability.hasEntityNetwork ? 'Geographic Map' : null,
+        availability.hasForceNetwork ? 'Force-Directed Network' : null,
+        availability.hasCharts ? 'Chart Visualizations' : null,
+        availability.hasExploreData ? 'Explore Your Data' : null,
+      ].filter(Boolean),
+    },
     [VISUALIZATION_TOOLS.CHART_WORKSPACE]: {
       label: 'Chart Visualizations',
       category: 'Chart Visualizations',
@@ -1152,7 +1180,7 @@ export function PeridotVisualizationsWorkspace({
       why: '',
       availableInstead: [],
     },
-  }), [availability.hasCharts, availability.hasEntityNetwork, availability.hasExploreData, availability.hasForceNetwork, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, onOpenAnalytics, onOpenExplore, onSelectForceDirected, onSelectGeographicMap]);
+  }), [availability.hasCharts, availability.hasEntityNetwork, availability.hasExploreData, availability.hasForceNetwork, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, availability.hasTimeline, onOpenAnalytics, onOpenExplore, onSelectForceDirected, onSelectGeographicMap, onSelectTimeline]);
 
   const selectedDefinition = toolDefinitions[selectedTool] || toolDefinitions[VISUALIZATION_TOOLS.CAPABILITY_SUMMARY];
   const activeVisualizationLabel = selectedDefinition.label;
@@ -1165,6 +1193,10 @@ export function PeridotVisualizationsWorkspace({
     {
       label: 'Network',
       tool: VISUALIZATION_TOOLS.FORCE_NETWORK,
+    },
+    {
+      label: 'Timeline',
+      tool: VISUALIZATION_TOOLS.TIMELINE_WORKSPACE,
     },
     {
       label: 'Charts',
@@ -1263,6 +1295,7 @@ export function PeridotVisualizationsWorkspace({
     { label: 'Point places', value: numberLabel(availability.pointCount) },
     { label: 'Routes', value: numberLabel(availability.routeCount) },
     { label: 'Network edges', value: numberLabel(availability.networkEdgeCount) },
+    { label: 'Timeline events', value: numberLabel(availability.timelineEventCount) },
     { label: 'Rows', value: numberLabel(availability.rowCount) },
   ];
 
@@ -1283,6 +1316,10 @@ export function PeridotVisualizationsWorkspace({
           counts={counts}
         />
       );
+    }
+
+    if (selectedTool === VISUALIZATION_TOOLS.TIMELINE_WORKSPACE) {
+      return <PeridotTimelineWorkspace {...(timelineWorkspaceProps || {})} />;
     }
 
     if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
@@ -1336,8 +1373,9 @@ export function PeridotVisualizationsWorkspace({
                     const delay = {
                       Mapping: '1040ms',
                       Network: '920ms',
-                      Charts: '800ms',
-                      Explore: '680ms',
+                      Timeline: '800ms',
+                      Charts: '680ms',
+                      Explore: '560ms',
                     }[category.label];
                     const handleClick = () => {
                       closeMenu();
