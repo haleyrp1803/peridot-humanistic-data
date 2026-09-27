@@ -18,7 +18,7 @@
  */
 
 // Core React hooks used throughout the app.
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { geoContains, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import countries50m from 'world-atlas/countries-50m.json';
@@ -2217,6 +2217,9 @@ function SvgMap({
   initialFocusStrategy = 'fit-all',
 }) {
   const svgRef = useRef(null);
+  const transientViewportRef = useRef(null);
+  const transientPanDeltaRef = useRef({ x: 0, y: 0 });
+  const clearTransientPanAfterCommitRef = useRef(false);
   const rememberedInitialView = viewStateRef?.current?.resetKey === viewResetKey
     ? viewStateRef.current.view
     : null;
@@ -2358,6 +2361,15 @@ function SvgMap({
     }
     viewStateRef.current = { resetKey: viewResetKey, view };
   }, [view, viewResetKey, viewStateRef]);
+
+  useLayoutEffect(() => {
+    if (!clearTransientPanAfterCommitRef.current) return;
+    clearTransientPanAfterCommitRef.current = false;
+    transientPanDeltaRef.current = { x: 0, y: 0 };
+    if (transientViewportRef.current) {
+      transientViewportRef.current.removeAttribute('transform');
+    }
+  }, [view]);
 
   useEffect(() => {
     const previous = lastViewportSizeRef.current;
@@ -2540,11 +2552,30 @@ function SvgMap({
 
   const handleMouseMove = (event) => {
     if (!dragState) return;
-    setView((prev) => ({
-      ...prev,
-      tx: dragState.startTx + (event.clientX - dragState.startX),
-      ty: dragState.startTy + (event.clientY - dragState.startY),
-    }));
+    const nextDelta = {
+      x: event.clientX - dragState.startX,
+      y: event.clientY - dragState.startY,
+    };
+    transientPanDeltaRef.current = nextDelta;
+    if (transientViewportRef.current) {
+      transientViewportRef.current.setAttribute('transform', `translate(${nextDelta.x} ${nextDelta.y})`);
+    }
+  };
+
+  const commitPointerPan = () => {
+    if (!dragState) return;
+    const { x, y } = transientPanDeltaRef.current;
+    if (x || y) {
+      clearTransientPanAfterCommitRef.current = true;
+      setView((prev) => ({
+        ...prev,
+        tx: dragState.startTx + x,
+        ty: dragState.startTy + y,
+      }));
+    } else if (transientViewportRef.current) {
+      transientViewportRef.current.removeAttribute('transform');
+    }
+    setDragState(null);
   };
 
   useEffect(() => {
@@ -2553,9 +2584,9 @@ function SvgMap({
     };
   }, []);
 
-  const handleMouseUp = () => setDragState(null);
+  const handleMouseUp = () => commitPointerPan();
   const handleMouseLeave = () => {
-    setDragState(null);
+    commitPointerPan();
     onEdgeLeave();
     onNodeLeave?.();
   };
@@ -2743,6 +2774,7 @@ function SvgMap({
         )}
         <rect x={frame.x + 8} y={frame.y + 8} width={frame.w - 16} height={frame.h - 16} fill="none" stroke="var(--map-frame-border)" strokeOpacity="0.35" strokeWidth="0.9" rx="12" />
         <g clipPath="url(#map-frame-clip)">
+          <g ref={transientViewportRef}>
           <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
             {showGeographicBackdrop ? (
               <>
@@ -2945,6 +2977,7 @@ function SvgMap({
                 </text>
               );
             })}
+          </g>
           </g>
         </g>
       </svg>
