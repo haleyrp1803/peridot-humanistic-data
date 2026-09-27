@@ -2220,6 +2220,8 @@ function SvgMap({
   const transientViewportRef = useRef(null);
   const transientPanDeltaRef = useRef({ x: 0, y: 0 });
   const clearTransientPanAfterCommitRef = useRef(false);
+  const transientWheelViewRef = useRef(null);
+  const wheelCommitTimerRef = useRef(null);
   const rememberedInitialView = viewStateRef?.current?.resetKey === viewResetKey
     ? viewStateRef.current.view
     : null;
@@ -2527,8 +2529,46 @@ function SvgMap({
 
   const handleWheel = (event) => {
     event.preventDefault();
+    const svg = svgRef.current;
+    if (!svg || !transientViewportRef.current) return;
+
+    const rect = svg.getBoundingClientRect();
+    const px = event.clientX - rect.left;
+    const py = event.clientY - rect.top;
+    const currentView = transientWheelViewRef.current || view;
     const factor = event.deltaY < 0 ? 1.15 : 1 / 1.15;
-    zoomAtPoint(event.clientX, event.clientY, view.scale * factor);
+    const nextScale = clampScale(currentView.scale * factor);
+
+    if (nextScale === currentView.scale) return;
+
+    const worldX = (px - currentView.tx) / currentView.scale;
+    const worldY = (py - currentView.ty) / currentView.scale;
+    const nextView = {
+      scale: nextScale,
+      tx: px - worldX * nextScale,
+      ty: py - worldY * nextScale,
+    };
+    transientWheelViewRef.current = nextView;
+
+    const relativeScale = nextView.scale / view.scale;
+    const relativeTx = nextView.tx - view.tx * relativeScale;
+    const relativeTy = nextView.ty - view.ty * relativeScale;
+    transientViewportRef.current.setAttribute(
+      'transform',
+      `translate(${relativeTx} ${relativeTy}) scale(${relativeScale})`
+    );
+
+    if (wheelCommitTimerRef.current) {
+      window.clearTimeout(wheelCommitTimerRef.current);
+    }
+    wheelCommitTimerRef.current = window.setTimeout(() => {
+      const committedView = transientWheelViewRef.current;
+      transientWheelViewRef.current = null;
+      wheelCommitTimerRef.current = null;
+      if (!committedView) return;
+      clearTransientPanAfterCommitRef.current = true;
+      setView(committedView);
+    }, 120);
   };
 
   const stopControlAnimation = () => {
@@ -2541,6 +2581,17 @@ function SvgMap({
 
   const handleMouseDown = (event) => {
     stopControlAnimation();
+    if (wheelCommitTimerRef.current) {
+      window.clearTimeout(wheelCommitTimerRef.current);
+      wheelCommitTimerRef.current = null;
+    }
+    if (transientWheelViewRef.current) {
+      const committedView = transientWheelViewRef.current;
+      transientWheelViewRef.current = null;
+      clearTransientPanAfterCommitRef.current = true;
+      setView(committedView);
+      return;
+    }
     if (event.button !== 0) return;
     setDragState({
       startX: event.clientX,
@@ -2581,6 +2632,10 @@ function SvgMap({
   useEffect(() => {
     return () => {
       stopControlAnimation();
+      if (wheelCommitTimerRef.current) {
+        window.clearTimeout(wheelCommitTimerRef.current);
+        wheelCommitTimerRef.current = null;
+      }
     };
   }, []);
 
