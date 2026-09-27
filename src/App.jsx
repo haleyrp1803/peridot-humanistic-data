@@ -2571,6 +2571,14 @@ function SvgMap({
     }, 120);
   };
 
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return undefined;
+    const onWheel = (event) => handleWheel(event);
+    svg.addEventListener('wheel', onWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', onWheel);
+  }, [view]);
+
   const stopControlAnimation = () => {
     holdActionRef.current = null;
     if (animationFrameRef.current) {
@@ -2732,7 +2740,6 @@ function SvgMap({
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
         className="h-full w-full bg-[var(--map-canvas-bg)]"
-        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -2833,8 +2840,8 @@ function SvgMap({
           <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
             {showGeographicBackdrop ? (
               <>
-                {showBasemap && basemapFeatures.length ? basemapFeatures.map((featureItem) => (
-                  <g key={featureItem.id}>
+                {showBasemap && basemapFeatures.length ? basemapFeatures.map((featureItem, featureIndex) => (
+                  <g key={`basemap-${featureItem.id}-${featureIndex}`}>
                     <path
                       d={featureItem.d}
                       fill={activeCountryIds.has(featureItem.id) ? 'var(--map-land-active-fill)' : 'var(--map-land-fill)'}
@@ -3718,7 +3725,6 @@ export default function EuropeNetworkMapApp() {
   const geographicMapViewStateRef = useRef(null);
   const forceNetworkViewStateRef = useRef(null);
   const geographicPersonGraphCacheRef = useRef(null);
-  const forcePersonGraphCacheRef = useRef(null);
   const [mapViewportSize, setMapViewportSize] = useState({ width: 0, height: 0 });
 
   const [zoomTuning] = useState({
@@ -3849,7 +3855,6 @@ export default function EuropeNetworkMapApp() {
     geographicMapViewStateRef.current = null;
     forceNetworkViewStateRef.current = null;
     geographicPersonGraphCacheRef.current = null;
-    forcePersonGraphCacheRef.current = null;
   }, [searchRecords]);
 
   const applyGeographicMapSettings = (nextSettings = {}) => {
@@ -4081,10 +4086,6 @@ export default function EuropeNetworkMapApp() {
     () => buildGraph(filteredPlaces, filteredAggregatedEdges, mapViewportSize.width, mapViewportSize.height),
     [filteredPlaces, filteredAggregatedEdges, mapViewportSize.width, mapViewportSize.height]
   );
-  const entityNetworkSemantics = useMemo(
-    () => derivePeridotEntityNetworkSemantics(filteredRowsByTime),
-    [filteredRowsByTime]
-  );
   // Force layout is intentionally expensive (hundreds of synchronous D3 ticks).
   // Do not compute it merely because Force Directed was the last selected person
   // layout while the researcher is viewing Maps, Charts, Search, or another
@@ -4103,17 +4104,129 @@ export default function EuropeNetworkMapApp() {
     : isForceNetworkGeometryActive
       ? 'force'
       : 'semantic';
-  const semanticPersonGraph = useMemo(
-    () => buildPersonGraph(
+  const semanticPersonGraph = useMemo(() => {
+    if (isForceNetworkGeometryActive) return { nodes: [], edges: [] };
+    return buildPersonGraph(
       filteredRowsByTime,
       mapViewportSize.width,
       mapViewportSize.height,
       'semantic',
       '',
       { entityLabelById: entityDisplayLabelById }
-    ),
-    [filteredRowsByTime, mapViewportSize.width, mapViewportSize.height, entityDisplayLabelById]
-  );
+    );
+  }, [
+    isForceNetworkGeometryActive,
+    filteredRowsByTime,
+    mapViewportSize.width,
+    mapViewportSize.height,
+    entityDisplayLabelById,
+  ]);
+
+  // Force geometry belongs to the committed Timeline/Search scope, not to the
+  // current playback frame. Playback changes membership and emphasis, but the
+  // spatial vocabulary stays fixed so Peridot does not run hundreds of
+  // synchronous D3 ticks for every playback step.
+  const stableForcePersonGraph = useMemo(() => {
+    if (!isForceNetworkGeometryActive) return null;
+    return buildPersonGraph(
+      filteredRowsForActiveFilters,
+      mapViewportSize.width,
+      mapViewportSize.height,
+      'force',
+      '',
+      { entityLabelById: entityDisplayLabelById }
+    );
+  }, [
+    isForceNetworkGeometryActive,
+    filteredRowsForActiveFilters,
+    mapViewportSize.width,
+    mapViewportSize.height,
+    entityDisplayLabelById,
+  ]);
+
+  const playbackForcePersonGraph = useMemo(() => {
+    if (!stableForcePersonGraph) return semanticPersonGraph;
+
+    // The full playback graph is already loaded and laid out. Playback now
+    // changes only which pre-existing edge provenance is visible. This avoids
+    // rebuilding entity-network semantics, nodes, edges, and force geometry on
+    // every timer tick.
+    const visibleRowRefs = new Set(filteredRowsByTime);
+    const visibleRowIds = new Set(
+      filteredRowsByTime.map((row) => row?.id).filter(Boolean)
+    );
+
+    const edges = stableForcePersonGraph.edges
+      .map((edge) => {
+        const provenanceRows = Array.isArray(edge?.rows) && edge.rows.length
+          ? edge.rows
+          : Array.isArray(edge?.letterMetadata)
+            ? edge.letterMetadata
+            : [];
+        const visibleRows = provenanceRows.filter((row) => (
+          visibleRowRefs.has(row)
+          || (row?.id && visibleRowIds.has(row.id))
+        ));
+        if (!visibleRows.length) return null;
+
+        const dates = Array.from(new Set(
+          visibleRows
+            .map((row) => String(getRowPrimaryTemporalDisplay(row) || '').trim())
+            .filter(Boolean)
+        ));
+        const count = visibleRows.length;
+
+        return {
+          ...edge,
+          count,
+          rows: visibleRows,
+          letterMetadata: visibleRows,
+          dates,
+          width: computePersonEdgeWidth(count),
+        };
+      })
+      .filter(Boolean);
+
+    const visibleNodeIds = new Set();
+    const degreeByNodeId = new Map();
+    edges.forEach((edge) => {
+      if (edge.sourceNodeId) {
+        visibleNodeIds.add(edge.sourceNodeId);
+        degreeByNodeId.set(
+          edge.sourceNodeId,
+          (degreeByNodeId.get(edge.sourceNodeId) || 0) + edge.count
+        );
+      }
+      if (edge.targetNodeId) {
+        visibleNodeIds.add(edge.targetNodeId);
+        degreeByNodeId.set(
+          edge.targetNodeId,
+          (degreeByNodeId.get(edge.targetNodeId) || 0) + edge.count
+        );
+      }
+    });
+
+    const visibleStableNodes = stableForcePersonGraph.nodes.filter(
+      (node) => visibleNodeIds.has(node.id)
+    );
+    const radiusForPersonDegree = createAdaptiveNodeRadiusScale(
+      visibleStableNodes.map((node) => degreeByNodeId.get(node.id) || 0),
+      5.5,
+      34
+    );
+    const nodes = visibleStableNodes.map((node) => {
+      const degree = degreeByNodeId.get(node.id) || 0;
+      return {
+        ...node,
+        appearances: degree,
+        degree,
+        radius: radiusForPersonDegree(degree),
+      };
+    });
+
+    return { nodes, edges };
+  }, [filteredRowsByTime, semanticPersonGraph, stableForcePersonGraph]);
+
   const personGraph = useMemo(() => {
     if (personGraphLayoutMode === 'geographic') {
       const cached = geographicPersonGraphCacheRef.current;
@@ -4158,39 +4271,14 @@ export default function EuropeNetworkMapApp() {
     }
 
     if (personGraphLayoutMode === 'force') {
-      const cached = forcePersonGraphCacheRef.current;
-      if (
-        cached
-        && cached.rows === filteredRowsByTime
-        && cached.width === mapViewportSize.width
-        && cached.height === mapViewportSize.height
-        && cached.entityLabelById === entityDisplayLabelById
-      ) {
-        return cached.graph;
-      }
-
-      const graphResult = buildPersonGraph(
-        filteredRowsByTime,
-        mapViewportSize.width,
-        mapViewportSize.height,
-        'force',
-        '',
-        { entityLabelById: entityDisplayLabelById }
-      );
-      forcePersonGraphCacheRef.current = {
-        rows: filteredRowsByTime,
-        width: mapViewportSize.width,
-        height: mapViewportSize.height,
-        entityLabelById: entityDisplayLabelById,
-        graph: graphResult,
-      };
-      return graphResult;
+      return playbackForcePersonGraph;
     }
 
     return semanticPersonGraph;
   }, [
     personGraphLayoutMode,
     semanticPersonGraph,
+    playbackForcePersonGraph,
     filteredRowsByTime,
     geographicRelationshipRows,
     mapViewportSize.width,
