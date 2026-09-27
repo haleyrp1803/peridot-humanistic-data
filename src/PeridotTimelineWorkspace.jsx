@@ -439,7 +439,45 @@ function IntervalSpanVertical({ event, top, height }) {
   );
 }
 
-function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode }) {
+function visibleHorizontalItems(items, renderWindow, overscan = 520) {
+  if (!renderWindow?.width) return items;
+  const left = renderWindow.scrollLeft - overscan;
+  const right = renderWindow.scrollLeft + renderWindow.width + overscan;
+  return items.filter((item) => {
+    const start = Math.min(item.x, item.endX ?? item.x);
+    const end = Math.max(item.x + 210, item.endX ?? item.x);
+    return end >= left && start <= right;
+  });
+}
+
+function visibleVerticalItems(items, renderWindow, overscan = 520) {
+  if (!renderWindow?.height) return items;
+  const top = renderWindow.scrollTop - overscan;
+  const bottom = renderWindow.scrollTop + renderWindow.height + overscan;
+  return items.filter((item) => {
+    const start = Math.min(item.y - 16, item.endY ?? item.y);
+    const end = Math.max(item.y + 92, item.endY ?? item.y);
+    return end >= top && start <= bottom;
+  });
+}
+
+function visibleHorizontalTicks(ticks, renderWindow, overscan = 220) {
+  if (!renderWindow?.width) return ticks;
+  const left = renderWindow.scrollLeft - overscan;
+  const right = renderWindow.scrollLeft + renderWindow.width + overscan;
+  return ticks.filter((tick) => tick.x >= left && tick.x <= right);
+}
+
+function visibleVerticalTicks(ticks, renderWindow, overscan = 220) {
+  if (!renderWindow?.height) return ticks;
+  const top = renderWindow.scrollTop - overscan;
+  const bottom = renderWindow.scrollTop + renderWindow.height + overscan;
+  return ticks.filter((tick) => tick.y >= top && tick.y <= bottom);
+}
+
+function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow }) {
+  const renderedItems = visibleHorizontalItems(geometry.items, renderWindow);
+  const renderedTicks = visibleHorizontalTicks(geometry.ticks, renderWindow);
   return (
     <div
       className="relative min-h-full bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_78%,var(--peridot-color-hex-f5ecd2)),color-mix(in_srgb,var(--peridot-color-hex-f5ecd2)_70%,var(--peridot-color-hex-dfe9c8)))]"
@@ -450,7 +488,7 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
         style={{ left: 68, right: 68, top: geometry.axisY }}
       />
 
-      {geometry.ticks.map((tick) => (
+      {renderedTicks.map((tick) => (
         <div key={tick.year} className="absolute top-0" style={{ left: tick.x }}>
           <div className="absolute top-[54px] h-6 w-px bg-[var(--peridot-role-ornament-line)]" />
           <div className="absolute top-[25px] -translate-x-1/2 whitespace-nowrap text-[11px] font-bold tracking-[0.08em] text-[var(--peridot-role-interface-panel-background-strong)]">
@@ -463,7 +501,7 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
         </div>
       ))}
 
-      {geometry.items.map(({ event, x, endX, top }) => {
+      {renderedItems.map(({ event, x, endX, top }) => {
         const isInterval = event.temporalKind === 'interval' || event.temporalKind === 'openInterval';
         const intervalWidth = Math.max(18, endX - x);
         return (
@@ -479,7 +517,9 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
   );
 }
 
-function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode }) {
+function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow }) {
+  const renderedItems = visibleVerticalItems(geometry.items, renderWindow);
+  const renderedTicks = visibleVerticalTicks(geometry.ticks, renderWindow);
   return (
     <div
       className="relative min-h-full bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_78%,var(--peridot-color-hex-f5ecd2)),color-mix(in_srgb,var(--peridot-color-hex-f5ecd2)_70%,var(--peridot-color-hex-dfe9c8)))]"
@@ -490,7 +530,7 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
         style={{ left: geometry.axisX, top: 68, bottom: 68 }}
       />
 
-      {geometry.ticks.map((tick) => (
+      {renderedTicks.map((tick) => (
         <div key={tick.year} className="absolute left-0" style={{ top: tick.y }}>
           <div
             className="absolute left-[68px] h-px bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_18%,transparent)]"
@@ -503,7 +543,7 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
         </div>
       ))}
 
-      {geometry.items.map(({ event, y, endY, left }) => {
+      {renderedItems.map(({ event, y, endY, left }) => {
         const isInterval = event.temporalKind === 'interval' || event.temporalKind === 'openInterval';
         const intervalTop = Math.min(y, endY);
         const intervalHeight = Math.max(18, Math.abs(y - endY));
@@ -671,6 +711,7 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
   const [orientation, setOrientation] = useState('horizontal');
   const [zoom, setZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+  const [renderWindow, setRenderWindow] = useState({ scrollLeft: 0, scrollTop: 0, width: 0, height: 0 });
   const [activeCategoryFields, setActiveCategoryFields] = useState([]);
   const [hiddenCategoryKeys, setHiddenCategoryKeys] = useState([]);
   const [showUncategorized, setShowUncategorized] = useState(true);
@@ -678,6 +719,9 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
   const scrollerRef = useRef(null);
   const pendingChronologyFractionRef = useRef(null);
   const pendingZoomAnchorRef = useRef(null);
+  const scrollFrameRef = useRef(null);
+  const wheelFrameRef = useRef(null);
+  const pendingWheelDeltaRef = useRef(0);
   const categoryFields = useMemo(() => buildPeridotTimelineCategoryFields(events), [events]);
   const activeCategoryFieldSet = useMemo(() => new Set(activeCategoryFields), [activeCategoryFields]);
   const visibleCategories = useMemo(() => categoryFields
@@ -721,22 +765,55 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
     const scroller = scrollerRef.current;
     if (!scroller) return undefined;
 
-    const measure = () => {
-      const next = { width: scroller.clientWidth, height: scroller.clientHeight };
+    const captureViewport = () => {
+      const nextSize = { width: scroller.clientWidth, height: scroller.clientHeight };
       setViewportSize((current) => (
-        current.width === next.width && current.height === next.height ? current : next
+        current.width === nextSize.width && current.height === nextSize.height ? current : nextSize
       ));
+      setRenderWindow((current) => {
+        const next = {
+          scrollLeft: scroller.scrollLeft,
+          scrollTop: scroller.scrollTop,
+          width: scroller.clientWidth,
+          height: scroller.clientHeight,
+        };
+        return current.scrollLeft === next.scrollLeft
+          && current.scrollTop === next.scrollTop
+          && current.width === next.width
+          && current.height === next.height
+          ? current
+          : next;
+      });
     };
 
-    measure();
+    const scheduleCapture = () => {
+      if (scrollFrameRef.current !== null) return;
+      scrollFrameRef.current = window.requestAnimationFrame(() => {
+        scrollFrameRef.current = null;
+        captureViewport();
+      });
+    };
+
+    captureViewport();
+    scroller.addEventListener('scroll', scheduleCapture, { passive: true });
+
+    let observer = null;
     if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', measure);
-      return () => window.removeEventListener('resize', measure);
+      window.addEventListener('resize', scheduleCapture);
+    } else {
+      observer = new ResizeObserver(scheduleCapture);
+      observer.observe(scroller);
     }
 
-    const observer = new ResizeObserver(measure);
-    observer.observe(scroller);
-    return () => observer.disconnect();
+    return () => {
+      scroller.removeEventListener('scroll', scheduleCapture);
+      window.removeEventListener('resize', scheduleCapture);
+      observer?.disconnect();
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
+    };
   }, []);
 
   const handleOrientationChange = (nextOrientation) => {
@@ -781,12 +858,28 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
 
       pendingZoomAnchorRef.current = { chronologicalFraction, viewportOffset };
       const delta = Number.isFinite(event.deltaY) && event.deltaY !== 0 ? event.deltaY : event.deltaX;
-      const zoomFactor = clamp(Math.exp(-delta * 0.0018), 0.82, 1.22);
-      setZoom((current) => clamp(current * zoomFactor, MIN_TIMELINE_ZOOM, MAX_TIMELINE_ZOOM));
+      pendingWheelDeltaRef.current += delta;
+
+      if (wheelFrameRef.current === null) {
+        wheelFrameRef.current = window.requestAnimationFrame(() => {
+          wheelFrameRef.current = null;
+          const accumulatedDelta = pendingWheelDeltaRef.current;
+          pendingWheelDeltaRef.current = 0;
+          const zoomFactor = clamp(Math.exp(-accumulatedDelta * 0.0018), 0.74, 1.35);
+          setZoom((current) => clamp(current * zoomFactor, MIN_TIMELINE_ZOOM, MAX_TIMELINE_ZOOM));
+        });
+      }
     };
 
     scroller.addEventListener('wheel', handleWheel, { passive: false });
-    return () => scroller.removeEventListener('wheel', handleWheel);
+    return () => {
+      scroller.removeEventListener('wheel', handleWheel);
+      if (wheelFrameRef.current !== null) {
+        window.cancelAnimationFrame(wheelFrameRef.current);
+        wheelFrameRef.current = null;
+      }
+      pendingWheelDeltaRef.current = 0;
+    };
   }, [orientation, geometry]);
 
   useLayoutEffect(() => {
@@ -880,9 +973,9 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
             </div>
           </div>
         ) : orientation === 'vertical' ? (
-          <VerticalTimeline geometry={verticalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} />
+          <VerticalTimeline geometry={verticalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} renderWindow={renderWindow} />
         ) : (
-          <HorizontalTimeline geometry={horizontalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} />
+          <HorizontalTimeline geometry={horizontalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} renderWindow={renderWindow} />
         )}
       </div>
 
