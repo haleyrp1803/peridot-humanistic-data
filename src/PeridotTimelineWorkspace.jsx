@@ -160,16 +160,86 @@ function positionedTimelineEvents(events) {
     .sort((a, b) => a.start - b.start || a.end - b.end || String(a.event.id).localeCompare(String(b.event.id)));
 }
 
-function tickYears(minYear, maxYear, extentPixels) {
-  const span = Math.max(1, maxYear - minYear);
-  const targetTickCount = Math.max(4, Math.min(14, Math.floor(extentPixels / 150)));
-  const roughStep = Math.max(1, Math.ceil(span / targetTickCount));
-  const candidates = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
-  const tickStep = candidates.find((candidate) => candidate >= roughStep) || roughStep;
-  const firstTick = Math.ceil(minYear / tickStep) * tickStep;
-  const years = [];
-  for (let year = firstTick; year <= maxYear; year += tickStep) years.push(year);
-  return years;
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function daysInMonth(year, month) {
+  if (month === 2) {
+    const leap = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    return leap ? 29 : 28;
+  }
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
+}
+
+function scalarFromCalendarDate(year, month = 1, day = 1) {
+  return year + (month - 1) / 12 + (day - 1) / 366;
+}
+
+function buildTemporalTicks(minYear, maxYear, pixelsPerYear) {
+  const ticks = [];
+  const pxPerMonth = pixelsPerYear / 12;
+  const pxPerDay = pixelsPerYear / 366;
+  const targetSpacing = 92;
+
+  // At very close scales, label exact calendar days. The day step remains
+  // adaptive so labels stay readable rather than turning into a wall of text.
+  if (pxPerDay * 15 >= targetSpacing) {
+    const dayCandidates = [1, 2, 5, 7, 10, 15];
+    const dayStep = dayCandidates.find((candidate) => candidate * pxPerDay >= targetSpacing) || 15;
+    for (let year = minYear; year <= maxYear; year += 1) {
+      for (let month = 1; month <= 12; month += 1) {
+        const monthDays = daysInMonth(year, month);
+        for (let day = 1; day <= monthDays; day += dayStep) {
+          const scalar = scalarFromCalendarDate(year, month, day);
+          if (scalar < minYear || scalar > maxYear) continue;
+          ticks.push({
+            key: `day:${year}:${month}:${day}`,
+            scalar,
+            label: `${day} ${MONTH_LABELS[month - 1]} ${year}`,
+            granularity: 'day',
+            major: day === 1,
+          });
+        }
+      }
+    }
+    return ticks;
+  }
+
+  // Once there is enough room to distinguish months, show month/year labels.
+  if (pxPerMonth * 6 >= targetSpacing) {
+    const monthCandidates = [1, 2, 3, 6];
+    const monthStep = monthCandidates.find((candidate) => candidate * pxPerMonth >= targetSpacing) || 6;
+    for (let year = minYear; year <= maxYear; year += 1) {
+      for (let month = 1; month <= 12; month += monthStep) {
+        const scalar = scalarFromCalendarDate(year, month, 1);
+        if (scalar < minYear || scalar > maxYear) continue;
+        ticks.push({
+          key: `month:${year}:${month}`,
+          scalar,
+          label: `${MONTH_LABELS[month - 1]} ${year}`,
+          granularity: 'month',
+          major: month === 1,
+        });
+      }
+    }
+    return ticks;
+  }
+
+  // Broad views stay year-based, choosing a readable interval from the actual
+  // number of pixels available per year rather than from an arbitrary zoom id.
+  const yearCandidates = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
+  const roughYearStep = Math.max(1, Math.ceil(targetSpacing / Math.max(1, pixelsPerYear)));
+  const yearStep = yearCandidates.find((candidate) => candidate >= roughYearStep) || roughYearStep;
+  const firstYear = Math.ceil(minYear / yearStep) * yearStep;
+  for (let year = firstYear; year <= maxYear; year += yearStep) {
+    ticks.push({
+      key: `year:${year}`,
+      scalar: year,
+      label: String(year),
+      granularity: 'year',
+      major: true,
+    });
+  }
+  return ticks;
 }
 
 function buildHorizontalGeometry(positioned, viewportWidth = 0, zoom = 1) {
@@ -201,7 +271,7 @@ function buildHorizontalGeometry(positioned, viewportWidth = 0, zoom = 1) {
     top: axisY + 42 + (index % laneCount) * laneHeight,
   }));
 
-  const ticks = tickYears(minYear, maxYear, width).map((year) => ({ year, x: xFor(year) }));
+  const ticks = buildTemporalTicks(minYear, maxYear, pixelsPerYear).map((tick) => ({ ...tick, x: xFor(tick.scalar) }));
 
   return {
     items,
@@ -249,7 +319,7 @@ function buildVerticalGeometry(positioned, viewportHeight = 0, zoom = 1) {
     left: axisX + 72 + (index % laneCount) * laneWidth,
   }));
 
-  const ticks = tickYears(minYear, maxYear, height).map((year) => ({ year, y: yFor(year) }));
+  const ticks = buildTemporalTicks(minYear, maxYear, pixelsPerYear).map((tick) => ({ ...tick, y: yFor(tick.scalar) }));
 
   return {
     items,
@@ -475,9 +545,64 @@ function visibleVerticalTicks(ticks, renderWindow, overscan = 220) {
   return ticks.filter((tick) => tick.y >= top && tick.y <= bottom);
 }
 
+function estimatedHorizontalTickWidth(tick) {
+  const label = String(tick?.label || '');
+  const characterWidth = tick?.granularity === 'year' ? 7.2 : 6.2;
+  return Math.max(30, label.length * characterWidth + 14);
+}
+
+function resolveHorizontalTickLabelCollisions(ticks = []) {
+  const sorted = [...ticks].sort((a, b) => a.x - b.x);
+  const kept = [];
+
+  sorted.forEach((tick) => {
+    const candidate = { ...tick, estimatedLabelWidth: estimatedHorizontalTickWidth(tick) };
+    const previous = kept[kept.length - 1];
+    if (!previous) {
+      kept.push(candidate);
+      return;
+    }
+
+    const requiredGap = (previous.estimatedLabelWidth + candidate.estimatedLabelWidth) / 2 + 10;
+    if (candidate.x - previous.x >= requiredGap) {
+      kept.push(candidate);
+      return;
+    }
+
+    // Prefer major temporal boundaries when two labels cannot coexist. This
+    // removes cases such as "31 Aug" immediately beside "1 Sep" without
+    // discarding the stronger month/year boundary.
+    if (candidate.major && !previous.major) {
+      kept[kept.length - 1] = candidate;
+    }
+  });
+
+  return kept;
+}
+
+function resolveVerticalTickLabelCollisions(ticks = []) {
+  const sorted = [...ticks].sort((a, b) => a.y - b.y);
+  const kept = [];
+  const minimumGap = 24;
+
+  sorted.forEach((tick) => {
+    const previous = kept[kept.length - 1];
+    if (!previous || tick.y - previous.y >= minimumGap) {
+      kept.push(tick);
+      return;
+    }
+
+    if (tick.major && !previous.major) {
+      kept[kept.length - 1] = tick;
+    }
+  });
+
+  return kept;
+}
+
 function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow }) {
   const renderedItems = visibleHorizontalItems(geometry.items, renderWindow);
-  const renderedTicks = visibleHorizontalTicks(geometry.ticks, renderWindow);
+  const renderedTicks = resolveHorizontalTickLabelCollisions(visibleHorizontalTicks(geometry.ticks, renderWindow));
   return (
     <div
       className="relative min-h-full bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_78%,var(--peridot-color-hex-f5ecd2)),color-mix(in_srgb,var(--peridot-color-hex-f5ecd2)_70%,var(--peridot-color-hex-dfe9c8)))]"
@@ -489,13 +614,13 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
       />
 
       {renderedTicks.map((tick) => (
-        <div key={tick.year} className="absolute top-0" style={{ left: tick.x }}>
-          <div className="absolute top-[54px] h-6 w-px bg-[var(--peridot-role-ornament-line)]" />
-          <div className="absolute top-[25px] -translate-x-1/2 whitespace-nowrap text-[11px] font-bold tracking-[0.08em] text-[var(--peridot-role-interface-panel-background-strong)]">
-            {tick.year}
+        <div key={tick.key} className="absolute top-0" style={{ left: tick.x }}>
+          <div className={`absolute top-[54px] w-px bg-[var(--peridot-role-ornament-line)] ${tick.major ? 'h-6' : 'h-4 opacity-75'}`} />
+          <div className={`absolute -translate-x-1/2 whitespace-nowrap font-bold text-[var(--peridot-role-interface-panel-background-strong)] ${tick.granularity === 'year' ? 'top-[25px] text-[11px] tracking-[0.08em]' : 'top-[27px] text-[10px] tracking-[0.04em]'}`}>
+            {tick.label}
           </div>
           <div
-            className="absolute top-[78px] w-px bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_18%,transparent)]"
+            className={`absolute top-[78px] w-px bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_18%,transparent)] ${tick.major ? '' : 'opacity-45'}`}
             style={{ height: Math.max(0, geometry.height - 102) }}
           />
         </div>
@@ -519,7 +644,7 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
 
 function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow }) {
   const renderedItems = visibleVerticalItems(geometry.items, renderWindow);
-  const renderedTicks = visibleVerticalTicks(geometry.ticks, renderWindow);
+  const renderedTicks = resolveVerticalTickLabelCollisions(visibleVerticalTicks(geometry.ticks, renderWindow));
   return (
     <div
       className="relative min-h-full bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_78%,var(--peridot-color-hex-f5ecd2)),color-mix(in_srgb,var(--peridot-color-hex-f5ecd2)_70%,var(--peridot-color-hex-dfe9c8)))]"
@@ -531,14 +656,14 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
       />
 
       {renderedTicks.map((tick) => (
-        <div key={tick.year} className="absolute left-0" style={{ top: tick.y }}>
+        <div key={tick.key} className="absolute left-0" style={{ top: tick.y }}>
           <div
-            className="absolute left-[68px] h-px bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_18%,transparent)]"
+            className={`absolute left-[68px] h-px bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_18%,transparent)] ${tick.major ? '' : 'opacity-45'}`}
             style={{ width: Math.max(0, geometry.width - 96) }}
           />
-          <div className="absolute left-[80px] -top-3 h-6 w-6 border-l border-[var(--peridot-role-ornament-line)]" />
-          <div className="absolute left-[22px] -top-2 whitespace-nowrap text-[11px] font-bold tracking-[0.08em] text-[var(--peridot-role-interface-panel-background-strong)]">
-            {tick.year}
+          <div className={`absolute left-[80px] -top-3 w-6 border-l border-[var(--peridot-role-ornament-line)] ${tick.major ? 'h-6' : 'h-4 opacity-75'}`} />
+          <div className={`absolute left-[22px] whitespace-nowrap font-bold text-[var(--peridot-role-interface-panel-background-strong)] ${tick.granularity === 'year' ? '-top-2 text-[11px] tracking-[0.08em]' : '-top-2 text-[10px] tracking-[0.03em]'}`}>
+            {tick.label}
           </div>
         </div>
       ))}
@@ -716,12 +841,14 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
   const [hiddenCategoryKeys, setHiddenCategoryKeys] = useState([]);
   const [showUncategorized, setShowUncategorized] = useState(true);
   const [markerMode, setMarkerMode] = useState('color');
+  const [isPanning, setIsPanning] = useState(false);
   const scrollerRef = useRef(null);
   const pendingChronologyFractionRef = useRef(null);
   const pendingZoomAnchorRef = useRef(null);
   const scrollFrameRef = useRef(null);
   const wheelFrameRef = useRef(null);
   const pendingWheelDeltaRef = useRef(0);
+  const panStateRef = useRef(null);
   const categoryFields = useMemo(() => buildPeridotTimelineCategoryFields(events), [events]);
   const activeCategoryFieldSet = useMemo(() => new Set(activeCategoryFields), [activeCategoryFields]);
   const visibleCategories = useMemo(() => categoryFields
@@ -882,6 +1009,56 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
     };
   }, [orientation, geometry]);
 
+
+  const handlePanPointerDown = (event) => {
+    const scroller = scrollerRef.current;
+    if (!scroller || event.button !== 0 || event.pointerType === 'touch') return;
+
+    const interactiveTarget = event.target?.closest?.('button, input, select, textarea, a, [role="button"], [data-timeline-no-pan]');
+    if (interactiveTarget) return;
+
+    const rect = scroller.getBoundingClientRect();
+    const localX = event.clientX - rect.left;
+    const localY = event.clientY - rect.top;
+    const verticalScrollbarWidth = Math.max(0, scroller.offsetWidth - scroller.clientWidth);
+    const horizontalScrollbarHeight = Math.max(0, scroller.offsetHeight - scroller.clientHeight);
+    if (verticalScrollbarWidth && localX >= scroller.clientWidth) return;
+    if (horizontalScrollbarHeight && localY >= scroller.clientHeight) return;
+
+    panStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startScrollLeft: scroller.scrollLeft,
+      startScrollTop: scroller.scrollTop,
+    };
+    scroller.setPointerCapture?.(event.pointerId);
+    setIsPanning(true);
+    event.preventDefault();
+  };
+
+  const handlePanPointerMove = (event) => {
+    const scroller = scrollerRef.current;
+    const panState = panStateRef.current;
+    if (!scroller || !panState || panState.pointerId !== event.pointerId) return;
+
+    scroller.scrollLeft = panState.startScrollLeft - (event.clientX - panState.startX);
+    scroller.scrollTop = panState.startScrollTop - (event.clientY - panState.startY);
+    event.preventDefault();
+  };
+
+  const endPan = (event) => {
+    const scroller = scrollerRef.current;
+    const panState = panStateRef.current;
+    if (!panState || (event?.pointerId != null && panState.pointerId !== event.pointerId)) return;
+
+    if (scroller && event?.pointerId != null && scroller.hasPointerCapture?.(event.pointerId)) {
+      scroller.releasePointerCapture(event.pointerId);
+    }
+    panStateRef.current = null;
+    setIsPanning(false);
+  };
+
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
     const zoomAnchor = pendingZoomAnchorRef.current;
@@ -963,7 +1140,12 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
     >
       <div
         ref={scrollerRef}
-        className="absolute inset-0 min-h-0 min-w-0 overflow-auto bg-[color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_76%,var(--peridot-color-hex-f5ecd2))]"
+        onPointerDown={handlePanPointerDown}
+        onPointerMove={handlePanPointerMove}
+        onPointerUp={endPan}
+        onPointerCancel={endPan}
+        onLostPointerCapture={endPan}
+        className={`absolute inset-0 min-h-0 min-w-0 overflow-auto bg-[color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_76%,var(--peridot-color-hex-f5ecd2))] ${isPanning ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
       >
         {!geometry.items.length ? (
           <div className="flex h-full w-full items-center justify-center p-8 text-center">
