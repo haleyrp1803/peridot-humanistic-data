@@ -32,7 +32,7 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-ddc0aca — Generalize network playback highlighting
+c8a7c46 — Optimize network playback and viewport interaction
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -87,7 +87,7 @@ The sample chooser currently offers three ordinary project files:
 - **Family Tree** — a CSV person-centered genealogy example with stable relationship IDs, life events, and places.
 - **Cardinals Active from 1600–1640** — an XLSX example that demonstrates a different research structure and supplies useful future QA cases for repeated/multi-valued historical information.
 
-Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
+Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. The current compact sample chooser keeps the three samples in one dark-green/gold/cream popover and exposes direct **Use**, **Edit**, **Download**, and **Details** actions for each row. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
 
 Home now includes a third, visually secondary **Tutorial** button centered beneath **Use sample data** and **Upload your data**. The old floating tutorial invitation has been removed. The button is intentionally disabled while the tutorial is being revised and shows **“Tutorial coming soon.”** on hover/focus; the existing tutorial implementation remains in the project for later reactivation and polish.
 
@@ -133,7 +133,7 @@ The Geographic Map includes compact **Map settings** for visible node identities
 
 Timeline is a compact bottom control within Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
 
-The current Timeline still has range-clamping controls but does **not** yet expose the desired draggable playback playhead/scrubber. Restoring that playhead inside the existing Timeline control is queued interface work. Export remains a shared header menu rather than a separate workspace. Map PNG export defaults to an unbranded map-only image, with optional title and metadata annotations.
+The Timeline range control now includes a draggable playback playhead/scrubber in addition to its left/right range clamps. Dragging the playhead updates a local preview continuously and commits the canonical playback position on release, avoiding expensive full-state churn on every pointer movement. Export remains a shared header menu rather than a separate workspace. Map PNG export defaults to an unbranded map-only image, with optional title and metadata annotations.
 
 ### 3.4 Explore and inspect
 
@@ -531,11 +531,11 @@ Peridot is an active research prototype. It can preserve and expose useful incom
 
 Generalized Relations, Identity, Time, Places, Evidence, Inspector participant attribution, and the principal Search place/Evidence/Results paths are now authoritative across the current import/runtime path. Compatibility projections still exist for older consumers and should be retired only after a repository-wide audit proves that their behavior has been replaced without loss.
 
-The principal generalized Network semantic migration is now complete through playback highlighting. Geographic relationship scope, generalized anchor semantics, the unified Geographic Map, transactional Map settings, generalized hover/provenance, and generalized playback highlighting are active on `main`. Remaining Network work is narrower: consumer/vocabulary cleanup, geometry/presentation correctness such as Force-Directed framing and arrowhead termination, and a dedicated visual-tuning pass for node/cluster/edge sizing and possible researcher-adjustable Appearance controls.
+The principal generalized Network semantic migration is now complete through playback highlighting. Geographic relationship scope, generalized anchor semantics, the unified Geographic Map, transactional Map settings, generalized hover/provenance, generalized playback highlighting, and the accepted viewport/Force-playback performance optimizations are active on `main`. Remaining Network work is narrower: consumer/vocabulary cleanup, geometry/presentation correctness such as Force-Directed framing and arrowhead termination, a dedicated visual-tuning pass for node/cluster/edge sizing and possible researcher-adjustable Appearance controls, and continued Geographic Inspector/cluster presentation QA.
 
-Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior.
+Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior. Performance work after that rollback now keeps pointer panning and wheel zoom transient during interaction, commits durable viewport state at bounded points, and preloads the stable full-scope Force graph so playback does not rerun force simulation on every tick. These changes improve interaction/playback smoothness without changing generalized relationship semantics.
 
-Three small interface redesign items are also queued: harmonize the open sample-selection state with the dark-green Data workspace rather than the current disruptive light panel; restore a draggable playback playhead/scrubber inside the existing Timeline range control; and substantially reduce the Visualizations header height to return vertical space to the visualization stage.
+The sample-selection redesign and Timeline playhead/scrubber restoration are now complete. Remaining interface/performance follow-up includes substantially reducing the Visualizations header height, calibrating the playback-speed choices after the optimization work, and revisiting playback presentation/animation only from the current stable architecture rather than the discarded tween prototypes.
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 

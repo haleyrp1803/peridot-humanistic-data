@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-ddc0aca — Generalize network playback highlighting
+c8a7c46 — Optimize network playback and viewport interaction
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```

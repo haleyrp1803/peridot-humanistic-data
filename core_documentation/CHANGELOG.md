@@ -20,30 +20,45 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-ddc0aca — Generalize network playback highlighting
+c8a7c46 — Optimize network playback and viewport interaction
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
 
-This checkpoint closes the principal generalized Network semantic sequence that followed the Search generalization milestone. Network/Map relationship scope, geographic anchor semantics, the user-facing Geographic Map model, transactional Map settings, generalized hover/provenance, and playback highlighting now consume generalized/canonical structures rather than assuming one correspondence-shaped Source→Target route.
+This checkpoint preserves the generalized Network semantics established at `ddc0aca` and adds the accepted sample-selection, Timeline-scrubbing, viewport-interaction, and Force-playback performance sequence. The optimization work changes when expensive state/geometry work occurs; it does not change the researcher-declared relationship, place, identity, or temporal semantics.
 
 Current architectural significance:
 
-- dated geographic relationship observations obey Timeline/playback scope while genuinely undated structural relationships can remain visible;
-- generalized multipart relationships retain the established rule that the primary mapped participant connects to each explicitly mapped counterpart without turning co-occurrence into an automatic clique;
-- `peridotEntityNetwork.js` provides generalized geographic anchor semantics, including multiple researcher-selected place roles plus an independent **Most frequent place** option, coordinate deduplication, and retained role/provenance information;
-- the former separate place/person geographic maps are unified into one **Geographic Map**. Places and People / entities are display identities over the same geographic evidence and may be shown together;
-- Map settings use draft state plus explicit **Apply**. Reset changes the draft only; expensive graph derivation is not meant to run eagerly for each checkbox/select edit;
-- geographic relationship lines follow explicit event/relationship geography first, then the selected fallback anchor, and disappear when no defensible endpoint location exists; an edge renders only when both exact endpoint node instances are visible;
-- Geographic and Force viewport state is preserved separately, and applying settings does not intentionally recenter the stage;
-- node/edge hover presentation uses generalized relationship labels/types, conditional direction, occurrence counts, geographic anchor provenance, and canonical entity/place identity rather than universal `Weight` or forced arrow semantics;
-- playback highlighting now consumes provenance on the **rendered generalized graph**. Cumulative playback highlights the newly reached record’s rendered relationships; co-current playback highlights the relationships active at the current moment; multipart records may therefore highlight several explicit edges and their actual endpoint nodes;
-- later playback-animation/tweening experiments were tested locally and rejected. They are **not present in `ddc0aca`**. Current `main` intentionally returns to generalized static highlighting with stable map geometry;
-- remaining Network work is Pass 4 consumer/vocabulary cleanup, Pass 5 geometry/presentation correctness, and Pass 6 node/cluster/edge visual tuning plus possible Appearance controls;
-- queued interface polish now includes harmonizing the Data sample chooser with the dark-green Data workspace, restoring a draggable playback playhead/scrubber inside the existing Timeline range control, and substantially compacting the Visualizations header to recover stage height;
-- the Search `Any record text` follow-up, Phase 3 Chart Builder, repository-wide compatibility retirement audit, and broader Home/tutorial work remain later tasks.
+- generalized Geographic/Force relationship and playback semantics remain provenance-driven and multipart-safe;
+- the sample chooser is now a compact dark-green/gold/cream control with direct **Use / Edit / Download / Details** actions;
+- Timeline direct scrubbing is restored inside the existing range control; drag motion uses local preview state and commits canonical playback position on release;
+- pointer panning uses a transient imperative SVG transform during drag and commits durable viewport state on release;
+- wheel zoom likewise applies transient visual scaling during interaction and commits durable viewport state after a short settle interval; the wheel handler is registered natively as non-passive so the visualization can suppress browser scrolling correctly;
+- Force playback now reuses a stable full-scope Force graph and filters rendered provenance/degree/radius for the current playback scope instead of rebuilding the graph and running synchronous force ticks on every playback frame;
+- an analogous Geographic preload experiment produced no meaningful improvement and was deliberately excluded from the clean candidate;
+- duplicate static basemap React keys were corrected with composite keys during the performance diagnostic sequence;
+- the discarded playback tween/geometry-animation prototypes remain absent. Playback animation/presentation is unfinished future work, not current architecture;
+- remaining performance follow-up includes reducing the playback-speed choices to **Slow / Medium / Fast**, calibrating them against the optimized runtime, and revisiting animation only from this stable architecture;
+- current Geographic QA remains separate from this checkpoint. Post-`c8a7c46` local investigation showed that an apparent large same-label duplicate was actually Siena adjacent to Roma, while Inspector count wording can still conflate entity-anchor instances with distinct places. Experimental clustering/Inspector fixes have not been committed and are not part of this checkpoint;
+- remaining Network work also includes consumer/vocabulary cleanup, geometry/presentation correctness, visual tuning/Appearance controls, the Search `Any record text` follow-up, Phase 3 Chart Builder, repository-wide compatibility retirement audit, compact Visualizations header work, and broader Home/tutorial work.
 
 ## 2. Recent Milestones, Newest First
+
+### Sample chooser, Timeline scrubber, and Network interaction/playback performance — 2026-09-27
+
+- **`852fd72` — `Synchronize documentation through Network playback generalization`** recorded the clean generalized Network/playback baseline after `ddc0aca`.
+- **`239f11f` — `Refine sample data chooser interaction`** established the compact chooser composition and interaction model.
+- **`04d8244` — `Add direct sample data actions`** completed direct **Use / Edit / Download / Details** actions for the three first-class samples while preserving their ordinary-file/generalized-mapping architecture.
+- **`a92ec9a` — `Restore smooth timeline playback scrubbing`** restored the playback playhead inside the existing Timeline range control. Dragging now uses local preview state and commits canonical playback position on release, avoiding full expensive state churn for every pointer movement.
+- **`f34207d` — `Isolate viewport panning from graph rendering`** moved pointer-drag panning to a transient imperative SVG transform and defers the durable React viewport commit until release.
+- **`da87f6d` — `Isolate wheel zoom from clustering updates`** applied the same separation to wheel zoom: transient zoom is immediate, durable state settles after interaction, and clustering/label derivation no longer runs for every wheel event.
+- Performance diagnostics also identified and corrected a passive-wheel-listener warning and duplicate static basemap React keys. Pure clustering/screen-node/label/edge derivation did not emerge as the dominant measured cost in the tested runs.
+- A Geographic graph-preload experiment was tested but produced no meaningful improvement and was excluded from the accepted clean candidate.
+- **`c8a7c46` — `Optimize network playback and viewport interaction`** checkpointed the accepted performance sequence. Force playback now reuses a stable full-scope Force graph and filters its rendered provenance and visible node/edge presentation by playback scope instead of rebuilding the semantic graph and rerunning force simulation on each playback frame.
+- User testing reported the Force-Directed Network as working well and the application as materially smoother except at the historical **Very Fast** setting. The next playback-speed pass should therefore simplify the choices to **Slow / Medium / Fast** and calibrate them against the optimized runtime.
+- Playback animation/tweening remains unfinished. The rejected pre-`ddc0aca` screen-space geometry experiments remain rolled back; future presentation work should start from the stable post-optimization architecture.
+- Post-checkpoint Geographic QA remains **uncommitted**. Investigation established that the large cluster initially suspected as a duplicate Roma node was Siena, while a smaller Roma cluster was separate. A temporary atomic co-location clustering fix was therefore not committed. A later local Inspector-semantics experiment correctly distinguished entity-anchor count from distinct represented places and removed sentinel `0` directed endpoints, but wording cleanup remained before any commit.
+- This documentation pass synchronizes the four core documents to `c8a7c46`. The Governance Protocol and restructuring plan remain unchanged because documentation ownership/process architecture did not change.
 
 ### Generalized Network scope, unified Geographic Map, Map settings, and playback highlighting — 2026-09-14 to 2026-09-25
 
@@ -553,12 +568,14 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
-### Current deferred Network, interface, Chart, compatibility, Search follow-up, and tutorial work after `ddc0aca`
+### Current deferred Network, interface, Chart, compatibility, Search follow-up, and tutorial work after `c8a7c46`
 
 - **Network Pass 4 — consumer/vocabulary cleanup:** audit remaining exports, capability text, comments, Inspector/hover bridges, and compatibility-facing presentation for stale `Weight`, `linked_letters`, Source/Target, sender/recipient, route, or forced-direction language. Preserve correspondence-specific vocabulary only where the mapping genuinely supplies it.
 - **Network Pass 5 — geometry/presentation correctness:** revisit Force-Directed initial framing/fit where still needed, terminate directed arrowheads at node boundaries, and repair bounded path/geometry issues without reopening semantic scope.
 - **Network Pass 6 — visual tuning / Appearance controls:** tune node size, cluster size, edge width, clustering threshold/sensitivity, and dense-versus-sparse defaults; decide explicitly what cluster size encodes; evaluate researcher-facing scaling controls in the reserved Map settings **Appearance** area.
-- **Playback animation is rolled back:** the local-only animation/tweening prototypes after generalized playback were rejected and are not in `ddc0aca`. Do not resume from their generated ZIPs or screen-space geometry code. Any future animation project should begin with a fresh architecture/design audit from the accepted checkpoint.
+- **Playback animation is rolled back:** the local-only animation/tweening prototypes after generalized playback were rejected and are not in `c8a7c46`. Do not resume from their generated ZIPs or screen-space geometry code. Any future animation project should begin with a fresh architecture/design audit from the accepted post-optimization checkpoint.
+- **Playback performance is partially closed, not finished:** transient pan/zoom, local scrub preview, and stable Force playback geometry are accepted. Remaining work is speed-choice simplification/calibration and any later presentation animation.
+- **Geographic Inspector/cluster QA is active but uncommitted:** post-checkpoint testing corrected the interpretation of the apparent Roma duplication and exposed count/wording semantics plus sentinel `0` endpoint cleanup. Do not document the temporary local fixes as committed architecture until a tested pass is checkpointed.
 - **Data/sample-selection visual polish:** the open sample chooser currently introduces a large light panel that conflicts with the otherwise coherent dark-green Data workspace. Redesign the open state so it feels like the same page expanding rather than a generic modal.
 - **Timeline scrubber restoration:** current Timeline controls can clamp the allowed timeframe but the desired direct draggable playback playhead/scrubber is absent. Add the playhead to the existing control rather than creating another timeline.
 - **Visualizations header compression:** the current header consumes excessive vertical space. Redesign it as a substantially more compact persistent toolbar while preserving direct Mapping/Network/Charts/Explore actions and the Export menu.
@@ -613,6 +630,13 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
+| 2026-09-27 | `c8a7c46` | Optimize network playback and viewport interaction | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-09-27 | `da87f6d` | Isolate wheel zoom from clustering updates |  |
+| 2026-09-27 | `f34207d` | Isolate viewport panning from graph rendering |  |
+| 2026-09-27 | `a92ec9a` | Restore smooth timeline playback scrubbing |  |
+| 2026-09-27 | `04d8244` | Add direct sample data actions |  |
+| 2026-09-27 | `239f11f` | Refine sample data chooser interaction |  |
+| 2026-09-25 | `852fd72` | Synchronize documentation through Network playback generalization |  |
 | 2026-09-25 | `ddc0aca` | Generalize network playback highlighting | (HEAD -> main, origin/main, origin/HEAD) |
 | 2026-09-14 | `cab2ffc` | Stabilize geographic map settings and hover semantics |  |
 | 2026-09-14 | `0afd2dd` | Unify geographic map projection |  |
