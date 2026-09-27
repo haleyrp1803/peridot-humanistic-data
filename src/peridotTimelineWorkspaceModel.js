@@ -12,6 +12,10 @@
  */
 
 import { buildTimelineEntries } from './timelinePlaybackHelpers.js';
+import {
+  derivePeridotEntityNetworkSemantics,
+  getPeridotRowEntityParticipantEntries,
+} from './peridotEntityNetwork.js';
 
 function asArray(value) {
   return Array.isArray(value) ? value : [];
@@ -230,4 +234,136 @@ export function filterPeridotTimelineEventsByCategories(events = [], visibleCate
       ))
     ))
   )));
+}
+
+
+function normalizedEndpointKeys(id, label) {
+  const keys = [];
+  const normalizedId = asText(id);
+  const normalizedLabel = asText(label).toLowerCase();
+  if (normalizedId) keys.push(`id:${normalizedId}`);
+  if (normalizedLabel) keys.push(`label:${normalizedLabel}`);
+  return keys;
+}
+
+function eventOwnedEndpointKeys(event) {
+  const keys = new Set();
+
+  // Timeline relationship endpoints must belong to the temporal assertion's
+  // actual subject. Do not treat every participant on the source row as an
+  // endpoint candidate: genealogy rows often contain both the person and one
+  // or more relatives, which can otherwise collapse A → B into B birth → B
+  // lifespan.
+  if (event?.subject?.type === 'entity') {
+    normalizedEndpointKeys(event.subject.id, event.subject.label).forEach((key) => keys.add(key));
+    return keys;
+  }
+
+  // Compatibility fallback for older/single-entity rows that predate explicit
+  // subject attribution. Only accept the row when it resolves to exactly one
+  // entity, so ambiguous multipart records cannot manufacture endpoints.
+  const participants = getPeridotRowEntityParticipantEntries(event?.row || {});
+  const unique = new Map();
+  participants.forEach((participant) => {
+    const participantKeys = normalizedEndpointKeys(participant?.id, participant?.label);
+    const identity = participantKeys[0] || participantKeys[1];
+    if (identity && !unique.has(identity)) unique.set(identity, participant);
+  });
+  if (unique.size === 1) {
+    const participant = Array.from(unique.values())[0];
+    normalizedEndpointKeys(participant?.id, participant?.label).forEach((key) => keys.add(key));
+  }
+  return keys;
+}
+
+function rowIdentity(row = {}) {
+  return asText(row?.generalizedObservation?.recordId || row?.recordId || row?.id);
+}
+
+function eventRepScore(event, endpointId, endpointLabel) {
+  const role = asText(event?.temporalRole).toLowerCase();
+  const endpointKeys = new Set(normalizedEndpointKeys(endpointId, endpointLabel));
+  const subjectKeys = new Set(normalizedEndpointKeys(event?.subject?.id, event?.subject?.label));
+  let score = 0;
+  if ([...endpointKeys].some((key) => subjectKeys.has(key))) score += 120;
+  if (role.includes('lifespan')) score += 80;
+  else if (role.includes('birth')) score += 45;
+  else if (role.includes('death')) score += 35;
+  if (event?.temporalKind === 'interval') score += 25;
+  return score;
+}
+
+function representativeEventForEndpoint(events, endpointId, endpointLabel, excludedEventId = '') {
+  const endpointKeys = new Set(normalizedEndpointKeys(endpointId, endpointLabel));
+  const candidates = asArray(events)
+    .filter((event) => event?.id !== excludedEventId)
+    .filter((event) => {
+      const keys = eventOwnedEndpointKeys(event);
+      return [...endpointKeys].some((key) => keys.has(key));
+    })
+    .map((event) => ({ event, score: eventRepScore(event, endpointId, endpointLabel) }))
+    .sort((a, b) => (
+      b.score - a.score
+      || Number(a.event?.playbackSortKey || a.event?.windowStart || 0) - Number(b.event?.playbackSortKey || b.event?.windowStart || 0)
+      || String(a.event?.id || '').localeCompare(String(b.event?.id || ''))
+    ));
+  return candidates[0]?.event || null;
+}
+
+/**
+ * Project explicit mapped entity relationships into Timeline event-to-event
+ * connections without inferring links from co-occurrence or shared categories.
+ *
+ * A relationship row that already produces a Timeline event is considered
+ * event-native and is not reinterpreted as a line between other events. For
+ * structural/undated relationships, one representative visible event is chosen
+ * per endpoint (preferring a subject-owned Lifespan assertion when available).
+ */
+export function buildPeridotTimelineConnections(events = [], relationshipRows = []) {
+  const timelineEvents = asArray(events);
+  if (!timelineEvents.length) return Object.freeze([]);
+
+  const semantics = derivePeridotEntityNetworkSemantics(asArray(relationshipRows));
+  const eventRowIds = new Set(timelineEvents.map((event) => rowIdentity(event?.row)).filter(Boolean));
+  const connections = [];
+
+  asArray(semantics?.relationships).forEach((relationship) => {
+    const rows = asArray(relationship?.rows);
+    const isEventNative = rows.some((row) => eventRowIds.has(rowIdentity(row)));
+    if (isEventNative) return;
+
+    const sourceEvent = representativeEventForEndpoint(
+      timelineEvents,
+      relationship?.sourceId,
+      relationship?.source,
+    );
+    if (!sourceEvent) return;
+    const targetEvent = representativeEventForEndpoint(
+      timelineEvents,
+      relationship?.targetId,
+      relationship?.target,
+      sourceEvent.id,
+    );
+    if (!targetEvent || sourceEvent.id === targetEvent.id) return;
+
+    const dated = asArray(relationship?.dates).some((value) => asText(value));
+    connections.push(Object.freeze({
+      id: `timeline-connection:${relationship.id}`,
+      sourceEventId: sourceEvent.id,
+      targetEventId: targetEvent.id,
+      source: asText(relationship?.source),
+      target: asText(relationship?.target),
+      sourceId: asText(relationship?.sourceId),
+      targetId: asText(relationship?.targetId),
+      direction: asText(relationship?.direction) || 'undirected',
+      relationshipType: asText(relationship?.relationshipType),
+      relationshipLabel: asText(relationship?.relationshipLabel),
+      temporalGrounding: dated ? 'dated' : 'structural',
+      dates: Object.freeze([...asArray(relationship?.dates)]),
+      count: Number(relationship?.count) || 1,
+      semanticEdgeId: asText(relationship?.id),
+    }));
+  });
+
+  return Object.freeze(connections);
 }

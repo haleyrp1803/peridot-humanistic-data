@@ -41,8 +41,7 @@ export function PeridotDataWorkspace({
   const sampleMenuRef = useRef(null);
   const [expandedSampleId, setExpandedSampleId] = useState('');
   const [sampleCascadeActive, setSampleCascadeActive] = useState(false);
-  const [sampleMenuRequestedHere, setSampleMenuRequestedHere] = useState(false);
-  const sampleMenuVisible = sampleChooserOpen && sampleMenuRequestedHere;
+  const sampleMenuVisible = sampleChooserOpen;
 
   useEffect(() => {
     if (!sampleMenuVisible) {
@@ -137,11 +136,9 @@ export function PeridotDataWorkspace({
               type="button"
               onClick={() => {
                 if (sampleMenuVisible) {
-                  setSampleMenuRequestedHere(false);
                   onCloseSampleChooser?.();
                 } else {
-                  setSampleMenuRequestedHere(true);
-                  if (!sampleChooserOpen) onUseSampleData?.();
+                  onUseSampleData?.();
                 }
               }}
               aria-expanded={sampleMenuVisible}
@@ -219,7 +216,6 @@ export function PeridotDataWorkspace({
                             type="button"
                             role="menuitem"
                             onClick={() => {
-                              setSampleMenuRequestedHere(false);
                               onCloseSampleChooser?.();
                               onEditSampleMapping?.(sample.id);
                             }}

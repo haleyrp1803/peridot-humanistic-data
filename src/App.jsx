@@ -6017,7 +6017,10 @@ export default function EuropeNetworkMapApp() {
 
   const homeWorkspaceProps = {
     onUploadData: openDataWorkspace,
-    onUseSampleData: useSampleData,
+    // Entering Data from Home starts with the sample chooser collapsed.
+    // The Data workspace's own "Start with Sample Data" control remains the
+    // explicit action that opens the chooser.
+    onUseSampleData: openDataWorkspace,
     onStartTutorial: startTutorial,
   };
 
@@ -6102,6 +6105,8 @@ export default function EuropeNetworkMapApp() {
     onSelectTimeline: selectTimelineVisualization,
     timelineWorkspaceProps: {
       events: timelineWorkspaceEvents,
+      relationshipRows: geographicAvailabilityRelationshipRows,
+      selectedEventId: selectedSelection?.kind === 'timeline-event' ? selectedSelection?.event?.id || '' : '',
       onEventClick: handleTimelineEventClick,
     },
     onOpenAnalytics: openAnalyticsWorkspace,

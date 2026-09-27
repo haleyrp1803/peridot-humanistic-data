@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   buildPeridotTimelineCategoryFields,
+  buildPeridotTimelineConnections,
   filterPeridotTimelineEventsByCategories,
 } from './peridotTimelineWorkspaceModel.js';
 
@@ -242,34 +243,228 @@ function buildTemporalTicks(minYear, maxYear, pixelsPerYear) {
   return ticks;
 }
 
-function buildHorizontalGeometry(positioned, viewportWidth = 0, zoom = 1) {
+function buildConnectionLayoutHints(positioned, connections = []) {
+  const byId = new Map(positioned.map((item) => [item.event.id, item]));
+  const adjacency = new Map();
+
+  const addNeighbor = (from, to) => {
+    if (!byId.has(from) || !byId.has(to) || from === to) return;
+    if (!adjacency.has(from)) adjacency.set(from, new Set());
+    adjacency.get(from).add(to);
+  };
+
+  asArray(connections).forEach((connection) => {
+    addNeighbor(connection?.sourceEventId, connection?.targetEventId);
+    addNeighbor(connection?.targetEventId, connection?.sourceEventId);
+  });
+
+  const hints = new Map();
+  const visited = new Set();
+  let componentIndex = 0;
+
+  positioned.forEach((item) => {
+    const rootId = item.event.id;
+    if (visited.has(rootId) || !adjacency.has(rootId)) return;
+
+    const componentIds = [];
+    const stack = [rootId];
+    visited.add(rootId);
+    while (stack.length) {
+      const current = stack.pop();
+      componentIds.push(current);
+      Array.from(adjacency.get(current) || [])
+        .sort((a, b) => String(a).localeCompare(String(b)))
+        .forEach((neighbor) => {
+          if (visited.has(neighbor)) return;
+          visited.add(neighbor);
+          stack.push(neighbor);
+        });
+    }
+
+    componentIds.sort((a, b) => (
+      (byId.get(a)?.start ?? 0) - (byId.get(b)?.start ?? 0)
+      || String(a).localeCompare(String(b))
+    ));
+
+    componentIds.forEach((eventId, order) => {
+      hints.set(eventId, {
+        connected: true,
+        componentIndex,
+        componentSize: componentIds.length,
+        componentOrder: order,
+        degree: adjacency.get(eventId)?.size || 0,
+      });
+    });
+    componentIndex += 1;
+  });
+
+  return { hints, adjacency };
+}
+
+function deterministicUnit(eventId = '') {
+  return (hashText(eventId) % 10000) / 9999;
+}
+
+function assignContinuousSecondaryPositions(items, connections, {
+  orientation,
+  secondaryStart,
+  secondaryEnd,
+  cardSecondarySize,
+  cardTemporalSize,
+}) {
+  if (!items.length) return [];
+  const { hints, adjacency } = buildConnectionLayoutHints(items, connections);
+  const range = Math.max(1, secondaryEnd - secondaryStart - cardSecondarySize);
+  const byId = new Map(items.map((item) => [item.event.id, item]));
+  const secondary = new Map();
+  const velocity = new Map();
+  const anchors = new Map();
+
+  const temporalCenter = (item) => orientation === 'horizontal' ? item.x : item.y;
+  const temporalOverlap = (a, b) => Math.abs(temporalCenter(a) - temporalCenter(b)) < cardTemporalSize + 28;
+
+  items.forEach((item) => {
+    const hint = hints.get(item.event.id);
+    let unit = deterministicUnit(item.event.id);
+    if (hint) {
+      // Spread connected components through the full secondary dimension, then
+      // give members of a component their own deterministic neighborhood.
+      const componentBand = ((hint.componentIndex * 0.61803398875) % 1);
+      const memberOffset = hint.componentSize > 1
+        ? (hint.componentOrder / Math.max(1, hint.componentSize - 1) - 0.5) * 0.34
+        : 0;
+      unit = (componentBand + memberOffset + 1) % 1;
+    }
+    const initial = secondaryStart + unit * range;
+    secondary.set(item.event.id, initial);
+    anchors.set(item.event.id, initial);
+    velocity.set(item.event.id, 0);
+  });
+
+  const iterations = 72;
+  for (let iteration = 0; iteration < iterations; iteration += 1) {
+    const forces = new Map(items.map((item) => [item.event.id, 0]));
+
+    // Relationship attraction acts only on the free/secondary dimension. The
+    // chronological coordinate remains immutable.
+    asArray(connections).forEach((connection) => {
+      const source = byId.get(connection?.sourceEventId);
+      const target = byId.get(connection?.targetEventId);
+      if (!source || !target || source.event.id === target.event.id) return;
+      const sourcePos = secondary.get(source.event.id);
+      const targetPos = secondary.get(target.event.id);
+      const delta = targetPos - sourcePos;
+      const pull = delta * 0.018;
+      forces.set(source.event.id, forces.get(source.event.id) + pull);
+      forces.set(target.event.id, forces.get(target.event.id) - pull);
+    });
+
+    // Only events that can visually collide in chronological space repel one
+    // another. This lets sparse dates use the same x/y region while forcing
+    // crowded dates apart across the available viewport dimension.
+    for (let i = 0; i < items.length; i += 1) {
+      const a = items[i];
+      for (let j = i + 1; j < items.length; j += 1) {
+        const b = items[j];
+        if (!temporalOverlap(a, b)) continue;
+        const aPos = secondary.get(a.event.id);
+        const bPos = secondary.get(b.event.id);
+        const delta = bPos - aPos;
+        const minimumGap = cardSecondarySize + 22;
+        if (Math.abs(delta) >= minimumGap) continue;
+        const direction = delta === 0
+          ? (hashText(a.event.id) < hashText(b.event.id) ? 1 : -1)
+          : Math.sign(delta);
+        const push = (minimumGap - Math.abs(delta)) * 0.17;
+        forces.set(a.event.id, forces.get(a.event.id) - direction * push);
+        forces.set(b.event.id, forces.get(b.event.id) + direction * push);
+      }
+    }
+
+    items.forEach((item) => {
+      const id = item.event.id;
+      const current = secondary.get(id);
+      const anchor = anchors.get(id);
+      const anchorPull = (anchor - current) * 0.012;
+      const nextVelocity = (velocity.get(id) * 0.72) + forces.get(id) + anchorPull;
+      velocity.set(id, nextVelocity);
+      secondary.set(id, clamp(current + nextVelocity, secondaryStart, secondaryEnd - cardSecondarySize));
+    });
+  }
+
+  // Deterministic final collision cleanup. This is intentionally stronger than
+  // the force pass so cards never remain stacked merely because chronology is
+  // dense at a particular date.
+  for (let pass = 0; pass < 12; pass += 1) {
+    let moved = false;
+    for (let i = 0; i < items.length; i += 1) {
+      const a = items[i];
+      for (let j = i + 1; j < items.length; j += 1) {
+        const b = items[j];
+        if (!temporalOverlap(a, b)) continue;
+        let aPos = secondary.get(a.event.id);
+        let bPos = secondary.get(b.event.id);
+        const minimumGap = cardSecondarySize + 18;
+        const delta = bPos - aPos;
+        if (Math.abs(delta) >= minimumGap) continue;
+        const direction = delta === 0
+          ? (hashText(a.event.id) < hashText(b.event.id) ? 1 : -1)
+          : Math.sign(delta);
+        const shift = (minimumGap - Math.abs(delta)) / 2 + 1;
+        aPos = clamp(aPos - direction * shift, secondaryStart, secondaryEnd - cardSecondarySize);
+        bPos = clamp(bPos + direction * shift, secondaryStart, secondaryEnd - cardSecondarySize);
+        secondary.set(a.event.id, aPos);
+        secondary.set(b.event.id, bPos);
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
+
+  return items.map((item) => {
+    const position = secondary.get(item.event.id);
+    return orientation === 'horizontal'
+      ? { ...item, top: position, connectionLayout: hints.get(item.event.id) || null }
+      : { ...item, left: position, connectionLayout: hints.get(item.event.id) || null };
+  });
+}
+
+function buildHorizontalGeometry(positioned, viewportSize = { width: 0, height: 0 }, zoom = 1, connections = []) {
   if (!positioned.length) {
     return { items: [], minYear: null, maxYear: null, width: 0, height: 0, ticks: [] };
   }
 
+  const viewportWidth = Math.max(0, Number(viewportSize?.width) || 0);
+  const viewportHeight = Math.max(0, Number(viewportSize?.height) || 0);
   const minYear = Math.floor(Math.min(...positioned.map((item) => item.start)));
   const maxYear = Math.ceil(Math.max(...positioned.map((item) => item.end)));
   const span = Math.max(1, maxYear - minYear);
   const basePixelsPerYear = span <= 10 ? 150 : span <= 30 ? 96 : span <= 100 ? 58 : 30;
   const pixelsPerYear = basePixelsPerYear * zoom;
   const leadingPadding = 110;
-  // Keep enough chronological-end space that the latest event can be scrolled
-  // to the near edge of the viewport with no later material beside it.
-  const trailingPadding = Math.max(160, Math.max(0, viewportWidth) - 96);
+  const trailingPadding = Math.max(160, viewportWidth - 96);
   const temporalExtent = span * pixelsPerYear;
   const width = Math.max(1200, leadingPadding + temporalExtent + trailingPadding);
-  const laneCount = Math.min(8, Math.max(3, Math.ceil(Math.sqrt(positioned.length))));
-  const laneHeight = 108;
   const axisY = 66;
+  const cardHeight = 68;
+  const secondaryStart = axisY + 72;
+  const desiredSecondaryExtent = Math.min(2200, 520 + Math.sqrt(positioned.length) * 92);
+  const height = Math.max(viewportHeight || 0, 760, desiredSecondaryExtent);
+  const secondaryEnd = height - 76;
 
   const xFor = (scalar) => leadingPadding + (scalar - minYear) * pixelsPerYear;
-  const items = positioned.map((item, index) => ({
+  const baseItems = positioned.map((item) => ({
     ...item,
     x: xFor(item.start),
     endX: xFor(item.end),
-    lane: index % laneCount,
-    top: axisY + 42 + (index % laneCount) * laneHeight,
   }));
+  const items = assignContinuousSecondaryPositions(baseItems, connections, {
+    orientation: 'horizontal',
+    secondaryStart,
+    secondaryEnd,
+    cardSecondarySize: cardHeight,
+    cardTemporalSize: 210,
+  });
 
   const ticks = buildTemporalTicks(minYear, maxYear, pixelsPerYear).map((tick) => ({ ...tick, x: xFor(tick.scalar) }));
 
@@ -278,7 +473,7 @@ function buildHorizontalGeometry(positioned, viewportWidth = 0, zoom = 1) {
     minYear,
     maxYear,
     width,
-    height: axisY + 80 + laneCount * laneHeight,
+    height,
     axisY,
     ticks,
     leadingPadding,
@@ -287,37 +482,42 @@ function buildHorizontalGeometry(positioned, viewportWidth = 0, zoom = 1) {
   };
 }
 
-function buildVerticalGeometry(positioned, viewportHeight = 0, zoom = 1) {
+function buildVerticalGeometry(positioned, viewportSize = { width: 0, height: 0 }, zoom = 1, connections = []) {
   if (!positioned.length) {
     return { items: [], minYear: null, maxYear: null, width: 0, height: 0, ticks: [] };
   }
 
+  const viewportWidth = Math.max(0, Number(viewportSize?.width) || 0);
+  const viewportHeight = Math.max(0, Number(viewportSize?.height) || 0);
   const minYear = Math.floor(Math.min(...positioned.map((item) => item.start)));
   const maxYear = Math.ceil(Math.max(...positioned.map((item) => item.end)));
   const span = Math.max(1, maxYear - minYear);
   const basePixelsPerYear = span <= 10 ? 130 : span <= 30 ? 86 : span <= 100 ? 52 : 28;
   const pixelsPerYear = basePixelsPerYear * zoom;
-  // In vertical mode chronology ends at the top. Reserve roughly one visible
-  // viewport above the latest event so it can be brought into an isolated
-  // end position, mirroring horizontal end-of-timeline scrolling.
-  const leadingPadding = Math.max(110, Math.max(0, viewportHeight) - 112);
+  const leadingPadding = Math.max(110, viewportHeight - 112);
   const trailingPadding = 150;
   const temporalExtent = span * pixelsPerYear;
   const height = Math.max(1000, leadingPadding + temporalExtent + trailingPadding);
-  const laneCount = Math.min(6, Math.max(3, Math.ceil(Math.sqrt(positioned.length))));
-  const laneWidth = 230;
   const axisX = 92;
-  const width = Math.max(1200, axisX + 92 + laneCount * laneWidth + 90);
+  const cardWidth = 210;
+  const secondaryStart = axisX + 88;
+  const desiredSecondaryExtent = Math.min(2800, 760 + Math.sqrt(positioned.length) * 118);
+  const width = Math.max(viewportWidth || 0, 1200, desiredSecondaryExtent);
+  const secondaryEnd = width - 90;
 
-  // Vertical chronology runs latest at the top and earliest at the bottom.
   const yFor = (scalar) => leadingPadding + (maxYear - scalar) * pixelsPerYear;
-  const items = positioned.map((item, index) => ({
+  const baseItems = positioned.map((item) => ({
     ...item,
     y: yFor(item.start),
     endY: yFor(item.end),
-    lane: index % laneCount,
-    left: axisX + 72 + (index % laneCount) * laneWidth,
   }));
+  const items = assignContinuousSecondaryPositions(baseItems, connections, {
+    orientation: 'vertical',
+    secondaryStart,
+    secondaryEnd,
+    cardSecondarySize: cardWidth,
+    cardTemporalSize: 68,
+  });
 
   const ticks = buildTemporalTicks(minYear, maxYear, pixelsPerYear).map((tick) => ({ ...tick, y: yFor(tick.scalar) }));
 
@@ -426,6 +626,121 @@ function ZoomControl({ zoom, onChange }) {
   );
 }
 
+function connectionLabel(connection) {
+  const relationship = String(connection?.relationshipLabel || connection?.relationshipType || 'Mapped relationship').trim();
+  const connector = connection?.direction === 'directed' ? '→' : '—';
+  return `${connection?.source || 'Source'} ${connector} ${connection?.target || 'Target'} · ${relationship}`;
+}
+
+function TimelineConnectionLayer({ geometry, connections = [], orientation, selectedEventId = '', renderWindow }) {
+  if (!connections.length || !geometry?.items?.length) return null;
+  const itemById = new Map(geometry.items.map((item) => [item.event.id, item]));
+  const renderedItemIds = new Set(
+    (orientation === 'vertical'
+      ? visibleVerticalItems(geometry.items, renderWindow, 680)
+      : visibleHorizontalItems(geometry.items, renderWindow, 680))
+      .map((item) => item.event.id),
+  );
+  const visibleConnections = connections.filter((connection) => (
+    itemById.has(connection.sourceEventId)
+    && itemById.has(connection.targetEventId)
+    && (renderedItemIds.has(connection.sourceEventId) || renderedItemIds.has(connection.targetEventId))
+  ));
+  if (!visibleConnections.length) return null;
+
+  const arrowId = orientation === 'vertical' ? 'peridot-timeline-arrow-v' : 'peridot-timeline-arrow-h';
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-[4] overflow-visible"
+      width={geometry.width}
+      height={geometry.height}
+      viewBox={`0 0 ${geometry.width} ${geometry.height}`}
+    >
+      <defs>
+        <marker id={arrowId} markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="strokeWidth">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--map-edge)" />
+        </marker>
+      </defs>
+      {visibleConnections.map((connection) => {
+        const sourceItem = itemById.get(connection.sourceEventId);
+        const targetItem = itemById.get(connection.targetEventId);
+        if (!sourceItem || !targetItem) return null;
+
+        let path = '';
+        let sourceAnchorX = 0;
+        let sourceAnchorY = 0;
+        let targetAnchorX = 0;
+        let targetAnchorY = 0;
+        if (orientation === 'vertical') {
+          const cardWidth = 210;
+          const cardHeight = 68;
+          const sourceTop = sourceItem.y - 16;
+          const targetTop = targetItem.y - 16;
+          const sourceCenterX = sourceItem.left + cardWidth / 2;
+          const targetCenterX = targetItem.left + cardWidth / 2;
+          const targetBelowSource = targetItem.y >= sourceItem.y;
+          const y1 = targetBelowSource ? sourceTop + cardHeight : sourceTop;
+          const y2 = targetBelowSource ? targetTop : targetTop + cardHeight;
+          const direction = targetBelowSource ? 1 : -1;
+          const separation = Math.abs(y2 - y1);
+          const bend = Math.max(48, Math.min(180, separation * 0.34));
+          sourceAnchorX = sourceCenterX;
+          sourceAnchorY = y1;
+          targetAnchorX = targetCenterX;
+          targetAnchorY = y2;
+          path = `M ${sourceCenterX} ${y1} C ${sourceCenterX} ${y1 + direction * bend}, ${targetCenterX} ${y2 - direction * bend}, ${targetCenterX} ${y2}`;
+        } else {
+          const cardWidth = 210;
+          const cardLeftOffset = -12; // EventCard uses -translate-x-3.
+          const sourceLeft = sourceItem.x + cardLeftOffset;
+          const targetLeft = targetItem.x + cardLeftOffset;
+          const sourceCenterY = sourceItem.top + 34;
+          const targetCenterY = targetItem.top + 34;
+          const targetRightOfSource = targetItem.x >= sourceItem.x;
+          const x1 = targetRightOfSource ? sourceLeft + cardWidth : sourceLeft;
+          const x2 = targetRightOfSource ? targetLeft : targetLeft + cardWidth;
+          const direction = targetRightOfSource ? 1 : -1;
+          const separation = Math.abs(x2 - x1);
+          const bend = Math.max(54, Math.min(190, separation * 0.36));
+          sourceAnchorX = x1;
+          sourceAnchorY = sourceCenterY;
+          targetAnchorX = x2;
+          targetAnchorY = targetCenterY;
+          path = `M ${x1} ${sourceCenterY} C ${x1 + direction * bend} ${sourceCenterY}, ${x2 - direction * bend} ${targetCenterY}, ${x2} ${targetCenterY}`;
+        }
+
+        const selected = selectedEventId
+          && (connection.sourceEventId === selectedEventId || connection.targetEventId === selectedEventId);
+        const unrelatedWhileSelected = selectedEventId && !selected;
+        const structural = connection.temporalGrounding === 'structural';
+        const opacity = selected ? 0.96 : unrelatedWhileSelected ? 0.16 : 0.7;
+        const width = selected ? 3.2 : 2.15;
+        const stroke = selected ? 'var(--map-edge-selected)' : 'var(--map-edge)';
+
+        return (
+          <g key={connection.id} opacity={opacity}>
+            <path
+              d={path}
+              fill="none"
+              stroke={stroke}
+              strokeWidth={width}
+              strokeDasharray={structural ? '7 6' : undefined}
+              strokeLinecap="round"
+              markerEnd={connection.direction === 'directed' ? `url(#${arrowId})` : undefined}
+            >
+              <title>{connectionLabel(connection)}</title>
+            </path>
+            <circle cx={sourceAnchorX} cy={sourceAnchorY} r={selected ? 4.5 : 3.5} fill={stroke} stroke="var(--peridot-color-hex-f5ecd2)" strokeWidth="1.5" />
+            <circle cx={targetAnchorX} cy={targetAnchorY} r={selected ? 4.5 : 3.5} fill={stroke} stroke="var(--peridot-color-hex-f5ecd2)" strokeWidth="1.5" />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 function EventCard({ event, onEventClick, className = '', style, activeCategoryFields = [], hiddenCategoryKeys = [], markerMode = 'color' }) {
   const temporal = temporalPresentation(event);
   const memberships = visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys);
@@ -483,12 +798,14 @@ function IntervalSpanHorizontal({ event, width }) {
   const openStart = event?.boundedness === 'openStart';
   const openEnd = event?.boundedness === 'openEnd' || event?.boundedness === 'ongoing';
   return (
-    <div aria-hidden="true" className="absolute left-0 top-[18px]" style={{ width }}>
+    <div aria-hidden="true" className="absolute left-0 top-[28px] z-0" style={{ width }}>
       <div
-        className={`h-[3px] opacity-85 ${dashed ? 'border-t-2 border-dashed border-[var(--peridot-role-ornament-line)]' : 'rounded-full bg-[var(--peridot-role-ornament-line)]'}`}
+        className={`h-[9px] rounded-full border opacity-55 ${dashed
+          ? 'border-dashed border-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_48%,transparent)] bg-[color-mix(in_srgb,var(--peridot-role-ornament-line)_18%,transparent)]'
+          : 'border-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_32%,transparent)] bg-[color-mix(in_srgb,var(--peridot-role-ornament-line)_22%,transparent)]'}`}
       />
-      {openStart ? <span className="absolute -left-2 -top-[8px] text-lg font-bold text-[var(--peridot-role-ornament-line)]">‹</span> : null}
-      {openEnd ? <span className="absolute -right-2 -top-[8px] text-lg font-bold text-[var(--peridot-role-ornament-line)]">›</span> : null}
+      {openStart ? <span className="absolute -left-2 -top-[8px] text-lg font-bold text-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_58%,transparent)]">‹</span> : null}
+      {openEnd ? <span className="absolute -right-2 -top-[8px] text-lg font-bold text-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_58%,transparent)]">›</span> : null}
     </div>
   );
 }
@@ -499,12 +816,14 @@ function IntervalSpanVertical({ event, top, height }) {
   const openStart = event?.boundedness === 'openStart';
   const openEnd = event?.boundedness === 'openEnd' || event?.boundedness === 'ongoing';
   return (
-    <div aria-hidden="true" className="absolute left-0" style={{ top, height }}>
+    <div aria-hidden="true" className="absolute left-[100px] z-0" style={{ top, height }}>
       <div
-        className={`h-full w-[3px] opacity-85 ${dashed ? 'border-l-2 border-dashed border-[var(--peridot-role-ornament-line)]' : 'rounded-full bg-[var(--peridot-role-ornament-line)]'}`}
+        className={`h-full w-[9px] rounded-full border opacity-55 ${dashed
+          ? 'border-dashed border-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_48%,transparent)] bg-[color-mix(in_srgb,var(--peridot-role-ornament-line)_18%,transparent)]'
+          : 'border-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_32%,transparent)] bg-[color-mix(in_srgb,var(--peridot-role-ornament-line)_22%,transparent)]'}`}
       />
-      {openEnd ? <span className="absolute -left-[5px] -top-3 text-lg font-bold text-[var(--peridot-role-ornament-line)]">⌃</span> : null}
-      {openStart ? <span className="absolute -bottom-3 -left-[5px] text-lg font-bold text-[var(--peridot-role-ornament-line)]">⌄</span> : null}
+      {openEnd ? <span className="absolute -left-[3px] -top-3 text-lg font-bold text-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_58%,transparent)]">⌃</span> : null}
+      {openStart ? <span className="absolute -bottom-3 -left-[3px] text-lg font-bold text-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_58%,transparent)]">⌄</span> : null}
     </div>
   );
 }
@@ -600,7 +919,7 @@ function resolveVerticalTickLabelCollisions(ticks = []) {
   return kept;
 }
 
-function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow }) {
+function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow, connections = [], selectedEventId = '' }) {
   const renderedItems = visibleHorizontalItems(geometry.items, renderWindow);
   const renderedTicks = resolveHorizontalTickLabelCollisions(visibleHorizontalTicks(geometry.ticks, renderWindow));
   return (
@@ -612,6 +931,10 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
         className="absolute h-px bg-[var(--peridot-role-ornament-line)] shadow-[0_0_10px_var(--peridot-color-hex-d6a36a-a35)]"
         style={{ left: 68, right: 68, top: geometry.axisY }}
       />
+
+      {connections.length ? (
+        <TimelineConnectionLayer geometry={geometry} connections={connections} orientation="horizontal" selectedEventId={selectedEventId} renderWindow={renderWindow} />
+      ) : null}
 
       {renderedTicks.map((tick) => (
         <div key={tick.key} className="absolute top-0" style={{ left: tick.x }}>
@@ -642,7 +965,7 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
   );
 }
 
-function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow }) {
+function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow, connections = [], selectedEventId = '' }) {
   const renderedItems = visibleVerticalItems(geometry.items, renderWindow);
   const renderedTicks = resolveVerticalTickLabelCollisions(visibleVerticalTicks(geometry.ticks, renderWindow));
   return (
@@ -654,6 +977,10 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
         className="absolute w-px bg-[var(--peridot-role-ornament-line)] shadow-[0_0_10px_var(--peridot-color-hex-d6a36a-a35)]"
         style={{ left: geometry.axisX, top: 68, bottom: 68 }}
       />
+
+      {connections.length ? (
+        <TimelineConnectionLayer geometry={geometry} connections={connections} orientation="vertical" selectedEventId={selectedEventId} renderWindow={renderWindow} />
+      ) : null}
 
       {renderedTicks.map((tick) => (
         <div key={tick.key} className="absolute left-0" style={{ top: tick.y }}>
@@ -832,7 +1159,7 @@ function CategoryControls({
   );
 }
 
-export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
+export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], selectedEventId = '', onEventClick }) {
   const [orientation, setOrientation] = useState('horizontal');
   const [zoom, setZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
@@ -877,16 +1204,21 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
     });
     return Array.from(matchesById.values());
   }, [events, activeCategoryFields.length, visibleCategories, showUncategorized, uncategorizedEventIds]);
+  const timelineConnections = useMemo(
+    () => buildPeridotTimelineConnections(filteredEvents, relationshipRows),
+    [filteredEvents, relationshipRows],
+  );
   const positioned = useMemo(() => positionedTimelineEvents(filteredEvents), [filteredEvents]);
   const horizontalGeometry = useMemo(
-    () => buildHorizontalGeometry(positioned, viewportSize.width, zoom),
-    [positioned, viewportSize.width, zoom],
+    () => buildHorizontalGeometry(positioned, viewportSize, zoom, timelineConnections),
+    [positioned, viewportSize.width, viewportSize.height, zoom, timelineConnections],
   );
   const verticalGeometry = useMemo(
-    () => buildVerticalGeometry(positioned, viewportSize.height, zoom),
-    [positioned, viewportSize.height, zoom],
+    () => buildVerticalGeometry(positioned, viewportSize, zoom, timelineConnections),
+    [positioned, viewportSize.width, viewportSize.height, zoom, timelineConnections],
   );
   const geometry = orientation === 'vertical' ? verticalGeometry : horizontalGeometry;
+
 
   useEffect(() => {
     const scroller = scrollerRef.current;
@@ -1155,9 +1487,9 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
             </div>
           </div>
         ) : orientation === 'vertical' ? (
-          <VerticalTimeline geometry={verticalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} renderWindow={renderWindow} />
+          <VerticalTimeline geometry={verticalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} renderWindow={renderWindow} connections={timelineConnections} selectedEventId={selectedEventId} />
         ) : (
-          <HorizontalTimeline geometry={horizontalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} renderWindow={renderWindow} />
+          <HorizontalTimeline geometry={horizontalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} renderWindow={renderWindow} connections={timelineConnections} selectedEventId={selectedEventId} />
         )}
       </div>
 

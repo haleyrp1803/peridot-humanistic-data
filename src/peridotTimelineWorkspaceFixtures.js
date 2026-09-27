@@ -2,6 +2,7 @@ import { pathToFileURL } from 'node:url';
 
 import {
   buildPeridotTimelineCategoryFields,
+  buildPeridotTimelineConnections,
   buildPeridotTimelineWorkspaceEvents,
   filterPeridotTimelineEventsByCategories,
 } from './peridotTimelineWorkspaceModel.js';
@@ -139,6 +140,61 @@ export function runPeridotTimelineWorkspaceFixtureAudit() {
     { fieldKey: 'Faction', value: 'Medici' },
   ]);
 
+  const structuralRows = [
+    {
+      id: 'person-parent',
+      sourcePerson: 'Parent',
+      targetPerson: 'Child',
+      sourceEntityId: 'entity:parent',
+      targetEntityId: 'entity:child',
+      relationshipType: 'parent',
+      relationshipDirection: 'directed',
+      recordType: 'genealogy-relationship',
+      temporalAssertions: [],
+    },
+  ];
+  const structuralEventRows = [
+    {
+      id: 'parent-life',
+      generalizedObservation: {
+        rowIndex: 10,
+        recordId: 'record:parent-life',
+        participants: [{ value: 'Parent', entityId: 'entity:parent' }],
+      },
+      temporalAssertions: [assertion({
+        id: 'parent-life-a',
+        role: 'Lifespan',
+        start: 15800000,
+        end: 16300000,
+        display: '1580–1630',
+        shape: 'interval',
+        precision: 'range',
+        subjectParticipantIndex: 0,
+      })],
+    },
+    {
+      id: 'child-life',
+      generalizedObservation: {
+        rowIndex: 11,
+        recordId: 'record:child-life',
+        participants: [{ value: 'Child', entityId: 'entity:child' }],
+      },
+      temporalAssertions: [assertion({
+        id: 'child-life-a',
+        role: 'Lifespan',
+        start: 16000000,
+        end: 16500000,
+        display: '1600–1650',
+        shape: 'interval',
+        precision: 'range',
+        subjectParticipantIndex: 0,
+      })],
+    },
+  ];
+  const structuralEvents = buildPeridotTimelineWorkspaceEvents(structuralEventRows);
+  const structuralConnections = buildPeridotTimelineConnections(structuralEvents, structuralRows);
+  const eventNativeConnections = buildPeridotTimelineConnections(events, appliedSearchScope);
+
   const sienaEvents = events.filter((event) => event.rowId === 'row_cosimo_siena');
   const lifespanEvent = sienaEvents.find((event) => event.temporalRole === 'Lifespan');
   const topicField = fields.find((field) => field.key === 'Topic');
@@ -174,6 +230,16 @@ export function runPeridotTimelineWorkspaceFixtureAudit() {
     uncertaintyMetadataSurvivesProjection:
       events.find((event) => event.rowId === 'row_cosimo_milano')?.qualifier === 'circa'
       && events.find((event) => event.rowId === 'row_cosimo_milano')?.precision === 'month',
+    structuralRelationshipProjectsToDistinctEvents:
+      structuralConnections.length === 1
+      && structuralConnections[0]?.relationshipType === 'parent'
+      && structuralConnections[0]?.direction === 'directed'
+      && structuralConnections[0]?.temporalGrounding === 'structural'
+      && structuralConnections[0]?.sourceEventId !== structuralConnections[0]?.targetEventId
+      && structuralEvents.find((event) => event.id === structuralConnections[0]?.sourceEventId)?.subject?.id === 'entity:parent'
+      && structuralEvents.find((event) => event.id === structuralConnections[0]?.targetEventId)?.subject?.id === 'entity:child',
+    eventNativeRelationshipIsNotReinterpretedAsEventConnection:
+      eventNativeConnections.length === 0,
   };
 
   return Object.freeze({
@@ -183,6 +249,7 @@ export function runPeridotTimelineWorkspaceFixtureAudit() {
       scopedRows: appliedSearchScope.length,
       events: events.length,
       categoryFields: fields.length,
+      structuralConnections: structuralConnections.length,
     }),
   });
 }
