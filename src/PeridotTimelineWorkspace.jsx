@@ -41,6 +41,54 @@ function eventTitle(event) {
   return String(event?.recordId || event?.rowId || 'Timeline event');
 }
 
+function temporalPresentation(event) {
+  const shape = String(event?.temporalShape || '').trim();
+  const qualifier = String(event?.qualifier || '').trim();
+  const precision = String(event?.precision || '').trim();
+  const boundedness = String(event?.boundedness || '').trim();
+
+  if (shape === 'openInterval' || event?.temporalKind === 'openInterval') {
+    if (boundedness === 'openStart') return { tone: 'open', label: 'Open start' };
+    if (boundedness === 'ongoing') return { tone: 'open', label: 'Ongoing' };
+    if (boundedness === 'openEnd') return { tone: 'open', label: 'Open end' };
+    return { tone: 'open', label: 'Open interval' };
+  }
+  if (shape === 'approximatePoint' || shape === 'approximateInterval' || qualifier === 'circa') {
+    return { tone: 'approximate', label: 'Approximate' };
+  }
+  if (shape === 'partialPoint' || shape === 'partialInterval' || precision === 'partial') {
+    return { tone: 'partial', label: 'Partial date' };
+  }
+  if (qualifier === 'uncertain') {
+    return { tone: 'approximate', label: 'Uncertain' };
+  }
+  if (shape === 'inconsistent' || event?.consistency === 'backwards') {
+    return { tone: 'inconsistent', label: 'Inconsistent range' };
+  }
+  return { tone: 'exact', label: '' };
+}
+
+function visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys) {
+  return asArray(event?.categoryMemberships).filter((membership) => (
+    activeCategoryFields.includes(membership.fieldKey)
+    && !hiddenCategoryKeys.includes(categoryIdentity(membership.fieldKey, membership.value))
+  ));
+}
+
+function anchorMarkerClassName(event) {
+  const tone = temporalPresentation(event).tone;
+  if (tone === 'approximate') {
+    return 'border-[var(--peridot-color-hex-f5ecd2)] bg-transparent shadow-[0_0_0_3px_var(--peridot-role-ornament-line),0_0_0_6px_var(--peridot-color-rgba-rgba-8-39-25-0-85)]';
+  }
+  if (tone === 'partial') {
+    return 'rounded-[3px] border-[var(--peridot-color-hex-f5ecd2)] bg-[var(--peridot-color-hex-b58b42)] shadow-[0_0_0_3px_var(--peridot-color-rgba-rgba-8-39-25-0-85)]';
+  }
+  if (tone === 'open') {
+    return 'border-[var(--peridot-color-hex-f5ecd2)] bg-[var(--peridot-role-interface-panel-background-strong)] shadow-[inset_0_0_0_2px_var(--peridot-color-hex-b58b42),0_0_0_3px_var(--peridot-color-rgba-rgba-8-39-25-0-85)]';
+  }
+  return 'border-[var(--peridot-color-hex-f5ecd2)] bg-[var(--peridot-color-hex-b58b42)] shadow-[0_0_0_3px_var(--peridot-color-rgba-rgba-8-39-25-0-85)]';
+}
+
 function categoryIdentity(fieldKey, value) {
   return `${String(fieldKey ?? '').trim()}\u0000${String(value ?? '').trim()}`;
 }
@@ -124,7 +172,7 @@ function tickYears(minYear, maxYear, extentPixels) {
   return years;
 }
 
-function buildHorizontalGeometry(positioned, viewportWidth = 0) {
+function buildHorizontalGeometry(positioned, viewportWidth = 0, zoom = 1) {
   if (!positioned.length) {
     return { items: [], minYear: null, maxYear: null, width: 0, height: 0, ticks: [] };
   }
@@ -132,7 +180,8 @@ function buildHorizontalGeometry(positioned, viewportWidth = 0) {
   const minYear = Math.floor(Math.min(...positioned.map((item) => item.start)));
   const maxYear = Math.ceil(Math.max(...positioned.map((item) => item.end)));
   const span = Math.max(1, maxYear - minYear);
-  const pixelsPerYear = span <= 10 ? 150 : span <= 30 ? 96 : span <= 100 ? 58 : 30;
+  const basePixelsPerYear = span <= 10 ? 150 : span <= 30 ? 96 : span <= 100 ? 58 : 30;
+  const pixelsPerYear = basePixelsPerYear * zoom;
   const leadingPadding = 110;
   // Keep enough chronological-end space that the latest event can be scrolled
   // to the near edge of the viewport with no later material beside it.
@@ -168,7 +217,7 @@ function buildHorizontalGeometry(positioned, viewportWidth = 0) {
   };
 }
 
-function buildVerticalGeometry(positioned, viewportHeight = 0) {
+function buildVerticalGeometry(positioned, viewportHeight = 0, zoom = 1) {
   if (!positioned.length) {
     return { items: [], minYear: null, maxYear: null, width: 0, height: 0, ticks: [] };
   }
@@ -176,7 +225,8 @@ function buildVerticalGeometry(positioned, viewportHeight = 0) {
   const minYear = Math.floor(Math.min(...positioned.map((item) => item.start)));
   const maxYear = Math.ceil(Math.max(...positioned.map((item) => item.end)));
   const span = Math.max(1, maxYear - minYear);
-  const pixelsPerYear = span <= 10 ? 130 : span <= 30 ? 86 : span <= 100 ? 52 : 28;
+  const basePixelsPerYear = span <= 10 ? 130 : span <= 30 ? 86 : span <= 100 ? 52 : 28;
+  const pixelsPerYear = basePixelsPerYear * zoom;
   // In vertical mode chronology ends at the top. Reserve roughly one visible
   // viewport above the latest event so it can be brought into an isolated
   // end position, mirroring horizontal end-of-timeline scrolling.
@@ -266,47 +316,133 @@ function OrientationControl({ orientation, onChange }) {
   );
 }
 
+const DEFAULT_TIMELINE_ZOOM = 3;
+const MIN_TIMELINE_ZOOM = 0.25;
+const MAX_TIMELINE_ZOOM = 24;
+
+function ZoomControl({ zoom, onChange }) {
+  const relativeZoom = zoom / DEFAULT_TIMELINE_ZOOM;
+  const atDefault = Math.abs(relativeZoom - 1) < 0.015;
+  const levelLabel = atDefault ? 'Default' : `${relativeZoom.toFixed(relativeZoom < 1 ? 2 : 1)}×`;
+
+  return (
+    <div className="flex items-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_94%,transparent)] p-1 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]" aria-label="Timeline zoom">
+      <button
+        type="button"
+        aria-label="Zoom timeline out"
+        onClick={() => onChange(zoom / 1.2)}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-base font-extrabold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-dfe9c8-a10)]"
+      >
+        −
+      </button>
+      <button
+        type="button"
+        aria-label={`Reset timeline zoom to default; current scale ${levelLabel}`}
+        title="Reset zoom to default"
+        onClick={() => onChange(DEFAULT_TIMELINE_ZOOM)}
+        className="min-w-[62px] rounded-full px-2 py-1.5 text-[9px] font-extrabold tabular-nums tracking-[0.08em] text-[var(--peridot-color-hex-dfe9c8)] transition hover:bg-[var(--peridot-color-hex-dfe9c8-a10)]"
+      >
+        {levelLabel}
+      </button>
+      <button
+        type="button"
+        aria-label="Zoom timeline in"
+        onClick={() => onChange(zoom * 1.2)}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-base font-extrabold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-dfe9c8-a10)]"
+      >
+        +
+      </button>
+    </div>
+  );
+}
+
 function EventCard({ event, onEventClick, className = '', style, activeCategoryFields = [], hiddenCategoryKeys = [], markerMode = 'color' }) {
+  const temporal = temporalPresentation(event);
+  const memberships = visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys);
+  const displayedMemberships = memberships.slice(0, 6);
+  const hiddenMembershipCount = Math.max(0, memberships.length - displayedMemberships.length);
+  const dateLabel = event.displayLabel || event.sourceText || 'Date available';
+  const title = eventTitle(event);
+
   return (
     <button
       type="button"
       onClick={() => onEventClick?.(event)}
-      className={`group relative z-10 w-[210px] rounded-xl border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_90%,transparent)] px-3 py-2 text-left text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] backdrop-blur-[1px] transition hover:-translate-y-0.5 hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] ${className}`}
+      aria-label={`${event.temporalRole || 'Time'}: ${title}, ${dateLabel}${temporal.label ? `, ${temporal.label}` : ''}`}
+      className={`group relative z-10 w-[210px] rounded-xl border bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_90%,transparent)] px-3 py-2 text-left text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] backdrop-blur-[1px] transition hover:-translate-y-0.5 hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] ${temporal.tone === 'approximate' || temporal.tone === 'partial' ? 'border-dashed border-[var(--peridot-color-hex-dfe9c8-a55)]' : 'border-[var(--peridot-color-hex-dfe9c8-a35)]'} ${className}`}
       style={style}
     >
-      <span aria-hidden="true" className="absolute -left-[7px] top-[13px] h-3 w-3 rounded-full border-2 border-[var(--peridot-color-hex-f5ecd2)] bg-[var(--peridot-color-hex-b58b42)] shadow-[0_0_0_3px_var(--peridot-color-rgba-rgba-8-39-25-0-85)]" />
-      <span className="block truncate text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
-        {event.temporalRole || 'Time'}
+      <span aria-hidden="true" className={`absolute -left-[7px] top-[13px] h-3 w-3 rounded-full border-2 ${anchorMarkerClassName(event)}`} />
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="min-w-0 flex-1 truncate text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
+          {event.temporalRole || 'Time'}
+        </span>
+        {temporal.label ? (
+          <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a30)] bg-[var(--peridot-color-hex-dfe9c8-a08)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.09em] text-[var(--peridot-color-hex-dfe9c8)]">
+            {temporal.label}
+          </span>
+        ) : null}
       </span>
-      <span className="mt-0.5 block truncate text-sm font-bold">{eventTitle(event)}</span>
-      <span className="mt-1 block truncate text-[11px] text-[var(--peridot-color-hex-dfe9c8)]">
-        {event.displayLabel || event.sourceText || 'Date available'}
+      <span className="mt-0.5 block truncate text-sm font-bold" title={title}>{title}</span>
+      <span className="mt-1 block truncate text-[11px] text-[var(--peridot-color-hex-dfe9c8)]" title={dateLabel}>
+        {dateLabel}
       </span>
-      {activeCategoryFields.length ? (
-        <span className="mt-2 flex min-h-[10px] flex-wrap items-center gap-1" aria-label="Timeline categories">
-          {asArray(event?.categoryMemberships)
-            .filter((membership) => (
-              activeCategoryFields.includes(membership.fieldKey)
-              && !hiddenCategoryKeys.includes(categoryIdentity(membership.fieldKey, membership.value))
-            ))
-            .slice(0, 8)
-            .map((membership) => (
-              <CategoryMarker
-                key={`${membership.fieldKey}::${membership.value}::${membership.id}`}
-                membership={membership}
-                mode={markerMode}
-              />
-            ))}
+      {activeCategoryFields.length && memberships.length ? (
+        <span className="mt-2 flex min-h-[14px] flex-wrap items-center gap-1" aria-label="Timeline categories">
+          {displayedMemberships.map((membership) => (
+            <CategoryMarker
+              key={`${membership.fieldKey}::${membership.value}::${membership.id}`}
+              membership={membership}
+              mode={markerMode}
+            />
+          ))}
+          {hiddenMembershipCount ? (
+            <span className="ml-0.5 text-[9px] font-bold text-[var(--peridot-color-hex-dfe9c8)]" title={`${hiddenMembershipCount} additional visible categories`}>
+              +{hiddenMembershipCount}
+            </span>
+          ) : null}
         </span>
       ) : null}
     </button>
   );
 }
 
+function IntervalSpanHorizontal({ event, width }) {
+  const temporal = temporalPresentation(event);
+  const dashed = temporal.tone === 'approximate' || temporal.tone === 'partial';
+  const openStart = event?.boundedness === 'openStart';
+  const openEnd = event?.boundedness === 'openEnd' || event?.boundedness === 'ongoing';
+  return (
+    <div aria-hidden="true" className="absolute left-0 top-[18px]" style={{ width }}>
+      <div
+        className={`h-[3px] opacity-85 ${dashed ? 'border-t-2 border-dashed border-[var(--peridot-role-ornament-line)]' : 'rounded-full bg-[var(--peridot-role-ornament-line)]'}`}
+      />
+      {openStart ? <span className="absolute -left-2 -top-[8px] text-lg font-bold text-[var(--peridot-role-ornament-line)]">‹</span> : null}
+      {openEnd ? <span className="absolute -right-2 -top-[8px] text-lg font-bold text-[var(--peridot-role-ornament-line)]">›</span> : null}
+    </div>
+  );
+}
+
+function IntervalSpanVertical({ event, top, height }) {
+  const temporal = temporalPresentation(event);
+  const dashed = temporal.tone === 'approximate' || temporal.tone === 'partial';
+  const openStart = event?.boundedness === 'openStart';
+  const openEnd = event?.boundedness === 'openEnd' || event?.boundedness === 'ongoing';
+  return (
+    <div aria-hidden="true" className="absolute left-0" style={{ top, height }}>
+      <div
+        className={`h-full w-[3px] opacity-85 ${dashed ? 'border-l-2 border-dashed border-[var(--peridot-role-ornament-line)]' : 'rounded-full bg-[var(--peridot-role-ornament-line)]'}`}
+      />
+      {openEnd ? <span className="absolute -left-[5px] -top-3 text-lg font-bold text-[var(--peridot-role-ornament-line)]">⌃</span> : null}
+      {openStart ? <span className="absolute -bottom-3 -left-[5px] text-lg font-bold text-[var(--peridot-role-ornament-line)]">⌄</span> : null}
+    </div>
+  );
+}
+
 function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode }) {
   return (
     <div
-      className="relative min-h-full bg-[radial-gradient(circle_at_50%_0%,var(--peridot-color-hex-dfe9c8-a10),transparent_42%),linear-gradient(180deg,var(--peridot-color-rgba-rgba-8-39-25-0-18),transparent_38%)]"
+      className="relative min-h-full bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_78%,var(--peridot-color-hex-f5ecd2)),color-mix(in_srgb,var(--peridot-color-hex-f5ecd2)_70%,var(--peridot-color-hex-dfe9c8)))]"
       style={{ width: geometry.width, minHeight: geometry.height }}
     >
       <div
@@ -317,11 +453,11 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
       {geometry.ticks.map((tick) => (
         <div key={tick.year} className="absolute top-0" style={{ left: tick.x }}>
           <div className="absolute top-[54px] h-6 w-px bg-[var(--peridot-role-ornament-line)]" />
-          <div className="absolute top-[25px] -translate-x-1/2 whitespace-nowrap text-[11px] font-bold tracking-[0.08em] text-[var(--peridot-color-hex-f5ecd2)]">
+          <div className="absolute top-[25px] -translate-x-1/2 whitespace-nowrap text-[11px] font-bold tracking-[0.08em] text-[var(--peridot-role-interface-panel-background-strong)]">
             {tick.year}
           </div>
           <div
-            className="absolute top-[78px] w-px bg-[var(--peridot-color-hex-dfe9c8-a12)]"
+            className="absolute top-[78px] w-px bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_18%,transparent)]"
             style={{ height: Math.max(0, geometry.height - 102) }}
           />
         </div>
@@ -333,11 +469,7 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
         return (
           <div key={event.id} className="absolute" style={{ left: x, top }}>
             {isInterval ? (
-              <div
-                aria-hidden="true"
-                className="absolute left-0 top-[18px] h-[3px] rounded-full bg-[var(--peridot-role-ornament-line)] opacity-80"
-                style={{ width: intervalWidth }}
-              />
+              <IntervalSpanHorizontal event={event} width={intervalWidth} />
             ) : null}
             <EventCard event={event} onEventClick={onEventClick} className="-translate-x-3" activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} />
           </div>
@@ -350,7 +482,7 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
 function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode }) {
   return (
     <div
-      className="relative min-h-full bg-[radial-gradient(circle_at_50%_0%,var(--peridot-color-hex-dfe9c8-a10),transparent_42%),linear-gradient(180deg,var(--peridot-color-rgba-rgba-8-39-25-0-18),transparent_38%)]"
+      className="relative min-h-full bg-[linear-gradient(180deg,color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_78%,var(--peridot-color-hex-f5ecd2)),color-mix(in_srgb,var(--peridot-color-hex-f5ecd2)_70%,var(--peridot-color-hex-dfe9c8)))]"
       style={{ width: geometry.width, minHeight: geometry.height }}
     >
       <div
@@ -361,11 +493,11 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
       {geometry.ticks.map((tick) => (
         <div key={tick.year} className="absolute left-0" style={{ top: tick.y }}>
           <div
-            className="absolute left-[68px] h-px bg-[var(--peridot-color-hex-dfe9c8-a12)]"
+            className="absolute left-[68px] h-px bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_18%,transparent)]"
             style={{ width: Math.max(0, geometry.width - 96) }}
           />
           <div className="absolute left-[80px] -top-3 h-6 w-6 border-l border-[var(--peridot-role-ornament-line)]" />
-          <div className="absolute left-[22px] -top-2 whitespace-nowrap text-[11px] font-bold tracking-[0.08em] text-[var(--peridot-color-hex-f5ecd2)]">
+          <div className="absolute left-[22px] -top-2 whitespace-nowrap text-[11px] font-bold tracking-[0.08em] text-[var(--peridot-role-interface-panel-background-strong)]">
             {tick.year}
           </div>
         </div>
@@ -378,21 +510,17 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
         return (
           <div key={event.id} className="absolute" style={{ left, top: y - 16 }}>
             {isInterval ? (
-              <div
-                aria-hidden="true"
-                className="absolute left-0 w-[3px] rounded-full bg-[var(--peridot-role-ornament-line)] opacity-80"
-                style={{ top: intervalTop - y + 16, height: intervalHeight }}
-              />
+              <IntervalSpanVertical event={event} top={intervalTop - y + 16} height={intervalHeight} />
             ) : null}
             <EventCard event={event} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} />
           </div>
         );
       })}
 
-      <div className="absolute left-[20px] top-[72px] text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
+      <div className="absolute left-[20px] top-[72px] text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-role-interface-panel-background-strong)]">
         Latest
       </div>
-      <div className="absolute bottom-[72px] left-[20px] text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
+      <div className="absolute bottom-[72px] left-[20px] text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-role-interface-panel-background-strong)]">
         Earliest
       </div>
     </div>
@@ -541,6 +669,7 @@ function CategoryControls({
 
 export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
   const [orientation, setOrientation] = useState('horizontal');
+  const [zoom, setZoom] = useState(DEFAULT_TIMELINE_ZOOM);
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [activeCategoryFields, setActiveCategoryFields] = useState([]);
   const [hiddenCategoryKeys, setHiddenCategoryKeys] = useState([]);
@@ -548,6 +677,7 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
   const [markerMode, setMarkerMode] = useState('color');
   const scrollerRef = useRef(null);
   const pendingChronologyFractionRef = useRef(null);
+  const pendingZoomAnchorRef = useRef(null);
   const categoryFields = useMemo(() => buildPeridotTimelineCategoryFields(events), [events]);
   const activeCategoryFieldSet = useMemo(() => new Set(activeCategoryFields), [activeCategoryFields]);
   const visibleCategories = useMemo(() => categoryFields
@@ -578,12 +708,12 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
   }, [events, activeCategoryFields.length, visibleCategories, showUncategorized, uncategorizedEventIds]);
   const positioned = useMemo(() => positionedTimelineEvents(filteredEvents), [filteredEvents]);
   const horizontalGeometry = useMemo(
-    () => buildHorizontalGeometry(positioned, viewportSize.width),
-    [positioned, viewportSize.width],
+    () => buildHorizontalGeometry(positioned, viewportSize.width, zoom),
+    [positioned, viewportSize.width, zoom],
   );
   const verticalGeometry = useMemo(
-    () => buildVerticalGeometry(positioned, viewportSize.height),
-    [positioned, viewportSize.height],
+    () => buildVerticalGeometry(positioned, viewportSize.height, zoom),
+    [positioned, viewportSize.height, zoom],
   );
   const geometry = orientation === 'vertical' ? verticalGeometry : horizontalGeometry;
 
@@ -619,10 +749,65 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
     setOrientation(nextOrientation);
   };
 
+  const handleZoomChange = (nextZoom) => {
+    const normalizedZoom = clamp(Number(nextZoom) || DEFAULT_TIMELINE_ZOOM, MIN_TIMELINE_ZOOM, MAX_TIMELINE_ZOOM);
+    if (Math.abs(normalizedZoom - zoom) < 0.0001) return;
+    pendingChronologyFractionRef.current = chronologyFractionForViewport(
+      scrollerRef.current,
+      orientation,
+      geometry,
+    );
+    setZoom(normalizedZoom);
+  };
+
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return undefined;
+
+    const handleWheel = (event) => {
+      if (!geometry?.temporalExtent) return;
+      event.preventDefault();
+
+      const rect = scroller.getBoundingClientRect();
+      const viewportOffset = orientation === 'vertical'
+        ? clamp(event.clientY - rect.top, 0, scroller.clientHeight)
+        : clamp(event.clientX - rect.left, 0, scroller.clientWidth);
+      const contentPosition = orientation === 'vertical'
+        ? scroller.scrollTop + viewportOffset
+        : scroller.scrollLeft + viewportOffset;
+      const chronologicalFraction = orientation === 'vertical'
+        ? clamp(1 - ((contentPosition - geometry.leadingPadding) / geometry.temporalExtent), 0, 1)
+        : clamp((contentPosition - geometry.leadingPadding) / geometry.temporalExtent, 0, 1);
+
+      pendingZoomAnchorRef.current = { chronologicalFraction, viewportOffset };
+      const delta = Number.isFinite(event.deltaY) && event.deltaY !== 0 ? event.deltaY : event.deltaX;
+      const zoomFactor = clamp(Math.exp(-delta * 0.0018), 0.82, 1.22);
+      setZoom((current) => clamp(current * zoomFactor, MIN_TIMELINE_ZOOM, MAX_TIMELINE_ZOOM));
+    };
+
+    scroller.addEventListener('wheel', handleWheel, { passive: false });
+    return () => scroller.removeEventListener('wheel', handleWheel);
+  }, [orientation, geometry]);
+
   useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    const zoomAnchor = pendingZoomAnchorRef.current;
+    if (zoomAnchor && scroller && geometry?.temporalExtent) {
+      if (orientation === 'vertical') {
+        const contentY = geometry.leadingPadding + (1 - zoomAnchor.chronologicalFraction) * geometry.temporalExtent;
+        scroller.scrollTop = Math.max(0, contentY - zoomAnchor.viewportOffset);
+      } else {
+        const contentX = geometry.leadingPadding + zoomAnchor.chronologicalFraction * geometry.temporalExtent;
+        scroller.scrollLeft = Math.max(0, contentX - zoomAnchor.viewportOffset);
+      }
+      pendingZoomAnchorRef.current = null;
+      pendingChronologyFractionRef.current = null;
+      return;
+    }
+
     if (pendingChronologyFractionRef.current === null) return;
     restoreChronologyFraction(
-      scrollerRef.current,
+      scroller,
       orientation,
       geometry,
       pendingChronologyFractionRef.current,
@@ -685,7 +870,7 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
     >
       <div
         ref={scrollerRef}
-        className="absolute inset-0 min-h-0 min-w-0 overflow-auto"
+        className="absolute inset-0 min-h-0 min-w-0 overflow-auto bg-[color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_76%,var(--peridot-color-hex-f5ecd2))]"
       >
         {!geometry.items.length ? (
           <div className="flex h-full w-full items-center justify-center p-8 text-center">
@@ -701,12 +886,19 @@ export function PeridotTimelineWorkspace({ events = [], onEventClick }) {
         )}
       </div>
 
-      <div className="pointer-events-none absolute left-3 top-3 z-30 flex items-center gap-3">
+      <div className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col items-start gap-2">
         <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-24)] backdrop-blur-sm">
           <div className="shrink-0 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
             Timeline view
           </div>
           <OrientationControl orientation={orientation} onChange={handleOrientationChange} />
+        </div>
+
+        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-24)] backdrop-blur-sm">
+          <div className="shrink-0 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
+            Zoom
+          </div>
+          <ZoomControl zoom={zoom} onChange={handleZoomChange} />
           <CategoryControls
             fields={categoryFields}
             activeFieldKeys={activeCategoryFields}
