@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, timelines, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system now uses one generalized mapping model for ordinary CSV, TSV, XLSX, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path.
+Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system now uses one generalized mapping model for ordinary CSV, TSV, XLSX, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The Timeline workspace is additive: the existing bottom Timeline/playback control remains the shared chronological playback control for the visualization environment.
 
 Peridot was created by Haley Price in direct and continuous collaboration with ChatGPT. There is a robust AI disclosure and discussion of AI ethics (and ethical concerns) on the tool's "Learn More About Peridot" page where credit is documented. Please go there for more details. For the purposes of README, it bears mentioning that the reason the documentation is so meticulous (and so robotic) is because Price made ChatGPT record every single decision, commit, redirection, success, and failure throughout Peridot's development so that the full record of labor would be documented and disclosed. This paragraph was written by Price (hi!) but the remainder of the documentation was written by ChatGPT under exacting human direction and quality assurance supervision.
 
@@ -32,7 +32,7 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-c8a7c46 — Optimize network playback and viewport interaction
+a32ef05 — Add timeline relationship layout and sample switching fixes
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -44,7 +44,7 @@ For detailed milestone interpretation and full commit history, see [CHANGELOG.md
 
 Peridot is the current app identity for the **Correspondence Visualizer** repository. It derives only the structures that mapped data can safely support, then gives researchers an interactive workspace for visualizing, searching, inspecting, and exporting that evidence.
 
-The active interface is workspace-first rather than rail-first. It opens to a concise Home workspace, uses a hamburger menu for public navigation, keeps Timeline inside Visualizations, and uses a dual-mode Inspector: compact side-panel summaries for visual clicks and a full dossier workspace for deeper evidence navigation.
+The active interface is workspace-first rather than rail-first. It opens to a concise Home workspace, uses a hamburger menu for public navigation, and uses a dual-mode Inspector: compact side-panel summaries for visual clicks and a full dossier workspace for deeper evidence navigation. Within Visualizations, Timeline now has its own visualization workspace alongside the map/network/chart surfaces, while the existing bottom Timeline/playback control remains available as the shared chronological range/playback control.
 
 ## 2. Audience, Research Uses, and Supported Data
 
@@ -54,6 +54,7 @@ Peridot is designed for researchers working with humanistic records that may be 
 
 - Place and route mapping when geographic fields are available.
 - Entity/person network and force-directed exploration when source-target relationships are mapped.
+- Dedicated Timeline exploration of mapped temporal assertions in horizontal or vertical orientation, with zoom/pan, adaptive date axes, evidence-driven categories, and mapped relationship context.
 - Chart-based analysis of dates, categories, numeric measures, relationships, and selected evidence fields.
 - Advanced Search across loaded data, with explicit draft-and-apply filtering.
 - Evidence inspection through people/entities, places, clusters, routes, and connected records.
@@ -87,7 +88,7 @@ The sample chooser currently offers three ordinary project files:
 - **Family Tree** — a CSV person-centered genealogy example with stable relationship IDs, life events, and places.
 - **Cardinals Active from 1600–1640** — an XLSX example that demonstrates a different research structure and supplies useful future QA cases for repeated/multi-valued historical information.
 
-Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. The current compact sample chooser keeps the three samples in one dark-green/gold/cream popover and exposes direct **Use**, **Edit**, **Download**, and **Details** actions for each row. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
+Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. The current compact sample chooser starts collapsed, expands in place when requested, and exposes direct **Use**, **Edit**, **Download**, and **Details** actions for each row. Sample selection is repeatable: choosing one sample does not lock the Data workspace, and a later sample cleanly replaces the active sample. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
 
 Home now includes a third, visually secondary **Tutorial** button centered beneath **Use sample data** and **Upload your data**. The old floating tutorial invitation has been removed. The button is intentionally disabled while the tutorial is being revised and shows **“Tutorial coming soon.”** on hover/focus; the existing tutorial implementation remains in the project for later reactivation and polish.
 
@@ -127,13 +128,19 @@ For suitable mapped fields, researchers can declare whether one cell contains on
 
 ### 3.3 Visualize
 
-Visualize Your Data provides capability-aware access to one unified **Geographic Map**, a separate **Force-Directed Network**, and Chart Visualizations. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
+Visualize Your Data provides capability-aware access to one unified **Geographic Map**, a separate **Force-Directed Network**, a dedicated **Timeline** visualization workspace, and Chart Visualizations. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
 
 The Geographic Map includes compact **Map settings** for visible node identities, researcher-selected geographic anchor roles, relationship-line location rules, and fallback behavior. Settings are transactional: changes are drafted, **Apply** commits them, and **Reset** affects the draft rather than silently recomputing the graph. Geographic edges render only when both exact endpoint node instances are visible under the applied settings.
 
-Timeline is a compact bottom control within Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
+The dedicated Timeline workspace projects canonical mapped temporal assertions into event cards without replacing the existing playback control. Its default orientation is horizontal, earliest to latest from left to right; researchers can switch to a vertical orientation, earliest to latest from bottom to top. Timeline navigation supports scrollbars, click-and-drag panning, smooth mouse-wheel zoom, and +/- controls. The temporal axis changes granularity with zoom and suppresses colliding labels rather than keeping one fixed year scale.
 
-The Timeline range control now includes a draggable playback playhead/scrubber in addition to its left/right range clamps. Dragging the playhead updates a local preview continuously and commits the canonical playback position on release, avoiding expensive full-state churn on every pointer movement. Export remains a shared header menu rather than a separate workspace. Map PNG export defaults to an unbranded map-only image, with optional title and metadata annotations.
+Timeline event categories are derived from mapped Evidence fields. Researchers choose which Evidence fields act as categories and can toggle individual values on or off; an event with several category memberships remains visible when **any** enabled membership matches. Category membership is plural rather than one-category-per-event. Compact card markers can use color or shape so category information is not dependent on color alone. The same applied Advanced Search / Explore scope that constrains other visualizations also constrains Timeline events.
+
+Mapped relationships are being projected into the Timeline only when explicit relationship semantics support them; shared participants, categories, or chronological proximity do not manufacture connections. The current relationship-layout foundation uses subject-strict endpoints and a continuous secondary-axis layout so chronology remains exact while cards can move in the orthogonal dimension for collision avoidance and connection legibility. Relationship-line presentation remains active polish work at this checkpoint.
+
+The existing bottom Timeline/playback control remains shared across Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
+
+The playback range control includes a draggable playhead/scrubber in addition to its left/right range clamps. Dragging the playhead updates a local preview continuously and commits the canonical playback position on release, avoiding expensive full-state churn on every pointer movement. Export remains a shared header menu rather than a separate workspace. Map PNG export defaults to an unbranded map-only image, with optional title and metadata annotations.
 
 ### 3.4 Explore and inspect
 
@@ -535,7 +542,7 @@ The principal generalized Network semantic migration is now complete through pla
 
 Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior. Performance work after that rollback now keeps pointer panning and wheel zoom transient during interaction, commits durable viewport state at bounded points, and preloads the stable full-scope Force graph so playback does not rerun force simulation on every tick. These changes improve interaction/playback smoothness without changing generalized relationship semantics.
 
-The sample-selection redesign and Timeline playhead/scrubber restoration are now complete. Remaining interface/performance follow-up includes substantially reducing the Visualizations header height, calibrating the playback-speed choices after the optimization work, and revisiting playback presentation/animation only from the current stable architecture rather than the discarded tween prototypes.
+The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The Timeline relationship-line treatment is still visibly unfinished and remains the immediate visualization-polish task. Other interface/performance follow-up includes substantially reducing the Visualizations header height, calibrating the playback-speed choices after the optimization work, and revisiting playback presentation/animation only from the current stable architecture rather than the discarded tween prototypes.
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 

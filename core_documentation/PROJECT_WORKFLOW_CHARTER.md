@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-c8a7c46 — Optimize network playback and viewport interaction
+a32ef05 — Add timeline relationship layout and sample switching fixes
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -390,7 +390,7 @@ Context:
 Humanistic datasets may contain multiple dates/periods per record, partial or approximate dates, open intervals, mixed precision, researcher-supplied temporal notes, and source layouts ranging from one range column to separate Y/M/D fields for both endpoints.
 
 Chosen approach:
-Preserve original temporal text; derive machine-usable temporal structure conservatively; keep researcher notes separate from inferred structure; allow repeatable user-named Date/Period mappings with reusable source columns; and carry canonical temporalAssertions[] into active runtime consumers. Timeline derives dataset-specific Time types and supports Cumulative Events and Co-current Events.
+Preserve original temporal text; derive machine-usable temporal structure conservatively; keep researcher notes separate from inferred structure; allow repeatable user-named Date/Period mappings with reusable source columns; and carry canonical temporalAssertions[] into active runtime consumers. The shared bottom Timeline/playback control derives dataset-specific Time types and supports Cumulative Events and Co-current Events. A separate dedicated Timeline visualization workspace projects the same canonical temporal assertions into an explorable chronology without replacing the shared playback control.
 
 Rejected alternative:
 Force one privileged Date per row, normalize every date to a JavaScript Date, invent missing components, let certainty/completeness notes silently determine visualization eligibility, or make empty co-current moments look like visualization failures.
@@ -399,7 +399,29 @@ Reason:
 The canonical model must preserve historical uncertainty and partiality while still supporting defensible chronological filtering, playback, and comparison of overlapping periods.
 
 Maintenance consequence:
-Temporal consumers use canonical `temporalAssertions[]`; the former `parsedDate`/duplicate-parser fallback paths have been retired. Future structure filters must distinguish machine-derived temporal form from researcher-supplied notes.
+Temporal consumers use canonical `temporalAssertions[]`; the former `parsedDate`/duplicate-parser fallback paths have been retired. The dedicated Timeline workspace must preserve the distinction between exact chronological placement and secondary-axis presentation/layout. Future structure filters must distinguish machine-derived temporal form from researcher-supplied notes.
+```
+
+#### Dedicated Timeline visualization-workspace decision
+
+```text
+Decision:
+Add a dedicated Timeline visualization workspace while preserving the existing bottom Timeline/playback control as a separate shared chronological control.
+
+Context:
+The existing bottom Timeline successfully controls date range and playback across Map/Network/Charts, but it is not a full event-centered visualization. Researchers also need a chronologically faithful workspace for reading events, switching horizontal/vertical orientation, assigning plural Evidence-based categories, filtering the Timeline through Search/Explore, and seeing explicit mapped relationships among temporal subjects.
+
+Chosen approach:
+Keep the bottom Timeline/playback control unchanged in role. Add a dedicated Timeline visualization workspace inside Visualizations. Horizontal chronology runs earliest → latest left-to-right; Vertical runs earliest → latest bottom-to-top. Chronology fixes the temporal axis, while the orthogonal axis may be used for collision avoidance and relationship legibility. Categories are evidence-driven and plural; visible membership is OR-based. Mapped connections come only from explicit relationship semantics and must resolve distinct relationship endpoint subjects rather than being inferred from co-occurrence.
+
+Rejected alternative:
+Replace the bottom playback control with the new Timeline; make Timeline a separate top-level route outside Visualizations; force one category per event; infer event connections from shared participants/categories; or keep rigid lanes that prevent relationship structure from being read.
+
+Reason:
+The two Timeline roles answer different research questions. Shared playback coordinates the active temporal scope across visualizations, while the dedicated workspace is itself a visualization of temporal evidence. Keeping them separate preserves existing behavior and enables richer chronological analysis without manufacturing scholarly relationships.
+
+Maintenance consequence:
+Do not conflate `timelinePlaybackComponents.jsx` with `PeridotTimelineWorkspace.jsx`. Preserve exact temporal-axis placement, Search-scope authority, plural category semantics, conservative relationship derivation, and the ability to use both orientations, zoom, panning, scrollbars, and the shared Inspector. Relationship-line styling/routing may change, but not by loosening endpoint semantics.
 ```
 
 #### Researcher-declared record and entity identity decision
@@ -443,7 +465,7 @@ Reason:
 Samples should demonstrate the same transparent data path that researchers use and should double as stable QA fixtures.
 
 Maintenance consequence:
-No-data is a valid first-launch state. Sample-specific behavior belongs in metadata/mapping definitions, not a second runtime architecture. Editing a sample changes only the active interpretation and must not mutate the shipped source or canonical mapping.
+No-data is a valid first-launch state. Sample-specific behavior belongs in metadata/mapping definitions, not a second runtime architecture. Editing a sample changes only the active interpretation and must not mutate the shipped source or canonical mapping. The chooser should start collapsed and remain repeatable: selecting one sample must not create local UI state that prevents a later sample from replacing it.
 ```
 
 #### Cardinality / delimiter decision
@@ -494,8 +516,8 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 ### 7.2 Routing and workspace model
 
 - The active public model is workspace-first: Home, Data, Visualizations, Explore/Advanced Search, and Learn More are the primary public surfaces.
-- The hamburger menu is the primary public navigation surface; Themes and Accessibility remains implemented but hidden; Export and Timeline are Visualizations-integrated.
-- First launch has no active dataset. **Use sample data** must require an explicit sample choice rather than silently activating a fallback.
+- The hamburger menu is the primary public navigation surface; Themes and Accessibility remains implemented but hidden; Export remains a Visualizations header action. Timeline is Visualizations-integrated in two forms: a dedicated Timeline visualization workspace and the separate shared bottom Timeline/playback control.
+- First launch has no active dataset. **Use sample data** must require an explicit sample choice rather than silently activating a fallback. The sample chooser starts collapsed and must remain reusable after a sample has been selected.
 - A larger visual redesign may still merge the strongest parts of the branded Home and Data/sample-selection surfaces. That redesign remains deferred and must not be smuggled into consumer/data-model passes.
 - The tutorial entry is now a static, shorter secondary Home button beneath the two data-entry CTAs. It is disabled with **“Tutorial coming soon.”** while tutorial revision is pending; do not restore the old floating invitation.
 - MapLibre migrated-overlay work is archived. Active `main` continues the D3/SVG path.
@@ -541,7 +563,7 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 
 ### 7.8 Archived or superseded decisions
 
-- Earlier persistent-rail, standalone Export, standalone Timeline, legacy three-file upload, and MapLibre preview directions are historical or superseded. Their active replacement is identified in the contracts above and in the Changelog.
+- Earlier persistent-rail, standalone Export, top-level/standalone Timeline-route, legacy three-file upload, and MapLibre preview directions are historical or superseded. The current dedicated Timeline is a visualization subworkspace inside Visualizations and does not revive the older standalone-route model. Active replacements are identified in the contracts above and in the Changelog.
 
 
 <details>

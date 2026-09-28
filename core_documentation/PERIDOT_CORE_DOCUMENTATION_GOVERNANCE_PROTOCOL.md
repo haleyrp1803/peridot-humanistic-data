@@ -560,7 +560,7 @@ Use the following terms consistently unless the implementation changes their mea
 - **charted data**: records or derived values currently supplied to a chart;
 - **exported data**: the specific loaded, filtered, visible, selected, or charted output identified by an export action.
 
-Until the formal Search and Timeline/Analytics audits are complete, do not overstate that all surfaces apply these scopes identically. Use precise language and identify uncertainty where appropriate.
+The formal Search and Timeline/Analytics scope audits are complete. Preserve the audited distinctions rather than implying that all surfaces use one interchangeable scope: Search Results/Refine use applied/filtered data, visualization playback uses timeline-visible data, entity/place dossiers use applied/filtered linked-record scope, and Analytics has its documented treatment of genuinely undated records.
 
 ---
 

@@ -20,29 +20,45 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-c8a7c46 — Optimize network playback and viewport interaction
+a32ef05 — Add timeline relationship layout and sample switching fixes
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
 
-This checkpoint preserves the generalized Network semantics established at `ddc0aca` and adds the accepted sample-selection, Timeline-scrubbing, viewport-interaction, and Force-playback performance sequence. The optimization work changes when expensive state/geometry work occurs; it does not change the researcher-declared relationship, place, identity, or temporal semantics.
+This checkpoint establishes the dedicated Timeline visualization workspace as a substantial new visualization surface while preserving the pre-existing bottom Timeline/playback control. It also closes the sample-switching regression discovered during Timeline QA. The underlying generalized mapping, temporal, Search-scope, Network, and Inspector semantics remain the same authorities.
 
 Current architectural significance:
 
-- generalized Geographic/Force relationship and playback semantics remain provenance-driven and multipart-safe;
-- the sample chooser is now a compact dark-green/gold/cream control with direct **Use / Edit / Download / Details** actions;
-- Timeline direct scrubbing is restored inside the existing range control; drag motion uses local preview state and commits canonical playback position on release;
-- pointer panning uses a transient imperative SVG transform during drag and commits durable viewport state on release;
-- wheel zoom likewise applies transient visual scaling during interaction and commits durable viewport state after a short settle interval; the wheel handler is registered natively as non-passive so the visualization can suppress browser scrolling correctly;
-- Force playback now reuses a stable full-scope Force graph and filters rendered provenance/degree/radius for the current playback scope instead of rebuilding the graph and running synchronous force ticks on every playback frame;
-- an analogous Geographic preload experiment produced no meaningful improvement and was deliberately excluded from the clean candidate;
-- duplicate static basemap React keys were corrected with composite keys during the performance diagnostic sequence;
-- the discarded playback tween/geometry-animation prototypes remain absent. Playback animation/presentation is unfinished future work, not current architecture;
-- remaining performance follow-up includes reducing the playback-speed choices to **Slow / Medium / Fast**, calibrating them against the optimized runtime, and revisiting animation only from this stable architecture;
-- current Geographic QA remains separate from this checkpoint. Post-`c8a7c46` local investigation showed that an apparent large same-label duplicate was actually Siena adjacent to Roma, while Inspector count wording can still conflate entity-anchor instances with distinct places. Experimental clustering/Inspector fixes have not been committed and are not part of this checkpoint;
-- remaining Network work also includes consumer/vocabulary cleanup, geometry/presentation correctness, visual tuning/Appearance controls, the Search `Any record text` follow-up, Phase 3 Chart Builder, repository-wide compatibility retirement audit, compact Visualizations header work, and broader Home/tutorial work.
+- `peridotTimelineWorkspaceModel.js` is the canonical Timeline-workspace projection layer: Search/applied scope remains authoritative; one source row may produce several temporal events; temporal subject/form/precision/uncertainty metadata survives projection; and Evidence-backed category membership is plural.
+- **`8188ac0`** added the first horizontal Timeline workspace; **`d410c3d`** added vertical orientation. Horizontal is earliest → latest left-to-right; Vertical is earliest → latest bottom-to-top.
+- Timeline uses an internal scrollable viewport of the same stage concept as Geographic/Force views rather than expanding the page. Scroll extent allows the first/last event to be isolated at the viewport edge.
+- **`0d0380a`** added evidence-driven categories. Users select mapped Evidence fields and values; event visibility is OR-based across enabled category memberships; category markers support color or shape.
+- **`98f3841`** and **`90f93d2`** established the pale reading surface, smooth continuous zoom, mouse-wheel zoom, +/- controls, click-drag panning, persistent scrollbars, zoom-adaptive year/month/day ticks, and label-collision suppression.
+- **`d1fd010`** optimized Timeline rendering performance so the richer workspace remains responsive under larger event counts/zoom ranges.
+- Timeline event selection uses the shared Inspector model. The new workspace did not replace or redesign the existing bottom Timeline/playback control.
+- Explicit mapped relationship projection is conservative: relationship lines are not inferred from shared categories, co-occurrence, or temporal proximity; relationship records that already exist as temporal events are not reinterpreted into arbitrary edges.
+- **`a32ef05`** checkpoints subject-strict relationship endpoint resolution, a continuous relationship/collision-aware secondary-axis layout, revised duration treatment, and the sample-switching/default-collapse correction.
+- Relationship **line routing/presentation remains unfinished**. The current connection semantics/layout are the accepted foundation, but the visual line treatment still needs a dedicated pass to reach the desired ClioVis-like legibility in both orientations.
+- Sample chooser state is application-owned, starts collapsed on Data entry, and can be reopened after loading a sample so another sample may replace it cleanly.
+- The accepted Network performance architecture from `c8a7c46` remains in place; the discarded playback tween/geometry-animation prototypes remain absent.
 
 ## 2. Recent Milestones, Newest First
+
+### Dedicated Timeline visualization workspace, adaptive navigation, categories, and relationship-layout foundation — 2026-09-27 to 2026-09-28
+
+- **`7eddfb0` — `Synchronize documentation through playback performance`** recorded the documentation baseline immediately before the new Timeline visualization project began.
+- **`d82406e` — `Add canonical timeline workspace projection`** added `peridotTimelineWorkspaceModel.js` and regression fixtures. The model preserves Search scope, plural temporal assertions, temporal semantics/subject attribution, plural Evidence categories, OR category visibility, and uncertainty metadata without changing the existing playback Timeline.
+- **`8188ac0` — `Add horizontal timeline workspace`** introduced the first dedicated event-card Timeline visualization. The default chronology runs earliest → latest left-to-right and uses the same overall visualization/Inspector shell as other views.
+- **`d410c3d` — `Add vertical timeline orientation`** added earliest → latest bottom-to-top orientation and corrected viewport/scroll behavior so overflow stays inside the visualization stage.
+- **`0d0380a` — `Add evidence-driven timeline categories`** made mapped Evidence fields available as researcher-selected Timeline categories. Events may have several category memberships; filtering is OR-based; category values can be marked by color or shape; the category panel is fixed-size, grouped with Timeline controls, and closes on outside click.
+- **`98f3841` — `Refine timeline readability and zoom`** moved the Timeline to a pale reading surface, established a more readable default event scale, and added continuous mouse-wheel zoom plus explicit +/- controls.
+- **`d1fd010` — `Optimize timeline rendering performance`** reduced unnecessary Timeline rendering work before the deferred navigation refinements resumed.
+- **`90f93d2` — `Refine timeline navigation and temporal axis`** completed click-and-drag panning alongside retained scrollbars, adaptive year/month/day axis granularity, and label-collision suppression. Chronology remains fixed while navigation is continuous rather than limited to arbitrary zoom stops.
+- Connection design then moved toward a ClioVis-inspired model while preserving Peridot's data-derived semantics. Relationship projection only uses explicit mapped relationships; same-subject birth/lifespan assertions are not legitimate relationship endpoints merely because they concern the same entity.
+- Several local connection-layout iterations exposed two distinct problems: rigid lanes prevented relationship legibility, and duration lines could be mistaken for relationship edges. The accepted correction makes relationship endpoints subject-strict, treats chronology as the fixed axis and the orthogonal axis as a continuous collision/relationship-layout space, and gives intervals a separate duration treatment.
+- **`a32ef05` — `Add timeline relationship layout and sample switching fixes`** checkpoints that relationship/layout foundation plus a Data-workspace regression fix. The sample chooser once again starts collapsed and may be reopened after loading one sample so a different sample can replace it.
+- Relationship-line **routing and visual legibility are explicitly unfinished** at this checkpoint. The next Timeline pass should improve curved card-to-card connection rendering without loosening the accepted endpoint semantics or reverting the continuous secondary-axis layout.
+- This documentation pass synchronizes the core documents to `a32ef05`. The Governance Protocol ownership model remains unchanged; only its stale pre-audit scope caveat is corrected. The restructuring plan is marked implemented and retained as a historical planning record.
 
 ### Sample chooser, Timeline scrubber, and Network interaction/playback performance — 2026-09-27
 
@@ -568,17 +584,17 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
-### Current deferred Network, interface, Chart, compatibility, Search follow-up, and tutorial work after `c8a7c46`
+### Current deferred Timeline, Network, interface, Chart, compatibility, Search follow-up, and tutorial work after `a32ef05`
 
+- **Timeline relationship-line presentation — immediate:** preserve subject-strict mapped endpoint semantics and the continuous secondary-axis layout, but redesign line routing/contrast/anchors so each relationship reads clearly as event → event in Horizontal and Vertical views. Keep duration bands visually distinct from relationship edges.
+- **Timeline dense-layout/card polish:** recheck collision cleanup, event-card footprint/truncation, uncertainty/partial-date cues, relationship arrowheads, and selected-edge emphasis after the line pass. Do not add aggregation/clustering until a real dataset demonstrates that zoom/pan plus collision-aware layout is insufficient.
+- **Optional Timeline temporal-structure filters:** approximate/partial/open/inconsistent controls remain optional future work if they can be made analytically useful and human-readable.
 - **Network Pass 4 — consumer/vocabulary cleanup:** audit remaining exports, capability text, comments, Inspector/hover bridges, and compatibility-facing presentation for stale `Weight`, `linked_letters`, Source/Target, sender/recipient, route, or forced-direction language. Preserve correspondence-specific vocabulary only where the mapping genuinely supplies it.
 - **Network Pass 5 — geometry/presentation correctness:** revisit Force-Directed initial framing/fit where still needed, terminate directed arrowheads at node boundaries, and repair bounded path/geometry issues without reopening semantic scope.
 - **Network Pass 6 — visual tuning / Appearance controls:** tune node size, cluster size, edge width, clustering threshold/sensitivity, and dense-versus-sparse defaults; decide explicitly what cluster size encodes; evaluate researcher-facing scaling controls in the reserved Map settings **Appearance** area.
-- **Playback animation is rolled back:** the local-only animation/tweening prototypes after generalized playback were rejected and are not in `c8a7c46`. Do not resume from their generated ZIPs or screen-space geometry code. Any future animation project should begin with a fresh architecture/design audit from the accepted post-optimization checkpoint.
-- **Playback performance is partially closed, not finished:** transient pan/zoom, local scrub preview, and stable Force playback geometry are accepted. Remaining work is speed-choice simplification/calibration and any later presentation animation.
-- **Geographic Inspector/cluster QA is active but uncommitted:** post-checkpoint testing corrected the interpretation of the apparent Roma duplication and exposed count/wording semantics plus sentinel `0` endpoint cleanup. Do not document the temporary local fixes as committed architecture until a tested pass is checkpointed.
-- **Data/sample-selection visual polish:** the open sample chooser currently introduces a large light panel that conflicts with the otherwise coherent dark-green Data workspace. Redesign the open state so it feels like the same page expanding rather than a generic modal.
-- **Timeline scrubber restoration:** current Timeline controls can clamp the allowed timeframe but the desired direct draggable playback playhead/scrubber is absent. Add the playhead to the existing control rather than creating another timeline.
-- **Visualizations header compression:** the current header consumes excessive vertical space. Redesign it as a substantially more compact persistent toolbar while preserving direct Mapping/Network/Charts/Explore actions and the Export menu.
+- **Playback animation remains rolled back:** local-only animation/tweening prototypes after generalized playback were rejected and are not in current `main`. Any future animation project should begin with a fresh architecture/design audit rather than copying discarded screen-space geometry code.
+- **Playback performance follow-up:** transient pan/zoom, local scrub preview, and stable Force playback geometry are accepted. Remaining work is speed calibration and any later presentation animation.
+- **Visualizations header compression:** the header still consumes excessive vertical space. Redesign it as a substantially more compact persistent toolbar while preserving direct visualization navigation and the Export menu.
 - **Search generalized-text follow-up:** `Any record text` still does not guarantee indexing of every generalized mapped semantic value.
 - **Phase 3 Chart Builder:** build chart controls from saved/generalized variables with structured human-readable sentence/autocomplete interaction; keep the wide/transposed stock case as a required regression dataset.
 - **Repository-wide compatibility retirement audit:** classify old Source/Target/profile/adapter/sample-fallback paths as delete now, still-required compatibility, legitimate specialization, or uncertain/retain.
@@ -630,7 +646,16 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
-| 2026-09-27 | `c8a7c46` | Optimize network playback and viewport interaction | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-09-27 | `a32ef05` | Add timeline relationship layout and sample switching fixes | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-09-27 | `90f93d2` | Refine timeline navigation and temporal axis |  |
+| 2026-09-27 | `d1fd010` | Optimize timeline rendering performance |  |
+| 2026-09-27 | `98f3841` | Refine timeline readability and zoom |  |
+| 2026-09-27 | `0d0380a` | Add evidence-driven timeline categories |  |
+| 2026-09-27 | `d410c3d` | Add vertical timeline orientation |  |
+| 2026-09-27 | `8188ac0` | Add horizontal timeline workspace |  |
+| 2026-09-27 | `d82406e` | Add canonical timeline workspace projection |  |
+| 2026-09-27 | `7eddfb0` | Synchronize documentation through playback performance |  |
+| 2026-09-27 | `c8a7c46` | Optimize network playback and viewport interaction |  |
 | 2026-09-27 | `da87f6d` | Isolate wheel zoom from clustering updates |  |
 | 2026-09-27 | `f34207d` | Isolate viewport panning from graph rendering |  |
 | 2026-09-27 | `a92ec9a` | Restore smooth timeline playback scrubbing |  |

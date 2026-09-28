@@ -1,10 +1,12 @@
 # Peridot Core Documentation Restructuring Plan
 
+> **Status: Implemented historical planning record.** The four core documents now use the ownership/front-matter architecture specified by this plan. Retain this file for provenance, but subsequent routine documentation passes are governed by `core_documentation/PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md`; they should not treat the migration instructions below as an unfinished rewrite.
+
 ## Purpose and Pass Boundary
 
-This planning document translates the **Peridot Core Documentation Governance Protocol** into a concrete, source-preserving restructuring plan for Peridot’s core documentation.
+This planning document translated the **Peridot Core Documentation Governance Protocol** into a concrete, source-preserving restructuring plan for Peridot’s core documentation.
 
-It is a planning artifact only. It does **not** rewrite the README, Maintainer’s Guide, Project Workflow Charter, Changelog, or Governance Protocol. The future implementation pass must reread this document, the Governance Protocol, and all current core documents before preparing replacements.
+It is retained as a planning/history artifact. It did **not** itself rewrite the README, Maintainer’s Guide, Project Workflow Charter, Changelog, or Governance Protocol; that restructuring was implemented later. The original future-facing instructions below are preserved as the migration record rather than silently rewritten into current maintenance guidance.
 
 ### Planning-pass classification
 
@@ -16,7 +18,7 @@ It is a planning artifact only. It does **not** rewrite the README, Maintainer�
 
 ## Current Documentation Context
 
-The planning baseline is the clean synchronized `main` state reported after:
+**Historical planning baseline:** the clean synchronized `main` state reported when this plan was authored was:
 
 ```text
 70d8b31 — Move documentation governance protocol to core documentation
@@ -399,6 +401,6 @@ The later rewrite should be one dedicated documentation pass and proceed in this
 
 ## Maintenance Instruction
 
-Retain this file in `planning_documents/` as the implementation map for the first core-document restructuring pass. After that pass is complete, do not delete this file. Mark it as **implemented** and retain it as a historical record of the documentation architecture migration.
+This plan is **implemented**. Retain it in `planning_documents/` as the historical implementation map for the first core-document restructuring pass; do not delete it merely because the migration is complete.
 
 Before subsequent smaller documentation updates, the Governance Protocol—not this migration plan—remains the mandatory standing preflight document.
