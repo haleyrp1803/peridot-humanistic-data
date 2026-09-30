@@ -1,25 +1,25 @@
 /*
- * Explore-direct routing pass.
+ * Navigation redesign Pass 2.
  *
  * Main visualization workspace.
- * 
- * This component coordinates the visualization header, visualization-category menus, map/network/chart stage, capability-unavailable states, header Export menu, collapsible header, and bottom Timeline scrubber.
+ *
+ * This component coordinates the compact local visualization navigation, map/network/chart/timeline stage, capability-unavailable states, contextual Export action, and bottom Timeline scrubber.
  * 
  * Important relationships:
  * - `App.jsx` owns the current data, selected visualization, map stage, export handlers, and timeline state passed here.
- * - `AnalyticsPanel.jsx` owns chart controls/rendering but registers chart export with the shared header export menu.
+ * - `AnalyticsPanel.jsx` owns chart controls/rendering but registers chart export with the shared contextual export action.
  * - `timelinePlaybackComponents.jsx` renders the bottom scrubber used here.
  * 
  * Maintenance cautions:
  * - This is now a key workspace-coordination file. Keep behavior changes narrow and test maps, networks, charts, timeline, and export after edits.
- * - Header Export should be the single export surface for visualization contexts.
+ * - Export remains contextual to the active visualization and is visually separated from navigation.
  *
  * Scope contract:
  * - This component does not derive the visible dataset. It receives already-
  *   scoped graph/map/chart props from `App.jsx`.
  * - The bottom timeline scrubber changes global App state; those changes flow
  *   back through graph derivation before this workspace renders the next view.
- * - Header Export should export the same scoped visualization state that is
+ * - Contextual Export should export the same scoped visualization state that is
  *   currently rendered. Do not point export actions at raw uploaded rows unless
  *   adding a separate, explicitly labeled full-dataset export.
  * - Chart export is registered by `AnalyticsPanel.jsx`; map/network export is
@@ -733,7 +733,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
 
   const buttonClass = compact
     ? [
-      'inline-flex h-10 w-[144px] items-center justify-center rounded-full border px-3 text-center text-[11px] font-extrabold uppercase tracking-[0.15em] transition duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
+      'inline-flex h-8 min-w-[104px] items-center justify-center rounded-full border px-3 text-center text-[10px] font-extrabold uppercase tracking-[0.14em] transition duration-150 focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
       isOpen
         ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-b58b42-a55)] text-[var(--peridot-color-hex-fff8e8)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a24),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-20)]'
         : 'border-[var(--peridot-color-hex-dfe9c8-a36)] bg-[var(--peridot-color-hex-dfe9c8-a08)] text-[var(--peridot-color-hex-f5ecd2)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a10)] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-b58b42-a30)] hover:text-[var(--peridot-color-hex-fff8e8)] hover:shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a20),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-18)]',
@@ -967,8 +967,6 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
 }
 
 export function PeridotVisualizationsWorkspace({
-  pageTitle,
-  setPageTitle,
   mapStageProps,
   MapStageComponent,
   viewMode,
@@ -984,10 +982,8 @@ export function PeridotVisualizationsWorkspace({
   onOpenAnalytics,
   onOpenChartVisualization,
   onOpenSearch,
-  onOpenExplore,
   timelineControlsProps,
   exportControls,
-  suppressFloatingFrameToggles = false,
 }) {
   const availability = {
     rowCount: 0,
@@ -1019,40 +1015,10 @@ export function PeridotVisualizationsWorkspace({
       : VISUALIZATION_TOOLS.GEOGRAPHIC_MAP;
 
   const [selectedTool, setSelectedTool] = useState(initialTool);
-  const [openMenuCategory, setOpenMenuCategory] = useState(null);
-  const [openMenuAnchorRect, setOpenMenuAnchorRect] = useState(null);
-  const [isHeaderExpanded, setIsHeaderExpanded] = useState(true);
-  const headerToggleAnchorRef = useRef(null);
   const [chartExportControls, setChartExportControls] = useState(null);
   const [isStageSwitching, setIsStageSwitching] = useState(false);
-  const menuCloseTimerRef = useRef(null);
   const stageSwitchTimerRef = useRef(null);
   const stageRevealFrameRef = useRef(null);
-  const headerEntranceTimerRef = useRef(null);
-  const [hasHeaderEntranceSettled, setHasHeaderEntranceSettled] = useState(false);
-
-  /*
-   * The Visualizations header has a one-time, right-to-left arrival sequence:
-   * Export, Explore, Charts, Network, then Mapping. Once that sequence has
-   * finished, these controls must remain fully visible. Visualization-stage
-   * switches re-render the header while the map/chart body transitions through
-   * its green veil, so replaying the generic opacity-zero entrance class here
-   * would make active controls disappear. Keep the mount-only timer independent
-   * from selected-tool and stage-switch state.
-   */
-  useEffect(() => {
-    headerEntranceTimerRef.current = window.setTimeout(() => {
-      headerEntranceTimerRef.current = null;
-      setHasHeaderEntranceSettled(true);
-    }, 2280);
-
-    return () => {
-      if (headerEntranceTimerRef.current) {
-        window.clearTimeout(headerEntranceTimerRef.current);
-        headerEntranceTimerRef.current = null;
-      }
-    };
-  }, []);
 
   useEffect(() => {
     if (visualizationsWorkspacePanel === 'analytics') {
@@ -1067,9 +1033,6 @@ export function PeridotVisualizationsWorkspace({
   }, [visualizationsWorkspacePanel]);
 
   useEffect(() => () => {
-    if (menuCloseTimerRef.current) {
-      window.clearTimeout(menuCloseTimerRef.current);
-    }
     if (stageSwitchTimerRef.current) {
       window.clearTimeout(stageSwitchTimerRef.current);
     }
@@ -1079,49 +1042,9 @@ export function PeridotVisualizationsWorkspace({
     }
   }, []);
 
-  const cancelMenuClose = () => {
-    if (menuCloseTimerRef.current) {
-      window.clearTimeout(menuCloseTimerRef.current);
-      menuCloseTimerRef.current = null;
-    }
-  };
-
-  const openMenu = (categoryLabel, anchorElement = null) => {
-    cancelMenuClose();
-    if (anchorElement && typeof anchorElement.getBoundingClientRect === 'function') {
-      setOpenMenuAnchorRect(anchorElement.getBoundingClientRect());
-    }
-    setOpenMenuCategory(categoryLabel);
-  };
-
-  const closeMenu = () => {
-    cancelMenuClose();
-    setOpenMenuCategory(null);
-    setOpenMenuAnchorRect(null);
-  };
-
-  const scheduleMenuClose = () => {
-    cancelMenuClose();
-    menuCloseTimerRef.current = window.setTimeout(() => {
-      setOpenMenuCategory(null);
-      setOpenMenuAnchorRect(null);
-      menuCloseTimerRef.current = null;
-    }, 260);
-  };
-
-  /*
-   * Build the active visualization registry. Mapping, Network, Charts, and
-   * Explore are direct header actions; Export remains the only dropdown.
-   */
   const toolDefinitions = useMemo(() => ({
-    /*
-     * Geographic mapping is now one user-facing visualization. Generalized
-     * entity/place geography is authoritative when available, with the older
-     * point/route projection retained only as a compatibility fallback.
-     */
     [VISUALIZATION_TOOLS.GEOGRAPHIC_MAP]: {
       label: 'Geographic Map',
-      category: 'Mapping',
       available: availability.hasPointMap || availability.hasRouteMap || availability.hasEntityNetwork,
       action: onSelectGeographicMap,
       unavailableTitle: 'Geographic Map is not available for this dataset.',
@@ -1134,7 +1057,6 @@ export function PeridotVisualizationsWorkspace({
     },
     [VISUALIZATION_TOOLS.FORCE_NETWORK]: {
       label: 'Force-Directed Network',
-      category: 'Network Visualizations',
       available: availability.hasForceNetwork,
       action: onSelectForceDirected,
       unavailableTitle: 'Force-Directed Network is not available for this dataset.',
@@ -1147,7 +1069,6 @@ export function PeridotVisualizationsWorkspace({
     },
     [VISUALIZATION_TOOLS.TIMELINE_WORKSPACE]: {
       label: 'Timeline',
-      category: 'Timeline',
       available: availability.hasTimeline,
       action: onSelectTimeline,
       unavailableTitle: 'Timeline is not available for this dataset.',
@@ -1161,7 +1082,6 @@ export function PeridotVisualizationsWorkspace({
     },
     [VISUALIZATION_TOOLS.CHART_WORKSPACE]: {
       label: 'Chart Visualizations',
-      category: 'Chart Visualizations',
       available: availability.hasCharts,
       action: onOpenAnalytics,
       unavailableTitle: 'Chart Visualizations are not available for this dataset.',
@@ -1171,46 +1091,32 @@ export function PeridotVisualizationsWorkspace({
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
     },
-    [VISUALIZATION_TOOLS.CAPABILITY_SUMMARY]: {
-      label: 'Tool Availability',
-      category: 'Explore Your Data',
-      available: true,
-      action: onOpenExplore,
-      unavailableTitle: '',
-      why: '',
-      availableInstead: [],
-    },
-  }), [availability.hasCharts, availability.hasEntityNetwork, availability.hasExploreData, availability.hasForceNetwork, availability.hasNetwork, availability.hasPointMap, availability.hasRouteMap, availability.hasTimeline, onOpenAnalytics, onOpenExplore, onSelectForceDirected, onSelectGeographicMap, onSelectTimeline]);
+  }), [
+    availability.hasCharts,
+    availability.hasEntityNetwork,
+    availability.hasExploreData,
+    availability.hasForceNetwork,
+    availability.hasPointMap,
+    availability.hasRouteMap,
+    availability.hasTimeline,
+    onOpenAnalytics,
+    onSelectForceDirected,
+    onSelectGeographicMap,
+    onSelectTimeline,
+  ]);
 
-  const selectedDefinition = toolDefinitions[selectedTool] || toolDefinitions[VISUALIZATION_TOOLS.CAPABILITY_SUMMARY];
+  const selectedDefinition = toolDefinitions[selectedTool] || toolDefinitions[VISUALIZATION_TOOLS.GEOGRAPHIC_MAP];
   const activeVisualizationLabel = selectedDefinition.label;
 
   const categories = [
-    {
-      label: 'Mapping',
-      tool: VISUALIZATION_TOOLS.GEOGRAPHIC_MAP,
-    },
-    {
-      label: 'Network',
-      tool: VISUALIZATION_TOOLS.FORCE_NETWORK,
-    },
-    {
-      label: 'Timeline',
-      tool: VISUALIZATION_TOOLS.TIMELINE_WORKSPACE,
-    },
-    {
-      label: 'Charts',
-      tool: VISUALIZATION_TOOLS.CHART_WORKSPACE,
-    },
-    {
-      label: 'Explore',
-      directAction: onOpenExplore,
-    },
+    { label: 'Map', tool: VISUALIZATION_TOOLS.GEOGRAPHIC_MAP },
+    { label: 'Network', tool: VISUALIZATION_TOOLS.FORCE_NETWORK },
+    { label: 'Timeline', tool: VISUALIZATION_TOOLS.TIMELINE_WORKSPACE },
+    { label: 'Charts', tool: VISUALIZATION_TOOLS.CHART_WORKSPACE },
   ];
 
   const selectTool = (toolKey) => {
     const tool = toolDefinitions[toolKey];
-    closeMenu();
 
     if (stageSwitchTimerRef.current) {
       window.clearTimeout(stageSwitchTimerRef.current);
@@ -1228,11 +1134,10 @@ export function PeridotVisualizationsWorkspace({
     }
 
     /*
-     * Keep a brief transition veil so an expensive visualization can mount
-     * without flashing intermediate geometry, but do not impose the previous
-     * one-second artificial wait. The stage itself is no longer force-remounted;
-     * preserving the component boundary lets map viewport memory and memoized
-     * derivations survive ordinary visualization switches.
+     * Preserve the existing short stage veil while the shared Peridot loading
+     * transition handles the visible heavy switch. Do not force-remount the
+     * stage: viewport memory and workspace-local state rely on the stable
+     * component boundary introduced in the navigation persistence pass.
      */
     setIsStageSwitching(true);
     stageSwitchTimerRef.current = window.setTimeout(() => {
@@ -1248,47 +1153,18 @@ export function PeridotVisualizationsWorkspace({
   };
 
   const isCategorySelected = (category) => {
-    if (!category.tool) return false;
     if (category.tool === VISUALIZATION_TOOLS.CHART_WORKSPACE) {
       return selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || Boolean(chartTypeFromToolKey(selectedTool));
     }
     return selectedTool === category.tool;
   };
 
-  const headerTabBaseClass = [
-    'inline-flex h-10 w-[144px] items-center justify-center rounded-full border px-3 text-center',
-    'text-[11px] font-extrabold uppercase tracking-[0.15em] transition duration-150',
-    'focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
-  ].join(' ');
-
-  const headerEntranceClass = () => (hasHeaderEntranceSettled ? '' : 'peridot-appear-fade');
-  const headerEntranceStyle = (delay) => (hasHeaderEntranceSettled ? undefined : { '--peridot-appear-delay': delay });
-  const categoryClass = () => ['relative rounded-full', headerEntranceClass()].filter(Boolean).join(' ');
-
-  const headerTabStateClass = (open, selected) => [
+  const tabClass = (selected) => [
+    'relative inline-flex h-9 items-center justify-center border-b-2 px-3 text-[11px] font-extrabold uppercase tracking-[0.14em] transition duration-150',
+    'focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
     selected
-      ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-b58b42)] text-[var(--peridot-color-hex-fff8e8)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a40),0_10px_24px_var(--peridot-color-rgba-rgba-0-0-0-0-28),0_0_0_1px_var(--peridot-color-hex-d6a36a-a35)]'
-      : open
-        ? 'border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-b58b42-a55)] text-[var(--peridot-color-hex-fff8e8)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a24),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-20)]'
-        : 'border-[var(--peridot-color-hex-dfe9c8-a36)] bg-[var(--peridot-color-hex-dfe9c8-a08)] text-[var(--peridot-color-hex-f5ecd2)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a10)] hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-b58b42-a30)] hover:text-[var(--peridot-color-hex-fff8e8)] hover:shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a20),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-18)]',
-  ].join(' ');
-
-  const headerActionClass = [
-    headerTabBaseClass,
-    'border-[var(--peridot-color-hex-dfe9c8-a36)] bg-[var(--peridot-color-hex-dfe9c8-a08)]',
-    'text-[var(--peridot-color-hex-f5ecd2)] shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a10)]',
-    'hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-b58b42-a30)] hover:text-[var(--peridot-color-hex-fff8e8)] hover:shadow-[inset_0_1px_0_var(--peridot-color-hex-fff8e8-a20),0_8px_18px_var(--peridot-color-rgba-rgba-0-0-0-0-18)]',
-  ].join(' ');
-
-  const headerRowDecalClass = 'hidden h-5 w-5 shrink-0 text-[var(--peridot-role-ornament-line)] opacity-80 xl:block';
-
-  const menuItemClass = (active, available) => [
-    'flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm transition focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
-    active
-      ? 'bg-[var(--peridot-color-hex-b58b42)] font-bold text-[var(--peridot-color-hex-fff8e8)] shadow-inner'
-      : available
-        ? 'text-[var(--peridot-color-hex-1d3326)] hover:bg-[var(--peridot-color-hex-dfe9c8)]'
-        : 'text-[var(--peridot-color-hex-4f4330)] hover:bg-[var(--peridot-color-hex-f3e4bf)]',
+      ? 'border-[var(--peridot-role-ornament-line)] text-[var(--peridot-color-hex-fff8e8)]'
+      : 'border-transparent text-[var(--peridot-color-hex-dfe9c8)] hover:border-[var(--peridot-color-hex-dfe9c8-a45)] hover:text-[var(--peridot-color-hex-fff8e8)]',
   ].join(' ');
 
   const counts = [
@@ -1303,10 +1179,6 @@ export function PeridotVisualizationsWorkspace({
   const activeExportControls = isChartWorkspaceActive ? chartExportControls : exportControls;
 
   const renderWorkspaceBody = () => {
-    if (selectedTool === VISUALIZATION_TOOLS.CAPABILITY_SUMMARY) {
-      return <CapabilitySummaryWorkspace availability={availability} onOpenSearch={onOpenSearch} />;
-    }
-
     if (!selectedDefinition.available) {
       return (
         <UnavailableVisualizationState
@@ -1324,7 +1196,7 @@ export function PeridotVisualizationsWorkspace({
 
     if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
       return (
-        <div className="peridot-analytics-workspace peridot-illuminated-panel min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--peridot-color-rgba-rgba-8-39-25-0-9)] p-2 shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm md:p-3">
+        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden rounded-xl border border-[var(--peridot-color-hex-c4e0ef-a35)] bg-[var(--peridot-color-rgba-rgba-8-39-25-0-88)] p-2 md:p-3">
           <AnalyticsPanelContent
             analyticsState={analyticsWorkspaceProps.analyticsState}
             onChartExportControlsChange={setChartExportControls}
@@ -1334,7 +1206,7 @@ export function PeridotVisualizationsWorkspace({
     }
 
     return (
-      <div className="peridot-map-plate relative flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--map-water)] shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]">
+      <div className="peridot-map-plate relative flex min-h-0 flex-1 overflow-hidden rounded-xl border border-[var(--peridot-color-hex-c4e0ef-a35)] bg-[var(--map-water)]">
         <MapStageComponent {...mapStageProps} />
         {selectedTool === VISUALIZATION_TOOLS.GEOGRAPHIC_MAP ? (
           <GeographicMapSettingsPanel controls={geographicAnchorControls} />
@@ -1345,124 +1217,56 @@ export function PeridotVisualizationsWorkspace({
 
   return (
     <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--peridot-color-hex-04160f)] text-[var(--peridot-color-hex-fbf7ea)]">
-      <div className="peridot-workspace-field flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="relative z-0 flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
-          <div
-            ref={headerToggleAnchorRef}
-            className={[
-              'peridot-appear-rise peridot-appear-delay-0 peridot-illuminated-panel relative z-[850] shrink-0 rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a70)] bg-[linear-gradient(135deg,var(--peridot-color-rgba-rgba-8-39-25-0-95),var(--peridot-color-rgba-rgba-5-29-19-0-96))] pl-[76px] shadow-[0_18px_46px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm sm:pl-[80px]',
-              isHeaderExpanded ? 'px-4 pb-4 pt-3' : 'px-4 py-2',
-            ].join(' ')}
+      <header className="relative shrink-0 border-b border-[var(--peridot-color-hex-dfe9c8-a20)] px-4">
+        <div className="flex min-h-10 min-w-0 items-center justify-center">
+          <nav
+            className="flex min-w-0 items-center justify-center gap-1"
+            aria-label="Visualization modes"
           >
-            {isHeaderExpanded ? (
-              <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-                <div className="min-w-0">
-                  <p className="peridot-kicker !mb-0 text-[10px]">Visualization workspace</p>
-                  <h1 className="mt-1 truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold tracking-[-0.035em] text-[var(--peridot-color-hex-f5ecd2)] md:text-3xl">
-                    {activeVisualizationLabel}
-                  </h1>
-                </div>
+            {categories.map((category) => {
+              const selected = isCategorySelected(category);
+              return (
+                <button
+                  key={category.label}
+                  type="button"
+                  className={tabClass(selected)}
+                  onClick={() => selectTool(category.tool)}
+                  aria-current={selected ? 'page' : undefined}
+                >
+                  {category.label}
+                </button>
+              );
+            })}
+          </nav>
 
-                <div className="flex flex-wrap items-center justify-end gap-2">
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className={[headerEntranceClass(), headerRowDecalClass].filter(Boolean).join(' ')} style={headerEntranceStyle('1120ms')} fill="none">
-                    <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
-                    <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
-                  </svg>
-                  {categories.map((category) => {
-                    const selected = isCategorySelected(category);
-                    const delay = {
-                      Mapping: '1040ms',
-                      Network: '920ms',
-                      Timeline: '800ms',
-                      Charts: '680ms',
-                      Explore: '560ms',
-                    }[category.label];
-                    const handleClick = () => {
-                      closeMenu();
-                      if (category.directAction) {
-                        category.directAction();
-                        return;
-                      }
-                      if (category.tool) selectTool(category.tool);
-                    };
-                    return (
-                      <button
-                        key={category.label}
-                        type="button"
-                        className={[headerEntranceClass(), `${headerTabBaseClass} ${headerTabStateClass(false, selected)}`].filter(Boolean).join(' ')}
-                        style={headerEntranceStyle(delay)}
-                        onClick={handleClick}
-                        aria-current={selected ? 'page' : undefined}
-                      >
-                        {category.label}
-                      </button>
-                    );
-                  })}
-                  <div className={headerEntranceClass()} style={headerEntranceStyle('560ms')}>
-                    <VisualizationExportMenu
-                      exportControls={activeExportControls}
-                      activeVisualizationLabel={activeVisualizationLabel}
-                      compact
-                    />
-                  </div>
-                  <svg aria-hidden="true" viewBox="0 0 20 20" className={[headerEntranceClass(), headerRowDecalClass, 'scale-x-[-1]'].filter(Boolean).join(' ')} style={headerEntranceStyle('460ms')} fill="none">
-                    <path d="M10 2.5C8.6 6.1 6.1 8.6 2.5 10C6.1 11.4 8.6 13.9 10 17.5C11.4 13.9 13.9 11.4 17.5 10C13.9 8.6 11.4 6.1 10 2.5Z" fill="currentColor" />
-                    <path d="M5.2 10H14.8" stroke="var(--peridot-role-interface-panel-background-strong)" strokeWidth="1.2" strokeLinecap="round" opacity="0.55" />
-                  </svg>
-                </div>
-              </div>
-            ) : (
-              <div className="flex h-8 items-center justify-between gap-3">
-                <div className="min-w-0">
-                  <span className="peridot-kicker !mb-0 mr-3 inline text-[9px] text-[var(--peridot-color-hex-dfe9c8)]">Visualization workspace</span>
-                  <span className="truncate text-sm font-bold text-[var(--peridot-color-hex-f5ecd2)]">{activeVisualizationLabel}</span>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <div className={headerEntranceClass()} style={headerEntranceStyle('560ms')}>
-                    <VisualizationExportMenu
-                      exportControls={activeExportControls}
-                      activeVisualizationLabel={activeVisualizationLabel}
-                      compact
-                    />
-                  </div>
-                  <span className={[headerEntranceClass(), 'rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-1 text-[11px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]'].filter(Boolean).join(' ')} style={headerEntranceStyle('720ms')}>
-                    Navigation minimized
-                  </span>
-                </div>
-              </div>
-            )}
-            {!suppressFloatingFrameToggles ? (
-              <FloatingOrnamentArrowToggle
-                anchorRef={headerToggleAnchorRef}
-                placement="bottom"
-                expanded={isHeaderExpanded}
-                onClick={() => setIsHeaderExpanded((value) => !value)}
-                expandedLabel="Hide visualization header"
-                collapsedLabel="Show visualization header"
-                expandedArrow="⌃"
-                collapsedArrow="⌄"
+          {activeExportControls ? (
+            <div className="absolute right-4 top-1/2 shrink-0 -translate-y-1/2">
+              <VisualizationExportMenu
+                exportControls={activeExportControls}
+                activeVisualizationLabel={activeVisualizationLabel}
+                compact
               />
-            ) : null}
-          </div>
-
-          <div className="relative z-[20] flex min-h-0 flex-1 flex-col gap-3" onMouseEnter={scheduleMenuClose}>
-            <div
-              className={[
-                'peridot-appear-soft peridot-appear-delay-5 peridot-visualization-stage-transition-shell min-h-0 flex flex-1',
-                isStageSwitching ? 'peridot-visualization-stage-transition-active' : '',
-              ].join(' ')}
-            >
-              <div className="peridot-visualization-stage-transition-content min-h-0 flex flex-1">
-                {renderWorkspaceBody()}
-              </div>
             </div>
-            {timelineControlsProps ? (
-              <div className="peridot-appear-rise peridot-appear-delay-3 peridot-visualization-timeline-sequence shrink-0">
-                <VisualizationTimelineScrubber {...timelineControlsProps} />
-              </div>
-            ) : null}
+          ) : null}
+        </div>
+      </header>
+
+      <div className="relative z-[20] flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-3">
+        <div
+          className={[
+            'peridot-visualization-stage-transition-shell min-h-0 flex flex-1',
+            isStageSwitching ? 'peridot-visualization-stage-transition-active' : '',
+          ].join(' ')}
+        >
+          <div className="peridot-visualization-stage-transition-content min-h-0 flex flex-1">
+            {renderWorkspaceBody()}
           </div>
         </div>
+        {timelineControlsProps ? (
+          <div className="peridot-visualization-timeline-sequence shrink-0">
+            <VisualizationTimelineScrubber {...timelineControlsProps} />
+          </div>
+        ) : null}
       </div>
     </section>
   );
