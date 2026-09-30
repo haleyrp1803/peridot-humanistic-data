@@ -3041,3 +3041,236 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Navigation redesign Pass 4 — page normalization
+ * -------------------------------------------------
+ * The global application header now supplies the outer shell and cross-workspace
+ * navigation. Explore therefore behaves like a normal section page rather than
+ * a framed application nested inside another application. Inner panels continue
+ * to provide functional grouping; this pass only flattens the page-level chrome.
+ */
+.peridot-search-workspace {
+  background: transparent;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.peridot-search-workspace .peridot-search-page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.15rem 0.35rem 0.85rem;
+  border-bottom: 1px solid rgba(221, 187, 105, 0.28);
+  background: transparent;
+}
+
+.peridot-search-workspace .peridot-search-page-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.peridot-search-workspace .peridot-search-workspace-title {
+  margin: 0;
+}
+
+.peridot-search-workspace .peridot-search-workspace-subtitle {
+  margin-bottom: 0;
+}
+
+.peridot-search-workspace .peridot-search-status-message {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(221, 187, 105, 0.20);
+  background: rgba(199, 155, 61, 0.16);
+  padding: 0.5rem 0.35rem;
+}
+
+.peridot-search-workspace .peridot-search-step-rail {
+  gap: 0.55rem;
+  border-top: 0;
+  border-bottom: 1px solid rgba(221, 187, 105, 0.24);
+  background: transparent;
+  padding: 0.62rem 0.35rem 0.7rem;
+}
+
+.peridot-search-workspace .peridot-search-step-button {
+  box-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-step-button-active,
+.peridot-search-workspace .peridot-search-step-button-active:hover {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.peridot-search-workspace .peridot-search-page-body {
+  min-height: 0;
+  border: 0;
+  background: transparent;
+  padding: 0.85rem 0 0;
+  box-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-active-surface {
+  position: relative;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--explore-text-on-dark);
+  box-shadow: none;
+  padding: 0;
+}
+
+@media (max-width: 900px) {
+  .peridot-search-workspace .peridot-search-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .peridot-search-workspace .peridot-search-page-actions {
+    justify-content: flex-start;
+  }
+}
+
+/* Navigation redesign Pass 4.1 — three-mode Explore workspace
+ * ------------------------------------------------------------
+ * Explore now follows the same two-level navigation pattern as Visualize.
+ * Results are presented with Advanced Query; capability review is contextual
+ * to Refine rather than occupying primary workspace navigation.
+ */
+.peridot-search-workspace {
+  padding: 0 1rem 1rem;
+}
+
+.peridot-search-workspace .peridot-search-mode-bar {
+  position: relative;
+  display: flex;
+  min-height: 2.85rem;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(221, 187, 105, 0.24);
+  background: var(--explore-shell);
+  margin: 0 -1rem;
+  padding: 0 1rem;
+}
+
+.peridot-search-workspace .peridot-search-mode-nav {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.peridot-search-workspace .peridot-search-mode-bar .peridot-search-step-button {
+  position: relative;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--explore-text-on-dark);
+  padding: 0.9rem 0.95rem 0.78rem;
+  box-shadow: none;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.peridot-search-workspace .peridot-search-mode-bar .peridot-search-step-button:hover {
+  transform: none;
+  border: 0;
+  background: transparent;
+  color: var(--explore-gold-soft);
+}
+
+.peridot-search-workspace .peridot-search-mode-bar .peridot-search-step-button::after {
+  content: '';
+  position: absolute;
+  left: 0.7rem;
+  right: 0.7rem;
+  bottom: 0;
+  height: 2px;
+  background: transparent;
+}
+
+.peridot-search-workspace .peridot-search-mode-bar .peridot-search-step-button-active,
+.peridot-search-workspace .peridot-search-mode-bar .peridot-search-step-button-active:hover {
+  border: 0;
+  background: transparent;
+  color: var(--explore-text-on-dark);
+  box-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-mode-bar .peridot-search-step-button-active::after {
+  background: var(--explore-gold-light);
+}
+
+.peridot-search-workspace .peridot-search-mode-bar .peridot-search-page-actions {
+  position: absolute;
+  right: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.42rem;
+}
+
+.peridot-search-workspace .peridot-search-mode-bar .peridot-search-page-actions .peridot-search-button {
+  padding: 0.42rem 0.78rem;
+  font-size: 0.66rem;
+  box-shadow: none;
+}
+
+.peridot-search-workspace .peridot-search-status-message {
+  margin: 0 -1rem;
+  padding-inline: 1rem;
+}
+
+.peridot-search-workspace .peridot-search-page-body {
+  padding-top: 0.78rem;
+}
+
+.peridot-search-workspace .peridot-search-step-number {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .peridot-search-workspace .peridot-search-mode-bar {
+    justify-content: flex-start;
+    padding-right: 1rem;
+  }
+
+  .peridot-search-workspace .peridot-search-mode-bar .peridot-search-page-actions {
+    position: static;
+    margin-left: auto;
+    transform: none;
+  }
+}
+
+/* Navigation redesign Pass 4.2 — Peridot palette + mode order
+ * ------------------------------------------------------------
+ * Keep Explore on the same dark-green application surface as the other
+ * workspaces. Cream is reserved for forms/results and gold for active/action
+ * accents rather than used as the page background.
+ */
+.peridot-search-workspace {
+  background: var(--explore-shell);
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-page-body,
+.peridot-search-workspace .peridot-search-active-surface {
+  background: var(--explore-shell);
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-section-title,
+.peridot-search-workspace .peridot-search-section-description {
+  color: var(--explore-text-on-dark);
+}
+
+.peridot-search-workspace .peridot-search-section-description {
+  color: var(--explore-muted-on-dark);
+}

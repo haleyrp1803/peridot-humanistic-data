@@ -85,8 +85,6 @@ import { getPeridotRowEntityParticipants, getPeridotRowEntityRelationshipLabels,
 import { PeridotRecordStructure } from './PeridotRecordStructure.jsx';
 import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 
-const SHELL_CLASS = 'peridot-search-folio-shell';
-const CARD_CLASS = 'peridot-search-tab-card';
 const PANEL_INSET_CLASS = 'peridot-search-panel peridot-search-panel-inset peridot-search-panel-cream';
 const FIELD_LABEL_CLASS = 'peridot-search-field-label block text-[0.62rem] font-black uppercase tracking-[0.14em]';
 const MUTED_TEXT_CLASS = 'peridot-search-helper-text text-sm leading-5';
@@ -948,7 +946,7 @@ function ExploreDivider({ className = '' }) {
   );
 }
 
-function SearchTabButton({ id, stepNumber, label, summary, active, onClick }) {
+function SearchTabButton({ id, label, summary, active, onClick }) {
   return (
     <button
       type="button"
@@ -956,7 +954,6 @@ function SearchTabButton({ id, stepNumber, label, summary, active, onClick }) {
       title={summary}
       className={`peridot-search-step-button peridot-search-step-button-${id} ${active ? 'peridot-search-step-button-active' : ''}`}
     >
-      <span className="peridot-search-step-number">{stepNumber}</span>
       <span className="peridot-search-step-label">{label}</span>
     </button>
   );
@@ -1448,7 +1445,6 @@ export function PeridotSearchWorkspace({
   setTimelineMode,
   setIsPlaying,
   setPlaybackIndex,
-  onOpenVisualizations,
 }) {
   const getAppliedStartYear = () => String(timelineMonths[rangeStart] || '').slice(0, 4);
   const getAppliedEndYear = () => String(timelineMonths[rangeEnd] || '').slice(0, 4);
@@ -1919,7 +1915,7 @@ export function PeridotSearchWorkspace({
       }
       setIsPlaying(false);
       setPlaybackIndex(-1);
-      setActiveTab('results');
+      setActiveTab('build');
     });
   };
 
@@ -1932,7 +1928,7 @@ export function PeridotSearchWorkspace({
 
   const renderBuildSearch = () => (
     <div className="peridot-search-build-view space-y-4">
-      <SectionHeader eyebrow="Step 1" title="Build Search">
+      <SectionHeader title="Build Search">
         Draft changes do not affect maps, charts, export, or Inspector until Apply Filters is pressed.
       </SectionHeader>
       <ExploreDivider />
@@ -2119,7 +2115,7 @@ export function PeridotSearchWorkspace({
   const renderBrowse = () => (
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <SectionHeader eyebrow="Step 2" title="Browse Indexes">
+        <SectionHeader title="Browse Indexes">
           Browse uses the full loaded dataset, not just the current result set. Choose an item to seed draft search criteria, then apply filters.
         </SectionHeader>
         <div className="peridot-search-heading-pill rounded-full border px-3 py-1.5 text-xs font-black shadow-sm shadow-black/5">
@@ -2156,7 +2152,7 @@ export function PeridotSearchWorkspace({
     return (
       <div className="peridot-search-results-tab space-y-4">
         <div className="peridot-search-results-header flex flex-wrap items-start justify-between gap-3">
-          <SectionHeader eyebrow="Step 3" title="Search Results">
+          <SectionHeader title="Current Results">
             Compact ledger rows reflect the current applied dataset. Use Inspect to open a record in the full Inspector workspace.
           </SectionHeader>
           <div className="peridot-search-heading-pill flex flex-wrap items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black shadow-sm shadow-black/5">
@@ -2266,7 +2262,7 @@ export function PeridotSearchWorkspace({
 
     return (
       <div className="space-y-4">
-        <SectionHeader eyebrow="Step 5" title="Capabilities">
+        <SectionHeader title="Dataset Capabilities">
           Review what the loaded and applied records can support before moving into visualizations, charts, export, or Inspector evidence review.
         </SectionHeader>
         <ExploreDivider />
@@ -2336,7 +2332,7 @@ export function PeridotSearchWorkspace({
 
   const renderRefineInspect = () => (
     <div className="peridot-search-refine-view space-y-4">
-      <SectionHeader eyebrow="Step 4" title="Refine / Inspect">
+      <SectionHeader title="Refine Results">
         Facets summarize the applied result set. Evidence values remain grouped under their mapped field headings so a Language or custom-category refinement stays precise. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>
       <ExploreDivider />
@@ -2344,7 +2340,7 @@ export function PeridotSearchWorkspace({
       <div className={PANEL_INSET_CLASS + ' p-3'}>
         <div className={FIELD_LABEL_CLASS}>Inspector handoff</div>
         <p className="peridot-search-helper-text mt-1 text-sm leading-5">
-          Use <span className="peridot-search-inline-strong font-black">Inspect</span> on a result card to open the record in the full evidence workspace. Dataset capability information now lives in the <span className="peridot-search-inline-strong font-black">Capabilities</span> tab.
+          Use <span className="peridot-search-inline-strong font-black">Inspect</span> on a result card to open the record in the full evidence workspace. Dataset capability information appears below the refinement facets.
         </p>
       </div>
       <ExploreDivider />
@@ -2377,97 +2373,69 @@ export function PeridotSearchWorkspace({
   );
 
   return (
-    <section className="peridot-search-workspace peridot-search-workspace-animated min-h-full px-6 py-5">
-      <div className="mx-auto max-w-[1380px]">
-        <div className={`${SHELL_CLASS} peridot-search-enter-shell`}>
-          <header className="peridot-search-folio-header peridot-search-enter-header">
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="min-w-0 max-w-3xl">
-                <div className="peridot-search-workspace-kicker text-[0.62rem] font-black uppercase tracking-[0.24em]">Explore workspace</div>
-                <h1 className="peridot-search-workspace-title mt-1.5 font-serif text-[clamp(2rem,3.2vw,3rem)] font-black leading-none tracking-[-0.045em]">
-                  Advanced Search
-                </h1>
-                <p className="peridot-search-workspace-subtitle mt-2 max-w-3xl text-sm leading-6">
-                  Build a draft query, browse indexes, review results, refine scope, check capabilities, and open records in Inspector.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 xl:justify-end">
-                <button type="button" onClick={onOpenVisualizations} className={SECONDARY_BUTTON_CLASS}>
-                  Open visualizations
-                </button>
-                <button type="button" onClick={clearFilters} className={SECONDARY_BUTTON_CLASS}>
-                  Clear Filters
-                </button>
-                <button type="button" onClick={applyDraftFilters} className={PRIMARY_BUTTON_CLASS}>
-                  Apply Filters
-                </button>
-              </div>
-            </div>
+    <section className="peridot-search-workspace peridot-search-workspace-animated min-h-full">
+      <div className="peridot-search-mode-bar peridot-search-enter-step-rail">
+        <nav className="peridot-search-mode-nav" aria-label="Explore workspace modes">
+          <SearchTabButton
+            id="browse"
+            label="Browse"
+            summary="Browse dataset-wide people, places, routes, and evidence"
+            active={activeTab === 'browse'}
+            onClick={setActiveTab}
+          />
+          <SearchTabButton
+            id="build"
+            label="Advanced Query"
+            summary="Build and apply structured search criteria"
+            active={activeTab === 'build'}
+            onClick={setActiveTab}
+          />
+          <SearchTabButton
+            id="refine"
+            label="Refine"
+            summary="Refine the current result set and review dataset capabilities"
+            active={activeTab === 'refine'}
+            onClick={setActiveTab}
+          />
+        </nav>
 
-          </header>
-
-          {filterStatusMessage ? (
-            <div className="peridot-search-status-message">
-              {filterStatusMessage}
-            </div>
-          ) : null}
-
-          <nav className="peridot-search-step-rail peridot-search-enter-step-rail" aria-label="Advanced Search workflow tabs">
-            <SearchTabButton
-              id="build"
-              stepNumber="1"
-              label="Build"
-              summary="Draft criteria and capability filters"
-              active={activeTab === 'build'}
-              onClick={setActiveTab}
-            />
-            <SearchTabButton
-              id="browse"
-              stepNumber="2"
-              label="Browse"
-              summary="Dataset-wide people, places, routes, and evidence"
-              active={activeTab === 'browse'}
-              onClick={setActiveTab}
-            />
-            <SearchTabButton
-              id="results"
-              stepNumber="3"
-              label="Results"
-              summary={`${searchRows?.length || 0} records currently applied`}
-              active={activeTab === 'results'}
-              onClick={setActiveTab}
-            />
-            <SearchTabButton
-              id="refine"
-              stepNumber="4"
-              label="Refine"
-              summary="Facet counts and Inspector guidance"
-              active={activeTab === 'refine'}
-              onClick={setActiveTab}
-            />
-            <SearchTabButton
-              id="capabilities"
-              stepNumber="5"
-              label="Capabilities"
-              summary="What this data can do"
-              active={activeTab === 'capabilities'}
-              onClick={setActiveTab}
-            />
-          </nav>
-
-          <main className="peridot-search-folio-body peridot-search-enter-body">
-            <div className={CARD_CLASS + ' peridot-search-active-card p-4'}>
-              <div key={activeTab} className={`peridot-search-tab-motion peridot-search-tab-motion-${activeTab}`}>
-                {activeTab === 'build' ? renderBuildSearch() : null}
-                {activeTab === 'browse' ? renderBrowse() : null}
-                {activeTab === 'results' ? renderResults() : null}
-                {activeTab === 'refine' ? renderRefineInspect() : null}
-                {activeTab === 'capabilities' ? renderCapabilities() : null}
-              </div>
-            </div>
-          </main>
+        <div className="peridot-search-page-actions">
+          <button type="button" onClick={clearFilters} className={SECONDARY_BUTTON_CLASS}>
+            Clear Filters
+          </button>
+          <button type="button" onClick={applyDraftFilters} className={PRIMARY_BUTTON_CLASS}>
+            Apply Filters
+          </button>
         </div>
       </div>
+
+      {filterStatusMessage ? (
+        <div className="peridot-search-status-message">
+          {filterStatusMessage}
+        </div>
+      ) : null}
+
+      <main className="peridot-search-page-body peridot-search-enter-body">
+        <div className="peridot-search-active-surface">
+          <div key={activeTab} className={`peridot-search-tab-motion peridot-search-tab-motion-${activeTab}`}>
+            {activeTab === 'build' ? (
+              <>
+                {renderBuildSearch()}
+                <ExploreDivider />
+                {renderResults()}
+              </>
+            ) : null}
+            {activeTab === 'browse' ? renderBrowse() : null}
+            {activeTab === 'refine' ? (
+              <>
+                {renderRefineInspect()}
+                <ExploreDivider />
+                {renderCapabilities()}
+              </>
+            ) : null}
+          </div>
+        </div>
+      </main>
     </section>
   );
 }
