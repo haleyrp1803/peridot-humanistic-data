@@ -152,9 +152,7 @@ export function PeridotTutorial({
   inspectorPresentationMode = 'closed',
   workspaceMode = '',
   tutorialCapabilities = {},
-  isMainMenuOpen = false,
   onReturnToStepWorkspace,
-  onOpenMainMenu,
   onOpenExplore,
   onCloseInspector,
   onExpandInspector,
@@ -299,17 +297,11 @@ export function PeridotTutorial({
             : '',
           placement: step?.reachedAnchorPlacement,
         }
-      : isMainMenuOpen
-        ? {
-            selector: step?.openAnchorSelector,
-            matchText: step?.openAnchorMatchText,
-            placement: step?.openAnchorPlacement,
-          }
-          : {
-              selector: step?.closedAnchorSelector,
-              matchText: step?.closedAnchorMatchText,
-              placement: step?.closedAnchorPlacement,
-            }
+      : {
+          selector: step?.closedAnchorSelector,
+          matchText: step?.closedAnchorMatchText,
+          placement: step?.closedAnchorPlacement,
+        }
     : isInspectorStep
       ? isFullInspectorOpen
       ? {
@@ -357,7 +349,7 @@ export function PeridotTutorial({
     attentionActive: isAttentionCueVisible && isInteractionPending,
     attentionMode,
     describedById: 'peridot-tutorial-description',
-    resetKey: `${step?.id}:${dialogueFrameIndex}:${isMinimized ? 'minimized' : 'open'}:${inspectorPresentationMode}:${hasActiveInspectorSelection ? 'selected' : 'unselected'}:${workspaceMode}:${isMainMenuOpen ? 'menu-open' : 'menu-closed'}:${hasActivatedExploreRoute ? 'explore-activated' : 'explore-pending'}:${isCapabilityUnavailable ? 'unavailable' : 'available'}`,
+    resetKey: `${step?.id}:${dialogueFrameIndex}:${isMinimized ? 'minimized' : 'open'}:${inspectorPresentationMode}:${hasActiveInspectorSelection ? 'selected' : 'unselected'}:${workspaceMode}:${hasActivatedExploreRoute ? 'explore-activated' : 'explore-pending'}:${isCapabilityUnavailable ? 'unavailable' : 'available'}`,
   });
 
   useEffect(() => {
@@ -388,7 +380,6 @@ export function PeridotTutorial({
     hasReachedExplore,
     isCapabilityUnavailable,
     isDialogueAnchorReady,
-    isMainMenuOpen,
     isMinimized,
     isWorkspaceMismatch,
     searchTutorialPhase,
@@ -598,7 +589,7 @@ export function PeridotTutorial({
     if (isExploreNavigationStep) {
       if (isInspectorOpenDuringExplore) return step.inspectorPrompt;
       if (hasReachedExplore) return step.reachedText;
-      return isMainMenuOpen ? step.menuOpenPrompt : step.menuClosedPrompt;
+      return step.navigationPrompt || 'Choose Explore in the persistent navigation at the top of the page.';
     }
 
     if (isSearchBrowseApplyStep) {
@@ -795,9 +786,7 @@ export function PeridotTutorial({
             ? 'inspector-open'
             : hasReachedExplore
               ? 'reached'
-              : isMainMenuOpen
-                ? 'menu-open'
-                : 'menu-closed'
+              : 'pending'
           : undefined
       }
       data-peridot-tutorial-search-phase={isSearchBrowseApplyStep ? searchTutorialPhase : undefined}
@@ -882,13 +871,13 @@ export function PeridotTutorial({
         </button>
       ) : null}
 
-      {!isDialogueIntro && !isWorkspaceMismatch && !isCapabilityUnavailable && isExploreNavigationStep && !isInspectorOpenDuringExplore && !hasReachedExplore && !isMainMenuOpen ? (
+      {!isDialogueIntro && !isWorkspaceMismatch && !isCapabilityUnavailable && isExploreNavigationStep && !isInspectorOpenDuringExplore && !hasReachedExplore ? (
         <button
           type="button"
           className="peridot-tutorial-inline-action"
-          onClick={onOpenMainMenu}
+          onClick={onOpenExplore}
         >
-          Open main menu
+          Open Explore
         </button>
       ) : null}
 

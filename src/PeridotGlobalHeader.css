@@ -1,0 +1,96 @@
+.peridot-global-header {
+  position: relative;
+  z-index: 220;
+  display: flex;
+  min-height: 62px;
+  flex: 0 0 62px;
+  align-items: center;
+  gap: 1.6rem;
+  border-bottom: 1px solid var(--peridot-color-hex-dfe9c8-a22);
+  background: linear-gradient(90deg, var(--peridot-color-hex-03120c), var(--peridot-role-interface-app-background));
+  padding: 0.35rem 1.4rem 0.35rem 1rem;
+  color: var(--peridot-color-hex-fbf7ea);
+  box-shadow: 0 8px 28px var(--peridot-color-rgba-rgba-0-0-0-0-18);
+}
+
+.peridot-global-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.55rem;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--peridot-color-hex-f5ecd2);
+  cursor: pointer;
+}
+
+.peridot-global-brand:focus-visible,
+.peridot-global-nav-link:focus-visible {
+  outline: 2px solid var(--peridot-role-interface-focus-ring);
+  outline-offset: 3px;
+}
+
+.peridot-global-brand-logo {
+  display: block;
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+}
+
+.peridot-global-brand-name {
+  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.025em;
+}
+
+.peridot-global-nav {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: stretch;
+  gap: 0.15rem;
+}
+
+.peridot-global-nav-link {
+  position: relative;
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  padding: 0 0.95rem;
+  color: var(--peridot-color-hex-dfe9c8);
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: 0.055em;
+  transition: color 140ms ease, background-color 140ms ease;
+}
+
+.peridot-global-nav-link::after {
+  content: '';
+  position: absolute;
+  right: 0.8rem;
+  bottom: 2px;
+  left: 0.8rem;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.peridot-global-nav-link:hover {
+  background: var(--peridot-color-hex-dfe9c8-a8);
+  color: var(--peridot-color-hex-fbf7ea);
+}
+
+.peridot-global-nav-link.is-active {
+  color: var(--peridot-color-hex-fff8e8);
+}
+
+.peridot-global-nav-link.is-active::after {
+  background: var(--peridot-color-hex-d6a36a);
+  box-shadow: 0 0 10px var(--peridot-color-hex-d6a36a-a70);
+}

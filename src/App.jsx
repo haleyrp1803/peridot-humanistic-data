@@ -68,7 +68,8 @@ import { InspectorContent } from './InspectorPanel.jsx';
 import { PeridotRecordStructure } from './PeridotRecordStructure.jsx';
 import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 import { LeftControlPanel } from './LeftControlPanel';
-import { PeridotHamburgerMenu } from './PeridotHamburgerMenu';
+import { PeridotGlobalHeader } from './PeridotGlobalHeader';
+import { PeridotTransitionOverlay } from './PeridotTransitionOverlay';
 import { PeridotHomeWorkspace } from './PeridotHomeWorkspace';
 import { PeridotDataWorkspace } from './PeridotDataWorkspace';
 import { PeridotThemeWorkspace } from './PeridotThemeWorkspace';
@@ -76,6 +77,8 @@ import { PeridotVisualizationsWorkspace } from './PeridotVisualizationsWorkspace
 import { buildPeridotTimelineWorkspaceEvents } from './peridotTimelineWorkspaceModel.js';
 import { PeridotExploreWorkspace } from './PeridotExploreWorkspace';
 import { PeridotLearnMoreWorkspace } from './PeridotLearnMoreWorkspace';
+import { PeridotTutorialsWorkspace } from './PeridotTutorialsWorkspace';
+import { PeridotDatasetRequiredWorkspace } from './PeridotDatasetRequiredWorkspace';
 import { PeridotTutorial } from './PeridotTutorial';
 import {
   getPeridotTutorialStep,
@@ -2182,6 +2185,17 @@ function buildInspectorPanelProps(args) {
 // ============================================================
 // MAIN MAP RENDERER
 // ============================================================
+// Map viewport memory uses a small composite reset key. Layout switches create
+// a fresh key object even when returning to the same dataset + layout, so key
+// equality must be semantic rather than object-identity based. Otherwise the
+// geographic/force viewport is treated as new every time the researcher moves
+// between visualization modes.
+function areMapViewResetKeysEqual(left, right) {
+  if (left === right) return true;
+  if (!left || !right || typeof left !== 'object' || typeof right !== 'object') return false;
+  return left.dataset === right.dataset && left.layout === right.layout;
+}
+
 // Main map renderer.
 // Important sections inside this component:
 // 1. viewport state
@@ -2224,7 +2238,7 @@ function SvgMap({
   const clearTransientPanAfterCommitRef = useRef(false);
   const transientWheelViewRef = useRef(null);
   const wheelCommitTimerRef = useRef(null);
-  const rememberedInitialView = viewStateRef?.current?.resetKey === viewResetKey
+  const rememberedInitialView = areMapViewResetKeysEqual(viewStateRef?.current?.resetKey, viewResetKey)
     ? viewStateRef.current.view
     : null;
   const [view, setView] = useState(rememberedInitialView || { scale: 1, tx: 0, ty: 0 });
@@ -2343,11 +2357,11 @@ function SvgMap({
 
     const shouldRecenter =
       !hasInitializedViewRef.current ||
-      lastViewResetKeyRef.current !== viewResetKey;
+      !areMapViewResetKeysEqual(lastViewResetKeyRef.current, viewResetKey);
 
     if (!shouldRecenter) return;
 
-    const remembered = viewStateRef?.current?.resetKey === viewResetKey
+    const remembered = areMapViewResetKeysEqual(viewStateRef?.current?.resetKey, viewResetKey)
       ? viewStateRef.current.view
       : null;
     skipViewPersistenceRef.current = true;
@@ -3408,12 +3422,16 @@ function AppMainWorkspace({
   setPageTitle,
   mapStageProps,
   workspaceMode,
+  keepVisualizationsMounted = false,
+  keepSearchMounted = false,
   homeWorkspaceProps,
   dataWorkspaceProps,
   themeWorkspaceProps,
   visualizationWorkspaceProps,
   exploreWorkspaceProps,
+  tutorialsWorkspaceProps,
   learnMoreWorkspaceProps,
+  datasetRequiredWorkspaceProps,
   searchWorkspaceProps,
   inspectorWorkspaceProps,
 }) {
@@ -3450,50 +3468,103 @@ function AppMainWorkspace({
     </div>
   ) : null;
 
-  return (
-    <main
-      className="h-full"
-      data-peridot-workspace-mode={workspaceMode}
-    >
-      {workspaceMode === PERIDOT_WORKSPACE_MODES.HOME ? (
-        <PeridotHomeWorkspace {...homeWorkspaceProps} />
-      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.DATA ? (
-        <PeridotDataWorkspace {...dataWorkspaceProps} />
-      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.THEME ? (
-        <PeridotThemeWorkspace {...themeWorkspaceProps} />
-      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS ? (
-        <div className="relative h-full overflow-hidden" data-peridot-visualizations-with-inspector={isInspectorWorkspaceOpen ? 'true' : 'false'} data-peridot-tutorial-anchor="visualizations-workspace">
-          <PeridotVisualizationsWorkspace
-            {...visualizationWorkspaceProps}
-            suppressFloatingFrameToggles={isInspectorWorkspaceOpen}
-          />
-          {inspectorWorkspaceOverlay}
-        </div>
-      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.EXPLORE ? (
-        <div className="relative h-full overflow-hidden" data-peridot-explore-with-inspector={isInspectorWorkspaceOpen ? 'true' : 'false'}>
-          <PeridotExploreWorkspace {...exploreWorkspaceProps} />
-          {inspectorWorkspaceOverlay}
-        </div>
-      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.LEARN_MORE ? (
-        <PeridotLearnMoreWorkspace {...learnMoreWorkspaceProps} />
-      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH ? (
-        <div className="relative h-full overflow-hidden" data-peridot-search-with-inspector={isInspectorWorkspaceOpen ? 'true' : 'false'}>
-          <PeridotSearchWorkspace {...searchWorkspaceProps} />
-          {inspectorWorkspaceOverlay}
-        </div>
-      ) : workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR ? (
-        <div className="relative h-full overflow-hidden bg-[var(--peridot-role-interface-app-background)]" data-peridot-inspector-workspace="true">
-          <PeridotVisualizationsWorkspace {...visualizationWorkspaceProps} suppressFloatingFrameToggles />
-          {inspectorWorkspaceOverlay}
-        </div>
-      ) : (
+  const isVisualizationRoute = [
+    PERIDOT_WORKSPACE_MODES.VISUALIZATIONS,
+    PERIDOT_WORKSPACE_MODES.INSPECTOR,
+  ].includes(workspaceMode);
+  const isExploreRoute = workspaceMode === PERIDOT_WORKSPACE_MODES.EXPLORE;
+  const isSearchRoute = workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH;
+  const isPersistentRoute = isVisualizationRoute || isExploreRoute || isSearchRoute;
+
+  const workspaceLayerClass = (active) => [
+    'absolute inset-0 min-h-0 overflow-hidden',
+    active ? 'block' : 'hidden',
+  ].join(' ');
+
+  const renderTransientWorkspace = () => {
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.HOME) {
+      return <PeridotHomeWorkspace {...homeWorkspaceProps} />;
+    }
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.DATA) {
+      return <PeridotDataWorkspace {...dataWorkspaceProps} />;
+    }
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.THEME) {
+      return <PeridotThemeWorkspace {...themeWorkspaceProps} />;
+    }
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.TUTORIALS) {
+      return <PeridotTutorialsWorkspace {...tutorialsWorkspaceProps} />;
+    }
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.LEARN_MORE) {
+      return <PeridotLearnMoreWorkspace {...learnMoreWorkspaceProps} />;
+    }
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.DATA_REQUIRED) {
+      return <PeridotDatasetRequiredWorkspace {...datasetRequiredWorkspaceProps} />;
+    }
+    if (!isPersistentRoute) {
+      return (
         <div className="flex h-full flex-col">
           <div className="shrink-0 bg-[var(--title-bar-bg)] py-3 pl-[76px] pr-4 sm:pl-[80px]">
             <MapTitleBar pageTitle={pageTitle} setPageTitle={setPageTitle} />
           </div>
           <MapStage {...mapStageProps} />
         </div>
-      )}
+      );
+    }
+    return null;
+  };
+
+  return (
+    <main
+      className="relative h-full min-h-0 overflow-hidden"
+      data-peridot-workspace-mode={workspaceMode}
+    >
+      {(keepVisualizationsMounted || isVisualizationRoute) ? (
+        <div
+          className={workspaceLayerClass(isVisualizationRoute)}
+          data-peridot-persistent-workspace="visualizations"
+          aria-hidden={isVisualizationRoute ? undefined : 'true'}
+        >
+          <div
+            className="relative h-full overflow-hidden"
+            data-peridot-visualizations-with-inspector={isInspectorWorkspaceOpen && isVisualizationRoute ? 'true' : 'false'}
+            data-peridot-tutorial-anchor="visualizations-workspace"
+          >
+            <PeridotVisualizationsWorkspace
+              {...visualizationWorkspaceProps}
+              suppressFloatingFrameToggles={isInspectorWorkspaceOpen && isVisualizationRoute}
+            />
+            {isVisualizationRoute ? inspectorWorkspaceOverlay : null}
+          </div>
+        </div>
+      ) : null}
+
+      {isExploreRoute ? (
+        <div
+          className={workspaceLayerClass(isExploreRoute)}
+          data-peridot-persistent-workspace="explore"
+          aria-hidden={isExploreRoute ? undefined : 'true'}
+        >
+          <div className="relative h-full overflow-hidden" data-peridot-explore-with-inspector={isInspectorWorkspaceOpen && isExploreRoute ? 'true' : 'false'}>
+            <PeridotExploreWorkspace {...exploreWorkspaceProps} />
+            {isExploreRoute ? inspectorWorkspaceOverlay : null}
+          </div>
+        </div>
+      ) : null}
+
+      {(keepSearchMounted || isSearchRoute) ? (
+        <div
+          className={workspaceLayerClass(isSearchRoute)}
+          data-peridot-persistent-workspace="search"
+          aria-hidden={isSearchRoute ? undefined : 'true'}
+        >
+          <div className="relative h-full overflow-hidden" data-peridot-search-with-inspector={isInspectorWorkspaceOpen && isSearchRoute ? 'true' : 'false'}>
+            <PeridotSearchWorkspace {...searchWorkspaceProps} />
+            {isSearchRoute ? inspectorWorkspaceOverlay : null}
+          </div>
+        </div>
+      ) : null}
+
+      {!isPersistentRoute ? renderTransientWorkspace() : null}
     </main>
   );
 }
@@ -3524,10 +3595,41 @@ export default function EuropeNetworkMapApp() {
   // as full workspace modes. Search and Inspector remain internal/compatibility
   // routes because the simplified product menu now presents a smaller stack.
   const [workspaceMode, setWorkspaceMode] = useState(DEFAULT_PERIDOT_WORKSPACE_MODE);
+  const [datasetRequiredDestination, setDatasetRequiredDestination] = useState('visualize');
   const [visualizationsWorkspacePanel, setVisualizationsWorkspacePanel] = useState('geographic-map');
   const [isTutorialActive, setIsTutorialActive] = useState(false);
   const [tutorialStepIndex, setTutorialStepIndex] = useState(PERIDOT_TUTORIAL_START_INDEX);
   const tutorialReturnFocusRef = useRef(null);
+  const [hasInitializedVisualizations, setHasInitializedVisualizations] = useState(false);
+  const [hasInitializedSearch, setHasInitializedSearch] = useState(false);
+  const [transitionState, setTransitionState] = useState({ active: false, label: 'Opening…' });
+  const transitionSequenceRef = useRef(0);
+  const transitionFrameIdsRef = useRef([]);
+  const transitionTimerRef = useRef(null);
+
+  const clearPeridotTransitionSchedule = () => {
+    transitionFrameIdsRef.current.forEach((frameId) => window.cancelAnimationFrame(frameId));
+    transitionFrameIdsRef.current = [];
+    if (transitionTimerRef.current) {
+      window.clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => () => {
+    transitionSequenceRef.current += 1;
+    clearPeridotTransitionSchedule();
+  }, []);
+
+  useEffect(() => {
+    if ([PERIDOT_WORKSPACE_MODES.VISUALIZATIONS, PERIDOT_WORKSPACE_MODES.INSPECTOR].includes(workspaceMode)) {
+      setHasInitializedVisualizations(true);
+    }
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH) {
+      setHasInitializedSearch(true);
+    }
+  }, [workspaceMode]);
+
   const setResolvedWorkspaceMode = (nextMode) => {
     setWorkspaceMode((currentMode) => resolvePeridotWorkspaceMode(nextMode, currentMode));
   };
@@ -3640,6 +3742,16 @@ export default function EuropeNetworkMapApp() {
   const [playbackSpeed, setPlaybackSpeed] = useState(700);
   const [timelinePlaybackMode, setTimelinePlaybackMode] = useState(PERIDOT_TIMELINE_PLAYBACK_MODES.CUMULATIVE);
   const [enabledTemporalRoles, setEnabledTemporalRoles] = useState([]);
+
+  useEffect(() => {
+    const visualizationIsVisible = [
+      PERIDOT_WORKSPACE_MODES.VISUALIZATIONS,
+      PERIDOT_WORKSPACE_MODES.INSPECTOR,
+    ].includes(workspaceMode);
+    if (!visualizationIsVisible) {
+      setIsPlaying(false);
+    }
+  }, [workspaceMode]);
   const [showAllLinkedLetters, setShowAllLinkedLetters] = useState(false);
   const [expandedLetterSections, setExpandedLetterSections] = useState({});
   const [viewMode, setViewMode] = useState('person');
@@ -3678,7 +3790,6 @@ export default function EuropeNetworkMapApp() {
   // but those setters now route through this split model.
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [activePanelTab, setActivePanelTab] = useState('controls');
-  const [isMainMenuOpen, setIsMainMenuOpen] = useState(false);
   const showLeftSidebar = isSidePanelOpen && activePanelTab === 'controls';
   const showRightSidebar = isSidePanelOpen && activePanelTab === 'inspector';
 
@@ -5880,17 +5991,91 @@ export default function EuropeNetworkMapApp() {
     ),
   };
 
+  const runPeridotTransition = (label, action, options = {}) => {
+    if (typeof action !== 'function') return;
+    if (typeof window === 'undefined') {
+      action();
+      return;
+    }
+
+    const sequence = transitionSequenceRef.current + 1;
+    transitionSequenceRef.current = sequence;
+    clearPeridotTransitionSchedule();
+
+    const minimumDuration = Number.isFinite(options.minimumDuration)
+      ? Math.max(0, options.minimumDuration)
+      : 650;
+    const startedAt = window.performance?.now?.() ?? Date.now();
+
+    setTransitionState({ active: true, label: label || 'Opening…' });
+
+    const scheduleFrame = (callback) => {
+      const frameId = window.requestAnimationFrame(() => {
+        transitionFrameIdsRef.current = transitionFrameIdsRef.current.filter((id) => id !== frameId);
+        callback();
+      });
+      transitionFrameIdsRef.current.push(frameId);
+    };
+
+    // Two frames guarantee that the overlay can paint before an expensive
+    // workspace state change begins. Two reveal frames then give the newly
+    // visible preserved workspace a layout/paint opportunity before fade-out.
+    scheduleFrame(() => {
+      scheduleFrame(() => {
+        if (transitionSequenceRef.current !== sequence) return;
+        action();
+        scheduleFrame(() => {
+          scheduleFrame(() => {
+            if (transitionSequenceRef.current !== sequence) return;
+            const now = window.performance?.now?.() ?? Date.now();
+            const remaining = Math.max(0, minimumDuration - (now - startedAt));
+            transitionTimerRef.current = window.setTimeout(() => {
+              transitionTimerRef.current = null;
+              if (transitionSequenceRef.current !== sequence) return;
+              setTransitionState((current) => ({ ...current, active: false }));
+            }, remaining);
+          });
+        });
+      });
+    });
+  };
+
   const openDataWorkspace = () => {
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.DATA) {
+      setIsSidePanelOpen(false);
+      return;
+    }
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.DATA);
     setIsSidePanelOpen(false);
   };
 
   const openVisualizationsWorkspace = () => {
-    setVisualizationsWorkspacePanel('geographic-map');
-    setViewMode('geographic');
-    setPersonLayoutMode('geographic');
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
-    setIsSidePanelOpen(false);
+    if (!peridotNormalizedData) {
+      if (workspaceMode === PERIDOT_WORKSPACE_MODES.DATA_REQUIRED && datasetRequiredDestination === 'visualize') {
+        setIsSidePanelOpen(false);
+        return;
+      }
+      setDatasetRequiredDestination('visualize');
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.DATA_REQUIRED);
+      setIsSidePanelOpen(false);
+      return;
+    }
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS) {
+      setIsSidePanelOpen(false);
+      return;
+    }
+
+    const openVisualizations = () => {
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+      setIsSidePanelOpen(false);
+    };
+
+    if (hasInitializedVisualizations) {
+      openVisualizations();
+      return;
+    }
+
+    runPeridotTransition('Opening Visualize…', openVisualizations);
   };
 
   const useSampleData = () => {
@@ -5900,25 +6085,44 @@ export default function EuropeNetworkMapApp() {
   };
 
   const selectGeographicMapVisualization = () => {
-    setVisualizationsWorkspacePanel('geographic-map');
-    setViewMode('geographic');
-    setPersonLayoutMode('geographic');
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
-    setIsSidePanelOpen(false);
+    const alreadyActive = workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
+      && visualizationsWorkspacePanel === 'geographic-map'
+      && viewMode === 'geographic'
+      && personLayoutMode === 'geographic';
+    if (alreadyActive) return;
+    runPeridotTransition('Loading Map…', () => {
+      setVisualizationsWorkspacePanel('geographic-map');
+      setViewMode('geographic');
+      setPersonLayoutMode('geographic');
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+      setIsSidePanelOpen(false);
+    }, { minimumDuration: 650 });
   };
 
   const selectForceDirectedVisualization = () => {
-    setVisualizationsWorkspacePanel('force-directed');
-    setViewMode('person');
-    setPersonLayoutMode('force');
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
-    setIsSidePanelOpen(false);
+    const alreadyActive = workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
+      && visualizationsWorkspacePanel === 'force-directed'
+      && viewMode === 'person'
+      && personLayoutMode === 'force';
+    if (alreadyActive) return;
+    runPeridotTransition('Loading Network…', () => {
+      setVisualizationsWorkspacePanel('force-directed');
+      setViewMode('person');
+      setPersonLayoutMode('force');
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+      setIsSidePanelOpen(false);
+    }, { minimumDuration: 650 });
   };
 
   const selectTimelineVisualization = () => {
-    setVisualizationsWorkspacePanel('timeline');
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
-    setIsSidePanelOpen(false);
+    const alreadyActive = workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
+      && visualizationsWorkspacePanel === 'timeline';
+    if (alreadyActive) return;
+    runPeridotTransition('Loading Timeline…', () => {
+      setVisualizationsWorkspacePanel('timeline');
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+      setIsSidePanelOpen(false);
+    }, { minimumDuration: 650 });
   };
 
   const handleTimelineEventClick = (event) => {
@@ -5935,9 +6139,14 @@ export default function EuropeNetworkMapApp() {
   };
 
   const openAnalyticsWorkspace = () => {
-    setVisualizationsWorkspacePanel('analytics');
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
-    setIsSidePanelOpen(false);
+    const alreadyActive = workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
+      && visualizationsWorkspacePanel === 'analytics';
+    if (alreadyActive) return;
+    runPeridotTransition('Loading Charts…', () => {
+      setVisualizationsWorkspacePanel('analytics');
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.VISUALIZATIONS);
+      setIsSidePanelOpen(false);
+    }, { minimumDuration: 650 });
   };
 
   const openChartVisualization = (chartType) => {
@@ -6112,13 +6321,19 @@ export default function EuropeNetworkMapApp() {
     onOpenAnalytics: openAnalyticsWorkspace,
     onOpenChartVisualization: openChartVisualization,
     onOpenSearch: () => {
-      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
-      setIsSidePanelOpen(false);
+      if (workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH) return;
+      runPeridotTransition('Opening Explore…', () => {
+        setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
+        setIsSidePanelOpen(false);
+      });
     },
     onOpenExplore: () => {
       // Explore is now the product entry point for Advanced Search and dataset capabilities.
-      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
-      setIsSidePanelOpen(false);
+      if (workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH) return;
+      runPeridotTransition('Opening Explore…', () => {
+        setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
+        setIsSidePanelOpen(false);
+      });
     },
     timelineControlsProps,
     exportControls: {
@@ -6192,20 +6407,66 @@ export default function EuropeNetworkMapApp() {
   };
 
   const openHomeWorkspace = () => {
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.HOME) {
+      setIsSidePanelOpen(false);
+      return;
+    }
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.HOME);
     setIsSidePanelOpen(false);
   };
 
   const openExploreWorkspaceFromMenu = () => {
-    // The hamburger Explore entry should open Advanced Search directly.
-    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
+    if (!peridotNormalizedData) {
+      if (workspaceMode === PERIDOT_WORKSPACE_MODES.DATA_REQUIRED && datasetRequiredDestination === 'explore') {
+        setIsSidePanelOpen(false);
+        return;
+      }
+      setDatasetRequiredDestination('explore');
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.DATA_REQUIRED);
+      setIsSidePanelOpen(false);
+      return;
+    }
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH) {
+      setIsSidePanelOpen(false);
+      return;
+    }
+
+    const openExplore = () => {
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
+      setIsSidePanelOpen(false);
+    };
+
+    if (hasInitializedSearch) {
+      openExplore();
+      return;
+    }
+
+    runPeridotTransition('Opening Explore…', openExplore);
+  };
+
+  const openTutorialsWorkspace = () => {
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.TUTORIALS) {
+      setIsSidePanelOpen(false);
+      return;
+    }
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.TUTORIALS);
     setIsSidePanelOpen(false);
   };
+
   const openLearnMoreWorkspaceFromMenu = () => {
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.LEARN_MORE) {
+      setIsSidePanelOpen(false);
+      return;
+    }
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.LEARN_MORE);
     setIsSidePanelOpen(false);
   };
+
   const openThemeWorkspaceFromMenu = () => {
+    if (workspaceMode === PERIDOT_WORKSPACE_MODES.THEME) {
+      setIsSidePanelOpen(false);
+      return;
+    }
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.THEME);
     setIsSidePanelOpen(false);
   };
@@ -6234,10 +6495,36 @@ export default function EuropeNetworkMapApp() {
     onOpenVisualizations: openVisualizationsWorkspace,
   };
 
+  const tutorialsWorkspaceProps = {
+    onStartTutorial: startTutorial,
+  };
+
   const learnMoreWorkspaceProps = {
     onOpenVisualizations: openVisualizationsWorkspace,
     onStartTutorial: startTutorial,
   };
+
+  const datasetRequiredWorkspaceProps = {
+    destination: datasetRequiredDestination,
+    onOpenData: openDataWorkspace,
+    onUseSampleData: useSampleData,
+  };
+
+  const globalNavigationSection = workspaceMode === PERIDOT_WORKSPACE_MODES.DATA
+    ? 'data'
+    : workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
+      || workspaceMode === PERIDOT_WORKSPACE_MODES.INSPECTOR
+      ? 'visualize'
+      : workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH
+        || workspaceMode === PERIDOT_WORKSPACE_MODES.EXPLORE
+        ? 'explore'
+        : workspaceMode === PERIDOT_WORKSPACE_MODES.TUTORIALS
+          ? 'tutorials'
+          : workspaceMode === PERIDOT_WORKSPACE_MODES.LEARN_MORE
+            ? 'about'
+            : workspaceMode === PERIDOT_WORKSPACE_MODES.DATA_REQUIRED
+              ? datasetRequiredDestination
+              : '';
 
   return (
     <div className={`${museumShellClassName()} peridot-redesign-root`} style={themeStyleVars} data-peridot-menu-redesign="true">
@@ -6267,28 +6554,17 @@ export default function EuropeNetworkMapApp() {
             min-height: 2.35rem !important;
           }
         `}</style>
-      <div className="relative h-full">
-        {workspaceMode !== PERIDOT_WORKSPACE_MODES.HOME ? (
-          <>
-            {/*
-              Themes and Accessibility remains an internal routed workspace for
-              development, but it is intentionally hidden from the public
-              hamburger menu until the user-facing page is ready again. Restore
-              `onOpenTheme={openThemeWorkspaceFromMenu}` on this menu component
-              to re-enable that entry without changing the workspace itself.
-            */}
-            <PeridotHamburgerMenu
-              open={isMainMenuOpen}
-              onToggle={() => setIsMainMenuOpen((value) => !value)}
-              onClose={() => setIsMainMenuOpen(false)}
-              workspaceMode={workspaceMode}
-              onOpenData={openDataWorkspace}
-              onOpenVisualizations={openVisualizationsWorkspace}
-              onOpenExplore={openExploreWorkspaceFromMenu}
-              onOpenLearnMore={openLearnMoreWorkspaceFromMenu}
-            />
-          </>
-        ) : null}
+      <div className="flex h-full min-h-0 flex-col">
+        <PeridotGlobalHeader
+          activeSection={globalNavigationSection}
+          onOpenHome={openHomeWorkspace}
+          onOpenData={openDataWorkspace}
+          onOpenVisualize={openVisualizationsWorkspace}
+          onOpenExplore={openExploreWorkspaceFromMenu}
+          onOpenTutorials={openTutorialsWorkspace}
+          onOpenAbout={openLearnMoreWorkspaceFromMenu}
+        />
+        <div className="relative min-h-0 flex-1">
         {/*
           CONTROL PANEL MOUNT POINT
           This is where the entire left control-panel subtree enters the app.
@@ -6317,14 +6593,22 @@ export default function EuropeNetworkMapApp() {
           setPageTitle={setPageTitle}
           mapStageProps={mapStageProps}
           workspaceMode={workspaceMode}
+          keepVisualizationsMounted={hasInitializedVisualizations}
+          keepSearchMounted={hasInitializedSearch}
           homeWorkspaceProps={homeWorkspaceProps}
           dataWorkspaceProps={dataWorkspaceProps}
           themeWorkspaceProps={themeWorkspaceProps}
           visualizationWorkspaceProps={visualizationWorkspaceProps}
           exploreWorkspaceProps={exploreWorkspaceProps}
+          tutorialsWorkspaceProps={tutorialsWorkspaceProps}
           learnMoreWorkspaceProps={learnMoreWorkspaceProps}
+          datasetRequiredWorkspaceProps={datasetRequiredWorkspaceProps}
           searchWorkspaceProps={searchWorkspaceProps}
           inspectorWorkspaceProps={inspectorWorkspaceProps}
+        />
+        <PeridotTransitionOverlay
+          active={transitionState.active}
+          label={transitionState.label}
         />
         {isTutorialActive ? (
           <PeridotTutorial
@@ -6345,9 +6629,7 @@ export default function EuropeNetworkMapApp() {
                 || visualizationAvailability.hasCharts
               ),
             }}
-            isMainMenuOpen={isMainMenuOpen}
             onReturnToStepWorkspace={() => routeTutorialStepToWorkspace(activeTutorialStep)}
-            onOpenMainMenu={() => setIsMainMenuOpen(true)}
             onOpenExplore={openExploreWorkspaceFromMenu}
             onCloseInspector={closeInspectorWorkspace}
             onExpandInspector={expandInspectorToWorkspace}
@@ -6361,6 +6643,7 @@ export default function EuropeNetworkMapApp() {
             onContinue={goToNextTutorialStep}
           />
         ) : null}
+        </div>
       </div>
     </div>
   );
