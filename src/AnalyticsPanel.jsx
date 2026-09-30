@@ -547,17 +547,13 @@ function ControlSection({ eyebrow, title, description, children, compact = false
   return (
     <section
       className={[
-        'rounded-[20px] border border-[rgba(176,132,50,0.32)]',
-        'bg-[#eee6cf]',
-        'shadow-[0_8px_22px_rgba(0,0,0,0.14),inset_0_1px_0_rgba(255,255,255,0.34)]',
-        compact ? 'p-3' : 'p-4',
+        'border-b border-[rgba(176,132,50,0.28)] last:border-b-0',
+        compact ? 'py-3' : 'py-4',
       ].join(' ')}
     >
       {eyebrow ? (
-        <div className="mb-1 flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--peridot-role-ornament-line)]">
-          <span aria-hidden="true">◆</span>
-          <span>{eyebrow}</span>
-          <span aria-hidden="true">◆</span>
+        <div className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-[var(--peridot-role-ornament-line)]">
+          {eyebrow}
         </div>
       ) : null}
       {title ? (
@@ -1322,7 +1318,7 @@ export function AnalyticsPanelContent({
   };
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-[28px] border border-[var(--peridot-role-interface-border-subtle)] bg-[var(--peridot-role-analytics-shell-bg)] text-[var(--peridot-role-analytics-chart-text)] shadow-[0_22px_60px_var(--peridot-role-card-shadow)] lg:flex-row">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--peridot-role-analytics-shell-bg)] text-[var(--peridot-role-analytics-chart-text)] lg:flex-row">
       <aside className={[
         'peridot-chart-builder-sequence flex max-h-[42vh] shrink-0 flex-col overflow-hidden border-b border-[rgba(218,174,82,0.35)] bg-[#142d19] lg:max-h-none lg:w-1/4 lg:border-b-0 lg:border-r',
         chartEntranceSettled ? 'peridot-chart-builder-sequence-settled' : '',
@@ -1349,15 +1345,15 @@ export function AnalyticsPanelContent({
           </div>
         </div>
 
-        <div className="peridot-chart-builder-step peridot-chart-builder-step-2 peridot-chart-builder-controls min-h-0 flex-1 space-y-3 overflow-auto px-4 py-3.5">
+        <div className="peridot-chart-builder-step peridot-chart-builder-step-2 peridot-chart-builder-controls min-h-0 flex-1 overflow-auto bg-[#eee6cf] px-4 py-0">
           {renderActiveBuilderTab()}
         </div>
       </aside>
 
       <main className="flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--peridot-role-analytics-shell-bg)] lg:w-3/4">
-        <div className="min-h-0 flex-1 overflow-hidden p-3 md:p-4">
+        <div className="min-h-0 flex-1 overflow-hidden p-2 pl-3 md:p-3 md:pl-4">
           <div className="flex h-full min-h-0 w-full items-stretch">
-            <div className="peridot-chart-stage-final flex h-full min-h-0 w-full rounded-[28px] border border-[var(--peridot-role-ornament-paper-rule)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 shadow-[0_22px_54px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.48)] md:p-4">
+            <div className="peridot-chart-stage-final flex h-full min-h-0 w-full rounded-xl border border-[var(--peridot-role-ornament-paper-rule)] bg-[var(--peridot-role-analytics-chart-bg)] p-3 md:p-4">
               <AnalyticsChartPreview chartData={displayChartData} svgRef={chartSvgRef} />
             </div>
           </div>

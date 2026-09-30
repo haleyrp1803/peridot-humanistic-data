@@ -1196,7 +1196,7 @@ export function PeridotVisualizationsWorkspace({
 
     if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
       return (
-        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden rounded-xl border border-[var(--peridot-color-hex-c4e0ef-a35)] bg-[var(--peridot-color-rgba-rgba-8-39-25-0-88)] p-2 md:p-3">
+        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden">
           <AnalyticsPanelContent
             analyticsState={analyticsWorkspaceProps.analyticsState}
             onChartExportControlsChange={setChartExportControls}

@@ -1454,7 +1454,7 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
 
   if (!events.length) {
     return (
-      <div className="peridot-illuminated-panel flex min-h-0 flex-1 items-center justify-center rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--peridot-color-rgba-rgba-8-39-25-0-9)] p-8 text-center shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)] backdrop-blur-sm">
+      <div className="flex min-h-0 flex-1 items-center justify-center p-8 text-center">
         <div className="max-w-xl rounded-2xl border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[var(--peridot-color-hex-dfe9c8-a08)] px-6 py-5">
           <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold text-[var(--peridot-color-hex-f5ecd2)]">No timeline events in the current scope</h2>
           <p className="mt-2 text-sm leading-relaxed text-[var(--peridot-color-hex-dfe9c8)]">
@@ -1467,7 +1467,7 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
 
   return (
     <div
-      className="peridot-map-plate relative flex min-h-0 min-w-0 w-full max-w-full flex-1 overflow-hidden rounded-[28px] border border-[var(--peridot-color-hex-c4e0ef-a50)] bg-[var(--map-water)] shadow-[0_20px_54px_var(--peridot-color-rgba-rgba-0-0-0-0-34)]"
+      className="peridot-map-plate relative flex min-h-0 min-w-0 w-full max-w-full flex-1 overflow-hidden rounded-xl border border-[var(--peridot-color-hex-c4e0ef-a35)] bg-[var(--map-water)]"
       data-peridot-tutorial-anchor="visualization-stage"
     >
       <div
@@ -1494,14 +1494,14 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
       </div>
 
       <div className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col items-start gap-2">
-        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-24)] backdrop-blur-sm">
+        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 backdrop-blur-sm">
           <div className="shrink-0 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
             Timeline view
           </div>
           <OrientationControl orientation={orientation} onChange={handleOrientationChange} />
         </div>
 
-        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-24)] backdrop-blur-sm">
+        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 backdrop-blur-sm">
           <div className="shrink-0 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
             Zoom
           </div>
