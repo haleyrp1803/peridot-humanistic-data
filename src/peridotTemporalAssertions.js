@@ -103,7 +103,13 @@ function parseApproximationPrefix(text) {
 
 function parseMachineEndpoint(value, approximation) {
   const raw = asText(value);
-  let match = raw.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
+  let match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[Tt]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:[Zz]|[+-]\d{2}:?\d{2})$/);
+  if (match) {
+    const rawYear = Number(match[1]); const rawMonth = Number(match[2]); const rawDay = Number(match[3]);
+    const year = rawYear === 0 ? null : rawYear; const month = rawMonth === 0 ? null : rawMonth; const day = rawDay === 0 ? null : rawDay;
+    return makeEndpoint({ year, month, day, approximation, sourceText: value });
+  }
+  match = raw.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/);
   if (match) {
     const rawYear = Number(match[1]); const rawMonth = Number(match[2]); const rawDay = Number(match[3]);
     const year = rawYear === 0 ? null : rawYear; const month = rawMonth === 0 ? null : rawMonth; const day = rawDay === 0 ? null : rawDay;
@@ -268,7 +274,8 @@ const TEMPORAL_ENDPOINT_TOKEN = new RegExp(
   String.raw`(?:` +
     String.raw`(?:circa|ca\.?|c\.?|approximately|approximate|approx\.?|probably|prob\.?)\s*` +
   String.raw`)?(?:` +
-    String.raw`\d{4}[/-]\d{1,2}[/-]\d{1,2}` +
+    String.raw`\d{4}-\d{1,2}-\d{1,2}[Tt]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:[Zz]|[+-]\d{2}:?\d{2})` +
+    String.raw`|\d{4}[/-]\d{1,2}[/-]\d{1,2}` +
     String.raw`|\d{1,2}[/.]\d{1,2}[/.]\d{4}` +
     String.raw`|\d{1,2}\s+(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s*,?\s*\d{4}` +
     String.raw`|(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+\d{1,2}(?:st|nd|rd|th)?\s*,?\s*\d{4}` +

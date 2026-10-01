@@ -34,6 +34,17 @@ export function runPeridotTemporalTimespanSelfAudit() {
   assert(yearRange.start?.year === 1600 && yearRange.end?.year === 1640, 'Year endpoints should survive.');
   assert(yearRange.start?.month === null && yearRange.end?.month === null, 'Year-only values must not invent month precision.');
 
+  const wikidataTimestamp = parsePeridotTemporalValue('1397-02-21T00:00:00Z');
+  assert(wikidataTimestamp.start?.year === 1397 && wikidataTimestamp.start?.month === 2 && wikidataTimestamp.start?.day === 21, 'ISO 8601 timestamps should preserve their calendar date.');
+  assert(wikidataTimestamp.precision === 'day' && wikidataTimestamp.parsingStatus === 'parsed', 'ISO 8601 timestamps should remain day-precision parsed temporal points.');
+  assert(wikidataTimestamp.sourceText === '1397-02-21T00:00:00Z', 'ISO 8601 source text should be preserved verbatim.');
+
+  const offsetTimestamp = parsePeridotTemporalValue('1471-12-17T14:30:00+01:00');
+  assert(offsetTimestamp.start?.year === 1471 && offsetTimestamp.start?.month === 12 && offsetTimestamp.start?.day === 17, 'ISO 8601 timestamps with timezone offsets should preserve their lexical calendar date.');
+
+  const isoSpan = parsePeridotTemporalSpan('1397-02-21T00:00:00Z – 1471-12-17T00:00:00Z');
+  assert(isoSpan.start?.year === 1397 && isoSpan.end?.year === 1471, 'ISO 8601 timestamp endpoints should survive timespan parsing.');
+
   const partial = parsePeridotTemporalValue('1607/00/02');
   assert(partial.start?.year === 1607 && partial.start?.month === null && partial.start?.day === 2, 'Known year/day with unknown month must survive without invention.');
   assert(partial.temporalShape === 'partialPoint', 'Zero-component historical date should be a partial point.');
