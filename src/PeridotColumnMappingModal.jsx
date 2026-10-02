@@ -118,7 +118,7 @@ function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   return `${base} ${variants[variant] || variants.secondary}`;
 }
 
-function StepButton({ active, label, index, onClick }) {
+function StepButton({ active, label, index, onClick, showIndex = true }) {
   return (
     <button
       type="button"
@@ -131,7 +131,7 @@ function StepButton({ active, label, index, onClick }) {
       style={{ '--peridot-mapping-step-delay': `${760 + index * 170}ms` }}
       aria-current={active ? 'step' : undefined}
     >
-      <span className="peridot-mapping-step-number">{index + 1}</span>
+      {showIndex ? <span className="peridot-mapping-step-number">{index + 1}</span> : null}
       <span className="peridot-mapping-step-label">{label}</span>
     </button>
   );
@@ -2173,6 +2173,7 @@ export function PeridotColumnMappingModal({
   onConfirmImport,
   onResetSampleMapping,
   readOnly = false,
+  presentation = 'modal',
 }) {
   const mappingState = staging?.mappingState || {};
   const datasetProfile = getPeridotDatasetProfile(
@@ -2182,6 +2183,7 @@ export function PeridotColumnMappingModal({
   const isWorkbookMode = staging?.mappingMode === 'workbook' || Boolean(staging?.workbookMappingRequired);
   const workbookModel = staging?.workbookModel || null;
   const workbookSummary = staging?.workbookSummary || null;
+  const isPagePresentation = presentation === 'page';
 
   const definitions = mappingState.coreFieldDefinitions || [];
   const sourceHeaders = staging?.headers || [];
@@ -2450,7 +2452,7 @@ export function PeridotColumnMappingModal({
     time: 'Time',
     places: 'Places',
     evidence: 'Evidence',
-    review: 'Review',
+    review: 'Review and Upload',
   };
 
   const workbookStepLabels = {
@@ -2460,7 +2462,7 @@ export function PeridotColumnMappingModal({
     'workbook-time': 'Time',
     'workbook-places': 'Places',
     'workbook-evidence': 'Evidence',
-    'workbook-review': 'Review',
+    'workbook-review': 'Review and Upload',
   };
 
   const genealogyStepLabels = {
@@ -2471,7 +2473,7 @@ export function PeridotColumnMappingModal({
     'genealogy-life-events': 'Life events',
     'genealogy-places': 'Places',
     'genealogy-attributes': 'Attributes',
-    'genealogy-review': 'Review',
+    'genealogy-review': 'Review and Upload',
   };
 
   const stepLabels = isGenealogyProfile
@@ -3321,49 +3323,76 @@ export function PeridotColumnMappingModal({
   );
 
   return (
-    <div className="peridot-mapping-modal fixed inset-0 z-[80] flex items-center justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-sm">
-      <div className="peridot-mapping-modal-shell peridot-mapping-modal-enter-shell flex flex-col overflow-hidden rounded-[30px] border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]">
-        <div className="peridot-mapping-modal-header peridot-mapping-modal-enter-header flex flex-wrap items-center justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
-          <div className="min-w-0">
-            <div className="mb-1 text-sm font-semibold text-[var(--muted-text)]">
+    <div className={isPagePresentation
+      ? "peridot-mapping-modal peridot-mapping-page h-full min-h-0 overflow-hidden bg-[var(--sidebar-bg)]"
+      : "peridot-mapping-modal fixed inset-0 z-[80] flex items-center justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-sm"
+    }>
+      <div className={`peridot-mapping-modal-shell peridot-mapping-modal-enter-shell flex flex-col overflow-hidden border border-[var(--panel-card-border)] bg-[var(--sidebar-bg)] text-[var(--text-main)] ${isPagePresentation ? 'h-full w-full' : 'rounded-[30px] shadow-[0_28px_80px_var(--peridot-color-rgba-rgba-0-0-0-0-55)]'}`}>
+        {isPagePresentation ? (
+          <div className="peridot-mapping-page-nav peridot-mapping-modal-enter-header border-b border-[var(--panel-card-border)]">
+            <div className="peridot-mapping-page-context" title={staging.fileLabel || 'Uploaded data'}>
               {staging.fileLabel || 'Uploaded data'}
             </div>
-            <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold leading-tight text-[var(--heading-text)]">
-              {readOnly
-                ? 'View mapping'
-                : staging?.editingSampleMapping
-                  ? (isWorkbookMode ? 'Edit sample workbook mapping' : 'Edit sample data mapping')
-                : staging?.editingActiveData
-                  ? (isWorkbookMode ? 'Edit workbook data roles' : 'Edit data roles for Peridot')
-                : isGenealogyProfile
-                  ? 'Genealogy import profile'
-                  : isWorkbookMode
-                    ? 'Assign workbook data roles for Peridot'
-                    : 'Assign data roles for Peridot'}
-            </h2>
+            <div className="peridot-mapping-progress peridot-mapping-modal-enter-progress">
+              {stepKeys.map((step, index) => (
+                <StepButton
+                  key={step}
+                  active={activeStep === step}
+                  label={stepLabels[step]}
+                  index={index}
+                  showIndex={false}
+                  onClick={() => moveToStep(step)}
+                />
+              ))}
+            </div>
+            <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
+              Back to Data
+            </button>
           </div>
-          <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
-            Close
-          </button>
-        </div>
+        ) : (
+          <>
+            <div className="peridot-mapping-modal-header peridot-mapping-modal-enter-header flex flex-wrap items-center justify-between gap-4 border-b border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-4">
+              <div className="min-w-0">
+                <div className="mb-1 text-sm font-semibold text-[var(--muted-text)]">
+                  {staging.fileLabel || 'Uploaded data'}
+                </div>
+                <h2 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-2xl font-bold leading-tight text-[var(--heading-text)]">
+                  {readOnly
+                    ? 'View mapping'
+                    : staging?.editingSampleMapping
+                      ? (isWorkbookMode ? 'Edit sample workbook mapping' : 'Edit sample data mapping')
+                    : staging?.editingActiveData
+                      ? (isWorkbookMode ? 'Edit workbook data roles' : 'Edit data roles for Peridot')
+                    : isGenealogyProfile
+                      ? 'Genealogy import profile'
+                      : isWorkbookMode
+                        ? 'Assign workbook data roles for Peridot'
+                        : 'Assign data roles for Peridot'}
+                </h2>
+              </div>
+              <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
+                Close
+              </button>
+            </div>
+            <div className="peridot-mapping-progress peridot-mapping-modal-enter-progress border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-3">
+              {stepKeys.map((step, index) => (
+                <StepButton
+                  key={step}
+                  active={activeStep === step}
+                  label={stepLabels[step]}
+                  index={index}
+                  onClick={() => moveToStep(step)}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {staging?.editingSampleMapping ? (
           <div className="border-b border-[var(--panel-card-border)] bg-[var(--peridot-role-card-bg)] px-6 py-4 text-sm leading-6 text-[var(--panel-card-text)]">
             <strong>Sample mapping:</strong> You’re editing Peridot’s interpretation of this sample data. Your changes will affect the active sample, but the original sample mapping is preserved and can be restored at any time.
           </div>
         ) : null}
-
-        <div className="peridot-mapping-progress peridot-mapping-modal-enter-progress border-b border-[var(--panel-card-border)] bg-[var(--section-bg)] px-6 py-3">
-          {stepKeys.map((step, index) => (
-            <StepButton
-              key={step}
-              active={activeStep === step}
-              label={stepLabels[step]}
-              index={index}
-              onClick={() => moveToStep(step)}
-            />
-          ))}
-        </div>
 
         <div className={`peridot-mapping-modal-body peridot-mapping-modal-enter-body peridot-mapping-step-soft-shell peridot-mapping-step-soft-shell-${stepTransitionPhase} min-h-0 flex-1 overflow-y-auto px-6 py-5`}>
           <fieldset disabled={readOnly} className="m-0 min-w-0 border-0 p-0">
@@ -3378,61 +3407,55 @@ export function PeridotColumnMappingModal({
 
         <div className="peridot-mapping-modal-footer peridot-mapping-modal-enter-footer flex flex-wrap items-center justify-between gap-3 border-t border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-6 py-3">
           <p className="max-w-2xl text-sm text-[var(--panel-card-muted-text)]">{footerHelper}</p>
-          <div className="flex flex-wrap gap-2">
+          <div className="peridot-mapping-footer-actions flex flex-wrap items-center">
             {staging?.editingSampleMapping && !readOnly ? (
               <button type="button" onClick={onResetSampleMapping} className={buttonClassName({ variant: 'secondary' })}>Reset to sample mapping</button>
             ) : null}
             {readOnly ? (
               <>
-                <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>Back</button>
-                {activeStepIndex < stepKeys.length - 1 ? (
-                  <button type="button" onClick={goNext} className={buttonClassName({ variant: 'primary' })}>Next</button>
-                ) : null}
                 <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>Close</button>
-              </>
-            ) : isGenealogyProfile ? (
-              <>
-                <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>Back</button>
-                {activeStepIndex < stepKeys.length - 1 ? (
-                  <button type="button" onClick={goNext} className={buttonClassName({ variant: 'primary' })}>Next</button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleConfirmImport}
-                    disabled={!genealogyValidation?.isValid}
-                    className={buttonClassName({ variant: 'primary' })}
-                  >
-                    {staging?.editingActiveData ? 'Apply changes' : 'Confirm import'}
-                  </button>
-                )}
-                <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>Cancel</button>
+                <div className="peridot-mapping-footer-nav flex flex-wrap gap-2">
+                  <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>Back</button>
+                  {activeStepIndex < stepKeys.length - 1 ? (
+                    <button type="button" onClick={goNext} className={buttonClassName({ variant: 'primary' })}>Next</button>
+                  ) : null}
+                </div>
               </>
             ) : (
               <>
-                <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>
-                  Back
-                </button>
-                {activeStepIndex < stepKeys.length - 1 ? (
-                  <button type="button" onClick={goNext} className={buttonClassName({ variant: 'primary' })}>
-                    Next
+                <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>Cancel</button>
+                <div className="peridot-mapping-footer-nav flex flex-wrap gap-2">
+                  <button type="button" onClick={goBack} disabled={activeStepIndex <= 0} className={buttonClassName({ variant: 'secondary' })}>
+                    Back
                   </button>
-                ) : isWorkbookMode ? (
-                  <button
-                    type="button"
-                    onClick={handleConfirmImport}
-                    disabled={!workbookValidation?.isValid}
-                    className={buttonClassName({ variant: 'primary' })}
-                  >
-                    {staging?.editingActiveData ? 'Apply changes' : 'Confirm import'}
-                  </button>
-                ) : (
-                  <button type="button" onClick={handleConfirmImport} className={buttonClassName({ variant: 'primary' })}>
-                    {staging?.editingActiveData ? 'Apply changes' : 'Confirm import'}
-                  </button>
-                )}
-                <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
-                  Cancel
-                </button>
+                  {activeStepIndex < stepKeys.length - 1 ? (
+                    <button type="button" onClick={goNext} className={buttonClassName({ variant: 'primary' })}>
+                      Next
+                    </button>
+                  ) : isGenealogyProfile ? (
+                    <button
+                      type="button"
+                      onClick={handleConfirmImport}
+                      disabled={!genealogyValidation?.isValid}
+                      className={buttonClassName({ variant: 'primary' })}
+                    >
+                      {staging?.editingActiveData ? 'Apply changes' : 'Confirm upload'}
+                    </button>
+                  ) : isWorkbookMode ? (
+                    <button
+                      type="button"
+                      onClick={handleConfirmImport}
+                      disabled={!workbookValidation?.isValid}
+                      className={buttonClassName({ variant: 'primary' })}
+                    >
+                      {staging?.editingActiveData ? 'Apply changes' : 'Confirm upload'}
+                    </button>
+                  ) : (
+                    <button type="button" onClick={handleConfirmImport} className={buttonClassName({ variant: 'primary' })}>
+                      {staging?.editingActiveData ? 'Apply changes' : 'Confirm upload'}
+                    </button>
+                  )}
+                </div>
               </>
             )}
           </div>

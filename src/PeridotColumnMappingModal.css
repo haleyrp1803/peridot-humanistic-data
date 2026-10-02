@@ -710,3 +710,151 @@
   z-index: 3;
 }
 
+
+/* Full-page Data mapping workspace.
+ * The mapping workflow can render inside the Data route instead of as a
+ * centered modal. The workflow behavior and step content remain unchanged;
+ * only the outer presentation changes so the global Peridot header stays
+ * visible and the mapping surface uses the entire workspace below it.
+ */
+.peridot-mapping-page {
+  padding: 0 !important;
+  background: var(--sidebar-bg) !important;
+  backdrop-filter: none !important;
+}
+
+.peridot-mapping-page .peridot-mapping-modal-shell {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.peridot-mapping-page .peridot-mapping-modal-shell::before {
+  display: none !important;
+}
+
+.peridot-mapping-page .peridot-mapping-modal-header {
+  padding-inline: clamp(1.25rem, 2.5vw, 2.5rem) !important;
+  padding-block: 0.9rem !important;
+}
+
+.peridot-mapping-page .peridot-mapping-progress {
+  padding-inline: clamp(1.25rem, 2.5vw, 2.5rem) !important;
+}
+
+.peridot-mapping-page .peridot-mapping-modal-body {
+  padding-inline: clamp(1.25rem, 2.5vw, 2.5rem) !important;
+  padding-block: 1.1rem !important;
+}
+
+.peridot-mapping-page .peridot-mapping-modal-footer {
+  padding-inline: clamp(1.25rem, 2.5vw, 2.5rem) !important;
+}
+
+/* Full-page mapping navigation refinement (Navigation Redesign Pass 5.2).
+ * The Data mapping workspace now follows the same compact hierarchy as Explore:
+ * one local navigation bar, direct non-linear section access, and page-level
+ * actions separated from section navigation. Modal presentation keeps the
+ * legacy title + numbered step rail for compatibility.
+ */
+.peridot-mapping-page .peridot-mapping-page-nav {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) auto minmax(10rem, 1fr);
+  align-items: center;
+  min-height: 3.05rem;
+  gap: 1rem;
+  padding: 0.35rem clamp(1.25rem, 2.5vw, 2.5rem);
+  border-color: rgba(221, 187, 105, 0.20) !important;
+  background: var(--sidebar-bg) !important;
+}
+
+.peridot-mapping-page .peridot-mapping-page-context {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--peridot-role-interface-text-primary, #f7f1dc);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.peridot-mapping-page .peridot-mapping-page-nav > button:last-child {
+  justify-self: end;
+}
+
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-progress {
+  justify-self: center;
+  display: flex;
+  width: max-content;
+  max-width: min(76vw, 72rem);
+  gap: clamp(0.7rem, 1.55vw, 1.45rem) !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+}
+
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button {
+  position: relative;
+  flex: 0 0 auto !important;
+  min-width: auto !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--peridot-role-interface-text-primary, #f7f1dc) !important;
+  padding: 0.65rem 0.12rem 0.58rem !important;
+  font-size: 0.76rem !important;
+  font-weight: 800;
+  letter-spacing: 0.055em !important;
+  line-height: 1 !important;
+  text-transform: uppercase;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: transparent;
+  transform: scaleX(0.55);
+  transform-origin: center;
+  transition: background 150ms ease, transform 150ms ease;
+}
+
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button:hover {
+  color: var(--peridot-role-interface-accent, #f0d27a) !important;
+}
+
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button-active,
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button-active:hover {
+  color: var(--peridot-role-interface-text-primary, #f7f1dc) !important;
+}
+
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button-active::after {
+  background: var(--peridot-role-interface-accent, #d9ae4c);
+  transform: scaleX(1);
+}
+
+.peridot-mapping-page .peridot-mapping-modal-body {
+  padding-top: 1rem !important;
+}
+
+.peridot-mapping-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.peridot-mapping-footer-nav {
+  margin-left: 0.9rem;
+}

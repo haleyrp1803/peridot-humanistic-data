@@ -3426,6 +3426,7 @@ function AppMainWorkspace({
   keepSearchMounted = false,
   homeWorkspaceProps,
   dataWorkspaceProps,
+  columnMappingWorkspaceProps,
   themeWorkspaceProps,
   visualizationWorkspaceProps,
   exploreWorkspaceProps,
@@ -3486,6 +3487,9 @@ function AppMainWorkspace({
       return <PeridotHomeWorkspace {...homeWorkspaceProps} />;
     }
     if (workspaceMode === PERIDOT_WORKSPACE_MODES.DATA) {
+      if (columnMappingWorkspaceProps?.open) {
+        return <PeridotColumnMappingModal {...columnMappingWorkspaceProps} presentation="page" />;
+      }
       return <PeridotDataWorkspace {...dataWorkspaceProps} />;
     }
     if (workspaceMode === PERIDOT_WORKSPACE_MODES.THEME) {
@@ -4995,6 +4999,9 @@ export default function EuropeNetworkMapApp() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.DATA);
+    setIsSidePanelOpen(false);
+
     const fileLabel = file.name || 'Uploaded table';
     // The public upload flow now always enters the generalized mapper. Dataset
     // profiles remain an internal compatibility token while legacy profile-specific
@@ -5086,7 +5093,11 @@ export default function EuropeNetworkMapApp() {
           ? 'This workbook has multiple usable sheets. You can now open the workbook mapping workspace to choose a primary record sheet, select a primary unique ID column, and preview Sheet + Column mappings. Multi-sheet import will be wired in the next pass.'
           : '',
       });
-      setIsColumnMappingModalOpen(Boolean(mappingState));
+      if (mappingState) {
+        openColumnMappingWorkspace();
+      } else {
+        setIsColumnMappingModalOpen(false);
+      }
     } catch (error) {
       setColumnMappingStaging({
         status: 'error',
@@ -5182,7 +5193,7 @@ export default function EuropeNetworkMapApp() {
         editingActiveData: Boolean(activeMappedDataSource?.isSampleData && activeMappedDataSource?.sampleDatasetId === sampleId),
         stagedAt: new Date().toLocaleTimeString(),
       });
-      setIsColumnMappingModalOpen(true);
+      openColumnMappingWorkspace();
     } catch (error) {
       setPeridotValidationSummary({
         popup: {
@@ -5614,7 +5625,7 @@ export default function EuropeNetworkMapApp() {
       editingActiveData: true,
       stagedAt: new Date().toLocaleTimeString(),
     });
-    setIsColumnMappingModalOpen(true);
+    openColumnMappingWorkspace();
   };
 
   const clearColumnMappingStaging = () => {
@@ -5873,7 +5884,7 @@ export default function EuropeNetworkMapApp() {
     columnMappingStaging,
     isColumnMappingModalOpen,
     handleColumnMappingTableUpload,
-    openColumnMappingModal: () => setIsColumnMappingModalOpen(true),
+    openColumnMappingModal: openColumnMappingWorkspace,
     clearColumnMappingStaging,
     rowDiagnostics,
     showLabels,
@@ -6048,6 +6059,21 @@ export default function EuropeNetworkMapApp() {
     setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.DATA);
     setIsSidePanelOpen(false);
   };
+
+  function openColumnMappingWorkspace() {
+    const openMappingWorkspace = () => {
+      setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.DATA);
+      setIsSidePanelOpen(false);
+      setIsColumnMappingModalOpen(true);
+    };
+
+    if (isColumnMappingModalOpen && workspaceMode === PERIDOT_WORKSPACE_MODES.DATA) {
+      setIsSidePanelOpen(false);
+      return;
+    }
+
+    runPeridotTransition('Opening Data Mapping…', openMappingWorkspace);
+  }
 
   const openVisualizationsWorkspace = () => {
     if (!peridotNormalizedData) {
@@ -6241,7 +6267,7 @@ export default function EuropeNetworkMapApp() {
     activeSampleDataSource: activeMappedDataSource?.isSampleData ? activeMappedDataSource : null,
     handleDownloadPeridotTemplate,
     handleColumnMappingTableUpload,
-    openColumnMappingModal: () => setIsColumnMappingModalOpen(true),
+    openColumnMappingModal: openColumnMappingWorkspace,
     openActiveMappedDataEditor,
     clearColumnMappingStaging,
     onUseSampleData: useSampleData,
@@ -6251,6 +6277,15 @@ export default function EuropeNetworkMapApp() {
     onExploreSample: activatePeridotSampleData,
     onEditSampleMapping: editPeridotSampleMapping,
     sampleLoadingId,
+  };
+
+  const columnMappingWorkspaceProps = {
+    open: isColumnMappingModalOpen,
+    staging: columnMappingStaging,
+    onClose: discardColumnMappingStaging,
+    onSaveMapping: handleSaveColumnMappingState,
+    onConfirmImport: handleConfirmColumnMappingImport,
+    onResetSampleMapping: resetPeridotSampleMapping,
   };
 
   const themeWorkspaceProps = {
@@ -6579,15 +6614,6 @@ export default function EuropeNetworkMapApp() {
           inspectorViewComponents={inspectorViewComponents}
         />
 
-        <PeridotColumnMappingModal
-          open={isColumnMappingModalOpen}
-          staging={columnMappingStaging}
-          onClose={discardColumnMappingStaging}
-          onSaveMapping={handleSaveColumnMappingState}
-          onConfirmImport={handleConfirmColumnMappingImport}
-          onResetSampleMapping={resetPeridotSampleMapping}
-        />
-
         <AppMainWorkspace
           pageTitle={pageTitle}
           setPageTitle={setPageTitle}
@@ -6597,6 +6623,7 @@ export default function EuropeNetworkMapApp() {
           keepSearchMounted={hasInitializedSearch}
           homeWorkspaceProps={homeWorkspaceProps}
           dataWorkspaceProps={dataWorkspaceProps}
+          columnMappingWorkspaceProps={columnMappingWorkspaceProps}
           themeWorkspaceProps={themeWorkspaceProps}
           visualizationWorkspaceProps={visualizationWorkspaceProps}
           exploreWorkspaceProps={exploreWorkspaceProps}
