@@ -329,3 +329,35 @@
     transform: none;
   }
 }
+
+/* Inline About-page feedback presentation. The same submission logic is shared
+ * with the legacy trigger/dialog mode, but the About hierarchy renders the form
+ * as normal page content rather than opening another modal. */
+.peridot-feedback-inline {
+  border-top: 1px solid rgba(223, 233, 200, 0.24);
+  padding-top: 1.5rem;
+}
+
+.peridot-feedback-form.is-inline {
+  width: min(100%, 60rem);
+  padding: 0;
+}
+
+.peridot-feedback-form.is-inline .peridot-feedback-choice {
+  background: rgba(247, 242, 223, 0.06);
+}
+
+.peridot-feedback-form.is-inline .peridot-feedback-field textarea,
+.peridot-feedback-form.is-inline .peridot-feedback-field input {
+  background: rgba(2, 18, 10, 0.5);
+}
+
+.peridot-feedback-form.is-inline .peridot-feedback-actions {
+  justify-content: flex-start;
+}
+
+.peridot-feedback-inline-success {
+  min-height: 0;
+  width: min(100%, 42rem);
+  padding: 1.5rem 0 0;
+}

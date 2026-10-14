@@ -33,7 +33,7 @@ const PERIDOT_AREAS = [
   'Chart Visualizations',
   'Timeline',
   'Export',
-  'Learn More',
+  'About / project information',
   'General',
 ];
 
@@ -62,7 +62,7 @@ function FeedbackIcon() {
   );
 }
 
-export function PeridotFeedbackForm() {
+export function PeridotFeedbackForm({ mode = 'trigger' }) {
   const [open, setOpen] = useState(false);
   const [feedbackTypes, setFeedbackTypes] = useState([]);
   const [areas, setAreas] = useState([]);
@@ -71,6 +71,7 @@ export function PeridotFeedbackForm() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const isInline = mode === 'inline';
 
   const dialogTitleId = useMemo(() => 'peridot-feedback-dialog-title', []);
   const closeButtonRef = useRef(null);
@@ -172,6 +173,123 @@ export function PeridotFeedbackForm() {
     }
   };
 
+  const feedbackForm = (
+    <form className={`peridot-feedback-form${isInline ? ' is-inline' : ''}`} onSubmit={handleSubmit}>
+      <fieldset>
+        <legend>Feedback type <span>(select any that apply)</span></legend>
+        <div className="peridot-feedback-choice-grid">
+          {FEEDBACK_TYPES.map((type) => (
+            <label key={type} className="peridot-feedback-choice">
+              <input
+                type="checkbox"
+                checked={feedbackTypes.includes(type)}
+                onChange={() => setFeedbackTypes((current) => toggleSelection(current, type))}
+              />
+              <span>{type}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Area of Peridot <span>(select any that apply)</span></legend>
+        <div className="peridot-feedback-choice-grid peridot-feedback-area-grid">
+          {PERIDOT_AREAS.map((area) => (
+            <label key={area} className="peridot-feedback-choice">
+              <input
+                type="checkbox"
+                checked={areas.includes(area)}
+                onChange={() => setAreas((current) => toggleSelection(current, area))}
+              />
+              <span>{area}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <label className="peridot-feedback-field">
+        <span>Message <b aria-hidden="true">*</b></span>
+        <textarea
+          value={message}
+          onChange={(event) => {
+            setMessage(event.target.value);
+            if (status === 'error') {
+              setStatus('idle');
+              setErrorMessage('');
+            }
+          }}
+          required
+          rows="5"
+          placeholder="Describe your question, report, or suggestion."
+        />
+      </label>
+
+      <label className="peridot-feedback-field">
+        <span>What were you trying to do? <em>(optional)</em></span>
+        <textarea
+          value={taskContext}
+          onChange={(event) => setTaskContext(event.target.value)}
+          rows="3"
+          placeholder="For example: map a point dataset, inspect a record, export a chart."
+        />
+      </label>
+
+      <label className="peridot-feedback-field">
+        <span>Email address <em>(optional, for a reply)</em></span>
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => setEmail(event.target.value)}
+          placeholder="name@example.edu"
+        />
+      </label>
+
+      <p className="peridot-feedback-privacy-note">
+        Your submission will be emailed to Peridot&apos;s creator, Haley Price. Thank you for helping her make Peridot better for everyone!
+      </p>
+
+      {status === 'error' ? (
+        <p className="peridot-feedback-error" role="alert">{errorMessage}</p>
+      ) : null}
+
+      <div className="peridot-feedback-actions">
+        {!isInline ? (
+          <button
+            type="button"
+            className="peridot-button-secondary"
+            onClick={closeDialog}
+            disabled={status === 'submitting'}
+          >
+            Cancel
+          </button>
+        ) : null}
+        <button
+          type="submit"
+          className="peridot-button-primary"
+          disabled={status === 'submitting'}
+        >
+          {status === 'submitting' ? 'Sending feedback…' : 'Send feedback'}
+        </button>
+      </div>
+    </form>
+  );
+
+  if (isInline) {
+    return (
+      <section className="peridot-feedback-inline" aria-label="Peridot feedback form">
+        {status === 'success' ? (
+          <div className="peridot-feedback-success peridot-feedback-inline-success" role="status">
+            <h3>Thank you.</h3>
+            <p>Your feedback has been sent. It will help guide future Peridot work.</p>
+            <button type="button" className="peridot-button-primary" onClick={resetForm}>
+              Send another message
+            </button>
+          </div>
+        ) : feedbackForm}
+      </section>
+    );
+  }
+
   return (
     <>
       <button
@@ -225,104 +343,7 @@ export function PeridotFeedbackForm() {
                   Close
                 </button>
               </div>
-            ) : (
-              <form className="peridot-feedback-form" onSubmit={handleSubmit}>
-                <fieldset>
-                  <legend>Feedback type <span>(select any that apply)</span></legend>
-                  <div className="peridot-feedback-choice-grid">
-                    {FEEDBACK_TYPES.map((type) => (
-                      <label key={type} className="peridot-feedback-choice">
-                        <input
-                          type="checkbox"
-                          checked={feedbackTypes.includes(type)}
-                          onChange={() => setFeedbackTypes((current) => toggleSelection(current, type))}
-                        />
-                        <span>{type}</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                <fieldset>
-                  <legend>Area of Peridot <span>(select any that apply)</span></legend>
-                  <div className="peridot-feedback-choice-grid peridot-feedback-area-grid">
-                    {PERIDOT_AREAS.map((area) => (
-                      <label key={area} className="peridot-feedback-choice">
-                        <input
-                          type="checkbox"
-                          checked={areas.includes(area)}
-                          onChange={() => setAreas((current) => toggleSelection(current, area))}
-                        />
-                        <span>{area}</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-
-                <label className="peridot-feedback-field">
-                  <span>Message <b aria-hidden="true">*</b></span>
-                  <textarea
-                    value={message}
-                    onChange={(event) => {
-                      setMessage(event.target.value);
-                      if (status === 'error') {
-                        setStatus('idle');
-                        setErrorMessage('');
-                      }
-                    }}
-                    required
-                    rows="5"
-                    placeholder="Describe your question, report, or suggestion."
-                  />
-                </label>
-
-                <label className="peridot-feedback-field">
-                  <span>What were you trying to do? <em>(optional)</em></span>
-                  <textarea
-                    value={taskContext}
-                    onChange={(event) => setTaskContext(event.target.value)}
-                    rows="3"
-                    placeholder="For example: map a point dataset, inspect a record, export a chart."
-                  />
-                </label>
-
-                <label className="peridot-feedback-field">
-                  <span>Email address <em>(optional, for a reply)</em></span>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="name@example.edu"
-                  />
-                </label>
-
-                <p className="peridot-feedback-privacy-note">
-                  Your submission will be emailed to Peridot's creator, Haley Price. Thank you for helping her make Peridot better for everyone!
-                </p>
-
-                {status === 'error' ? (
-                  <p className="peridot-feedback-error" role="alert">{errorMessage}</p>
-                ) : null}
-
-                <div className="peridot-feedback-actions">
-                  <button
-                    type="button"
-                    className="peridot-button-secondary"
-                    onClick={closeDialog}
-                    disabled={status === 'submitting'}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="peridot-button-primary"
-                    disabled={status === 'submitting'}
-                  >
-                    {status === 'submitting' ? 'Sending feedback…' : 'Send feedback'}
-                  </button>
-                </div>
-              </form>
-            )}
+            ) : feedbackForm}
           </section>
         </div>,
         document.body,
