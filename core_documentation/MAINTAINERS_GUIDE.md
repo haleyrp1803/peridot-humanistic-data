@@ -29,7 +29,7 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-a32ef05 — Add timeline relationship layout and sample switching fixes
+cd625a2 — Normalize About workspace and feedback
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -51,11 +51,11 @@ Mapped uploads are now editable after import. The Data workspace can reopen the 
 
 Sample data is now first-class generalized data rather than hidden embedded fallback state. Peridot starts with **no active dataset**. A researcher must explicitly select a sample or upload their own data. `public/sample_data/` contains three ordinary downloadable source files—correspondence network, family tree, and cardinals—and `src/peridotSampleDatasets.js` pairs each with a preserved generalized mapping. The sample chooser starts collapsed and may be reopened repeatedly; selection state is owned at the application level so choosing one sample does not prevent replacement with another. Sample mappings can be edited for learning/QA without mutating the shipped mapping; **Reset to sample mapping** restores the canonical interpretation.
 
-Canonical temporal semantics remain fully authoritative across active consumers. The former `parsedDate`, `parseHistoricalDate`, duplicate capability parser, and lexical date-sorting fallbacks are retired from active `src`. Search consumes generalized relationships and places plus canonical subject-aware Evidence; its Results ledger is generalized rather than route-shaped, and the Search/Timeline/Analytics scope audit is complete.
+Canonical temporal semantics remain fully authoritative across active consumers. The former `parsedDate`, `parseHistoricalDate`, duplicate capability parser, and lexical date-sorting fallbacks are retired from active `src`. ISO 8601 timestamp strings are accepted as day-precision temporal values while preserving the complete source text; parsing uses the lexical source calendar date rather than timezone-shifting historical dates. Search consumes generalized relationships and places plus canonical subject-aware Evidence; its Results presentation is generalized rather than route-shaped, and the Search/Timeline/Analytics scope audit is complete.
 
 Network semantics have now crossed the principal generalized boundary as well. Geographic relationship scope respects Timeline-visible dated relationship observations while retaining genuinely undated structural relationships; `peridotEntityNetwork.js` provides generalized geographic anchor semantics; the old separate place/person map distinction has been collapsed into one Geographic Map; Map settings apply anchor roles, display identities, relationship-line location rules, and fallbacks transactionally; geographic edges require both exact visible endpoint node instances; hover/provenance language is generalized; and playback highlighting consumes the rendered generalized graph rather than rebuilding a correspondence-shaped Source→Target pair. The accepted playback/interaction performance sequence from `c8a7c46` remains current: the bottom playback scrubber uses transient local preview state, pointer panning and wheel zoom use transient SVG transforms before durable state commits, and Force playback reuses a stable full-scope graph instead of rebuilding/re-simulating geometry on every playback tick. The discarded playback tween/geometry-animation prototypes remain absent.
 
-The active public workflow remains Home → Manage Your Data → Visualize Your Data → Explore Your Data → Learn More. Themes and Accessibility remains route-compatible but intentionally hidden from the public hamburger menu. Timeline now has a dedicated visualization workspace inside Visualizations, while the pre-existing bottom Timeline/playback control remains shared across visualization modes; Export remains a Visualizations header action. Inspector is a compact/full shared-state evidence system. Home now includes a fixed, visually secondary **Tutorial** button beneath the two primary data-entry actions; it is currently disabled with **“Tutorial coming soon.”** on hover/focus. The prior floating tutorial invitation is removed, while the existing tutorial implementation remains in source for later revision.
+The active public workflow now uses a persistent site-wide header rather than a hamburger-first route model. The Peridot logo returns to Home; **Data**, **Visualize**, and **Explore** occupy the primary task group; **Tutorials** and **About** occupy the project/help group. The header persists across public pages, and page navigation does not intentionally unload the active dataset or reset accepted workspace state. Visualize owns Map, Network, Timeline, Charts, and Export; Explore owns Browse, Advanced Query, and Refine; Data owns project start/edit plus the full-page mapping workspace; About owns About Peridot, Creator, AI Disclosure, Open Source, and Feedback. Themes and Accessibility remains implemented as an internal compatibility/development route but is not a public header destination. The Home tutorial placeholder remains deferred pending the dedicated Tutorials/Home pass.
 
 ### Current source context
 
@@ -79,7 +79,7 @@ The following tracked planning documents remain relevant maintenance references:
 | System | Primary owner | Core responsibility | Sensitive coupling | Minimum regression check |
 |---|---|---|---|---|
 | Top-level orchestration | `App.jsx` | state, derived data, routing, Inspector history, export wiring | filters, timeline, compact/full Inspector bridge | open each workspace; upload/use sample; click node/edge/cluster |
-| Workspace navigation | `peridotWorkspaceConfig.js`, `PeridotHamburgerMenu.jsx` | public routing and hidden Theme path | active workspace state, Inspector presentation | hamburger routes; Home CTAs; return paths |
+| Workspace navigation | `App.jsx`, global header/navigation boundaries, `peridotWorkspaceConfig.js` | persistent public routing, state continuity, hidden Theme compatibility | active dataset, workspace/viewport state, Inspector presentation | logo/Home; Data/Visualize/Explore/Tutorials/About; cross-page state persistence |
 | First-time tutorial | tutorial state, panel, dock, anchor/highlight, and Home-entry boundaries | retained seven-stage guided workflow; Home launcher currently disabled pending revision | workspace routing, Inspector close behavior, target observation, keyboard focus | verify disabled Home placeholder now; rerun full seven-stage regression when launcher is re-enabled |
 | Data import | Data workspace + mapping/import helpers | parse, map, validate, normalize, capability audit | upload reset and downstream data scope | template, CSV, TSV, XLSX, XLS, mapped import |
 | Visualizations | `PeridotVisualizationsWorkspace.jsx`, `PeridotTimelineWorkspace.jsx` | map/network/chart modes, dedicated Timeline workspace, shared playback control, header, stage, Export menu | stage sizing, Inspector overlay, search/playback scope, portal layers | map/network/timeline/chart switch; Timeline orientation/zoom/pan/categories; header/playback controls |
@@ -91,18 +91,19 @@ The following tracked planning documents remain relevant maintenance references:
 
 ## 2. Application Boundaries and Route Model
 
-Peridot uses a workspace-first route model. The active public path is **Home → Manage Your Data → Visualize Your Data → Explore Your Data → Learn More**. The hamburger menu is the primary visible navigation surface. **Themes and Accessibility** remains implemented and route-compatible, but is intentionally hidden from the public menu.
+Peridot uses a workspace-first route model with a **persistent global header**. The logo is the Home control; **Data**, **Visualize**, and **Explore** are the primary task destinations; **Tutorials** and **About** are persistent project/help destinations. Lightweight page navigation is immediate; the heavier transition overlay is reserved for expensive workspace/visualization changes and for entering the full-page mapping workspace. **Themes and Accessibility** remains implemented and route-compatible internally, but is intentionally absent from the public header.
 
 ### Workspace boundaries
 
 | Surface | User-facing role | Primary boundary | Important maintenance condition |
 |---|---|---|---|
-| Home | concise start surface | `PeridotHomeWorkspace.jsx` | preserve fixed-ratio, non-scrolling title-card composition |
-| Manage Your Data | import, mapping, validation | `PeridotDataWorkspace.jsx`, mapping/import helpers | preserve permissive database-first ingestion and explicit user mapping |
-| Visualize Your Data | map, network, dedicated Timeline visualization, charts, shared playback, Export | `PeridotVisualizationsWorkspace.jsx`, `PeridotTimelineWorkspace.jsx` | preserve stage sizing, mounted Inspector behavior, Timeline viewport/navigation, and header/playback layering |
-| Explore Your Data | Advanced Search and research scope | `PeridotSearchWorkspace.jsx` | preserve draft/apply semantics and return-to-state Inspector handoff |
-| Learn More | project context and help | `PeridotLearnMoreWorkspace.jsx` | preserve editorial reading flow and divider choreography |
-| Themes and Accessibility | internal appearance/settings workspace | `PeridotThemeWorkspace.jsx` | retain route/component even while menu entry is hidden |
+| Home | concise start surface and return anchor | `PeridotHomeWorkspace.jsx` + global header/logo routing | preserve branded entry composition; logo remains a reliable Home action |
+| Data | project start, source replacement, mapping, validation | `PeridotDataWorkspace.jsx`, `PeridotColumnMappingModal.jsx`, mapping/import helpers | preserve permissive database-first ingestion, explicit user mapping, and full-page mapping behavior |
+| Visualize | Map, Network, dedicated Timeline visualization, Charts, shared playback, Export | `PeridotVisualizationsWorkspace.jsx`, `PeridotTimelineWorkspace.jsx` | preserve stage sizing, mounted Inspector behavior, state persistence, Timeline viewport/navigation, and header/playback layering |
+| Explore | Browse, Advanced Query, Refine, applied research scope | `PeridotSearchWorkspace.jsx` | preserve draft/apply semantics, three-mode local navigation, result/facet/capability placement, and return-to-state Inspector handoff |
+| Tutorials | public help/tutorial destination | current tutorial routing/placeholder boundaries | destination is established; substantive Tutorials redesign remains deferred |
+| About | project context, creator, AI disclosure, open source, Feedback | `PeridotLearnMoreWorkspace.jsx`, `PeridotFeedbackForm.jsx` | preserve local About hierarchy, readable scroll containment, inline Feedback, and scholarly project context |
+| Themes and Accessibility | internal appearance/settings workspace | `PeridotThemeWorkspace.jsx` | retain route/component even while public entry is hidden |
 | Inspector | compact selection summary and full dossier | Inspector modules + `App.jsx` | compact/full modes share selection and Back history |
 
 ### First-time tutorial contract
@@ -205,17 +206,16 @@ Export is a header action rather than a top-level workspace. Map/network exports
 
 ## 5. Advanced Search / Explore Contract
 
-Advanced Search is the primary Explore Your Data surface and the owner of global **applied/filtered data**. It uses the explicit draft/apply model: typing, suggestions, Browse selections, facets, and structured criteria change draft state until **Apply Filters** commits the scope.
+Explore is the owner of global **applied/filtered data** and now presents three local modes: **Browse**, **Advanced Query**, and **Refine**. It retains the explicit draft/apply model: typing, suggestions, Browse selections, facets, and structured criteria change draft state until **Apply Filters** commits the scope.
 
 ### Responsibilities
 
-- Build Search supports keyword, person/entity, place, explicit route-place, entity-relationship, date, capability, and structured criteria inputs.
+- **Browse** indexes the loaded dataset. Generalized Places and canonical Evidence are included; explicit Routes remain separate and appear only when meaningful route data exists.
+- **Advanced Query** contains Build Search plus the current generalized result set. Build Search supports keyword, person/entity, place, explicit route-place, entity-relationship, date, capability, and structured criteria inputs; Results remain neutral Date / People or entities / Places rows with pagination, mapped-information drilldown, and Inspector handoff.
 - Structured criteria support Required / Any-of / Excluded groups plus optional **count conditions attached to a specific criterion**. Count conditions use plain language such as **This person has at least N connected entities**, **This place has at least N connected places**, or **People in these records have at least N connected entities**.
 - Count-condition reference counts are derived from the loaded/mapped Search dataset; the primary criterion determines which records are returned. Place-to-place connection counts use explicit directed place connections and never infer a route merely because several mapped places occur in one record.
-- Browse indexes the loaded dataset. Generalized Places and canonical Evidence are included; explicit Routes remain separate and appear only when meaningful route data exists.
-- Results presents generalized Date / People or entities / Places ledger rows, pagination, mapped-information drilldown, and Inspector handoff rather than requiring every record to be a Source/Target route.
-- Refine / Inspect exposes applied-result facets; generalized place and canonical Evidence facets fill draft controls for later Apply rather than silently changing scope.
-- Capabilities presents the active dataset’s supported research surfaces.
+- **Refine** exposes applied-result facets, Inspector handoff guidance, and dataset capability review. Generalized place and canonical Evidence facets fill draft controls for later Apply rather than silently changing scope.
+- Results and Capabilities remain behaviors/content areas but are no longer independent top-level Explore modes.
 - Inspect opens the full Inspector above the current Explore state, so closing it returns the researcher to the same search context.
 - The legacy global minimum correspondence/connection weight is retired. Do not restore it as a universal dataset filter; the generalized replacement is criterion-attached count conditions.
 
@@ -315,7 +315,7 @@ Older correspondence and genealogy profile/normalizer modules remain in source w
 
 - `PeridotDataWorkspace.jsx` owns user entry through **Start with a Template**, **Start with Sample Data**, and **Upload Your Data**. It no longer exposes the old Correspondence/Genealogy profile selector or a separate experimental universal-mapper surface.
 - Peridot starts with **no active dataset**. Do not restore a hidden sample fallback beneath Home/Data. A dataset becomes active only after an explicit sample selection or user upload.
-- `PeridotColumnMappingModal.jsx` owns the generalized mapping workflow for both ordinary tables and workbooks. The active conceptual order is Preview, Sheets where applicable, Relations, Time, Places, Evidence, Review. Recurring-entity Identity controls are integrated into Relations/Places when needed rather than occupying a separate required page.
+- `PeridotColumnMappingModal.jsx` retains its historical filename but now renders the generalized mapping workflow as a **full-page Data workspace**, not a modal overlay. The local mapping rail is directly navigable and uses Preview, Sheets where applicable, Relations, Time, Places, Evidence, and **Review and Upload**. Recurring-entity Identity controls are integrated into Relations/Places when needed rather than occupying a separate required page. Cancel is separated from the Back/Next progression group; entering mapping uses the established heavier transition to avoid a flash of unstyled/settling content.
 - Mapping is explicit, progressive, reversible, and user-owned. Peridot may propose recognizable structures, but it does not silently standardize values, merge entities, assign scholarly meaning, or infer irreversible relationships.
 - Existing uploaded mappings are editable after import. **Apply changes** recompiles the active dataset from the preserved original uploaded source with the revised mapping rather than patching only the rendered runtime rows.
 - Identity mapping separates **record identity** from **recurring entity identity**. Simple recurring entities default to the mapped display name/label; stronger rules may use stable IDs or alternate compound recipes whose complete branches represent equivalent appearances of the same entity across roles/sheets.
@@ -328,7 +328,7 @@ Older correspondence and genealogy profile/normalizer modules remain in source w
 - Place subjects are authoritative. Reusing one source column for two different participant-specific mappings is valid; for example a child’s source-row place may be mapped as `place of birth` for the child and as `birthed child here` for the mother.
 - Workbook Relations, Identity, Time, and Places use sheet-qualified references and the same generalized semantic model.
 - Evidence retains explicit Include/Ignore controls, optional display labels, examples, per-field cardinality, record/participant subject selection, and downstream chart/search availability where appropriate. Cardinality splits first and subject attribution fans out second. Canonical subject-aware Evidence assertions link to the existing per-record EvidenceSource, while compatibility `customFields` remain deduplicated by source interpretation. Structurally mapped fields may remain visible without being duplicated as evidence.
-- Review is a summary + validation + correction checkpoint. It repeats accepted assignments, reports temporal/capability information, and exposes warnings without treating legacy correspondence-shaped requirements as semantic authority.
+- **Review and Upload** is the summary + validation + correction checkpoint. It repeats accepted assignments, reports temporal/capability information, and exposes warnings without treating legacy correspondence-shaped requirements as semantic authority. For edits to an active mapping, the final action remains an apply-changes operation rather than pretending the source is a new upload.
 - Workbooks use a selected primary record sheet and explicit unique-ID joins. Row order is not a primary join strategy. Duplicate join IDs that would make assembly unsafe must be blocked or clearly surfaced rather than multiplying rows silently.
 - The generalized mapping/source/transformation layer is authoritative. Legacy correspondence-shaped fields may exist only as downstream compatibility projections.
 
@@ -370,7 +370,7 @@ These capabilities should now be treated as preservation contracts, not backlog 
 
 ### Minimum regression checks
 
-Test: first launch with no active data; template download; all three sample chooser entries; sample source download; sample mapping edit/cancel/reset; CSV and TSV mapping; XLSX and XLS staging; primary-sheet selection; multiple joins; duplicate-ID blocking; joined-field mapping; Identity continuity across repeated roles; post-upload mapping re-edit/apply; retained accepted incomplete rows; Search reset/coherence; Timeline and Analytics scope after upload; Inspector participant attribution and linked navigation; and relevant exports.
+Test: first launch with no active data; persistent-header navigation and logo/Home return; template download; all three sample chooser entries; sample source download; sample mapping edit/cancel/reset; CSV and TSV mapping; XLSX and XLS staging; full-page mapping entry without flash; direct mapping-section navigation; primary-sheet selection; multiple joins; duplicate-ID blocking; joined-field mapping; Identity continuity across repeated roles; Review and Upload/apply behavior; post-upload mapping re-edit/apply; retained accepted incomplete rows; cross-page active-dataset/state persistence; Search reset/coherence; Timeline and Analytics scope after upload; Inspector participant attribution and linked navigation; and relevant exports.
 
 ### Preserved detailed import regression expectations
 
@@ -450,13 +450,13 @@ import './PeridotFeedbackForm.css';
 
 | Stylesheet | Ownership boundary | Sensitive behavior | Verify after change |
 |---|---|---|---|
-| `index.css` | shared global layer | shared selectors and cross-workspace defaults | Home, Data, Visualizations, Explore, Learn More |
+| `index.css` | shared global layer | shared selectors and cross-workspace defaults | Home, Data, Visualize, Explore, About |
 | `InspectorPanel.css` | compact/full/Explore Inspector | overlay and dossier presentation | compact click, Expand, Back, Explore handoff |
 | `AnalyticsPanel.css` | chart builder and renderer chrome | controls, dropdown layering, reduced motion | chart switch, menus, export |
-| `PeridotSearchWorkspace.css` | Explore folio/search | scroll containment and folio corners | expanded Build/Refine/Browse/Results scrolling |
-| `PeridotColumnMappingModal.css` | role-mapping modal | modal layering and step transitions | table/workbook mapping flow |
-| `PeridotLearnMoreWorkspace.css` | Learn More reading surface | portrait/text flow, dividers, expansion | biography, disclosure, Tutorials |
-| `PeridotFeedbackForm.css` | feedback modal | modal layering and form layout | hamburger-adjacent form, backdrop/Escape, Visualizations controls |
+| `PeridotSearchWorkspace.css` | Explore workspace | three-mode local navigation, query/facet/result layout, scroll containment | Browse/Advanced Query/Refine switching; expanded criteria/facets/results |
+| `PeridotColumnMappingModal.css` | full-page role-mapping workspace (historical filename) | mapping header/section rail, page containment, step transitions, footer actions | table/workbook mapping flow; direct section navigation; Cancel/Back/Next |
+| `PeridotLearnMoreWorkspace.css` | About reading surface | local About navigation, title scale, portrait/text flow, page scrolling | About Peridot, Creator, AI Disclosure, Open Source, Feedback |
+| `PeridotFeedbackForm.css` | Feedback form in inline and compatibility-modal modes | form layout, inline embedding, compatibility overlay behavior | About Feedback page; modal compatibility path |
 
 CSS extraction, dead-rule removal, behavior repairs, and visual redesign are distinct bounded passes. The earlier component-style extraction sequence is historical context in the Changelog; the `7df46a8` import restoration is a correction to preserve this functional cascade, not a new architectural direction.
 
@@ -475,8 +475,8 @@ The user-designed Peridot logo and related design assets live in `assets/`:
 - `assets/Homepage Layout Mockup.png` and `assets/Homepage Layout Mockup Annotated.png` — user-authored layout references for the homepage redesign.
 - `assets/Chart Colors Base.jpeg`, `assets/Chart Colors Dark.jpeg`, and `assets/Chart Colors Pale.jpeg` — chart-palette reference assets.
 - `assets/Peridot Palette Upload Guide 1.png` and `assets/Peridot Palette Upload Guide 2.png` — palette-upload guide/reference assets.
-- `assets/2026_Price_Headshot.jpg` — creator portrait used in the Learn More biography flow.
-- `assets/Price_CV.pdf` — creator CV resource linked from Learn More.
+- `assets/2026_Price_Headshot.jpg` — creator portrait used in the About → Creator biography flow.
+- `assets/Price_CV.pdf` — creator CV resource linked from About → Creator.
 
 `src/PeridotHomeWorkspace.jsx` imports the gilded transparent logo directly from `../assets/Peridot Logo Gilded Transparent.png` and the selected filigree from `../assets/Adobe Stock Filigree 1.png`. Keep these files under version control. The local Photoshop source file, `assets/Peridot Logo Workspace.psd`, should remain ignored unless there is an explicit decision to archive editable design sources in the repository.
 
@@ -517,7 +517,7 @@ Anchor rules:
 
 The default interface is Peridot-inspired and controlled through semantic roles in `peridotTheme.js`. `peridotThemeRoleMetadata.js` must remain aligned with those roles, while `peridotColorPalette.js` supports older compatibility paths. Chart-targeted palette imports may change chart series only; they must not recolor unrelated interface chrome.
 
-Current routing constraints are stable: the hamburger exposes Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More; Themes and Accessibility remains internally routable but hidden; Export and Timeline stay inside Visualizations; and the persistent rail survives only as a compact Inspector compatibility bridge. For the historical palette and workspace-routing commit sequence, see the Changelog.
+Current routing is centered on the persistent global header: logo/Home, Data, Visualize, Explore, Tutorials, and About. Workspace-local navigation is centered where appropriate; Export stays at the right edge of Visualize local navigation. Themes and Accessibility remains internally routable but hidden. Lightweight page changes do not receive an added transition; the heavier transition is reserved for expensive visualization/workspace changes. The active dataset and accepted workspace state persist across page navigation, and the persistent rail survives only as an Inspector compatibility bridge. For the historical routing sequence, see the Changelog.
 
 ## 9. Module Ownership Index
 
@@ -542,11 +542,11 @@ Main orchestration file. It owns top-level state, derived-data wiring, workspace
 
 #### `src/peridotWorkspaceConfig.js`
 
-Workspace-mode vocabulary and helper functions used by `App.jsx` for Home, Data, Visualizations, Explore, Learn More, Search, Inspector, and Themes/Accessibility routing. Export and Timeline are now Visualizations-integrated features rather than standalone workspace modes.
+Workspace-mode vocabulary and helper functions used by `App.jsx` for Home, Data, Visualize, Explore, About/Learn More compatibility, Search, Inspector, and Themes/Accessibility routing. Export and Timeline remain Visualize-integrated features rather than standalone workspace modes; Tutorials is a public navigation destination whose substantive content remains deferred.
 
 #### `src/PeridotHamburgerMenu.jsx`
 
-Primary visible navigation component. It renders the hamburger button and the simplified task-oriented public menu: Manage Your Data, Visualize Your Data, Explore Your Data, and Learn More about Peridot. Themes and Accessibility is intentionally hidden from the public menu for now, but the component comments preserve the restore point for re-adding that entry later.
+Legacy/compatibility navigation component retained where older paths still reference it. It is no longer the primary public navigation model; the persistent global header owns ordinary page-to-page navigation. Themes and Accessibility remains intentionally non-public unless a later appearance/settings pass restores it.
 
 #### `src/PeridotHomeWorkspace.jsx`
 
@@ -558,11 +558,11 @@ Full Data workspace for the three explicit entry paths: **Start with a Template*
 
 #### `src/PeridotVisualizationsWorkspace.jsx`
 
-Full Visualizations workspace. The visualization header now uses direct single-destination navigation for Mapping, Network, Charts, and Explore; Export remains a menu. It renders unavailable-state explanations when a dataset cannot support a selected view, hosts the large chart workspace, owns the current large/collapsible visualization header, places the compact bottom Timeline control, exposes Map settings, and wraps the live map/network stage. The header is a queued redesign target because it still consumes too much vertical space; future work should compact it rather than relying on users to hide it. The Timeline should regain a playback playhead/scrubber inside the existing range control rather than adding a second timeline surface.
+Full Visualize workspace. The current shell is flattened: a compact second bar centers **Map / Network / Timeline / Charts**, with **Export** held separately at the right. The former oversized visualization title/banner framing has been removed. The workspace renders unavailable-state explanations when a dataset cannot support a selected view, hosts Charts, places the compact bottom Timeline/playback control, exposes Map settings, and wraps the live map/network stage. Visualization state is intended to persist while moving among public pages and visualization modes rather than being reset by navigation.
 
 #### `src/PeridotSearchWorkspace.jsx`
 
-Full Advanced Search workspace and primary Explore surface. It renders active-scope summary plus the animated **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities** tabs. It owns the UI for keyword/person/place/explicit-route/date filters, predictive suggestions, capability filters, structured Required / Any-of / Excluded criteria, criterion-attached count conditions, compact dataset-wide Browse ledgers, generalized Results ledgers, result facets, Apply Filters, Clear Filters, Explore-scoped page animations, and search-result Inspector handoff. Inspect actions from Explore open the full Inspector above the current Explore page so the researcher returns to the same tab/state when the Inspector closes.
+Full Explore workspace. Its public local modes are **Browse / Advanced Query / Refine**. Advanced Query contains the query builder and current result set; Refine contains applied-result facets, Inspector handoff guidance, and capability review. The component still owns keyword/person/place/explicit-route/date filters, predictive suggestions, capability filters, structured Required / Any-of / Excluded criteria, criterion-attached count conditions, dataset-wide Browse ledgers, generalized Results presentation, Apply Filters, Clear Filters, and search-result Inspector handoff. Inspect actions open the full Inspector above the current Explore state so closing it returns to the same context. A larger content/layout redesign remains deferred.
 
 #### `src/PeridotThemeWorkspace.jsx`
 
@@ -574,11 +574,11 @@ Compatibility routing boundary for the old Explore workspace. Current Explore en
 
 #### `src/PeridotLearnMoreWorkspace.jsx`
 
-Public project-information hub for creator context, project provenance, open-source resources, AI-method disclosures, tutorials, and help. It keeps compact reading as the default: the creator biography and both disclosure papers expand independently, while the creator/GitHub top row can reallocate width in favor of the longer biography without removing access to repository materials. The creator portrait is part of the expanded biography’s reading flow rather than a separate dashboard card. Major Learn More sections are separated by the same restrained gold-filigree divider language used in Inspector and Explore; divider timing intentionally establishes reading order before each following section appears.
+Public **About** workspace with local destinations **About Peridot / Creator / AI Disclosure / Open Source / Feedback**. The old Project Information Hub / Return to visualizations framing is superseded. The current presentation is intentionally flat and scholarly: restrained rules/spacing, reduced page-title scale, and a workspace-owned vertical scrollbar when content exceeds the viewport. Creator keeps the portrait and expandable biography; AI Disclosure preserves separate human and ChatGPT accounts; Open Source exposes repository/core-documentation references; Feedback is rendered inline as a normal About page.
 
 #### `src/PeridotFeedbackForm.jsx`
 
-Persistent feedback modal opened from the control placed beneath the hamburger menu. It owns feedback-type selection, required message validation, optional context/email capture, Formspree submission, success/error states, Cancel/close controls, backdrop behavior, and Escape handling. It is coupled to `PeridotHamburgerMenu.jsx` for entry placement and to `PeridotFeedbackForm.css` for modal layering; its overlay must remain above Visualizations header and stage controls.
+Feedback form component used inline by **About → Feedback** and still capable of compatibility-modal rendering. It owns feedback-type selection, required message validation, optional context/email capture, Formspree submission, success/error states, and form actions. Do not assume modal presentation is the only public contract.
 
 ### Data import and mapping
 
@@ -623,19 +623,19 @@ Owns pure post-upload validation summaries. It produces:
 
 #### `src/PeridotColumnMappingModal.jsx`
 
-Owns the large generalized column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports and editable sample mappings. The active model is Preview, Sheets where applicable, Relations, Identity, Time, Places, Evidence, and Review. It exposes repeatable relationship participants, authoritative Identity rules, repeatable temporal assertions, repeatable participant-attached places, workbook primary-sheet selection, multi-sheet unique-ID joins, and selected Evidence/Analytics metadata.
+Owns the generalized column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports and editable sample mappings. Despite its historical filename, it now renders as a **full-page Data workspace**, not a modal. The active local sections are Preview, Sheets where applicable, Relations, Time, Places, Evidence, and **Review and Upload**; recurring-entity Identity controls are integrated where entities are mapped rather than exposed as a separate required page. It exposes repeatable relationship participants, authoritative Identity rules, repeatable temporal assertions, repeatable participant-attached places, workbook primary-sheet selection, multi-sheet unique-ID joins, and selected Evidence/Analytics metadata.
 
-The same modal is reused after import. Researcher uploads can be reopened and recompiled from their preserved original source. Samples open an editable active copy of the shipped mapping and display the approved warning that sample edits affect only the active interpretation; a reset action restores the canonical sample mapping.
+The same full-page workspace is reused after import. Researcher uploads can be reopened and recompiled from their preserved original source. Samples open an editable active copy of the shipped mapping and display the approved warning that sample edits affect only the active interpretation; a reset action restores the canonical sample mapping. Mapping sections are directly navigable, while Back/Next remain convenience progression controls and Cancel is separated from that pair.
 
-This file remains partially decomposed: static UI labels/step groupings live in `peridotColumnMappingUiConfig.js`; repeated Time/Places/Relations controls live in `PeridotMappingFieldControls.jsx`; Identity presentation lives in `PeridotIdentityMappingControls.jsx`; Evidence Include/Ignore controls live in `PeridotEvidenceFieldControls.jsx`. The modal owns mapping state transitions, workbook state, edit/apply/cancel/reset behavior, final mapping assembly, and mapping-workspace presentation.
+This file remains partially decomposed: static UI labels/section groupings live in `peridotColumnMappingUiConfig.js`; repeated Time/Places/Relations controls live in `PeridotMappingFieldControls.jsx`; Identity presentation lives in `PeridotIdentityMappingControls.jsx`; Evidence Include/Ignore controls live in `PeridotEvidenceFieldControls.jsx`. The workspace owns mapping state transitions, workbook state, edit/apply/cancel/reset behavior, final mapping assembly, and mapping-workspace presentation.
 
 #### `src/peridotColumnMappingUiConfig.js`
 
-Static UI configuration for the mapping modal: single-table/workbook step sequences, display labels, field groupings, capability labels, and formatting helpers. It intentionally contains no React state and no import/application logic.
+Static UI configuration for the mapping workspace: single-table/workbook section sequences, display labels, field groupings, capability labels, and formatting helpers. It intentionally contains no React state and no import/application logic.
 
 #### `src/PeridotMappingFieldControls.jsx`
 
-Presentational mapping controls used by the mapping modal for generalized repeatable Relations, Time, Places, and workbook-qualified equivalents. Time presents repeatable Date/Period cards, source-representation controls, Y/M/D component selectors, relationship-participant attachment, and related-note selectors. Places support arbitrary Place A/B/C parts with role source and optional coordinates; Relations support Part A/B/C participants with per-part role source and optional relationship metadata. Workbook controls use combined sheet-column references while preserving the internal workbook reference shape. This file should remain stateless and receive current values plus callbacks from `PeridotColumnMappingModal.jsx`.
+Presentational mapping controls used by the full-page mapping workspace for generalized repeatable Relations, Time, Places, and workbook-qualified equivalents. Time presents repeatable Date/Period cards, source-representation controls, Y/M/D component selectors, relationship-participant attachment, and related-note selectors. Places support arbitrary Place A/B/C parts with role source and optional coordinates; Relations support Part A/B/C participants with per-part role source and optional relationship metadata. Workbook controls use combined sheet-column references while preserving the internal workbook reference shape. This file should remain stateless and receive current values plus callbacks from `PeridotColumnMappingModal.jsx`.
 
 #### `src/PeridotIdentityMappingControls.jsx`
 
@@ -1022,11 +1022,14 @@ These areas still deserve narrow, explicit passes:
    - Evaluate researcher-facing controls in the reserved **Appearance** section of Map settings for node size, cluster size, edge width, and possibly clustering sensitivity.
    - Keep visual scaling controls presentation-only: they must not alter data counts, identities, relationship membership, or scholarly semantics.
 
-6. **Visualization interface and playback follow-up.**
+6. **Navigation/interface and playback follow-up.**
+   - **Completed:** persistent global navigation, logo-as-Home behavior, active dataset/workspace-state persistence, compact centered Visualize local navigation, flattened Visualize framing, three-mode Explore navigation, full-page Data mapping, and normalized About/Feedback hierarchy.
    - **Completed:** sample selection uses the compact chooser with direct **Use / Edit / Download / Details** actions, starts collapsed, and supports replacing one active sample with another.
    - **Completed:** direct Timeline playback scrubbing uses transient preview during drag and canonical commit on release.
    - **Completed foundation:** dedicated Timeline workspace with horizontal/vertical orientations, smooth zoom, drag/scroll navigation, adaptive temporal axis, evidence-driven categories, and relationship-aware event layout.
-   - **Compact Visualizations header:** substantially reduce header height so the visualization stage regains vertical space. Prefer a persistent compact toolbar over an oversized header that users must hide.
+   - **Explore redesign:** the Browse / Advanced Query / Refine architecture is accepted, but Explore remains dense and needs a later content/layout redesign without undoing its scope semantics.
+   - **Data-mapping redesign:** full-page mapping is accepted, but the mapping content itself remains confusing and space-inefficient; redesign it later without returning to a modal/wizard shell.
+   - **About visual polish:** structure is accepted; later global palette/typography work may refine colors without restoring decorative container-heavy framing.
    - **Playback speed calibration:** retain **Slow / Medium / Fast** only and calibrate their intervals against the optimized runtime.
    - **Playback presentation:** animation/tweening remains unfinished design work, not accepted current behavior. Revisit it only from the stable post-optimization architecture; do not resurrect discarded screen-space geometry tween code.
 
@@ -1046,9 +1049,9 @@ These areas still deserve narrow, explicit passes:
    - Do not remove code simply because the public generalized workflow no longer exposes it.
 
 10. **Homepage/tutorial follow-up — deferred visual/content work.**
-    - Preserve the current hierarchy: **Use sample data** and **Upload your data** are the primary Home actions; **Tutorial** is a shorter secondary button beneath them.
-    - The Tutorial placeholder remains disabled with **“Tutorial coming soon.”** until the guided workflow is deliberately revised/re-enabled.
-    - A larger future Home/Data integration may still merge the strongest branded landing-page and sample-selection patterns, but do not combine that broader redesign with Timeline/Network semantic passes.
+    - Preserve the current Home CTAs while integrating the persistent global header and reliable logo-as-Home behavior.
+    - The dedicated **Tutorials** global destination now exists as navigation architecture, but substantive tutorial content/interaction remains deferred; the existing Home Tutorial placeholder remains disabled until that work is deliberately resumed.
+    - A larger future Home refinement may merge the strongest branded landing-page and sample-selection/orientation patterns, but do not combine that broader redesign with Timeline/Network semantic passes.
     - Tutorial attention choreography, panel placement, typography spacing, accessibility, semantic keyword highlighting, animation order/timing, and a final UX walkthrough remain later bounded work.
 
 11. **Inspector → Advanced Search actions and safe metadata filters**, after the current Timeline connection work unless a concrete Search need arises first.

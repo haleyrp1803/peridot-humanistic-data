@@ -20,29 +20,41 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-a32ef05 — Add timeline relationship layout and sample switching fixes
+cd625a2 — Normalize About workspace and feedback
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
 
-This checkpoint establishes the dedicated Timeline visualization workspace as a substantial new visualization surface while preserving the pre-existing bottom Timeline/playback control. It also closes the sample-switching regression discovered during Timeline QA. The underlying generalized mapping, temporal, Search-scope, Network, and Inspector semantics remain the same authorities.
+This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
 
 Current architectural significance:
 
-- `peridotTimelineWorkspaceModel.js` is the canonical Timeline-workspace projection layer: Search/applied scope remains authoritative; one source row may produce several temporal events; temporal subject/form/precision/uncertainty metadata survives projection; and Evidence-backed category membership is plural.
-- **`8188ac0`** added the first horizontal Timeline workspace; **`d410c3d`** added vertical orientation. Horizontal is earliest → latest left-to-right; Vertical is earliest → latest bottom-to-top.
-- Timeline uses an internal scrollable viewport of the same stage concept as Geographic/Force views rather than expanding the page. Scroll extent allows the first/last event to be isolated at the viewport edge.
-- **`0d0380a`** added evidence-driven categories. Users select mapped Evidence fields and values; event visibility is OR-based across enabled category memberships; category markers support color or shape.
-- **`98f3841`** and **`90f93d2`** established the pale reading surface, smooth continuous zoom, mouse-wheel zoom, +/- controls, click-drag panning, persistent scrollbars, zoom-adaptive year/month/day ticks, and label-collision suppression.
-- **`d1fd010`** optimized Timeline rendering performance so the richer workspace remains responsive under larger event counts/zoom ranges.
-- Timeline event selection uses the shared Inspector model. The new workspace did not replace or redesign the existing bottom Timeline/playback control.
-- Explicit mapped relationship projection is conservative: relationship lines are not inferred from shared categories, co-occurrence, or temporal proximity; relationship records that already exist as temporal events are not reinterpreted into arbitrary edges.
-- **`a32ef05`** checkpoints subject-strict relationship endpoint resolution, a continuous relationship/collision-aware secondary-axis layout, revised duration treatment, and the sample-switching/default-collapse correction.
-- Relationship **line routing/presentation remains unfinished**. The current connection semantics/layout are the accepted foundation, but the visual line treatment still needs a dedicated pass to reach the desired ClioVis-like legibility in both orientations.
-- Sample chooser state is application-owned, starts collapsed on Data entry, and can be reopened after loading a sample so another sample may replace it cleanly.
-- The accepted Network performance architecture from `c8a7c46` remains in place; the discarded playback tween/geometry-animation prototypes remain absent.
+- **`a1f4d56`** established persistent global navigation plus workspace-state continuity. The Peridot logo is a Home control; Data, Visualize, Explore, Tutorials, and About are persistent public destinations. Lightweight page changes do not receive an added loading overlay.
+- **`1810bf9`** and **`f59402f`** compacted and flattened Visualize. Map / Network / Timeline / Charts are centered on a local second bar, Export remains distinct at the right, and the prior oversized workspace framing no longer consumes the visualization stage.
+- **`e9ddf1f`** reorganized Explore around **Browse / Advanced Query / Refine**. Results live with Advanced Query; capability review and Inspector handoff context live with Refine. Search draft/apply and scope semantics remain unchanged.
+- **`4a6cd2e`** accepts ISO 8601 timestamp strings as day-precision temporal values while preserving full source text and using the lexical source calendar date rather than timezone-shifting historical evidence.
+- **`f139f53`** moved Data mapping out of a modal/scrim and into the Data page beneath the persistent global header. Mapping sections are directly navigable; the final section is **Review and Upload**; Cancel is separated from Back/Next; entry uses the established heavier transition to avoid flash.
+- **`cd625a2`** normalizes About into **About Peridot / Creator / AI Disclosure / Open Source / Feedback**, removes the old Project Information Hub/return-to-visualizations framing, renders Feedback inline as a normal About page, reduces title scale, and restores page scrolling when content exceeds the viewport.
+- The accepted generalized mapping, Search scope, Timeline, Network, Inspector, and export semantics remain authoritative underneath the navigation redesign. This sequence changes how researchers move among those systems, not what the mapped evidence means.
+- Larger usability redesigns of the mapping content and Explore content remain deferred. Tutorials and Home refinement also remain pending, followed by a broader palette/typography/animation polish pass.
+- Timeline relationship-line routing/presentation remains unfinished; the `a32ef05` subject-strict relationship semantics and continuous secondary-axis layout remain the foundation.
+- The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
 
 ## 2. Recent Milestones, Newest First
+
+### Persistent navigation, workspace normalization, full-page mapping, ISO dates, and About — 2026-09-28 to 2026-10-14
+
+- **`360682f` — `Synchronize documentation through timeline workspace`** closed the previous documentation cycle before the navigation audit began.
+- The navigation redesign was informed by comparison with established mapping, visualization, digital-humanities, archive, journal, and portfolio sites. The project adopted a conventional persistent global header rather than continuing the hamburger-first public model.
+- **`a1f4d56` — `Add persistent navigation and workspace state`** added the global header and preserved the active dataset plus accepted workspace state while users move among pages. The Peridot logo returns Home. Heavy transition treatment is reserved for expensive changes rather than ordinary page navigation.
+- **`1810bf9` — `Simplify visualization workspace navigation`** compressed Visualize navigation, and **`f59402f` — `Flatten visualization workspace framing`** removed oversized title/container framing so the stage receives more vertical space. Map / Network / Timeline / Charts are centered in the local bar; Export remains separate at the right.
+- **`e9ddf1f` — `Restructure Explore workspace navigation`** replaced the former numbered five-step navigation with **Browse / Advanced Query / Refine**. Results are contextual to Advanced Query; capability review is contextual to Refine. The Explore page still needs a later content/layout redesign, but this three-mode architecture is the accepted shell.
+- **`4a6cd2e` — `Support ISO 8601 temporal values`** extended canonical temporal parsing to common machine-readable timestamps such as `1397-02-21T00:00:00Z`, preserving source text and interpreting the lexical calendar date conservatively.
+- Data normalization first exposed a false start that duplicated the data-selection page without fixing the mapper hierarchy. That local design was rejected before commit. The accepted direction was to keep the existing Data landing surface and change the mapping layer itself.
+- **`f139f53` — `Move data mapping into full-page workspace`** makes mapping a full Data page under the global header rather than a modal. Subsequent accepted local refinements before the next commit added the mapping-entry transition, directly accessible mapping sections, **Review and Upload**, and the separated Cancel / Back / Next footer composition.
+- **`cd625a2` — `Normalize About workspace and feedback`** makes About a scholarly project section with **About Peridot / Creator / AI Disclosure / Open Source / Feedback**, flattens decorative container nesting, scales page titles down to ordinary page-heading proportions, allows page scrolling as needed, and embeds Feedback as a normal About subpage while preserving compatibility modal rendering.
+- Deferred after this sequence: a larger mapping-content redesign; a larger Explore-content redesign; substantive Tutorials; Home refinement; header hover/active/logo polish; broader cross-site palette/typography/animation work.
+- This documentation pass synchronizes the core documents through clean checkpoint `cd625a2` and strengthens the file-continuity/handoff protocol so already-available current files are reused and replacement-bundle commands must match the delivered ZIP's actual internal structure.
 
 ### Dedicated Timeline visualization workspace, adaptive navigation, categories, and relationship-layout foundation — 2026-09-27 to 2026-09-28
 
@@ -584,7 +596,7 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
-### Current deferred Timeline, Network, interface, Chart, compatibility, Search follow-up, and tutorial work after `a32ef05`
+### Current deferred Timeline, Network, navigation/interface, Chart, compatibility, Search follow-up, and tutorial work after `cd625a2`
 
 - **Timeline relationship-line presentation — immediate:** preserve subject-strict mapped endpoint semantics and the continuous secondary-axis layout, but redesign line routing/contrast/anchors so each relationship reads clearly as event → event in Horizontal and Vertical views. Keep duration bands visually distinct from relationship edges.
 - **Timeline dense-layout/card polish:** recheck collision cleanup, event-card footprint/truncation, uncertainty/partial-date cues, relationship arrowheads, and selected-edge emphasis after the line pass. Do not add aggregation/clustering until a real dataset demonstrates that zoom/pan plus collision-aware layout is insufficient.
@@ -594,11 +606,14 @@ The following milestone narratives are retained as historical records. They rema
 - **Network Pass 6 — visual tuning / Appearance controls:** tune node size, cluster size, edge width, clustering threshold/sensitivity, and dense-versus-sparse defaults; decide explicitly what cluster size encodes; evaluate researcher-facing scaling controls in the reserved Map settings **Appearance** area.
 - **Playback animation remains rolled back:** local-only animation/tweening prototypes after generalized playback were rejected and are not in current `main`. Any future animation project should begin with a fresh architecture/design audit rather than copying discarded screen-space geometry code.
 - **Playback performance follow-up:** transient pan/zoom, local scrub preview, and stable Force playback geometry are accepted. Remaining work is speed calibration and any later presentation animation.
-- **Visualizations header compression:** the header still consumes excessive vertical space. Redesign it as a substantially more compact persistent toolbar while preserving direct visualization navigation and the Export menu.
+- **Visualize shell compression — completed in navigation redesign:** the oversized visualization header/framing was flattened; centered Map / Network / Timeline / Charts navigation and right-aligned Export are now the accepted local shell.
+- **Explore content redesign:** preserve the accepted Browse / Advanced Query / Refine shell and draft/apply semantics, but revisit the dense internal content/layout later for clarity and space efficiency.
+- **Data mapping content redesign:** preserve the full-page Data mapping architecture and direct section navigation; redesign the mapping content later because it remains confusing and space-inefficient. Do not return to a modal/wizard shell.
+- **About / global visual polish:** About structure is accepted. Colors, typography, hover/active states, and logo/transition animation can be refined in a later cross-site cosmetic pass without restoring decorative container-heavy framing.
 - **Search generalized-text follow-up:** `Any record text` still does not guarantee indexing of every generalized mapped semantic value.
 - **Phase 3 Chart Builder:** build chart controls from saved/generalized variables with structured human-readable sentence/autocomplete interaction; keep the wide/transposed stock case as a required regression dataset.
 - **Repository-wide compatibility retirement audit:** classify old Source/Target/profile/adapter/sample-fallback paths as delete now, still-required compatibility, legitimate specialization, or uncertain/retain.
-- **Broader Home/tutorial redesign:** retain the current primary Home CTAs and static disabled Tutorial placeholder until a deliberate redesign; later work may merge the strongest Home/Data patterns and revisit tutorial attention choreography, placement, typography, accessibility, animation order/timing, and the full UX walkthrough.
+- **Home/tutorial redesign:** persistent global navigation now provides a reliable return to Home and a first-class Tutorials destination, but Home content refinement and substantive Tutorials remain deferred. Preserve the existing Home CTAs until a dedicated pass; later work may merge the strongest Home/Data patterns and revisit tutorial attention choreography, placement, typography, accessibility, animation order/timing, and the full UX walkthrough.
 
 ### Tutorial attention-animation experiments rolled back before `619bab0`
 
@@ -646,7 +661,15 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
-| 2026-09-27 | `a32ef05` | Add timeline relationship layout and sample switching fixes | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-10-14 | `cd625a2` | Normalize About workspace and feedback | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-10-01 | `f139f53` | Move data mapping into full-page workspace |  |
+| 2026-10-01 | `4a6cd2e` | Support ISO 8601 temporal values |  |
+| 2026-09-30 | `e9ddf1f` | Restructure Explore workspace navigation |  |
+| 2026-09-30 | `f59402f` | Flatten visualization workspace framing |  |
+| 2026-09-30 | `1810bf9` | Simplify visualization workspace navigation |  |
+| 2026-09-30 | `a1f4d56` | Add persistent navigation and workspace state |  |
+| 2026-09-28 | `360682f` | Synchronize documentation through timeline workspace |  |
+| 2026-09-27 | `a32ef05` | Add timeline relationship layout and sample switching fixes |  |
 | 2026-09-27 | `90f93d2` | Refine timeline navigation and temporal axis |  |
 | 2026-09-27 | `d1fd010` | Optimize timeline rendering performance |  |
 | 2026-09-27 | `98f3841` | Refine timeline readability and zoom |  |

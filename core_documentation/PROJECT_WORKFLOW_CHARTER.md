@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-a32ef05 — Add timeline relationship layout and sample switching fixes
+cd625a2 — Normalize About workspace and feedback
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -60,10 +60,13 @@ Current synchronized checkpoint is recorded in the standardized block above. The
 
 After the user applies and tests an uncommitted replacement, script, or manual edit, the resulting **local file** becomes the new source of truth for that file. Before a later change to the same file, either:
 
-- obtain that exact current local file again; or
+- use that exact current file if it is already available in the active conversation/runtime (including the user's original current upload or the latest assistant-generated replacement that the user confirmed was applied);
+- obtain that exact current local file if it is not already available; or
 - work from a newly committed Git state that the user has confirmed contains the tested change.
 
-Do not regenerate a broad replacement from an earlier upload, generated artifact, or remembered snapshot. This is especially important for shared files such as `src/index.css`, where unrelated workspace rules may coexist and a stale full-file handoff can silently revert a successful visual repair.
+Do **not** ask the user to upload a current file again merely because it was supplied earlier in the same active conversation. Re-request only when there is concrete ambiguity, drift, an uncommitted local change not represented in the conversation, or inability to access the exact file bytes.
+
+Do not regenerate a broad replacement from an earlier upload, superseded generated artifact, or remembered snapshot. This is especially important for shared files such as `src/index.css`, where unrelated workspace rules may coexist and a stale full-file handoff can silently revert a successful visual repair.
 
 Current branch note:
 
@@ -172,6 +175,8 @@ A **checkpoint** is a tested intermediate state that may still be revised soon. 
 
 - **Default Peridot coding and documentation delivery:** provide one uniquely versioned ZIP bundle per pass containing all new/replacement files for that pass.
 - Always provide exact PowerShell commands to extract the bundle into a uniquely named temporary folder and copy each contained file to its intended path under `C:\Users\haley\OneDrive\Desktop\Peridot\`.
+- **Before delivery, inspect the completed ZIP's actual internal path structure and write the PowerShell copy commands against those exact paths.** Do not assume the archive contains `src\...`, a versioned top-level directory, or any other layout without checking it.
+- The handoff commands must be complete enough to execute the pass from the project root: extraction, every required `Copy-Item`, and the relevant verification command(s) such as `git status` and `npm.cmd run dev` for source changes.
 - Bundle-internal replacement filenames should also be unique/versioned when practical so downloads from different passes cannot be confused. Repository destination filenames remain the canonical project filenames.
 - Avoid separate individual-file downloads unless there is a specific reason to provide one, such as isolated recovery of one file.
 - Do not use executable apply/patch scripts unless explicitly requested. The bundle should contain ordinary source/document/asset files and the chat should provide transparent copy commands.
@@ -193,7 +198,7 @@ Get-ChildItem src -Name
 
 A clean ritual showing local `HEAD`, `origin/main`, and `origin/HEAD` aligned establishes the synced Git state as the current source of truth.
 
-After a clean aligned sync ritual, do not repeatedly request uploaded source files unless there is a specific reason to believe the relevant file has drifted, the current contents are unavailable, or the task requires an uncommitted local version.
+After a clean aligned sync ritual, do not repeatedly request uploaded source files unless there is a specific reason to believe the relevant file has drifted, the exact current contents are unavailable to the execution environment, or the task requires an uncommitted local version. If the exact necessary file is already present in the active conversation, use it.
 
 ## 3. Recovery Protocol
 
@@ -515,11 +520,15 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 
 ### 7.2 Routing and workspace model
 
-- The active public model is workspace-first: Home, Data, Visualizations, Explore/Advanced Search, and Learn More are the primary public surfaces.
-- The hamburger menu is the primary public navigation surface; Themes and Accessibility remains implemented but hidden; Export remains a Visualizations header action. Timeline is Visualizations-integrated in two forms: a dedicated Timeline visualization workspace and the separate shared bottom Timeline/playback control.
+- The active public model is workspace-first with a persistent global header: **logo/Home, Data, Visualize, Explore, Tutorials, About**.
+- Public page navigation must not intentionally unload the active dataset or discard accepted workspace state. Visualize keeps Map/Network/Timeline/Charts local navigation plus Export; Explore keeps Browse/Advanced Query/Refine; About keeps its scholarly project subpages.
+- Heavy transition treatment is reserved for expensive visualization/workspace changes and mapping entry. Lightweight page navigation should remain immediate rather than receiving decorative loading overlays.
+- Themes and Accessibility remains implemented but hidden from public navigation. Export remains a Visualize-local action. Timeline remains Visualize-integrated in two forms: a dedicated Timeline visualization workspace and the separate shared bottom Timeline/playback control.
 - First launch has no active dataset. **Use sample data** must require an explicit sample choice rather than silently activating a fallback. The sample chooser starts collapsed and must remain reusable after a sample has been selected.
-- A larger visual redesign may still merge the strongest parts of the branded Home and Data/sample-selection surfaces. That redesign remains deferred and must not be smuggled into consumer/data-model passes.
-- The tutorial entry is now a static, shorter secondary Home button beneath the two data-entry CTAs. It is disabled with **“Tutorial coming soon.”** while tutorial revision is pending; do not restore the old floating invitation.
+- Data mapping is a full-page Data workspace, not a modal/wizard shell. Its local section navigation is directly accessible; larger mapping-content redesign is deferred.
+- A larger Home refinement may still merge the strongest parts of the branded Home and Data/sample-selection surfaces. That redesign remains deferred and must not be smuggled into consumer/data-model passes.
+- Tutorials is now a first-class navigation destination, but substantive tutorial revision remains deferred; do not restore the old floating invitation.
+- About is the scholarly project-information destination and contains About Peridot, Creator, AI Disclosure, Open Source, and Feedback.
 - MapLibre migrated-overlay work is archived. Active `main` continues the D3/SVG path.
 
 ### 7.3 Inspector
@@ -534,8 +543,8 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 
 ### 7.4 Search and data scope
 
-- Advanced Search is the owner of global applied filtering and the primary Explore surface.
-- Search retains the draft/apply model, predictive discovery, explicit route filters, structured Required / Any-of / Excluded criteria, Browse, generalized Results, Refine/Inspect, Capabilities, and overlay Inspector handoff.
+- Explore is the owner of global applied filtering.
+- The accepted public Explore shell is **Browse / Advanced Query / Refine**. Advanced Query retains the query builder plus current Results; Refine contains applied-result facets, Inspector handoff guidance, and capability review. These are presentation groupings over the existing draft/apply semantics, not changes to scope authority.
 - Generalized Place semantics use mapped place assertions without inventing routes from co-occurrence. Search Evidence uses canonical subject-aware mapped-Evidence assertions. Results presentation is neutral/generalized rather than universally Source/Target.
 - The legacy global minimum correspondence/connection weight is retired. Optional count conditions attach to an individual structured criterion and state explicitly what is counted—for example **This place has at least N connected places** or **People in these records have at least N connected entities**. Reference counts come from loaded/mapped Search data; the primary criterion determines returned records.
 - Browse uses loaded data. Search Results/Refine use applied/filtered data and remain stable during playback. Entity/place Inspector dossiers also use applied/filtered linked-record scope rather than shrinking with playback.
@@ -554,12 +563,56 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 
 - Color changes should use semantic roles in `peridotTheme.js` and related metadata.
 - Greens/golds remain primary; map/chrome/chart palettes and dropdown layering are semantic/system concerns rather than local cosmetic overrides.
-- Home remains informative-minimalist; Learn More carries expanded project information; licensed Adobe filigree attribution must remain clear.
+- Home remains informative-minimalist; **About** carries expanded scholarly project information; licensed Adobe filigree attribution must remain clear.
 
 ### 7.7 Export
 
 - Export is an in-place Visualizations header action.
 - Map PNG default output is unbranded map-only content, with optional title/metadata using Peridot typography.
+
+### Navigation-state persistence and public header decision
+
+```text
+Decision:
+Use one persistent global header across Peridot's public pages and preserve the active research state while users navigate.
+
+Context:
+The earlier hamburger/workspace model made ordinary navigation feel detached from established website conventions, prevented a reliable return to Home, and made near-instant page changes feel heavier than necessary.
+
+Chosen approach:
+Keep the Peridot logo as Home; expose Data, Visualize, Explore, Tutorials, and About persistently; use workspace-local second bars for Visualize, Explore, mapping, and About; preserve the active dataset plus accepted filtering/playback/viewport/workspace state across page changes; reserve the heavier loading transition for genuinely expensive changes.
+
+Rejected alternative:
+Keep the hamburger as the primary public navigation system; reload/reset research state on page changes; or place a transition overlay on every lightweight route.
+
+Reason:
+Researchers need predictable website-level orientation without losing the analytical state of their working session.
+
+Maintenance consequence:
+Navigation changes must be tested for active-dataset continuity, filters, playback position, visualization state, and direct Home return. Do not add a general page-transition animation to ordinary lightweight navigation.
+```
+
+### Full-page Data mapping decision
+
+```text
+Decision:
+Treat upload/mapping as a full Data workspace rather than a modal wizard.
+
+Context:
+The modal mapping shell duplicated the Data selection page underneath it, obscured page hierarchy, and consumed space while implying a strictly linear workflow.
+
+Chosen approach:
+Open mapping beneath the persistent global header as a full-page Data surface. Keep directly accessible mapping sections, rename the final section Review and Upload, and visually separate Cancel from the grouped Back/Next controls.
+
+Rejected alternative:
+Keep a scrim/modal over the Data landing page or redesign the entire mapping content during the navigation pass.
+
+Reason:
+The structural navigation problem could be solved independently while preserving the existing mapping semantics for a later focused usability redesign.
+
+Maintenance consequence:
+Do not return mapping to modal presentation. The mapping content itself remains a deferred redesign target.
+```
 
 ### 7.8 Archived or superseded decisions
 
@@ -717,7 +770,8 @@ Each implementation pass should end with:
 - one acceptance test;
 - whether the result is a checkpoint or commit;
 - a uniquely versioned replacement bundle when files are being delivered;
-- exact PowerShell extract/copy commands for that bundle;
+- exact PowerShell extract/copy commands verified against the bundle's actual internal structure;
+- verification commands appropriate to the pass;
 - exact Git commands;
 - known residual risks.
 

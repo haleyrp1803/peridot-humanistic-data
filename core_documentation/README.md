@@ -6,9 +6,9 @@
 
 ## Executive Summary
 
-Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system now uses one generalized mapping model for ordinary CSV, TSV, XLSX, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The Timeline workspace is additive: the existing bottom Timeline/playback control remains the shared chronological playback control for the visualization environment.
+Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system now uses one generalized mapping model for ordinary CSV, TSV, XLSX, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The current interface uses a persistent site-wide header—logo/Home, Data, Visualize, Explore, Tutorials, and About—while workspace-local navigation handles visualization, query, mapping, and About subsections without unloading the active dataset. The Timeline workspace remains additive: the existing bottom Timeline/playback control is still the shared chronological playback control for the visualization environment.
 
-Peridot was created by Haley Price in direct and continuous collaboration with ChatGPT. There is a robust AI disclosure and discussion of AI ethics (and ethical concerns) on the tool's "Learn More About Peridot" page where credit is documented. Please go there for more details. For the purposes of README, it bears mentioning that the reason the documentation is so meticulous (and so robotic) is because Price made ChatGPT record every single decision, commit, redirection, success, and failure throughout Peridot's development so that the full record of labor would be documented and disclosed. This paragraph was written by Price (hi!) but the remainder of the documentation was written by ChatGPT under exacting human direction and quality assurance supervision.
+Peridot was created by Haley Price in direct and continuous collaboration with ChatGPT. There is a robust AI disclosure and discussion of AI ethics (and ethical concerns) in the tool's **About → AI Disclosure** section where credit is documented. Please go there for more details. For the purposes of README, it bears mentioning that the reason the documentation is so meticulous (and so robotic) is because Price made ChatGPT record every single decision, commit, redirection, success, and failure throughout Peridot's development so that the full record of labor would be documented and disclosed. This paragraph was written by Price (hi!) but the remainder of the documentation was written by ChatGPT under exacting human direction and quality assurance supervision.
 
 This README is the public orientation and workflow guide. It explains what Peridot is, what kinds of work and data it supports, how to run it locally, and how to use the active interface. For current architecture, module ownership, regression contracts, and project-maintenance guidance, use the [Maintainer’s Guide](MAINTAINERS_GUIDE.md), [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md), and [Changelog](CHANGELOG.md).
 
@@ -17,7 +17,7 @@ This README is the public orientation and workflow guide. It explains what Perid
 - [What Peridot is](#1-what-peridot-is)
 - [Audience, research uses, and supported data](#2-audience-research-uses-and-supported-data)
 - [Current public workflow](#3-current-public-workflow)
-- [Current interface examples](#4-current-interface-examples)
+- [Interface examples and current-state note](#4-interface-examples-and-current-state-note)
 - [Historical interface archive](#5-historical-interface-archive)
 - [Install and run locally](#6-install-and-run-locally)
 - [Data-input guide](#7-data-input-guide)
@@ -32,7 +32,7 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-a32ef05 — Add timeline relationship layout and sample switching fixes
+cd625a2 — Normalize About workspace and feedback
 Branch: main
 Status: local and origin/main aligned after the latest sync ritual
 ```
@@ -44,7 +44,7 @@ For detailed milestone interpretation and full commit history, see [CHANGELOG.md
 
 Peridot is the current app identity for the **Correspondence Visualizer** repository. It derives only the structures that mapped data can safely support, then gives researchers an interactive workspace for visualizing, searching, inspecting, and exporting that evidence.
 
-The active interface is workspace-first rather than rail-first. It opens to a concise Home workspace, uses a hamburger menu for public navigation, and uses a dual-mode Inspector: compact side-panel summaries for visual clicks and a full dossier workspace for deeper evidence navigation. Within Visualizations, Timeline now has its own visualization workspace alongside the map/network/chart surfaces, while the existing bottom Timeline/playback control remains available as the shared chronological range/playback control.
+The active interface is workspace-first rather than rail-first. A persistent global header remains available across public pages: the Peridot logo returns to Home; **Data**, **Visualize**, and **Explore** occupy the primary work area; **Tutorials** and **About** provide project/help destinations. Moving between pages preserves the active dataset and accepted workspace state rather than treating navigation as a reload. The Inspector remains dual-mode: compact side-panel summaries for visual clicks and a full dossier workspace for deeper evidence navigation. Within Visualize, Timeline has its own visualization workspace alongside Map, Network, and Charts, while the existing bottom Timeline/playback control remains available as the shared chronological range/playback control.
 
 ## 2. Audience, Research Uses, and Supported Data
 
@@ -78,9 +78,9 @@ Peridot follows a **database-first** model: a record or normalized research item
 
 ### 3.1 Start
 
-Peridot opens with **no active dataset**. Nothing is silently preloaded underneath the interface.
+Peridot opens with **no active dataset**. Nothing is silently preloaded underneath the interface. The persistent header is still available in this no-data state; destinations that require data must route the researcher toward choosing/uploading data rather than inventing hidden sample state.
 
-From Home, choose **Use sample data** to open the sample chooser or **Upload your data** to begin with your own file. Manage Your Data also provides a simple template download.
+From Home, choose **Use sample data** to open the sample chooser or **Upload your data** to begin with your own file. The persistent **Data** destination also provides the template, sample, upload, and mapped-data editing entry points.
 
 The sample chooser currently offers three ordinary project files:
 
@@ -94,9 +94,9 @@ Home now includes a third, visually secondary **Tutorial** button centered benea
 
 ### 3.2 Load and map data
 
-Manage Your Data provides three explicit paths: **Start with a Template**, **Start with Sample Data**, and **Upload Your Data**. The unified uploader accepts CSV, TSV, XLSX, and XLS files.
+The **Data** page provides three explicit paths: **Start with a Template**, **Start with Sample Data**, and **Upload Your Data**. The unified uploader accepts CSV, TSV, XLSX, and XLS files. Once a file or editable mapping is opened, mapping occupies the Data page itself beneath the persistent global header rather than appearing in a modal overlay.
 
-The public mapper is now one generalized workflow rather than a Correspondence / Directed Record versus Genealogy / Person-Centered profile choice. Users describe what their data means through progressive mapping pages:
+The public mapper is now one generalized workflow rather than a Correspondence / Directed Record versus Genealogy / Person-Centered profile choice. Users describe what their data means through directly navigable mapping sections:
 
 1. **Preview** — review the source table as uploaded.
 2. **Sheets** — for workbooks, choose the primary record sheet and configure any related-sheet joins.
@@ -104,7 +104,9 @@ The public mapper is now one generalized workflow rather than a Correspondence /
 4. **Time** — add and name one or more Date or Period/range assertions and choose whether each describes the record, one or more participants, or both.
 5. **Places** — add and name one or more place assertions, optionally with coordinates, participant/record attribution, and place Identity when needed.
 6. **Evidence** — include, ignore, and label additional source fields; declare cardinality and subject attribution where appropriate.
-7. **Review** — inspect the accepted interpretation and capability/warning summary before import.
+7. **Review and Upload** — inspect the accepted interpretation and capability/warning summary before accepting a new upload or applying mapping changes.
+
+The section rail is navigation, not a locked wizard: users can revisit available mapping sections directly. **Cancel** is visually separated from the grouped **Back / Next** progression controls, and opening the mapping workspace uses the established heavier transition so the full-page surface does not flash into place.
 
 Identity is researcher-owned and authoritative at runtime, but it is no longer a separate required mapping page. Simple datasets default to the same column used for the displayed name or label. When stronger recognition is needed, relationship/place Identity controls can use a stable source ID or a structured alternate recipe such as `(Name A + Title A) OR (Name B + Title B)`. This lets one historical person remain one entity across roles while still allowing same-named people to remain distinct when their mapped identities differ. Canonical display labels are resolved separately from identity, so known IDs display human-readable names while genuinely unresolved source references remain visible as IDs.
 
@@ -128,7 +130,7 @@ For suitable mapped fields, researchers can declare whether one cell contains on
 
 ### 3.3 Visualize
 
-Visualize Your Data provides capability-aware access to one unified **Geographic Map**, a separate **Force-Directed Network**, a dedicated **Timeline** visualization workspace, and Chart Visualizations. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
+**Visualize** provides capability-aware access to one unified **Geographic Map**, a separate **Force-Directed Network**, a dedicated **Timeline** visualization workspace, and Chart Visualizations. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
 
 The Geographic Map includes compact **Map settings** for visible node identities, researcher-selected geographic anchor roles, relationship-line location rules, and fallback behavior. Settings are transactional: changes are drafted, **Apply** commits them, and **Reset** affects the draft rather than silently recomputing the graph. Geographic edges render only when both exact endpoint node instances are visible under the applied settings.
 
@@ -144,7 +146,7 @@ The playback range control includes a draggable playhead/scrubber in addition to
 
 ### 3.4 Explore and inspect
 
-Explore Your Data opens Advanced Search, organized around **Build Search**, **Browse**, **Results**, **Refine / Inspect**, and **Capabilities**. Search uses an explicit draft/apply model: entering text or selecting a suggestion changes draft criteria until **Apply Filters** is pressed.
+**Explore** is organized around three persistent local destinations: **Browse**, **Advanced Query**, and **Refine**. Advanced Query contains query construction and the current result set; Refine contains applied-result facets, Inspector handoff, and dataset capability review. Search retains the explicit draft/apply model: entering text or selecting a suggestion changes draft criteria until **Apply Filters** is pressed.
 
 Search now works directly with generalized mapped Places and canonical subject-aware Evidence. Results use neutral **Date / People or entities / Places** presentation rather than treating every record as a Source→Target route. Structured Required / Any-of / Excluded criteria can also carry an optional plain-language count condition attached to that specific criterion—for example, **This place has at least 20 connected places** or **People in these records have at least 40 connected entities**. The older global minimum correspondence/connection-weight control has been retired.
 
@@ -154,15 +156,15 @@ The Inspector opens compactly after visualization node, edge, or cluster clicks.
 
 The Visualizations header provides SVG and PNG export for map/network views, CSV export for nodes and edges/routes, and PNG export for charts. Export descriptions should make clear whether they represent loaded, filtered, visible, selected, or charted data.
 
-### 3.6 Send feedback
+### 3.6 About, documentation, and feedback
 
-A persistent in-app feedback control is available beneath the hamburger menu. It supports questions, bug reports, issue reports, feature suggestions, and other feedback, with optional context and email fields. The form submits through the project’s Formspree integration.
+**About** is a first-class scholarly project section with local pages for **About Peridot**, **Creator**, **AI Disclosure**, **Open Source**, and **Feedback**. The public Feedback page supports questions, bug reports, issue reports, feature suggestions, and other feedback, with optional context and email fields; submission continues through the project’s Formspree integration. The feedback component retains its modal-capable implementation path for compatibility, but the normal public destination is the inline About subpage.
 
-## 4. Current Interface Examples
+## 4. Interface Examples and Current-State Note
 
-### Current interface examples — 2026-06-21
+### Interface snapshot — 2026-06-21 (pre-persistent-header)
 
-The screenshots in this section document the active workspace-first Peridot interface as captured on **2026-06-21**. They illustrate current public navigation, data-entry, visualization, search, Inspector, Learn More, and feedback workflows. The examples use Peridot’s then-current visual system and representative data states; later feature or design refinements may change details without invalidating the underlying workflow descriptions.
+The screenshots in this section document Peridot as it appeared on **2026-06-21**. They remain useful records of the underlying Data, visualization, Search, Inspector, project-information, and feedback workflows, but their **navigation and framing are now historical**: the current application uses the persistent global header and the normalized Visualize, Explore, Data-mapping, and About shells described above. Until a new screenshot set is committed, treat these images as a dated interface snapshot rather than literal current-navigation instructions.
 
 #### Start and navigate
 
@@ -461,7 +463,7 @@ Peridot does **not** clean or standardize person names, place names, dates, topi
 
 ### Time and partial historical dates
 
-Temporal parsing is conservative and humanities-aware. Peridot preserves original temporal text while deriving machine-usable structure for ordinary dates, year/month/day precision, approximate forms, mixed-precision ranges, open-ended periods, and partial dates such as `1607/00/02`, where zero represents an unknown component rather than a literal zero. Structurally inconsistent ranges are preserved and flagged rather than silently reversed. Competing date possibilities remain preserved for review rather than being collapsed into false certainty.
+Temporal parsing is conservative and humanities-aware. Peridot preserves original temporal text while deriving machine-usable structure for ordinary dates, ISO 8601 timestamps such as `1397-02-21T00:00:00Z`, year/month/day precision, approximate forms, mixed-precision ranges, open-ended periods, and partial dates such as `1607/00/02`, where zero represents an unknown component rather than a literal zero. ISO timestamps are interpreted from their lexical calendar date for historical chronology rather than timezone-shifting the source into a different day. Structurally inconsistent ranges are preserved and flagged rather than silently reversed. Competing date possibilities remain preserved for review rather than being collapsed into false certainty.
 
 Mapped Time is repeatable. Users can name each Date or Period/range in ordinary language; use one source field or separate year/month/day fields; reuse fields across assertions; and preserve related researcher-note columns without treating those notes as visualization rules.
 
@@ -501,14 +503,12 @@ Peridot supports researcher-declared multiple values on suitable mapped fields. 
 
 1. Open Peridot; no dataset is active yet.
 2. Choose a sample, download the template, or upload your own CSV/TSV/XLSX/XLS file.
-3. Review Preview and workbook Sheets if applicable.
-4. Map Relations and configure stronger participant Identity only where the default displayed-name rule is insufficient.
-5. Add Time and Places with the appropriate record/participant attribution and per-field cardinality where relevant.
-6. Include or ignore Evidence fields; declare their cardinality and subjects where useful.
-7. Review the full mapping and warnings.
-8. Confirm import.
-9. Reopen **Edit mapped data** later if the interpretation needs revision.
-10. Open Visualizations, Advanced Search, Inspector, and Export as the data supports them.
+3. Review **Preview** and workbook **Sheets** if applicable.
+4. Move among **Relations**, **Time**, **Places**, and **Evidence** as needed; configure stronger participant Identity only where the default displayed-name rule is insufficient.
+5. Use **Review and Upload** to inspect the full interpretation and warnings.
+6. Confirm the upload (or apply changes when editing an existing mapping).
+7. Reopen **Edit mapped data** later if the interpretation needs revision.
+8. Move among **Visualize**, **Explore**, Inspector, and Export as the data supports them; the active dataset remains loaded while navigating.
 
 ### Advanced Search workflow
 
@@ -542,7 +542,7 @@ The principal generalized Network semantic migration is now complete through pla
 
 Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior. Performance work after that rollback now keeps pointer panning and wheel zoom transient during interaction, commits durable viewport state at bounded points, and preloads the stable full-scope Force graph so playback does not rerun force simulation on every tick. These changes improve interaction/playback smoothness without changing generalized relationship semantics.
 
-The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The Timeline relationship-line treatment is still visibly unfinished and remains the immediate visualization-polish task. Other interface/performance follow-up includes substantially reducing the Visualizations header height, calibrating the playback-speed choices after the optimization work, and revisiting playback presentation/animation only from the current stable architecture rather than the discarded tween prototypes.
+The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. Larger redesigns of the mapping page and Explore content remain deferred, along with Tutorials, Home refinement, and a later cross-site palette/typography/animation polish pass. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 

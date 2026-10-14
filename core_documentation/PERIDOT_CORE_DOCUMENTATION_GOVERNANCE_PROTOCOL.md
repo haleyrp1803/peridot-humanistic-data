@@ -599,10 +599,13 @@ Before delivering a documentation pass:
 ### Delivery checks
 - [ ] All four core documents were reviewed in full before edits.
 - [ ] Replacements were generated from the current committed/local source.
+- [ ] Exact current files already available in the active conversation were reused rather than unnecessarily re-requested; any re-request had a concrete recency/access reason.
 - [ ] Changes are described as a bounded documentation pass.
-- [ ] Copy commands use the current project source-of-truth path.
+- [ ] Copy commands use the current project source-of-truth path and have been checked against the delivered bundle's actual internal directory structure.
 - [ ] Commit message describes the documentation outcome.
 - [ ] The Changelog receives the completed documentation-pass entry.
+
+The detailed source-continuity and handoff-command rules remain owned by the Project Workflow Charter; this checklist verifies that they were followed rather than duplicating them here.
 
 ---
 
