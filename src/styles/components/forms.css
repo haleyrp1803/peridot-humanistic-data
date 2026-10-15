@@ -1,0 +1,57 @@
+/*
+ * Shared form controls — Structural Styling Pass S4 (2026-10-15).
+ *
+ * Owns the existing reusable .peridot-form-input/.peridot-form-select
+ * selectors, including dark/base styling and semantic-theme overrides.
+ * The two sets of declarations were moved verbatim from index.css,
+ * retaining their internal order and color/theme API for visual neutrality.
+ *
+ * Not included: generic browser form reset in index.css; dedicated
+ * mapping, Explore, Inspector, and feedback form rules in their owners.
+ * Workspace-specific stylesheets load later and retain precedence.
+ */
+
+/* Original shared/base control rules. */
+.peridot-form-input,
+.peridot-form-select {
+  width: 100%;
+  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-54);
+  border-radius: 14px;
+  background: var(--peridot-color-rgba-rgba-4-24-16-0-62);
+  color: var(--peridot-color-hex-fbf7ea);
+  padding: 0.65rem 0.78rem;
+  outline: none;
+}
+
+.peridot-form-input::placeholder { color: var(--peridot-color-rgba-rgba-251-247-234-0-58); }
+.peridot-form-input:focus,
+.peridot-form-select:focus {
+  border-color: var(--peridot-color-rgba-rgba-214-163-106-0-92);
+  box-shadow: 0 0 0 3px var(--peridot-color-rgba-rgba-181-139-66-0-22);
+}
+
+.peridot-cream-card .peridot-form-input,
+.peridot-cream-card .peridot-form-select,
+.peridot-mapping-modal .peridot-form-input,
+.peridot-mapping-modal .peridot-form-select {
+  background: var(--peridot-color-rgba-rgba-255-252-241-0-88);
+  color: var(--peridot-color-hex-26352b);
+  border-color: var(--peridot-color-rgba-rgba-95-113-74-0-28);
+}
+
+/* Existing semantic-theme overrides: retain after the base rules. */
+.peridot-form-input,
+.peridot-form-select {
+  border-color: var(--peridot-role-form-border);
+  background: var(--peridot-role-form-bg-dark);
+  color: var(--peridot-role-form-text-dark);
+}
+
+.peridot-cream-card .peridot-form-input,
+.peridot-cream-card .peridot-form-select,
+.peridot-mapping-modal .peridot-form-input,
+.peridot-mapping-modal .peridot-form-select {
+  background: var(--peridot-role-form-bg-light);
+  color: var(--peridot-role-form-text-light);
+  border-color: var(--peridot-role-form-border);
+}

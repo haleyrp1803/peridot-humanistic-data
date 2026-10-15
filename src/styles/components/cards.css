@@ -1,0 +1,106 @@
+/*
+ * Shared card and grid appearances — Structural Styling Pass S5.
+ *
+ * Consolidates the exact source rules for reusable hero, action, surface, and
+ * cream cards, card grids, inner padding, and their label treatment.
+ * Base legacy colors and later semantic-role overrides stay in original order.
+ *
+ * Ownership boundary: global ornaments/pseudo-elements, workspace-specific
+ * panel layouts, tables and map plates remain in index.css and/or their own
+ * workspace CSS. Do not style mapping forms or Inspector panels from here.
+ */
+
+.peridot-hero-card {
+  border: 1px solid var(--peridot-color-rgba-rgba-196-224-239-0-82);
+  border-radius: 34px;
+  background: linear-gradient(135deg, var(--peridot-color-rgba-rgba-8-39-25-0-95), var(--peridot-color-rgba-rgba-5-29-19-0-96));
+  box-shadow: 0 24px 70px var(--peridot-color-rgba-rgba-0-0-0-0-42), inset 0 1px 0 var(--peridot-color-rgba-rgba-255-255-255-0-04);
+  padding: clamp(1.6rem, 3vw, 2.8rem);
+}
+
+.peridot-card-grid {
+  display: grid;
+  gap: var(--pd-space-5);
+}
+
+.peridot-card-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.peridot-card-grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 900px) {
+  .peridot-card-grid-2,
+  .peridot-card-grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.peridot-action-card,
+.peridot-surface-card {
+  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-32);
+  border-radius: 26px;
+  background: var(--peridot-color-rgba-rgba-97-132-77-0-88);
+  color: var(--peridot-color-hex-fbf7ea);
+  box-shadow: 0 18px 42px var(--peridot-color-rgba-rgba-0-0-0-0-26);
+}
+
+.peridot-surface-card {
+  background: var(--peridot-color-rgba-rgba-11-45-29-0-88);
+}
+
+.peridot-cream-card {
+  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-58);
+  border-radius: 26px;
+  background: var(--peridot-color-rgba-rgba-248-243-225-0-94);
+  color: var(--peridot-color-hex-26352b);
+  box-shadow: 0 18px 42px var(--peridot-color-rgba-rgba-0-0-0-0-24);
+}
+
+.peridot-card-inner {
+  padding: clamp(1.25rem, 2.2vw, 1.8rem);
+}
+
+.peridot-section-label {
+  color: var(--peridot-color-rgba-rgba-223-233-200-0-78);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.peridot-cream-card .peridot-section-label {
+  color: var(--peridot-color-hex-5c724d);
+}
+
+/* Existing semantic card-surface overrides. */
+.peridot-hero-card {
+  border-color: var(--peridot-role-ornament-corner-muted);
+  background:
+    linear-gradient(135deg, var(--peridot-role-interface-panel-background-strong), var(--peridot-role-interface-panel-background));
+  box-shadow:
+    0 24px 70px var(--peridot-role-card-shadow),
+    inset 0 0 0 1px var(--peridot-role-ornament-line-muted),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.peridot-action-card {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--peridot-role-button-primary-bg) 88%, var(--peridot-role-interface-panel-background) 12%), var(--peridot-role-interface-card-background-dark));
+  border-color: var(--peridot-role-ornament-corner-muted);
+}
+
+.peridot-surface-card {
+  background:
+    linear-gradient(135deg, var(--peridot-role-interface-card-background-dark), var(--peridot-role-interface-panel-background-strong));
+  border-color: var(--peridot-role-ornament-corner-muted);
+}
+
+.peridot-cream-card {
+  background:
+    linear-gradient(135deg, var(--peridot-role-interface-card-background), var(--peridot-role-interface-card-background-warm));
+  border-color: var(--peridot-role-ornament-paper-rule);
+  color: var(--peridot-role-interface-text-on-light);
+}
