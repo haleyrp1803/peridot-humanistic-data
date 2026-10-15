@@ -1,0 +1,87 @@
+/*
+ * Shared workspace frames and cross-component surface ornaments — S6.
+ * The grouped card, illuminated panel, analytics, and map selectors stay intact.
+ * Specialized Inspector, Explore, Mapping, Timeline and chart panel layouts
+ * remain owned by their existing workspace stylesheets.
+ */
+
+.peridot-workspace-frame {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1160px);
+  margin: 0 auto;
+  padding: clamp(2rem, 4vw, 4rem) clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.peridot-workspace-frame-wide {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 1480px);
+  margin: 0 auto;
+  padding: clamp(1rem, 2.4vw, 2rem);
+}
+
+.peridot-workspace-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--pd-space-5);
+  flex-wrap: wrap;
+}
+
+/* Existing grouped surface framing rules. */
+.peridot-hero-card,
+.peridot-action-card,
+.peridot-surface-card,
+.peridot-cream-card,
+.peridot-analytics-workspace,
+.peridot-guide-panel,
+.peridot-illuminated-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.peridot-hero-card::before,
+.peridot-hero-card::after,
+.peridot-action-card::before,
+.peridot-surface-card::before,
+.peridot-cream-card::before,
+.peridot-illuminated-panel::before,
+.peridot-map-plate::before {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-color: var(--peridot-role-ornament-corner);
+  opacity: 0.72;
+}
+
+.peridot-hero-card::before,
+.peridot-action-card::before,
+.peridot-surface-card::before,
+.peridot-cream-card::before,
+.peridot-illuminated-panel::before,
+.peridot-map-plate::before {
+  left: 1rem;
+  top: 1rem;
+  border-left: 2px solid;
+  border-top: 2px solid;
+  border-top-left-radius: 16px;
+}
+
+.peridot-hero-card::after,
+.peridot-illuminated-panel::after,
+.peridot-map-plate::after {
+  content: '';
+  position: absolute;
+  pointer-events: none;
+  right: 1rem;
+  bottom: 1rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-right: 2px solid var(--peridot-role-ornament-corner);
+  border-bottom: 2px solid var(--peridot-role-ornament-corner);
+  border-bottom-right-radius: 16px;
+  opacity: 0.72;
+}
