@@ -1,0 +1,61 @@
+/*
+ * Peridot design foundations — Structural Pass S1 (2026-10-15).
+ *
+ * This module defines central, NON-COLOR design scales only. Values are
+ * intentionally not consumed by existing selectors in this pass: importing
+ * this stylesheet must be visually inert until separately reviewed components
+ * are migrated. All existing theme and legacy color APIs remain authoritative.
+ *
+ * Ownership:
+ * - foundational typography, space, radii, shadow scales, motion timings here;
+ * - semantic colors in peridotTheme.js (NOT here);
+ * - interactive control appearance in future shared component styles;
+ * - workspace geometry in workspace-owned styles;
+ * - visualization color encodings in their existing semantic theme roles.
+ *
+ * Do not replace positioning/scroll/z-index or reduced-motion rules wholesale.
+ */
+
+:root {
+  /* Font family aliases are neutral placeholders; final licensed typefaces are
+   * introduced in the later typography/visual pass. These are unused for now. */
+  --pd-font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --pd-font-editorial: Georgia, "Times New Roman", serif;
+  --pd-font-display: Georgia, "Times New Roman", serif;
+
+  /* Stable spacing rhythm: base 4px, with an 8px common step. */
+  --pd-space-0: 0px;
+  --pd-space-1: 4px;
+  --pd-space-2: 8px;
+  --pd-space-3: 12px;
+  --pd-space-4: 16px;
+  --pd-space-5: 20px;
+  --pd-space-6: 24px;
+  --pd-space-8: 32px;
+  --pd-space-10: 40px;
+  --pd-space-12: 48px;
+  --pd-space-16: 64px;
+
+  /* Corners and rules: quiet functional surfaces, not ornamental frames. */
+  --pd-radius-none: 0px;
+  --pd-radius-xs: 2px;
+  --pd-radius-sm: 4px;
+  --pd-radius-md: 8px;
+  --pd-radius-lg: 12px;
+  --pd-radius-xl: 16px;
+  --pd-radius-round: 9999px;
+  --pd-rule-hairline: 1px;
+
+  /* Neutral effects. No brand colors or active component selectors here. */
+  --pd-shadow-none: none;
+  --pd-shadow-low: 0 1px 3px rgb(0 0 0 / 0.08);
+  --pd-shadow-raised: 0 6px 18px rgb(0 0 0 / 0.12);
+
+  /* Descriptive timings for future component migrations. */
+  --pd-duration-instant: 0ms;
+  --pd-duration-fast: 120ms;
+  --pd-duration-normal: 200ms;
+  --pd-duration-slow: 320ms;
+  --pd-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --pd-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

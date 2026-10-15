@@ -6,8 +6,8 @@
  * deliberate cascade order, import `App`, and render inside React Strict Mode.
  *
  * Stylesheet order is a functional contract:
- * shared rules -> Inspector -> Analytics -> Search -> Mapping -> Learn More ->
- * global feedback modal. Do not remove an extracted stylesheet import when
+ * shared rules -> non-color foundations -> Inspector -> Analytics -> Search ->
+ * Mapping -> Learn More -> Tutorial -> global feedback modal. Do not remove an extracted stylesheet import when
  * adding a later layer; omitted imports can make an entire workspace fall back
  * to bare structural markup.
  */
@@ -17,6 +17,8 @@ import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 
 import './index.css';
+// Central non-color foundations; existing workspace styles retain cascade precedence.
+import './styles/foundations/tokens.css';
 import './InspectorPanel.css';
 import './AnalyticsPanel.css';
 import './PeridotSearchWorkspace.css';
