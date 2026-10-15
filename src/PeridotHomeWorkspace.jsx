@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import florencePanorama from './assets/editorial/rosselli-florence.webp';
 import './styles/workspaces/home.css';
 
 import peridotLogoTransparent from '../assets/Peridot Logo Gilded Transparent.png';
@@ -56,7 +57,41 @@ const homeActionClass = [
 
 export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
   return (
-    <section className="peridot-home-workspace relative h-full min-h-0 overflow-hidden bg-[var(--peridot-color-hex-03120c)] text-[var(--peridot-color-hex-f4f6df)]">
+    <>
+      {/* Editorial Home: all artistic layers are replaceable; controls remain live HTML. */}
+      <main className="pd-home-editorial" aria-label="Peridot home">
+        <section className="pd-home-scene" aria-labelledby="pd-home-title">
+          <div className="pd-home-scene__map" aria-hidden="true">
+            <img src={florencePanorama} alt="" draggable="false" />
+          </div>
+          <div className="pd-home-scene__paper" aria-hidden="true" />
+          <div className="pd-home-scene__content">
+            <p className="pd-home-editorial__eyebrow">VISUALIZE · EXPLORE · UNCOVER</p>
+            <h1 id="pd-home-title">PERIDOT</h1>
+            <p className="pd-home-editorial__lead">Humanities data visualizations<br className="pd-home-desktop-break" /> for your research.</p>
+            <p className="pd-home-editorial__description">Map places. Trace relationships. Explore timelines.<br className="pd-home-desktop-break"/> Work with your own data or try a sample.</p>
+            <div className="pd-home-editorial__actions">
+              <button type="button" className="pd-home-editorial__primary" onClick={onUploadData}>Get started <span aria-hidden="true">→</span></button>
+              <button type="button" className="pd-home-editorial__secondary" onClick={onUseSampleData}>Try sample data <span aria-hidden="true">→</span></button>
+            </div>
+          </div>
+        </section>
+        <section className="pd-home-editorial__features" aria-label="What you can do in Peridot">
+          <article className="pd-home-editorial__feature">
+            <div className="pd-home-editorial__feature-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M13 5h15l8 8v30H13z"/><path d="M28 5v9h8M24 36V22m-6 6 6-6 6 6"/></svg></div>
+            <div className="pd-home-editorial__feature-copy"><span className="pd-home-editorial__feature-no">01 / MANAGE</span><h2>Manage data</h2><p>Upload and map records to prepare them for exploration.</p></div>
+          </article>
+          <article className="pd-home-editorial__feature">
+            <div className="pd-home-editorial__feature-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.9"><path d="M13 15L31 10 37 33 16 36 13 15"/><circle cx="13" cy="15" r="4" fill="var(--pd-feature-circle)"/><circle cx="31" cy="10" r="4" fill="var(--pd-feature-circle)"/><circle cx="37" cy="33" r="4" fill="var(--pd-feature-circle)"/><circle cx="16" cy="36" r="4" fill="var(--pd-feature-circle)"/></svg></div>
+            <div className="pd-home-editorial__feature-copy"><span className="pd-home-editorial__feature-no">02 / VISUALIZE</span><h2>Visualize</h2><p>Explore maps, networks, timelines, and charts.</p></div>
+          </article>
+          <article className="pd-home-editorial__feature">
+            <div className="pd-home-editorial__feature-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="21" cy="21" r="13"/><path d="M31 31l12 12"/></svg></div>
+            <div className="pd-home-editorial__feature-copy"><span className="pd-home-editorial__feature-no">03 / EXPLORE</span><h2>Explore evidence</h2><p>Browse, search, and refine the information in your data.</p></div>
+          </article>
+        </section>
+      </main>
+      <section className="peridot-home-legacy peridot-home-workspace relative h-full min-h-0 overflow-hidden bg-[var(--peridot-color-hex-03120c)] text-[var(--peridot-color-hex-f4f6df)]">
       <HomeTextureBackdrop />
 
       <div className="relative z-10 flex h-full w-full items-center justify-center px-[clamp(1rem,3vw,3rem)] py-[clamp(1rem,3vh,2.5rem)]">
@@ -123,5 +158,6 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
         </div>
       </div>
     </section>
+    </>
   );
 }
