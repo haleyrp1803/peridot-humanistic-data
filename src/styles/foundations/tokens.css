@@ -1,10 +1,10 @@
 /*
- * Peridot design foundations — Structural Pass S1 (2026-10-15).
+ * Peridot design foundations — Structural Pass S2 (2026-10-15).
  *
  * This module defines central, NON-COLOR design scales only. Values are
- * intentionally not consumed by existing selectors in this pass: importing
- * this stylesheet must be visually inert until separately reviewed components
- * are migrated. All existing theme and legacy color APIs remain authoritative.
+ * consumed only by a small set of source-verified shared rules in Structural
+ * Pass S2; values match existing declarations for visual neutrality. All
+ * existing theme and legacy color APIs remain authoritative.
  *
  * Ownership:
  * - foundational typography, space, radii, shadow scales, motion timings here;
@@ -17,9 +17,9 @@
  */
 
 :root {
-  /* Font family aliases are neutral placeholders; final licensed typefaces are
-   * introduced in the later typography/visual pass. These are unused for now. */
-  --pd-font-ui: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Existing UI font stack is now consumed by the global body rule. Editorial
+   * and display stacks remain placeholders until the approved typography pass. */
+  --pd-font-ui: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --pd-font-editorial: Georgia, "Times New Roman", serif;
   --pd-font-display: Georgia, "Times New Roman", serif;
 
