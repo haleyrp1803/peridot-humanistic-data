@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-cd625a2 — Normalize About workspace and feedback
+fd02d84 — Build Cartographic Editorial Home composition
 Branch: main
-Status: local and origin/main aligned after the latest sync ritual
+Status: committed locally; origin/main remains at fe9634b pending asset-license review and push
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -561,9 +561,12 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 
 ### 7.6 Themes and visual language
 
+**Current visual-decision note (2026-10-15):** Cartographic Editorial is the approved art direction for Home/public-facing editorial surfaces; the accepted H2e torn-paper Florence hero and three-column information banner are a local `fd02d84` checkpoint. H2f's diagonal-mask experiment was rejected due to wordmark/text intrusion. Future visual passes may crop/rotate licensed paper derivatives and change banner content, but must preserve legibility, functional navigation, research-workspace vertical room, and explicit asset credits. The old green/gold Home rules below are historic design guidance superseded by this deliberate decision. Before pushing stock-containing files, check their public-source redistribution rights rather than inferring them from licensing for website use. These visual decisions do not authorize changing semantic data behavior or introducing a new theme engine.
+
+
 - Color changes should use semantic roles in `peridotTheme.js` and related metadata.
-- Greens/golds remain primary; map/chrome/chart palettes and dropdown layering are semantic/system concerns rather than local cosmetic overrides.
-- Home remains informative-minimalist; **About** carries expanded scholarly project information; licensed Adobe filigree attribution must remain clear.
+- Cartographic Editorial uses paper/ivory, oxblood, forest green, and readable ink for editorial surfaces; map/chrome/chart palettes and dropdown layering remain semantic/system concerns rather than local cosmetic overrides.
+- Home is now a layered historical-map/paper editorial composition; **About** carries expanded scholarly project information; historical map and licensed asset provenance must remain clear.
 
 ### 7.7 Export
 

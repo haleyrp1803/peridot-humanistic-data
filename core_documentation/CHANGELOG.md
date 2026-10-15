@@ -8,7 +8,7 @@ The Changelog owns chronology and milestone interpretation, not the complete cur
 
 ## Quick Navigation
 
-- [Current synchronized checkpoint](#1-current-synchronized-checkpoint)
+- [Current checkpoint](#1-current-checkpoint-local-publication-pending)
 - [Recent milestones](#2-recent-milestones-newest-first)
 - [Deferred, archived, and rolled-back work](#3-deferred-archived-and-rolled-back-work)
 - [Full development history](#4-full-development-history)
@@ -17,15 +17,17 @@ The Changelog owns chronology and milestone interpretation, not the complete cur
 
 This document owns the detailed checkpoint, milestone chronology, deferred/archived/rolled-back record, and full commit history. It does not own broad module specifications, public workflows, or process law.
 
-## 1. Current Synchronized Checkpoint
+## 1. Current Checkpoint (Local; Publication Pending)
 
 ```text
-cd625a2 — Normalize About workspace and feedback
+fd02d84 — Build Cartographic Editorial Home composition
 Branch: main
-Status: local and origin/main aligned after the latest sync ritual
+Status: committed locally; origin/main remains at fe9634b pending asset-license review and push
 ```
 
-This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
+This is **not** a synchronized remote checkpoint. User-provided Git output confirms `fd02d84` is one commit ahead of `origin/main` (`fe9634b`). The tracked Home implementation and its assets are in the local commit, but no push has been reported. Publication is deferred pending review of the Adobe Stock redistribution terms. The untracked planning mockup and four experimental editorial assets are not included. The record below distinguishes verified Git evidence from browser observations and earlier handoff claims.
+
+**Historical checkpoint narrative (`cd625a2`):** This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
 
 Current architectural significance:
 
@@ -41,6 +43,22 @@ Current architectural significance:
 - The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
 
 ## 2. Recent Milestones, Newest First
+
+### Cartographic Editorial foundation, header, and layered Home — 2026-10-14 to 2026-10-15
+
+- **`2024897` — `Synchronize documentation through navigation redesign`** was the documented clean foundation before the new visual work. This earlier documentation baseline is historical, not the current local HEAD.
+- **`ec5152c` — `Establish centralized styling foundations and editorial design plan`** established the structural groundwork for token-led Cartographic Editorial styling.
+- **`d108bb2` — `Migrate shared styles to centralized design tokens`**, **`98bcbcb` — `Consolidate shared button form and card styles`**, **`bc4761e` — `Consolidate shared panel and workspace framing styles`**, and **`f667329` — `Establish Home and Data workspace styling ownership`** formed bounded styling ownership passes before substantive visual redesign. They did not change canonical data semantics.
+- **`2e20bba` — `Integrate Cartographic Editorial palette and restore UI contrast`** adopted paper/ivory, oxblood, forest green, ink, and restrained sand tones, with subsequent contrast repairs confirmed by screenshots. **`889ebae` — `Document legacy CSS and cascade verification`** preserved the audit of residual competing styles.
+- **`243ea6c` — `Establish Cartographic Editorial typography foundations`** put serif typography into the editorial hierarchy; it was accepted provisionally, to be judged again after the larger composition was complete.
+- **`fe9634b` — `Redesign global header with editorial typography`** established a compact, ivory editorial header with a large Peridot wordmark, larger serif navigation labels, close active underlines, and hover behavior for the Home wordmark. The previous gemstone image was removed from the header. A minimal line-only gemstone is a *future concept*, not an installed asset or animation.
+- **`fd02d84` — `Build Cartographic Editorial Home composition`** committed the locally tested, layered Home: ivory paper reading area, the historical Florence panorama, a stock-paper irregular hero boundary, oxblood CTA, and a **rectangular three-column** Manage / Visualize / Explore orientation banner with decorative paper-edge accents. The three banner arrows were removed because the columns are informational, not active buttons. Image/source and stock provenance notes were staged with the artwork. The accepted hero is **H2e**, not the experimental H2f strong diagonal.
+- **Visual design decisions:** The approved design direction is a more expressive cartographic/editorial publication, not a corporate dashboard or a universal parchment treatment for data workspaces. Historical images and licensed stock paper textures support the art-directed public Home; dense analytical workspaces retain readable, performant utility styles. Desktop/full-screen use takes priority over mobile adaptation; exact minimum-supported viewport behavior remains a later implementation decision. Decorative route lines and ornaments were deliberately deferred during the last Home pass.
+- **Rejected experiment:** H2f's stronger diagonal hero mask exposed Florence above the wordmark in the top-left and intruded into the text. That treatment was reverted before `fd02d84` was committed. A future asymmetric diagonal is an art-direction problem to revisit with its own mask/crop tests; do not assume H2f is accepted.
+- **Asset provenance / distribution gate:** `src/assets/editorial/ASSET_CREDITS.md` and `STOCK_ASSET_NOTES.md` accompany the committed assets. The user supplied Wikimedia Commons source-page references for the Rosselli-attributed *Pianta della Catena* and Grazioso Benincasa portolan, and personally licensed Adobe Stock paper assets. **Do not infer blanket permission to redistribute Adobe Stock derivatives as reusable source assets in a public repository.** Review specific license and repository distribution mode before pushing the local commit. Licensing is unresolved in this handoff, not a determination that the use is forbidden.
+- **Untracked, deliberately excluded:** `planning_documents/Peridot_ Florence Atlas Homepage.png` plus `home-cartography-placeholder.svg`, `home-route-decal.svg`, `home-torn-paper-mask.svg`, and `paper-grain.webp` under `src/assets/editorial/`. Preserve until separately triaged; do not run `git add .` or `git clean` by default.
+- **Next visual work:** after the publication gate, polish the banner's paper layering and its eventual useful content, then art-direct the remaining public entry/workspace surfaces separately. Preserve the currently accepted hero and the compact header unless a new bounded visual pass explicitly changes them.
+
 
 ### Persistent navigation, workspace normalization, full-page mapping, ISO dates, and About — 2026-09-28 to 2026-10-14
 
@@ -596,7 +614,7 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
-### Current deferred Timeline, Network, navigation/interface, Chart, compatibility, Search follow-up, and tutorial work after `cd625a2`
+### Deferred Timeline, Network, navigation/interface, Chart, compatibility, Search follow-up, and tutorial work (originally recorded after `cd625a2`)
 
 - **Timeline relationship-line presentation — immediate:** preserve subject-strict mapped endpoint semantics and the continuous secondary-axis layout, but redesign line routing/contrast/anchors so each relationship reads clearly as event → event in Horizontal and Vertical views. Keep duration bands visually distinct from relationship edges.
 - **Timeline dense-layout/card polish:** recheck collision cleanup, event-card footprint/truncation, uncertainty/partial-date cues, relationship arrowheads, and selected-edge emphasis after the line pass. Do not add aggregation/clustering until a real dataset demonstrates that zoom/pan plus collision-aware layout is insufficient.
@@ -653,6 +671,23 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 ## 4. Full Development History
 
+The entries immediately below extend the original exhaustive history with Git commits explicitly reported during the Cartographic Editorial sequence. The older rows and their original historical refs remain intact. Only `fd02d84` is the current *local* HEAD; no remote push is attested.
+
+| Date | Commit | Message | Checkpoint note |
+|---|---|---|---|
+| 2026-10-15 | `fd02d84` | Build Cartographic Editorial Home composition | local HEAD; push pending |
+| 2026-10-15 | `fe9634b` | Redesign global header with editorial typography | origin/main at last user status |
+| 2026-10-15 | `243ea6c` | Establish Cartographic Editorial typography foundations | prior accepted commit |
+| 2026-10-15 | `889ebae` | Document legacy CSS and cascade verification | prior accepted commit |
+| 2026-10-15 | `2e20bba` | Integrate Cartographic Editorial palette and restore UI contrast | prior accepted commit |
+| 2026-10-15 | `f667329` | Establish Home and Data workspace styling ownership | prior accepted commit |
+| 2026-10-15 | `bc4761e` | Consolidate shared panel and workspace framing styles | prior accepted commit |
+| 2026-10-15 | `98bcbcb` | Consolidate shared button form and card styles | prior accepted commit |
+| 2026-10-15 | `d108bb2` | Migrate shared styles to centralized design tokens | prior accepted commit |
+| 2026-10-15 | `ec5152c` | Establish centralized styling foundations and editorial design plan | prior accepted commit |
+| 2026-10-14 | `2024897` | Synchronize documentation through navigation redesign | preceding documentation checkpoint |
+
+
 
 
 This is the single authoritative place in the documentation for the cumulative commit trajectory. The table is retained exhaustively, newest first. New rows are appended during synchronized documentation passes.
@@ -661,7 +696,7 @@ This is the single authoritative place in the documentation for the cumulative c
 
 | Date | Commit | Message | Branch/tag decoration |
 |---|---|---|---|
-| 2026-10-14 | `cd625a2` | Normalize About workspace and feedback | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-10-14 | `cd625a2` | Normalize About workspace and feedback | historical checkpoint at time |
 | 2026-10-01 | `f139f53` | Move data mapping into full-page workspace |  |
 | 2026-10-01 | `4a6cd2e` | Support ISO 8601 temporal values |  |
 | 2026-09-30 | `e9ddf1f` | Restructure Explore workspace navigation |  |

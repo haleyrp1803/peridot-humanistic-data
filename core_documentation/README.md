@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system now uses one generalized mapping model for ordinary CSV, TSV, XLSX, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The current interface uses a persistent site-wide header—logo/Home, Data, Visualize, Explore, Tutorials, and About—while workspace-local navigation handles visualization, query, mapping, and About subsections without unloading the active dataset. The Timeline workspace remains additive: the existing bottom Timeline/playback control is still the shared chronological playback control for the visualization environment.
+Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system uses one generalized mapping model for ordinary CSV, TSV, XLSX, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The current interface uses a persistent site-wide editorial header—Peridot wordmark/Home, Data, Visualize, Explore, Tutorials, and About—while workspace-local navigation handles visualization, query, mapping, and About subsections without unloading the active dataset. The Timeline workspace remains additive: the existing bottom Timeline/playback control is still the shared chronological playback control for the visualization environment.
 
 Peridot was created by Haley Price in direct and continuous collaboration with ChatGPT. There is a robust AI disclosure and discussion of AI ethics (and ethical concerns) in the tool's **About → AI Disclosure** section where credit is documented. Please go there for more details. For the purposes of README, it bears mentioning that the reason the documentation is so meticulous (and so robotic) is because Price made ChatGPT record every single decision, commit, redirection, success, and failure throughout Peridot's development so that the full record of labor would be documented and disclosed. This paragraph was written by Price (hi!) but the remainder of the documentation was written by ChatGPT under exacting human direction and quality assurance supervision.
 
@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-cd625a2 — Normalize About workspace and feedback
+fd02d84 — Build Cartographic Editorial Home composition
 Branch: main
-Status: local and origin/main aligned after the latest sync ritual
+Status: committed locally; origin/main remains at fe9634b pending asset-license review and push
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -44,7 +44,7 @@ For detailed milestone interpretation and full commit history, see [CHANGELOG.md
 
 Peridot is the current app identity for the **Correspondence Visualizer** repository. It derives only the structures that mapped data can safely support, then gives researchers an interactive workspace for visualizing, searching, inspecting, and exporting that evidence.
 
-The active interface is workspace-first rather than rail-first. A persistent global header remains available across public pages: the Peridot logo returns to Home; **Data**, **Visualize**, and **Explore** occupy the primary work area; **Tutorials** and **About** provide project/help destinations. Moving between pages preserves the active dataset and accepted workspace state rather than treating navigation as a reload. The Inspector remains dual-mode: compact side-panel summaries for visual clicks and a full dossier workspace for deeper evidence navigation. Within Visualize, Timeline has its own visualization workspace alongside Map, Network, and Charts, while the existing bottom Timeline/playback control remains available as the shared chronological range/playback control.
+The active interface is workspace-first rather than rail-first. A persistent global header remains available across public pages: the Peridot wordmark returns to Home; **Data**, **Visualize**, and **Explore** occupy the primary work area; **Tutorials** and **About** provide project/help destinations. Moving between pages preserves the active dataset and accepted workspace state rather than treating navigation as a reload. The Inspector remains dual-mode: compact side-panel summaries for visual clicks and a full dossier workspace for deeper evidence navigation. Within Visualize, Timeline has its own visualization workspace alongside Map, Network, and Charts, while the existing bottom Timeline/playback control remains available as the shared chronological range/playback control.
 
 ## 2. Audience, Research Uses, and Supported Data
 
@@ -80,7 +80,7 @@ Peridot follows a **database-first** model: a record or normalized research item
 
 Peridot opens with **no active dataset**. Nothing is silently preloaded underneath the interface. The persistent header is still available in this no-data state; destinations that require data must route the researcher toward choosing/uploading data rather than inventing hidden sample state.
 
-From Home, choose **Use sample data** to open the sample chooser or **Upload your data** to begin with your own file. The persistent **Data** destination also provides the template, sample, upload, and mapped-data editing entry points.
+Home is now a Cartographic Editorial composition. The large Peridot wordmark and humanities-data introduction sit on paper at left; a historical Florence panorama occupies the right side, separated by a textured torn-paper edge. **Get started** and **Try sample data** are the Home actions. **Data** remains the full entry point for templates, samples, uploads, and editing an existing mapping. The broad three-column paper banner introduces **Manage data**, **Visualize**, and **Explore evidence**; it is informational rather than a secondary set of interactive navigation buttons.
 
 The sample chooser currently offers three ordinary project files:
 
@@ -90,7 +90,7 @@ The sample chooser currently offers three ordinary project files:
 
 Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. The current compact sample chooser starts collapsed, expands in place when requested, and exposes direct **Use**, **Edit**, **Download**, and **Details** actions for each row. Sample selection is repeatable: choosing one sample does not lock the Data workspace, and a later sample cleanly replaces the active sample. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
 
-Home now includes a third, visually secondary **Tutorial** button centered beneath **Use sample data** and **Upload your data**. The old floating tutorial invitation has been removed. The button is intentionally disabled while the tutorial is being revised and shows **“Tutorial coming soon.”** on hover/focus; the existing tutorial implementation remains in the project for later reactivation and polish.
+**Historical Home note:** the former small disabled Tutorial button is not part of the accepted Cartographic Editorial Home composition. Tutorials remains a separate persistent header destination, with substantive tutorial work still deferred. The earlier floating tutorial invitation remains retired.
 
 ### 3.2 Load and map data
 
@@ -161,6 +161,13 @@ The Visualizations header provides SVG and PNG export for map/network views, CSV
 **About** is a first-class scholarly project section with local pages for **About Peridot**, **Creator**, **AI Disclosure**, **Open Source**, and **Feedback**. The public Feedback page supports questions, bug reports, issue reports, feature suggestions, and other feedback, with optional context and email fields; submission continues through the project’s Formspree integration. The feedback component retains its modal-capable implementation path for compatibility, but the normal public destination is the inline About subpage.
 
 ## 4. Interface Examples and Current-State Note
+
+### Cartographic Editorial Home — current local implementation (2026-10-15)
+
+Local commit `fd02d84` contains the new art-directed Home, the editorial global-header work inherited from `fe9634b`, and the associated image derivatives and credits. Its current Home uses the Rosselli-attributed *Pianta della Catena* Florence panorama, a paper-textured reading layer and irregular torn-paper edge, serif lettering, and a rectangular informational three-column banner. The stronger experimental H2f diagonal mask was rejected and reverted. No current screenshot is yet tracked in this documentation pass; the planning mockup remains an untracked local reference and must not be presented as a screenshot of the app.
+
+**Publication notice:** this Home commit exists locally but has not been pushed. A check of the applicable Adobe Stock redistribution terms for the included stock-derived assets is pending. Source-page credits and stock notes accompany the local implementation under `src/assets/editorial/`; reuse and source-distribution permissions must not be assumed from their presence.
+
 
 ### Interface snapshot — 2026-06-21 (pre-persistent-header)
 
@@ -255,11 +262,11 @@ The screenshots in this section document Peridot as it appeared on **2026-06-21*
 
 *Persistent in-app feedback form, 2026-06-21: users can submit questions, bug reports, issues, and feature suggestions directly to the project creator.*
 
-### Brand and design-reference assets
+### Historical brand and design-reference assets
 
 ![Peridot gilded logo](../assets/Peridot%20Logo%20Gilded.png)
 
-*Peridot gilded logo asset used by the current Home workspace.*
+*Historical gilded logo retained for design history; no longer the current Home or global-header logo.*
 
 ![Peridot transparent logo](../assets/Peridot%20Logo%20Transparent.png)
 
@@ -542,13 +549,13 @@ The principal generalized Network semantic migration is now complete through pla
 
 Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior. Performance work after that rollback now keeps pointer panning and wheel zoom transient during interaction, commits durable viewport state at bounded points, and preloads the stable full-scope Force graph so playback does not rerun force simulation on every tick. These changes improve interaction/playback smoothness without changing generalized relationship semantics.
 
-The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. Larger redesigns of the mapping page and Explore content remain deferred, along with Tutorials, Home refinement, and a later cross-site palette/typography/animation polish pass. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
+The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. Larger redesigns of the mapping page and Explore content remain deferred, along with Tutorials, further Home paper/banner polish, and later cross-site animation and visual refinement. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 
 Phase 3 of the universal data work—the generalized Chart Builder—also remains deferred. The intended direction is to build charts from saved/generalized variables through structured, human-readable controls rather than unrestricted natural-language prompting.
 
-The existing guided tutorial implementation remains in source, but its Home entry is currently disabled while tutorial content and polish are revisited. The Home now exposes a smaller static **Tutorial** placeholder beneath the two primary data-entry actions; hover/focus reads **“Tutorial coming soon.”** The larger Home/Data integration, tutorial attention choreography, placement, typography, accessibility, and full UX walkthrough remain later bounded work.
+The existing guided tutorial implementation remains in source, but the new Home uses Get started and Try sample data rather than the former disabled tutorial button. Tutorials has a persistent header destination; tutorial content, choreography, accessibility, and the walkthrough remain later bounded work.
 
 MapLibre work is archived and should not be treated as part of current `main`. For active technical caveats, regression expectations, and compatibility paths, see the Maintainer’s Guide.
 
@@ -562,6 +569,11 @@ MapLibre work is archived and should not be treated as part of current `main`. F
 - [Repository](https://github.com/haleyrp1803/peridot-humanistic-data) — current public source repository.
 
 ## 10. Author, License, and Attribution
+
+### Current Cartographic Editorial imagery and distribution status
+
+The Home includes image assets derived from historical-map sources credited in `src/assets/editorial/ASSET_CREDITS.md`, including the Wikimedia Commons pages for the Rosselli-attributed *Pianta della Catena* and Grazioso Benincasa's 1466 portolan chart. Licensed Adobe Stock paper/paper-edge assets and derivatives have separate provenance notes in `src/assets/editorial/STOCK_ASSET_NOTES.md`. The project is **not asserting that the stock assets may be freely redistributed as repository source files**. Specific Adobe Stock terms and the intended public distribution method must be checked before pushing `fd02d84` to a public GitHub repository.
+
 
 
 
