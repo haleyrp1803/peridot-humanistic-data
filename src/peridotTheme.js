@@ -16,11 +16,20 @@
  * site-wide palette.
  */
 
-export const DEFAULT_PERIDOT_PALETTE_ID = 'legacyCurrent';
+export const DEFAULT_PERIDOT_PALETTE_ID = 'cartographicEditorial';
 export const PERIDOT_PALETTE_STORAGE_KEY = 'peridot.activePaletteId';
 export const PERIDOT_CUSTOM_THEME_STORAGE_KEY = 'peridot.customThemeOverrides';
 
 export const PERIDOT_SOURCE_PALETTES = Object.freeze({
+  // Provisional Cartographic Editorial color study (style guide v0.2).
+  // The legacy palette remains selectable; chart series remain independent.
+  cartographicEditorial: {
+    label: 'Cartographic Editorial (provisional)',
+    dark: ['#262722', '#253C32', '#7C211E', '#253C32'],
+    mid: ['#7C211E', '#A63D2B', '#6B7F6B', '#6B7F6B'],
+    light: ['#D7CABC', '#E8D8BC', '#FBF8F2', '#F5EFE4'],
+    highlight: ['#C8A87A', '#D7CABC'],
+  },
   legacyCurrent: {
     label: 'Peridot Upload Guide',
     // This single built-in palette is adapted from the generated upload guide.
@@ -1198,7 +1207,140 @@ function getLegacyThemeCandidatePairs() {
     .filter((entry) => comparableHexFromColor(entry.value));
 }
 
-export const PERIDOT_BASE_THEME = Object.freeze(buildSemanticTheme(PERIDOT_TONES));
+// The editorial palette is intentionally mapped by *semantic role*, rather
+// than asking the generic tone scale to design an interface automatically.
+// Data-encoding colors and status semantics retain their legacy defaults until
+// each visualization/status system undergoes its own dedicated review.
+function buildCartographicEditorialTheme(tones) {
+  const paper = '#F5EFE4';
+  const surface = '#FBF8F2';
+  const parchment = '#E8D8BC';
+  const ink = '#262722';
+  const oxblood = '#7C211E';
+  const vermilion = '#A63D2B';
+  const forest = '#253C32';
+  const sage = '#6B7F6B';
+  const sand = '#C8A87A';
+  const line = '#D7CABC';
+  const original = buildSemanticTheme(tones);
+  return Object.freeze(deepMerge(original, {
+    interface: {
+      appBackground: paper,
+      appBackgroundAlt: parchment,
+      workspaceBackground: paper,
+      panelBackground: surface,
+      panelBackgroundStrong: parchment,
+      cardBackground: surface,
+      cardBackgroundWarm: paper,
+      cardBackgroundMuted: parchment,
+      cardBackgroundDark: forest,
+      borderSubtle: line,
+      borderStrong: oxblood,
+      textOnDark: surface,
+      textMutedOnDark: parchment,
+      textOnLight: ink,
+      textMutedOnLight: forest,
+      textInverse: surface,
+      focusRing: withAlpha(oxblood, 0.42),
+      scrim: withAlpha(ink, 0.50),
+      scrimStrong: withAlpha(ink, 0.68),
+    },
+    button: {
+      primaryBg: forest,
+      primaryHoverBg: oxblood,
+      primaryText: surface,
+      primaryBorder: forest,
+      secondaryBg: surface,
+      secondaryHoverBg: parchment,
+      secondaryText: ink,
+      secondaryBorder: line,
+      creamBg: paper,
+      creamText: ink,
+      creamBorder: line,
+    },
+    navigation: {
+      menuBg: paper,
+      menuBorder: line,
+      menuText: ink,
+      menuMutedText: forest,
+      itemBg: surface,
+      itemHoverBg: parchment,
+      itemActiveBg: withAlpha(oxblood, 0.12),
+      itemActiveText: oxblood,
+      itemBorder: line,
+      itemActiveBorder: oxblood,
+    },
+    workspaceChrome: {
+      headerBg: paper,
+      headerText: ink,
+      headerMutedText: forest,
+      headerBorder: line,
+      tabBg: surface,
+      tabHoverBg: parchment,
+      tabActiveBg: withAlpha(oxblood, 0.12),
+      tabText: ink,
+      dropdownBg: surface,
+      dropdownText: ink,
+      dropdownActiveBg: parchment,
+      dropdownActiveText: oxblood,
+    },
+    search: {
+      shellBg: paper,
+      panelBg: surface,
+      panelBorder: line,
+      cardBg: surface,
+      cardActiveBg: parchment,
+      cardText: ink,
+      cardMutedText: forest,
+      inputBg: surface,
+      inputBorder: line,
+      criterionBg: paper,
+      criterionActiveBg: parchment,
+      resultBg: surface,
+      resultBorder: line,
+      badgeBg: forest,
+      badgeText: surface,
+    },
+    card: {
+      darkBg: forest,
+      darkSurfaceBg: forest,
+      creamBg: surface,
+      creamText: ink,
+      border: line,
+      shadow: withAlpha(ink, 0.15),
+    },
+    form: {
+      bgDark: forest,
+      bgLight: surface,
+      border: line,
+      textDark: surface,
+      textLight: ink,
+      placeholder: withAlpha(ink, 0.62),
+    },
+    ornament: {
+      line: sand,
+      lineMuted: withAlpha(sand, 0.44),
+      corner: withAlpha(sand, 0.65),
+      cornerMuted: withAlpha(line, 0.55),
+      gemFill: sage,
+      gemStroke: sand,
+      sparkle: sand,
+      paperRule: line,
+      panelGlow: withAlpha(sand, 0.12),
+    },
+    // These semantic groups are not decorative; their colors carry meaning.
+    visualization: LEGACY_REFERENCE_THEME.visualization,
+    analytics: LEGACY_REFERENCE_THEME.analytics,
+    timeline: LEGACY_REFERENCE_THEME.timeline,
+    status: LEGACY_REFERENCE_THEME.status,
+  }));
+}
+
+export const PERIDOT_BASE_THEME = Object.freeze(
+  ACTIVE_PERIDOT_PALETTE_ID === 'cartographicEditorial'
+    ? buildCartographicEditorialTheme(PERIDOT_TONES)
+    : buildSemanticTheme(PERIDOT_TONES)
+);
 export const PERIDOT_THEME = Object.freeze(deepMerge(PERIDOT_BASE_THEME, PERIDOT_CUSTOM_THEME_OVERRIDES));
 
 function flattenTheme(value, prefix = '--peridot-role', output = {}) {
@@ -1220,6 +1362,7 @@ function flattenTheme(value, prefix = '--peridot-role', output = {}) {
 export const PERIDOT_THEME_CSS_VARIABLES = Object.freeze(flattenTheme(PERIDOT_THEME));
 
 export function applyPeridotThemeVariables(root = document.documentElement) {
+  root.setAttribute('data-peridot-palette', ACTIVE_PERIDOT_PALETTE_ID);
   Object.entries(PERIDOT_THEME_CSS_VARIABLES).forEach(([name, value]) => {
     root.style.setProperty(name, value);
   });

@@ -9,3 +9,24 @@
   --peridot-data-button-border: var(--peridot-role-ornament-corner-muted);
   --peridot-data-button-text: color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%);
 }
+
+/* Editorial palette: light introductory card uses the matching ink foreground. */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-intro {
+  color: var(--peridot-role-interface-text-on-light);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-intro .peridot-title-medium {
+  color: var(--peridot-role-interface-text-on-light);
+  text-shadow: none;
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-intro .peridot-kicker {
+  color: var(--peridot-role-navigation-item-active-text);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-intro-copy {
+  color: var(--peridot-role-interface-text-on-light);
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-source-status,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-source-status strong,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-source-status button {
+  color: var(--peridot-role-interface-text-on-light);
+}

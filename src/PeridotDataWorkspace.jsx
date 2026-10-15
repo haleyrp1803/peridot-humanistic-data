@@ -92,11 +92,11 @@ export function PeridotDataWorkspace({
           ? "-translate-y-[4.75rem] md:-translate-y-[5.5rem]"
           : "translate-y-0"
       }`}>
-        <div className="peridot-appear-rise peridot-appear-delay-0 peridot-hero-card !py-8 md:!py-9">
+        <div className="peridot-data-intro peridot-appear-rise peridot-appear-delay-0 peridot-hero-card !py-8 md:!py-9">
           <div>
             <p className="peridot-kicker">Data workspace</p>
             <h1 className="peridot-title-medium">Choose what data to use.</h1>
-            <div className="mt-4 w-full space-y-3 text-base leading-7 text-[var(--peridot-role-interface-text-on-dark)]/90">
+            <div className="peridot-data-intro-copy mt-4 w-full space-y-3 text-base leading-7">
               <p>
                 To use your own data in Peridot, please upload it as a CSV, TSV, XLS, or XLSX file. We'll help you assign variable roles that work best for your project, whether you are working with qualitative or quantitative information.
               </p>
@@ -279,7 +279,7 @@ export function PeridotDataWorkspace({
             </div>
           </div>
         ) : (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-sm text-[var(--peridot-color-hex-f7f2df-a70)]">
+          <div className="peridot-data-source-status mt-6 flex flex-wrap items-center justify-center gap-3 text-sm text-[var(--peridot-color-hex-f7f2df-a70)]">
             <span>
               Current source: <strong className="text-[var(--peridot-color-hex-fbf7ea)]">{peridotFileLabel}</strong>
             </span>

@@ -12,3 +12,23 @@
 .peridot-home-tutorial-action {
   height: 3.15cqw;
 }
+
+/* Editorial palette: pair the light stage with legible ink and forest actions. */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-home-workspace .peridot-home-tagline {
+  color: var(--peridot-role-interface-text-on-light);
+  text-shadow: none;
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-home-workspace .peridot-home-action {
+  color: var(--peridot-role-button-primary-text);
+  background: var(--peridot-role-button-primary-bg);
+  border-color: var(--peridot-role-button-primary-border);
+  box-shadow: 0 12px 28px var(--peridot-role-card-shadow);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-home-workspace .peridot-home-action:hover {
+  color: var(--peridot-role-button-primary-text);
+  background: var(--peridot-role-button-primary-hover-bg);
+  border-color: var(--peridot-role-button-primary-hover-bg);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-home-workspace .peridot-home-tutorial-action {
+  opacity: 0.55;
+}

@@ -103,3 +103,25 @@
   background: var(--peridot-color-hex-d6a36a);
   box-shadow: 0 0 10px var(--peridot-color-hex-d6a36a-a70);
 }
+
+/* Cartographic Editorial V1b: scoped header contrast pairing. */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-header {
+  background: var(--peridot-role-interface-card-background-dark);
+  border-bottom-color: var(--peridot-role-ornament-line-muted);
+  color: var(--peridot-role-interface-text-on-dark);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link {
+  color: var(--peridot-role-interface-text-on-dark);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link:hover {
+  background: color-mix(in srgb, var(--peridot-role-interface-text-on-dark) 13%, transparent);
+  color: var(--peridot-role-interface-text-on-dark);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link.is-active {
+  color: var(--peridot-role-interface-text-on-dark);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link.is-active::after {
+  background: var(--peridot-role-ornament-line);
+  box-shadow: none;
+}

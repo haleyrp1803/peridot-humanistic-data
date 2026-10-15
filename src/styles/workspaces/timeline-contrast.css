@@ -1,0 +1,63 @@
+/* Visual V1b: editorial light panel controls only; visualization marks are unchanged. */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-orientation,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-zoom {
+  color: var(--peridot-role-interface-text-on-light);
+  background: var(--peridot-role-interface-card-background);
+  border-color: var(--peridot-role-interface-border-subtle);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-orientation button,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-zoom button {
+  color: var(--peridot-role-interface-text-on-light);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-orientation button[aria-pressed="true"] {
+  background: var(--peridot-role-button-primary-bg);
+  color: var(--peridot-role-button-primary-text);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-orientation button:hover,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-zoom button:hover {
+  background: var(--peridot-role-interface-card-background-muted);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-orientation button[aria-pressed="true"]:hover {
+  background: var(--peridot-role-button-primary-hover-bg);
+  color: var(--peridot-role-button-primary-text);
+}
+
+/* Visual V1c: foreground roles for editorial timeline event cards only. */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-event-card,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-event-role,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-event-date,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-event-qualifier,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-event-overflow {
+  color: var(--peridot-role-interface-text-on-light);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-event-qualifier {
+  border-color: var(--peridot-role-interface-border-subtle);
+  background: var(--peridot-role-interface-card-background-muted);
+}
+
+/* Visual V1d: readable toolbar chrome when the editorial palette is active.
+   The scroller, geometry, interaction states, and chart colors are unchanged. */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-toolbar-group {
+  color: var(--peridot-role-interface-text-on-light);
+  background: var(--peridot-role-interface-card-background);
+  border-color: var(--peridot-role-interface-border-subtle);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-toolbar-group > div:first-child {
+  color: var(--peridot-role-interface-text-on-light);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-categories-trigger {
+  color: var(--peridot-role-interface-text-on-light);
+  background: var(--peridot-role-interface-card-background);
+  border-color: var(--peridot-role-interface-border-subtle);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-categories-trigger:hover {
+  background: var(--peridot-role-interface-card-background-muted);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-categories-popover {
+  color: var(--peridot-role-interface-text-on-light);
+  background: var(--peridot-role-interface-card-background);
+  border-color: var(--peridot-role-interface-border-subtle);
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-timeline-categories-popover .text-\[var\(--peridot-color-hex-dfe9c8\)\] {
+  color: var(--peridot-role-interface-text-on-light);
+}

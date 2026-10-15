@@ -1,3 +1,4 @@
+import './styles/workspaces/timeline-contrast.css';
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   buildPeridotTimelineCategoryFields,
@@ -564,7 +565,7 @@ function restoreChronologyFraction(scroller, orientation, geometry, fraction) {
 
 function OrientationControl({ orientation, onChange }) {
   return (
-    <div className="flex rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_94%,transparent)] p-1 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]" aria-label="Timeline orientation">
+    <div className="peridot-timeline-orientation flex rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_94%,transparent)] p-1 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]" aria-label="Timeline orientation">
       {['horizontal', 'vertical'].map((value) => {
         const active = orientation === value;
         return (
@@ -596,7 +597,7 @@ function ZoomControl({ zoom, onChange }) {
   const levelLabel = atDefault ? 'Default' : `${relativeZoom.toFixed(relativeZoom < 1 ? 2 : 1)}×`;
 
   return (
-    <div className="flex items-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_94%,transparent)] p-1 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]" aria-label="Timeline zoom">
+    <div className="peridot-timeline-zoom flex items-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_94%,transparent)] p-1 shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]" aria-label="Timeline zoom">
       <button
         type="button"
         aria-label="Zoom timeline out"
@@ -754,22 +755,22 @@ function EventCard({ event, onEventClick, className = '', style, activeCategoryF
       type="button"
       onClick={() => onEventClick?.(event)}
       aria-label={`${event.temporalRole || 'Time'}: ${title}, ${dateLabel}${temporal.label ? `, ${temporal.label}` : ''}`}
-      className={`group relative z-10 w-[210px] rounded-xl border bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_90%,transparent)] px-3 py-2 text-left text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] backdrop-blur-[1px] transition hover:-translate-y-0.5 hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] ${temporal.tone === 'approximate' || temporal.tone === 'partial' ? 'border-dashed border-[var(--peridot-color-hex-dfe9c8-a55)]' : 'border-[var(--peridot-color-hex-dfe9c8-a35)]'} ${className}`}
+      className={`peridot-timeline-event-card group relative z-10 w-[210px] rounded-xl border bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_90%,transparent)] px-3 py-2 text-left text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] backdrop-blur-[1px] transition hover:-translate-y-0.5 hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] ${temporal.tone === 'approximate' || temporal.tone === 'partial' ? 'border-dashed border-[var(--peridot-color-hex-dfe9c8-a55)]' : 'border-[var(--peridot-color-hex-dfe9c8-a35)]'} ${className}`}
       style={style}
     >
       <span aria-hidden="true" className={`absolute -left-[7px] top-[13px] h-3 w-3 rounded-full border-2 ${anchorMarkerClassName(event)}`} />
       <span className="flex min-w-0 items-center gap-2">
-        <span className="min-w-0 flex-1 truncate text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
+        <span className="peridot-timeline-event-role min-w-0 flex-1 truncate text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
           {event.temporalRole || 'Time'}
         </span>
         {temporal.label ? (
-          <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a30)] bg-[var(--peridot-color-hex-dfe9c8-a08)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.09em] text-[var(--peridot-color-hex-dfe9c8)]">
+          <span className="peridot-timeline-event-qualifier shrink-0 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a30)] bg-[var(--peridot-color-hex-dfe9c8-a08)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.09em] text-[var(--peridot-color-hex-dfe9c8)]">
             {temporal.label}
           </span>
         ) : null}
       </span>
       <span className="mt-0.5 block truncate text-sm font-bold" title={title}>{title}</span>
-      <span className="mt-1 block truncate text-[11px] text-[var(--peridot-color-hex-dfe9c8)]" title={dateLabel}>
+      <span className="peridot-timeline-event-date mt-1 block truncate text-[11px] text-[var(--peridot-color-hex-dfe9c8)]" title={dateLabel}>
         {dateLabel}
       </span>
       {activeCategoryFields.length && memberships.length ? (
@@ -782,7 +783,7 @@ function EventCard({ event, onEventClick, className = '', style, activeCategoryF
             />
           ))}
           {hiddenMembershipCount ? (
-            <span className="ml-0.5 text-[9px] font-bold text-[var(--peridot-color-hex-dfe9c8)]" title={`${hiddenMembershipCount} additional visible categories`}>
+            <span className="peridot-timeline-event-overflow ml-0.5 text-[9px] font-bold text-[var(--peridot-color-hex-dfe9c8)]" title={`${hiddenMembershipCount} additional visible categories`}>
               +{hiddenMembershipCount}
             </span>
           ) : null}
@@ -1054,13 +1055,13 @@ function CategoryControls({
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_94%,transparent)] px-4 py-2 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] backdrop-blur-sm transition hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
+        className="peridot-timeline-categories-trigger rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_94%,transparent)] px-4 py-2 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] backdrop-blur-sm transition hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)]"
       >
         Categories{activeCount ? ` · ${activeCount}` : ''}
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+8px)] flex h-[600px] w-[340px] max-h-[calc(100vh-180px)] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-2xl border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_97%,transparent)] text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_18px_42px_var(--peridot-color-rgba-rgba-0-0-0-0-36)] backdrop-blur-md">
+        <div className="peridot-timeline-categories-popover absolute right-0 top-[calc(100%+8px)] flex h-[600px] w-[340px] max-h-[calc(100vh-180px)] max-w-[calc(100vw-48px)] flex-col overflow-hidden rounded-2xl border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_97%,transparent)] text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_18px_42px_var(--peridot-color-rgba-rgba-0-0-0-0-36)] backdrop-blur-md">
           <div className="border-b border-[var(--peridot-color-hex-dfe9c8-a18)] px-4 py-3">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -1494,14 +1495,14 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
       </div>
 
       <div className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col items-start gap-2">
-        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 backdrop-blur-sm">
+        <div className="peridot-timeline-toolbar-group pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 backdrop-blur-sm">
           <div className="shrink-0 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
             Timeline view
           </div>
           <OrientationControl orientation={orientation} onChange={handleOrientationChange} />
         </div>
 
-        <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 backdrop-blur-sm">
+        <div className="peridot-timeline-toolbar-group pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 backdrop-blur-sm">
           <div className="shrink-0 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
             Zoom
           </div>
