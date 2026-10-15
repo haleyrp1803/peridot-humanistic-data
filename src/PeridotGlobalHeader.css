@@ -17,7 +17,7 @@
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 0.42rem;
+  gap: 0;
   border: 0;
   background: transparent;
   padding: 0;
@@ -29,13 +29,6 @@
 .peridot-global-nav-link:focus-visible {
   outline: 2px solid var(--peridot-role-interface-focus-ring);
   outline-offset: 3px;
-}
-
-.peridot-global-brand-logo {
-  display: block;
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
 }
 
 .peridot-global-brand-name {
@@ -124,4 +117,141 @@
 :root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link.is-active::after {
   background: var(--peridot-role-ornament-line);
   box-shadow: none;
+}
+
+/* Cartographic Editorial V3: the persistent header is a quiet publication masthead.
+ * The existing navigation elements, handlers, and focus semantics are unchanged.
+ * All overrides are palette-scoped; legacyCurrent retains its prior presentation. */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-header {
+  min-height: 66px;
+  flex-basis: 66px;
+  gap: clamp(1.25rem, 2.4vw, 2.8rem);
+  padding: 0.15rem clamp(1.5rem, 3vw, 3.5rem);
+  background: #fbf8f2;
+  color: var(--peridot-role-interface-text-primary, #262722);
+  border-bottom: 1px solid var(--peridot-role-ornament-line-muted, #d7cabc);
+  box-shadow: 0 2px 12px rgb(38 39 34 / 0.055);
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand {
+  gap: 0;
+  color: #7c211e;
+}
+
+/* The wordmark is an interactive Home control, not a static masthead label. */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand {
+  transition: color var(--pd-duration-fast, 120ms) ease;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand:hover,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand:focus-visible {
+  color: #253c32;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand:hover .peridot-global-brand-name,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand:focus-visible .peridot-global-brand-name {
+  text-decoration: underline;
+  text-decoration-color: currentColor;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.075em;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand-name {
+  font-family: var(--pd-font-display, Georgia, serif);
+  font-size: clamp(2.9rem, 3.35vw, 3.7rem);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav {
+  gap: clamp(0.2rem, 1vw, 0.9rem);
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-primary {
+  margin-left: clamp(0.25rem, 1.5vw, 1.75rem);
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link {
+  min-height: 54px;
+  padding: 0 clamp(0.6rem, 1.15vw, 1.3rem);
+  font-family: var(--pd-font-editorial, Georgia, serif);
+  font-size: clamp(1.35rem, 1.55vw, 1.62rem);
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  text-transform: none;
+  color: #253c32;
+  transition: color var(--pd-duration-fast, 120ms) ease, background-color var(--pd-duration-fast, 120ms) ease;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link:hover {
+  background: transparent;
+  color: #7c211e;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link.is-active {
+  color: #7c211e;
+  font-weight: 650;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link::after {
+  right: 0.6rem;
+  bottom: 10px;
+  left: 0.6rem;
+  height: 1px;
+  border-radius: 0;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link.is-active::after {
+  background: #7c211e;
+  box-shadow: none;
+}
+
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand:focus-visible,
+:root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link:focus-visible {
+  outline: 2px solid #7c211e;
+  outline-offset: 3px;
+}
+
+/* Desktop-width resilience: avoid overlap without changing navigation architecture. */
+@media (max-width: 950px) {
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-header {
+    gap: 0.4rem;
+    padding-inline: 0.8rem;
+  }
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand-name {
+    font-size: 2.25rem;
+  }
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-primary {
+    margin-left: 0;
+  }
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link {
+    padding-inline: 0.42rem;
+    font-size: 1.13rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link,
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand {
+    transition: none;
+  }
+}
+
+/* Retain navigation breathing room on smaller desktop windows. */
+@media (min-width: 951px) and (max-width: 1200px) {
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-header {
+    gap: 0.75rem;
+    padding-inline: 1.1rem;
+  }
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-brand-name {
+    font-size: 2.7rem;
+  }
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-primary {
+    margin-left: 0.35rem;
+  }
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-nav-link {
+    padding-inline: 0.45rem;
+    font-size: 1.2rem;
+  }
 }

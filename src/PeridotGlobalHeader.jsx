@@ -8,7 +8,6 @@
  */
 
 import React from 'react';
-import peridotLogo from '../assets/Peridot Logo Gilded Transparent.png';
 import './PeridotGlobalHeader.css';
 
 const PRIMARY_NAV_ITEMS = Object.freeze([
@@ -67,7 +66,6 @@ export function PeridotGlobalHeader({
         aria-label="Peridot home"
         title="Peridot home"
       >
-        <img src={peridotLogo} alt="" className="peridot-global-brand-logo" draggable="false" />
         <span className="peridot-global-brand-name">Peridot</span>
       </button>
 
