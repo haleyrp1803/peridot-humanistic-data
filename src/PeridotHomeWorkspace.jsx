@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import './styles/workspaces/home.css';
 
 import peridotLogoTransparent from '../assets/Peridot Logo Gilded Transparent.png';
 import homepageFiligree from '../assets/Adobe Stock Filigree 1.png';
@@ -60,11 +61,7 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
 
       <div className="relative z-10 flex h-full w-full items-center justify-center px-[clamp(1rem,3vw,3rem)] py-[clamp(1rem,3vh,2.5rem)]">
         <div
-          className="relative w-full max-w-[94rem] [container-type:size]"
-          style={{
-            aspectRatio: '2.22 / 1',
-            width: 'min(92vw, calc((100vh - 4rem) * 2.22), 94rem)',
-          }}
+          className="peridot-home-stage relative w-full max-w-[94rem] [container-type:size]"
         >
           <StageOrnament side="left" />
           <StageOrnament side="right" />
@@ -109,8 +106,7 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
                   type="button"
                   aria-disabled="true"
                   aria-describedby="peridot-home-tutorial-coming-soon"
-                  className={`${homeActionClass} pointer-events-none opacity-40 grayscale`}
-                  style={{ height: '3.15cqw' }}
+                  className={`${homeActionClass} peridot-home-tutorial-action pointer-events-none opacity-40 grayscale`}
                 >
                   Tutorial
                 </button>

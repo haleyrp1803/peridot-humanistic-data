@@ -1,0 +1,11 @@
+/*
+ * Data landing workspace — static entry-action color aliases.
+ * Extracted unchanged from three identical inline style objects during S8b.
+ * The mapping editor is owned separately by PeridotColumnMappingModal.css.
+ * Interactive sample-menu cascade geometry remains React-controlled.
+ */
+.peridot-data-entry-action {
+  --peridot-data-button-bg: #0f2912;
+  --peridot-data-button-border: var(--peridot-role-ornament-corner-muted);
+  --peridot-data-button-text: color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%);
+}

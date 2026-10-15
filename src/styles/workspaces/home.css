@@ -1,0 +1,14 @@
+/*
+ * Home workspace ownership — static composition only.
+ * Extracted without changing source values during Structural Styling S8.
+ * Colors, textures, hero typography, and action appearance remain in existing
+ * JSX until their separately bounded Cartographic Editorial visual passes.
+ */
+.peridot-home-stage {
+  aspect-ratio: 2.22 / 1;
+  width: min(92vw, calc((100vh - 4rem) * 2.22), 94rem);
+}
+
+.peridot-home-tutorial-action {
+  height: 3.15cqw;
+}
