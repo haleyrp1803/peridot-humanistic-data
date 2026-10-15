@@ -32,3 +32,13 @@
 :root[data-peridot-palette="cartographicEditorial"] .peridot-home-workspace .peridot-home-tutorial-action {
   opacity: 0.55;
 }
+
+/* V2b editorial typography: Home's prominent statement serves as display text.
+ * Preserve its existing container-relative size and geometry; keep button and
+ * tooltip lettering in the functional UI font. Scoped to the editorial palette.
+ */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-home-workspace .peridot-home-tagline {
+  font-family: var(--pd-font-display);
+  font-weight: 500;
+  letter-spacing: -0.018em;
+}

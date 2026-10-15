@@ -30,3 +30,17 @@
 :root[data-peridot-palette="cartographicEditorial"] .peridot-data-source-status button {
   color: var(--peridot-role-interface-text-on-light);
 }
+
+/* V2b editorial typography: Data landing only. Mapping and menu controls retain
+ * their compact functional type treatment. The existing layout dimensions and
+ * responsive sizing remain unchanged.
+ */
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-intro .peridot-title-medium {
+  font-family: var(--pd-font-display);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-intro-copy {
+  font-family: var(--pd-font-editorial);
+  font-weight: 400;
+}

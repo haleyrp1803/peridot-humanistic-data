@@ -19,6 +19,8 @@ import App from './App.jsx';
 import './index.css';
 // Central non-color foundations; existing workspace styles retain cascade precedence.
 import './styles/foundations/tokens.css';
+// Opt-in editorial typography roles and font loading (V2a).
+import './styles/foundations/typography.css';
 // Shared buttons follow foundations and precede workspace-specific overrides.
 import './styles/components/buttons.css';
 // Shared form controls; workspace-specific forms continue to override these.

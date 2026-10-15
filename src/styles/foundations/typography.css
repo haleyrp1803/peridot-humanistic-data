@@ -1,0 +1,52 @@
+/* Peridot Cartographic Editorial typography — V2a.
+ * Google Fonts: Cormorant Garamond, Source Serif 4, Inter (OFL families).
+ * Fonts load externally when online. System fallbacks remain functional offline.
+ * Role selectors are opt-in, not global element overrides.
+ * Avoid applying display styles to tables, axes, network labels, or mapping fields.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Source+Serif+4:wght@400;500;600;700&display=swap');
+
+.pd-type-display {
+  font-family: var(--pd-font-display);
+  font-weight: 500;
+  font-size: var(--pd-type-hero-size);
+  line-height: var(--pd-type-hero-leading);
+  letter-spacing: -0.035em;
+}
+
+.pd-type-page-title {
+  font-family: var(--pd-font-display);
+  font-size: var(--pd-type-page-size);
+  font-weight: 500;
+  line-height: var(--pd-type-page-leading);
+  letter-spacing: -0.025em;
+}
+
+.pd-type-section-title {
+  font-family: var(--pd-font-editorial);
+  font-size: var(--pd-type-section-size);
+  font-weight: 500;
+  line-height: var(--pd-type-section-leading);
+}
+
+.pd-type-editorial-body {
+  font-family: var(--pd-font-editorial);
+  font-size: var(--pd-type-editorial-body-size);
+  font-weight: 400;
+  line-height: var(--pd-type-editorial-body-leading);
+}
+
+.pd-type-eyebrow {
+  font-family: var(--pd-font-ui);
+  font-size: var(--pd-type-eyebrow-size);
+  font-weight: 600;
+  letter-spacing: var(--pd-type-eyebrow-tracking);
+  line-height: 1.35;
+  text-transform: uppercase;
+}
+
+.pd-type-interface {
+  font-family: var(--pd-font-ui);
+  font-size: var(--pd-type-ui-size);
+  line-height: var(--pd-type-ui-leading);
+}
