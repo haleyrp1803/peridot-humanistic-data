@@ -259,7 +259,7 @@ function GeographicMapSettingsPanel({ controls }) {
   if (!controls) return null;
 
   return (
-    <div className="pointer-events-auto absolute right-6 top-6 z-[120] flex flex-col items-end gap-1.5">
+    <div className="pointer-events-auto absolute right-3 top-3 z-[120] flex flex-col items-end gap-1.5">
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
@@ -790,7 +790,7 @@ function VisualizationExportMenu({ exportControls, activeVisualizationLabel, com
       <button
         type="button"
         onClick={() => (isOpen ? closeMenu() : openMenu())}
-        className={buttonClass}
+        className={`${buttonClass} ${compact ? 'peridot-visualize-export' : ''}`}
         aria-expanded={isOpen}
         aria-label={`Export ${activeVisualizationLabel}`}
       >
@@ -1160,7 +1160,7 @@ export function PeridotVisualizationsWorkspace({
   };
 
   const tabClass = (selected) => [
-    'relative inline-flex h-9 items-center justify-center border-b-2 px-3 text-[11px] font-extrabold uppercase tracking-[0.14em] transition duration-150',
+    'peridot-visualize-tab relative inline-flex h-9 items-center justify-center border-b-2 px-3 text-[11px] font-extrabold uppercase tracking-[0.14em] transition duration-150',
     'focus:outline-none focus:ring-2 focus:ring-inset focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
     selected
       ? 'border-[var(--peridot-role-ornament-line)] text-[var(--peridot-color-hex-fff8e8)]'
@@ -1206,7 +1206,7 @@ export function PeridotVisualizationsWorkspace({
     }
 
     return (
-      <div className="peridot-map-plate relative flex min-h-0 flex-1 overflow-hidden rounded-xl border border-[var(--peridot-color-hex-c4e0ef-a35)] bg-[var(--map-water)]">
+      <div className="peridot-map-plate peridot-visualize-map-plate relative flex min-h-0 flex-1 overflow-hidden rounded-xl border border-[var(--peridot-color-hex-c4e0ef-a35)] bg-[var(--map-water)]">
         <MapStageComponent {...mapStageProps} />
         {selectedTool === VISUALIZATION_TOOLS.GEOGRAPHIC_MAP ? (
           <GeographicMapSettingsPanel controls={geographicAnchorControls} />
@@ -1216,8 +1216,8 @@ export function PeridotVisualizationsWorkspace({
   };
 
   return (
-    <section className="flex h-full min-h-0 flex-col overflow-hidden bg-[var(--peridot-color-hex-04160f)] text-[var(--peridot-color-hex-fbf7ea)]">
-      <header className="relative shrink-0 border-b border-[var(--peridot-color-hex-dfe9c8-a20)] px-4">
+    <section className="peridot-visualize-shell flex h-full min-h-0 flex-col overflow-hidden bg-[var(--peridot-color-hex-04160f)] text-[var(--peridot-color-hex-fbf7ea)]">
+      <header className="peridot-visualize-header relative shrink-0 border-b border-[var(--peridot-color-hex-dfe9c8-a20)] px-4">
         <div className="flex min-h-10 min-w-0 items-center justify-center">
           <nav
             className="flex min-w-0 items-center justify-center gap-1"

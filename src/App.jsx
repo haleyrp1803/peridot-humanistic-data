@@ -2252,7 +2252,9 @@ function SvgMap({
   const lastViewportSizeRef = useRef({ width: 0, height: 0 });
 
   const clampScale = (scale) => Math.max(0.6, Math.min(160, scale));
-  const frame = { x: 20, y: 20, w: width - 40, h: height - 40 };
+  // Use the entire SVG drawing surface. The single visible frame belongs to
+  // the outer CSS plate; SVG clipping and node/label bounds share these limits.
+  const frame = { x: 0, y: 0, w: width, h: height };
 
   const projection = useMemo(() => createWorldProjection(width, height), [width, height]);
 
@@ -2779,7 +2781,7 @@ function SvgMap({
               5. ornamental compass marker for early-modern atmosphere
           */}
           <clipPath id="map-frame-clip">
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} rx="16" />
+            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} />
           </clipPath>
 
           <marker
@@ -2837,20 +2839,16 @@ function SvgMap({
           width={frame.w}
           height={frame.h}
           fill={showGeographicBackdrop ? 'var(--map-texture-sea)' : 'var(--map-frame-bg)'}
-          stroke="var(--map-frame-border)"
-          strokeWidth="1.4"
-          rx="16"
         />
         {showGeographicBackdrop ? (
           <>
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-sea)" opacity="0.24" filter="url(#map-paper-grain)" rx="16" />
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="url(#map-sea-lines)" opacity="0.34" rx="16" />
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.06" filter="url(#map-paper-grain)" rx="16" />
+            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-sea)" opacity="0.24" filter="url(#map-paper-grain)" />
+            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="url(#map-sea-lines)" opacity="0.34" />
+            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.06" filter="url(#map-paper-grain)" />
           </>
         ) : (
-          <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.26" filter="url(#map-paper-grain)" rx="16" />
+          <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.26" filter="url(#map-paper-grain)" />
         )}
-        <rect x={frame.x + 8} y={frame.y + 8} width={frame.w - 16} height={frame.h - 16} fill="none" stroke="var(--map-frame-border)" strokeOpacity="0.35" strokeWidth="0.9" rx="12" />
         <g clipPath="url(#map-frame-clip)">
           <g ref={transientViewportRef}>
           <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>

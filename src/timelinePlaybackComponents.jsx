@@ -405,7 +405,7 @@ export function VisualizationTimelineScrubber({
       : `${enabledTemporalRoles.length} selected`;
 
   return (
-    <div className="rounded-[18px] border border-[var(--peridot-role-ornament-line-muted)] bg-[var(--peridot-color-hex-102c20)] px-3 py-2 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]">
+    <div className="peridot-playback-toolbar rounded-[18px] border border-[var(--peridot-role-ornament-line-muted)] bg-[var(--peridot-color-hex-102c20)] px-3 py-2 text-[var(--peridot-color-hex-fbf7ea)] shadow-[0_12px_28px_var(--peridot-color-rgba-rgba-0-0-0-0-28)]">
       <style>{`
         .peridot-dual-range input[type='range'] {
           -webkit-appearance: none;
@@ -423,7 +423,7 @@ export function VisualizationTimelineScrubber({
         .peridot-dual-range input[type='range']::-webkit-slider-thumb {
           -webkit-appearance: none;
           appearance: none;
-          background: var(--peridot-color-hex-d6a36a);
+          background: var(--peridot-playback-accent, #7C211E);
           border: 2px solid var(--peridot-color-hex-fff8e8);
           border-radius: 9999px;
           box-shadow: 0 3px 9px var(--peridot-color-rgba-rgba-0-0-0-0-32);
@@ -434,7 +434,7 @@ export function VisualizationTimelineScrubber({
           width: 18px;
         }
         .peridot-dual-range input[type='range']::-moz-range-thumb {
-          background: var(--peridot-color-hex-d6a36a);
+          background: var(--peridot-playback-accent, #7C211E);
           border: 2px solid var(--peridot-color-hex-fff8e8);
           border-radius: 9999px;
           box-shadow: 0 3px 9px var(--peridot-color-rgba-rgba-0-0-0-0-32);
@@ -447,7 +447,7 @@ export function VisualizationTimelineScrubber({
           z-index: 20;
         }
         .peridot-dual-range input.peridot-playback-scrubber::-webkit-slider-thumb {
-          background: var(--peridot-color-hex-d6a36a);
+          background: var(--peridot-playback-accent, #7C211E);
           border: 1px solid var(--peridot-color-hex-fff8e8);
           border-radius: 2px;
           box-shadow: 0 2px 7px var(--peridot-color-rgba-rgba-0-0-0-0-32);
@@ -457,7 +457,7 @@ export function VisualizationTimelineScrubber({
           width: 6px;
         }
         .peridot-dual-range input.peridot-playback-scrubber::-moz-range-thumb {
-          background: var(--peridot-color-hex-d6a36a);
+          background: var(--peridot-playback-accent, #7C211E);
           border: 1px solid var(--peridot-color-hex-fff8e8);
           border-radius: 2px;
           box-shadow: 0 2px 7px var(--peridot-color-rgba-rgba-0-0-0-0-32);
@@ -468,26 +468,26 @@ export function VisualizationTimelineScrubber({
       `}</style>
 
       <div className="grid min-h-[50px] gap-3 xl:grid-cols-[250px_150px_180px_minmax(280px,1fr)_auto] xl:items-center">
-        <div className="flex min-w-0 items-center gap-3 border-[var(--peridot-color-hex-dfe9c8-a20)] xl:border-r xl:pr-4">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a45)] text-[15px] text-[var(--peridot-color-hex-f5ecd2)]">
+        <div className="peridot-playback-intro flex min-w-0 items-center gap-3 border-[var(--peridot-color-hex-dfe9c8-a20)] xl:border-r xl:pr-4">
+          <div className="peridot-playback-mark flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--peridot-color-hex-dfe9c8-a45)] text-[15px] text-[var(--peridot-color-hex-f5ecd2)]">
             ◷
           </div>
           <div className="min-w-0">
-            <div className="truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[16px] font-bold text-[var(--peridot-color-hex-f5ecd2)]">
+            <div className="peridot-playback-title truncate [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[16px] font-bold text-[var(--peridot-color-hex-f5ecd2)]">
               Timeline &amp; playback
             </div>
-            <div className="truncate text-[10px] text-[var(--peridot-color-hex-c8d7bd)]">
+            <div className="peridot-playback-help truncate text-[10px] text-[var(--peridot-color-hex-c8d7bd)]">
               {isAdjustingRange ? 'Release to apply range' : 'Explore how locations change over time'}
             </div>
           </div>
         </div>
 
-        <div className="relative">
-          <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">Time types</div>
+        <div className="peridot-playback-time-types relative">
+          <div className="peridot-playback-label text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">Time types</div>
           <button
             type="button"
             onClick={() => setTimeTypeMenuOpen((value) => !value)}
-            className="mt-0.5 inline-flex w-full items-center justify-between gap-2 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-3 py-1.5 text-[10px] font-semibold text-[var(--peridot-color-hex-203429)]"
+            className="peridot-playback-field mt-0.5 inline-flex w-full items-center justify-between gap-2 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-3 py-1.5 text-[10px] font-semibold text-[var(--peridot-color-hex-203429)]"
             aria-expanded={timeTypeMenuOpen}
           >
             <span className="truncate">{activeTimeTypeLabel}</span>
@@ -527,8 +527,8 @@ export function VisualizationTimelineScrubber({
           ) : null}
         </div>
 
-        <label className="block">
-          <div className="text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">Event mode</div>
+        <label className="peridot-playback-event-mode block">
+          <div className="peridot-playback-label text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">Event mode</div>
           <select
             value={timelinePlaybackMode}
             onChange={(event) => {
@@ -536,7 +536,7 @@ export function VisualizationTimelineScrubber({
               setTimelinePlaybackMode(event.target.value);
               stopPlayback();
             }}
-            className="mt-0.5 w-full rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-3 py-1.5 text-[10px] font-semibold text-[var(--peridot-color-hex-203429)]"
+            className="peridot-playback-field mt-0.5 w-full rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-3 py-1.5 text-[10px] font-semibold text-[var(--peridot-color-hex-203429)]"
           >
             <option value="cumulative">Cumulative Events</option>
             <option value="co-current">Co-current Events</option>
@@ -544,15 +544,15 @@ export function VisualizationTimelineScrubber({
         </label>
 
         {hasTimeline ? (
-          <div className="min-w-0 border-[var(--peridot-color-hex-dfe9c8-a20)] xl:border-x xl:px-4">
-            <div className="mb-0.5 flex items-center justify-between text-[10px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]">
+          <div className="peridot-playback-range-region min-w-0 border-[var(--peridot-color-hex-dfe9c8-a20)] xl:border-x xl:px-4">
+            <div className="peridot-playback-range-labels mb-0.5 flex items-center justify-between text-[10px] font-semibold text-[var(--peridot-color-hex-dfe9c8)]">
               <span>{startLabel}</span>
               <span>{endLabel}</span>
             </div>
             <div className="peridot-dual-range relative h-8">
               <div className="absolute left-0 right-0 top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[var(--peridot-color-hex-dfe9c8-a25)]" />
               <div
-                className="absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[var(--peridot-color-hex-d6a36a)]"
+                className="absolute top-1/2 h-[3px] -translate-y-1/2 rounded-full bg-[var(--peridot-playback-accent, #7C211E)]"
                 style={{ left: `${startPercent}%`, right: `${100 - endPercent}%` }}
               />
               <input
@@ -617,7 +617,7 @@ export function VisualizationTimelineScrubber({
             </div>
           </div>
         ) : (
-          <div className="rounded-xl border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-2 text-xs text-[var(--peridot-color-hex-dfe9c8)]">
+          <div className="peridot-playback-empty rounded-xl border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[var(--peridot-color-hex-dfe9c8-a10)] px-3 py-2 text-xs text-[var(--peridot-color-hex-dfe9c8)]">
             No usable dates are available.
           </div>
         )}
@@ -627,7 +627,7 @@ export function VisualizationTimelineScrubber({
             type="button"
             onClick={togglePlay}
             disabled={!selectedRowsForPlayback?.length}
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d6a36a)] bg-[var(--peridot-color-hex-f5ecd2)] text-sm font-bold text-[var(--peridot-color-hex-203429)] transition hover:bg-[var(--peridot-color-hex-d6a36a)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="peridot-playback-play flex h-9 w-9 items-center justify-center rounded-full border border-[var(--peridot-playback-accent, #7C211E)] bg-[var(--peridot-color-hex-f5ecd2)] text-sm font-bold text-[var(--peridot-color-hex-203429)] transition hover:bg-[var(--peridot-playback-accent, #7C211E)] disabled:cursor-not-allowed disabled:opacity-50"
             aria-label={isPlaying ? 'Pause timeline playback' : 'Play timeline'}
             title={isPlaying ? 'Pause' : 'Play'}
           >
@@ -636,16 +636,16 @@ export function VisualizationTimelineScrubber({
           <button
             type="button"
             onClick={resetTimeline}
-            className="mb-0.5 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-102c20)] px-3 py-1.5 text-[9px] font-bold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-214332)]"
+            className="peridot-playback-reset mb-0.5 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-102c20)] px-3 py-1.5 text-[9px] font-bold text-[var(--peridot-color-hex-f5ecd2)] transition hover:bg-[var(--peridot-color-hex-214332)]"
           >
             Reset
           </button>
-          <label className="min-w-[118px] text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">
+          <label className="peridot-playback-speed-label peridot-playback-label min-w-[118px] text-[9px] font-semibold uppercase tracking-[0.12em] text-[var(--peridot-color-hex-dfe9c8)]">
             Speed
             <select
               value={playbackSpeed}
               onChange={(event) => setPlaybackSpeed(Number(event.target.value))}
-              className="mt-0.5 w-full rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-2.5 py-1.5 text-[10px] normal-case tracking-normal text-[var(--peridot-color-hex-203429)]"
+              className="peridot-playback-field mt-0.5 w-full rounded-full border border-[var(--peridot-color-hex-dfe9c8-a35)] bg-[var(--peridot-color-hex-fbf8f1)] px-2.5 py-1.5 text-[10px] normal-case tracking-normal text-[var(--peridot-color-hex-203429)]"
             >
               {playbackSpeedOptions.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>

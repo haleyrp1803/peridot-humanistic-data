@@ -16,11 +16,11 @@ import React, { useState } from 'react';
 
 function mapUtilityButtonClassName(position = 'left') {
   return [
-    'absolute bottom-6 z-20 inline-flex items-center gap-2 rounded-full border border-[var(--peridot-role-ornament-line-muted)]',
+    'absolute bottom-3 z-20 inline-flex items-center gap-2 rounded-full border border-[var(--peridot-role-ornament-line-muted)]',
     'bg-[var(--peridot-color-hex-102c20)] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.14em]',
     'text-[var(--peridot-role-interface-text-on-dark)] shadow-[0_10px_24px_rgba(0,0,0,0.28)] backdrop-blur-[1px]',
     'transition duration-150 hover:border-[var(--peridot-role-ornament-line)] hover:text-[var(--peridot-role-ornament-sparkle)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-text-on-dark)]',
-    position === 'right' ? 'right-6' : 'left-6',
+    position === 'right' ? 'right-3' : 'left-3',
   ].join(' ');
 }
 
@@ -43,7 +43,7 @@ function MapUtilityControlsIcon() {
 }
 
 export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCardClassName }) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const isPlaceMap = clusterPluralLabel === 'places';
   const isPeopleMap = clusterPluralLabel === 'people';
   const clusterLabel = isPlaceMap ? 'Place cluster' : isPeopleMap ? 'People / entity cluster' : 'Node cluster';
@@ -67,7 +67,7 @@ export function MapLegendOverlay({ nodes, edges, clusterPluralLabel, floatingCar
   }
 
   return (
-    <div className={`absolute bottom-6 left-6 z-20 w-[220px] p-3 text-xs ${floatingCardClassName()}`}>
+    <div className={`peridot-visualize-legend absolute bottom-3 left-3 z-20 w-[220px] p-3 text-xs ${floatingCardClassName()}`}>
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[14px] font-bold text-[var(--text-main)]">Legend</div>
         <button
@@ -113,10 +113,10 @@ export function MapControlsOverlay({
   onStop,
   onReset,
 }) {
-  const controlClassName = 'flex h-9 w-9 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[color-mix(in_srgb,var(--peridot-color-hex-fffaf0)_94%,transparent)] text-[var(--peridot-color-hex-203429)] shadow-[0_7px_18px_rgba(0,0,0,0.22)] backdrop-blur-sm transition hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-f5ecd2)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]';
+  const controlClassName = 'peridot-visualize-map-control flex h-9 w-9 items-center justify-center rounded-full border border-[var(--peridot-color-hex-d8c79a)] bg-[color-mix(in_srgb,var(--peridot-color-hex-fffaf0)_94%,transparent)] text-[var(--peridot-color-hex-203429)] shadow-[0_7px_18px_rgba(0,0,0,0.22)] backdrop-blur-sm transition hover:border-[var(--peridot-role-ornament-line)] hover:bg-[var(--peridot-color-hex-f5ecd2)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]';
 
   return (
-    <div className="pointer-events-auto absolute right-[196px] top-6 z-[110] flex items-center gap-2.5" aria-label="Map view controls">
+    <div className="pointer-events-auto absolute right-[184px] top-3 z-[110] flex items-center gap-2.5" aria-label="Map view controls">
       <button
         type="button"
         onMouseDown={onZoomOut}

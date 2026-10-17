@@ -85,3 +85,190 @@
   border-bottom-right-radius: 16px;
   opacity: 0.72;
 }
+
+
+/* Visualize V7a — Cartographic Editorial shell and shared map controls.
+ * Presentation only: no stage dimensions, coordinates, data encodings,
+ * interaction hit boxes, timeline scrubber, or functional overlays changed.
+ * Kept in the existing shared panels owner; all selectors are scoped to
+ * the Visualize shell to avoid changing Home, Data, Explore, or export output.
+ */
+.peridot-visualize-shell {
+  background: var(--peridot-role-interface-panel-background, #f5efe4);
+  color: var(--peridot-role-interface-text-on-light, #262722);
+}
+.peridot-visualize-header {
+  background: var(--peridot-role-interface-card-background-warm, #e8d8bc);
+  border-bottom-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+}
+.peridot-visualize-header .peridot-visualize-tab {
+  color: var(--peridot-role-interface-text-on-light, #262722);
+  font-family: var(--pd-font-ui, system-ui, sans-serif);
+  font-weight: 700;
+}
+.peridot-visualize-header .peridot-visualize-tab[aria-current="page"] {
+  color: var(--peridot-role-button-primary-bg, #7c211e);
+  border-bottom-color: var(--peridot-role-button-primary-bg, #7c211e);
+}
+.peridot-visualize-header .peridot-visualize-tab:not([aria-current="page"]):hover {
+  color: var(--peridot-role-button-primary-bg, #7c211e);
+  border-bottom-color: var(--peridot-role-ornament-line-muted, #c8a87a);
+}
+.peridot-visualize-header .peridot-visualize-tab:focus-visible,
+.peridot-visualize-header .peridot-visualize-export:focus-visible {
+  outline: 2px solid var(--peridot-role-button-primary-bg, #7c211e);
+  outline-offset: 2px;
+}
+.peridot-visualize-header .peridot-visualize-export {
+  background: var(--peridot-role-interface-card-background, #fbf8f2);
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+  color: var(--peridot-role-interface-text-on-light, #262722);
+  box-shadow: none;
+}
+.peridot-visualize-header .peridot-visualize-export:hover,
+.peridot-visualize-header .peridot-visualize-export[aria-expanded="true"] {
+  background: var(--peridot-role-interface-card-background-warm, #e8d8bc);
+  border-color: var(--peridot-role-button-primary-bg, #7c211e);
+  color: var(--peridot-role-button-primary-bg, #7c211e);
+}
+/* Suppress only redundant ornamental corner marks; retain stage and canvas. */
+.peridot-visualize-shell .peridot-visualize-map-plate::before,
+.peridot-visualize-shell .peridot-visualize-map-plate::after {
+  content: none;
+}
+.peridot-visualize-shell .peridot-visualize-legend {
+  background: var(--peridot-role-interface-card-background, #fbf8f2);
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+  color: var(--peridot-role-interface-text-on-light, #262722);
+  box-shadow: var(--pd-shadow-low, 0 1px 3px rgb(0 0 0 / .08));
+}
+.peridot-visualize-shell .peridot-visualize-map-control {
+  background: var(--peridot-role-interface-card-background, #fbf8f2);
+  color: var(--peridot-role-interface-text-on-light, #262722);
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+  box-shadow: var(--pd-shadow-low, 0 1px 3px rgb(0 0 0 / .08));
+}
+.peridot-visualize-shell .peridot-visualize-map-control:hover {
+  background: var(--peridot-role-interface-card-background-warm, #e8d8bc);
+  border-color: var(--peridot-role-button-primary-bg, #7c211e);
+}
+.peridot-visualize-shell .peridot-visualize-map-control:focus-visible {
+  outline: 2px solid var(--peridot-role-button-primary-bg, #7c211e);
+  outline-offset: 2px;
+}
+
+
+/* Visualize V7b — presentation-only refinement, 17 Oct 2026.
+ * Existing shell and layout ownership retained. These rules do not change
+ * stage geometry, timeline range thumb size, scrubber positioning, or data ink.
+ */
+.peridot-visualize-header .peridot-visualize-tab[aria-current="page"] {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-left-color: transparent;
+  border-bottom-color: var(--peridot-role-button-primary-bg, #7c211e);
+}
+.peridot-visualize-header .peridot-visualize-tab[aria-current="page"]:focus-visible {
+  outline: 2px solid var(--peridot-role-button-primary-bg, #7c211e);
+  outline-offset: 2px;
+}
+/* Reconcile the legacy inset plate framing without altering plotting surfaces. */
+/* One actual CSS outline; SVG uses its computed frame exclusively for fill/clip.
+ * The map, network, geometry and visible data marks are unchanged. */
+.peridot-visualize-shell .peridot-visualize-map-plate {
+  background-color: var(--peridot-role-interface-card-background-warm, #e8d8bc);
+  border-color: var(--peridot-role-button-primary-bg, #7c211e) !important;
+  box-shadow: 0 1px 5px var(--peridot-role-card-shadow, rgb(0 0 0 / .1));
+}
+
+/* Playback-only semantic accent: tracks, clamps, and scrubber share the
+ * editorial interface's strong-border role, without affecting data encodings. */
+.peridot-visualize-shell .peridot-playback-toolbar {
+  --peridot-playback-accent: var(--peridot-role-interface-border-strong, #7C211E);
+}
+
+/* Shared timeline playback toolbar. Color and surface treatment only.
+ * Deliberately leave .peridot-dual-range and its slider/thumb rules untouched.
+ */
+.peridot-visualize-shell .peridot-playback-toolbar {
+  background: var(--peridot-role-interface-card-background-warm, #e8d8bc);
+  color: var(--peridot-role-interface-text-on-light, #262722);
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+  box-shadow: var(--pd-shadow-low, 0 1px 3px rgb(0 0 0 / .08));
+}
+.peridot-visualize-shell .peridot-playback-intro,
+.peridot-visualize-shell .peridot-playback-range-region {
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+}
+.peridot-visualize-shell .peridot-playback-mark {
+  color: var(--peridot-role-button-primary-bg, #7c211e);
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+}
+.peridot-visualize-shell .peridot-playback-title {
+  color: var(--peridot-role-button-primary-bg, #7c211e);
+}
+.peridot-visualize-shell .peridot-playback-help {
+  color: var(--peridot-role-interface-text-on-light, #262722);
+  opacity: .78;
+}
+.peridot-visualize-shell .peridot-playback-label,
+.peridot-visualize-shell .peridot-playback-range-labels {
+  color: var(--peridot-role-interface-text-on-light, #262722);
+}
+.peridot-visualize-shell .peridot-playback-field {
+  color: var(--peridot-role-interface-text-on-light, #262722);
+  background: var(--peridot-role-interface-card-background, #fbf8f2);
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+}
+.peridot-visualize-shell .peridot-playback-field:hover {
+  border-color: var(--peridot-role-button-primary-bg, #7c211e);
+}
+.peridot-visualize-shell .peridot-playback-field:focus-visible,
+.peridot-visualize-shell .peridot-playback-play:focus-visible,
+.peridot-visualize-shell .peridot-playback-reset:focus-visible {
+  outline: 2px solid var(--peridot-role-button-primary-bg, #7c211e);
+  outline-offset: 2px;
+}
+/* Playback Play: oxblood at rest, darker on hover, forest while running.
+ * aria-label already changes to Pause when isPlaying; no handler changes. */
+.peridot-visualize-shell .peridot-playback-play {
+  color: var(--peridot-role-interface-text-on-dark, #fbf8f2);
+  background: var(--peridot-role-button-primary-bg, #7c211e);
+  border-color: var(--peridot-role-button-primary-bg, #7c211e);
+}
+.peridot-visualize-shell .peridot-playback-play:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--peridot-role-button-primary-bg, #7c211e) 80%, black);
+  border-color: color-mix(in srgb, var(--peridot-role-button-primary-bg, #7c211e) 80%, black);
+}
+.peridot-visualize-shell .peridot-playback-play[aria-label="Pause timeline playback"] {
+  background: var(--peridot-role-interface-panel-background-strong, #253c32);
+  border-color: var(--peridot-role-interface-panel-background-strong, #253c32);
+}
+.peridot-visualize-shell .peridot-playback-play[aria-label="Pause timeline playback"]:hover:not(:disabled) {
+  background: var(--peridot-role-button-primary-hover-bg, #345447);
+  border-color: var(--peridot-role-button-primary-hover-bg, #345447);
+}
+.peridot-visualize-shell .peridot-playback-reset {
+  color: var(--peridot-role-button-primary-bg, #7c211e);
+  background: var(--peridot-role-interface-card-background, #fbf8f2);
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+}
+.peridot-visualize-shell .peridot-playback-reset:hover {
+  border-color: var(--peridot-role-button-primary-bg, #7c211e);
+  background: var(--peridot-role-interface-card-background, #fbf8f2);
+}
+.peridot-visualize-shell .peridot-playback-empty {
+  color: var(--peridot-role-interface-text-on-light, #262722);
+  background: var(--peridot-role-interface-card-background, #fbf8f2);
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+}
+/* Timeline's existing toolbar groups can share the neutral surface treatment.
+ * No change to their positioning, zoom, category actions, or event cards.
+ */
+.peridot-visualize-shell .peridot-timeline-toolbar-group {
+  border-color: var(--peridot-role-ornament-paper-rule, #d7cabc);
+  box-shadow: var(--pd-shadow-low, 0 1px 3px rgb(0 0 0 / .08));
+}
