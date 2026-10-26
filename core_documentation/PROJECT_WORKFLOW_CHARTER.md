@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-4e6fb11 — Refine Cartographic Editorial homepage composition
+27e3cf7 — Update interface mockups and genealogy retirement audit
 Branch: main
-Status: local HEAD, origin/main, and origin/HEAD synchronized; clean working tree (user-confirmed 2026-10-25)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-26)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -525,8 +525,8 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 - Heavy transition treatment is reserved for expensive visualization/workspace changes and mapping entry. Lightweight page navigation should remain immediate rather than receiving decorative loading overlays.
 - Themes and Accessibility remains implemented but hidden from public navigation. Export remains a Visualize-local action. Timeline remains Visualize-integrated in two forms: a dedicated Timeline visualization workspace and the separate shared bottom Timeline/playback control.
 - First launch has no active dataset. **Use sample data** must require an explicit sample choice rather than silently activating a fallback. The sample chooser starts collapsed and must remain reusable after a sample has been selected.
-- Data mapping is a full-page Data workspace, not a modal/wizard shell. Its local section navigation is directly accessible; larger mapping-content redesign is deferred.
-- The Cartographic Editorial Home composition and its three-column informational banner are accepted at `4e6fb11`. Any later integration of Home with Data/sample selection is a **separate future content/interaction decision** and must not be smuggled into consumer/data-model passes.
+- Data mapping is a full-page Data workspace, not a modal/wizard shell. Its local section navigation is directly accessible. A first Relations/Time/Places mapping-UI redesign was committed at `f3cf4fb`; other stages and shared Identity presentation still require follow-up.
+- The Cartographic Editorial Home and its three-column informational banner originated at `4e6fb11` and were refined at `7280e30`, `2117659`, and `60b8643`: distinct Upload your data and Explore sample data actions now enter the established file-chooser and sample-selection paths. Further Home interaction changes must not be smuggled into unrelated data-model passes.
 - Tutorials is now a first-class navigation destination, but substantive tutorial revision remains deferred; do not restore the old floating invitation.
 - About is the scholarly project-information destination and contains About Peridot, Creator, AI Disclosure, Open Source, and Feedback.
 - MapLibre migrated-overlay work is archived. Active `main` continues the D3/SVG path.
@@ -561,7 +561,7 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 
 ### 7.6 Themes and visual language
 
-**Current visual-decision note (updated 2026-10-25):** Cartographic Editorial is the approved art direction for Home/public-facing editorial surfaces; the accepted Florence/paper hero, informational three-column parchment banner, corner collages, compact Visualize editorial frame, and shared button roles are now represented in the synchronized `4e6fb11` checkpoint. The original H2e hero decision entered at `fd02d84`; that old local-only status is historical. H2f's diagonal-mask experiment was rejected due to wordmark/text intrusion. Future visual passes may crop/rotate licensed paper derivatives and change banner content, but must preserve legibility, functional navigation, research-workspace vertical room, and explicit asset credits. The old green/gold Home rules below are historic design guidance superseded by this deliberate decision. For any stock-containing files already published, verify source-redistribution rights and required remediation separately; before future publication, check permissions rather than inferring them from licensing for website use. These visual decisions do not authorize changing semantic data behavior or introducing a new theme engine.
+**Current visual-decision note (updated through 2026-10-26):** Cartographic Editorial is the approved art direction for Home/public-facing editorial surfaces; the accepted Florence/paper hero, informational three-column parchment banner, corner collages, compact Visualize editorial frame, and shared button roles are now established at `4e6fb11` and subsequently refined through `27e3cf7`. The original H2e hero decision entered at `fd02d84`; that old local-only status is historical. H2f's diagonal-mask experiment was rejected due to wordmark/text intrusion. Future visual passes may crop/rotate licensed paper derivatives and change banner content, but must preserve legibility, functional navigation, research-workspace vertical room, and explicit asset credits. The old green/gold Home rules below are historic design guidance superseded by this deliberate decision. For any stock-containing files already published, verify source-redistribution rights and required remediation separately; before future publication, check permissions rather than inferring them from licensing for website use. These visual decisions do not authorize changing semantic data behavior or introducing a new theme engine.
 
 
 - Color changes should use semantic roles in `peridotTheme.js` and related metadata.
@@ -636,7 +636,7 @@ Reason:
 The structural navigation problem could be solved independently while preserving the existing mapping semantics for a later focused usability redesign.
 
 Maintenance consequence:
-Do not return mapping to modal presentation. The mapping content itself remains a deferred redesign target.
+Do not return mapping to modal presentation. The first shared Relations/Time/Places mapping presentation redesign is committed at `f3cf4fb`; remaining mapping screens and identity styling are further redesign targets.
 ```
 
 ### 7.8 Archived or superseded decisions

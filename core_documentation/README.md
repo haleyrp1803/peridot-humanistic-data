@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-4e6fb11 — Refine Cartographic Editorial homepage composition
+27e3cf7 — Update interface mockups and genealogy retirement audit
 Branch: main
-Status: local HEAD, origin/main, and origin/HEAD synchronized; clean working tree (user-confirmed 2026-10-25)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-26)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -80,7 +80,7 @@ Peridot follows a **database-first** model: a record or normalized research item
 
 Peridot opens with **no active dataset**. Nothing is silently preloaded underneath the interface. The persistent header is still available in this no-data state; destinations that require data must route the researcher toward choosing/uploading data rather than inventing hidden sample state.
 
-Home is a Cartographic Editorial composition. The large Peridot wordmark and humanities-data introduction sit on paper at left; a historical Florence panorama occupies the right side, separated by a textured torn-paper edge. **Get started** is the prominent Home action. **Data** remains the full entry point for templates, samples, uploads, and editing an existing mapping. The full-width three-column parchment banner introduces **Manage data**, **Visualize**, and **Explore evidence**; two layered corner collages frame this information rather than creating another set of interactive navigation buttons.
+Home is a Cartographic Editorial composition. The large Peridot wordmark and humanities-data introduction sit on paper at left; a historical Florence panorama occupies the right side, separated by a textured torn-paper edge. **Upload your data** and **Explore sample data** are the two prominent Home actions. The former opens the native file chooser and proceeds through the existing upload/mapping workflow after a file is selected; the latter opens the existing explicit sample chooser without silently loading data. A **New to Peridot?** explainer sits inside the lower informational banner. **Data** remains the full entry point for templates, samples, uploads, and editing an existing mapping. The full-width three-column parchment banner introduces **Manage data**, **Visualize**, and **Explore evidence**; two layered corner collages frame this information rather than creating another set of interactive navigation buttons.
 
 The sample chooser currently offers three ordinary project files:
 
@@ -106,7 +106,9 @@ The public mapper is now one generalized workflow rather than a Correspondence /
 6. **Evidence** — include, ignore, and label additional source fields; declare cardinality and subject attribution where appropriate.
 7. **Review and Upload** — inspect the accepted interpretation and capability/warning summary before accepting a new upload or applying mapping changes.
 
-The section rail is navigation, not a locked wizard: users can revisit available mapping sections directly. **Cancel** is visually separated from the grouped **Back / Next** progression controls, and opening the mapping workspace uses the established heavier transition so the full-page surface does not flash into place.
+The pill-and-icon section rail is navigation among relevant mapping categories, not a requirement to map every category or a locked wizard: users can revisit available mapping sections directly. **Cancel** is visually separated from the grouped **Back / Next** progression controls, and opening the mapping workspace uses the established heavier transition so the full-page surface does not flash into place.
+
+**Current mapping interface (2026-10-26):** Relations, Time, and Places have received a substantial Cartographic Editorial readability pass. Their shared design uses compact stage headings, prominent primary questions, indented subordinate questions, content-sized selection cards, `(i)` explanatory popovers, and a contextual column for examples, current interpretation, and Additional Context / Good to know. This is a presentation improvement, not a change to mapping rules or a completed redesign of Preview, Sheets, Evidence, Review, or recurring-entity Identity. The categories in the mapping bar are options determined by the source data rather than compulsory steps.
 
 Identity is researcher-owned and authoritative at runtime, but it is no longer a separate required mapping page. Simple datasets default to the same column used for the displayed name or label. When stronger recognition is needed, relationship/place Identity controls can use a stable source ID or a structured alternate recipe such as `(Name A + Title A) OR (Name B + Title B)`. This lets one historical person remain one entity across roles while still allowing same-named people to remain distinct when their mapped identities differ. Canonical display labels are resolved separately from identity, so known IDs display human-readable names while genuinely unresolved source references remain visible as IDs.
 
@@ -162,9 +164,9 @@ The Visualizations header provides SVG and PNG export for map/network views, CSV
 
 ## 4. Interface Examples and Current-State Note
 
-### Cartographic Editorial Home — current synchronized implementation (2026-10-25)
+### Cartographic Editorial Home — current synchronized implementation (2026-10-26)
 
-The synchronized `4e6fb11` checkpoint contains Peridot's accepted current art-directed homepage composition. The Rosselli-attributed *Pianta della Catena* Florence panorama, paper-textured left reading surface, torn-paper boundary, serif display typography, and oxblood **Get started** action occupy the upper composition. A full-width parchment-textured lower banner introduces **Manage data**, **Visualize**, and **Explore evidence** as three *informational*, non-clickable columns. Two layered decorative corner collages frame this content at lower-left and upper-right. Their art-directed crop and the content's optical centering are preserved independently. The homepage fills the space beneath the persistent global header, avoiding a bottom gap without a second hard-coded header subtraction. The stronger H2f diagonal was a rejected historical experiment, not the active mask.
+The Cartographic Editorial Home originated at `4e6fb11` and was subsequently refined through the clean `27e3cf7` checkpoint. The Rosselli-attributed *Pianta della Catena* Florence panorama, paper-textured left reading surface, torn-paper boundary, serif display typography, and two forest-green primary **Upload your data** / **Explore sample data** actions occupy the upper composition. A full-width parchment-textured lower banner introduces **Manage data**, **Visualize**, and **Explore evidence** as three *informational*, non-clickable columns. The banner also carries a compact **New to Peridot?** explanation toward its right side. Two layered decorative corner collages frame this content at lower-left and upper-right. The numbered step labels and Home compass-rose ornament were retired. Their art-directed crop and the content's optical centering are preserved independently. The homepage fills the space beneath the persistent global header, avoiding a bottom gap without a second hard-coded header subtraction. The stronger H2f diagonal was a rejected historical experiment, not the active mask.
 
 **Publication and attribution:** the homepage refinements and new corner assets have been committed and pushed to `main`. This confirms Git publication, **not** unrestricted licensing of every stock-derived or third-party source asset. Existing historical-map credits and stock-provenance notes remain important; redistribution terms should be checked separately. The earlier documentation's `fd02d84` local-only/pending-push note is historical. The screenshot gallery below still primarily contains dated June 2026 interface states, not evidence of the current rendering.
 
@@ -283,7 +285,7 @@ The screenshots in this section document Peridot as it appeared on **2026-06-21*
 
 *Annotated earlier Home layout concept documenting design decisions during development.*
 
-*Historical Adobe Stock filigree was once used as Home framing ornament. All five tracked Adobe filigree PNGs were intentionally removed on 2026-10-25; their images are no longer embedded here, and they are not active project assets.*
+*Historical Adobe Stock filigree was once used as Home framing ornament. All five tracked Adobe filigree PNGs were intentionally removed and their retirement committed on 2026-10-26; their images are no longer embedded here, and they are not active project assets.*
 
 </details>
 
@@ -543,13 +545,13 @@ The principal generalized Network semantic migration is now complete through pla
 
 Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior. Performance work after that rollback now keeps pointer panning and wheel zoom transient during interaction, commits durable viewport state at bounded points, and preloads the stable full-scope Force graph so playback does not rerun force simulation on every tick. These changes improve interaction/playback smoothness without changing generalized relationship semantics.
 
-The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. Larger redesigns of the mapping page and Explore content remain deferred, along with Tutorials, future targeted Home content/interaction work, and later cross-site animation and visual refinement. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
+The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. The first compact shared Relations/Time/Places mapping-interface redesign is implemented, while the remaining mapping pages and the Explore content overhaul remain deferred, along with Tutorials, future targeted Home content/interaction work, and later cross-site animation and visual refinement. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 
 Phase 3 of the universal data work—the generalized Chart Builder—also remains deferred. The intended direction is to build charts from saved/generalized variables through structured, human-readable controls rather than unrestricted natural-language prompting.
 
-The existing guided tutorial implementation remains in source, but the new Home emphasizes Get started rather than the former disabled tutorial button. Tutorials has a persistent header destination; tutorial content, choreography, accessibility, and the walkthrough remain later bounded work.
+The existing guided tutorial implementation remains in source, but the new Home emphasizes explicit upload and sample-selection actions rather than the former disabled tutorial button. Tutorials has a persistent header destination; tutorial content, choreography, accessibility, and the walkthrough remain later bounded work.
 
 MapLibre work is archived and should not be treated as part of current `main`. For active technical caveats, regression expectations, and compatibility paths, see the Maintainer’s Guide.
 

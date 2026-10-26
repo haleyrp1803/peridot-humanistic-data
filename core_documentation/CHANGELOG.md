@@ -20,12 +20,12 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-6667505 — Synchronize documentation through Cartographic Editorial overhaul
+27e3cf7 — Update interface mockups and genealogy retirement audit
 Branch: main
-Status: last user-confirmed synchronized commit; current working tree has intentional asset deletions (user-confirmed 2026-10-25)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-26)
 ```
 
-The Changelog previously documented `4e6fb11` as a synchronized commit. A later user-provided log established `6667505` (`Synchronize documentation through Cartographic Editorial overhaul`) as synchronized; the present Git status does not include a new hash and reports intentional deletions of five tracked Adobe Stock filigree images, so the working tree is **not clean**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned. The previous `fd02d84` local-only/pending-push status is historical. The October homepage revisions and button consolidation were committed and pushed; the initially misnamed second commit `c88056d` was amended to `4e6fb11` before the final sync check. Successful Git publication does **not** independently establish rights to redistribute every asset: preserve the Adobe Stock distribution/provenance caveat and review source licensing separately. This record distinguishes user-confirmed Git state from local screenshot/interaction observations and from unverified production/browser behavior.
+The user-confirmed 2026-10-26 sync ritual establishes `27e3cf7` as the latest clean, pushed checkpoint. It follows `f3cf4fb` (shared mapping workspace layout/contextual guidance), `89aaa50` (mapping palette and contrast), `60b8643` (direct Home file chooser), and the intervening Home onboarding/asset-retirement commits. `27e3cf7` updates tracked design mockups and the genealogy retirement audit; **it does not retire genealogy code**. Earlier statements about uncommitted Adobe filigree deletions, a sole Home “Get started” button, and a wholly deferred mapping-content redesign describe earlier stages, not the current implementation. Browser observations and source changes are distinguished from verified Git synchronization; asset licensing is a separate unresolved review.
 
 **Historical checkpoint narrative (`cd625a2`):** This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
 
@@ -38,27 +38,37 @@ Current architectural significance:
 - **`f139f53`** moved Data mapping out of a modal/scrim and into the Data page beneath the persistent global header. Mapping sections are directly navigable; the final section is **Review and Upload**; Cancel is separated from Back/Next; entry uses the established heavier transition to avoid flash.
 - **`cd625a2`** normalizes About into **About Peridot / Creator / AI Disclosure / Open Source / Feedback**, removes the old Project Information Hub/return-to-visualizations framing, renders Feedback inline as a normal About page, reduces title scale, and restores page scrolling when content exceeds the viewport.
 - The accepted generalized mapping, Search scope, Timeline, Network, Inspector, and export semantics remain authoritative underneath the navigation redesign. This sequence changes how researchers move among those systems, not what the mapped evidence means.
-- Larger usability redesigns of the mapping content and Explore content remain deferred. Tutorials and Home refinement also remain pending, followed by a broader palette/typography/animation polish pass.
+- The first shared Relations/Time/Places mapping-content redesign and Home onboarding refinement are now committed; remaining mapping sections, integrated Identity styling, Explore-content overhaul, and Tutorials remain pending.
 - Timeline relationship-line routing/presentation remains unfinished; the `a32ef05` subject-strict relationship semantics and continuous secondary-axis layout remain the foundation.
 - The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
 
 ## 2. Recent Milestones, Newest First
 
-### Adobe filigree retirement — 2026-10-25 (local, not yet committed)
+### Shared mapping UI, Home onboarding, and planning references — 2026-10-26 (committed)
 
-- The user intentionally deleted `assets/Adobe Stock Filigree 1.png`, `2.png`, `3.png`, `Divider Set.png`, and `Full Set.png`. Git reports these five files as tracked deletions; no commit or push has yet been verified for this change.
+- **`27e3cf7` — `Update interface mockups and genealogy retirement audit`** records the approved Florence Home and mapping-interface reference images, sample-selection concept mockup, and `planning_documents/Peridot_Genealogy_Retirement_Audit_20261026_v1.md`. The genealogy-specific workflow remains an **audit/retirement proposal**, not a completed source removal; generalized genealogy data support must be preserved.
+- **`f3cf4fb` — `Refine shared mapping workspace layout and contextual guidance`** checkpoints the first broad visual/structural redesign of Relations, Time, and Places: shared icon-pill section navigation, stage mastheads, primary/refinement/lettered question hierarchy, content-sized choices, corrected option-row vertical alignment, source-example and interpretation context panels, Additional Context / Good to know guidance, and accessible `(i)` explanatory popovers. Original mapping handlers, source semantics, identity/cardinality/attribution rules, validation, and import workflow remain unchanged. The screens are **improved but not final**; shared Identity UI and Preview/Sheets/Evidence/Review are subsequent design work.
+- **`89aaa50` — `Align mapping workspace palette and improve contrast`** harmonized the mapper with forest green, oxblood, parchment, and ivory; visual/browser contrast improvements were user-reviewed, but no exhaustive WCAG audit is claimed.
+- **`60b8643` — `Open file chooser directly from homepage`** connects Home's **Upload your data** action to the existing native file chooser and generalized mapping flow. Canceling the chooser leaves Home intact.
+- **`2117659` — `Connect homepage sample button to sample chooser`** opens existing sample selection from Home without activating a dataset implicitly.
+- **`7280e30` — `Refine homepage typography and onboarding layout`** establishes the final hero wording/subtitle, two primary Home actions (**Upload your data** and **Explore sample data**), shortened editorial typography spacing, and a compact **New to Peridot?** explanation grouped toward the right of the parchment informational banner. The previous numbered 01/02/03 labels and Home compass rose were removed; the three workspace columns remain informational rather than a mandatory linear sequence.
+- **`57f6ef3` — `Document Adobe filigree asset retirement`** and **`07ec80d` — `Retire Adobe filigree assets and decorations`** commit the removal of five Adobe Stock filigree PNGs and their active decorative uses in Data/Manage, tutorial, Inspector, and Explore. Historical records of the original design remain in the Changelog. This retirement is specific to those filigree images, **not** a blanket assertion that all stock-derived paper art or provenance concerns have been resolved.
+
+### Adobe filigree retirement — 2026-10-25 (historical local stage; committed 2026-10-26)
+
+- The user intentionally deleted `assets/Adobe Stock Filigree 1.png`, `2.png`, `3.png`, `Divider Set.png`, and `Full Set.png`. Git reports these five files as tracked deletions; those deletions were subsequently committed in `07ec80d`.
 - The accompanying source cleanup removes active Adobe filigree dependencies and decorations from the Data/Manage entry page, guided tutorial, full Inspector profile, and Explore divider areas. JSX imports and associated image CSS paths are removed. Retain the content sections; do not replace these ornaments automatically.
-- This is a **local proposed handoff**, not a claimed deployed or browser-verified change. Test `npm.cmd run dev` and `npm.cmd run build` locally before committing the deletions, code replacements, and documentation updates.
+- This paragraph describes the historical pre-commit handoff; the deletion and associated documentation are now committed (`07ec80d`, `57f6ef3`). Browser/build validation was conducted as part of user-side iterations, but no independent production deployment is asserted.
 - Historical entries about earlier filigree design choices remain valid historical records; asset filenames in those entries no longer denote files that should exist in the active working tree.
 
 
-### Cartographic Editorial Visualize, homepage, and buttons — 2026-10-15 to 2026-10-25
+### Cartographic Editorial Visualize, homepage, and buttons — 2026-10-15 to 2026-10-25 (historical preceding design)
 
 - **`ad14727` — `Refine Visualize workspace styling and viewport`** and the Visualize styling sequence following the editorial foundations established the accepted compact, single editorial outer frame. The map/network/timeline workspaces preserve their functional geometry and vertical working area. Legend defaults closed; map controls and legend sit nearer the stage edges; the bottom playback surface and normal play button use oxblood, with a darker hover and green playing state. A prior decorative inner SVG border was removed. The asset/style work preserves visualization state and semantics rather than remapping research data.
 - **`9e12305` — `Document Visualize component ownership and styling architecture`** recorded component/styling responsibilities as a maintenance reference ahead of the homepage/button passes.
 - **`2472c57` — `Consolidate primary and secondary button styling`** committed shared button styling changes across common controls, Data, and playback surfaces. Maintain primary/secondary roles and centralized styling instead of proliferating one-off button variants.
-- **`4e6fb11` — `Refine Cartographic Editorial homepage composition`** is the **current synchronized checkpoint**. It contains the accepted current homepage component and stylesheet refinements, two newly added layered corner-collage images in `assets/`, and `planning_documents/Peridot_Sitewide_Button_Inventory_20261017_v1.md`. The original message for this commit was `Consolidate primary and secondary button styling 2` (`c88056d`), subsequently amended by the user to the accurate homepage message; **only `4e6fb11` belongs in the current ancestry**.
-- The accepted Home retains the editorial paper-and-Florence hero, primary Get started action, and a full-width parchment-textured lower banner with three *informational* columns for Manage data, Visualize, and Explore evidence. The large transparent collages at the lower-left and upper-right frame the banner. The final bounded polish adjusted the collage crop, filled the homepage's actual available parent height rather than calculating `100dvh - 72px`, and optically shifted the three-column content right/down without moving its corner artwork. These were CSS/layout changes; no new data semantics were introduced.
+- **`4e6fb11` — `Refine Cartographic Editorial homepage composition`** was the **historical synchronized checkpoint for this milestone**. It contains the accepted current homepage component and stylesheet refinements, two newly added layered corner-collage images in `assets/`, and `planning_documents/Peridot_Sitewide_Button_Inventory_20261017_v1.md`. The original message for this commit was `Consolidate primary and secondary button styling 2` (`c88056d`), subsequently amended by the user to the accurate homepage message; **only `4e6fb11` belongs in the current ancestry**.
+- At that historical milestone, Home retained the editorial paper-and-Florence hero, primary Get started action, and a full-width parchment-textured lower banner with three *informational* columns for Manage data, Visualize, and Explore evidence. The large transparent collages at the lower-left and upper-right frame the banner. The final bounded polish adjusted the collage crop, filled the homepage's actual available parent height rather than calculating `100dvh - 72px`, and optically shifted the three-column content right/down without moving its corner artwork. These were CSS/layout changes; no new data semantics were introduced.
 - **Current-state correction:** the earlier H2e/H2f mask experiments and the `fd02d84` local-only status remain historical. No assertion of public-repository asset-distribution permission follows from a completed Git push; the existing provenance/licensing notes remain relevant. Subsequent Home/Visualize work should avoid unverified global sizing fixes or broad cascade rewrites.
 
 ### Cartographic Editorial foundation, header, and layered Home — 2026-10-14 to 2026-10-15
@@ -693,8 +703,17 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 The entries immediately below extend the original history with **verified recent checkpoint commits** explicitly reported during the Cartographic Editorial sequence; the complete intervening commit list has not been independently reproduced in this pass. The older rows and their original historical refs remain intact. The latest user-confirmed synchronized HEAD is `4e6fb11`; older local-only status annotations below are historical at their respective commits.
 
 | Date | Commit | Message | Checkpoint note |
+| 2026-10-26 | `27e3cf7` | Update interface mockups and genealogy retirement audit | current clean synchronized checkpoint; planning artifacts only |
+| 2026-10-26 | `f3cf4fb` | Refine shared mapping workspace layout and contextual guidance | accepted first-stage Relations/Time/Places UI redesign |
+| 2026-10-26 | `89aaa50` | Align mapping workspace palette and improve contrast | mapping visual palette pass |
+| 2026-10-26 | `60b8643` | Open file chooser directly from homepage | direct upload action |
+| 2026-10-26 | `2117659` | Connect homepage sample button to sample chooser | explicit sample selection |
+| 2026-10-26 | `7280e30` | Refine homepage typography and onboarding layout | two primary actions and editorial banner guidance |
+| 2026-10-26 | `57f6ef3` | Document Adobe filigree asset retirement | documentation checkpoint |
+| 2026-10-26 | `07ec80d` | Retire Adobe filigree assets and decorations | removed five filigree assets and active references |
+| 2026-10-26 | `6667505` | Synchronize documentation through Cartographic Editorial overhaul | preceding documentation checkpoint |
 |---|---|---|---|
-| 2026-10-25 | `4e6fb11` | Refine Cartographic Editorial homepage composition | current synchronized HEAD (amended from `c88056d`) |
+| 2026-10-25 | `4e6fb11` | Refine Cartographic Editorial homepage composition | historical; amended from `c88056d` |
 | 2026-10-25 | `2472c57` | Consolidate primary and secondary button styling | accepted button consolidation |
 | 2026-10-17 | `9e12305` | Document Visualize component ownership and styling architecture | accepted ownership notes |
 | 2026-10-17 | `ad14727` | Refine Visualize workspace styling and viewport | accepted Visualize pass |
