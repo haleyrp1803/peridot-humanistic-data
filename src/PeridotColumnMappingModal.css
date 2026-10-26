@@ -1026,3 +1026,788 @@
   background: #F5EFE4 !important;
   height: 3px;
 }
+
+/* Places workspace redesign — 2026-10-26.
+   Scoped to the Places components: no mapping state, validation, or other sections
+   are changed. Uses the approved nested-question + context-column composition. */
+.peridot-mapping-modal .peridot-places-workspace { color: #253c32; }
+.peridot-mapping-modal .peridot-places-intro {
+  display: grid; grid-template-columns: minmax(0,1.8fr) minmax(17rem,0.9fr);
+  gap: 1.4rem; align-items: center; padding: 1.2rem 1.45rem;
+  background: #e8d8bc; border: 1px solid #c6b9a9; border-radius: 1rem;
+  margin-bottom: .85rem;
+}
+.peridot-mapping-modal .peridot-places-eyebrow {
+  font-size: .76rem; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; color: #253c32;
+}
+.peridot-mapping-modal .peridot-places-intro h2 {
+  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', serif;
+  font-size: clamp(1.6rem, 2.25vw, 2.2rem); line-height: 1.13;
+  font-weight: 600; letter-spacing: -.028em; color: #262722; margin: .2rem 0 .45rem;
+}
+.peridot-mapping-modal .peridot-places-intro p { font-size: .9rem; line-height: 1.5; color: #37483e; }
+.peridot-mapping-modal .peridot-places-intro-why { border-left: 1px solid #aa9883; padding-left: 1.3rem; }
+.peridot-mapping-modal .peridot-places-intro-why h3,
+.peridot-mapping-modal .peridot-places-context h3 {
+  font: 600 1.25rem/1.2 Georgia, 'Palatino Linotype', serif;
+  color: #262722; margin-bottom: .5rem;
+}
+.peridot-mapping-modal .peridot-places-content-grid {
+  display: grid; grid-template-columns: minmax(0, 2.1fr) minmax(18rem, .94fr);
+  align-items: start; gap: .85rem;
+}
+.peridot-mapping-modal .peridot-places-editing-column { min-width: 0; }
+.peridot-mapping-modal .peridot-place-part-card {
+  background: #fbf8f2 !important; border: 1px solid #c6b9a9;
+  box-shadow: 0 2px 6px rgba(38,39,34,.055); padding: 1.3rem;
+}
+.peridot-mapping-modal .peridot-place-part-title {
+  font: 600 1.75rem/1.2 Georgia,'Palatino Linotype',serif; color: #262722;
+}
+.peridot-mapping-modal .peridot-place-part-title span {
+  font: 400 .84rem/1.3 system-ui,sans-serif; color: #4f5a52;
+}
+.peridot-mapping-modal .peridot-place-primary-row {
+  border-top: 1px solid #d7cbbd; padding: 1.15rem 0 1.35rem;
+  grid-template-columns: minmax(13rem,.92fr) minmax(15rem,1.08fr);
+}
+.peridot-mapping-modal .peridot-place-question-heading { display: flex; gap: .8rem; min-width: 0; }
+.peridot-mapping-modal .peridot-place-question-marker {
+  flex: 0 0 2.35rem; display: grid; place-items: center; height: 2.35rem;
+  border-radius: 100%; background: #e8d8bc; font: 700 1.05rem Georgia,serif; color: #262722;
+}
+.peridot-mapping-modal .peridot-place-question-heading h4 {
+  font: 600 1.25rem/1.27 Georgia,'Palatino Linotype',serif; color: #262722;
+}
+.peridot-mapping-modal .peridot-place-question-heading p { color: #435248; font-size: .88rem; line-height: 1.5; margin-top: .35rem; }
+.peridot-mapping-modal .peridot-place-refinement-heading {
+  display: flex; align-items: start; gap: .7rem; border-top: 1px solid #d7cbbd;
+  padding: 1.25rem 0 .65rem .5rem;
+}
+.peridot-mapping-modal .peridot-place-refinement-heading h3 {
+  font: 600 1.22rem/1.25 Georgia,'Palatino Linotype',serif; color: #253c32;
+}
+.peridot-mapping-modal .peridot-place-refinement-heading p { margin-top: .3rem; font-size: .83rem; color: #435248; }
+.peridot-mapping-modal .peridot-place-refinement-marker {
+  width: 1.2rem; height: 1.2rem; flex: 0 0 1.2rem; border-radius: 50%;
+  display: grid; place-items: center; background: #dce5d9; color: #253c32; font-size: .45rem;
+}
+.peridot-mapping-modal .peridot-place-subquestion {
+  position: relative; display: grid; grid-template-columns: 1.9rem minmax(0,1fr);
+  gap: .6rem; margin-left: 1rem; padding: .75rem 0 1rem .8rem;
+  border-left: 2px solid #c8d5c7;
+}
+.peridot-mapping-modal .peridot-place-subquestion-letter {
+  position: relative; left: -.05rem; display: grid; place-items: center;
+  width: 1.9rem; height: 1.9rem; border-radius: 50%;
+  background: #e2e9dd; color: #253c32; font: 600 .98rem Georgia,serif;
+}
+.peridot-mapping-modal .peridot-place-subquestion > .grid { min-width: 0; }
+.peridot-mapping-modal .peridot-place-subquestion :is(select,input[type='text']) { min-height: 2.6rem; }
+.peridot-mapping-modal .peridot-place-subquestion :is(label:has(input[type='radio']:checked),label:has(input[type='checkbox']:checked)) {
+  border-color: #7a9b8b; background: #f0f5ef !important;
+}
+.peridot-mapping-modal .peridot-place-subquestion :is(label:has(input[type='radio']),label:has(input[type='checkbox'])) {
+  min-height: 2.6rem; border-radius: .7rem;
+}
+.peridot-mapping-modal .peridot-place-advanced-details {
+  margin-top: 1rem; padding: 1.1rem 0 .3rem;
+  border-top: 1px solid #d7cbbd;
+}
+.peridot-mapping-modal .peridot-place-advanced-details > h3 {
+  font: 600 1.2rem Georgia,'Palatino Linotype',serif; color: #253c32;
+}
+.peridot-mapping-modal .peridot-place-advanced-details > p {
+  margin: .35rem 0 1rem; color: #435248; font-size: .85rem;
+}
+.peridot-mapping-modal .peridot-places-context {
+  display: grid; gap: .7rem; min-width: 0;
+}
+.peridot-mapping-modal .peridot-places-help-card {
+  min-width: 0; background: #fbf8f2; border: 1px solid #c6b9a9;
+  border-radius: .95rem; padding: 1.05rem 1.1rem;
+  box-shadow: 0 2px 5px rgba(38,39,34,.055);
+  color: #37483e; font-size: .88rem; line-height: 1.55;
+}
+.peridot-mapping-modal .peridot-places-help-card p,
+.peridot-mapping-modal .peridot-places-help-card li { overflow-wrap: anywhere; }
+.peridot-mapping-modal .peridot-places-card-caption { color: #435248; font-size: .8rem; margin: .1rem 0 .55rem; }
+.peridot-mapping-modal .peridot-places-example-list { list-style: none; padding: 0; margin: 0; border: 1px solid #d5c9bb; border-radius: .55rem; overflow: hidden; }
+.peridot-mapping-modal .peridot-places-example-list li { padding: .55rem .65rem; border-bottom: 1px solid #d5c9bb; font-size: .82rem; }
+.peridot-mapping-modal .peridot-places-example-list li:last-child { border-bottom: 0; }
+.peridot-mapping-modal .peridot-places-example-list li:nth-child(even) { background: #f3ece2; }
+.peridot-mapping-modal .peridot-places-bullet-list { margin: 0; padding-left: 1.25rem; }
+.peridot-mapping-modal .peridot-places-bullet-list li { margin: .35rem 0; }
+.peridot-mapping-modal .peridot-places-help-guidance { background: #edf0e8; }
+.peridot-mapping-modal .peridot-places-help-guidance p + p { margin-top: .65rem; }
+@media (max-width: 1100px) {
+  .peridot-mapping-modal .peridot-places-content-grid { grid-template-columns: minmax(0,1fr); }
+  .peridot-mapping-modal .peridot-places-context { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@media (max-width: 760px) {
+  .peridot-mapping-modal .peridot-places-intro { grid-template-columns: minmax(0,1fr); }
+  .peridot-mapping-modal .peridot-places-intro-why { border-left: 0; border-top: 1px solid #aa9883; padding: 1rem 0 0; }
+  .peridot-mapping-modal .peridot-places-context { grid-template-columns: minmax(0,1fr); }
+  .peridot-mapping-modal .peridot-place-primary-row,
+  .peridot-mapping-modal .peridot-place-subquestion > .grid { grid-template-columns: minmax(0,1fr); }
+}
+/* Places-only navigation clarification; no change to step ordering or validation. */
+.peridot-mapping-page .peridot-places-optional-nav-note {
+  max-width: 16rem; flex: 0 1 13rem; color: #fff !important;
+  font-size: .78rem; line-height: 1.35; border-left: 1px solid #b5c4b9;
+  padding-left: .75rem;
+}
+.peridot-mapping-page .peridot-mapping-page-nav:has(.peridot-places-optional-nav-note) {
+  grid-template-columns: minmax(9rem,.85fr) minmax(0,auto) minmax(11rem,.8fr) auto;
+  gap: clamp(.5rem, 1vw, 1rem);
+}
+.peridot-mapping-page .peridot-mapping-page-nav:has(.peridot-places-optional-nav-note) .peridot-mapping-progress {
+  max-width: 100%; gap: clamp(.45rem,.95vw,1rem) !important;
+}
+@media (max-width: 1300px) {
+  .peridot-mapping-page .peridot-mapping-page-nav:has(.peridot-places-optional-nav-note) {
+    grid-template-columns: minmax(8rem,1fr) auto auto;
+  }
+  .peridot-mapping-page .peridot-places-optional-nav-note { display: none; }
+}
+
+/* Shared optional-section navigation, visual foundations pass. */
+.peridot-mapping-page .peridot-mapping-page-nav:has(.peridot-mapping-optional-nav-note) {
+  grid-template-columns: minmax(8.5rem, .8fr) minmax(0, auto) minmax(10rem, .75fr) auto;
+  gap: clamp(.4rem, .8vw, .9rem);
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-progress {
+  gap: clamp(.2rem, .35vw, .5rem) !important;
+  max-width: 100%;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button {
+  display: inline-flex;
+  align-items: center;
+  gap: .32rem;
+  padding: .5rem .55rem !important;
+  border: 1px solid #6f887a !important;
+  border-radius: .6rem !important;
+  color: #f8f5ed !important;
+  background: transparent !important;
+  text-decoration: none !important;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button::after { display: none !important; }
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button:hover {
+  border-color: #f8f5ed !important;
+  background: #355347 !important;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button-active,
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button-active:hover {
+  color: #253c32 !important;
+  background: #fbf8f2 !important;
+  border-color: #fbf8f2 !important;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button:focus-visible {
+  outline: 3px solid #f3cc88 !important;
+  outline-offset: 2px;
+}
+.peridot-mapping-page .peridot-mapping-section-icon { flex: 0 0 1rem; }
+.peridot-mapping-page .peridot-mapping-optional-nav-note {
+  margin: 0;
+  padding-left: .75rem;
+  border-left: 1px solid #9db1a5;
+  color: #f8f5ed;
+  font-size: .78rem;
+  line-height: 1.35;
+}
+@media (max-width: 1400px) {
+  .peridot-mapping-page .peridot-mapping-page-nav:has(.peridot-mapping-optional-nav-note) { grid-template-columns: minmax(7rem,1fr) auto auto; }
+  .peridot-mapping-page .peridot-mapping-optional-nav-note { display: none; }
+  .peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button { padding: .45rem .4rem !important; }
+}
+@media (max-width: 980px) {
+  .peridot-mapping-page .peridot-mapping-section-icon { display: none; }
+  .peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-progress { overflow-x: auto !important; width: 100%; justify-self: stretch; }
+  .peridot-mapping-page .peridot-mapping-page-nav:has(.peridot-mapping-optional-nav-note) { grid-template-columns: minmax(0,1fr) auto; }
+  .peridot-mapping-page .peridot-mapping-page-context { display: none; }
+}
+
+/* Shared mapping question-and-context foundation. Applies to single-table and workbook steps. */
+.peridot-mapping-modal .peridot-guide-intro {
+ display:grid;grid-template-columns:minmax(0,1.9fr) minmax(16rem,1fr);gap:1.3rem;
+ background:#e8d8bc;border:1px solid #cbb99d;border-radius:1rem;padding:1.2rem 1.35rem;
+ color:#26332b;align-items:center;
+}
+.peridot-mapping-modal .peridot-guide-eyebrow {margin:0 0 .3rem;font-size:.75rem;font-weight:750;letter-spacing:.13em;text-transform:uppercase;color:#253c32;}
+.peridot-mapping-modal .peridot-guide-intro h2 {font:600 clamp(1.35rem,2.2vw,2.2rem)/1.16 Georgia,'Palatino Linotype',serif;color:#282722;}
+.peridot-mapping-modal .peridot-guide-intro-main > p:last-child {font-size:.91rem;line-height:1.5;margin-top:.45rem;color:#35483c;}
+.peridot-mapping-modal .peridot-guide-intro-why {display:flex;gap:.85rem;border-left:1px solid #b3a086;padding-left:1.1rem;align-items:flex-start;}
+.peridot-mapping-modal .peridot-guide-intro-why h3,.peridot-mapping-modal .peridot-guide-card h3 {font:600 1.12rem/1.24 Georgia,'Palatino Linotype',serif;color:#262722;}
+.peridot-mapping-modal .peridot-guide-intro-why p {font-size:.84rem;line-height:1.5;margin-top:.35rem;color:#35483c;}
+.peridot-mapping-modal .peridot-guide-symbol {height:2.55rem;width:2.55rem;flex:0 0 2.55rem;border-radius:50%;background:#f3ded4;color:#7c211e;display:grid;place-items:center;}
+.peridot-mapping-modal .peridot-guide-symbol-used,.peridot-mapping-modal .peridot-guide-symbol-help {background:#dfe9de;color:#253c32;}
+.peridot-mapping-modal .peridot-guide-symbol-examples {background:#efe7dc;color:#253c32;}
+.peridot-mapping-modal .peridot-guide-context {display:grid;align-content:start;gap:.65rem;min-width:0;}
+.peridot-mapping-modal .peridot-guide-card {background:#fbf8f2;border:1px solid #c8b9a5;border-radius:.95rem;padding:.95rem;color:#34463c;box-shadow:0 2px 5px rgba(30,37,30,.045);}
+.peridot-mapping-modal .peridot-guide-card-help {background:#eff2eb;}
+.peridot-mapping-modal .peridot-guide-card-heading {display:flex;align-items:center;gap:.65rem;margin-bottom:.55rem;}
+.peridot-mapping-modal .peridot-guide-card .peridot-guide-symbol {height:2rem;width:2rem;flex-basis:2rem;}
+.peridot-mapping-modal .peridot-guide-card .peridot-guide-symbol svg {width:19px;height:19px;}
+.peridot-mapping-modal .peridot-guide-card-body {font-size:.85rem;line-height:1.5;overflow-wrap:anywhere;}
+.peridot-mapping-modal .peridot-guide-example-list {margin:0;padding:0;list-style:none;border:1px solid #d4c5b4;border-radius:.5rem;overflow:hidden;}
+.peridot-mapping-modal .peridot-guide-example-list li {padding:.45rem .55rem;border-bottom:1px solid #d4c5b4;overflow-wrap:anywhere;}
+.peridot-mapping-modal .peridot-guide-example-list li:nth-child(even) {background:#f3ede5;}
+.peridot-mapping-modal .peridot-guide-example-list li:last-child {border-bottom:0;}
+.peridot-mapping-modal .peridot-guide-check-list {list-style:none;padding:0;margin:0;}
+.peridot-mapping-modal .peridot-guide-check-list li {position:relative;padding-left:1.25rem;margin:.35rem 0;}
+.peridot-mapping-modal .peridot-guide-check-list li::before {content:'✓';position:absolute;left:0;color:#253c32;font-weight:800;}
+.peridot-mapping-modal .peridot-guide-entity-card {background:#fbf8f2!important;}
+.peridot-mapping-modal .peridot-guide-entity-card > .flex:first-child .text-lg {font:600 1.45rem/1.2 Georgia,'Palatino Linotype',serif;color:#262722;}
+.peridot-mapping-modal .peridot-guide-question-row {position:relative;align-items:start;border-top:1px solid #d4c6b7;padding:1rem 0;margin-top:.7rem;}
+.peridot-mapping-modal .peridot-guide-question-row:first-of-type {border-top:0;}
+.peridot-mapping-modal .peridot-guide-question-row > div:first-child > .text-\[15px\] {font:600 1.13rem/1.3 Georgia,'Palatino Linotype',serif;color:#262722;}
+.peridot-mapping-modal .peridot-guide-question-row label:has(input[type='radio']:checked),
+.peridot-mapping-modal .peridot-guide-entity-card label:has(input[type='radio']:checked) {border-color:#7a9b8b!important;background:#edf4ec!important;}
+.peridot-mapping-modal .peridot-guide-entity-card label:has(input[type='radio']) {min-height:2.7rem;}
+.peridot-mapping-modal .peridot-guide-time-primary {padding:.9rem;border:1px solid #d3c4b2;border-radius:.85rem;background:#f7f2e9;}
+.peridot-mapping-modal .peridot-guide-time-primary label {font-size:.85rem;}
+.peridot-mapping-modal .peridot-guide-time-primary :is(input,select) {min-height:2.5rem;}
+.peridot-mapping-modal .peridot-guide-card :is(a,button,input,select):focus-visible,
+.peridot-mapping-modal .peridot-guide-entity-card :is(a,button,input,select):focus-visible {outline:3px solid #7c211e;outline-offset:2px;}
+@media(max-width:1100px){
+ .peridot-mapping-modal .peridot-guide-intro {grid-template-columns:minmax(0,1fr);}
+ .peridot-mapping-modal .peridot-guide-intro-why {border-left:0;border-top:1px solid #b3a086;padding:1rem 0 0;}
+ .peridot-mapping-modal .peridot-guide-context {grid-template-columns:repeat(2,minmax(0,1fr));}
+}
+@media(max-width:760px){.peridot-mapping-modal .peridot-guide-context {grid-template-columns:minmax(0,1fr);}}
+
+/* Cartographic Editorial — shared question composition (2026-10-26).
+ * Scoped to mapping presentation. No changes to mapping state or validation. */
+.peridot-mapping-modal .peridot-mapping-quiet-divider {
+  border: 0; border-top: 1px solid #d5c9b9; margin: .95rem 0;
+}
+.peridot-mapping-modal .peridot-guide-question-marker {
+  display: inline-grid; place-items: center; flex: 0 0 2.5rem;
+  width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  background: #eedec4; color: #2b3028;
+  font: 700 1.18rem/1 Georgia,'Palatino Linotype',serif;
+}
+.peridot-mapping-modal .peridot-guide-question-marker-sub {
+  width: 1.8rem; height: 1.8rem; flex-basis: 1.8rem;
+  background: #dfe9de; color: #253c32; font-size: .9rem;
+}
+.peridot-mapping-modal .peridot-guide-primary-label {
+  display: flex; align-items: flex-start; gap: .7rem;
+  font: 600 1.23rem/1.27 Georgia,'Palatino Linotype',serif;
+  color: #282722;
+}
+.peridot-mapping-modal .peridot-guide-refinement-caption {
+  display: flex; gap: .75rem; align-items: flex-start;
+  border-top: 1px solid #d6c9b8;
+  padding: 1.05rem 0 .6rem; margin-top: 1rem;
+}
+.peridot-mapping-modal .peridot-guide-refinement-caption strong {
+  display: block; font: 600 1.2rem/1.25 Georgia,'Palatino Linotype',serif;
+  color: #253c32;
+}
+.peridot-mapping-modal .peridot-guide-refinement-caption p {
+  margin-top: .2rem; color: #435248; font-size: .86rem; line-height: 1.5;
+}
+.peridot-mapping-modal .peridot-guide-relation-primary {
+  border-top: 0; padding: 1.15rem 0 1.4rem;
+}
+.peridot-mapping-modal .peridot-guide-relation-detail {
+  border-top: 0; border-left: 2px solid #cbd7c8;
+  margin: 0 0 0 1.05rem; padding: 1rem 0 1rem 1.6rem;
+}
+.peridot-mapping-modal .peridot-guide-relation-detail > div:first-child > div:first-child {
+  font: 600 1.08rem/1.34 Georgia,'Palatino Linotype',serif;
+}
+.peridot-mapping-modal .peridot-guide-relation-detail :is(label:has(input[type='radio']),label:has(input[type='checkbox'])) {
+  border: 1px solid #cebfae; border-radius: .75rem; min-height: 2.8rem;
+}
+.peridot-mapping-modal .peridot-guide-time-primary-question {
+  background: #faf7f1; border-color: #d2c3b2;
+}
+.peridot-mapping-modal .peridot-guide-time-question-heading {
+  grid-column: 1 / -1; display: flex; align-items: center; gap: .7rem;
+  font: 600 1.2rem/1.3 Georgia,'Palatino Linotype',serif;
+  color: #282722;
+}
+.peridot-mapping-modal .peridot-guide-time-refinement { margin: 1rem 0 .3rem; }
+.peridot-mapping-modal .peridot-place-advanced-details {
+  margin-left: 1rem; border-left: 2px solid #cbd7c8;
+  border-top: 0; padding: 1rem 0 0 1.15rem;
+}
+.peridot-mapping-modal .peridot-place-detail-question {
+  padding: .75rem 0 1rem;
+}
+.peridot-mapping-modal .peridot-guide-detail-label {
+  display: flex; align-items: center; gap: .65rem;
+  font: 600 1.07rem/1.36 Georgia,'Palatino Linotype',serif;
+  color: #282722;
+}
+.peridot-mapping-modal .peridot-place-coordinate-question {
+  border-top: 1px solid #d6c9b8; padding-top: 1rem;
+}
+.peridot-mapping-modal .peridot-place-advanced-details > h3 { font-size: 1.17rem; }
+.peridot-mapping-modal .peridot-guide-entity-card :is(select,input:not([type='radio']):not([type='checkbox'])):focus-visible,
+.peridot-mapping-modal .peridot-place-part-card :is(select,input:not([type='radio']):not([type='checkbox'])):focus-visible {
+  outline: 3px solid #7c211e; outline-offset: 2px;
+}
+@media (max-width: 880px) {
+  .peridot-mapping-modal .peridot-guide-relation-detail,
+  .peridot-mapping-modal .peridot-place-advanced-details { margin-left: .3rem; padding-left: .85rem; }
+}
+
+/* Editorial upload headers: stage name + question, with contextual help in header. */
+.peridot-mapping-modal .peridot-guide-intro h2,
+.peridot-mapping-modal .peridot-places-intro h2 {
+  font: 600 clamp(1.7rem, 2.2vw, 2.25rem)/1.14 Georgia, 'Palatino Linotype', serif;
+  letter-spacing: -.025em;
+  color: #282722;
+  margin: 0 0 .38rem;
+}
+.peridot-mapping-modal .peridot-guide-intro-main .peridot-guide-intro-subtitle,
+.peridot-mapping-modal .peridot-places-intro-main .peridot-places-intro-subtitle {
+  font: 400 clamp(1rem, 1.15vw, 1.17rem)/1.4 Georgia, 'Palatino Linotype', serif;
+  letter-spacing: normal;
+  color: #31463b;
+  margin: 0;
+}
+.peridot-mapping-modal .peridot-guide-intro-why,
+.peridot-mapping-modal .peridot-places-intro-why {
+  display: flex;
+  gap: .8rem;
+  align-items: flex-start;
+  min-width: 0;
+}
+.peridot-mapping-modal .peridot-guide-intro-why .peridot-guide-symbol,
+.peridot-mapping-modal .peridot-places-intro-why .peridot-guide-symbol {
+  background: #dfe9de;
+  color: #253c32;
+}
+.peridot-mapping-modal .peridot-guide-intro-why h3,
+.peridot-mapping-modal .peridot-places-intro-why h3 {
+  margin: 0 0 .35rem;
+  font: 600 1.18rem/1.25 Georgia, 'Palatino Linotype', serif;
+}
+.peridot-mapping-modal .peridot-guide-intro-why p,
+.peridot-mapping-modal .peridot-places-intro-why p {
+  font-size: .87rem;
+  line-height: 1.48;
+  margin: 0;
+  color: #35483c;
+}
+.peridot-mapping-modal .peridot-guide-intro-why p + p,
+.peridot-mapping-modal .peridot-places-intro-why p + p { margin-top: .45rem; }
+
+/* 2026-10-26 — Compact editorial mapping layout, presentation only.
+ * Intrinsic sizing applies inside mapped field cards; source data remain intact. */
+.peridot-mapping-modal .peridot-guide-intro,
+.peridot-mapping-modal .peridot-places-intro {
+  display:block; padding:.8rem 1.2rem; min-height:0;
+}
+.peridot-mapping-modal .peridot-guide-intro h2,
+.peridot-mapping-modal .peridot-places-intro h2 {
+  font-size:clamp(1.45rem,1.8vw,1.9rem); margin-bottom:.1rem;
+}
+.peridot-mapping-modal .peridot-guide-intro-subtitle,
+.peridot-mapping-modal .peridot-places-intro-subtitle {
+  font-size:1rem; line-height:1.35; margin:0;
+}
+.peridot-mapping-modal .peridot-compact-info-wrap {
+  display:inline-flex; position:relative; vertical-align:middle; margin-left:.25rem;
+}
+.peridot-mapping-modal .peridot-compact-info {
+  width:1.5rem; height:1.5rem; min-width:1.5rem; border-radius:50%;
+  background:#dfe9de; color:#253c32; border:1px solid #89a293;
+  display:inline-grid; place-items:center; padding:0;
+  font:700 .78rem/1 system-ui,sans-serif; cursor:help;
+}
+.peridot-mapping-modal .peridot-compact-info:focus-visible {
+  outline:3px solid #7c211e; outline-offset:3px;
+}
+.peridot-mapping-modal .peridot-compact-tooltip {
+  visibility:hidden; opacity:0; pointer-events:none; position:absolute;
+  z-index:100; top:calc(100% + .65rem); left:0;
+  width:min(22rem,calc(100vw - 4rem));
+  border:1px solid #718c7e; background:#253c32; color:#fff;
+  box-shadow:0 8px 20px rgba(0,0,0,.2); border-radius:.55rem;
+  padding:.75rem .9rem; font:400 .89rem/1.45 system-ui,sans-serif;
+  transition:opacity .12s ease; text-align:left; letter-spacing:normal;
+}
+.peridot-mapping-modal .peridot-compact-info-wrap:hover .peridot-compact-tooltip,
+.peridot-mapping-modal .peridot-compact-info-wrap:focus-within .peridot-compact-tooltip {
+  visibility:visible; opacity:1;
+}
+/* Questions and answers now form a vertical unit, not opposing columns. */
+.peridot-mapping-modal .peridot-guide-relation-primary,
+.peridot-mapping-modal .peridot-guide-relation-detail {
+  display:flex!important; flex-direction:column; align-items:flex-start;
+  gap:.5rem!important; padding-top:.7rem; padding-bottom:.7rem;
+}
+.peridot-mapping-modal .peridot-guide-relation-primary > div,
+.peridot-mapping-modal .peridot-guide-relation-detail > div {width:100%;min-width:0;}
+.peridot-mapping-modal .peridot-guide-relation-primary select,
+.peridot-mapping-modal .peridot-guide-relation-detail select,
+.peridot-mapping-modal .peridot-guide-relation-primary .peridot-mapping-select,
+.peridot-mapping-modal .peridot-guide-relation-detail .peridot-mapping-select {
+  width:fit-content!important; max-width:min(100%,32rem); min-width:12rem;
+}
+.peridot-mapping-modal .peridot-guide-relation-detail > .space-y-3 {
+  display:flex;flex-flow:row wrap;align-items:flex-start;gap:.5rem!important;
+}
+.peridot-mapping-modal .peridot-guide-relation-detail > .space-y-3 > label {
+  width:fit-content;max-width:100%;min-width:0; flex:none;
+  padding:.6rem .8rem!important;
+}
+.peridot-mapping-modal .peridot-guide-relation-detail > .space-y-3 > label span.block.text-xs {
+  max-width:19rem;line-height:1.35;
+}
+.peridot-mapping-modal .peridot-guide-relation-detail > .space-y-3 > div { flex-basis:100%; }
+.peridot-mapping-modal .peridot-guide-entity-card .peridot-guide-refinement-caption,
+.peridot-mapping-modal .peridot-guide-relation-primary {margin-top:.25rem;}
+.peridot-mapping-modal .peridot-guide-entity-card > .my-4 { margin-top:.35rem;margin-bottom:.35rem; }
+.peridot-mapping-modal .peridot-guide-entity-card .peridot-mapping-quiet-divider {margin:.3rem 0;}
+/* Compact the shared cardinality choices without affecting their checked/disabled behavior. */
+.peridot-mapping-modal .peridot-guide-entity-card :is(.peridot-guide-relation-primary,.peridot-guide-relation-detail,.peridot-guide-refinement-caption) ~ .space-y-3 > .grid:has(input[type="radio"]),
+.peridot-mapping-modal .peridot-guide-entity-card .space-y-3 > .grid:has(input[type="radio"]) {
+  display:flex!important; flex-wrap:wrap; gap:.5rem;
+}
+.peridot-mapping-modal .peridot-guide-entity-card .space-y-3 > .grid:has(input[type="radio"]) > label {
+  flex:0 1 auto; width:fit-content;max-width:100%;min-width:0;
+  padding:.6rem .8rem!important;
+}
+/* Avoid width:100% on select controls within dedicated question blocks.
+   A long chosen field remains visible via the native select's popup. */
+.peridot-mapping-modal .peridot-guide-time-primary select,
+.peridot-mapping-modal .peridot-guide-time-primary input,
+.peridot-mapping-modal .peridot-guide-entity-card .peridot-mapping-select {
+  max-width:100%;
+}
+.peridot-mapping-modal .peridot-guide-time-primary select { width:fit-content!important; min-width:10rem; }
+.peridot-mapping-modal .peridot-guide-time-primary {padding:.65rem .8rem;gap:.6rem;}
+.peridot-mapping-modal .peridot-guide-card,
+.peridot-mapping-modal .peridot-places-help-card {padding:.8rem .9rem;}
+.peridot-mapping-modal .peridot-guide-context,
+.peridot-mapping-modal .peridot-places-context {gap:.5rem;}
+.peridot-mapping-modal .peridot-compact-context-subhead {
+  font:700 .95rem/1.35 Georgia,'Palatino Linotype',serif;
+  margin:.2rem 0 .45rem;color:#253c32;
+}
+.peridot-mapping-modal .peridot-guide-card-help,
+.peridot-mapping-modal .peridot-compact-additional-context {background:#eef2e9;}
+@media (max-width:760px) {
+  .peridot-mapping-modal .peridot-guide-relation-primary select,
+  .peridot-mapping-modal .peridot-guide-relation-detail select { max-width:100%; }
+  .peridot-mapping-modal .peridot-compact-tooltip {left:auto;right:-2rem;}
+}
+/* Equivalent compact grouping for the Places page, with the right column reserved
+   for data examples and current interpretation. */
+.peridot-mapping-modal .peridot-place-primary-row,
+.peridot-mapping-modal .peridot-place-subquestion .peridot-guide-question-row {
+  display:flex!important;flex-direction:column;align-items:flex-start;gap:.45rem!important;
+}
+.peridot-mapping-modal .peridot-place-primary-row > *,
+.peridot-mapping-modal .peridot-place-subquestion .peridot-guide-question-row > * {width:100%;min-width:0;}
+.peridot-mapping-modal .peridot-place-primary-row select,
+.peridot-mapping-modal .peridot-place-subquestion select,
+.peridot-mapping-modal .peridot-place-subquestion input:not([type='radio']):not([type='checkbox']) {
+  width:fit-content!important;min-width:11rem;max-width:min(100%,32rem);
+}
+.peridot-mapping-modal .peridot-place-subquestion .space-y-3:has(input[type='radio']) {
+  display:flex;flex-flow:row wrap;align-items:flex-start;gap:.5rem!important;
+}
+.peridot-mapping-modal .peridot-place-subquestion .space-y-3:has(input[type='radio']) > label {
+  flex:0 1 auto;width:fit-content;max-width:100%;padding:.6rem .8rem!important;
+}
+.peridot-mapping-modal .peridot-place-subquestion .space-y-3:has(input[type='radio']) > div {flex-basis:100%;}
+.peridot-mapping-modal .peridot-place-subquestion {padding-top:.5rem;padding-bottom:.45rem;}
+.peridot-mapping-modal .peridot-place-refinement-heading {margin-top:.5rem;margin-bottom:.45rem;}
+
+.peridot-mapping-modal .peridot-compact-info-wrap[data-open="true"] .peridot-compact-tooltip {visibility:visible;opacity:1;}
+
+/* 2026-10-26 — Choice-card alignment and concise labels.
+   Only mapping option cards are affected; input state and semantics stay intact. */
+.peridot-mapping-modal .peridot-guide-entity-card label:has(> input:is([type="radio"],[type="checkbox"])),
+.peridot-mapping-modal .peridot-place-part-card label:has(> input:is([type="radio"],[type="checkbox"])),
+.peridot-mapping-modal .peridot-guide-question-row label:has(> input:is([type="radio"],[type="checkbox"])) {
+  align-items:center!important;
+  gap:.55rem;
+}
+.peridot-mapping-modal .peridot-guide-entity-card label > input:is([type="radio"],[type="checkbox"]),
+.peridot-mapping-modal .peridot-place-part-card label > input:is([type="radio"],[type="checkbox"]),
+.peridot-mapping-modal .peridot-guide-question-row label > input:is([type="radio"],[type="checkbox"]) {
+  margin-top:0!important;
+  margin-bottom:0!important;
+  flex:0 0 auto;
+  align-self:center;
+}
+.peridot-mapping-modal .peridot-guide-entity-card label:has(> input:is([type="radio"],[type="checkbox"])) > span,
+.peridot-mapping-modal .peridot-place-part-card label:has(> input:is([type="radio"],[type="checkbox"])) > span {
+  line-height:1.35;
+}
+.peridot-mapping-modal .peridot-compact-context-divider {
+  border-top:1px solid #c6d1c7;
+  margin:.8rem 0 .65rem;
+}
+.peridot-mapping-modal .peridot-compact-context-notes {
+  list-style:disc;
+  padding-left:1.1rem;
+  margin:.3rem 0 0;
+  line-height:1.5;
+}
+.peridot-mapping-modal .peridot-compact-context-notes li + li {margin-top:.2rem;}
+
+/* Relations: one shared indentation track for all three refinement questions.
+   Scoped to participant cards so Places and Time retain their own structure. */
+.peridot-mapping-modal .peridot-guide-relation-refinement-group {
+  margin-left: .95rem;
+  padding-left: 1.1rem;
+  border-left: 2px solid #cbd7c8;
+  display: grid;
+  row-gap: .85rem;
+}
+.peridot-mapping-modal .peridot-guide-relation-refinement-item {
+  display: grid;
+  grid-template-columns: 1.75rem minmax(0, 1fr);
+  gap: .65rem;
+  align-items: start;
+  min-width: 0;
+}
+.peridot-mapping-modal .peridot-guide-relation-refinement-marker {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #dfe9de;
+  color: #253c32;
+  font: 700 .9rem/1 Georgia,'Palatino Linotype',serif;
+}
+.peridot-mapping-modal .peridot-guide-relation-refinement-content {
+  min-width: 0;
+  width: 100%;
+}
+.peridot-mapping-modal .peridot-guide-relation-refinement-group .peridot-guide-relation-detail {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  width: 100%;
+}
+.peridot-mapping-modal .peridot-guide-relation-refinement-group .peridot-guide-relation-refinement-content > .space-y-3 {
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .peridot-mapping-modal .peridot-guide-relation-refinement-group { margin-left: .35rem; padding-left: .6rem; }
+  .peridot-mapping-modal .peridot-guide-relation-refinement-item { gap: .45rem; }
+}
+
+/* 2026-10-26 — Relations option-row vertical alignment.
+   The legacy `space-y-3` utility adds margin-top to later siblings even
+   after their container is converted to a horizontal flex row. Remove only
+   that inherited vertical margin; retain compact intrinsic widths. */
+.peridot-mapping-modal .peridot-guide-relation-refinement-group
+  .peridot-guide-relation-detail > .space-y-3 > label {
+  margin-top: 0 !important;
+}
+
+
+/* Mapping editorial system — parity across Relations, Places, and Time.
+   Presentation only: no mapping values, event handlers, or validation are changed.
+   Keep the primary choice prominent, align subordinate controls, and allow
+   intrinsic-width option cards rather than forcing full-width rows. */
+.peridot-mapping-modal :is(
+  .peridot-guide-relation-refinement-content,
+  .peridot-place-subquestion,
+  .peridot-guide-time-refinement
+) { min-width: 0; }
+
+/* Shared compact refinement headings. */
+.peridot-mapping-modal :is(
+  .peridot-guide-refinement-caption,
+  .peridot-place-refinement-heading
+) {
+  margin: .6rem 0 .45rem;
+  padding: .7rem 0 .3rem;
+  gap: .6rem;
+}
+.peridot-mapping-modal :is(
+  .peridot-guide-refinement-caption strong,
+  .peridot-place-refinement-heading h3
+) {
+  font: 600 1.16rem/1.28 Georgia, 'Palatino Linotype', serif;
+  color: #253c32;
+}
+
+/* Unified label and control spacing in the refinement tracks. */
+.peridot-mapping-modal :is(
+  .peridot-guide-relation-refinement-item,
+  .peridot-place-subquestion,
+  .peridot-place-detail-question
+) { row-gap: .45rem; }
+.peridot-mapping-modal :is(
+  .peridot-guide-relation-refinement-content,
+  .peridot-place-subquestion
+) :is(.space-y-3,.grid):has(> label > input[type="radio"]) {
+  align-items: flex-start;
+}
+
+/* Normalize native radio/checkbox alignment and purge Tailwind's vertical
+   sibling margins when those groups display horizontally. This fixes the
+   same specific conflict that caused the Relations b/c misalignment. */
+.peridot-mapping-modal :is(
+  .peridot-guide-relation-refinement-group,
+  .peridot-place-subquestion,
+  .peridot-guide-time-primary,
+  .peridot-guide-entity-card
+) .space-y-3:has(> label > input:is([type="radio"],[type="checkbox"])) > label {
+  margin-top: 0 !important;
+}
+.peridot-mapping-modal :is(
+  .peridot-guide-relation-refinement-group,
+  .peridot-place-subquestion,
+  .peridot-guide-entity-card
+) label:has(> input:is([type="radio"],[type="checkbox"])) {
+  display: inline-flex;
+  align-items: center !important;
+  vertical-align: top;
+  gap: .5rem;
+}
+.peridot-mapping-modal :is(
+  .peridot-guide-relation-refinement-group,
+  .peridot-place-subquestion,
+  .peridot-guide-entity-card
+) label > input:is([type="radio"],[type="checkbox"]) {
+  flex: 0 0 auto;
+  margin: 0 !important;
+  align-self: center;
+}
+
+/* Places: the first three refinements and the optional subject/coordinate
+   settings follow the same quiet vertical rhythm as the Relations track. */
+.peridot-mapping-modal .peridot-place-subquestion { padding-top: .38rem; padding-bottom: .38rem; }
+.peridot-mapping-modal .peridot-place-subquestion .peridot-guide-question-row {
+  margin-top: 0; padding-top: 0; border-top: 0;
+}
+.peridot-mapping-modal .peridot-place-subquestion .space-y-3:has(> label > input[type="radio"]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: .5rem !important;
+}
+.peridot-mapping-modal .peridot-place-subquestion .space-y-3:has(> label > input[type="radio"]) > label {
+  margin-top: 0 !important;
+  flex: 0 1 auto;
+  width: fit-content;
+  max-width: 100%;
+}
+.peridot-mapping-modal .peridot-place-advanced-details { padding-top: .65rem; }
+.peridot-mapping-modal .peridot-place-detail-question { padding: .55rem 0 .8rem; }
+
+/* Time: bring temporal primary and refinement controls into the same
+   compact presentation scale. Date/period-specific control grouping is kept. */
+.peridot-mapping-modal .peridot-guide-time-primary { padding: .65rem .8rem; }
+.peridot-mapping-modal .peridot-guide-time-primary-question { gap: .55rem; }
+.peridot-mapping-modal .peridot-guide-time-refinement { margin: .7rem 0 .4rem; }
+.peridot-mapping-modal .peridot-guide-time-primary :is(input:not([type="radio"]),select) {
+  min-height: 2.35rem;
+  max-width: min(100%, 28rem);
+}
+.peridot-mapping-modal .peridot-guide-entity-card :is(
+  .peridot-mapping-input, .peridot-mapping-select
+) { max-width: 100%; }
+
+/* Preserve visible keyboard focus when compact cards and controls share a row. */
+.peridot-mapping-modal :is(
+  .peridot-guide-relation-refinement-group,
+  .peridot-place-part-card,
+  .peridot-guide-entity-card
+) :is(label:has(> input:focus-visible), select:focus-visible, input:focus-visible) {
+  outline: 2px solid #7c211e;
+  outline-offset: 2px;
+}
+
+/* Shared mapping hierarchy consolidation — 2026-10-26.
+   Relations is the approved reference. These rules affect only presentation;
+   the different control types, field mappings, and handlers remain intact. */
+.peridot-mapping-modal .peridot-place-refinement-marker {
+  font-size: .95rem;
+  font-weight: 700;
+}
+.peridot-mapping-modal .peridot-place-refinement-heading {
+  align-items: flex-start;
+}
+/* A consistent a/b/c/d refinement track for both Time renderers. */
+.peridot-mapping-modal .peridot-guide-entity-card:has(.peridot-guide-time-refinement)
+  .peridot-time-detail-question {
+  position: relative;
+  min-width: 0;
+  margin: 0 0 0 .85rem !important;
+  padding: .65rem 0 .7rem 2.85rem !important;
+  border: 0 !important;
+  border-left: 2px solid #c8d5c7 !important;
+}
+.peridot-mapping-modal .peridot-time-detail-question::before {
+  content: attr(data-marker);
+  position: absolute;
+  left: .75rem;
+  top: .6rem;
+  transform: translateX(-50%);
+  width: 1.45rem;
+  height: 1.45rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #dfe9de;
+  color: #253c32;
+  font: 700 .8rem/1 Georgia, 'Palatino Linotype', serif;
+}
+/* A consistent minimum reading size and compact native inputs across stages. */
+.peridot-mapping-modal :is(.peridot-place-subquestion,.peridot-time-detail-question)
+  :is(input:not([type=radio]):not([type=checkbox]),select) {
+  max-width: min(100%, 32rem);
+}
+/* Keep radio choices content-sized even in the original two-column
+   value-handling grid. This matches Relations without changing semantics. */
+.peridot-mapping-modal :is(.peridot-place-subquestion,.peridot-time-detail-question)
+  .grid:has(> label > input[type=radio]) {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: .5rem !important;
+}
+.peridot-mapping-modal :is(.peridot-place-subquestion,.peridot-time-detail-question)
+  .grid:has(> label > input[type=radio]) > label {
+  flex: 0 1 auto !important;
+  width: fit-content !important;
+  max-width: 100%;
+  margin-top: 0 !important;
+  align-items: center;
+}
+/* Do not turn multi-subject checkboxes into radio controls: their
+   appearance and ability to select multiple subjects are retained. */
+.peridot-mapping-modal .peridot-time-detail-question label:has(> input:is([type=radio],[type=checkbox])) > input {
+  margin-top: 0 !important;
+  align-self: center;
+}
+
+/* A single marker palette across all generalized mapping stages. */
+.peridot-mapping-modal .peridot-mapping-refinement-marker,
+.peridot-mapping-modal .peridot-time-detail-question::before {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: #dfe9de;
+  color: #253c32;
+  font: 700 .9rem/1 Georgia, 'Palatino Linotype', serif;
+  display: grid;
+  place-items: center;
+}
+.peridot-mapping-modal .peridot-place-refinement-marker {
+  width: 1.35rem;
+  height: 1.35rem;
+  font-size: .85rem;
+}
+.peridot-mapping-modal .peridot-time-detail-question::before {
+  left: 1.05rem;
+  top: .55rem;
+}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { MappingInfo } from './PeridotMappingPresentation.jsx';
 import { normalizePeridotSubjectSelection } from './peridotSubjectSelection.js';
 
 function checkboxDisabled(selection, target) {
@@ -27,7 +28,7 @@ export default function PeridotSubjectSelectionControl({
 
   return (
     <div className="space-y-2">
-      {showTitle ? <div className="text-xs font-semibold text-[var(--muted-text)]">Who or what does this {noun} describe?</div> : null}
+      {showTitle ? <div className="text-xs font-semibold text-[var(--muted-text)]">Who or what does this {noun} describe? <MappingInfo text={`Select every subject this mapped ${noun} actually describes. The row itself does not automatically include participants; select them separately. Peridot preserves each selection as a separate, traceable assertion.`} /></div> : null}
       <div className="space-y-2">
         <label className="flex items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
           <input
@@ -38,8 +39,7 @@ export default function PeridotSubjectSelectionControl({
             className="mt-0.5"
           />
           <span>
-            <span className="font-semibold">This row / record itself</span>
-            <span className="mt-0.5 block text-xs leading-relaxed text-[var(--panel-card-muted-text)]">This does not automatically include the participants in the row. Select any participants separately below.</span>
+            <span className="font-semibold">This row / record itself</span> {!showTitle ? <MappingInfo text={`Select every subject this mapped ${noun} actually describes. Selecting the row does not automatically include participants; select them separately. Peridot preserves each selection as a separate assertion.`} /> : null}
           </span>
         </label>
         {participants.map((participant) => (
@@ -55,9 +55,7 @@ export default function PeridotSubjectSelectionControl({
           </label>
         ))}
       </div>
-      <p className="text-[11px] leading-relaxed text-[var(--panel-card-muted-text)]">
-        Select every subject this mapped {noun} actually describes. Peridot preserves each selection as a separate, traceable assertion rather than combining several subjects into one assertion.
-      </p>
+      
     </div>
   );
 }

@@ -118,6 +118,28 @@ function buttonClassName({ active = false, variant = 'secondary' } = {}) {
   return `${base} ${variants[variant] || variants.secondary}`;
 }
 
+// Shared, decorative section symbols. Labels remain visible and are the accessible names.
+function MappingSectionIcon({ label }) {
+  const iconName = String(label || '').toLowerCase();
+  let paths;
+  if (iconName === 'preview' || iconName === 'sheets') {
+    paths = <><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 3v18" /></>;
+  } else if (iconName === 'relations') {
+    paths = <><circle cx="6" cy="6" r="2" /><circle cx="18" cy="7" r="2" /><circle cx="12" cy="18" r="2" /><path d="m8 7 8 0M7 8l4 8m6-7-4 7" /></>;
+  } else if (iconName === 'time' || iconName === 'life events') {
+    paths = <><circle cx="12" cy="12" r="9" /><path d="M12 6v6l4 3" /></>;
+  } else if (iconName === 'places') {
+    paths = <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>;
+  } else if (iconName === 'review and upload') {
+    paths = <><path d="M12 16V3m-5 5 5-5 5 5M4 16v5h16v-5" /></>;
+  } else if (iconName === 'evidence' || iconName === 'attributes') {
+    paths = <><path d="M6 3h9l4 4v14H6zM15 3v5h4M9 12h7M9 16h7" /></>;
+  } else {
+    paths = <><rect x="4" y="4" width="16" height="16" rx="2" /><path d="M8 9h8M8 13h8" /></>;
+  }
+  return <svg className="peridot-mapping-section-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">{paths}</svg>;
+}
+
 function StepButton({ active, label, index, onClick, showIndex = true }) {
   return (
     <button
@@ -131,7 +153,7 @@ function StepButton({ active, label, index, onClick, showIndex = true }) {
       style={{ '--peridot-mapping-step-delay': `${760 + index * 170}ms` }}
       aria-current={active ? 'step' : undefined}
     >
-      {showIndex ? <span className="peridot-mapping-step-number">{index + 1}</span> : null}
+      {showIndex ? <span className="peridot-mapping-step-number">{index + 1}</span> : <MappingSectionIcon label={label} />}
       <span className="peridot-mapping-step-label">{label}</span>
     </button>
   );
@@ -3345,6 +3367,9 @@ export function PeridotColumnMappingModal({
                 />
               ))}
             </div>
+            {!isGenealogyProfile ? (
+              <p className="peridot-mapping-optional-nav-note">Use the sections that fit your data. Some datasets need only a few.</p>
+            ) : null}
             <button type="button" onClick={handleRequestCancel} className={buttonClassName({ variant: 'secondary' })}>
               Back to Data
             </button>

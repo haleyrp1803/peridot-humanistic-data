@@ -19,6 +19,7 @@
 import React from 'react';
 import PeridotValueHandlingControl from './PeridotValueHandlingControl.jsx';
 import PeridotSubjectSelectionControl from './PeridotSubjectSelectionControl.jsx';
+import { MappingStageIntro, MappingGuideCard, MappingQuestionMarker, MappingRefinementMarker, MappingSymbol, MappingInfo } from './PeridotMappingPresentation.jsx';
 import {
   PERIDOT_CORE_FIELD_DEFINITIONS_BY_KEY,
   PERIDOT_POINT_FIELD_DEFINITIONS_BY_KEY,
@@ -65,13 +66,7 @@ function UsedForBadges({ items = [] }) {
 }
 
 function SectionDivider() {
-  return (
-    <div className="flex items-center gap-3 py-1" aria-hidden="true">
-      <div className="h-px flex-1 bg-[var(--button-primary-bg)] opacity-85" />
-      <div className="h-2.5 w-2.5 rotate-45 border border-[var(--button-primary-active-border)] bg-[var(--button-primary-bg)] opacity-85" />
-      <div className="h-px flex-1 bg-[var(--button-primary-bg)] opacity-85" />
-    </div>
-  );
+  return <hr className="peridot-mapping-quiet-divider" aria-hidden="true" />;
 }
 
 function RoleCell({ definition }) {
@@ -148,18 +143,10 @@ const TEMPORAL_UI_COPY = Object.freeze({
 });
 
 function TemporalIntro() {
-  return (
-    <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-snug text-[var(--panel-card-muted-text)]">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Time</div>
-      <div className="mt-1 text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">When does the information in each row take place?</div>
-      <p className="mt-2 text-sm leading-relaxed">
-        Choose any columns that tell Peridot when a record, event, person, place, object, measurement, or other item belongs in time. Peridot reads the date or timespan itself and preserves partial, approximate, open-ended, and incomplete values whenever it can do so safely.
-      </p>
-      <p className="mt-2 text-sm leading-relaxed">
-        <span className="font-semibold text-[var(--panel-card-text)]">Examples:</span> date on a letter, timeframe of a journey, publication date, lifespans, etc.
-      </p>
-    </div>
-  );
+  return <MappingStageIntro section="Time" kind="time"
+    title="When does the information in each row take place?"
+    description="Choose dates or periods associated with your records. You can preserve partial, approximate, and open-ended temporal values."
+    help="Choose whether a field is a date or period, then identify where its value is stored. Partial and approximate source values can remain intact." />;
 }
 
 function TemporalPartSelect({ headers, value, onChange, label }) {
@@ -209,15 +196,16 @@ export function TemporalMappingTable({ headers, rows = [], temporalAssertions = 
           <div className="space-y-4 min-w-0">
             {temporalAssertions.map((mapping, index) => {
               const kind = mapping.kind === 'period' ? 'period' : 'date';
-              return <div key={mapping.id || index} className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
+              return <div key={mapping.id || index} className="peridot-guide-entity-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="text-[15px] font-bold text-[var(--panel-card-text)]">Time {index + 1}</div>
                   <button type="button" onClick={() => remove(index)} className="rounded-lg border border-[var(--input-border)] px-2 py-1 text-xs text-[var(--panel-card-muted-text)]">Remove</button>
                 </div>
-                <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                  <label className="text-xs font-semibold text-[var(--muted-text)]">Name this date or period
+                <div className="peridot-guide-time-primary peridot-guide-time-primary-question mt-3 grid gap-3 sm:grid-cols-2">
+                  <div className="peridot-guide-time-question-heading"><MappingQuestionMarker>1</MappingQuestionMarker><span>What date or period does this field represent?</span></div>
+                  <label className="text-xs font-semibold text-[var(--muted-text)]">Name this date or period <MappingInfo text="Peridot will use this name to identify the time later in Timeline, Search, Inspector, and Export." />
                     <input value={mapping.role || ''} onChange={(event) => update(index, { role: event.target.value })} placeholder="e.g. Birth, Creation date, Lifespan, Reign" className={`${SOURCE_SELECT_CLASS} mt-1`} />
-                    <span className="mt-1 block text-[11px] font-normal leading-relaxed text-[var(--panel-card-muted-text)]">Peridot will use this name to identify the time later in Timeline, Search, Inspector, and Export.</span>
+                    
                   </label>
                   <label className="text-xs font-semibold text-[var(--muted-text)]">What kind of time is it?
                     <select value={kind} onChange={(event) => update(index, { kind: event.target.value, sourceMode: 'single' })} className={`${SOURCE_SELECT_CLASS} mt-1`}>
@@ -225,8 +213,9 @@ export function TemporalMappingTable({ headers, rows = [], temporalAssertions = 
                     </select>
                   </label>
                 </div>
+                <div className="peridot-guide-refinement-caption peridot-guide-time-refinement"><MappingQuestionMarker sub>↳</MappingQuestionMarker><div><strong>Then describe this temporal field <MappingInfo text="Identify its subject, source values, and any additional notes." /></strong></div></div>
                 {(relationshipParts || []).length ? (
-                  <div className="mt-4">
+                  <div className="peridot-time-detail-question peridot-time-detail-a mt-4" data-marker="a">
                     <PeridotSubjectSelectionControl
                       value={mapping.subjectSelection}
                       legacySubjectParticipantIndex={mapping.subjectParticipantIndex}
@@ -239,7 +228,7 @@ export function TemporalMappingTable({ headers, rows = [], temporalAssertions = 
                     />
                   </div>
                 ) : null}
-                <div className="mt-4">
+                <div className="peridot-time-detail-question peridot-time-detail-b mt-4" data-marker="b">
                   {kind === 'date' ? <SingleEndpointControls headers={headers} mapping={mapping} onPatch={(patch) => update(index, patch)} /> : (
                     <div className="space-y-3">
                       <label className="block text-xs font-semibold text-[var(--muted-text)]">How is this period stored?
@@ -252,7 +241,7 @@ export function TemporalMappingTable({ headers, rows = [], temporalAssertions = 
                   )}
                 </div>
                 {(kind === 'date' ? mapping.sourceMode !== 'parts' : mapping.sourceMode !== 'endpoints') ? (
-                  <div className="mt-4 border-t border-[var(--panel-card-border)] pt-4">
+                  <div className="peridot-time-detail-question peridot-time-detail-c mt-4 border-t border-[var(--panel-card-border)] pt-4" data-marker="c">
                     <PeridotValueHandlingControl
                       valueHandling={mapping.valueHandling}
                       onChange={(valueHandling) => update(index, { valueHandling })}
@@ -260,8 +249,8 @@ export function TemporalMappingTable({ headers, rows = [], temporalAssertions = 
                     />
                   </div>
                 ) : null}
-                <div className="mt-4 border-t border-[var(--panel-card-border)] pt-3">
-                  <div className="text-xs font-semibold text-[var(--muted-text)]">Related temporal notes (optional)</div>
+                <div className="peridot-time-detail-question peridot-time-detail-d mt-4 border-t border-[var(--panel-card-border)] pt-3" data-marker="d">
+                  <div className="text-xs font-semibold text-[var(--muted-text)]">Related temporal notes (optional) <MappingInfo text="Select any additional source columns that provide notes about this temporal assertion. These are preserved as evidence, not treated as commands about visualization." /></div>
                   {(mapping.noteColumns || []).map((column, noteIndex) => <div key={noteIndex} className="mt-2 flex max-w-xl gap-2"><select value={column || ''} onChange={(event) => { const notes=[...(mapping.noteColumns||[])]; notes[noteIndex]=event.target.value; update(index,{noteColumns:notes}); }} className={`${SOURCE_SELECT_CLASS} max-w-md`}><option value="">Unassigned</option>{headers.map((header)=><option key={header} value={header}>{header}</option>)}</select><button type="button" onClick={()=>update(index,{noteColumns:(mapping.noteColumns||[]).filter((_,i)=>i!==noteIndex)})} className="rounded-lg border border-[var(--input-border)] px-2 text-xs text-[var(--panel-card-muted-text)]">Remove</button></div>)}
                   <button type="button" onClick={()=>update(index,{noteColumns:[...(mapping.noteColumns||[]),'']})} className="mt-3 rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-3 py-2 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]">+ Add related note column</button>
                 </div>
@@ -269,24 +258,24 @@ export function TemporalMappingTable({ headers, rows = [], temporalAssertions = 
             })}
             <button type="button" onClick={add} className="rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-3 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]">+ Add date or period</button>
           </div>
-          <TemporalUsagePanel />
+          <TemporalUsagePanel assertions={temporalAssertions} rows={rows} />
         </div>
       </div>
     </div>
   );
 }
-function TemporalUsagePanel() {
-  return (
-    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Used for</div>
-      <p className="mt-3">
-        Temporal information is used in Peridot’s timeline, search and filter, charts, Inspector, and export.
-      </p>
-      <p className="mt-3">
-        Each mapped temporal field remains a separate temporal assertion. Optional note columns—such as certainty, completeness, transcription, or project-specific qualifiers—are preserved without being treated as commands about visualization.
-      </p>
-    </aside>
-  );
+function TemporalUsagePanel({assertions=[],rows=[],workbookModel}) {
+  const first=assertions.find(m=>m?.column || m?.startColumn) || assertions[0] || {};
+  const ref=first.column;
+  const column=typeof ref==='string'?ref:(ref?.columnName || '');
+  const sheet=typeof ref==='object' && ref?.sheetName ? getWorkbookSheet(workbookModel,ref.sheetName) : null;
+  const values=getNonBlankExampleValues(sheet?.rows || rows,column,5);
+  return <aside className="peridot-guide-context" aria-label="Time mapping examples and guidance">
+    <MappingGuideCard kind="examples" title="Examples from your data">{values.length?<ul className="peridot-guide-example-list">{values.map((value,i)=><li key={`${i}-${value}`}>{value}</li>)}</ul>:<p>Select a date or period column to see examples.</p>}</MappingGuideCard>
+    <MappingGuideCard kind="interpretation" title="Current interpretation"><p>{column?<>Peridot will read <strong>{column}</strong> as {first.kind==='period'?'a period or range':'a date'}{first.role?` called “${first.role}”`:''}. Source text remains preserved.</>:'No temporal source column has been selected yet.'}</p></MappingGuideCard>
+    <MappingGuideCard kind="help" title="Additional context"><h4 className="peridot-compact-context-subhead">Used for</h4><ul className="peridot-guide-check-list"><li>Timeline and temporal navigation</li><li>Inspector, search, and filters</li><li>Charts and exports</li><li>Multiple separate temporal assertions per record</li></ul><div className="peridot-compact-context-divider"/><h4 className="peridot-compact-context-subhead">Good to know</h4><ul className="peridot-compact-context-notes"><li>Time values can be partial, approximate, or open-ended.</li><li>You can map multiple temporal assertions without combining them into one date.</li></ul></MappingGuideCard>
+    
+  </aside>;
 }
 
 /*
@@ -583,9 +572,9 @@ function WorkbookPlacePartCard({ part, index, workbookModel, relationshipParts =
     : '';
 
   return (
-    <section className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/30 p-4">
+    <section className="peridot-place-part-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/30 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-[16px] font-bold leading-tight text-[var(--panel-card-text)]">{label}</div>
+        <div className="peridot-place-part-title">{label}<span> · Mapping details</span></div>
         {index > 0 ? (
           <button
             type="button"
@@ -597,13 +586,8 @@ function WorkbookPlacePartCard({ part, index, workbookModel, relationshipParts =
         ) : null}
       </div>
 
-      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
-        <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Which column contains the place?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Choose the column whose values name or identify this place.
-          </p>
-        </div>
+      <div className="peridot-place-primary-row mt-4 grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+        <PlaceQuestionHeading primary title={<>Which column contains the place? <MappingInfo text="Choose the column whose values name or identify this place." /></>} />
         <div className="min-w-0">
           <WorkbookFieldSelect
             workbookModel={workbookModel}
@@ -614,8 +598,10 @@ function WorkbookPlacePartCard({ part, index, workbookModel, relationshipParts =
         </div>
       </div>
 
-      <div className="my-4"><SectionDivider /></div>
-      <PeridotValueHandlingControl
+      <div className="peridot-place-refinement-heading"><MappingRefinementMarker value="↳" className="peridot-place-refinement-marker" /><div><h3>Then refine this place field <MappingInfo text="These details help Peridot interpret the selected place values." /></h3></div></div>
+      <div className="peridot-place-subquestion peridot-place-subquestion-a">
+        <MappingRefinementMarker value="a" className="peridot-place-subquestion-letter" />
+        <PeridotValueHandlingControl
         valueHandling={part?.valueHandling}
         onChange={(valueHandling) => onChange(
           valueHandling?.cardinality === 'multiple'
@@ -630,34 +616,31 @@ function WorkbookPlacePartCard({ part, index, workbookModel, relationshipParts =
         disabled={!placeRef?.columnName}
       />
 
-      <div className="my-4"><SectionDivider /></div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+      </div>
+      <div className="peridot-place-subquestion peridot-place-subquestion-b">
+        <MappingRefinementMarker value="b" className="peridot-place-subquestion-letter" />
+        <div className="peridot-guide-question-row grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Name this place role <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span></div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Use a fixed researcher-defined name when the source heading does not describe how this place relates to the selected participant, such as “Place of childbirth.”
-          </p>
+          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Name this place role <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span> <MappingInfo text="Use a fixed researcher-defined name when the source heading does not describe how this place relates to the selected participant, such as “Place of childbirth.” If supplied, this name takes precedence over the source-derived role; the original source field is preserved." /></div>
         </div>
         <div>
           <input
+            aria-label="Custom place role"
             value={part?.roleLabel || ''}
             onChange={(event) => onChange({ roleLabel: event.target.value })}
             placeholder="e.g. Place of childbirth, Residence, Court"
             className={SOURCE_SELECT_CLASS}
           />
-          <p className="mt-1.5 text-[11px] leading-relaxed text-[var(--panel-card-muted-text)]">If supplied, this name takes precedence over the source-derived role below. The original workbook field is still preserved.</p>
+          
         </div>
       </div>
 
-      <div className="my-4"><SectionDivider /></div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+      </div>
+      <div className="peridot-place-subquestion peridot-place-subquestion-c">
+        <MappingRefinementMarker value="c" className="peridot-place-subquestion-letter" />
+        <div className="peridot-guide-question-row grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Where is the role of this place recorded?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            The role explains how this place is connected to the row, such as birthplace, residence, origin, destination, court, or repository.
-          </p>
+          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Where is the role of this place recorded? <MappingInfo text="The role explains how this place is connected to the row, such as birthplace, residence, origin, destination, court, or repository." /></div>
         </div>
         <div className="space-y-3">
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
@@ -670,7 +653,6 @@ function WorkbookPlacePartCard({ part, index, workbookModel, relationshipParts =
             />
             <span>
               <span className="font-semibold">In the column heading</span>
-              {headingLabel ? <span className="text-[var(--panel-card-muted-text)]"> — {headingLabel}</span> : null}
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
@@ -696,16 +678,15 @@ function WorkbookPlacePartCard({ part, index, workbookModel, relationshipParts =
         </div>
       </div>
 
-      <div className="my-4"><SectionDivider /></div>
-
+      </div>
+      <div className="peridot-place-advanced-details">
+        <h3>Additional place details <MappingInfo text="Use these settings if your data connects places to specific participants or records coordinates." /></h3>
       {(relationshipParts || []).length ? (
         <>
-          <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+          <div className="peridot-guide-question-row peridot-place-detail-question grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
             <div>
-              <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Who or what does this place describe?</div>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-                Choose every mapped participant or the row itself that this place genuinely describes. The same mapped place can support several separate subject-specific assertions.
-              </p>
+              <div className="peridot-guide-detail-label"><MappingQuestionMarker sub>d</MappingQuestionMarker><span>Who or what does this place describe? <MappingInfo text="Choose every mapped participant or the row itself that this place genuinely describes. The same mapped place can support several separate subject-specific assertions." /></span></div>
+              
             </div>
             <PeridotSubjectSelectionControl
               value={part?.subjectSelection}
@@ -727,11 +708,9 @@ function WorkbookPlacePartCard({ part, index, workbookModel, relationshipParts =
         </>
       ) : null}
 
-      <div>
-        <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Coordinates for this place <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span></div>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-          Choose a combined coordinate column, or separate latitude and longitude columns, if your source records them.
-        </p>
+      <div className="peridot-place-detail-question peridot-place-coordinate-question">
+        <div className="peridot-guide-detail-label"><MappingQuestionMarker sub>e</MappingQuestionMarker><span>Coordinates for this place <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span> <MappingInfo text="Choose a combined coordinate column, or separate latitude and longitude columns, if your source records them." /></span></div>
+        
         {usesMultiplePlaceValues ? (
           <p className="mt-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
             Coordinates are unavailable for multi-value place cells. If each place has different coordinates, store the places in separate rows, columns, or a related sheet so Peridot can see which coordinates belong to which place.
@@ -770,35 +749,70 @@ function WorkbookPlacePartCard({ part, index, workbookModel, relationshipParts =
           </label>
         </div>
       </div>
+      </div>
     </section>
   );
 }
 
 function PlacesIntro() {
   return (
-    <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-3 text-sm leading-snug text-[var(--panel-card-muted-text)]">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Places</div>
-      <div className="mt-1 text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">
-        Where are the people, events, objects, records, or other information in each row located?
+    <header className="peridot-places-intro">
+      <div className="peridot-places-intro-main">
+        <h2>Places</h2>
+        <p className="peridot-places-intro-subtitle">Where is the information in each row located? <MappingInfo label="About place mapping" text="Choose columns that identify places connected to your records. A dataset may contain one place, several places, or none. A place's role explains how it relates to a record or participant, such as birthplace, residence, or court. Only map fields whose values actually identify places." /></p>
       </div>
-      <p className="mt-2 text-sm leading-relaxed">
-        Choose any columns that identify places connected to this row. Your data may use one place, several places, or no places at all.
-      </p>
-      <p className="mt-2 text-sm leading-relaxed">
-        <span className="font-semibold text-[var(--panel-card-text)]">Examples:</span> birthplace, place a letter was sent from or to, residence, court, archive, event location, stops along a journey, excavation site, etc.
-      </p>
-    </div>
+    </header>
   );
 }
 
-function PlacesUsagePanel() {
+function PlacesHelpCard({ title, children, modifier = '' }) {
+  return <section className={`peridot-places-help-card ${modifier}`}><h3>{title}</h3>{children}</section>;
+}
+
+function PlacesContext({ parts, workbookModel, rows = [], relationshipParts = [] }) {
+  const assignedPart = parts.find((part) => part?.placeColumn || part?.placeRef?.columnName) || parts[0] || {};
+  const ref = assignedPart?.placeRef;
+  const sourceColumn = ref?.columnName || assignedPart?.placeColumn || '';
+  const sourceSheet = ref?.sheetName ? getWorkbookSheet(workbookModel, ref.sheetName) : null;
+  const sourceRows = sourceSheet?.rows || rows;
+  const values = sourceColumn ? getNonBlankExampleValues(sourceRows, sourceColumn, 5) : [];
+  const multi = assignedPart?.valueHandling?.cardinality === 'multiple';
+  const placeRole = assignedPart?.roleLabel?.trim() || (assignedPart?.roleMode === 'column' ? 'a separate source column' : 'the source column heading');
+  const contextLabel = ref?.sheetName ? `${ref.sheetName} — ${sourceColumn}` : sourceColumn;
   return (
-    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Used for</div>
-      <p className="mt-3">Place information supports maps, Inspector records, search and filter, charts, and export.</p>
-      <p className="mt-3">Coordinates allow Peridot to place locations on maps.</p>
-      <p className="mt-3">If one row contains several places, Peridot can preserve each place and its role separately.</p>
+    <aside className="peridot-places-context" aria-label="Places examples and guidance">
+      <PlacesHelpCard title="Examples from your data">
+        {values.length ? (
+          <>
+            <p className="peridot-places-card-caption">Selected field: {contextLabel}</p>
+            <ul className="peridot-places-example-list">{values.map((value, i) => <li key={`${i}-${value}`} title={String(value)}>{value}</li>)}</ul>
+          </>
+        ) : <p className="peridot-places-card-caption">Choose a place column to see its original values here.</p>}
+      </PlacesHelpCard>
+      <PlacesHelpCard title="Current interpretation">
+        {sourceColumn ? (
+          <p>Peridot will read <strong>{contextLabel}</strong> as place information. {multi ? 'Some cells can contain multiple place values.' : 'Each cell contains at most one place value.'} The place role comes from <strong>{placeRole}</strong>.{relationshipParts.length ? ' Subject attribution is configured below.' : ''}</p>
+        ) : <p>No place column is assigned yet. You can leave this section unused if the dataset has no mapped places.</p>}
+      </PlacesHelpCard>
+      <PlacesHelpCard title="Additional context" modifier="peridot-compact-additional-context"><h4 className="peridot-compact-context-subhead">Used for</h4>
+        <ul className="peridot-places-bullet-list">
+          <li>Locations in maps when usable coordinates and relationships are available</li>
+          <li>Inspector records, search, and filtering</li>
+          <li>Charts and exports where supported</li>
+          <li>Separate place roles and subject-specific evidence</li>
+        </ul><div className="peridot-compact-context-divider"/><h4 className="peridot-compact-context-subhead">Good to know</h4><ul className="peridot-compact-context-notes"><li>A place value identifies a location; its role explains its relationship to the record.</li><li>A dataset can have multiple place roles or no mapped places at all.</li></ul>
+      </PlacesHelpCard>
+
     </aside>
+  );
+}
+
+function PlaceQuestionHeading({ primary = false, letter, title, children }) {
+  return (
+    <div className={`peridot-place-question-heading ${primary ? 'peridot-place-question-primary' : 'peridot-place-question-secondary'}`}>
+      <span className="peridot-place-question-marker" aria-hidden="true">{primary ? '1' : letter}</span>
+      <div><h4>{title}</h4>{children}</div>
+    </div>
   );
 }
 
@@ -813,9 +827,9 @@ function PlacePartCard({ part, index, headers, rows, relationshipParts = [], onC
   const usesMultiplePlaceValues = part?.valueHandling?.cardinality === 'multiple';
 
   return (
-    <section className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/30 p-4">
+    <section className="peridot-place-part-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/30 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-[16px] font-bold leading-tight text-[var(--panel-card-text)]">{label}</div>
+        <div className="peridot-place-part-title">{label}<span> · Mapping details</span></div>
         {index > 0 ? (
           <button
             type="button"
@@ -827,15 +841,11 @@ function PlacePartCard({ part, index, headers, rows, relationshipParts = [], onC
         ) : null}
       </div>
 
-      <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
-        <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Which column contains the place?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Choose the column whose values name or identify this place.
-          </p>
-        </div>
+      <div className="peridot-place-primary-row mt-4 grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+        <PlaceQuestionHeading primary title={<>Which column contains the place? <MappingInfo text="Choose the column whose values name or identify this place." /></>} />
         <div className="min-w-0">
           <select
+            aria-label="Place source column"
             value={selectedPlaceColumn}
             onChange={(event) => onChange({ placeColumn: event.target.value })}
             className={SOURCE_SELECT_CLASS}
@@ -847,8 +857,10 @@ function PlacePartCard({ part, index, headers, rows, relationshipParts = [], onC
         </div>
       </div>
 
-      <div className="my-4"><SectionDivider /></div>
-      <PeridotValueHandlingControl
+      <div className="peridot-place-refinement-heading"><MappingRefinementMarker value="↳" className="peridot-place-refinement-marker" /><div><h3>Then refine this place field <MappingInfo text="These details help Peridot interpret the selected place values." /></h3></div></div>
+      <div className="peridot-place-subquestion peridot-place-subquestion-a">
+        <MappingRefinementMarker value="a" className="peridot-place-subquestion-letter" />
+        <PeridotValueHandlingControl
         valueHandling={part?.valueHandling}
         onChange={(valueHandling) => onChange(
           valueHandling?.cardinality === 'multiple'
@@ -863,34 +875,31 @@ function PlacePartCard({ part, index, headers, rows, relationshipParts = [], onC
         disabled={!selectedPlaceColumn}
       />
 
-      <div className="my-4"><SectionDivider /></div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+      </div>
+      <div className="peridot-place-subquestion peridot-place-subquestion-b">
+        <MappingRefinementMarker value="b" className="peridot-place-subquestion-letter" />
+        <div className="peridot-guide-question-row grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Name this place role <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span></div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Use a fixed researcher-defined name when the source heading does not describe how this place relates to the selected participant, such as “Place of childbirth.”
-          </p>
+          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Name this place role <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span> <MappingInfo text="Use a fixed researcher-defined name when the source heading does not describe how this place relates to the selected participant, such as “Place of childbirth.” If supplied, this name takes precedence over the source-derived role; the original source field is preserved." /></div>
         </div>
         <div>
           <input
+            aria-label="Custom place role"
             value={part?.roleLabel || ''}
             onChange={(event) => onChange({ roleLabel: event.target.value })}
             placeholder="e.g. Place of childbirth, Residence, Court"
             className={SOURCE_SELECT_CLASS}
           />
-          <p className="mt-1.5 text-[11px] leading-relaxed text-[var(--panel-card-muted-text)]">If supplied, this name takes precedence over the source-derived role below. The original source column is still preserved.</p>
+          
         </div>
       </div>
 
-      <div className="my-4"><SectionDivider /></div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+      </div>
+      <div className="peridot-place-subquestion peridot-place-subquestion-c">
+        <MappingRefinementMarker value="c" className="peridot-place-subquestion-letter" />
+        <div className="peridot-guide-question-row grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Which column contains the place?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Choose the column whose values name or identify this place.
-          </p>
+          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Where is the role of this place recorded? <MappingInfo text="The role identifies how this place relates to the record or participant, such as birthplace, residence, court, or origin." /></div>
         </div>
         <div className="space-y-3">
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
@@ -903,7 +912,6 @@ function PlacePartCard({ part, index, headers, rows, relationshipParts = [], onC
             />
             <span>
               <span className="font-semibold">In the column heading</span>
-              {selectedPlaceColumn ? <span className="text-[var(--panel-card-muted-text)]"> — {selectedPlaceColumn}</span> : null}
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
@@ -932,16 +940,15 @@ function PlacePartCard({ part, index, headers, rows, relationshipParts = [], onC
         </div>
       </div>
 
-      <div className="my-4"><SectionDivider /></div>
-
+      </div>
+      <div className="peridot-place-advanced-details">
+        <h3>Additional place details <MappingInfo text="Use these settings if your data connects places to specific participants or records coordinates." /></h3>
       {(relationshipParts || []).length ? (
         <>
-          <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+          <div className="peridot-guide-question-row peridot-place-detail-question grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
             <div>
-              <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Who or what does this place describe?</div>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-                Choose every mapped participant or the row itself that this place genuinely describes. The same mapped place can support several separate subject-specific assertions.
-              </p>
+              <div className="peridot-guide-detail-label"><MappingQuestionMarker sub>d</MappingQuestionMarker><span>Who or what does this place describe? <MappingInfo text="Choose every mapped participant or the row itself that this place genuinely describes. The same mapped place can support several separate subject-specific assertions." /></span></div>
+              
             </div>
             <PeridotSubjectSelectionControl
               value={part?.subjectSelection}
@@ -960,11 +967,9 @@ function PlacePartCard({ part, index, headers, rows, relationshipParts = [], onC
         </>
       ) : null}
 
-      <div>
-        <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Coordinates for this place <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span></div>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-          Choose a combined coordinate column, or separate latitude and longitude columns, if your source records them.
-        </p>
+      <div className="peridot-place-detail-question peridot-place-coordinate-question">
+        <div className="peridot-guide-detail-label"><MappingQuestionMarker sub>e</MappingQuestionMarker><span>Coordinates for this place <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span> <MappingInfo text="Choose a combined coordinate column, or separate latitude and longitude columns, if your source records them." /></span></div>
+        
         {usesMultiplePlaceValues ? (
           <p className="mt-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2 text-xs leading-relaxed text-[var(--panel-card-muted-text)]">
             Coordinates are unavailable for multi-value place cells. If each place has different coordinates, store the places in separate rows, columns, or a related sheet so Peridot can see which coordinates belong to which place.
@@ -1012,6 +1017,7 @@ function PlacePartCard({ part, index, headers, rows, relationshipParts = [], onC
           </label>
         </div>
       </div>
+      </div>
     </section>
   );
 }
@@ -1035,10 +1041,10 @@ export function SpatialMappingPanel({ headers, rows = [], placeParts = [], relat
   };
 
   return (
-    <div className="space-y-3">
+    <div className="peridot-places-workspace">
       <PlacesIntro />
-      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-5">
-        <div className="grid gap-7 lg:grid-cols-[minmax(0,1.62fr)_minmax(17rem,0.72fr)]">
+      <div className="peridot-places-content-grid">
+        <div className="peridot-places-editing-column">
           <div className="min-w-0 space-y-4">
             {effectiveParts.map((part, index) => (
               <PlacePartCard
@@ -1060,8 +1066,8 @@ export function SpatialMappingPanel({ headers, rows = [], placeParts = [], relat
               + Add another place
             </button>
           </div>
-          <PlacesUsagePanel />
         </div>
+        <PlacesContext parts={effectiveParts} rows={rows} relationshipParts={relationshipParts} />
       </div>
     </div>
   );
@@ -1086,10 +1092,10 @@ export function WorkbookSpatialMappingPanel({ workbookModel, placeParts = [], re
   };
 
   return (
-    <div className="space-y-3">
+    <div className="peridot-places-workspace">
       <PlacesIntro />
-      <div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-5">
-        <div className="grid gap-7 lg:grid-cols-[minmax(0,1.62fr)_minmax(17rem,0.72fr)]">
+      <div className="peridot-places-content-grid">
+        <div className="peridot-places-editing-column">
           <div className="min-w-0 space-y-4">
             {effectiveParts.map((part, index) => (
               <WorkbookPlacePartCard
@@ -1110,8 +1116,8 @@ export function WorkbookSpatialMappingPanel({ workbookModel, placeParts = [], re
               + Add another place
             </button>
           </div>
-          <PlacesUsagePanel />
         </div>
+        <PlacesContext parts={effectiveParts} workbookModel={workbookModel} relationshipParts={relationshipParts} />
       </div>
     </div>
   );
@@ -1127,18 +1133,10 @@ const EMPTY_RELATIONSHIP_PART = Object.freeze({
 });
 
 function RelationshipIntro() {
-  return (
-    <div className="peridot-mapping-intro-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Relations</div>
-      <div className="mt-1 text-lg font-bold text-[var(--panel-card-text)]">What connections are recorded in each row?</div>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Choose the columns that identify the people, places, organizations, objects, or other things connected by this row. A relationship can have two parts or many parts.
-      </p>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        <span className="font-semibold text-[var(--panel-card-text)]">Examples:</span> sender and recipient of a letter, parent and child, members of a family, origin and destination, people involved in a legal case, owner and object, organization and member, etc.
-      </p>
-    </div>
-  );
+  return <MappingStageIntro section="Relations" kind="relations"
+    title="What connections are recorded in each row?"
+    description="Choose columns identifying the people, places, organizations, objects, or other participants connected by a row. A relationship may have two or many parts."
+    help="A participant is someone or something connected in the record. Its role explains how it is connected, such as sender, recipient, parent, child, or owner." />;
 }
 
 function RelationshipExamples({ rows = [], sourceColumn = '' }) {
@@ -1164,21 +1162,20 @@ function RelationshipExamples({ rows = [], sourceColumn = '' }) {
   );
 }
 
-function RelationshipUsagePanel() {
-  return (
-    <aside className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] p-4 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-      <div className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--muted-text)]">Used for</div>
-      <p className="mt-3">
-        Relationship information supports network visualizations, Inspector records, search and filter, charts, and export.
-      </p>
-      <p className="mt-3">
-        Each part of a relationship can have its own role.
-      </p>
-      <p className="mt-3">
-        Relationships may include two participants or many participants.
-      </p>
-    </aside>
-  );
+function RelationshipUsagePanel({parts=[],rows=[],workbookModel}) {
+  const first=parts.find(part=>part?.participantColumn || part?.participantRef?.columnName) || parts[0] || {};
+  const sourceRef=first.participantRef || {};
+  const column=sourceRef.columnName || first.participantColumn || '';
+  const sheet=sourceRef.sheetName ? getWorkbookSheet(workbookModel,sourceRef.sheetName) : null;
+  const values=getNonBlankExampleValues(sheet?.rows || rows,column,5);
+  const field=sourceRef.sheetName ? `${sourceRef.sheetName} — ${column}` : column;
+  return <aside className="peridot-guide-context" aria-label="Relationship mapping examples and guidance">
+    <MappingGuideCard title="Examples from your data" kind="examples">
+      {values.length?<ul className="peridot-guide-example-list">{values.map((value,i)=><li key={`${i}-${value}`}>{value}</li>)}</ul>:<p>Select a participant column to view example values.</p>}
+    </MappingGuideCard>
+    <MappingGuideCard title="Current interpretation" kind="interpretation"><p>{field?<>Peridot reads <strong>{field}</strong> as a relationship participant. {first.participantValueMode==='identity-reference'?'Values reference mapped identities.':'Values are participant names or labels.'} The role {first.roleMode==='column'?'comes from another column.':'comes from the source heading.'}</>:'No participant column has been selected yet.'}</p></MappingGuideCard><MappingGuideCard title="Additional context" kind="help"><h4 className="peridot-compact-context-subhead">Used for</h4><ul className="peridot-guide-check-list"><li>Network visualizations and connected records</li><li>Inspector, search, and filtering</li><li>Charts and exports</li><li>Separate participant roles for multi-part relationships</li></ul><div className="peridot-compact-context-divider"/><h4 className="peridot-compact-context-subhead">Good to know</h4><ul className="peridot-compact-context-notes"><li>A relationship can connect two or more participants.</li><li>Each participant can have a distinct role.</li></ul></MappingGuideCard>
+    
+  </aside>;
 }
 
 function RelationshipPartCard({ part, index, headers, rows, onChange, onRemove, canRemove }) {
@@ -1188,17 +1185,14 @@ function RelationshipPartCard({ part, index, headers, rows, onChange, onRemove, 
   const letter = String.fromCharCode(65 + index);
 
   return (
-    <section className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
+    <section className="peridot-guide-entity-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-lg font-bold text-[var(--panel-card-text)]">Part {letter}</div>
-          <p className="mt-1 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            {index === 0
-              ? 'This might be the sender of a letter, the place of origin, a person on a family tree, an organization, an object, or another participant.'
-              : index === 1
-                ? 'This might be the recipient of a letter, the destination or a stop along a journey, a relative of Part A on a family tree, or another participant.'
-                : 'Add another person, place, organization, object, or other participant in this relationship.'}
-          </p>
+          <div className="text-lg font-bold text-[var(--panel-card-text)]">Part {letter} <MappingInfo label={`About Part ${letter}`} text={index === 0
+            ? 'This might be the sender of a letter, the place of origin, a person on a family tree, an organization, an object, or another participant.'
+            : index === 1
+              ? 'This might be the recipient of a letter, the destination or a stop along a journey, a relative of Part A on a family tree, or another participant.'
+              : 'Add another person, place, organization, object, or other participant in this relationship.'} /></div>
         </div>
         {canRemove ? (
           <button
@@ -1213,12 +1207,9 @@ function RelationshipPartCard({ part, index, headers, rows, onChange, onRemove, 
 
       <div className="my-4"><SectionDivider /></div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+      <div className="peridot-guide-question-row peridot-guide-relation-primary grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Which column contains this part of the relationship?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Choose the column whose values identify the person, place, organization, object, or other participant.
-          </p>
+          <div className="peridot-guide-primary-label"><MappingQuestionMarker>1</MappingQuestionMarker><span>Which column contains this part of the relationship? <MappingInfo text="Choose the column whose values identify the person, place, organization, object, or other participant." /></span></div>
         </div>
         <div>
           <select
@@ -1229,46 +1220,51 @@ function RelationshipPartCard({ part, index, headers, rows, onChange, onRemove, 
             <option value="">Unassigned</option>
             {headers.map((header) => <option key={header} value={header}>{header}</option>)}
           </select>
-          <RelationshipExamples rows={rows} sourceColumn={participantColumn} />
+          
         </div>
       </div>
 
       <div className="my-4"><SectionDivider /></div>
+      <div className="peridot-guide-refinement-caption"><MappingQuestionMarker sub>↳</MappingQuestionMarker><div><strong>Then refine this relationship field <MappingInfo text="Describe how this participant should be interpreted." /></strong></div></div>
+      <div className="peridot-guide-relation-refinement-group">
+        <div className="peridot-guide-relation-refinement-item">
+          <MappingRefinementMarker value="a" className="peridot-guide-relation-refinement-marker" />
+          <div className="peridot-guide-relation-refinement-content">
       <PeridotValueHandlingControl
         valueHandling={part?.valueHandling}
         onChange={(valueHandling) => onChange({ valueHandling })}
         disabled={!participantColumn}
       />
+          </div>
+        </div>
 
-      <div className="my-4"><SectionDivider /></div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+        <div className="peridot-guide-relation-refinement-item">
+          <MappingRefinementMarker value="b" className="peridot-guide-relation-refinement-marker" />
+          <div className="peridot-guide-relation-refinement-content">
+            <div className="peridot-guide-question-row peridot-guide-relation-detail grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">What does this column contain?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Most relationship fields contain the participant&apos;s name or label. Choose ID references when the values instead point to IDs for people or entities recorded elsewhere in your mapped data.
-          </p>
+          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">What does this column contain? <MappingInfo text="Most relationship fields contain the participant's name or label. Choose ID references when the values instead point to IDs for people or entities recorded elsewhere in your mapped data." /></div>
         </div>
         <div className="space-y-3">
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
             <input type="radio" name={`relationship-value-mode-${index}`} checked={part?.participantValueMode !== 'identity-reference'} onChange={() => onChange({ participantValueMode: 'label' })} className="mt-0.5" />
-            <span><span className="font-semibold">Names or labels</span><span className="mt-0.5 block text-xs text-[var(--panel-card-muted-text)]">Show the values in this column as the participant names or labels.</span></span>
+            <span className="font-semibold">Names or labels</span>
           </label>
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
             <input type="radio" name={`relationship-value-mode-${index}`} checked={part?.participantValueMode === 'identity-reference'} onChange={() => onChange({ participantValueMode: 'identity-reference' })} className="mt-0.5" />
-            <span><span className="font-semibold">IDs that identify records elsewhere in the data</span><span className="mt-0.5 block text-xs text-[var(--panel-card-muted-text)]">Use the Identity controls below to connect this part to the same ID system used by those records. Peridot will keep the source IDs but show the mapped entity labels when they can be resolved.</span></span>
+            <span className="font-semibold">IDs that identify records elsewhere in the data</span>
           </label>
         </div>
       </div>
 
-      <div className="my-4"><SectionDivider /></div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+          </div>
+        </div>
+        <div className="peridot-guide-relation-refinement-item">
+          <MappingRefinementMarker value="c" className="peridot-guide-relation-refinement-marker" />
+          <div className="peridot-guide-relation-refinement-content">
+            <div className="peridot-guide-question-row peridot-guide-relation-detail grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Where is this part&apos;s role recorded?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            The role explains how this participant takes part in the relationship, such as sender, recipient, mother, child, witness, owner, or member.
-          </p>
+          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Where is this part&apos;s role recorded? <MappingInfo text="The role explains how this participant takes part in the relationship, such as sender, recipient, mother, child, witness, owner, or member." /></div>
         </div>
         <div className="space-y-3">
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
@@ -1281,7 +1277,6 @@ function RelationshipPartCard({ part, index, headers, rows, onChange, onRemove, 
             />
             <span>
               <span className="font-semibold">In the column heading</span>
-              {participantColumn ? <span className="text-[var(--panel-card-muted-text)]"> — {participantColumn}</span> : null}
             </span>
           </label>
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
@@ -1308,6 +1303,9 @@ function RelationshipPartCard({ part, index, headers, rows, onChange, onRemove, 
             </div>
           ) : null}
         </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -1323,11 +1321,9 @@ function RelationshipMetadataSection({
   const relationshipLabelColumn = relationshipMetadataMapping?.Relationship_Label || '';
 
   return (
-    <section className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
-      <div className="text-lg font-bold text-[var(--panel-card-text)]">Relationship information <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span></div>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Map columns that describe the relationship as a whole rather than one participant&apos;s role.
-      </p>
+    <section className="peridot-guide-entity-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
+      <div className="text-lg font-bold text-[var(--panel-card-text)]">Relationship information <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span> <MappingInfo text="Map columns that describe the relationship as a whole rather than one participant&apos;s role." /></div>
+      
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <label className="min-w-0">
           <div className="mb-1 text-sm font-semibold text-[var(--panel-card-text)]">Relationship type</div>
@@ -1420,7 +1416,7 @@ export function RelationshipMappingPanel({
               onMetadataChange={onMetadataChange}
             />
           </div>
-          <RelationshipUsagePanel />
+          <RelationshipUsagePanel parts={effectiveParts} rows={rows} />
         </div>
       </div>
     </div>
@@ -1448,17 +1444,14 @@ function WorkbookRelationshipPartCard({ part, index, workbookModel, onChange, on
   const headingLabel = participantRef?.columnName ? `${participantRef.sheetName} — ${participantRef.columnName}` : '';
 
   return (
-    <section className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
+    <section className="peridot-guide-entity-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-lg font-bold text-[var(--panel-card-text)]">Part {letter}</div>
-          <p className="mt-1 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            {index === 0
-              ? 'This might be the sender of a letter, the place of origin, a person on a family tree, an organization, an object, or another participant.'
-              : index === 1
-                ? 'This might be the recipient of a letter, the destination or a stop along a journey, a relative of Part A on a family tree, or another participant.'
-                : 'Add another person, place, organization, object, or other participant in this relationship.'}
-          </p>
+          <div className="text-lg font-bold text-[var(--panel-card-text)]">Part {letter} <MappingInfo label={`About Part ${letter}`} text={index === 0
+            ? 'This might be the sender of a letter, the place of origin, a person on a family tree, an organization, an object, or another participant.'
+            : index === 1
+              ? 'This might be the recipient of a letter, the destination or a stop along a journey, a relative of Part A on a family tree, or another participant.'
+              : 'Add another person, place, organization, object, or other participant in this relationship.'} /></div>
         </div>
         {canRemove ? (
           <button
@@ -1473,12 +1466,9 @@ function WorkbookRelationshipPartCard({ part, index, workbookModel, onChange, on
 
       <div className="my-4"><SectionDivider /></div>
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+      <div className="peridot-guide-question-row peridot-guide-relation-primary grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Which column contains this part of the relationship?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Choose the sheet and column whose values identify the person, place, organization, object, or other participant.
-          </p>
+          <div className="peridot-guide-primary-label"><MappingQuestionMarker>1</MappingQuestionMarker><span>Which column contains this part of the relationship? <MappingInfo text="Choose the sheet and column whose values identify the person, place, organization, object, or other participant." /></span></div>
         </div>
         <div>
           <WorkbookFieldSelect
@@ -1486,46 +1476,51 @@ function WorkbookRelationshipPartCard({ part, index, workbookModel, onChange, on
             currentRef={participantRef}
             onChange={(ref) => onChange({ participantRef: ref })}
           />
-          <WorkbookRelationshipExamples workbookModel={workbookModel} sourceRef={participantRef} />
+          
         </div>
       </div>
 
       <div className="my-4"><SectionDivider /></div>
+      <div className="peridot-guide-refinement-caption"><MappingQuestionMarker sub>↳</MappingQuestionMarker><div><strong>Then refine this relationship field <MappingInfo text="Describe how this participant should be interpreted." /></strong></div></div>
+      <div className="peridot-guide-relation-refinement-group">
+        <div className="peridot-guide-relation-refinement-item">
+          <MappingRefinementMarker value="a" className="peridot-guide-relation-refinement-marker" />
+          <div className="peridot-guide-relation-refinement-content">
       <PeridotValueHandlingControl
         valueHandling={part?.valueHandling}
         onChange={(valueHandling) => onChange({ valueHandling })}
         disabled={!participantRef?.columnName}
       />
+          </div>
+        </div>
 
-      <div className="my-4"><SectionDivider /></div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+        <div className="peridot-guide-relation-refinement-item">
+          <MappingRefinementMarker value="b" className="peridot-guide-relation-refinement-marker" />
+          <div className="peridot-guide-relation-refinement-content">
+            <div className="peridot-guide-question-row peridot-guide-relation-detail grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">What does this column contain?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            Most relationship fields contain the participant&apos;s name or label. Choose ID references when the values instead point to IDs for people or entities recorded elsewhere in your mapped data.
-          </p>
+          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">What does this column contain? <MappingInfo text="Most relationship fields contain the participant's name or label. Choose ID references when the values instead point to IDs for people or entities recorded elsewhere in your mapped data." /></div>
         </div>
         <div className="space-y-3">
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
             <input type="radio" name={`workbook-relationship-value-mode-${index}`} checked={part?.participantValueMode !== 'identity-reference'} onChange={() => onChange({ participantValueMode: 'label' })} className="mt-0.5" />
-            <span><span className="font-semibold">Names or labels</span><span className="mt-0.5 block text-xs text-[var(--panel-card-muted-text)]">Show the values in this column as the participant names or labels.</span></span>
+            <span className="font-semibold">Names or labels</span>
           </label>
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
             <input type="radio" name={`workbook-relationship-value-mode-${index}`} checked={part?.participantValueMode === 'identity-reference'} onChange={() => onChange({ participantValueMode: 'identity-reference' })} className="mt-0.5" />
-            <span><span className="font-semibold">IDs that identify records elsewhere in the data</span><span className="mt-0.5 block text-xs text-[var(--panel-card-muted-text)]">Use the Identity controls below to connect this part to the same ID system used by those records. Peridot will keep the source IDs but show the mapped entity labels when they can be resolved.</span></span>
+            <span className="font-semibold">IDs that identify records elsewhere in the data</span>
           </label>
         </div>
       </div>
 
-      <div className="my-4"><SectionDivider /></div>
-
-      <div className="grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
+          </div>
+        </div>
+        <div className="peridot-guide-relation-refinement-item">
+          <MappingRefinementMarker value="c" className="peridot-guide-relation-refinement-marker" />
+          <div className="peridot-guide-relation-refinement-content">
+            <div className="peridot-guide-question-row peridot-guide-relation-detail grid gap-5 lg:grid-cols-[minmax(14rem,0.9fr)_minmax(16rem,1.1fr)]">
         <div>
-          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Where is this part&apos;s role recorded?</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-            The role explains how this participant takes part in the relationship, such as sender, recipient, mother, child, witness, owner, or member.
-          </p>
+          <div className="text-[15px] font-bold leading-tight text-[var(--panel-card-text)]">Where is this part&apos;s role recorded? <MappingInfo text="The role explains how this participant takes part in the relationship, such as sender, recipient, mother, child, witness, owner, or member." /></div>
         </div>
         <div className="space-y-3">
           <label className="flex cursor-pointer items-start gap-2 rounded-xl border border-[var(--panel-card-border)] bg-[var(--stat-card-bg)] px-3 py-2.5 text-sm text-[var(--panel-card-text)]">
@@ -1538,7 +1533,6 @@ function WorkbookRelationshipPartCard({ part, index, workbookModel, onChange, on
             />
             <span>
               <span className="font-semibold">In the column heading</span>
-              {headingLabel ? <span className="text-[var(--panel-card-muted-text)]"> — {headingLabel}</span> : null}
             </span>
           </label>
 
@@ -1564,6 +1558,9 @@ function WorkbookRelationshipPartCard({ part, index, workbookModel, onChange, on
             </div>
           ) : null}
         </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
@@ -1574,13 +1571,11 @@ function WorkbookRelationshipMetadataSection({ workbookModel, relationshipMetada
   const relationshipLabelRef = relationshipMetadataMappings?.Relationship_Label || makeWorkbookColumnRef('', '');
 
   return (
-    <section className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
+    <section className="peridot-guide-entity-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4">
       <div className="text-lg font-bold text-[var(--panel-card-text)]">
         Relationship information <span className="font-normal text-[var(--panel-card-muted-text)]">(optional)</span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--panel-card-muted-text)]">
-        Map columns that describe the relationship as a whole rather than one participant&apos;s role.
-      </p>
+      
 
       <div className="mt-4 grid gap-4 md:grid-cols-2">
         <label className="min-w-0">
@@ -1666,7 +1661,7 @@ export function WorkbookRelationshipMappingPanel({ workbookModel, workbookMappin
               onMetadataChange={onMetadataChange}
             />
           </div>
-          <RelationshipUsagePanel />
+          <RelationshipUsagePanel parts={effectiveParts} workbookModel={workbookModel} />
         </div>
       </div>
     </div>
@@ -1689,7 +1684,7 @@ function WorkbookEndpointControls({ workbookModel, mapping, prefix = '', onPatch
 export function WorkbookTemporalMappingTable({ workbookModel, workbookMapping, onAssertionsChange }) {
   const temporalAssertions = workbookMapping.temporalAssertionMappings || [];
   const update=(index,patch)=>onAssertionsChange?.((currentMappings)=>(currentMappings||[]).map((m,i)=>i===index?{...m,...patch}:m)); const remove=(index)=>onAssertionsChange?.((currentMappings)=>(currentMappings||[]).filter((_,i)=>i!==index)); const add=()=>onAssertionsChange?.((currentMappings)=>[...(currentMappings||[]),{id:`time-${Date.now()}`,role:'',kind:'date',sourceMode:'single',column:makeWorkbookColumnRef('',''),noteColumns:[],subjectSelection:{includeRecord:true,participantIndices:[]}}]);
-  return <div className="space-y-3"><TemporalIntro/><div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-5"><div className="grid gap-7 lg:grid-cols-[minmax(0,1.62fr)_minmax(17rem,0.72fr)]"><div className="space-y-4 min-w-0">{temporalAssertions.map((mapping,index)=>{const kind=mapping.kind==='period'?'period':'date'; return <div key={mapping.id||index} className="rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4"><div className="flex items-start justify-between gap-3"><div className="text-[15px] font-bold text-[var(--panel-card-text)]">Time {index+1}</div><button type="button" onClick={()=>remove(index)} className="rounded-lg border border-[var(--input-border)] px-2 py-1 text-xs text-[var(--panel-card-muted-text)]">Remove</button></div><div className="mt-3 grid gap-3 sm:grid-cols-2"><label className="text-xs font-semibold text-[var(--muted-text)]">Name this date or period<input value={mapping.role||''} onChange={(e)=>update(index,{role:e.target.value})} placeholder="e.g. Birth, Creation date, Lifespan, Reign" className={`${SOURCE_SELECT_CLASS} mt-1`}/><span className="mt-1 block text-[11px] font-normal leading-relaxed text-[var(--panel-card-muted-text)]">Peridot will use this name to identify the time later in Timeline, Search, Inspector, and Export.</span></label><label className="text-xs font-semibold text-[var(--muted-text)]">What kind of time is it?<select value={kind} onChange={(e)=>update(index,{kind:e.target.value,sourceMode:'single'})} className={`${SOURCE_SELECT_CLASS} mt-1`}><option value="date">Date</option><option value="period">Period / range</option></select></label></div>{(workbookMapping.relationshipParts || []).length ? <div className="mt-4"><PeridotSubjectSelectionControl value={mapping.subjectSelection} legacySubjectParticipantIndex={mapping.subjectParticipantIndex} participants={(workbookMapping.relationshipParts || []).map((part, participantIndex) => { const ref = part?.participantRef || makeWorkbookColumnRef('', ''); return { index: participantIndex, label: `Part ${String.fromCharCode(65 + participantIndex)} — ${ref?.columnName ? `${ref.sheetName} — ${ref.columnName}` : `Relationship part ${participantIndex + 1}`}` }; })} noun="date or period" onChange={(subjectSelection)=>update(index,{subjectSelection,subjectParticipantIndex:null})}/></div> : null}<div className="mt-4">{kind==='date'?<WorkbookEndpointControls workbookModel={workbookModel} mapping={mapping} onPatch={(patch)=>update(index,patch)}/>:<div className="space-y-3"><label className="block text-xs font-semibold text-[var(--muted-text)]">How is this period stored?<select value={mapping.sourceMode==='endpoints'?'endpoints':'single'} onChange={(e)=>update(index,{sourceMode:e.target.value})} className={`${SOURCE_SELECT_CLASS} mt-1`}><option value="single">In one column</option><option value="endpoints">In separate beginning and ending fields</option></select></label>{mapping.sourceMode==='endpoints'?<div className="grid gap-4 xl:grid-cols-2"><div className="rounded-xl border border-[var(--panel-card-border)] p-3"><div className="mb-2 text-sm font-bold text-[var(--panel-card-text)]">Beginning</div><WorkbookEndpointControls workbookModel={workbookModel} mapping={mapping} prefix="start" onPatch={(patch)=>update(index,patch)}/></div><div className="rounded-xl border border-[var(--panel-card-border)] p-3"><div className="mb-2 text-sm font-bold text-[var(--panel-card-text)]">Ending</div><WorkbookEndpointControls workbookModel={workbookModel} mapping={mapping} prefix="end" onPatch={(patch)=>update(index,patch)}/></div></div>:<WorkbookTemporalRefControl workbookModel={workbookModel} label="Period column" currentRef={mapping.column} onChange={(ref)=>update(index,{column:ref})}/>}</div>}</div>{(kind==='date'?mapping.sourceMode!=='parts':mapping.sourceMode!=='endpoints')?<div className="mt-4 border-t border-[var(--panel-card-border)] pt-4"><PeridotValueHandlingControl valueHandling={mapping.valueHandling} onChange={(valueHandling)=>update(index,{valueHandling})} disabled={!mapping.column?.columnName}/></div>:null}<div className="mt-4 border-t border-[var(--panel-card-border)] pt-3"><div className="text-xs font-semibold text-[var(--muted-text)]">Related temporal notes (optional)</div>{(mapping.noteColumns||[]).map((ref,noteIndex)=><div key={noteIndex} className="mt-2 flex max-w-xl gap-2"><div className="min-w-0 max-w-md flex-1"><WorkbookFieldSelect workbookModel={workbookModel} currentRef={ref||{}} onChange={(nextRef)=>{const notes=[...(mapping.noteColumns||[])];notes[noteIndex]=nextRef;update(index,{noteColumns:notes});}}/></div><button type="button" onClick={()=>update(index,{noteColumns:(mapping.noteColumns||[]).filter((_,i)=>i!==noteIndex)})} className="rounded-lg border border-[var(--input-border)] px-2 text-xs text-[var(--panel-card-muted-text)]">Remove</button></div>)}<button type="button" onClick={()=>update(index,{noteColumns:[...(mapping.noteColumns||[]),makeWorkbookColumnRef('','')]})} className="mt-3 rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-3 py-2 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]">+ Add related note column</button></div></div>})}<button type="button" onClick={add} className="rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-3 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]">+ Add date or period</button></div><TemporalUsagePanel/></div></div></div>;
+  return <div className="space-y-3"><TemporalIntro/><div className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-5"><div className="grid gap-7 lg:grid-cols-[minmax(0,1.62fr)_minmax(17rem,0.72fr)]"><div className="space-y-4 min-w-0">{temporalAssertions.map((mapping,index)=>{const kind=mapping.kind==='period'?'period':'date'; return <div key={mapping.id||index} className="peridot-guide-entity-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--input-bg)]/35 p-4"><div className="flex items-start justify-between gap-3"><div className="text-[15px] font-bold text-[var(--panel-card-text)]">Time {index+1}</div><button type="button" onClick={()=>remove(index)} className="rounded-lg border border-[var(--input-border)] px-2 py-1 text-xs text-[var(--panel-card-muted-text)]">Remove</button></div><div className="peridot-guide-time-primary peridot-guide-time-primary-question mt-3 grid gap-3 sm:grid-cols-2"><div className="peridot-guide-time-question-heading"><MappingQuestionMarker>1</MappingQuestionMarker><span>What date or period does this field represent?</span></div><label className="text-xs font-semibold text-[var(--muted-text)]">Name this date or period <MappingInfo text="Peridot will use this name to identify the time later in Timeline, Search, Inspector, and Export." /><input value={mapping.role||''} onChange={(e)=>update(index,{role:e.target.value})} placeholder="e.g. Birth, Creation date, Lifespan, Reign" className={`${SOURCE_SELECT_CLASS} mt-1`}/></label><label className="text-xs font-semibold text-[var(--muted-text)]">What kind of time is it?<select value={kind} onChange={(e)=>update(index,{kind:e.target.value,sourceMode:'single'})} className={`${SOURCE_SELECT_CLASS} mt-1`}><option value="date">Date</option><option value="period">Period / range</option></select></label></div><div className="peridot-guide-refinement-caption peridot-guide-time-refinement"><MappingQuestionMarker sub>↳</MappingQuestionMarker><div><strong>Then describe this temporal field <MappingInfo text="Identify its subject, source values, and any additional notes." /></strong></div></div>{(workbookMapping.relationshipParts || []).length ? <div className="peridot-time-detail-question peridot-time-detail-a mt-4" data-marker="a"><PeridotSubjectSelectionControl value={mapping.subjectSelection} legacySubjectParticipantIndex={mapping.subjectParticipantIndex} participants={(workbookMapping.relationshipParts || []).map((part, participantIndex) => { const ref = part?.participantRef || makeWorkbookColumnRef('', ''); return { index: participantIndex, label: `Part ${String.fromCharCode(65 + participantIndex)} — ${ref?.columnName ? `${ref.sheetName} — ${ref.columnName}` : `Relationship part ${participantIndex + 1}`}` }; })} noun="date or period" onChange={(subjectSelection)=>update(index,{subjectSelection,subjectParticipantIndex:null})}/></div> : null}<div className="peridot-time-detail-question peridot-time-detail-b mt-4" data-marker="b">{kind==='date'?<WorkbookEndpointControls workbookModel={workbookModel} mapping={mapping} onPatch={(patch)=>update(index,patch)}/>:<div className="space-y-3"><label className="block text-xs font-semibold text-[var(--muted-text)]">How is this period stored?<select value={mapping.sourceMode==='endpoints'?'endpoints':'single'} onChange={(e)=>update(index,{sourceMode:e.target.value})} className={`${SOURCE_SELECT_CLASS} mt-1`}><option value="single">In one column</option><option value="endpoints">In separate beginning and ending fields</option></select></label>{mapping.sourceMode==='endpoints'?<div className="grid gap-4 xl:grid-cols-2"><div className="rounded-xl border border-[var(--panel-card-border)] p-3"><div className="mb-2 text-sm font-bold text-[var(--panel-card-text)]">Beginning</div><WorkbookEndpointControls workbookModel={workbookModel} mapping={mapping} prefix="start" onPatch={(patch)=>update(index,patch)}/></div><div className="rounded-xl border border-[var(--panel-card-border)] p-3"><div className="mb-2 text-sm font-bold text-[var(--panel-card-text)]">Ending</div><WorkbookEndpointControls workbookModel={workbookModel} mapping={mapping} prefix="end" onPatch={(patch)=>update(index,patch)}/></div></div>:<WorkbookTemporalRefControl workbookModel={workbookModel} label="Period column" currentRef={mapping.column} onChange={(ref)=>update(index,{column:ref})}/>}</div>}</div>{(kind==='date'?mapping.sourceMode!=='parts':mapping.sourceMode!=='endpoints')?<div className="peridot-time-detail-question peridot-time-detail-c mt-4 border-t border-[var(--panel-card-border)] pt-4" data-marker="c"><PeridotValueHandlingControl valueHandling={mapping.valueHandling} onChange={(valueHandling)=>update(index,{valueHandling})} disabled={!mapping.column?.columnName}/></div>:null}<div className="peridot-time-detail-question peridot-time-detail-d mt-4 border-t border-[var(--panel-card-border)] pt-3" data-marker="d"><div className="text-xs font-semibold text-[var(--muted-text)]">Related temporal notes (optional) <MappingInfo text="Select any additional source columns that provide notes about this temporal assertion. These are preserved as evidence, not treated as commands about visualization." /></div>{(mapping.noteColumns||[]).map((ref,noteIndex)=><div key={noteIndex} className="mt-2 flex max-w-xl gap-2"><div className="min-w-0 max-w-md flex-1"><WorkbookFieldSelect workbookModel={workbookModel} currentRef={ref||{}} onChange={(nextRef)=>{const notes=[...(mapping.noteColumns||[])];notes[noteIndex]=nextRef;update(index,{noteColumns:notes});}}/></div><button type="button" onClick={()=>update(index,{noteColumns:(mapping.noteColumns||[]).filter((_,i)=>i!==noteIndex)})} className="rounded-lg border border-[var(--input-border)] px-2 text-xs text-[var(--panel-card-muted-text)]">Remove</button></div>)}<button type="button" onClick={()=>update(index,{noteColumns:[...(mapping.noteColumns||[]),makeWorkbookColumnRef('','')]})} className="mt-3 rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-3 py-2 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]">+ Add related note column</button></div></div>})}<button type="button" onClick={add} className="rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-3 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]">+ Add date or period</button></div><TemporalUsagePanel assertions={temporalAssertions} workbookModel={workbookModel}/></div></div></div>;
 }
 /*
  * Renders workbook role mappings for caller-supplied role definitions. This is
