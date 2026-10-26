@@ -43,11 +43,8 @@
 .pd-home-editorial__actions {display:flex;gap:13px;flex-wrap:wrap;margin-top:clamp(22px,2vw,34px)}
 .pd-home-editorial__actions button {cursor:pointer;min-height:48px;padding:10px clamp(17px,1.6vw,28px);border-radius:29px;font:500 clamp(15px,1.13vw,19px)/1.2 var(--pd-font-editorial,Georgia,serif);transition:background .16s,box-shadow .16s;white-space:nowrap}
 .pd-home-editorial__actions button span {margin-left:14px;font:500 1.2em/1 var(--pd-font-ui,sans-serif)}
-.pd-home-editorial__primary {color:#fff9ef;background:#882a22;border:1px solid #882a22;box-shadow:0 7px 19px #582b2325}
-.pd-home-editorial__primary:hover {background:#622019}
-.pd-home-editorial__secondary {color:#79271f;background:#f8f0e5e8;border:1px solid #8e3025}
-.pd-home-editorial__secondary:hover {background:#f4dfc9}
-.pd-home-editorial__actions button:focus-visible {outline:3px solid #263d32;outline-offset:3px}
+/* B2: Home owns CTA geometry and editorial typography only.
+   Primary/Secondary color, border, hover, and focus come from shared buttons.css. */
 .pd-home-editorial__lower-scene {position:relative;flex:0 0 auto;min-height:230px;margin-top:-5px;isolation:isolate;background:#e2cfaf;overflow:hidden}
 .pd-home-editorial__lower-art {position:absolute;inset:0;pointer-events:none;z-index:0}
 .pd-home-editorial__benincasa {position:absolute;right:-2%;top:-36%;width:36%;height:165%;object-fit:cover;object-position:50% 43%;filter:saturate(.78)}
@@ -296,4 +293,266 @@
 @media (max-width:1100px) and (min-width:761px) {
   .pd-home-scene__content {width:52%;padding-right:32px;}
   .pd-home-art--compass {left:0;bottom:1%;width:76px;}
+}
+
+/* Home asset placement — paper image itself supplies the torn alpha boundary.
+   Decorative layers are sized relative to the hero, not the text column.
+   Keep text and controls in the separate foreground content layer. */
+.pd-home-scene__paper {
+  left: -1%;
+  top: -1%;
+  width: 90%;
+  height: 103%;
+  overflow: visible;
+  clip-path: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  filter: drop-shadow(5px 3px 5px #49332340);
+}
+.pd-home-scene__paper img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  filter: none;
+}
+/* Corner graphics use their intrinsic transparency. Avoid the former
+   negative top offsets, which hid much of their detailed edges. */
+.pd-home-art--top-left {
+  left: 0; top: 0; width: clamp(230px, 28vw, 450px);
+  opacity: .62; mix-blend-mode: multiply;
+}
+.pd-home-art--top-right {
+  right: 0; top: 0; width: clamp(230px, 29vw, 470px);
+  opacity: .72;
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .pd-home-scene__paper { width: 106%; left: -2%; }
+  .pd-home-art--top-left { width: 30%; }
+  .pd-home-art--top-right { width: 31%; }
+}
+@media (max-width: 760px) {
+  .pd-home-scene__paper { width: 136%; left: -5%; height: 100%; top: 0; }
+  .pd-home-art--top-left { width: 54%; }
+  .pd-home-art--top-right { width: 55%; }
+}
+
+
+/* Home asset placement — Pass 2 (2026-10-25).
+   Move the former top-left corner onto the lower banner as a mirrored top-right corner,
+   anchor ParchmentTear2 to the lower banner's bottom-left edge, and keep the olive detail
+   as the foremost decorative layer. The hero no longer uses the top-left corner asset. */
+.pd-home-art--top-left { display: none; }
+
+.pd-home-editorial__features {
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+}
+.pd-home-editorial__banner-art { display: none; }
+.pd-home-editorial__banner-tear,
+.pd-home-editorial__banner-corner,
+.pd-home-editorial__olive {
+  position: absolute;
+  pointer-events: none;
+}
+.pd-home-editorial__banner-tear {
+  left: -2.5%;
+  bottom: -30%;
+  width: clamp(300px, 34vw, 560px);
+  z-index: 0;
+  opacity: 0.96;
+  filter: drop-shadow(3px 6px 6px #3a2b1b24);
+}
+.pd-home-editorial__banner-corner {
+  right: -1.5%;
+  top: -16%;
+  width: clamp(240px, 26vw, 440px);
+  transform: scaleX(-1);
+  transform-origin: top right;
+  z-index: 0;
+  opacity: 0.64;
+  mix-blend-mode: multiply;
+}
+.pd-home-editorial__olive {
+  left: -2.6%;
+  bottom: -18%;
+  width: clamp(195px, 16vw, 290px);
+  z-index: 3;
+  filter: drop-shadow(4px 5px 5px #372b1b36);
+}
+.pd-home-editorial__feature {
+  position: relative;
+  z-index: 1;
+}
+
+@media (min-width: 761px) and (max-width: 1100px) {
+  .pd-home-editorial__banner-corner {
+    width: clamp(190px, 28vw, 320px);
+    top: -12%;
+    right: -1.5%;
+  }
+  .pd-home-editorial__banner-tear {
+    width: clamp(250px, 38vw, 420px);
+    left: -4%;
+    bottom: -24%;
+  }
+  .pd-home-editorial__olive {
+    width: 170px;
+    left: -3%;
+    bottom: -14%;
+  }
+}
+
+@media (max-width: 760px) {
+  .pd-home-editorial__banner-corner {
+    width: 46%;
+    right: -2%;
+    top: -5%;
+    opacity: 0.56;
+  }
+  .pd-home-editorial__banner-tear {
+    width: 58%;
+    left: -6%;
+    bottom: -10%;
+  }
+  .pd-home-editorial__olive {
+    width: 150px;
+    left: -6%;
+    bottom: -5%;
+  }
+}
+
+
+/* Cartographic Editorial Home — full-width feature banner (2026-10-25).
+   A continuous cream section is the paper surface. The existing feature grid
+   retains its placement; the transparent corner collages belong to the WHOLE
+   lower section, not the feature panel. */
+.pd-home-editorial__lower-scene {
+  background-color: var(--home-paper, #f5ebd8);
+  /* A pale overlay keeps the existing parchment grain readable but quiet. */
+  background-image: linear-gradient(#f5ebd822, #f5ebd822),
+    url('../../../assets/ChatGPT_Home_ParchmentBase.png');
+  background-position: center 43%;
+  background-size: cover;
+  isolation: isolate;
+  /* Let the corner collages cross the hero/banner seam. Viewport clipping
+     remains owned by the top-level homepage, not this section. */
+  overflow: visible;
+  z-index: 2;
+}
+.pd-home-editorial__features {
+  position: relative;
+  z-index: 1;
+  /* Preserve the existing grid geometry, margins, padding, and text styling. */
+  background: transparent;
+  background-image: none;
+  box-shadow: none;
+  clip-path: none;
+  overflow: visible;
+}
+/* Move only the content vertically: its columns, horizontal positions, and
+   separators remain exactly as before. Keep the corner artworks independent. */
+.pd-home-editorial__features > .pd-home-editorial__feature {
+  transform: translateY(-12px);
+}
+.pd-home-editorial__features::before { content: none; }
+.pd-home-editorial__banner-decor {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  /* Decorations intentionally spill above the hero and beyond the sides. */
+  overflow: visible;
+}
+.pd-home-editorial__banner-collage {
+  position: absolute;
+  display: block;
+  height: auto;
+  max-width: none;
+  pointer-events: none;
+  user-select: none;
+}
+.pd-home-editorial__banner-collage--lower-left {
+  left: -5.5%;
+  bottom: -11%;
+  width: clamp(290px, 28vw, 455px);
+}
+.pd-home-editorial__banner-collage--upper-right {
+  right: -5.5%;
+  top: -19%;
+  width: clamp(315px, 32vw, 510px);
+}
+@media (min-width: 761px) and (max-width: 1100px) {
+  .pd-home-editorial__banner-collage--lower-left { width: 30vw; left: -5.5%; bottom: -11%; }
+  .pd-home-editorial__banner-collage--upper-right { width: 34vw; right: -5.5%; top: -19%; }
+}
+@media (max-width: 760px) {
+  .pd-home-editorial__banner-collage--lower-left { width: 190px; left: -5%; bottom: -8%; }
+  .pd-home-editorial__banner-collage--upper-right { width: 220px; right: -5%; top: -12%; }
+  .pd-home-editorial__features > .pd-home-editorial__feature { transform: none; }
+}
+
+/* Cartographic Editorial Home — fill the actual parent workspace.
+   App.jsx already sizes the workspace to the flex area below the global header.
+   No fixed 72px header assumption, translation, or seam-covering pseudo-element. */
+@media (min-width: 1101px) {
+  .pd-home-editorial {
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  .pd-home-scene {
+    flex: 1 1 0;
+    height: auto;
+    min-height: 0;
+  }
+  .pd-home-editorial__lower-scene {
+    flex: 0 0 224px;
+    height: 224px;
+    min-height: 0;
+    margin-top: 0;
+  }
+  /* Preserve all column X/Y rules, only bound the section they occupy. */
+  .pd-home-editorial__features {
+    min-height: 196px;
+    margin-top: 9px;
+    margin-bottom: 9px;
+    transform: translate(14px, 7px);
+  }
+  /* Show more of both illustrations, still cropped at the viewport edge. */
+  .pd-home-editorial__banner-collage--lower-left {
+    left: -2%;
+    bottom: -8.5%;
+    width: clamp(315px, 29vw, 475px);
+  }
+  .pd-home-editorial__banner-collage--upper-right {
+    right: -0.75%;
+    top: -16%;
+    width: clamp(330px, 33vw, 530px);
+  }
+}
+
+/* Smaller desktop widths retain their existing layout proportions, while
+   avoiding horizontal overdraw from the newly revealed corner assets. */
+@media (min-width: 761px) and (max-width: 1100px) {
+  .pd-home-editorial {
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+  .pd-home-scene { flex: 1 1 0; height: auto; min-height: 0; }
+  .pd-home-editorial__lower-scene {
+    flex: 0 0 226px;
+    height: 226px;
+    min-height: 0;
+    margin-top: 0;
+  }
+  .pd-home-editorial__features {
+    transform: translate(12px, 6px);
+  }
+  .pd-home-editorial__banner-collage--lower-left { left: -2%; bottom: -8.5%; }
+  .pd-home-editorial__banner-collage--upper-right { right: -0.75%; top: -15%; }
 }
