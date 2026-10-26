@@ -627,7 +627,8 @@ export function VisualizationTimelineScrubber({
             type="button"
             onClick={togglePlay}
             disabled={!selectedRowsForPlayback?.length}
-            className="peridot-playback-play flex h-9 w-9 items-center justify-center rounded-full border border-[var(--peridot-playback-accent, #7C211E)] bg-[var(--peridot-color-hex-f5ecd2)] text-sm font-bold text-[var(--peridot-color-hex-203429)] transition hover:bg-[var(--peridot-playback-accent, #7C211E)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="peridot-playback-play flex h-9 w-9 items-center justify-center rounded-full border text-sm font-bold transition-colors disabled:cursor-not-allowed"
+            data-playback-state={isPlaying ? 'playing' : 'paused'}
             aria-label={isPlaying ? 'Pause timeline playback' : 'Play timeline'}
             title={isPlaying ? 'Pause' : 'Play'}
           >

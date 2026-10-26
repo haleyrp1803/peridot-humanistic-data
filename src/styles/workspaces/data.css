@@ -1,14 +1,8 @@
 /*
- * Data landing workspace — static entry-action color aliases.
- * Extracted unchanged from three identical inline style objects during S8b.
- * The mapping editor is owned separately by PeridotColumnMappingModal.css.
- * Interactive sample-menu cascade geometry remains React-controlled.
+ * Data landing workspace: editorial introduction typography and surfaces.
+ * B2 entry actions consume shared Primary/Secondary in buttons.css.
+ * Mapping remains separate; sample-menu cascade geometry stays React-controlled.
  */
-.peridot-data-entry-action {
-  --peridot-data-button-bg: #0f2912;
-  --peridot-data-button-border: var(--peridot-role-ornament-corner-muted);
-  --peridot-data-button-text: color-mix(in srgb, var(--peridot-role-ornament-sparkle) 82%, #fff8e8 18%);
-}
 
 /* Editorial palette: light introductory card uses the matching ink foreground. */
 :root[data-peridot-palette="cartographicEditorial"] .peridot-data-intro {
@@ -26,8 +20,7 @@
 }
 
 :root[data-peridot-palette="cartographicEditorial"] .peridot-data-source-status,
-:root[data-peridot-palette="cartographicEditorial"] .peridot-data-source-status strong,
-:root[data-peridot-palette="cartographicEditorial"] .peridot-data-source-status button {
+:root[data-peridot-palette="cartographicEditorial"] .peridot-data-source-status strong {
   color: var(--peridot-role-interface-text-on-light);
 }
 

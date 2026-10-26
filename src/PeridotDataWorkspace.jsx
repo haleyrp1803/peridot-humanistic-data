@@ -43,6 +43,8 @@ export function PeridotDataWorkspace({
   const [expandedSampleId, setExpandedSampleId] = useState('');
   const [sampleCascadeActive, setSampleCascadeActive] = useState(false);
   const sampleMenuVisible = sampleChooserOpen;
+  // Give the three entry paths equal primary emphasis before a dataset is active.
+  const noActiveDataset = !activeMappedDataSource && !activeSampleDataSource;
 
   useEffect(() => {
     if (!sampleMenuVisible) {
@@ -121,7 +123,7 @@ export function PeridotDataWorkspace({
             <button
               type="button"
               onClick={handleDownloadPeridotTemplate}
-              className="peridot-button-cream peridot-data-entry-action min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+              className={`${noActiveDataset ? "peridot-button-primary" : "peridot-button-secondary"} peridot-data-entry-action min-w-[18rem] whitespace-nowrap px-8 py-7 !text-[18px] leading-tight`}
             >
               Start with a Template
             </button>
@@ -139,7 +141,7 @@ export function PeridotDataWorkspace({
               }}
               aria-expanded={sampleMenuVisible}
               aria-haspopup="menu"
-              className="peridot-button-cream peridot-data-entry-action min-w-[18rem] whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+              className={`${noActiveDataset ? "peridot-button-primary" : "peridot-button-secondary"} peridot-data-entry-action min-w-[18rem] whitespace-nowrap px-8 py-7 !text-[18px] leading-tight`}
             >
               Start with Sample Data <span aria-hidden="true" className="ml-1 text-sm">{sampleMenuVisible ? '▴' : '▾'}</span>
             </button>
@@ -241,7 +243,7 @@ export function PeridotDataWorkspace({
 
           <div className="peridot-appear-rise peridot-appear-delay-4">
             <label
-              className="peridot-button-cream peridot-data-entry-action min-w-[18rem] cursor-pointer whitespace-nowrap px-8 py-7 !border-[var(--peridot-data-button-border)] !bg-[var(--peridot-data-button-bg)] !text-[18px] !text-[var(--peridot-data-button-text)] hover:!border-[var(--peridot-role-ornament-corner)] hover:!bg-[linear-gradient(135deg,var(--peridot-role-button-primary-hover-bg),var(--peridot-role-ornament-line))] hover:!text-[var(--peridot-role-button-primary-text)] leading-tight"
+              className="peridot-button-primary peridot-data-entry-action min-w-[18rem] cursor-pointer whitespace-nowrap px-8 py-7 !text-[18px] leading-tight"
             >
               Upload Your Data
               <input type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values" onChange={handleColumnMappingTableUpload} className="sr-only" />
@@ -272,7 +274,7 @@ export function PeridotDataWorkspace({
                 >
                   {columnMappingStaging.editingActiveData ? 'Continue editing' : 'Open mapping workspace'}
                 </button>
-                <button type="button" onClick={clearColumnMappingStaging} className="peridot-button-cream">
+                <button type="button" onClick={clearColumnMappingStaging} className="peridot-button-secondary">
                   {columnMappingStaging.editingActiveData ? 'Cancel edit' : 'Clear staged data'}
                 </button>
               </div>
@@ -287,7 +289,7 @@ export function PeridotDataWorkspace({
               <button
                 type="button"
                 onClick={() => onEditSampleMapping?.(activeSampleDataSource.sampleDatasetId)}
-                className="rounded-full border border-[var(--peridot-role-ornament-line)] px-4 py-2 font-semibold text-[var(--peridot-color-hex-fbf7ea)] transition hover:bg-[var(--peridot-role-button-primary-hover-bg)]"
+                className="peridot-button-secondary px-4 py-2"
               >
                 Edit sample mapping
               </button>
@@ -295,7 +297,7 @@ export function PeridotDataWorkspace({
               <button
                 type="button"
                 onClick={openActiveMappedDataEditor}
-                className="rounded-full border border-[var(--peridot-role-ornament-line)] px-4 py-2 font-semibold text-[var(--peridot-color-hex-fbf7ea)] transition hover:bg-[var(--peridot-role-button-primary-hover-bg)]"
+                className="peridot-button-secondary px-4 py-2"
               >
                 Edit mapped data
               </button>

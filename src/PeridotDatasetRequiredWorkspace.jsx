@@ -29,7 +29,7 @@ export function PeridotDatasetRequiredWorkspace({
           <button type="button" className="peridot-button-primary" onClick={onOpenData}>
             Upload Your Data
           </button>
-          <button type="button" className="peridot-button-secondary" onClick={onUseSampleData}>
+          <button type="button" className="peridot-button-primary" onClick={onUseSampleData}>
             Choose Sample Data
           </button>
         </div>

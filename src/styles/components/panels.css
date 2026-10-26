@@ -232,24 +232,21 @@
   outline: 2px solid var(--peridot-role-button-primary-bg, #7c211e);
   outline-offset: 2px;
 }
-/* Playback Play: oxblood at rest, darker on hover, forest while running.
- * aria-label already changes to Pause when isPlaying; no handler changes. */
+/* Playback Play: follow the shared primary-button semantic color contract.
+ * The playing state changes the icon, not the button colors. Keep all range
+ * controls, scrubber geometry, event handlers, and focus behavior unchanged.
+ */
 .peridot-visualize-shell .peridot-playback-play {
-  color: var(--peridot-role-interface-text-on-dark, #fbf8f2);
-  background: var(--peridot-role-button-primary-bg, #7c211e);
-  border-color: var(--peridot-role-button-primary-bg, #7c211e);
+  background-color: var(--peridot-role-button-primary-bg, #253C32);
+  border-color: var(--peridot-role-button-primary-border, #253C32);
+  color: var(--peridot-role-button-primary-text, #FBF8F2);
 }
 .peridot-visualize-shell .peridot-playback-play:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--peridot-role-button-primary-bg, #7c211e) 80%, black);
-  border-color: color-mix(in srgb, var(--peridot-role-button-primary-bg, #7c211e) 80%, black);
+  background-color: var(--peridot-role-button-primary-hover-bg, #7C211E);
+  border-color: var(--peridot-role-button-primary-hover-bg, #7C211E);
 }
-.peridot-visualize-shell .peridot-playback-play[aria-label="Pause timeline playback"] {
-  background: var(--peridot-role-interface-panel-background-strong, #253c32);
-  border-color: var(--peridot-role-interface-panel-background-strong, #253c32);
-}
-.peridot-visualize-shell .peridot-playback-play[aria-label="Pause timeline playback"]:hover:not(:disabled) {
-  background: var(--peridot-role-button-primary-hover-bg, #345447);
-  border-color: var(--peridot-role-button-primary-hover-bg, #345447);
+.peridot-visualize-shell .peridot-playback-play:disabled {
+  opacity: 0.5;
 }
 .peridot-visualize-shell .peridot-playback-reset {
   color: var(--peridot-role-button-primary-bg, #7c211e);

@@ -1,13 +1,8 @@
 /*
- * Peridot shared button appearances — Structural Styling Pass S3.
- *
- * Moved without changing declarations from src/index.css at checkpoint d108bb2.
- * Base button geometry comes before the later semantic-theme overrides, just as
- * in the original global stylesheet. Do not deduplicate the early legacy color
- * values in this structural-only pass: their exact cascade is preserved here.
- *
- * Workspace-specific sizing/layout and state rules remain with their owners;
- * button colors still use the existing semantic theme/legacy role variables.
+ * Peridot shared action buttons — Button consolidation B1 (2026-10-17).
+ * Appearance authority for Primary and Secondary action buttons.
+ * Colors come from the semantic theme; workspace-specific geometry remains local.
+ * Legacy Cream appearance is retained for existing consumers until B2/B3 migration.
  */
 
 .peridot-button-primary,
@@ -21,92 +16,80 @@
   font-size: 0.88rem;
   font-weight: 800;
   line-height: 1;
-  transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+  letter-spacing: -0.01em;
+  background-image: none;
+  transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
 }
 
+/* Primary: forest at rest, oxblood on hover; never a gradient. */
 .peridot-button-primary {
-  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-55);
-  background: var(--peridot-color-hex-6d8b53);
-  color: var(--peridot-color-hex-fbf7ea);
-  box-shadow: 0 10px 22px var(--peridot-color-rgba-rgba-0-0-0-0-24);
+  border: 1px solid var(--peridot-role-button-primary-border);
+  background-color: var(--peridot-role-button-primary-bg);
+  color: var(--peridot-role-button-primary-text);
+  box-shadow: 0 2px 6px var(--peridot-role-card-shadow);
 }
 
-.peridot-button-primary:hover {
-  background: var(--peridot-color-hex-b58b42);
-  border-color: var(--peridot-color-rgba-rgba-245-236-210-0-88);
-  color: var(--peridot-color-hex-fff8e8);
-  box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-34);
-  transform: translateY(-1px);
+.peridot-button-primary:hover:not(:disabled):not([aria-disabled="true"]) {
+  border-color: var(--peridot-role-button-primary-hover-bg);
+  background-color: var(--peridot-role-button-primary-hover-bg);
+  color: var(--peridot-role-button-primary-text);
 }
 
+/* Secondary: near-white at rest, parchment on hover. */
 .peridot-button-secondary {
-  border: 1px solid var(--peridot-color-rgba-rgba-223-233-200-0-48);
-  background: var(--peridot-color-rgba-rgba-223-233-200-0-10);
-  color: var(--peridot-color-hex-fbf7ea);
+  border: 1px solid var(--peridot-role-button-secondary-border);
+  background-color: var(--peridot-role-button-secondary-bg);
+  color: var(--peridot-role-button-secondary-text);
+  box-shadow: 0 2px 6px var(--peridot-role-card-shadow);
 }
 
-.peridot-button-secondary:hover {
-  background: var(--peridot-color-rgba-rgba-181-139-66-0-88);
-  border-color: var(--peridot-color-rgba-rgba-245-236-210-0-82);
-  color: var(--peridot-color-hex-fff8e8);
-  box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-30);
-  transform: translateY(-1px);
+.peridot-button-secondary:hover:not(:disabled):not([aria-disabled="true"]) {
+  border-color: var(--peridot-role-button-secondary-border);
+  background-color: var(--peridot-role-button-secondary-hover-bg);
+  color: var(--peridot-role-button-secondary-text);
 }
 
+/* Pointer-down feedback does not introduce a third color convention. */
+.peridot-button-primary:active:not(:disabled):not([aria-disabled="true"]),
+.peridot-button-secondary:active:not(:disabled):not([aria-disabled="true"]) {
+  box-shadow: inset 0 1px 3px var(--peridot-role-card-shadow);
+}
+
+.peridot-button-primary:focus-visible,
+.peridot-button-secondary:focus-visible {
+  outline: 2px solid var(--peridot-role-interface-focus-ring);
+  outline-offset: 2px;
+}
+
+.peridot-button-primary:disabled,
+.peridot-button-primary[aria-disabled="true"],
+.peridot-button-secondary:disabled,
+.peridot-button-secondary[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Transitional compatibility only: some Data/Mapping actions still use Cream.
+ * Do not silently remap this class until those call sites are audited in B2/B3.
+ */
 .peridot-button-cream {
-  border: 1px solid var(--peridot-color-rgba-rgba-96-122-78-0-38);
-  background: var(--peridot-color-hex-f4eedb);
-  color: var(--peridot-color-hex-26352b);
+  border: 1px solid var(--peridot-role-button-cream-border);
+  background-color: var(--peridot-role-button-cream-bg);
+  color: var(--peridot-role-button-cream-text);
+  box-shadow: 0 10px 22px var(--peridot-role-card-shadow);
 }
 
 .peridot-button-cream:hover {
-  background: var(--peridot-color-hex-b58b42);
+  background-color: var(--peridot-color-hex-b58b42);
   border-color: var(--peridot-color-rgba-rgba-99-68-28-0-46);
   color: var(--peridot-color-hex-fff8e8);
   box-shadow: 0 12px 28px var(--peridot-color-rgba-rgba-86-52-22-0-24);
   transform: translateY(-1px);
 }
 
-/* Semantic role overrides, formerly near the end of index.css. */
-.peridot-button-primary,
-.peridot-button-secondary,
-.peridot-button-cream {
-  letter-spacing: -0.01em;
-  box-shadow:
-    0 10px 22px var(--peridot-role-card-shadow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+@media (prefers-reduced-motion: reduce) {
+  .peridot-button-primary,
+  .peridot-button-secondary,
+  .peridot-button-cream { transition: none; }
 }
-
-.peridot-button-primary::before,
-.peridot-button-secondary::before,
-.peridot-button-cream::before {
-  content: '◆';
-  margin-right: 0.45rem;
-  font-size: 0.72em;
-  opacity: 0.78;
-}
-
-.peridot-button-primary {
-  border-color: var(--peridot-role-button-primary-border);
-  background: linear-gradient(135deg, var(--peridot-role-button-primary-bg), var(--peridot-role-button-primary-hover-bg));
-  color: var(--peridot-role-button-primary-text);
-}
-
-.peridot-button-primary:hover,
-.peridot-button-secondary:hover,
-.peridot-button-cream:hover {
-  background: linear-gradient(135deg, var(--peridot-role-button-primary-hover-bg), var(--peridot-role-ornament-line));
-}
-
-.peridot-button-secondary {
-  border-color: var(--peridot-role-button-secondary-border);
-  background: var(--peridot-role-button-secondary-bg);
-  color: var(--peridot-role-button-secondary-text);
-}
-
-.peridot-button-cream {
-  border-color: var(--peridot-role-button-cream-border);
-  background: var(--peridot-role-button-cream-bg);
-  color: var(--peridot-role-button-cream-text);
-}
-
