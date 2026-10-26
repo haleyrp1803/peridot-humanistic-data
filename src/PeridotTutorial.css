@@ -1241,39 +1241,6 @@
   font-size: 1.12rem;
 }
 
-.peridot-tutorial-divider {
-  display: grid;
-  grid-template-columns: auto minmax(1rem, 1fr) auto minmax(1rem, 1fr) auto;
-  align-items: center;
-  gap: 0.38rem;
-  margin: 0.35rem 1.35rem 0;
-  color: #c99c38;
-}
-
-.peridot-tutorial-divider-line {
-  display: block;
-  height: 1px;
-  background:
-    linear-gradient(90deg, transparent, rgba(213, 171, 70, 0.78), transparent);
-}
-
-.peridot-tutorial-divider-flourish {
-  display: inline-block;
-  color: #d7ad4a;
-  font-size: 1.05rem;
-  line-height: 1;
-}
-
-.peridot-tutorial-divider-flourish.is-reversed {
-  transform: scaleX(-1);
-}
-
-.peridot-tutorial-divider-diamond {
-  color: #e1b955;
-  font-size: 0.54rem;
-  line-height: 1;
-}
-
 .peridot-tutorial-dialogue {
   min-height: 7rem;
   padding: 1.2rem 1.55rem 1.15rem;
@@ -1377,10 +1344,6 @@
     font-size: 1.4rem;
   }
 
-  .peridot-tutorial-divider {
-    margin-inline: 1rem;
-  }
-
   .peridot-tutorial-dialogue {
     min-height: 6rem;
     padding-inline: 1.1rem;
@@ -1434,7 +1397,6 @@
   text-align: center;
 }
 
-.peridot-tutorial-divider,
 .peridot-home-tutorial-divider {
   display: flex;
   align-items: center;
@@ -1443,12 +1405,6 @@
   color: transparent;
 }
 
-.peridot-tutorial-divider {
-  height: 1.45rem;
-  margin: 0.32rem 1.35rem 0;
-}
-
-.peridot-tutorial-divider-image,
 .peridot-home-tutorial-divider-image {
   display: block;
   width: 100%;
@@ -1462,11 +1418,7 @@
   user-select: none;
 }
 
-.peridot-tutorial-divider-flourish,
-.peridot-tutorial-divider-line,
-.peridot-tutorial-divider-diamond {
-  display: none !important;
-}
+
 
 /* Home invitation now uses the same minimal dialogue-card language. */
 .peridot-home-tutorial-invitation {

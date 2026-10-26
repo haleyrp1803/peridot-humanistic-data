@@ -938,14 +938,6 @@ function SectionHeader({ eyebrow, title, children }) {
   );
 }
 
-function ExploreDivider({ className = '' }) {
-  return (
-    <div className={`peridot-search-divider ${className}`.trim()} aria-hidden="true">
-      <span />
-    </div>
-  );
-}
-
 function SearchTabButton({ id, label, summary, active, onClick }) {
   return (
     <button
@@ -1931,7 +1923,7 @@ export function PeridotSearchWorkspace({
       <SectionHeader title="Build Search">
         Draft changes do not affect maps, charts, export, or Inspector until Apply Filters is pressed.
       </SectionHeader>
-      <ExploreDivider />
+
 
       <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel peridot-search-build-primary-panel p-4'}>
         <div className="grid gap-3 lg:grid-cols-12">
@@ -2023,7 +2015,6 @@ export function PeridotSearchWorkspace({
         </div>
       </div>
 
-      <ExploreDivider className="peridot-search-build-divider-before-criteria" />
 
       <div className={PANEL_INSET_CLASS + ` peridot-search-build-panel peridot-search-structured-panel ${draftStructuredCriteria.length ? 'peridot-search-structured-panel-active' : 'peridot-search-structured-panel-empty'} p-4`}>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2067,7 +2058,6 @@ export function PeridotSearchWorkspace({
         </div>
       </div>
 
-      <ExploreDivider className="peridot-search-build-divider-after-criteria" />
 
       <div className={PANEL_INSET_CLASS + ' peridot-search-build-panel peridot-search-capability-filter-panel p-4'}>
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2161,7 +2151,7 @@ export function PeridotSearchWorkspace({
             <span>{firstShown}–{lastShown} rows shown</span>
           </div>
         </div>
-        <ExploreDivider />
+
 
         <div className="peridot-search-results-grid peridot-search-results-card-grid peridot-search-results-ledger">
           {searchResultCards.length ? (
@@ -2265,7 +2255,7 @@ export function PeridotSearchWorkspace({
         <SectionHeader title="Dataset Capabilities">
           Review what the loaded and applied records can support before moving into visualizations, charts, export, or Inspector evidence review.
         </SectionHeader>
-        <ExploreDivider />
+
 
         <div className="peridot-search-capability-review-grid">
           <section className="peridot-search-capability-review-card">
@@ -2313,7 +2303,7 @@ export function PeridotSearchWorkspace({
             </div>
           </section>
         </div>
-        <ExploreDivider />
+
 
         <div className="peridot-search-capability-review-note">
           <div>
@@ -2335,7 +2325,7 @@ export function PeridotSearchWorkspace({
       <SectionHeader title="Refine Results">
         Facets summarize the applied result set. Evidence values remain grouped under their mapped field headings so a Language or custom-category refinement stays precise. Clicking a facet fills draft criteria; Apply commits the refinement.
       </SectionHeader>
-      <ExploreDivider />
+
 
       <div className={PANEL_INSET_CLASS + ' p-3'}>
         <div className={FIELD_LABEL_CLASS}>Inspector handoff</div>
@@ -2343,7 +2333,7 @@ export function PeridotSearchWorkspace({
           Use <span className="peridot-search-inline-strong font-black">Inspect</span> on a result card to open the record in the full evidence workspace. Dataset capability information appears below the refinement facets.
         </p>
       </div>
-      <ExploreDivider />
+
 
       {searchFacetGroups.length || metadataFacetGroups.length ? (
         <div className="space-y-3">
@@ -2421,7 +2411,7 @@ export function PeridotSearchWorkspace({
             {activeTab === 'build' ? (
               <>
                 {renderBuildSearch()}
-                <ExploreDivider />
+
                 {renderResults()}
               </>
             ) : null}
@@ -2429,7 +2419,7 @@ export function PeridotSearchWorkspace({
             {activeTab === 'refine' ? (
               <>
                 {renderRefineInspect()}
-                <ExploreDivider />
+
                 {renderCapabilities()}
               </>
             ) : null}

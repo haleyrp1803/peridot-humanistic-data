@@ -402,14 +402,6 @@ function ReferenceLead({ selectedProps, profile }) {
   );
 }
 
-function ReferenceDivider() {
-  return (
-    <div className="peridot-inspector-filigree-divider" aria-hidden="true">
-      <span>Section divider</span>
-    </div>
-  );
-}
-
 function CompactSummaryTile({ count, label, onOpenFullInspector }) {
   return (
     <button
@@ -517,8 +509,6 @@ export function InspectorNodeView({
   return (
     <article className="space-y-3">
       <ReferenceLead selectedProps={selectedProps} profile={profile} />
-      <ReferenceDivider />
-
       <div className="grid gap-3 lg:grid-cols-2">
         <CountSectionCard
           title="Connected places"
@@ -535,16 +525,12 @@ export function InspectorNodeView({
         />
       </div>
 
-      <ReferenceDivider />
-
       <CountSectionCard
         title="Directed place connections"
         sections={profile.routeSections}
         emptyMessage="No explicit directed place pairs were found in related records for this profile."
         onOpenItem={onOpenRouteDetail}
       />
-
-      <ReferenceDivider />
 
       <LinkedLettersPanelComponent
         linkedLettersToShow={linkedLettersToShow}

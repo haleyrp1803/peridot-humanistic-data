@@ -161,7 +161,7 @@ textarea {
  * The homepage framing ornaments use side-specific wrapper animations so their
  * images can keep their centering/rotation transforms while the frame itself
  * drifts gently inward. Their home-specific delay lets the logo/sentence/action
- * content establish itself before the filigree completes the frame.
+ * content establish itself before decorative framing completes the scene.
  */
 .peridot-appear-fade,
 .peridot-appear-soft,
@@ -755,7 +755,7 @@ textarea {
 
 /* Inspector stylesheet ownership — 2026-06-21
  * The compact/full Inspector shell, interaction hierarchy, reference-page ground,
- * and filigree divider system now live in `InspectorPanel.css`. It is loaded
+ * and reference-page ground styling now live in `InspectorPanel.css`. It is loaded
  * after the shared stylesheet and before Analytics, Search, Mapping, and Learn More.
  */
 

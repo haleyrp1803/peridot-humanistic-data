@@ -19,7 +19,6 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import './styles/workspaces/data.css';
-import dataDividerFiligree from '../assets/Adobe Stock Filigree 3.png';
 
 export function PeridotDataWorkspace({
   peridotFileLabel,
@@ -109,14 +108,6 @@ export function PeridotDataWorkspace({
           </div>
         </div>
 
-        <div className="relative left-1/2 mt-6 mb-6 w-[calc(100%+4rem)] max-w-[calc(100vw-3rem)] -translate-x-1/2" aria-hidden="true">
-          <img
-            src={dataDividerFiligree}
-            alt=""
-            className="peridot-appear-soft peridot-appear-delay-1 block h-auto w-full select-none object-contain opacity-95 drop-shadow-[0_12px_22px_var(--peridot-role-card-shadow)]"
-            draggable="false"
-          />
-        </div>
 
         <div className="flex flex-wrap items-center justify-center gap-8">
           <div className="peridot-appear-rise peridot-appear-delay-2">

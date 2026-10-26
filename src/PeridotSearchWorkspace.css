@@ -231,36 +231,9 @@
   margin-top: 0.72rem;
 }
 
-/* Inspector-sized filigree divider */
-.peridot-search-workspace .peridot-search-divider {
-  position: relative;
-  display: flex;
-  min-height: 1.25rem;
-  align-items: center;
-  justify-content: center;
-  margin: 0.25rem 0 0.35rem;
-  color: var(--explore-gold);
-  opacity: 0.9;
-}
 
-.peridot-search-workspace .peridot-search-divider::before,
-.peridot-search-workspace .peridot-search-divider::after {
-  content: '';
-  height: 1px;
-  flex: 1;
-  background: linear-gradient(90deg, transparent, rgba(181, 139, 66, 0.68), transparent);
-}
 
-.peridot-search-workspace .peridot-search-divider::before { margin-right: 0.85rem; }
-.peridot-search-workspace .peridot-search-divider::after { margin-left: 0.85rem; }
 
-.peridot-search-workspace .peridot-search-divider span {
-  display: inline-flex;
-  min-width: min(18rem, 42vw);
-  height: 1.1rem;
-  color: transparent;
-  background: url('/assets/Adobe Stock Filigree 3.png') center / contain no-repeat;
-}
 
 /* Shared controls */
 .peridot-search-workspace .peridot-search-button {
@@ -1683,11 +1656,6 @@
   margin-top: 0.56rem !important;
 }
 
-.peridot-search-workspace .peridot-search-refine-view .peridot-search-divider {
-  min-height: 1rem;
-  margin-top: 0.06rem;
-  margin-bottom: 0.12rem;
-}
 
 .peridot-search-workspace .peridot-search-refine-view .peridot-search-panel-inset {
   padding: 0.54rem 0.72rem !important;
@@ -1743,11 +1711,6 @@
     margin-top: 0.44rem !important;
   }
 
-  .peridot-search-workspace .peridot-search-refine-view .peridot-search-divider {
-    min-height: 0.9rem;
-    margin-top: 0.02rem;
-    margin-bottom: 0.06rem;
-  }
 
   .peridot-search-workspace .peridot-search-refine-view .peridot-search-panel-inset {
     padding: 0.46rem 0.64rem !important;
@@ -1808,11 +1771,6 @@
   line-height: 1.25;
 }
 
-.peridot-search-workspace .peridot-search-build-view > .peridot-search-divider:first-of-type {
-  min-height: 0.95rem;
-  margin-top: 0.02rem;
-  margin-bottom: 0.06rem;
-}
 
 .peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-before-criteria,
 .peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-after-criteria {
@@ -1950,17 +1908,7 @@
     line-height: 1.18;
   }
 
-  .peridot-search-workspace .peridot-search-build-view > .peridot-search-divider:first-of-type,
-  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-before-criteria,
-  .peridot-search-workspace .peridot-search-build-view .peridot-search-build-divider-after-criteria {
-    min-height: 0.72rem;
-    margin-top: 0;
-    margin-bottom: 0.02rem;
-  }
 
-  .peridot-search-workspace .peridot-search-build-view .peridot-search-divider span {
-    height: 0.84rem;
-  }
 
   .peridot-search-workspace .peridot-search-build-view .peridot-search-build-panel {
     padding: 0.44rem 0.62rem !important;
@@ -2070,11 +2018,6 @@
   margin-top: 0.56rem !important;
 }
 
-.peridot-search-workspace .peridot-search-capabilities-view .peridot-search-divider {
-  min-height: 1rem;
-  margin-top: 0.04rem;
-  margin-bottom: 0.10rem;
-}
 
 .peridot-search-workspace .peridot-search-capability-review-grid {
   align-items: start;
@@ -2167,11 +2110,6 @@
     margin-top: 0.42rem !important;
   }
 
-  .peridot-search-workspace .peridot-search-capabilities-view .peridot-search-divider {
-    min-height: 0.82rem;
-    margin-top: 0;
-    margin-bottom: 0.04rem;
-  }
 
   .peridot-search-workspace .peridot-search-capability-review-grid {
     gap: 0.58rem;

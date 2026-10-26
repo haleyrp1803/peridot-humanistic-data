@@ -123,8 +123,6 @@
  *   the header and behind the reference cards.
  * - The stripe field is darkened by a transparent overlay so the pattern reads
  *   as subdued ornament rather than visual noise.
- * Keep the image divider optional: if the Adobe Stock Filigree 3 asset is
- * unavailable, the gold rules still provide a quiet ornamental separator.
  */
 .peridot-inspector-reference-ground {
   position: relative;
@@ -155,41 +153,4 @@
 
 .peridot-inspector-reference-body {
   background: transparent;
-}
-
-.peridot-inspector-filigree-divider {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 1.25rem;
-  margin: 0.25rem 0 0.35rem;
-  color: var(--detail-label-text, #b58b42);
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  opacity: 0.9;
-}
-
-.peridot-inspector-filigree-divider::before,
-.peridot-inspector-filigree-divider::after {
-  content: '';
-  height: 1px;
-  flex: 1;
-  background: linear-gradient(90deg, transparent, rgba(181, 139, 66, 0.68), transparent);
-}
-
-.peridot-inspector-filigree-divider::before { margin-right: 0.85rem; }
-.peridot-inspector-filigree-divider::after { margin-left: 0.85rem; }
-
-.peridot-inspector-filigree-divider span {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: min(18rem, 42vw);
-  height: 1.1rem;
-  color: transparent;
-  background: url('/assets/Adobe Stock Filigree 3.png') center / contain no-repeat;
 }

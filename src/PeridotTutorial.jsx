@@ -11,7 +11,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { PERIDOT_TUTORIAL_TOTAL_STEPS } from './peridotTutorialConfig.js';
 import { useDraggableTutorialPanel } from './useDraggableTutorialPanel.js';
 
-import tutorialFiligreeDivider from '../assets/Adobe Stock Filigree 3.png';
 
 function isTimelineInteractionTarget(target, anchorElement) {
   if (!target || !anchorElement || !anchorElement.contains(target)) return false;
@@ -828,14 +827,6 @@ export function PeridotTutorial({
         </div>
       </header>
 
-      <div className="peridot-tutorial-divider" aria-hidden="true">
-        <img
-          src={tutorialFiligreeDivider}
-          alt=""
-          className="peridot-tutorial-divider-image"
-          draggable="false"
-        />
-      </div>
 
       <div className="peridot-tutorial-dialogue" key={`${step.id}:${dialogueFrameIndex}:${currentSentence}`}>
         <p id="peridot-tutorial-description">{renderTutorialSentence(currentSentence)}</p>
