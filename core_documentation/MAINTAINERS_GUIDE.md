@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-fd02d84 — Build Cartographic Editorial Home composition
+4e6fb11 — Refine Cartographic Editorial homepage composition
 Branch: main
-Status: committed locally; origin/main remains at fe9634b pending asset-license review and push
+Status: local HEAD, origin/main, and origin/HEAD synchronized; clean working tree (user-confirmed 2026-10-25)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -108,11 +108,11 @@ Peridot uses a workspace-first route model with a **persistent global header**. 
 
 ### First-time tutorial contract
 
-The tutorial is a retained guided overlay system rather than a separate workspace, but it is **not currently launched from Home**. `b7482cb` removed the floating tutorial invitation and added a smaller static Home **Tutorial** placeholder beneath the two primary data-entry actions. The placeholder is disabled and exposes **“Tutorial coming soon.”** on hover/focus while the tutorial is revised.
+The tutorial is a retained guided overlay system rather than a separate workspace, but it is **not currently launched from Home**. Historically, `b7482cb` removed the floating invitation and added a disabled **Tutorial** placeholder beneath two Home data-entry actions. That placeholder was later superseded by the current Cartographic Editorial Home; Tutorials remains available as a global navigation destination, while substantive guided content is deferred.
 
 When tutorial work resumes, preserve the existing seven-stage implementation as the starting baseline unless an explicit redesign supersedes it: Visualizations → Timeline → Inspector → Explore → Browse / Apply → Working Set → Export. The existing draggable/minimized panel, Back/Continue, recovery, target-observation, and keyboard-accessibility behavior remains source/history to protect during revision; do not silently revive the old floating Home invitation.
 
-Current minimum regression check: Home renders the secondary disabled Tutorial button, the two data-entry CTAs remain visually primary, and no floating tutorial invitation appears. When the launcher is re-enabled, rerun the full seven-stage, drag, minimize/restore, keyboard, Inspector-close, anchor, and recovery regression suite.
+Current minimum regression check: Home displays its current Get started action and informational three-column banner, Tutorials remains a global navigation destination, and no obsolete floating tutorial invitation or disabled Home placeholder reappears. When the guided launcher is re-enabled, rerun the full seven-stage, drag, minimize/restore, keyboard, Inspector-close, anchor, and recovery regression suite.
 
 ### Current route and visualization model
 
@@ -458,20 +458,24 @@ import './PeridotFeedbackForm.css';
 | `PeridotLearnMoreWorkspace.css` | About reading surface | local About navigation, title scale, portrait/text flow, page scrolling | About Peridot, Creator, AI Disclosure, Open Source, Feedback |
 | `PeridotFeedbackForm.css` | Feedback form in inline and compatibility-modal modes | form layout, inline embedding, compatibility overlay behavior | About Feedback page; modal compatibility path |
 
+**Current editorial styling layers (verified through the accepted homepage replacement and tracked development artifacts):** `src/styles/workspaces/home.css` owns the Home composition; `src/styles/components/buttons.css` and `src/styles/components/panels.css` provide shared component styling; `src/styles/workspaces/data.css` owns Data-specific styling. The accepted work also includes `planning_documents/Peridot_Sitewide_Button_Inventory_20261017_v1.md` and Visualize component-ownership notes. These are not substitutes for inspecting the actual import graph when touching a style: several historical rules remain in the Home stylesheet, and cascade order still matters. Primary/secondary buttons are shared variants; do not add ad-hoc component-specific button color rules that compete with them.
+
+**Homepage viewport contract:** Peridot's parent app shell already determines the height below the persistent header. The accepted Home uses `height: 100%` of that allocated workspace on desktop and divides the available height between the flexible hero and the bounded lower banner. Do **not** independently subtract an assumed 72-pixel header height or move the entire banner with a transform. When adjusting optical alignment, change only the feature content group, leaving the corner collage offsets and hero/banner seam intact. Check a complete desktop browser viewport for unwanted bottom gaps and scrollbars.
+
 CSS extraction, dead-rule removal, behavior repairs, and visual redesign are distinct bounded passes. The earlier component-style extraction sequence is historical context in the Changelog; the `7df46a8` import restoration is a correction to preserve this functional cascade, not a new architectural direction.
 
 ### Cartographic Editorial ownership and visual-source contracts (current)
 
 The visual overhaul uses a **centralized styling foundation** established by `ec5152c` through `f667329`, followed by palette/contrast (`2e20bba`), typography (`243ea6c`), compact global-header typography (`fe9634b`), and the art-directed Home (`fd02d84`). The earlier stylesheet-extraction history above is retained, but it is **not** a complete inventory of the newer `src/styles/` ownership layers. Before changing any style, inspect actual `src/main.jsx` imports, affected workspace CSS and shared tokens, and the residual cascade audit; do not assume an obsolete selector has ceased to apply.
 
-- **Current Home:** `src/PeridotHomeWorkspace.jsx` plus `src/styles/workspaces/home.css` own the accepted layered Home. The left area is a paper-textured editorial reading surface with large oxblood **PERIDOT**, a serif description, and two real calls to action. The right side uses a cropped historic Florence panorama. An irregular stock-paper mask separates these layers. This is the accepted **H2e** hero boundary restored in H2g; do not reuse the rejected H2f diagonal mask.
-- **Current lower banner:** a structurally simple, wide rectangular surface with **three informational columns** (Manage data / Visualize / Explore evidence) and paper-edge decals above/below. The prior arrows were deliberately removed because no click behavior existed. Future copy or interactions must be chosen explicitly; do not turn the informational columns into pseudo-buttons.
+- **Current Home:** `src/PeridotHomeWorkspace.jsx` plus `src/styles/workspaces/home.css` own the accepted layered Home. The left area is a paper-textured editorial reading surface with large oxblood **PERIDOT**, a serif description, and the Get started action. The right side uses a cropped historic Florence panorama. An irregular stock-paper mask separates these layers. This is the accepted **H2e** hero boundary restored in H2g; do not reuse the rejected H2f diagonal mask.
+- **Current lower banner:** a full-width, parchment-textured rectangular lower section with **three informational columns** (Manage data / Visualize / Explore evidence) and two independently placed transparent corner-collage PNGs, `assets/ChatGPT_Home_BannerLowerLeft_Collage_20261025.png` and `assets/ChatGPT_Home_BannerUpperRight_Collage_20261025.png`. The column grid is shifted slightly right/down for optical balance without changing its internal spacing; the corner assets are positioned independently. Prior banner arrows were removed because the columns are not live buttons. Future interactions must be chosen explicitly.
 - **Current global header:** compact ivory bar with a large serif `Peridot` Home wordmark, editorial-sized serif navigation, active underline close to the corresponding label, hover feedback on Home, and no old gemstone graphic. The thin-line, forest-green gemstone and its possible network-line animation are deferred concepts, not part of current routing.
 - **Type and color:** visual foundation emphasizes editorial display serif and substantial readable serif use, with functional controls legible and efficient. Paper, oxblood, forest green, and near-black ink are brand roles; analytics series and relationship encodings must not be silently recolored for decorative consistency.
 - **Desktop contract:** concentrate design evaluation on full-screen desktop workspaces and preserve vertical stage height. A small-window blocking experience was discussed by analogy with StoryMaps, but no verified implementation or final threshold is attested; do not describe this as a shipped feature.
 - **Visual QA:** check hero text clearance, irregular-edge opacity at upper-left, historical-image crop, CTA visibility, no overlays intercepting buttons, banner legibility and exactly three columns, plus the active dataset and navigation invariants. A sufficiently diagonal hero mask previously put imagery over the wordmark; that is an explicitly rejected regression.
-- **Asset inventory:** `src/assets/editorial/rosselli-florence.webp`, `benincasa-portolan-detail.webp`, `home-stock-torn-hero-mask.png`, `home-stock-feature-parchment.webp`, `home-stock-paper-texture.webp`, `home-feature-edge-top.webp`, `home-feature-edge-bottom.webp`, and the adjacent `ASSET_CREDITS.md` / `STOCK_ASSET_NOTES.md` were included in local commit `fd02d84`. Respect the recorded source-page attributions and the user's licensed stock asset provenance. Exact licensing and derivative redistribution permission **remain to be verified before public Git push**; a stock license is not by itself proof that a source repository may redistribute the image files.
-- **Untracked work at handoff:** `planning_documents/Peridot_ Florence Atlas Homepage.png`, `src/assets/editorial/home-cartography-placeholder.svg`, `home-route-decal.svg`, `home-torn-paper-mask.svg`, and `paper-grain.webp`. These are not accepted repository assets merely because they exist locally; do not wipe or bulk-stage them.
+- **Asset inventory:** `src/assets/editorial/rosselli-florence.webp`, `benincasa-portolan-detail.webp`, `home-stock-torn-hero-mask.png`, `home-stock-feature-parchment.webp`, `home-stock-paper-texture.webp`, `home-feature-edge-top.webp`, `home-feature-edge-bottom.webp`, and the adjacent `ASSET_CREDITS.md` / `STOCK_ASSET_NOTES.md` were included in local commit `fd02d84`. Respect the recorded source-page attributions and the user's licensed stock asset provenance. These assets entered the historical `fd02d84` commit, and subsequent changes have been pushed by `4e6fb11`. Exact licensing and derivative redistribution permission **remain to be verified**, independent of whether Git publication has already occurred; a stock license is not by itself proof that a source repository may redistribute the image files.
+- **Historical untracked work at the October 15 handoff:** `planning_documents/Peridot_ Florence Atlas Homepage.png`, `src/assets/editorial/home-cartography-placeholder.svg`, `home-route-decal.svg`, `home-torn-paper-mask.svg`, and `paper-grain.webp`. Their **current** tracked/untracked status cannot be established from the latest five-commit Git log; check the working tree before deciding to stage, delete, or replace them. Do not wipe or bulk-stage unknown assets.
 - **Historical material:** the `assets/` green/gilded logo and Adobe filigree files, older fixed-ratio green title-card Home, and prior logo-centric instructions are retained as *historical visual references*, not the currently rendered Home contract. Preserve image/provenance records rather than deleting them on the theory that the newer design supersedes the history.
 
 ### Current Theme and Routing State
@@ -511,7 +515,7 @@ Legacy/compatibility navigation component retained where older paths still refer
 
 #### `src/PeridotHomeWorkspace.jsx`
 
-Full Home / welcome workspace implemented as a fixed-ratio title-card composition. It uses the gilded transparent Peridot logo, licensed filigree framing, a single concise sentence, and **Use sample data** / **Upload your data** calls to action. The component intentionally keeps detailed onboarding out of the homepage; longer explanatory material belongs in `PeridotLearnMoreWorkspace.jsx`.
+Current Cartographic Editorial Home component. It owns the Florence image/paper hero, prominent Peridot introduction and Get started action, plus the three informational lower-banner columns (Manage data, Visualize, Explore evidence). `src/styles/workspaces/home.css` owns the parent-height filling flex layout and the full-width parchment banner, while the corner-collage PNGs under `assets/` provide decoration only. The lower-banner columns are **not** navigation buttons. The older gilded-logo/title-card model is historical, not the current Home source contract. Avoid reintroducing a fixed `100dvh - 72px` subtraction when the application shell already measures workspace height.
 
 #### `src/PeridotDataWorkspace.jsx`
 
@@ -929,7 +933,7 @@ These areas still deserve narrow, explicit passes:
 
 | Fragile zone | Typical regression | Minimum test |
 |---|---|---|
-| Workspace routing | wrong workspace or lost state | Home CTA and every hamburger route |
+| Workspace routing | wrong workspace or lost state | Home/Get started and each persistent-header route; preserve cross-page data and viewport state |
 | First-time tutorial | placeholder disappears/becomes primary, or future launcher regresses overlay behavior | now: disabled secondary Home button + tooltip + no floating invitation; when re-enabled: full seven-stage suite |
 | Inspector bridge | compact Inspector fails to open | node, edge, cluster, contained member, Expand, Back |
 | Search scope | generalized place/Evidence values disappear, count conditions mis-scope, or Results/facets use playback visibility | draft suggestion, Apply, Clear, attached count conditions, Place/Evidence criteria, pagination, Inspect handoff during playback |
@@ -944,14 +948,15 @@ These areas still deserve narrow, explicit passes:
 | Canonical entity presentation | raw IDs shown despite known labels, or record Evidence leaks onto entities | display-label fixtures; entity-Evidence fixtures; unresolved-reference fallback |
 | Compatibility boundary | generalized mapping overridden by profile/legacy projection | correspondence adapter audit; genealogy fixture; generalized runtime fixtures |
 | Visual stage | remount/reanimation, viewport shift, or post-import freeze | repeated map/network/chart switching; full Inspector open/close |
-| CSS cascade | late stylesheet masks accepted behavior | inspect every extracted workspace and feedback form |
+| CSS cascade | late stylesheet masks accepted behavior | inspect shared tokens, `styles/components/buttons.css`, `styles/components/panels.css`, Home/Data workspace CSS, and workspace imports; verify buttons and all public pages |
+| Editorial Home viewport | bottom gap, scrollbar, shifted corner artwork, or cropped hero | check full-window desktop render; confirm parent-height fill, hero/banner seam, collage crop, and optical three-column alignment |
 | Chart rendering/export | mismatched labels, colors, or PNG | multiple chart types, manual series, PNG export |
 | Theme roles | chart-only changes recolor chrome | apply chart-targeted palette and inspect map/header |
 | Export | wrong output scope or broken render | map PNG/SVG, CSV, chart PNG |
 
 ## 11. Active Technical Backlog
 
-**Cartographic Editorial active visual work (separate from the older technical priority order):** `fd02d84` is a local, not pushed, Home milestone. Resolve Adobe Stock redistribution/public-repository permission; preserve accepted H2e mask; refine paper banner/contents in dedicated visual passes. Do not silently reinstate the previous green title-card Home or adopt rejected H2f diagonal. Full-screen desktop art direction is the evaluation priority; viewport minimum enforcement has not been implemented/verified.
+**Cartographic Editorial active visual work (separate from the older technical priority order):** `4e6fb11` is a clean, synchronized checkpoint for the finished *current* homepage composition and button consolidation. The Florence/paper hero, full-width banner, corner-collage frame, and optical content position are accepted; do not revive the earlier green title card or rejected H2f diagonal. Remaining visual work is targeted CSS/token cleanup, consistent buttons and workspaces, tutorial content, and verification across supported desktop viewport sizes. Asset publication is confirmed by Git, but licensing/redistribution rights are **not** established merely by the push. Preserve attribution notes and verify the applicable licenses separately. The present art direction prioritizes full-screen desktop; minimum supported viewport enforcement remains unresolved.
 
 
 1. **Timeline relationship rendering / connection legibility — immediate.**
@@ -1013,9 +1018,9 @@ These areas still deserve narrow, explicit passes:
    - Do not remove code simply because the public generalized workflow no longer exposes it.
 
 10. **Homepage/tutorial follow-up — deferred visual/content work.**
-    - Preserve the current Home CTAs while integrating the persistent global header and reliable logo-as-Home behavior.
-    - The dedicated **Tutorials** global destination now exists as navigation architecture, but substantive tutorial content/interaction remains deferred; the existing Home Tutorial placeholder remains disabled until that work is deliberately resumed.
-    - A larger future Home refinement may merge the strongest branded landing-page and sample-selection/orientation patterns, but do not combine that broader redesign with Timeline/Network semantic passes.
+    - Preserve the current Home Get started action, the accepted parent-height geometry, and the existing persistent-header/logo-as-Home behavior.
+    - The dedicated **Tutorials** global destination exists, but substantive tutorial content/interaction remains deferred; the **former Home Tutorial placeholder was superseded by the Cartographic Editorial Home** and must not be described as a current Home button.
+    - The Home artwork/layout pass is accepted through `4e6fb11`. Any future Home/Data entry integration is a separate content/interaction decision, not unfinished implementation of the current banner; do not combine it with Timeline/Network semantic passes.
     - Tutorial attention choreography, panel placement, typography spacing, accessibility, semantic keyword highlighting, animation order/timing, and a final UX walkthrough remain later bounded work.
 
 11. **Inspector → Advanced Search actions and safe metadata filters**, after the current Timeline connection work unless a concrete Search need arises first.
@@ -1072,7 +1077,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current local checkpoint: **`fd02d84` — `Build Cartographic Editorial Home composition`**; `origin/main` remains at **`fe9634b`** pending asset-license review and push
+- current synchronized checkpoint: **`4e6fb11` — `Refine Cartographic Editorial homepage composition`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
 - local development command on the user's machine: **`npm.cmd run dev`**
 - current Timeline state: canonical assertion-level projection, horizontal/vertical visualization workspace, smooth wheel/button zoom, scrollbars + click-drag panning, zoom-adaptive axis, evidence-driven plural categories with OR visibility, shared Inspector handoff, subject-strict mapped relationship projection, continuous secondary-axis layout, and revised duration treatment are committed; relationship-line routing/presentation is the immediate unfinished item.
 - the existing bottom Timeline/playback control remains intact and separate from the dedicated Timeline visualization workspace.
@@ -1094,8 +1099,8 @@ A future chat should also be told that:
 - one bounded Search text gap remains: **Any record text** does not yet guarantee every generalized mapped semantic value;
 - generalized Geographic/Force relationship and playback semantics remain accepted; playback animation experiments were rolled back and are not part of current `main`;
 - Phase 3 Chart Builder and the no-loss compatibility retirement audit remain later major tasks;
-- the accepted Home is the art-directed Cartographic Editorial Florence composition with two data-entry CTAs and a three-column orientation banner; the historical centered disabled Tutorial button description belongs to the previous Home version. The dedicated Tutorials public navigation destination remains; existing tutorial code is retained for later revision;
+- the accepted Home is the art-directed Cartographic Editorial Florence composition with a Get started action and an informational three-column parchment banner framed by two corner collages; the earlier Home CTAs and the historical centered disabled Tutorial button belong to previous Home versions. The dedicated Tutorials public navigation destination remains; existing tutorial code is retained for later revision;
 - MapLibre remains archived.
 
-For the current **visual redesign continuation**, first resolve the Adobe Stock public-repository distribution question and retain the accepted Home mask; then make a separately bounded banner/paper detail pass. The pre-existing **technical backlog priority** remains Timeline relationship-line rendering/presentation, using the current `a32ef05` subject-strict connection model and continuous secondary-axis layout as the source of truth. Before changing `PeridotTimelineWorkspace.jsx`, reread the entire exact current file under the Project Workflow Charter. Preserve adaptive-axis, zoom/pan, categories, Search scope, Inspector behavior, and relationship endpoint semantics while changing only connection/duration presentation.
+For the current **visual redesign continuation**, start from the accepted Cartographic Editorial Home/Visualize layout at `4e6fb11`, preserve both lower-banner corner collages and the optically shifted informational grid, and distinguish asset-license verification from code-push status. Further visual changes should be separately bounded rather than reopening the accepted composition. The pre-existing **technical backlog priority** remains Timeline relationship-line rendering/presentation, using the current `a32ef05` subject-strict connection model and continuous secondary-axis layout as the source of truth. Before changing `PeridotTimelineWorkspace.jsx`, reread the entire exact current file under the Project Workflow Charter. Preserve adaptive-axis, zoom/pan, categories, Search scope, Inspector behavior, and relationship endpoint semantics while changing only connection/duration presentation.
 

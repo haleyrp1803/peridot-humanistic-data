@@ -1,7 +1,7 @@
-# Peridot (Correspondence Visualizer)
+# Peridot
 
 <p align="center">
-  <img src="../assets/Peridot%20Logo%20Gilded.png" alt="Peridot logo" width="360" />
+  <img src="../assets/Peridot%20Logo%20Gilded.png" alt="Historical gilded Peridot logo" width="360" />
 </p>
 
 ## Executive Summary
@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-fd02d84 — Build Cartographic Editorial Home composition
+4e6fb11 — Refine Cartographic Editorial homepage composition
 Branch: main
-Status: committed locally; origin/main remains at fe9634b pending asset-license review and push
+Status: local HEAD, origin/main, and origin/HEAD synchronized; clean working tree (user-confirmed 2026-10-25)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -80,7 +80,7 @@ Peridot follows a **database-first** model: a record or normalized research item
 
 Peridot opens with **no active dataset**. Nothing is silently preloaded underneath the interface. The persistent header is still available in this no-data state; destinations that require data must route the researcher toward choosing/uploading data rather than inventing hidden sample state.
 
-Home is now a Cartographic Editorial composition. The large Peridot wordmark and humanities-data introduction sit on paper at left; a historical Florence panorama occupies the right side, separated by a textured torn-paper edge. **Get started** and **Try sample data** are the Home actions. **Data** remains the full entry point for templates, samples, uploads, and editing an existing mapping. The broad three-column paper banner introduces **Manage data**, **Visualize**, and **Explore evidence**; it is informational rather than a secondary set of interactive navigation buttons.
+Home is a Cartographic Editorial composition. The large Peridot wordmark and humanities-data introduction sit on paper at left; a historical Florence panorama occupies the right side, separated by a textured torn-paper edge. **Get started** is the prominent Home action. **Data** remains the full entry point for templates, samples, uploads, and editing an existing mapping. The full-width three-column parchment banner introduces **Manage data**, **Visualize**, and **Explore evidence**; two layered corner collages frame this information rather than creating another set of interactive navigation buttons.
 
 The sample chooser currently offers three ordinary project files:
 
@@ -162,11 +162,11 @@ The Visualizations header provides SVG and PNG export for map/network views, CSV
 
 ## 4. Interface Examples and Current-State Note
 
-### Cartographic Editorial Home — current local implementation (2026-10-15)
+### Cartographic Editorial Home — current synchronized implementation (2026-10-25)
 
-Local commit `fd02d84` contains the new art-directed Home, the editorial global-header work inherited from `fe9634b`, and the associated image derivatives and credits. Its current Home uses the Rosselli-attributed *Pianta della Catena* Florence panorama, a paper-textured reading layer and irregular torn-paper edge, serif lettering, and a rectangular informational three-column banner. The stronger experimental H2f diagonal mask was rejected and reverted. No current screenshot is yet tracked in this documentation pass; the planning mockup remains an untracked local reference and must not be presented as a screenshot of the app.
+The synchronized `4e6fb11` checkpoint contains Peridot's accepted current art-directed homepage composition. The Rosselli-attributed *Pianta della Catena* Florence panorama, paper-textured left reading surface, torn-paper boundary, serif display typography, and oxblood **Get started** action occupy the upper composition. A full-width parchment-textured lower banner introduces **Manage data**, **Visualize**, and **Explore evidence** as three *informational*, non-clickable columns. Two layered decorative corner collages frame this content at lower-left and upper-right. Their art-directed crop and the content's optical centering are preserved independently. The homepage fills the space beneath the persistent global header, avoiding a bottom gap without a second hard-coded header subtraction. The stronger H2f diagonal was a rejected historical experiment, not the active mask.
 
-**Publication notice:** this Home commit exists locally but has not been pushed. A check of the applicable Adobe Stock redistribution terms for the included stock-derived assets is pending. Source-page credits and stock notes accompany the local implementation under `src/assets/editorial/`; reuse and source-distribution permissions must not be assumed from their presence.
+**Publication and attribution:** the homepage refinements and new corner assets have been committed and pushed to `main`. This confirms Git publication, **not** unrestricted licensing of every stock-derived or third-party source asset. Existing historical-map credits and stock-provenance notes remain important; redistribution terms should be checked separately. The earlier documentation's `fd02d84` local-only/pending-push note is historical. The screenshot gallery below still primarily contains dated June 2026 interface states, not evidence of the current rendering.
 
 
 ### Interface snapshot — 2026-06-21 (pre-persistent-header)
@@ -285,7 +285,7 @@ The screenshots in this section document Peridot as it appeared on **2026-06-21*
 
 ![Selected homepage filigree](../assets/Adobe%20Stock%20Filigree%201.png)
 
-*Licensed Adobe Stock filigree selected for current Home framing.*
+*Historical Adobe Stock filigree chosen for an earlier Home framing treatment; not the current Cartographic Editorial lower-banner corner collage.*
 
 ![Licensed Adobe Stock filigree full set](../assets/Adobe%20Stock%20Filigree%20Full%20Set.png)
 
@@ -549,13 +549,13 @@ The principal generalized Network semantic migration is now complete through pla
 
 Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior. Performance work after that rollback now keeps pointer panning and wheel zoom transient during interaction, commits durable viewport state at bounded points, and preloads the stable full-scope Force graph so playback does not rerun force simulation on every tick. These changes improve interaction/playback smoothness without changing generalized relationship semantics.
 
-The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. Larger redesigns of the mapping page and Explore content remain deferred, along with Tutorials, further Home paper/banner polish, and later cross-site animation and visual refinement. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
+The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. Larger redesigns of the mapping page and Explore content remain deferred, along with Tutorials, future targeted Home content/interaction work, and later cross-site animation and visual refinement. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 
 Phase 3 of the universal data work—the generalized Chart Builder—also remains deferred. The intended direction is to build charts from saved/generalized variables through structured, human-readable controls rather than unrestricted natural-language prompting.
 
-The existing guided tutorial implementation remains in source, but the new Home uses Get started and Try sample data rather than the former disabled tutorial button. Tutorials has a persistent header destination; tutorial content, choreography, accessibility, and the walkthrough remain later bounded work.
+The existing guided tutorial implementation remains in source, but the new Home emphasizes Get started rather than the former disabled tutorial button. Tutorials has a persistent header destination; tutorial content, choreography, accessibility, and the walkthrough remain later bounded work.
 
 MapLibre work is archived and should not be treated as part of current `main`. For active technical caveats, regression expectations, and compatibility paths, see the Maintainer’s Guide.
 
@@ -572,7 +572,7 @@ MapLibre work is archived and should not be treated as part of current `main`. F
 
 ### Current Cartographic Editorial imagery and distribution status
 
-The Home includes image assets derived from historical-map sources credited in `src/assets/editorial/ASSET_CREDITS.md`, including the Wikimedia Commons pages for the Rosselli-attributed *Pianta della Catena* and Grazioso Benincasa's 1466 portolan chart. Licensed Adobe Stock paper/paper-edge assets and derivatives have separate provenance notes in `src/assets/editorial/STOCK_ASSET_NOTES.md`. The project is **not asserting that the stock assets may be freely redistributed as repository source files**. Specific Adobe Stock terms and the intended public distribution method must be checked before pushing `fd02d84` to a public GitHub repository.
+The Home includes image assets derived from historical-map sources credited in `src/assets/editorial/ASSET_CREDITS.md`, including the Wikimedia Commons pages for the Rosselli-attributed *Pianta della Catena* and Grazioso Benincasa's 1466 portolan chart. Licensed Adobe Stock paper/paper-edge assets and derivatives have separate provenance notes in `src/assets/editorial/STOCK_ASSET_NOTES.md`. The project is **not asserting that the stock assets may be freely redistributed as repository source files**. The Home and related assets have now been pushed to the public GitHub repository, but that push alone does not resolve source-asset licensing or redistribution permission. The applicable Adobe Stock terms and any required attribution/distribution conditions should be verified independently.
 
 
 

@@ -8,7 +8,7 @@ The Changelog owns chronology and milestone interpretation, not the complete cur
 
 ## Quick Navigation
 
-- [Current checkpoint](#1-current-checkpoint-local-publication-pending)
+- [Current checkpoint](#1-current-synchronized-checkpoint)
 - [Recent milestones](#2-recent-milestones-newest-first)
 - [Deferred, archived, and rolled-back work](#3-deferred-archived-and-rolled-back-work)
 - [Full development history](#4-full-development-history)
@@ -17,15 +17,15 @@ The Changelog owns chronology and milestone interpretation, not the complete cur
 
 This document owns the detailed checkpoint, milestone chronology, deferred/archived/rolled-back record, and full commit history. It does not own broad module specifications, public workflows, or process law.
 
-## 1. Current Checkpoint (Local; Publication Pending)
+## 1. Current Synchronized Checkpoint
 
 ```text
-fd02d84 — Build Cartographic Editorial Home composition
+4e6fb11 — Refine Cartographic Editorial homepage composition
 Branch: main
-Status: committed locally; origin/main remains at fe9634b pending asset-license review and push
+Status: local HEAD, origin/main, and origin/HEAD synchronized; clean working tree (user-confirmed 2026-10-25)
 ```
 
-This is **not** a synchronized remote checkpoint. User-provided Git output confirms `fd02d84` is one commit ahead of `origin/main` (`fe9634b`). The tracked Home implementation and its assets are in the local commit, but no push has been reported. Publication is deferred pending review of the Adobe Stock redistribution terms. The untracked planning mockup and four experimental editorial assets are not included. The record below distinguishes verified Git evidence from browser observations and earlier handoff claims.
+The latest user-provided Git status and log confirm a **clean synchronized checkpoint** at `4e6fb11`, with `HEAD`, `origin/main`, and `origin/HEAD` aligned. The previous `fd02d84` local-only/pending-push status is historical. The October homepage revisions and button consolidation were committed and pushed; the initially misnamed second commit `c88056d` was amended to `4e6fb11` before the final sync check. Successful Git publication does **not** independently establish rights to redistribute every asset: preserve the Adobe Stock distribution/provenance caveat and review source licensing separately. This record distinguishes user-confirmed Git state from local screenshot/interaction observations and from unverified production/browser behavior.
 
 **Historical checkpoint narrative (`cd625a2`):** This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
 
@@ -43,6 +43,15 @@ Current architectural significance:
 - The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
 
 ## 2. Recent Milestones, Newest First
+
+### Cartographic Editorial Visualize, homepage, and buttons — 2026-10-15 to 2026-10-25
+
+- **`ad14727` — `Refine Visualize workspace styling and viewport`** and the Visualize styling sequence following the editorial foundations established the accepted compact, single editorial outer frame. The map/network/timeline workspaces preserve their functional geometry and vertical working area. Legend defaults closed; map controls and legend sit nearer the stage edges; the bottom playback surface and normal play button use oxblood, with a darker hover and green playing state. A prior decorative inner SVG border was removed. The asset/style work preserves visualization state and semantics rather than remapping research data.
+- **`9e12305` — `Document Visualize component ownership and styling architecture`** recorded component/styling responsibilities as a maintenance reference ahead of the homepage/button passes.
+- **`2472c57` — `Consolidate primary and secondary button styling`** committed shared button styling changes across common controls, Data, and playback surfaces. Maintain primary/secondary roles and centralized styling instead of proliferating one-off button variants.
+- **`4e6fb11` — `Refine Cartographic Editorial homepage composition`** is the **current synchronized checkpoint**. It contains the accepted current homepage component and stylesheet refinements, two newly added layered corner-collage images in `assets/`, and `planning_documents/Peridot_Sitewide_Button_Inventory_20261017_v1.md`. The original message for this commit was `Consolidate primary and secondary button styling 2` (`c88056d`), subsequently amended by the user to the accurate homepage message; **only `4e6fb11` belongs in the current ancestry**.
+- The accepted Home retains the editorial paper-and-Florence hero, primary Get started action, and a full-width parchment-textured lower banner with three *informational* columns for Manage data, Visualize, and Explore evidence. The large transparent collages at the lower-left and upper-right frame the banner. The final bounded polish adjusted the collage crop, filled the homepage's actual available parent height rather than calculating `100dvh - 72px`, and optically shifted the three-column content right/down without moving its corner artwork. These were CSS/layout changes; no new data semantics were introduced.
+- **Current-state correction:** the earlier H2e/H2f mask experiments and the `fd02d84` local-only status remain historical. No assertion of public-repository asset-distribution permission follows from a completed Git push; the existing provenance/licensing notes remain relevant. Subsequent Home/Visualize work should avoid unverified global sizing fixes or broad cascade rewrites.
 
 ### Cartographic Editorial foundation, header, and layered Home — 2026-10-14 to 2026-10-15
 
@@ -614,6 +623,8 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
+**Checkpoint update (2026-10-25):** The prior broad “Home refinement” and “Visualize palette/frame overhaul” requests have substantial accepted implementation through `4e6fb11`. Remaining work is targeted cross-workspace visual consistency, content and interaction decisions, tutorial development, CSS cascade cleanup, and future responsiveness/window-minimum testing—not a claim that the original entry composition is still unbuilt. The historic entries below are retained to explain what had been deferred at earlier checkpoints.
+
 ### Deferred Timeline, Network, navigation/interface, Chart, compatibility, Search follow-up, and tutorial work (originally recorded after `cd625a2`)
 
 - **Timeline relationship-line presentation — immediate:** preserve subject-strict mapped endpoint semantics and the continuous secondary-axis layout, but redesign line routing/contrast/anchors so each relationship reads clearly as event → event in Horizontal and Vertical views. Keep duration bands visually distinct from relationship edges.
@@ -631,7 +642,7 @@ The following milestone narratives are retained as historical records. They rema
 - **Search generalized-text follow-up:** `Any record text` still does not guarantee indexing of every generalized mapped semantic value.
 - **Phase 3 Chart Builder:** build chart controls from saved/generalized variables with structured human-readable sentence/autocomplete interaction; keep the wide/transposed stock case as a required regression dataset.
 - **Repository-wide compatibility retirement audit:** classify old Source/Target/profile/adapter/sample-fallback paths as delete now, still-required compatibility, legitimate specialization, or uncertain/retain.
-- **Home/tutorial redesign:** persistent global navigation now provides a reliable return to Home and a first-class Tutorials destination, but Home content refinement and substantive Tutorials remain deferred. Preserve the existing Home CTAs until a dedicated pass; later work may merge the strongest Home/Data patterns and revisit tutorial attention choreography, placement, typography, accessibility, animation order/timing, and the full UX walkthrough.
+- **Home/tutorial redesign (status updated at `4e6fb11`):** the editorial Home layout, full-width banner, and global Home return are implemented. Remaining Home work is optional, separately scoped content/entry refinements rather than a missing banner implementation. Substantive Tutorials, including attention choreography, placement, accessibility, animation timing, and the walkthrough, remain deferred.
 
 ### Tutorial attention-animation experiments rolled back before `619bab0`
 
@@ -671,12 +682,17 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 ## 4. Full Development History
 
-The entries immediately below extend the original exhaustive history with Git commits explicitly reported during the Cartographic Editorial sequence. The older rows and their original historical refs remain intact. Only `fd02d84` is the current *local* HEAD; no remote push is attested.
+The entries immediately below extend the original history with **verified recent checkpoint commits** explicitly reported during the Cartographic Editorial sequence; the complete intervening commit list has not been independently reproduced in this pass. The older rows and their original historical refs remain intact. The latest user-confirmed synchronized HEAD is `4e6fb11`; older local-only status annotations below are historical at their respective commits.
 
 | Date | Commit | Message | Checkpoint note |
 |---|---|---|---|
-| 2026-10-15 | `fd02d84` | Build Cartographic Editorial Home composition | local HEAD; push pending |
-| 2026-10-15 | `fe9634b` | Redesign global header with editorial typography | origin/main at last user status |
+| 2026-10-25 | `4e6fb11` | Refine Cartographic Editorial homepage composition | current synchronized HEAD (amended from `c88056d`) |
+| 2026-10-25 | `2472c57` | Consolidate primary and secondary button styling | accepted button consolidation |
+| 2026-10-17 | `9e12305` | Document Visualize component ownership and styling architecture | accepted ownership notes |
+| 2026-10-17 | `ad14727` | Refine Visualize workspace styling and viewport | accepted Visualize pass |
+| 2026-10-17 | `aaef93b` | Integrate Cartographic Editorial homepage assets | historical predecessor |
+| 2026-10-15 | `fd02d84` | Build Cartographic Editorial Home composition | historical local-only checkpoint; later superseded |
+| 2026-10-15 | `fe9634b` | Redesign global header with editorial typography | historical prior remote checkpoint |
 | 2026-10-15 | `243ea6c` | Establish Cartographic Editorial typography foundations | prior accepted commit |
 | 2026-10-15 | `889ebae` | Document legacy CSS and cascade verification | prior accepted commit |
 | 2026-10-15 | `2e20bba` | Integrate Cartographic Editorial palette and restore UI contrast | prior accepted commit |

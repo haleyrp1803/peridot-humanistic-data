@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-fd02d84 — Build Cartographic Editorial Home composition
+4e6fb11 — Refine Cartographic Editorial homepage composition
 Branch: main
-Status: committed locally; origin/main remains at fe9634b pending asset-license review and push
+Status: local HEAD, origin/main, and origin/HEAD synchronized; clean working tree (user-confirmed 2026-10-25)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -526,7 +526,7 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 - Themes and Accessibility remains implemented but hidden from public navigation. Export remains a Visualize-local action. Timeline remains Visualize-integrated in two forms: a dedicated Timeline visualization workspace and the separate shared bottom Timeline/playback control.
 - First launch has no active dataset. **Use sample data** must require an explicit sample choice rather than silently activating a fallback. The sample chooser starts collapsed and must remain reusable after a sample has been selected.
 - Data mapping is a full-page Data workspace, not a modal/wizard shell. Its local section navigation is directly accessible; larger mapping-content redesign is deferred.
-- A larger Home refinement may still merge the strongest parts of the branded Home and Data/sample-selection surfaces. That redesign remains deferred and must not be smuggled into consumer/data-model passes.
+- The Cartographic Editorial Home composition and its three-column informational banner are accepted at `4e6fb11`. Any later integration of Home with Data/sample selection is a **separate future content/interaction decision** and must not be smuggled into consumer/data-model passes.
 - Tutorials is now a first-class navigation destination, but substantive tutorial revision remains deferred; do not restore the old floating invitation.
 - About is the scholarly project-information destination and contains About Peridot, Creator, AI Disclosure, Open Source, and Feedback.
 - MapLibre migrated-overlay work is archived. Active `main` continues the D3/SVG path.
@@ -561,12 +561,34 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 
 ### 7.6 Themes and visual language
 
-**Current visual-decision note (2026-10-15):** Cartographic Editorial is the approved art direction for Home/public-facing editorial surfaces; the accepted H2e torn-paper Florence hero and three-column information banner are a local `fd02d84` checkpoint. H2f's diagonal-mask experiment was rejected due to wordmark/text intrusion. Future visual passes may crop/rotate licensed paper derivatives and change banner content, but must preserve legibility, functional navigation, research-workspace vertical room, and explicit asset credits. The old green/gold Home rules below are historic design guidance superseded by this deliberate decision. Before pushing stock-containing files, check their public-source redistribution rights rather than inferring them from licensing for website use. These visual decisions do not authorize changing semantic data behavior or introducing a new theme engine.
+**Current visual-decision note (updated 2026-10-25):** Cartographic Editorial is the approved art direction for Home/public-facing editorial surfaces; the accepted Florence/paper hero, informational three-column parchment banner, corner collages, compact Visualize editorial frame, and shared button roles are now represented in the synchronized `4e6fb11` checkpoint. The original H2e hero decision entered at `fd02d84`; that old local-only status is historical. H2f's diagonal-mask experiment was rejected due to wordmark/text intrusion. Future visual passes may crop/rotate licensed paper derivatives and change banner content, but must preserve legibility, functional navigation, research-workspace vertical room, and explicit asset credits. The old green/gold Home rules below are historic design guidance superseded by this deliberate decision. For any stock-containing files already published, verify source-redistribution rights and required remediation separately; before future publication, check permissions rather than inferring them from licensing for website use. These visual decisions do not authorize changing semantic data behavior or introducing a new theme engine.
 
 
 - Color changes should use semantic roles in `peridotTheme.js` and related metadata.
 - Cartographic Editorial uses paper/ivory, oxblood, forest green, and readable ink for editorial surfaces; map/chrome/chart palettes and dropdown layering remain semantic/system concerns rather than local cosmetic overrides.
 - Home is now a layered historical-map/paper editorial composition; **About** carries expanded scholarly project information; historical map and licensed asset provenance must remain clear.
+
+#### Cartographic Editorial homepage geometry and shared-button decision (2026-10-25)
+
+```text
+Decision:
+Preserve the accepted full-screen desktop editorial composition and use shared button role styling instead of independent one-off button variants.
+
+Context:
+Home's Florence/paper hero and corner-framed information banner underwent several layout refinements. A narrow blank strip at the viewport bottom exposed duplicated header-height subtraction; separate collage crop and feature-grid adjustments were needed to achieve optical rather than mathematical centering. Concurrent work consolidated shared button variants.
+
+Chosen approach:
+Let the application shell allocate the area beneath the global header; make Home fill that parent area and use flex sizing for hero and lower banner. Keep the parchment banner, informational feature grid, and independently positioned transparent corner collages separate. Offset only the content grid for optical balance. Use shared primary/secondary button styles and appropriate semantic oxblood/green playback states.
+
+Rejected alternative:
+Subtract `72px` from `100dvh` inside Home after the shell has already sized it; translate the entire banner to hide a bottom gap; move the corner assets along with unrelated content; or add special-purpose button rules for every workspace.
+
+Reason:
+Parent-relative geometry resolves the actual layout boundary, while independent decorative and information layers allow predictable adjustment without cropping or accidental clicks. Shared controls reduce competing CSS behavior.
+
+Maintenance consequence:
+Preserve the one-screen desktop composition and its decorative crop, prevent bottom gaps and scrollbars, and test button semantics in Data, Visualize/playback, and other relevant workspaces. Do not change canonical data interpretation as part of visual adjustments. The provenance of imagery remains subject to source-specific licensing checks, independently of Git publication.
+```
 
 ### 7.7 Export
 
