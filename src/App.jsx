@@ -6249,7 +6249,8 @@ export default function EuropeNetworkMapApp() {
   const activeTutorialStep = getPeridotTutorialStep(tutorialStepIndex);
 
   const homeWorkspaceProps = {
-    onUploadData: openDataWorkspace,
+    // Open the native file chooser on Home and reuse the generalized upload flow.
+    onUploadData: handleColumnMappingTableUpload,
     // Home's sample action opens the existing chooser; it does not automatically
     // activate or replace the user's currently selected dataset.
     onUseSampleData: useSampleData,

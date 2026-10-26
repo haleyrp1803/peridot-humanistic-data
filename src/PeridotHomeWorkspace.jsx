@@ -32,7 +32,16 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
           <p className="pd-home-editorial__lead">Humanities Data Visualizations</p>
           <p className="pd-home-editorial__description">Turn your data into interactive maps, networks, and timelines. Move seamlessly from visualization to individual record and back again, without interrupting your research flow.</p>
           <div className="pd-home-editorial__actions">
-            <button type="button" className="peridot-button-primary pd-home-editorial__primary" onClick={onUploadData}>Upload your data</button>
+            <label className="peridot-button-primary pd-home-editorial__primary" style={{ cursor: 'pointer' }}>
+              Upload your data
+              <input
+                type="file"
+                accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values"
+                onChange={onUploadData}
+                className="sr-only"
+                aria-label="Choose a file to upload to Peridot"
+              />
+            </label>
             <button type="button" className="peridot-button-primary pd-home-editorial__primary" onClick={onUseSampleData}>Explore sample data</button>
           </div>
         </div>
