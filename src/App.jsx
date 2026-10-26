@@ -6250,10 +6250,9 @@ export default function EuropeNetworkMapApp() {
 
   const homeWorkspaceProps = {
     onUploadData: openDataWorkspace,
-    // Entering Data from Home starts with the sample chooser collapsed.
-    // The Data workspace's own "Start with Sample Data" control remains the
-    // explicit action that opens the chooser.
-    onUseSampleData: openDataWorkspace,
+    // Home's sample action opens the existing chooser; it does not automatically
+    // activate or replace the user's currently selected dataset.
+    onUseSampleData: useSampleData,
     onStartTutorial: startTutorial,
   };
 
