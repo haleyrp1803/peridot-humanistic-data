@@ -1,0 +1,79 @@
+/* Editorial sample chooser: isolated from the dark Data landing and mapper.
+ * The parchment file lives in the repository's root assets folder, as on Home.
+ * Typography uses the existing Peridot editorial families; buttons use the
+ * shared primary/secondary classes and retain their theme-driven states.
+ */
+.pd-samples {
+  --pd-samples-ink: #23382d;
+  --pd-samples-oxblood: #812d26;
+  box-sizing: border-box;
+  height: 100%; min-height: 0; width: 100%; overflow: hidden;
+  color: var(--pd-samples-ink);
+  background-color: #eadfc9;
+  background-image: url('../../../assets/ChatGPT_Home_ParchmentBase.png');
+  background-position: center;
+  background-size: cover;
+  font-family: var(--pd-font-editorial, Georgia, serif);
+}
+.pd-samples__inner { box-sizing: border-box; width: min(1320px, calc(100% - 76px)); margin: 0 auto; padding: 31px 0 14px; }
+.pd-samples__topline { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.pd-samples__back { color:var(--pd-samples-oxblood); font:600 14px var(--pd-font-ui, sans-serif); border-bottom:1px solid currentColor; padding-bottom:3px; }
+.pd-samples__back:hover { color:#5e1b1b; }
+.pd-samples__edition { font:650 10px var(--pd-font-ui,sans-serif); letter-spacing:.19em; color:#856d5c; }
+.pd-samples__heading { text-align:center; margin:0 auto 25px; }
+.pd-samples__heading h1 { color:var(--pd-samples-ink); font:500 clamp(35px,3.45vw,60px)/1.1 var(--pd-font-display,Georgia,serif); letter-spacing:-.035em; margin:0; }
+.pd-samples__heading p { margin:7px 0 0; font:400 clamp(15px,1.07vw,19px)/1.4 var(--pd-font-editorial,Georgia,serif); }
+.pd-samples__rule { height:15px; display:flex; align-items:center; justify-content:center; gap:10px; color:var(--pd-samples-oxblood); font-size:13px; }
+.pd-samples__rule::before,.pd-samples__rule::after { content:''; width:90px; border-top:1px solid #a18b72; }
+.pd-samples__grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:stretch; }
+.pd-samples__card { min-width:0; display:flex; flex-direction:column; padding:12px; border:1px solid #b7a086; border-radius:12px; background:#fbf6ebed; box-shadow:0 7px 18px #50341a26; transition:transform 180ms ease,box-shadow 180ms ease,border-color 180ms ease; }
+.pd-samples__card:hover,.pd-samples__card:focus-within { transform:translateY(-5px); border-color:#813a2e; box-shadow:0 13px 24px #50341a35; }
+.pd-samples__image { position:relative; display:grid; place-items:center; aspect-ratio: 2.35; border:1px solid #b39a78; background:#eee3ce; }
+.pd-samples__image::before { content:''; position:absolute; inset:7px; border:1px solid #bbab92; pointer-events:none; }
+.pd-samples__image span { font:500 clamp(64px,6vw,110px)/1 var(--pd-font-display,Georgia,serif); color:var(--pd-samples-ink); }
+.pd-samples__card-content { flex:1; display:flex; flex-direction:column; align-items:stretch; text-align:center; }
+.pd-samples__card h2 { font:500 clamp(27px,2.1vw,36px)/1.1 var(--pd-font-display,Georgia,serif); letter-spacing:-.025em; margin:11px 0 4px; color:var(--pd-samples-ink); }
+.pd-samples__eyebrow { min-height:18px; margin:0 0 7px; font:650 11px/1.4 var(--pd-font-ui,sans-serif); letter-spacing:.15em; text-transform:uppercase; color:#87644f; }
+.pd-samples__summary { flex:1; margin:0 8px 8px; text-align:left; font:400 clamp(15px,1vw,17px)/1.45 var(--pd-font-editorial,Georgia,serif); }
+.pd-samples__metadata { margin:0 8px 8px; padding-top:8px; text-align:left; border-top:1px solid #cdbcaa; font:500 13px/1.4 var(--pd-font-ui,sans-serif); }
+.pd-samples__use { width:100%; min-height:43px; font:600 18px/1.1 var(--pd-font-editorial,Georgia,serif); border-radius:8px; gap:12px; }
+.pd-samples__utilities { display:flex; flex-wrap:wrap; justify-content:center; gap:6px 14px; margin-top:6px; font:600 12px/1.3 var(--pd-font-ui,sans-serif); }
+.pd-samples__utilities button,.pd-samples__utilities a { color:#74352a; border-bottom:1px solid transparent; padding:2px 0; }
+.pd-samples__utilities button:hover,.pd-samples__utilities a:hover { border-color:currentColor; }
+.pd-samples__utilities button:disabled { opacity:.5; }
+.pd-samples__details { text-align:left; border-top:1px solid #cdbcaa; margin-top:12px; padding:11px 7px 2px; font:400 13px/1.45 var(--pd-font-ui,sans-serif); }
+.pd-samples__details p + p { margin-top:8px; }
+.pd-samples__template { display:grid; grid-template-columns:50px minmax(0,1fr) auto; gap:22px; align-items:center; margin-top:14px; padding:12px 26px; border:1px solid #9eaa91; border-radius:11px; background:#f8f3e5ed; box-shadow:0 4px 12px #50341a1e; }
+.pd-samples__file-icon svg { display:block; width:40px; height:44px; }
+.pd-samples__template h2 { font:500 clamp(23px,1.8vw,30px)/1.15 var(--pd-font-display,Georgia,serif); margin:0 0 5px; }
+.pd-samples__template p { margin:0; font:400 15px/1.4 var(--pd-font-editorial,Georgia,serif); }
+.pd-samples__template-button { white-space:nowrap; min-height:45px; padding-inline:24px; }
+.pd-samples button:focus-visible,.pd-samples a:focus-visible { outline:2px solid var(--peridot-role-interface-focus-ring,#812d26); outline-offset:3px; }
+@media (max-width:950px) { .pd-samples__inner{width:calc(100% - 36px)} .pd-samples__grid{gap:12px} .pd-samples__card{padding:10px} .pd-samples__summary{margin-inline:3px} }
+@media (max-width:700px) { .pd-samples__grid{grid-template-columns:1fr;max-width:450px;margin:auto} .pd-samples__image{aspect-ratio:2.2} .pd-samples__template{grid-template-columns:40px 1fr}.pd-samples__template-button{grid-column:1/-1}.pd-samples__edition{display:none} }
+@media (prefers-reduced-motion:reduce) { .pd-samples__card{transition:none}.pd-samples__card:hover,.pd-samples__card:focus-within{transform:none} }
+
+/* Desktop composition stays within the height allocated below Peridot's header.
+ * On short windows or when Details expands, permit scrolling rather than
+ * clipping interactive controls. Normal desktop use has no page scrollbar. */
+@media (min-width: 701px) and (min-height: 760px) {
+  .pd-samples__inner { max-height: 100%; }
+}
+@media (max-height: 759px), (max-width: 700px) {
+  .pd-samples { overflow-y: auto; }
+}
+.pd-samples:has(.pd-samples__details) { overflow-y: auto; }
+
+/* The former Data introduction is retired. Keep both ordinary-data entry
+ * actions accessible inside the sample collection instead of a separate page. */
+.pd-samples__entry-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:10px; }
+.pd-samples__upload { display:inline-flex; align-items:center; justify-content:center; cursor:pointer; white-space:nowrap; min-height:45px; padding-inline:20px; }
+.pd-samples__upload:focus-within { outline:2px solid var(--peridot-role-interface-focus-ring,#812d26); outline-offset:3px; }
+.pd-samples__staged { margin-top:12px; padding:12px 20px; display:flex; align-items:center; justify-content:space-between; gap:16px; border:1px solid #9eaa91; border-radius:11px; background:#f8f3e5; }
+.pd-samples__staged h2 { font:500 21px/1.2 var(--pd-font-display,Georgia,serif); }
+.pd-samples__staged p { font:400 13px/1.4 var(--pd-font-ui,sans-serif); }
+.pd-samples__active-source { display:flex; align-items:center; justify-content:center; gap:16px; margin-top:8px; font:400 12px/1.4 var(--pd-font-ui,sans-serif); }
+.pd-samples__active-source button { color:var(--pd-samples-oxblood); text-decoration:underline; text-underline-offset:3px; }
+.pd-samples:has(.pd-samples__staged) { overflow-y:auto; }
+@media (max-width:900px) { .pd-samples__template {grid-template-columns:40px minmax(0,1fr); gap:12px;} .pd-samples__entry-actions {grid-column:1/-1; justify-content:center;} }
+@media (max-height:780px) { .pd-samples__inner {padding-top:18px;} .pd-samples__heading {margin-bottom:18px;} }
