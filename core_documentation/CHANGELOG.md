@@ -20,12 +20,12 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-4e6fb11 — Refine Cartographic Editorial homepage composition
+6667505 — Synchronize documentation through Cartographic Editorial overhaul
 Branch: main
-Status: local HEAD, origin/main, and origin/HEAD synchronized; clean working tree (user-confirmed 2026-10-25)
+Status: last user-confirmed synchronized commit; current working tree has intentional asset deletions (user-confirmed 2026-10-25)
 ```
 
-The latest user-provided Git status and log confirm a **clean synchronized checkpoint** at `4e6fb11`, with `HEAD`, `origin/main`, and `origin/HEAD` aligned. The previous `fd02d84` local-only/pending-push status is historical. The October homepage revisions and button consolidation were committed and pushed; the initially misnamed second commit `c88056d` was amended to `4e6fb11` before the final sync check. Successful Git publication does **not** independently establish rights to redistribute every asset: preserve the Adobe Stock distribution/provenance caveat and review source licensing separately. This record distinguishes user-confirmed Git state from local screenshot/interaction observations and from unverified production/browser behavior.
+The Changelog previously documented `4e6fb11` as a synchronized commit. A later user-provided log established `6667505` (`Synchronize documentation through Cartographic Editorial overhaul`) as synchronized; the present Git status does not include a new hash and reports intentional deletions of five tracked Adobe Stock filigree images, so the working tree is **not clean**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned. The previous `fd02d84` local-only/pending-push status is historical. The October homepage revisions and button consolidation were committed and pushed; the initially misnamed second commit `c88056d` was amended to `4e6fb11` before the final sync check. Successful Git publication does **not** independently establish rights to redistribute every asset: preserve the Adobe Stock distribution/provenance caveat and review source licensing separately. This record distinguishes user-confirmed Git state from local screenshot/interaction observations and from unverified production/browser behavior.
 
 **Historical checkpoint narrative (`cd625a2`):** This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
 
@@ -43,6 +43,14 @@ Current architectural significance:
 - The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
 
 ## 2. Recent Milestones, Newest First
+
+### Adobe filigree retirement — 2026-10-25 (local, not yet committed)
+
+- The user intentionally deleted `assets/Adobe Stock Filigree 1.png`, `2.png`, `3.png`, `Divider Set.png`, and `Full Set.png`. Git reports these five files as tracked deletions; no commit or push has yet been verified for this change.
+- The accompanying source cleanup removes active Adobe filigree dependencies and decorations from the Data/Manage entry page, guided tutorial, full Inspector profile, and Explore divider areas. JSX imports and associated image CSS paths are removed. Retain the content sections; do not replace these ornaments automatically.
+- This is a **local proposed handoff**, not a claimed deployed or browser-verified change. Test `npm.cmd run dev` and `npm.cmd run build` locally before committing the deletions, code replacements, and documentation updates.
+- Historical entries about earlier filigree design choices remain valid historical records; asset filenames in those entries no longer denote files that should exist in the active working tree.
+
 
 ### Cartographic Editorial Visualize, homepage, and buttons — 2026-10-15 to 2026-10-25
 

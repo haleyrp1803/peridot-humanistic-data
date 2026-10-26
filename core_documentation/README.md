@@ -283,13 +283,7 @@ The screenshots in this section document Peridot as it appeared on **2026-06-21*
 
 *Annotated earlier Home layout concept documenting design decisions during development.*
 
-![Selected homepage filigree](../assets/Adobe%20Stock%20Filigree%201.png)
-
-*Historical Adobe Stock filigree chosen for an earlier Home framing treatment; not the current Cartographic Editorial lower-banner corner collage.*
-
-![Licensed Adobe Stock filigree full set](../assets/Adobe%20Stock%20Filigree%20Full%20Set.png)
-
-*Licensed filigree reference set retained for design history and future ornamental work.*
+*Historical Adobe Stock filigree was once used as Home framing ornament. All five tracked Adobe filigree PNGs were intentionally removed on 2026-10-25; their images are no longer embedded here, and they are not active project assets.*
 
 </details>
 

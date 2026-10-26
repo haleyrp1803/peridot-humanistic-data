@@ -756,9 +756,9 @@ Current notable decisions:
 - Map and visualization chrome colors should be routed through semantic theme roles where possible.
 - Peridot’s logo assets should live in `assets/`; solid-background variants are used for documentation/reference display, and transparent variants are used by the Home workspace hero.
 - The Home workspace should remain an informative-minimalist title-card surface: a large Peridot logo, one concise description sentence, and two CTAs (**Use sample data** and **Upload your data**). Detailed onboarding belongs in **Learn More about Peridot**.
-- Home title-card composition should scale as one fixed-ratio stage. The logo and text/buttons are primary content; filigree is decorative framing anchored outside adjacent content and must not overlap the logo, sentence, or buttons.
+- **Historical Home title-card contract (superseded):** the older fixed-ratio stage privileged logo/text/buttons with decorative filigree framing. This is not the current Cartographic Editorial Home contract; do not restore its Adobe filigree.
 - The Home text hierarchy should remain: **PERIDOT** wordmark largest, “Your go-to…” sentence second, button labels smallest.
-- The selected homepage filigree comes from licensed Adobe Stock assets. Keep attribution/asset origin clear in documentation and avoid treating the full filigree set as open-source original artwork.
+- **Historical provenance:** the old homepage filigree came from licensed Adobe Stock images. The five tracked filigree PNGs were deliberately removed from the working tree on 2026-10-25. Keep their origin documented, but do not treat them as current dependencies or freely redistributable project artwork.
 - Map PNG export defaults to map-only output with no Peridot branding. Optional export title appears above the map image; optional metadata appears below it. This supports researchers using exports in presentations without unnecessary branding or whitespace.
 - Map PNG export should use Peridot’s in-app typography and readable text sizes for presentation legibility.
 - Capability wording should use plain availability language: unavailable visualization types are **not available** for the dataset, not merely “limited.” User-facing capability cards should avoid internal diagnostics language.
@@ -773,7 +773,7 @@ Current notable decisions:
 
 
 - Learn More about Peridot is now a public project-information hub rather than a placeholder. It should keep compact reading as the default, retain expandable creator and disclosure prose, preserve access to open-source project resources, and keep tutorials/help material separate from the minimal Home workspace.
-- Learn More dividers reuse the restrained Inspector/Explore filigree treatment. They belong in dedicated dark-green intervals between major horizontal chunks, not inside cards or between the creator and GitHub cards. Their entrance order is divider → following section, so the page reads vertically rather than resolving all elements at once.
+- **Historical Learn More styling (superseded):** its ornamental divider treatment followed an earlier Inspector/Explore filigree language. The current removal pass retires filigree decorations in active Inspector/Explore; do not copy those deleted assets into present-day page designs.
 - The Learn More expanded biography may grow while the GitHub resource card contracts. The portrait belongs to the biography’s reading flow and should allow prose to wrap alongside it and continue beneath it.
 - A small shared-style change must preserve the accepted behavior of unrelated current rules. For example, a Learn More parchment-color adjustment must not reintroduce an earlier portrait crop or remove the expanded biography’s text-flow rules.
 

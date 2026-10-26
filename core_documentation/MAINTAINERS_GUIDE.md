@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-4e6fb11 — Refine Cartographic Editorial homepage composition
+6667505 — Synchronize documentation through Cartographic Editorial overhaul
 Branch: main
-Status: local HEAD, origin/main, and origin/HEAD synchronized; clean working tree (user-confirmed 2026-10-25)
+Status: last user-confirmed synchronized commit; asset deletions currently uncommitted (user-confirmed 2026-10-25)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -476,7 +476,7 @@ The visual overhaul uses a **centralized styling foundation** established by `ec
 - **Visual QA:** check hero text clearance, irregular-edge opacity at upper-left, historical-image crop, CTA visibility, no overlays intercepting buttons, banner legibility and exactly three columns, plus the active dataset and navigation invariants. A sufficiently diagonal hero mask previously put imagery over the wordmark; that is an explicitly rejected regression.
 - **Asset inventory:** `src/assets/editorial/rosselli-florence.webp`, `benincasa-portolan-detail.webp`, `home-stock-torn-hero-mask.png`, `home-stock-feature-parchment.webp`, `home-stock-paper-texture.webp`, `home-feature-edge-top.webp`, `home-feature-edge-bottom.webp`, and the adjacent `ASSET_CREDITS.md` / `STOCK_ASSET_NOTES.md` were included in local commit `fd02d84`. Respect the recorded source-page attributions and the user's licensed stock asset provenance. These assets entered the historical `fd02d84` commit, and subsequent changes have been pushed by `4e6fb11`. Exact licensing and derivative redistribution permission **remain to be verified**, independent of whether Git publication has already occurred; a stock license is not by itself proof that a source repository may redistribute the image files.
 - **Historical untracked work at the October 15 handoff:** `planning_documents/Peridot_ Florence Atlas Homepage.png`, `src/assets/editorial/home-cartography-placeholder.svg`, `home-route-decal.svg`, `home-torn-paper-mask.svg`, and `paper-grain.webp`. Their **current** tracked/untracked status cannot be established from the latest five-commit Git log; check the working tree before deciding to stage, delete, or replace them. Do not wipe or bulk-stage unknown assets.
-- **Historical material:** the `assets/` green/gilded logo and Adobe filigree files, older fixed-ratio green title-card Home, and prior logo-centric instructions are retained as *historical visual references*, not the currently rendered Home contract. Preserve image/provenance records rather than deleting them on the theory that the newer design supersedes the history.
+- **Historical material:** the earlier green/gilded logo, the retired Adobe filigree artwork, older fixed-ratio green title-card Home, and prior logo-centric instructions are **historical design references only**. On 2026-10-25 the user intentionally deleted all five tracked `assets/Adobe Stock Filigree*.png` variants. Active Data, Tutorials, Inspector, and Explore views should no longer import or render that artwork. Preserve historical provenance in documentation; do not reintroduce the deleted images to satisfy historical references.
 
 ### Current Theme and Routing State
 
