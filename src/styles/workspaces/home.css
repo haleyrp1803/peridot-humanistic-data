@@ -758,3 +758,97 @@
 /* A full editorial text-line of air between the hero description and CTAs.
    Overrides the earlier onboarding margin without moving the artwork. */
 .pd-home-editorial__actions { margin-top: clamp(34px, 3vw, 44px); }
+
+/* Cartographic Editorial Home entrance — atlas assembly follow-up, 2026-10-26.
+   Florence, the global header, and fixed graphic overlays remain stationary.
+   The hero parchment arrives from the left; the banner rises next; its two
+   corner collages drift in from their respective sides. Use the independent
+   CSS translate property to preserve existing transform-based positioning. */
+@keyframes pd-home-editorial-enter-rise {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes pd-home-editorial-enter-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pd-home-editorial-paper-from-left {
+  from { opacity: 0; translate: -28px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes pd-home-editorial-banner-from-bottom {
+  from { opacity: 0; translate: 0 24px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes pd-home-editorial-collage-from-left {
+  from { opacity: 0; translate: -26px 7px; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes pd-home-editorial-collage-from-right {
+  from { opacity: 0; translate: 26px 7px; }
+  to { opacity: 1; translate: 0 0; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Animate the masked paper layer itself, without moving the Florence map,
+     text block, or paper-edge mask relative to one another at rest. */
+  .pd-home-scene__paper {
+    animation: pd-home-editorial-paper-from-left 1.22s cubic-bezier(.19, 1, .22, 1) .04s both;
+  }
+  /* The entire lower parchment surface arrives after the hero, preserving its
+     flex height, internal card placements, artwork crop, and existing transforms. */
+  .pd-home-editorial__lower-scene {
+    animation: pd-home-editorial-banner-from-bottom 1.14s cubic-bezier(.19, 1, .22, 1) 1.22s both;
+  }
+  /* The collages enter only after the banner has started to settle. Their
+     independent movement remains distinct from their parent's entrance. */
+  .pd-home-editorial__banner-collage--lower-left {
+    animation: pd-home-editorial-collage-from-left 1.10s cubic-bezier(.19, 1, .22, 1) 1.83s both;
+  }
+  .pd-home-editorial__banner-collage--upper-right {
+    animation: pd-home-editorial-collage-from-right 1.10s cubic-bezier(.19, 1, .22, 1) 2.01s both;
+  }
+  /* The title establishes identity; supporting text follows in reading order. */
+  .pd-home-scene__content > .pd-home-editorial__eyebrow {
+    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) .18s both;
+  }
+  .pd-home-scene__content > h1 {
+    animation: pd-home-editorial-enter-rise 1.18s cubic-bezier(.19, 1, .22, 1) .32s both;
+  }
+  .pd-home-scene__content > .pd-home-editorial__lead {
+    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) .56s both;
+  }
+  .pd-home-scene__content > .pd-home-editorial__description {
+    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) .72s both;
+  }
+
+  /* Animate the buttons individually, not their flex container: both remain
+     in their established positions and retain their native interaction paths. */
+  .pd-home-editorial__actions > :nth-child(1) {
+    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) .98s both;
+  }
+  .pd-home-editorial__actions > :nth-child(2) {
+    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) 1.14s both;
+  }
+
+  /* The reading columns assemble over the rising banner, left to right,
+     echoing the approved sample-selection card choreography. */
+  .pd-home-editorial__features > .pd-home-editorial__feature:nth-child(1) {
+    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) 1.62s both;
+  }
+  .pd-home-editorial__features > .pd-home-editorial__feature:nth-child(2) {
+    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) 1.80s both;
+  }
+  .pd-home-editorial__features > .pd-home-editorial__feature:nth-child(3) {
+    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) 1.98s both;
+  }
+  /* Animate newcomer children, not the container: responsive positioning
+     previously used transforms at some widths. */
+  .pd-home-editorial__newcomer-title,
+  .pd-home-editorial__newcomer-copy {
+    animation: pd-home-editorial-enter-fade 1.12s cubic-bezier(.19, 1, .22, 1) 2.18s both;
+  }
+}
+
+/* In reduced-motion mode none of the entrance animations run; the entire
+   editorial composition is fully visible on its initial paint. */
