@@ -858,3 +858,171 @@
 .peridot-mapping-footer-nav {
   margin-left: 0.9rem;
 }
+
+/* Cartographic Editorial — mapping workspace contrast pass (2026-10-26).
+ * Scoped to mapping only. No layout, transitions, data roles, or behavior changes.
+ * Use opaque paper surfaces and readable forest/ink text in place of the legacy
+ * gold-on-dark folio. The page navigation remains a distinct forest-green bar.
+ */
+.peridot-mapping-modal {
+  --mapping-shell-bg: #F5EFE4;
+  --mapping-shell-bg-2: #E8D8BC;
+  --mapping-paper: #FBF8F2;
+  --mapping-paper-warm: #F5EFE4;
+  --mapping-paper-muted: #E8D8BC;
+  --mapping-ink: #262722;
+  --mapping-muted: #253C32;
+  --mapping-gold: #7C211E;
+  --mapping-gold-light: #7C211E;
+  --mapping-border: #C6B9A9;
+  --text-main: #262722;
+  --heading-text: #262722;
+  --muted-text: #253C32;
+  --panel-card-text: #262722;
+  --panel-card-muted-text: #253C32;
+  --panel-card-border: #C6B9A9;
+  --section-bg: #FBF8F2;
+  --stat-card-bg: #F5EFE4;
+  --input-bg: #FBF8F2;
+  color: #262722;
+}
+
+.peridot-mapping-modal .peridot-mapping-modal-shell {
+  background: #F5EFE4 !important;
+  border-color: #C6B9A9 !important;
+  color: #262722 !important;
+  box-shadow: 0 12px 36px rgba(38, 39, 34, 0.15) !important;
+}
+.peridot-mapping-modal .peridot-mapping-modal-shell::before {
+  display: none !important;
+}
+.peridot-mapping-modal .peridot-mapping-modal-body {
+  background: #F5EFE4 !important;
+  color: #262722;
+}
+.peridot-mapping-modal .peridot-mapping-modal-header,
+.peridot-mapping-modal .peridot-mapping-modal-footer {
+  background: #E8D8BC !important;
+  border-color: #C6B9A9 !important;
+  color: #262722 !important;
+}
+.peridot-mapping-modal .peridot-mapping-modal-header :is(h2, p, div),
+.peridot-mapping-modal .peridot-mapping-modal-footer p,
+.peridot-mapping-modal .peridot-mapping-modal-header .text-xs {
+  color: #262722 !important;
+}
+.peridot-mapping-modal .peridot-mapping-intro-card,
+.peridot-mapping-modal .peridot-mapping-section-card {
+  background: #FBF8F2 !important;
+  border-color: #C6B9A9 !important;
+  color: #262722 !important;
+  box-shadow: 0 2px 6px rgba(38, 39, 34, 0.07) !important;
+}
+.peridot-mapping-modal .peridot-mapping-intro-card {
+  background: #E8D8BC !important;
+}
+.peridot-mapping-modal .peridot-mapping-table-wrap {
+  background: #FBF8F2 !important;
+  border-color: #C6B9A9 !important;
+}
+.peridot-mapping-modal .peridot-mapping-table-wrap table thead,
+.peridot-mapping-modal .peridot-mapping-table-wrap-full-preview thead th {
+  background: #E8D8BC !important;
+}
+.peridot-mapping-modal .peridot-mapping-table-wrap :is(th, td) {
+  color: #262722 !important;
+  border-color: #C6B9A9 !important;
+}
+.peridot-mapping-modal :is(select, input[type='text'], input[type='number'], input[type='date'], textarea),
+.peridot-mapping-modal :is(.peridot-form-input, .peridot-form-select) {
+  background: #FBF8F2 !important;
+  border-color: #927E6B !important;
+  color: #262722 !important;
+}
+.peridot-mapping-modal :is(input, textarea)::placeholder {
+  color: #51564E !important;
+  opacity: 1;
+}
+.peridot-mapping-modal :is(select, input, textarea, button):focus-visible {
+  outline: 2px solid #7C211E !important;
+  outline-offset: 2px;
+}
+.peridot-mapping-modal :is(select, input, textarea):focus {
+  border-color: #7C211E !important;
+  box-shadow: 0 0 0 3px rgba(124, 33, 30, 0.16) !important;
+}
+.peridot-mapping-modal .peridot-mapping-mini-badge,
+.peridot-mapping-modal .peridot-mapping-readiness-badge {
+  background: #E8D8BC;
+  border-color: #B49F89;
+  color: #253C32;
+}
+.peridot-mapping-modal .peridot-mapping-readiness-badge-chart,
+.peridot-mapping-modal .peridot-mapping-priority-badge {
+  background: #F1DCD6;
+  border-color: #B98C82;
+  color: #7C211E;
+}
+.peridot-mapping-modal .peridot-mapping-evidence-toggle {
+  background: #E8D8BC;
+  border-color: #B49F89;
+}
+.peridot-mapping-modal .peridot-mapping-evidence-choice {
+  color: #253C32;
+}
+.peridot-mapping-modal .peridot-mapping-evidence-choice-active {
+  background: #7C211E;
+  color: #FFFFFF;
+}
+.peridot-mapping-modal .peridot-mapping-progress {
+  background: #E8D8BC !important;
+  border-color: #C6B9A9 !important;
+}
+.peridot-mapping-modal .peridot-mapping-step-button {
+  background: #FBF8F2 !important;
+  border-color: #C6B9A9 !important;
+  color: #253C32 !important;
+  box-shadow: none !important;
+}
+.peridot-mapping-modal .peridot-mapping-step-button-active,
+.peridot-mapping-modal .peridot-mapping-step-button-active:hover {
+  background: #7C211E !important;
+  border-color: #7C211E !important;
+  color: #FFFFFF !important;
+}
+.peridot-mapping-modal .peridot-mapping-review-strip {
+  background: #E8D8BC !important;
+}
+/* Full-page section navigation: preserve its position and sizing; distinguish
+ * active, hover, and focus states without relying on gold or subtle opacity. */
+.peridot-mapping-page .peridot-mapping-page-nav {
+  background: #253C32 !important;
+  border-color: #456056 !important;
+}
+.peridot-mapping-page .peridot-mapping-page-context {
+  color: #FFFFFF !important;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-progress {
+  background: transparent !important;
+  border: 0 !important;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button {
+  background: transparent !important;
+  border: 0 !important;
+  color: #F5EFE4 !important;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button:hover {
+  color: #FFFFFF !important;
+  text-decoration: underline;
+  text-underline-offset: 0.24em;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button-active,
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button-active:hover {
+  background: transparent !important;
+  color: #FFFFFF !important;
+  text-decoration: none;
+}
+.peridot-mapping-page .peridot-mapping-page-nav .peridot-mapping-step-button-active::after {
+  background: #F5EFE4 !important;
+  height: 3px;
+}
