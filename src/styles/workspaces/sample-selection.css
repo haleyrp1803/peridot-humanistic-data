@@ -124,3 +124,40 @@
     animation: none;
   }
 }
+
+/* Proportional laptop composition. Keep the title unchanged while scaling
+ * the three cards AND the template panel together. Unlike the preceding
+ * height-saving pass, image aspect ratios, text hierarchy, spacing, and
+ * control sizes all retain approximately the same relative proportions.
+ * Avoid CSS transform scaling: it would leave the original layout box behind
+ * and could obscure buttons or conflict with entrance/hover animations.
+ */
+@media (min-width: 701px) and (max-height: 850px) {
+  .pd-samples__inner { padding-top: 22px; padding-bottom: 10px; }
+  .pd-samples__heading { margin-bottom: 19px; }
+  .pd-samples__grid,
+  .pd-samples__template { width: 90%; margin-left: auto; margin-right: auto; }
+  .pd-samples__grid { gap: 16px; }
+  .pd-samples__card { padding: 11px; border-radius: 11px; }
+  .pd-samples__image { aspect-ratio: 2.35; }
+  .pd-samples__image::before { inset: 6px; }
+  .pd-samples__image span { font-size: clamp(56px, 5.4vw, 96px); }
+  .pd-samples__card h2 { font-size: clamp(24px, 1.9vw, 32px); margin: 10px 0 3px; }
+  .pd-samples__eyebrow { min-height: 16px; margin-bottom: 6px; font-size: 10px; }
+  .pd-samples__summary { font-size: clamp(13px, .9vw, 15px); margin: 0 7px 7px; line-height: 1.45; }
+  .pd-samples__metadata { font-size: 12px; margin: 0 7px 7px; padding-top: 7px; }
+  .pd-samples__use { min-height: 39px; font-size: 16px; }
+  .pd-samples__utilities { font-size: 11px; gap: 5px 12px; margin-top: 5px; }
+  .pd-samples__template { grid-template-columns: 44px minmax(0,1fr) auto; gap: 18px; margin-top: 13px; padding: 10px 23px; }
+  .pd-samples__file-icon svg { width: 35px; height: 39px; }
+  .pd-samples__template h2 { font-size: clamp(21px, 1.6vw, 27px); margin-bottom: 4px; }
+  .pd-samples__template p { font-size: 13px; }
+  .pd-samples__template-button, .pd-samples__upload { min-height: 40px; padding-inline: 19px; }
+  .pd-samples__entry-actions { gap: 9px; }
+}
+/* At narrower widths, preserve the existing two-row template actions
+ * rather than squeezing buttons into the descriptive copy. */
+@media (min-width: 701px) and (max-width: 900px) and (max-height: 850px) {
+  .pd-samples__template { grid-template-columns: 36px minmax(0,1fr); gap: 11px; }
+  .pd-samples__entry-actions { grid-column: 1 / -1; justify-content: center; }
+}
