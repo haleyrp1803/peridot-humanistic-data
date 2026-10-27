@@ -161,3 +161,31 @@
   .pd-samples__template { grid-template-columns: 36px minmax(0,1fr); gap: 11px; }
   .pd-samples__entry-actions { grid-column: 1 / -1; justify-content: center; }
 }
+
+/* Sample-specific historical art replaces the '?' panels without changing
+ * the cards' laptop-tested aspect ratio, grid, or entrance choreography.
+ * Portrait focal points are set in the data map in JSX; the inner decorative
+ * border is layered above the image and never intercepts input.
+ */
+.pd-samples__image { overflow: hidden; }
+.pd-samples__image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  object-fit: cover;
+}
+.pd-samples__image::before { z-index: 1; }
+
+/* Cardinal painting: a moderate, contained view of the portrait avoids the
+ * face-only crop created by cover in a panoramic card image slot. The frame,
+ * card dimensions, and the other two illustrations are unchanged. */
+.pd-samples__image:has(.pd-samples__cardinal-portrait) {
+  background: #342722;
+}
+.pd-samples__image img.pd-samples__cardinal-portrait {
+  object-fit: contain;
+  transform: scale(1.5);
+  transform-origin: center center;
+}

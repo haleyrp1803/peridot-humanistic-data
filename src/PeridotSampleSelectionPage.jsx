@@ -6,6 +6,18 @@
 import React, { useState } from 'react';
 import './styles/workspaces/sample-selection.css';
 
+// Artwork lives in the existing root assets directory. Static imports allow
+// Vite to include these files in production builds as well as local previews.
+import letterImage from '../assets/early_modern_letter.png';
+import mediciFamilyTreeImage from '../assets/1569_medici_family_tree.jpg';
+import cardinalPortrait from "../assets/Cardinal_Carlo_de'_Medici.jpg";
+
+const sampleImages = {
+  'correspondence-network': { src: letterImage, alt: 'Early modern letter', position: 'center' },
+  'family-tree': { src: mediciFamilyTreeImage, alt: 'Medici family tree from 1569', position: 'center' },
+  'cardinals-1600-1640': { src: cardinalPortrait, alt: 'Portrait of Cardinal Carlo de Medici', position: 'center 23%' },
+};
+
 const cardCopy = {
   'correspondence-network': {
     heading: 'Correspondence',
@@ -59,12 +71,23 @@ export function PeridotSampleSelectionPage({
               summary: sample.description,
               metadata: sample.format,
             };
+            const illustration = sampleImages[sample.id];
             const busy = Boolean(sampleLoadingId);
             const expanded = detailsId === sample.id;
             return (
               <article className="pd-samples__card" key={sample.id}>
-                <div className="pd-samples__image" aria-label={`Illustration placeholder for ${copy.heading}`}>
-                  <span aria-hidden="true">?</span>
+                <div className="pd-samples__image">
+                  {illustration ? (
+                    <img
+                      src={illustration.src}
+                      alt={illustration.alt}
+                      className={sample.id === 'cardinals-1600-1640' ? 'pd-samples__cardinal-portrait' : undefined}
+                      style={{ objectPosition: illustration.position }}
+                      decoding="async"
+                    />
+                  ) : (
+                    <span aria-label={`Illustration placeholder for ${copy.heading}`}>?</span>
+                  )}
                 </div>
                 <div className="pd-samples__card-content">
                   <h2>{copy.heading}</h2>

@@ -3,7 +3,6 @@ import React from 'react';
 import florenceMap from '../assets/Rosselli_Map_of_Florence.jpg';
 import parchmentTearOne from '../assets/ChatGPT_Home_ParchmentTear1.png';
 import rightCorner from '../assets/ChatGPT_Home_TopRightCorner.png';
-import dottedRoute from '../assets/ChatGPT_Home_DottedLine.png';
 import bannerLowerLeft from '../assets/ChatGPT_Home_BannerLowerLeft_Collage_20261025.png';
 import bannerUpperRight from '../assets/ChatGPT_Home_BannerUpperRight_Collage_20261025.png';
 import './styles/workspaces/home.css';
@@ -24,7 +23,6 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
         <div className="pd-home-scene__graphics" aria-hidden="true">
           <div className="pd-home-scene__paper"><img src={parchmentTearOne} alt="" draggable="false" /></div>
           <img className="pd-home-art pd-home-art--top-right" src={rightCorner} alt="" draggable="false" />
-          <img className="pd-home-art pd-home-art--route" src={dottedRoute} alt="" draggable="false" />
         </div>
         <div className="pd-home-scene__content">
           <p className="pd-home-editorial__eyebrow">VISUALIZE · EXPLORE · UNCOVER</p>
