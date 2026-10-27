@@ -373,3 +373,244 @@
     transition: none;
   }
 }
+
+/* About laptop-first reading system — bounded layout-only pass.
+ * The global application header allocates the remaining viewport height.
+ * Keep local navigation fixed in the workspace and let only the reading pane
+ * scroll; expanded biographies and disclosures remain fully accessible.
+ */
+.peridot-about-workspace {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.peridot-about-local-nav {
+  position: relative;
+  top: auto;
+  flex: 0 0 auto;
+  min-height: 2.85rem;
+  gap: clamp(1.25rem, 2.6vw, 2.4rem);
+}
+.peridot-about-local-nav-item { padding-block: .78rem .7rem; }
+.peridot-about-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  width: min(100%, 94rem);
+  padding: clamp(.9rem, 1.7vh, 1.35rem) clamp(1.15rem, 3.2vw, 3rem) 1.5rem;
+}
+.peridot-about-reading-column,
+.peridot-about-reading-column-wide { width: 100%; max-width: none; }
+.peridot-about-page-heading {
+  max-width: none;
+  margin-bottom: clamp(.85rem, 1.6vh, 1.25rem);
+}
+.peridot-about-page-heading .peridot-section-label { margin-bottom: .32rem; }
+.peridot-about-page-heading h1 {
+  max-width: none;
+  font-size: clamp(1.75rem, 2.45vw, 2.45rem);
+  line-height: 1.1;
+}
+.peridot-about-lede {
+  max-width: 78rem;
+  margin-top: .4rem;
+  font-size: clamp(.91rem, 1vw, 1rem);
+  line-height: 1.5;
+}
+/* Overview pairs the Purpose and Audience discussions rather than stacking
+ * two full-width prose sections; Research principles retain three columns. */
+.peridot-about-overview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: clamp(1.25rem, 2.3vw, 2.4rem);
+  align-items: start;
+}
+.peridot-about-prose-section,
+.peridot-about-principles {
+  max-width: none;
+  padding-block: .85rem;
+}
+.peridot-about-prose-section h2,
+.peridot-about-principles > h2,
+.peridot-about-creator-copy h2 {
+  font-size: clamp(1.25rem, 1.8vw, 1.7rem);
+  margin-bottom: .45rem;
+}
+.peridot-about-prose-section p,
+.peridot-about-creator-copy p {
+  max-width: none;
+  font-size: .95rem;
+  line-height: 1.57;
+  margin-bottom: .6rem;
+}
+.peridot-about-principle-grid { gap: clamp(.8rem, 1.7vw, 1.6rem); margin-top: .65rem; }
+.peridot-about-principle-grid article { padding-top: .65rem; }
+.peridot-about-principle-grid p { line-height: 1.48; }
+.peridot-about-creator { padding-top: .85rem; }
+.peridot-about-creator-copy { max-width: none; }
+.peridot-about-creator-portrait {
+  width: clamp(11rem, 18vw, 15rem);
+  margin-right: 1.2rem;
+}
+.peridot-about-inline-actions { margin-top: .75rem; }
+.peridot-about-disclosure-grid { gap: 1rem; align-items: start; }
+.peridot-about-disclosure { padding: clamp(.95rem, 1.55vw, 1.35rem); }
+.peridot-about-disclosure h3 { font-size: clamp(1.25rem, 1.8vw, 1.6rem); }
+.peridot-about-disclosure-copy { line-height: 1.52; }
+.peridot-about-source-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .65rem 1.05rem;
+  border-top: none;
+}
+.peridot-about-source-link {
+  min-width: 0;
+  min-height: 4.15rem;
+  border: 1px solid rgba(223,233,200,.22);
+  padding: .65rem .9rem;
+}
+.peridot-about-source-link:hover,
+.peridot-about-source-link:focus-visible { padding-inline: 1rem; }
+@media (max-width: 900px) {
+  .peridot-about-overview-grid { grid-template-columns: 1fr; gap: 0; }
+  .peridot-about-source-list { grid-template-columns: 1fr; }
+}
+@media (max-height: 850px) and (min-width: 901px) {
+  .peridot-about-content { padding-top: .8rem; }
+  .peridot-about-page-heading { margin-bottom: .75rem; }
+  .peridot-about-prose-section, .peridot-about-principles { padding-block: .7rem; }
+}
+
+/* Cartographic Editorial Feedback — opt-in to the Feedback destination only.
+ * The existing About pages deliberately retain their current appearance until
+ * their individual redesigns are approved. Asset is shared with Home/Samples. */
+.peridot-about-workspace.is-feedback-editorial {
+  background: #f4e9d6 url('/assets/ChatGPT_Home_ParchmentBase.png') center center / cover no-repeat;
+  color: #213a31;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav {
+  background: rgba(248, 243, 233, .95);
+  border-bottom: 1px solid #c9b99c;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav-item {
+  color: #254036;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav-item:is(:hover,:focus-visible,.is-active) {
+  color: #7c2925;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav-item.is-active::after {
+  background: #832d28;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-content {
+  width: min(100%, 98rem);
+  padding-top: clamp(1rem, 2.2vh, 1.6rem);
+  padding-bottom: 1.2rem;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-page-heading {
+  border-bottom: 1px solid #c6b59a;
+  padding-bottom: .8rem;
+  margin-bottom: .2rem;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-page-heading .peridot-section-label {
+  color: #8a6131;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-page-heading h1 {
+  color: #203b31;
+  font-size: clamp(1.85rem, 2.75vw, 2.75rem);
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-lede {
+  color: #374a3e;
+  max-width: 72rem;
+}
+
+/* Feedback Pass 5: omit the redundant eyebrow and use green accents on the
+ * Feedback local tab only; other About destinations preserve their styling. */
+.peridot-about-workspace.is-feedback-editorial .peridot-about-page-heading .peridot-section-label {
+  display: none;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav-item.is-active,
+.peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav-item:is(:hover,:focus-visible) {
+  color: #26543e;
+}
+.peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav-item.is-active::after {
+  background: #35684c;
+}
+
+
+/* Cartographic Editorial About — presentation-only convergence (2026-10-27).
+ * Retain the existing content/grid layouts and the fixed local navigation +
+ * scrollable reading pane. Feedback's previously approved green overrides stay
+ * intact; this layer gives the other four destinations the same paper idiom.
+ * The image URL matches the existing Home and Sample Selection asset usage.
+ */
+.peridot-about-workspace {
+  background: #f4e9d6 url('/assets/ChatGPT_Home_ParchmentBase.png') center / cover no-repeat;
+  color: #243b31;
+}
+.peridot-about-local-nav {
+  background: rgba(248, 243, 233, .96);
+  border-bottom: 1px solid #c9b99c;
+}
+.peridot-about-local-nav-item { color: #294239; }
+.peridot-about-local-nav-item:is(:hover, :focus-visible, .is-active) { color: #28553e; }
+.peridot-about-local-nav-item::after { background: #35684c; }
+.peridot-about-page-heading { border-bottom: 1px solid #c6b59a; padding-bottom: .8rem; }
+.peridot-about-page-heading .peridot-section-label { color: #80633d; }
+.peridot-about-page-heading h1,
+.peridot-about-prose-section h2,
+.peridot-about-principles > h2,
+.peridot-about-creator-copy h2 { color: #203b31; }
+.peridot-about-lede,
+.peridot-about-prose-section p,
+.peridot-about-creator-copy p { color: #334a3e; }
+.peridot-about-prose-section,
+.peridot-about-principles,
+.peridot-about-creator { border-color: #c6b59a; }
+.peridot-about-principle-grid article { border-top-color: #6d8a69; }
+.peridot-about-principle-grid h3 { color: #243b31; }
+.peridot-about-principle-grid p { color: #3f5144; }
+.peridot-about-creator-portrait { border-color: #b9a989; }
+.peridot-about-creator-copy a { color: #26553f; text-decoration-color: #759d7f; }
+.peridot-about-creator-copy a:is(:hover,:focus-visible) { color: #173e2a; text-decoration-color: currentColor; }
+.peridot-about-creator .peridot-button-primary {
+  background: #284c3a;
+  border-color: #284c3a;
+  color: #fff9ed;
+}
+.peridot-about-creator .peridot-button-primary:is(:hover,:focus-visible) { background: #1c3c2c; }
+.peridot-about-disclosure {
+  background: rgba(255, 252, 246, .78);
+  border: 1px solid #c7b99e;
+  border-top: 2px solid #65856b;
+  border-radius: .45rem;
+  color: #243b31;
+}
+.peridot-about-disclosure h3 { color: #213c30; }
+.peridot-about-disclosure-copy { color: #374b3d; }
+.peridot-about-disclosure .peridot-about-text-button {
+  border-color: #8da491;
+  color: #28553e;
+}
+.peridot-about-disclosure .peridot-about-text-button:is(:hover,:focus-visible) {
+  border-color: #426f51;
+  background: rgba(87, 129, 91, .12);
+}
+.peridot-about-source-list { border-top-color: #c6b59a; }
+.peridot-about-source-link {
+  background: rgba(255, 252, 246, .54);
+  border-color: #c6b59a;
+  border-radius: .35rem;
+  color: #243b31;
+}
+.peridot-about-source-link small { color: #4b5c4f; }
+.peridot-about-source-link > span:last-child { color: #37634b; }
+.peridot-about-source-link:is(:hover,:focus-visible) {
+  background: rgba(238, 238, 217, .78);
+  color: #1c4933;
+}
+.peridot-about-source-link:is(:hover,:focus-visible) small { color: #405647; }
+/* The Feedback tab retains its previously accepted green treatment,
+ * including hiding only its redundant FEEDBACK eyebrow. */

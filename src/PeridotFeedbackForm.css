@@ -361,3 +361,341 @@
   width: min(100%, 42rem);
   padding: 1.5rem 0 0;
 }
+
+/* Only the inline About presentation uses the denser two-column form.
+ * Modal compatibility and Formspree submission behavior are unchanged. */
+.peridot-feedback-inline { padding-top: .8rem; }
+.peridot-feedback-form.is-inline {
+  width: 100%;
+  max-width: none;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: .85rem 1.1rem;
+}
+.peridot-feedback-form.is-inline > fieldset:first-child { grid-column: 1; }
+.peridot-feedback-form.is-inline > fieldset:nth-child(2) { grid-column: 2; }
+.peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(1) { grid-column: 1; }
+.peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(2) { grid-column: 2; }
+.peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(3) { grid-column: 1; }
+.peridot-feedback-form.is-inline > .peridot-feedback-privacy-note { grid-column: 2; align-self: center; }
+.peridot-feedback-form.is-inline > .peridot-feedback-error,
+.peridot-feedback-form.is-inline > .peridot-feedback-actions { grid-column: 1 / -1; }
+.peridot-feedback-form.is-inline .peridot-feedback-field textarea { min-height: 6rem; }
+.peridot-feedback-form.is-inline .peridot-feedback-choice { padding: .38rem .55rem; }
+@media (max-width: 900px) {
+  .peridot-feedback-form.is-inline { grid-template-columns: minmax(0, 1fr); }
+  .peridot-feedback-form.is-inline > * { grid-column: 1 / -1 !important; }
+}
+
+/* Editorial Feedback applies only to the inline form in its About destination.
+ * Modal styling and form logic remain untouched. */
+.is-feedback-editorial .peridot-feedback-inline {
+  border: 0;
+  padding-top: 1rem;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline {
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+  gap: clamp(.8rem, 1.7vh, 1.25rem) clamp(1.2rem, 2.2vw, 2.4rem);
+  color: #233b32;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline fieldset,
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field,
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-privacy-note,
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-actions {
+  min-width: 0;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline legend,
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field > span {
+  color: #244035;
+  font-family: Georgia, 'Palatino Linotype', serif;
+  font-size: clamp(.95rem, 1.15vw, 1.14rem);
+  font-weight: 700;
+  margin-bottom: .48rem;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline legend span,
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field em {
+  color: #5e6055;
+  font-family: inherit;
+  font-size: .74rem;
+  font-weight: 400;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field b { color: #8c312b; }
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice {
+  border: 1px solid #b9aa8c;
+  background: rgba(251,248,240,.47);
+  color: #233c32;
+  font-size: .77rem;
+  font-weight: 650;
+  line-height: 1.25;
+  padding: .42rem .66rem;
+  box-shadow: none;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice:hover {
+  border-color: #89372e;
+  background: #f5e9db;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice:has(input:checked) {
+  border-color: #832d28;
+  background: #832d28;
+  color: #fffaf1;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice input {
+  accent-color: #832d28;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field textarea,
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field input {
+  border: 1px solid #b8aa90;
+  border-radius: .6rem;
+  background: rgba(255,253,248,.58);
+  color: #20392f;
+  font-size: .91rem;
+  padding: .65rem .85rem;
+  box-shadow: inset 0 1px 2px rgba(77,55,30,.05);
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field textarea::placeholder,
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field input::placeholder {
+  color: #74796e;
+  opacity: 1;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field :is(textarea,input):focus {
+  border-color: #85312c;
+  box-shadow: 0 0 0 3px rgba(131,45,40,.15);
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field textarea {
+  min-height: clamp(6.2rem, 13.5vh, 8.3rem);
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-privacy-note {
+  background: rgba(236,232,213,.72);
+  color: #3d4c40;
+  border: 1px solid #c9b99b;
+  border-left: 3px solid #84936c;
+  border-radius: .6rem;
+  padding: .75rem 1rem;
+  font-size: .8rem;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-actions {
+  justify-content: flex-start;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-actions .peridot-button-primary {
+  background: #812b27;
+  color: #fff8ea;
+  border-color: #812b27;
+  border-radius: 999px;
+  padding: .68rem 1.3rem;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-actions .peridot-button-primary:hover {
+  background: #67211f;
+  border-color: #67211f;
+}
+.is-feedback-editorial .peridot-feedback-inline-success h3 { color: #244036; }
+.is-feedback-editorial .peridot-feedback-inline-success p { color: #3c5146; }
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-error {
+  background: #f8e4df;
+  border-color: #b55b49;
+  color: #71231b;
+}
+@media (max-width: 900px) {
+  .is-feedback-editorial .peridot-feedback-form.is-inline { grid-template-columns: minmax(0,1fr); }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > * { grid-column: 1 / -1 !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice { transition: none; }
+}
+
+/* Feedback laptop-first composition, 2026-10-27.
+ * Presentation only: preserve checkbox, validation, Formspree, and modal paths.
+ * The ordered grid corresponds to the existing inline form children. */
+@media (min-width: 901px) {
+  .is-feedback-editorial .peridot-feedback-form.is-inline {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    column-gap: clamp(1rem, 2.1vw, 2rem);
+    row-gap: clamp(.55rem, 1.15vh, .85rem);
+    align-items: start;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > fieldset:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > fieldset:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(1) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(2) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(3) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: center;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-error {
+    grid-column: 1 / -1;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+    margin-top: 0;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field textarea {
+    height: clamp(5.8rem, 12vh, 7rem);
+    min-height: clamp(5.8rem, 12vh, 7rem);
+    resize: vertical;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-privacy-note {
+    background: transparent;
+    border: 0;
+    border-left: 2px solid #84936c;
+    border-radius: 0;
+    padding: .15rem 0 .15rem .8rem;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice-grid {
+    gap: .34rem;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice {
+    padding: .34rem .54rem;
+  }
+  .is-feedback-editorial .peridot-feedback-inline {
+    padding-top: .6rem;
+  }
+}
+
+/* Preserve a readable, single-column flow in narrow windows; allow scrolling
+ * when text areas are manually expanded or validation adds content. */
+@media (max-width: 900px) {
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+    justify-content: flex-end;
+  }
+}
+
+/* Feedback Pass 4 — clear left-to-right writing workflow.
+ * The existing inline form children stay in source order for keyboard access;
+ * only their desktop visual grid positions change. Modal presentation retains
+ * its established layout and the page can scroll if the content grows. */
+@media (min-width: 901px) {
+  .is-feedback-editorial .peridot-feedback-form.is-inline {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-rows: auto auto auto auto;
+    align-items: start;
+    column-gap: clamp(1.2rem, 2.2vw, 2rem);
+    row-gap: clamp(.5rem, 1.15vh, .85rem);
+  }
+
+  .is-feedback-editorial .peridot-feedback-form.is-inline > fieldset:first-child {
+    grid-column: 1;
+    grid-row: 1;
+    padding-bottom: clamp(.6rem, 1.2vh, .9rem);
+    border-bottom: 1px solid #b9a888;
+    position: relative;
+  }
+  /* Small oxblood diamond marks the center of the editorial divider. */
+  .is-feedback-editorial .peridot-feedback-form.is-inline > fieldset:first-child::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: #88342d;
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > fieldset:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(1) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(2) {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(3) {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: center;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-error {
+    grid-column: 1 / -1;
+    grid-row: 4;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+    grid-column: 1 / -1;
+    grid-row: 5;
+    justify-content: flex-end;
+  }
+}
+
+/* Feedback Pass 5 — green editorial accents and centered selection divider.
+ * Scoped to inline Feedback only; legacy modal and other About pages retain
+ * their pre-existing presentation and behaviors. */
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field b {
+  color: #286347;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice:hover {
+  border-color: #35684c;
+  background: #e9eee2;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice:has(input:checked) {
+  border-color: #26543e;
+  background: #26543e;
+  color: #fffaf1;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-choice input {
+  accent-color: #26543e;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-field :is(textarea,input):focus {
+  border-color: #35684c;
+  box-shadow: 0 0 0 3px rgba(53,104,76,.16);
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-actions .peridot-button-primary {
+  background: #26543e;
+  border-color: #26543e;
+}
+.is-feedback-editorial .peridot-feedback-form.is-inline .peridot-feedback-actions .peridot-button-primary:hover {
+  background: #193f30;
+  border-color: #193f30;
+}
+@media (min-width: 901px) {
+  /* Stretch the first selection group to the height of the corresponding
+   * writing field. The rule participates in the fieldset's flex flow AFTER
+   * the checkbox pills, rather than overlapping them with a fixed offset.
+   * This also keeps it below wrapped pills at narrower desktop widths. */
+  .is-feedback-editorial .peridot-feedback-form.is-inline > fieldset:first-child {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > fieldset:first-child::before {
+    content: '';
+    position: static;
+    display: block;
+    flex: none;
+    order: 3;
+    width: 100%;
+    margin-top: auto;
+    margin-bottom: 1.45rem;
+    border-bottom: 1px solid #829e86;
+  }
+  /* The centered green diamond remains decorative; it aligns with the
+   * in-flow rule without covering any checkbox label. */
+  .is-feedback-editorial .peridot-feedback-form.is-inline > fieldset:first-child::after {
+    bottom: calc(1.45rem - 2px);
+    background: #35684c;
+  }
+}

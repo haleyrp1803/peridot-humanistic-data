@@ -208,7 +208,7 @@ export function PeridotFeedbackForm({ mode = 'trigger' }) {
       </fieldset>
 
       <label className="peridot-feedback-field">
-        <span>Message <b aria-hidden="true">*</b></span>
+        <span>Describe your bug, question, or suggestion. <b aria-hidden="true">*</b></span>
         <textarea
           value={message}
           onChange={(event) => {

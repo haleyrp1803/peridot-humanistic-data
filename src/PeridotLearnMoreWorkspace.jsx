@@ -7,7 +7,7 @@
  * this component owns only the local About hierarchy.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 import priceHeadshot from '../assets/2026_Price_Headshot.jpg';
 import priceCvUrl from '../assets/Price_CV.pdf?url';
@@ -91,6 +91,7 @@ function AboutOverview() {
         </p>
       </header>
 
+      <div className="peridot-about-overview-grid">
       <section className="peridot-about-prose-section" aria-labelledby="peridot-about-purpose-heading">
         <h2 id="peridot-about-purpose-heading">Purpose</h2>
         <p>
@@ -108,6 +109,7 @@ function AboutOverview() {
         </p>
       </section>
 
+      </div>
       <section className="peridot-about-principles" aria-labelledby="peridot-about-principles-heading">
         <h2 id="peridot-about-principles-heading">Research principles</h2>
         <div className="peridot-about-principle-grid">
@@ -136,9 +138,9 @@ function AboutOverview() {
   );
 }
 
+// The Creator biography is intentionally presented in full, including the portrait
+// and CV link; it does not share the collapsible AI disclosure behavior.
 function AboutCreator() {
-  const [isBioExpanded, setIsBioExpanded] = useState(false);
-
   return (
     <div className="peridot-about-reading-column">
       <header className="peridot-about-page-heading">
@@ -148,43 +150,28 @@ function AboutCreator() {
       </header>
 
       <section className="peridot-about-creator" aria-labelledby="peridot-about-creator-bio-heading">
-        <div className={`peridot-about-creator-copy${isBioExpanded ? ' is-expanded' : ''}`}>
-          {isBioExpanded ? (
-            <figure className="peridot-about-creator-portrait">
-              <img src={priceHeadshot} alt="Haley Price" />
-            </figure>
-          ) : null}
+        <div className="peridot-about-creator-copy is-expanded">
+          <figure className="peridot-about-creator-portrait">
+            <img src={priceHeadshot} alt="Haley Price" />
+          </figure>
 
           <h2 id="peridot-about-creator-bio-heading">Creator and maintainer</h2>
           <p>
             Haley Price created Peridot as an open-source, open-access digital scholarship tool with the help of ChatGPT. Aware of the fraught ethics of the current AI landscape, Price advocates for humanists to be well-informed about AI. Rather than avoid it altogether, Price sees the need for scholars to engage with it as responsibly and ethically as possible so that humanists have a voice in shaping AI&apos;s impact on the production and maintenance of humanistic knowledge and in humanities pedagogy.
           </p>
 
-          {isBioExpanded ? (
-            <>
               <p>
                 Price is a <a href={BROWN_PROFILE_URL} target="_blank" rel="noreferrer">History PhD Candidate at Brown University</a> and the <a href={JAPANLAB_PROFILE_URL} target="_blank" rel="noreferrer">Digital Humanities Specialist for UT Austin’s JapanLab</a>. Price is interested in the relationship between power, piety, patronage, networks, and gender in early modern Italy. She studied History and Humanities as an undergraduate at the University of Texas at Austin, where she engineered her own interdisciplinary degree plan to create educational history-based video games. This study culminated in <a href={PAZZI_CONSPIRACY_URL} target="_blank" rel="noreferrer"><em>The Pazzi Conspiracy</em></a>, which aims to teach students about patronage and power in fifteenth-century Florence. Her doctoral dissertation visualizes and analyzes Maria Maddalena von Habsburg de’ Medici’s (1589–1631) network, using her epistolary record and family tree to map her kith, kin, and correspondents across early modern Europe through digital visualizations and traditional prose.
               </p>
               <p>
                 Price&apos;s research interests include Early Modern European History, Medici Studies, power, piety, patronage, gender, and networks, Digital History and Visualization, Educational Video Games and Interactive Media, History Pedagogy, and AI Ethics in the Humanities.
               </p>
-            </>
-          ) : null}
+
 
           <div className="peridot-about-inline-actions">
-            <button
-              type="button"
-              className="peridot-about-text-button"
-              onClick={() => setIsBioExpanded((currentValue) => !currentValue)}
-              aria-expanded={isBioExpanded}
-            >
-              {isBioExpanded ? 'Show shorter bio' : 'Read full bio'}
-            </button>
-            {isBioExpanded ? (
-              <a href={priceCvUrl} download className="peridot-button-primary">
-                Download Haley Price’s CV
-              </a>
-            ) : null}
+            <a href={priceCvUrl} download className="peridot-button-primary">
+              Download Haley Price’s CV
+            </a>
           </div>
         </div>
       </section>
@@ -275,9 +262,16 @@ function AboutFeedback() {
 
 export function PeridotLearnMoreWorkspace() {
   const [activeMode, setActiveMode] = useState('overview');
+  const contentRef = useRef(null);
+
+  // Each About destination is a distinct reading page; do not inherit the prior
+  // section's internal scroll position when switching local navigation tabs.
+  useEffect(() => {
+    if (contentRef.current) contentRef.current.scrollTop = 0;
+  }, [activeMode]);
 
   return (
-    <section className="peridot-about-workspace">
+    <section className={`peridot-about-workspace${activeMode === 'feedback' ? ' is-feedback-editorial' : ''}`}>
       <nav className="peridot-about-local-nav" aria-label="About Peridot sections">
         {ABOUT_MODES.map((mode) => (
           <button
@@ -292,7 +286,7 @@ export function PeridotLearnMoreWorkspace() {
         ))}
       </nav>
 
-      <main className="peridot-about-content">
+      <main className="peridot-about-content" ref={contentRef}>
         {activeMode === 'overview' ? <AboutOverview /> : null}
         {activeMode === 'creator' ? <AboutCreator /> : null}
         {activeMode === 'ai' ? <AboutAI /> : null}
