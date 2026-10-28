@@ -14,6 +14,7 @@
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { MappingStageIntro, MappingInfo } from './PeridotMappingPresentation.jsx';
 import { PERIDOT_TEMPLATE_COLUMNS } from './peridotCsvSchema.js';
 import { getPeridotDatasetProfile, isPeridotGenealogyProfile } from './peridotDatasetProfiles.js';
 import {
@@ -473,51 +474,55 @@ function IdentifyRecordsStep({ staging, previewRows, headers }) {
   );
 }
 
-function TimeMappingStep({ headers, rows, temporalAssertions, relationshipParts, onTemporalAssertionsChange }) {
-  return <TemporalMappingTable headers={headers} rows={rows} temporalAssertions={temporalAssertions} relationshipParts={relationshipParts} onAssertionsChange={onTemporalAssertionsChange} />;
-}
+// Keep candidate mappings in their existing model. The step-level disclosure control
+// determines when a user first engages with their configuration; it does not mutate
+// or discard suggestions merely because the step is initially closed.
+const ADD_MAPPING_CLASS = 'rounded-xl border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-3 text-sm font-semibold text-[var(--button-primary-text)] hover:bg-[var(--button-primary-hover)]';
 
-function PlacesMappingStep({ headers, rows, placeParts, relationshipParts, identityMapping, onPlacePartsChange, onIdentityChange }) {
+function MappingAddGate({ label, section, active, onActivate, children }) {
   return (
-    <div className="space-y-4">
-      <SpatialMappingPanel
-        headers={headers}
-        rows={rows}
-        placeParts={placeParts}
-        relationshipParts={relationshipParts}
-        onPlacePartsChange={onPlacePartsChange}
-      />
-      <PlaceIdentityControls
-        headers={headers}
-        placeParts={placeParts}
-        identityMapping={identityMapping}
-        onChange={onIdentityChange}
-      />
+    <div className="space-y-3">
+      {!active ? (
+        <>
+          {section === 'places' ? (
+            <header className="peridot-places-intro"><div className="peridot-places-intro-main"><h2>Places</h2><p className="peridot-places-intro-subtitle">Where is the information in each row located? <MappingInfo label="About place mapping" text="A dataset may contain one, several, or no mapped locations. Add the fields that identify places." /></p></div></header>
+          ) : section === 'time' ? (
+            <MappingStageIntro section="Time" kind="time" title="When does the information in each row take place?" description="Choose dates or periods associated with your records." help="You can preserve partial, approximate, and open-ended values." />
+          ) : (
+            <MappingStageIntro section="Relations" kind="relations" title="What connections are recorded in each row?" description="Map people, places, organizations, or other participants connected by a row." help="A relationship can connect two or more participants." />
+          )}
+          <button type="button" className={ADD_MAPPING_CLASS} onClick={onActivate}>+ {label}</button>
+        </>
+      ) : children}
     </div>
   );
 }
 
-function RelationshipsMappingStep({ headers, rows, relationshipParts, relationshipMetadataMapping, identityMapping, onRelationshipPartsChange, onMetadataChange, onIdentityChange }) {
+function TimeMappingStep({ headers, rows, temporalAssertions, relationshipParts, onTemporalAssertionsChange , disclosureActive, onDisclosureActivate }) {
+  return <MappingAddGate label="Add a Date or Time Period" section="time" active={disclosureActive} onActivate={onDisclosureActivate}><TemporalMappingTable headers={headers} rows={rows} temporalAssertions={temporalAssertions} relationshipParts={relationshipParts} onAssertionsChange={onTemporalAssertionsChange} /></MappingAddGate>;
+}
+
+function PlacesMappingStep({ headers, rows, placeParts, relationshipParts, identityMapping, onPlacePartsChange, onIdentityChange , disclosureActive, onDisclosureActivate }) {
   return (
-    <div className="space-y-4">
-      <RelationshipMappingPanel
-        headers={headers}
-        rows={rows}
-        relationshipParts={relationshipParts}
-        relationshipMetadataMapping={relationshipMetadataMapping}
-        onRelationshipPartsChange={onRelationshipPartsChange}
-        onMetadataChange={onMetadataChange}
-      />
-      <RelationshipIdentityControls
-        headers={headers}
-        relationshipParts={relationshipParts}
-        identityMapping={identityMapping}
-        onChange={onIdentityChange}
-      />
-    </div>
+    <MappingAddGate label="Add a Location" section="places" active={disclosureActive} onActivate={onDisclosureActivate}>
+      <div className="space-y-4">
+        <SpatialMappingPanel headers={headers} rows={rows} placeParts={placeParts} relationshipParts={relationshipParts} onPlacePartsChange={onPlacePartsChange} />
+        <PlaceIdentityControls headers={headers} placeParts={placeParts} identityMapping={identityMapping} onChange={onIdentityChange} />
+      </div>
+    </MappingAddGate>
   );
 }
 
+function RelationshipsMappingStep({ headers, rows, relationshipParts, relationshipMetadataMapping, identityMapping, onRelationshipPartsChange, onMetadataChange, onIdentityChange , disclosureActive, onDisclosureActivate }) {
+  return (
+    <MappingAddGate label="Add a Relationship" section="relationships" active={disclosureActive} onActivate={onDisclosureActivate}>
+      <div className="space-y-4">
+        <RelationshipMappingPanel headers={headers} rows={rows} relationshipParts={relationshipParts} relationshipMetadataMapping={relationshipMetadataMapping} onRelationshipPartsChange={onRelationshipPartsChange} onMetadataChange={onMetadataChange} />
+        <RelationshipIdentityControls headers={headers} relationshipParts={relationshipParts} identityMapping={identityMapping} onChange={onIdentityChange} />
+      </div>
+    </MappingAddGate>
+  );
+}
 
 
 function refreshWorkbookCustomSelections({ workbookModel, workbookMapping, previousSelections = [] }) {
@@ -1744,45 +1749,29 @@ function WorkbookIdentifyRecordsStep({ workbookModel, workbookMapping }) {
   );
 }
 
-function WorkbookTimeMappingStep({ workbookModel, workbookMapping, onTemporalAssertionsChange }) {
-  return <WorkbookTemporalMappingTable workbookModel={workbookModel} workbookMapping={workbookMapping} onAssertionsChange={onTemporalAssertionsChange} />;
+function WorkbookTimeMappingStep({ workbookModel, workbookMapping, onTemporalAssertionsChange , disclosureActive, onDisclosureActivate }) {
+  return <MappingAddGate label="Add a Date or Time Period" section="time" active={disclosureActive} onActivate={onDisclosureActivate}><WorkbookTemporalMappingTable workbookModel={workbookModel} workbookMapping={workbookMapping} onAssertionsChange={onTemporalAssertionsChange} /></MappingAddGate>;
 }
 
-function WorkbookPlacesMappingStep({ workbookModel, placeParts, relationshipParts, identityMapping, onPlacePartsChange, onIdentityChange }) {
+function WorkbookPlacesMappingStep({ workbookModel, placeParts, relationshipParts, identityMapping, onPlacePartsChange, onIdentityChange , disclosureActive, onDisclosureActivate }) {
   return (
-    <div className="space-y-4">
-      <WorkbookSpatialMappingPanel
-        workbookModel={workbookModel}
-        placeParts={placeParts}
-        relationshipParts={relationshipParts}
-        onPlacePartsChange={onPlacePartsChange}
-      />
-      <WorkbookPlaceIdentityControls
-        workbookModel={workbookModel}
-        placeParts={placeParts}
-        identityMapping={identityMapping}
-        onChange={onIdentityChange}
-      />
-    </div>
+    <MappingAddGate label="Add a Location" section="places" active={disclosureActive} onActivate={onDisclosureActivate}>
+      <div className="space-y-4">
+        <WorkbookSpatialMappingPanel workbookModel={workbookModel} placeParts={placeParts} relationshipParts={relationshipParts} onPlacePartsChange={onPlacePartsChange} />
+        <WorkbookPlaceIdentityControls workbookModel={workbookModel} placeParts={placeParts} identityMapping={identityMapping} onChange={onIdentityChange} />
+      </div>
+    </MappingAddGate>
   );
 }
 
-function WorkbookRelationshipsMappingStep({ workbookModel, workbookMapping, onRelationshipPartsChange, onMetadataChange, onIdentityChange }) {
+function WorkbookRelationshipsMappingStep({ workbookModel, workbookMapping, onRelationshipPartsChange, onMetadataChange, onIdentityChange , disclosureActive, onDisclosureActivate }) {
   return (
-    <div className="space-y-4">
-      <WorkbookRelationshipMappingPanel
-        workbookModel={workbookModel}
-        workbookMapping={workbookMapping}
-        onRelationshipPartsChange={onRelationshipPartsChange}
-        onMetadataChange={onMetadataChange}
-      />
-      <WorkbookRelationshipIdentityControls
-        workbookModel={workbookModel}
-        relationshipParts={workbookMapping.relationshipParts || []}
-        identityMapping={workbookMapping.identityMapping || { record: {}, entityGroups: [] }}
-        onChange={onIdentityChange}
-      />
-    </div>
+    <MappingAddGate label="Add a Relationship" section="relationships" active={disclosureActive} onActivate={onDisclosureActivate}>
+      <div className="space-y-4">
+        <WorkbookRelationshipMappingPanel workbookModel={workbookModel} workbookMapping={workbookMapping} onRelationshipPartsChange={onRelationshipPartsChange} onMetadataChange={onMetadataChange} />
+        <WorkbookRelationshipIdentityControls workbookModel={workbookModel} relationshipParts={workbookMapping.relationshipParts || []} identityMapping={workbookMapping.identityMapping || { record: {}, entityGroups: [] }} onChange={onIdentityChange} />
+      </div>
+    </MappingAddGate>
   );
 }
 function WorkbookReviewStep({ workbookModel, workbookMapping, validation, summary, previewRows, capabilityAudit, temporalReviewSummary }) {
@@ -2225,6 +2214,8 @@ export function PeridotColumnMappingModal({
   const stepKeys = isGenealogyProfile ? GENEALOGY_STEP_KEYS : (isWorkbookMode ? WORKBOOK_STEP_KEYS : SINGLE_TABLE_STEP_KEYS);
 
   const [activeStep, setActiveStep] = useState(stepKeys[0]);
+  const [revealedMappingSteps, setRevealedMappingSteps] = useState({});
+  const revealMappingStep = (key) => setRevealedMappingSteps((current) => ({ ...current, [key]: true }));
   const [coreMapping, setCoreMapping] = useState(mappingState.coreMapping || {});
   const [temporalMapping, setTemporalMapping] = useState(stripDisplayDateMapping(mappingState.temporalMapping || {}));
   const [temporalNoteMappings, setTemporalNoteMappings] = useState(mappingState.temporalNoteMappings || {});
@@ -2263,6 +2254,7 @@ export function PeridotColumnMappingModal({
     stepTransitionTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
     stepTransitionTimeoutsRef.current = [];
     setActiveStep(firstStep);
+    setRevealedMappingSteps({});
     setTableOrientation(mappingState.tableOrientation === 'rows' ? 'rows' : 'columns');
     setRenderedStep(firstStep);
     setStepTransitionPhase('idle');
@@ -3204,6 +3196,8 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'time' ? (
             <TimeMappingStep
+              disclosureActive={Boolean(revealedMappingSteps["time"])}
+              onDisclosureActivate={() => { if (!temporalAssertionsMapping.length) handleTemporalAssertionsChange((current) => [...(current || []), { id: `time-${Date.now()}`, role: "", kind: "date", sourceMode: "single", column: "", noteColumns: [], subjectSelection: { includeRecord: true, participantIndices: [] } }]); revealMappingStep("time"); }}
               headers={headers}
               rows={rows}
               temporalAssertions={temporalAssertionsMapping}
@@ -3214,6 +3208,8 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'places' ? (
             <PlacesMappingStep
+              disclosureActive={Boolean(revealedMappingSteps["places"])}
+              onDisclosureActivate={() => revealMappingStep("places")}
               headers={headers}
               rows={rows}
               placeParts={placeParts}
@@ -3226,6 +3222,8 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'relationships' ? (
             <RelationshipsMappingStep
+              disclosureActive={Boolean(revealedMappingSteps["relationships"])}
+              onDisclosureActivate={() => revealMappingStep("relationships")}
               headers={headers}
               rows={rows}
               relationshipParts={relationshipParts}
@@ -3290,6 +3288,8 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-time' ? (
             <WorkbookTimeMappingStep
+              disclosureActive={Boolean(revealedMappingSteps["workbook-time"])}
+              onDisclosureActivate={() => { if (!(workbookMapping.temporalAssertionMappings || []).length) handleWorkbookTemporalAssertionsChange((current) => [...(current || []), { id: `time-${Date.now()}`, role: "", kind: "date", sourceMode: "single", column: makeWorkbookColumnRef("", ""), noteColumns: [], subjectSelection: { includeRecord: true, participantIndices: [] } }]); revealMappingStep("workbook-time"); }}
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
               onTemporalAssertionsChange={handleWorkbookTemporalAssertionsChange}
@@ -3298,6 +3298,8 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-places' ? (
             <WorkbookPlacesMappingStep
+              disclosureActive={Boolean(revealedMappingSteps["workbook-places"])}
+              onDisclosureActivate={() => revealMappingStep("workbook-places")}
               workbookModel={workbookModel}
               placeParts={workbookMapping.placeParts || []}
               relationshipParts={workbookMapping.relationshipParts || []}
@@ -3309,6 +3311,8 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-relationships' ? (
             <WorkbookRelationshipsMappingStep
+              disclosureActive={Boolean(revealedMappingSteps["workbook-relationships"])}
+              onDisclosureActivate={() => revealMappingStep("workbook-relationships")}
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
               onRelationshipPartsChange={handleWorkbookRelationshipPartsChange}
