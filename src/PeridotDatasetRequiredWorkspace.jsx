@@ -18,7 +18,6 @@ export function PeridotDatasetRequiredWorkspace({
   return (
     <section className="h-full overflow-auto bg-[var(--peridot-role-interface-app-background)] px-8 py-12 text-[var(--text-main)]">
       <div className="mx-auto max-w-4xl">
-        <p className="peridot-kicker">{isExplore ? 'Explore' : 'Visualize'}</p>
         <h1 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[clamp(2.4rem,5vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[var(--heading-text)]">
           {heading}
         </h1>

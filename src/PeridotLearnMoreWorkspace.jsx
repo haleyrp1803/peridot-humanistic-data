@@ -84,7 +84,6 @@ function AboutOverview() {
   return (
     <div className="peridot-about-reading-column">
       <header className="peridot-about-page-heading">
-        <p className="peridot-section-label">About Peridot</p>
         <h1>Humanistic data without forcing the evidence to behave like a spreadsheet.</h1>
         <p className="peridot-about-lede">
           Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, timelines, charts, advanced query tools, exports, and evidence dossiers.
@@ -144,7 +143,6 @@ function AboutCreator() {
   return (
     <div className="peridot-about-reading-column">
       <header className="peridot-about-page-heading">
-        <p className="peridot-section-label">Creator</p>
         <h1>Haley Price</h1>
         <p className="peridot-about-lede">Historian, digital humanist, and creator of Peridot.</p>
       </header>
@@ -183,7 +181,6 @@ function AboutAI() {
   return (
     <div className="peridot-about-reading-column peridot-about-reading-column-wide">
       <header className="peridot-about-page-heading">
-        <p className="peridot-section-label">AI disclosure</p>
         <h1>How AI was used in Peridot</h1>
         <p className="peridot-about-lede">
           Peridot&apos;s development involved an ongoing human–AI collaboration. These companion statements distinguish Price&apos;s account of the project from ChatGPT&apos;s account of its role.
@@ -217,7 +214,6 @@ function AboutOpenSource() {
   return (
     <div className="peridot-about-reading-column peridot-about-reading-column-wide">
       <header className="peridot-about-page-heading">
-        <p className="peridot-section-label">Open source</p>
         <h1>Source, documentation, and development record</h1>
         <p className="peridot-about-lede">
           Peridot&apos;s public repository preserves the application source alongside the documentation used to record architecture, maintenance rules, development principles, and project history.
