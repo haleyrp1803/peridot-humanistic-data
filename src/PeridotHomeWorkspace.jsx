@@ -34,7 +34,7 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
               Upload your data
               <input
                 type="file"
-                accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values"
+                accept=".csv,.tsv,.xlsx,.xlsm,.xls,text/csv,text/tab-separated-values"
                 onChange={onUploadData}
                 className="sr-only"
                 aria-label="Choose a file to upload to Peridot"

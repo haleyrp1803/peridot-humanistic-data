@@ -134,19 +134,29 @@ export function PeridotSampleSelectionPage({
             <button type="button" className="peridot-button-secondary pd-samples__template-button" onClick={onDownloadTemplate}>↓&nbsp; Download Template</button>
             <label className="peridot-button-secondary pd-samples__template-button pd-samples__upload">
               Upload Your Data
-              <input type="file" accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values" onChange={onUploadData} className="sr-only" aria-label="Choose a file to upload to Peridot" />
+              <input type="file" accept=".csv,.tsv,.xlsx,.xlsm,.xls,text/csv,text/tab-separated-values" onChange={onUploadData} className="sr-only" aria-label="Choose a file to upload to Peridot" />
             </label>
           </div>
         </section>
         {staging ? (
           <section className="pd-samples__staged" aria-live="polite">
             <div>
-              <h2>{staging.editingActiveData ? 'Mapped data ready to edit' : 'Data staged for mapping'}</h2>
-              <p>{staging.fileLabel} · {staging.rowCount || 0} rows · {staging.columnCount || 0} columns</p>
+              <h2>{staging.status === 'error' ? 'File could not be opened' : staging.status === 'parsing' ? 'Reading your file…' : staging.editingActiveData ? 'Mapped data ready to edit' : 'Data staged for mapping'}</h2>
+              {staging.status === 'error' ? (
+                <>
+                  <p>{staging.fileLabel}</p>
+                  <p role="alert" style={{ color: '#813a31', fontWeight: 600, maxWidth: '68ch' }}>{staging.errorMessage || 'Peridot could not read this file.'}</p>
+                  <p>Supported formats: CSV, TSV, XLSX, XLSM, and XLS. Your existing dataset has not been changed.</p>
+                </>
+              ) : staging.status === 'parsing' ? (
+                <p>{staging.fileLabel} · {staging.statusMessage || 'Reading file structure…'}</p>
+              ) : (
+                <p>{staging.fileLabel} · {staging.rowCount || 0} rows · {staging.columnCount || 0} columns</p>
+              )}
             </div>
             <div className="pd-samples__entry-actions">
-              <button type="button" className="peridot-button-primary" onClick={onContinueStaging} disabled={staging.status !== 'ready'}>{staging.editingActiveData ? 'Continue editing' : 'Open mapping workspace'}</button>
-              <button type="button" className="peridot-button-secondary" onClick={onClearStaging}>{staging.editingActiveData ? 'Cancel edit' : 'Clear staged data'}</button>
+              {staging.status === 'ready' && <button type="button" className="peridot-button-primary" onClick={onContinueStaging}>{staging.editingActiveData ? 'Continue editing' : 'Open mapping workspace'}</button>}
+              <button type="button" className="peridot-button-secondary" onClick={onClearStaging}>{staging.status === 'error' ? 'Dismiss' : staging.editingActiveData ? 'Cancel edit' : 'Clear staged data'}</button>
             </div>
           </section>
         ) : onEditActiveMapping ? (

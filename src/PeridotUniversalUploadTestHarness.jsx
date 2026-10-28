@@ -59,7 +59,7 @@ export function PeridotUniversalUploadTestHarness() {
           <p className="peridot-section-label">Experimental · Phase 2 test surface</p>
           <h2 className="mt-2 text-xl font-bold text-[var(--peridot-role-interface-text-on-dark)]">Test the new universal mapper</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--peridot-role-interface-text-on-dark)]/80">
-            Upload a CSV, TSV, XLS, or XLSX file here to try the new mapping workflow. This test does not import the file into Peridot or replace the current correspondence/genealogy mapper.
+            Upload a CSV, TSV, XLS, XLSM, or XLSX file here to try the new mapping workflow. This test does not import the file into Peridot or replace the current correspondence/genealogy mapper.
           </p>
           {status === 'ready' && workbookModel ? (
             <p className="mt-2 text-xs text-[var(--peridot-role-interface-text-on-dark)]/70">
@@ -73,7 +73,7 @@ export function PeridotUniversalUploadTestHarness() {
             {status === 'parsing' ? 'Reading file…' : 'Choose test file'}
             <input
               type="file"
-              accept=".csv,.tsv,.xlsx,.xls,text/csv,text/tab-separated-values"
+              accept=".csv,.tsv,.xlsx,.xlsm,.xls,text/csv,text/tab-separated-values"
               onChange={handleUpload}
               disabled={status === 'parsing'}
               className="sr-only"

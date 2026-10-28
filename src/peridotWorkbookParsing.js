@@ -1,7 +1,7 @@
 /*
  * Workbook and table parsing helper.
  * 
- * This module isolates CSV/TSV/XLSX/XLS parsing into a normalized workbook model. It detects file type, parses sheets, normalizes display rows/headers, removes empty rows/columns, and avoids preserving spreadsheet formatting that Peridot does not use.
+ * This module isolates CSV/TSV/XLSX/XLSM/XLS parsing into a normalized workbook model. It detects file type, parses sheets, normalizes display rows/headers, removes empty rows/columns, and avoids preserving spreadsheet formatting that Peridot does not use.
  * 
  * Important relationships:
  * - `App.jsx` calls this when a user uploads a table/workbook.
@@ -16,7 +16,7 @@
  *
  * Pass E1 scope:
  * - isolate the Excel parser dependency in one helper module;
- * - parse CSV, TSV, XLSX, and XLS into a common workbook-like model;
+ * - parse CSV, TSV, XLSX, XLSM, and XLS into a common workbook-like model;
  * - expose all Excel sheets rather than silently choosing one;
  * - ignore formatting and merged-cell styling;
  * - read saved/displayed cell values only; do not recalculate formulas;
@@ -42,6 +42,7 @@ export const PERIDOT_SUPPORTED_TABLE_EXTENSIONS = Object.freeze([
   'csv',
   'tsv',
   'xlsx',
+  'xlsm',
   'xls',
 ]);
 
@@ -83,7 +84,7 @@ export function detectPeridotTableFileType(fileName = '') {
 
   if (extension === 'csv') return PERIDOT_TABLE_FILE_TYPES.csv;
   if (extension === 'tsv' || extension === 'tab') return PERIDOT_TABLE_FILE_TYPES.tsv;
-  if (extension === 'xlsx' || extension === 'xls') return PERIDOT_TABLE_FILE_TYPES.excel;
+  if (extension === 'xlsx' || extension === 'xlsm' || extension === 'xls') return PERIDOT_TABLE_FILE_TYPES.excel;
 
   return PERIDOT_TABLE_FILE_TYPES.unsupported;
 }
@@ -395,7 +396,7 @@ export async function parsePeridotTableFile(file) {
       warnings: [
         {
           code: 'unsupported_file_type',
-          message: 'Peridot supports CSV, TSV, XLSX, and XLS files for mapped table imports.',
+          message: 'Peridot supports CSV, TSV, XLSX, XLSM, and XLS files for mapped table imports.',
         },
       ],
     };
@@ -410,8 +411,17 @@ export async function parsePeridotTableFile(file) {
     });
   }
 
-  const arrayBuffer = await file.arrayBuffer();
-  return parseExcelWorkbookArrayBuffer(arrayBuffer, fileName);
+  let arrayBuffer;
+  try {
+    arrayBuffer = await file.arrayBuffer();
+  } catch {
+    throw new Error('Peridot could not read this workbook from your device. Try selecting the file again or saving a new copy in Excel.');
+  }
+  try {
+    return parseExcelWorkbookArrayBuffer(arrayBuffer, fileName);
+  } catch {
+    throw new Error('Peridot recognizes this Excel file type but could not read the workbook. It may be damaged, password-protected, or saved in an incompatible format. Open it in Excel or another spreadsheet editor and save a fresh .xlsx or .xlsm copy, then try again.');
+  }
 }
 
 export function summarizePeridotWorkbook(workbookModel) {

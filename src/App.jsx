@@ -5010,7 +5010,7 @@ export default function EuropeNetworkMapApp() {
     const lowerName = fileLabel.toLowerCase();
     const displayFileType = lowerName.endsWith('.tsv')
       ? 'TSV'
-      : lowerName.endsWith('.xlsx') || lowerName.endsWith('.xls')
+      : lowerName.endsWith('.xlsx') || lowerName.endsWith('.xlsm') || lowerName.endsWith('.xls')
         ? 'Excel workbook'
         : 'CSV';
 
@@ -5048,6 +5048,9 @@ export default function EuropeNetworkMapApp() {
       }
 
       const usableSheets = (workbookModel.sheets || []).filter((sheet) => sheet.headers?.length && sheet.rows?.length);
+      if (!usableSheets.length) {
+        throw new Error('Peridot opened the file but found no usable data tables. Check that at least one sheet contains a header row followed by data rows, then save the file and try again.');
+      }
       const primarySheet = usableSheets[0] || workbookModel.sheets?.[0] || null;
       const isSingleSheetWorkbook = usableSheets.length === 1;
       const canUseCurrentSingleTableMapper = Boolean(primarySheet && isSingleSheetWorkbook);
@@ -5114,7 +5117,7 @@ export default function EuropeNetworkMapApp() {
         workbookModel: null,
         workbookSummary: null,
         stagedAt: new Date().toLocaleTimeString(),
-        errorMessage: error instanceof Error ? error.message : 'Unknown error',
+        errorMessage: error instanceof Error ? error.message : 'An unexpected error prevented Peridot from reading the file. Check the file and try again.',
       });
       setIsColumnMappingModalOpen(false);
     } finally {
