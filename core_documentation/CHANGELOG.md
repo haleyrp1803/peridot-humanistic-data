@@ -20,12 +20,12 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-27e3cf7 — Update interface mockups and genealogy retirement audit
+87d6955 — Refine informational workspace presentation and restore Creator layout
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-26)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-28)
 ```
 
-The user-confirmed 2026-10-26 sync ritual establishes `27e3cf7` as the latest clean, pushed checkpoint. It follows `f3cf4fb` (shared mapping workspace layout/contextual guidance), `89aaa50` (mapping palette and contrast), `60b8643` (direct Home file chooser), and the intervening Home onboarding/asset-retirement commits. `27e3cf7` updates tracked design mockups and the genealogy retirement audit; **it does not retire genealogy code**. Earlier statements about uncommitted Adobe filigree deletions, a sole Home “Get started” button, and a wholly deferred mapping-content redesign describe earlier stages, not the current implementation. Browser observations and source changes are distinguished from verified Git synchronization; asset licensing is a separate unresolved review.
+The user-confirmed 2026-10-28 sync ritual establishes `87d6955` as the latest clean, pushed checkpoint. The prior `27e3cf7` state remains an earlier historical checkpoint, following `f3cf4fb` (shared mapping workspace layout/contextual guidance), `89aaa50` (mapping palette and contrast), `60b8643` (direct Home file chooser), and the intervening Home onboarding/asset-retirement commits. `27e3cf7` updates tracked design mockups and the genealogy retirement audit; **it does not retire genealogy code**. Earlier statements about uncommitted Adobe filigree deletions, a sole Home “Get started” button, and a wholly deferred mapping-content redesign describe earlier stages, not the current implementation. Browser observations and source changes are distinguished from verified Git synchronization; asset licensing is a separate unresolved review.
 
 **Historical checkpoint narrative (`cd625a2`):** This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
 
@@ -43,6 +43,23 @@ Current architectural significance:
 - The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
 
 ## 2. Recent Milestones, Newest First
+
+### Cartographic Editorial public pages, import compatibility, and mapping disclosure — 2026-10-26 to 2026-10-28 (committed)
+
+**Documentation synchronization prepared 2026-10-30 (not yet committed):** current user-confirmed checkpoint, public workflow, import compatibility, mapping disclosure, informational workspaces, and deferred status were reconciled across the four core documents. The Governance Protocol was reviewed and left unchanged. This documentation artifact does not assert a new Git commit.
+
+- **`87d6955` — `Refine informational workspace presentation and restore Creator layout`** removes redundant eyebrow text from the no-data Visualize/Explore screens, Tutorials, and applicable About pages; returns Creator to its earlier photo-and-biography composition after a trial of a large portrait/name/CV profile card; and preserves the existing About/Feedback navigation. The experimental profile-card variants and their proposed biography replacement were not retained. This is the current user-confirmed clean `main` checkpoint.
+- **`c0e1fb3` — `Add progressive disclosure to relationship time and place mapping`** adds user-triggered **Add a Relationship**, **Add a Date or Time Period**, and **Add a Location** entry controls, deferring display of the full mapping form until requested while keeping source-column suggestions and existing underlying mapping semantics. Initial experimental collapsed-summary versions were rejected because they displaced the Places grid and exposed inferred fields too soon; the corrected parent-level activation preserves the original form layout. Multiple **independent** relationship groups remain deferred; `relationshipParts` still denotes participant parts within a single relationship.
+- **`55453a8` — `Support XLSM workbooks and improve file import errors`** accepts `.xlsm` as Excel worksheet data (without executing VBA) alongside CSV, TSV, XLSX, and XLS. User-facing errors distinguish unsupported extension, unreadable workbook, and unusable source rather than mislabeling a failed upload as staged. The historical London stock-price `.xlsm` workbook exposed the omission and was user-tested successfully after the fix.
+- **`3bb71be` — `Replace unfinished tutorial entry with coming soon page`** removes the misleading guided-tutorial start action from the public Tutorials destination and describes future tutorials accurately.
+- **`fb18799` — `Organize historical design assets and retain portrait reference`** relocates eight planning/reference images from active `assets/` into `planning_documents/` and retains the Maria Maddalena portrait as a source asset.
+- **`263cad0` — `Refine homepage styling and add sample dataset artwork`** preserves accepted no-dotted-route Florence/Atlas entrance treatment, aligns the two Home CTA text treatments, and adds the letter, Medici family tree, and Cardinal Carlo portrait to the three sample cards with constrained crop geometry. The Cardinal Carlo crop was refined to reveal more historical dress without enlarging the card.
+- **`2217373` — `Unify About workspace editorial styling and refine feedback layout`** applies the shared public editorial language to About and gives Feedback a two-column organization; Creator was later returned to its earlier presentation.
+- **`83dd4fa` — `Refine sample selection layout for laptop viewports`**, **`d75fa1e` — `Add staggered Sample Selection entrance animations`**, **`5f4a7f2` — `Refine Cartographic Editorial homepage entrance animations`**, and **`d443585` — `Redesign sample selection and Data entry workspace`** established the current illustrated-card layout and entry experience.
+
+**Deferred after this milestone:** multiple independent relationship mappings per record; unfinished Timeline relationship-line presentation; broader Sample Selection color experimentation; Creator profile-card redesign; remaining mapping-page presentation/Explore-content redesign and substantive guided Tutorials. The responsive sample-card proportions and the earlier Creator layout are the accepted configurations.
+
+
 
 ### Shared mapping UI, Home onboarding, and planning references — 2026-10-26 (committed)
 
@@ -641,6 +658,10 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
+**2026-10-28 deferrals and rejected interface trials:** The multi-relationship design (separate Mother/Father/Spouse groups within one record) remains unimplemented because runtime and graph consumers assume one relationship group with multipart participants; a future implementation must preserve group boundaries and never infer edges between unrelated groups. The sample card color treatments (ivory/green/oxblood accents) were discussed but not applied. The larger Creator profile-card experiment and alternative biography were reversed; the earlier portrait/biography layout is accepted. The dotted SVG Home route treatment and early collapsed-summary/offset-grid mapping variants were rejected. The corrected Add-on-demand mapping form activation is committed.
+
+
+
 **Checkpoint update (2026-10-25):** The prior broad “Home refinement” and “Visualize palette/frame overhaul” requests have substantial accepted implementation through `4e6fb11`. Remaining work is targeted cross-workspace visual consistency, content and interaction decisions, tutorial development, CSS cascade cleanup, and future responsiveness/window-minimum testing—not a claim that the original entry composition is still unbuilt. The historic entries below are retained to explain what had been deferred at earlier checkpoints.
 
 ### Deferred Timeline, Network, navigation/interface, Chart, compatibility, Search follow-up, and tutorial work (originally recorded after `cd625a2`)
@@ -700,10 +721,22 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 ## 4. Full Development History
 
-The entries immediately below extend the original history with **verified recent checkpoint commits** explicitly reported during the Cartographic Editorial sequence; the complete intervening commit list has not been independently reproduced in this pass. The older rows and their original historical refs remain intact. The latest user-confirmed synchronized HEAD is `4e6fb11`; older local-only status annotations below are historical at their respective commits.
+The entries immediately below extend the original history with **verified recent checkpoint commits** explicitly reported during the Cartographic Editorial sequence; the complete intervening commit list has not been independently reproduced in this pass. The older rows and their original historical refs remain intact. The latest user-confirmed synchronized HEAD is `87d6955`; older local-only status annotations below are historical at their respective commits.
 
 | Date | Commit | Message | Checkpoint note |
-| 2026-10-26 | `27e3cf7` | Update interface mockups and genealogy retirement audit | current clean synchronized checkpoint; planning artifacts only |
+| 2026-10-28 | `87d6955` | Refine informational workspace presentation and restore Creator layout | current clean synchronized checkpoint |
+| 2026-10-28 | `c0e1fb3` | Add progressive disclosure to relationship time and place mapping | user-activated Add controls; original editor layouts |
+| 2026-10-28 | `55453a8` | Support XLSM workbooks and improve file import errors | workbook acceptance and actionable errors |
+| 2026-10-27 | `3bb71be` | Replace unfinished tutorial entry with coming soon page | public Tutorials placeholder |
+| 2026-10-27 | `fb18799` | Organize historical design assets and retain portrait reference | reference-asset relocation |
+| 2026-10-27 | `263cad0` | Refine homepage styling and add sample dataset artwork | Florence and sample artwork |
+| 2026-10-27 | `2217373` | Unify About workspace editorial styling and refine feedback layout | About/Feedback presentation |
+| 2026-10-26 | `83dd4fa` | Refine sample selection layout for laptop viewports | compact card sizing |
+| 2026-10-26 | `d75fa1e` | Add staggered Sample Selection entrance animations | sample-page animation |
+| 2026-10-26 | `5f4a7f2` | Refine Cartographic Editorial homepage entrance animations | homepage animation |
+| 2026-10-26 | `d443585` | Redesign sample selection and Data entry workspace | sample chooser and Data entry |
+| 2026-10-26 | `4133bb7` | Synchronize documentation through shared mapping redesign | preceding documentation checkpoint |
+| 2026-10-26 | `27e3cf7` | Update interface mockups and genealogy retirement audit | historical clean checkpoint; planning artifacts only |
 | 2026-10-26 | `f3cf4fb` | Refine shared mapping workspace layout and contextual guidance | accepted first-stage Relations/Time/Places UI redesign |
 | 2026-10-26 | `89aaa50` | Align mapping workspace palette and improve contrast | mapping visual palette pass |
 | 2026-10-26 | `60b8643` | Open file chooser directly from homepage | direct upload action |

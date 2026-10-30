@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-27e3cf7 — Update interface mockups and genealogy retirement audit
+87d6955 — Refine informational workspace presentation and restore Creator layout
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-26)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-28)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -41,7 +41,7 @@ For detailed milestone interpretation and full commit history, see [CHANGELOG.md
 
 Peridot is a Vite/React/Tailwind research application organized around a workspace-first, multimodal exploration environment. `src/App.jsx` remains the top-level orchestration boundary, while dedicated workspaces and pure/helper modules own most UI, import, visualization, theme, search, Inspector, export, and generalized mapping behavior.
 
-The active data architecture is now one generalized user-mapping model over the canonical normalized research model. The public upload workflow no longer asks the researcher to choose Correspondence / Directed Record versus Genealogy / Person-Centered, and the former separate experimental “universal mapper” surface has been removed. Ordinary CSV/TSV/XLS/XLSX uploads pass through the generalized mapping workflow; older correspondence/genealogy normalizers and adapters may remain internally as compatibility/specialization boundaries, but they are not competing public semantic authorities.
+The active data architecture is now one generalized user-mapping model over the canonical normalized research model. The public upload workflow no longer asks the researcher to choose Correspondence / Directed Record versus Genealogy / Person-Centered, and the former separate experimental “universal mapper” surface has been removed. Ordinary CSV/TSV/XLS/XLSX/XLSM uploads pass through the generalized mapping workflow; older correspondence/genealogy normalizers and adapters may remain internally as compatibility/specialization boundaries, but they are not competing public semantic authorities.
 
 Generalized mapping is authoritative for Relations, Identity, Time, Places, Evidence, per-field cardinality, and record/participant subject attribution. Recurring-entity Identity is integrated into the mappings where entities are declared rather than exposed as a separate required page: simple data defaults to the displayed name/label, while stronger rules can use stable source IDs or alternate compound recipes such as `(Name A + Title A) OR (Name B + Title B)`. Canonical entity IDs remain identity authority; canonical entity labels are a separate presentation authority consumed by Network and Inspector.
 
@@ -81,7 +81,7 @@ The following tracked planning documents remain relevant maintenance references:
 | Top-level orchestration | `App.jsx` | state, derived data, routing, Inspector history, export wiring | filters, timeline, compact/full Inspector bridge | open each workspace; upload/use sample; click node/edge/cluster |
 | Workspace navigation | `App.jsx`, global header/navigation boundaries, `peridotWorkspaceConfig.js` | persistent public routing, state continuity, hidden Theme compatibility | active dataset, workspace/viewport state, Inspector presentation | logo/Home; Data/Visualize/Explore/Tutorials/About; cross-page state persistence |
 | First-time tutorial | tutorial state, panel, dock, anchor/highlight, and Home-entry boundaries | retained seven-stage guided workflow; Home launcher currently disabled pending revision | workspace routing, Inspector close behavior, target observation, keyboard focus | verify disabled Home placeholder now; rerun full seven-stage regression when launcher is re-enabled |
-| Data import | Data workspace + mapping/import helpers | parse, map, validate, normalize, capability audit | upload reset and downstream data scope | template, CSV, TSV, XLSX, XLS, mapped import |
+| Data import | Data workspace + mapping/import helpers | parse, map, validate, normalize, capability audit | upload reset and downstream data scope | template, CSV, TSV, XLSX, XLSM, XLS, mapped import |
 | Visualizations | `PeridotVisualizationsWorkspace.jsx`, `PeridotTimelineWorkspace.jsx` | map/network/chart modes, dedicated Timeline workspace, shared playback control, header, stage, Export menu | stage sizing, Inspector overlay, search/playback scope, portal layers | map/network/timeline/chart switch; Timeline orientation/zoom/pan/categories; header/playback controls |
 | Search | `PeridotSearchWorkspace.jsx` | draft/apply search and Explore UI | active dataset, facets, Inspector handoff | Apply/Clear, suggestion, pagination, Inspect return |
 | Inspector | Inspector modules + `App.jsx` | compact/full evidence dossier and history | selection resolution, mounted overlay | node/edge/cluster; Expand; Back; close |
@@ -295,7 +295,7 @@ Analytics receives the Search-filtered/playback-visible dated scope while preser
 
 ## 7. Data Import and Workbook Contract
 
-Peridot supports a simple downloadable template, arbitrary CSV/TSV mapping, workbook-aware XLSX/XLS import, editable post-import mappings, and three first-class sample datasets. The public import model is now **one generalized mapping system** rather than a Correspondence-versus-Genealogy profile choice. The canonical model remains database-first: source material may remain useful even when it is not map-, network-, timeline-, or chart-ready.
+Peridot supports a simple downloadable template, arbitrary CSV/TSV mapping, workbook-aware XLSX/XLSM/XLS import, editable post-import mappings, and three first-class sample datasets. The public import model is now **one generalized mapping system** rather than a Correspondence-versus-Genealogy profile choice. The canonical model remains database-first: source material may remain useful even when it is not map-, network-, timeline-, or chart-ready.
 
 ### Canonical normalization and compatibility boundary
 
@@ -368,6 +368,14 @@ Preserve: icon-and-pill navigation indicating optional mapping categories; compa
 
 The planning references committed in `27e3cf7` are `planning_documents/Mockup Florence Atlas Homepage.png`, `Mockup Places Data Mapping Interface.png`, `Mockup Relations Mapping Interface.png`, `Mockup Sample Data Selection Interface.png`, and `planning_documents/Peridot_Genealogy_Retirement_Audit_20261026_v1.md`. The last item is an audit, **not** authorization or evidence that specialized genealogy import/runtime files have been deleted. Retain generalized genealogy data support and verify active dependencies before future retirement.
 
+### Progressive disclosure and Excel import error contract (2026-10-28)
+
+At `c0e1fb3`, `PeridotColumnMappingModal.jsx` introduced user-triggered activation for the existing Relations, Time, and Places editing surfaces: **Add a Relationship**, **Add a Date or Time Period**, and **Add a Location** appear before the full mapping form. `PeridotMappingFieldControls.jsx` retains the original full-width, two-column field-editor compositions and nested **Add another part** behavior. Suggested source mappings may still be identified, but they should only populate the newly opened form after user action. Relevant integrated Identity controls follow form activation. Preserve the difference between a suggested mapping and an accepted mapping; closing/navigating must not discard researcher-approved values. Test empty, suggested, previously mapped, and revisited states in both single-table and workbook entry paths.
+
+**Relationship capacity:** the accepted model still represents one relationship group with `relationshipParts` (Part A/B/C...). Multiple *independent* relationship groups per row are not implemented. Do not represent a one-to-many participant collection as separately configured Mother/Father/Spouse relationships, or create clique edges from co-occurrence. The extension is deferred pending schema, compilation, canonical projection, Network/Inspector, and compatibility regression work.
+
+At `55453a8`, the recognized Excel formats gained `.xlsm` in addition to `.xlsx` and `.xls`, including file chooser and upload routing support. The workbook parser reads worksheet data without executing macro code. Unsupported formats, failed parsing/unreadable workbooks, and data with no usable table must yield actionable user-facing errors, not misleading successful staging. Include `.xlsm` and failed-file cases in import regressions, including sample-selection entry, without changing the established unique-ID join contract.
+
 ### Current mapping-model status
 
 The two major mapping-model questions previously deferred here are now implemented:
@@ -379,7 +387,7 @@ These capabilities should now be treated as preservation contracts, not backlog 
 
 ### Minimum regression checks
 
-Test: first launch with no active data; persistent-header navigation and logo/Home return; template download; all three sample chooser entries; sample source download; sample mapping edit/cancel/reset; CSV and TSV mapping; XLSX and XLS staging; full-page mapping entry without flash; direct mapping-section navigation; primary-sheet selection; multiple joins; duplicate-ID blocking; joined-field mapping; Identity continuity across repeated roles; Review and Upload/apply behavior; post-upload mapping re-edit/apply; retained accepted incomplete rows; cross-page active-dataset/state persistence; Search reset/coherence; Timeline and Analytics scope after upload; Inspector participant attribution and linked navigation; and relevant exports.
+Test: first launch with no active data; persistent-header navigation and logo/Home return; template download; all three sample chooser entries; sample source download; sample mapping edit/cancel/reset; CSV and TSV mapping; XLSX, XLSM, and XLS staging; full-page mapping entry without flash; direct mapping-section navigation; primary-sheet selection; multiple joins; duplicate-ID blocking; joined-field mapping; Identity continuity across repeated roles; Review and Upload/apply behavior; post-upload mapping re-edit/apply; retained accepted incomplete rows; cross-page active-dataset/state persistence; Search reset/coherence; Timeline and Analytics scope after upload; Inspector participant attribution and linked navigation; and relevant exports.
 
 ### Preserved detailed import regression expectations
 
@@ -391,7 +399,7 @@ The following implementation-level expectations were relocated from the Project 
 Committed Data behavior includes:
 
 - downloadable simple Peridot template;
-- one unified CSV / TSV / XLSX / XLS table-workbook upload control;
+- one unified CSV / TSV / XLSX / XLSM table-workbook upload control;
 - no implicit/default loaded sample on first use;
 - explicit sample selection among ordinary generalized source files;
 - downloadable sample source files and editable/resettable sample mappings;
@@ -434,6 +442,12 @@ Future Data changes should explicitly test:
 Do not reintroduce the legacy three-file workflow, public Correspondence/Genealogy profile-choice screen, separate experimental universal-mapper surface, or embedded default sample fallback without an explicit architecture decision.
 
 </details>
+
+### Sample Selection, Tutorials, and informational workspace presentation (2026-10-27–28)
+
+The sample chooser is now a dedicated parchment-backed selection page with three illustrated cards, one per shipped dataset: letter, Medici family tree, and Cardinal Carlo portrait. Image crop/frame settings are presentation only; sample files, generalized mapping definitions, and the requirement for explicit selection remain unchanged. The Home entrance effects use restrained sequential editorial animation; a decorative dotted-route trial was rejected.
+
+The public Tutorials page now presents a Coming Soon state; do not claim the retained guided overlay is publicly launched. The no-dataset Visualize/Explore and About/Tutorials pages have had redundant eyebrow labels removed. The Creator page was returned to its earlier smaller-portrait and adjacent-biography layout after an experimental large profile-card series was rejected. The revised Creator bio from that experiment is not the accepted live copy. The Feedback form remains the two-column editorial design. These are presentation decisions, not semantic or routing changes.
 
 ## 8. Theme and Stylesheet Architecture
 
@@ -597,7 +611,7 @@ Owns pure post-upload validation summaries. It produces:
 
 #### `src/PeridotColumnMappingModal.jsx`
 
-Owns the generalized column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLS imports and editable sample mappings. Despite its historical filename, it now renders as a **full-page Data workspace**, not a modal. The active local sections are Preview, Sheets where applicable, Relations, Time, Places, Evidence, and **Review and Upload**; recurring-entity Identity controls are integrated where entities are mapped rather than exposed as a separate required page. It exposes repeatable relationship participants, authoritative Identity rules, repeatable temporal assertions, repeatable participant-attached places, workbook primary-sheet selection, multi-sheet unique-ID joins, and selected Evidence/Analytics metadata.
+Owns the generalized column/workbook-mapping workspace for arbitrary CSV/TSV/XLSX/XLSM/XLS imports and editable sample mappings. Despite its historical filename, it now renders as a **full-page Data workspace**, not a modal. The active local sections are Preview, Sheets where applicable, Relations, Time, Places, Evidence, and **Review and Upload**; recurring-entity Identity controls are integrated where entities are mapped rather than exposed as a separate required page. It exposes repeatable relationship participants, authoritative Identity rules, repeatable temporal assertions, repeatable participant-attached places, workbook primary-sheet selection, multi-sheet unique-ID joins, and selected Evidence/Analytics metadata.
 
 The same full-page workspace is reused after import. Researcher uploads can be reopened and recompiled from their preserved original source. Samples open an editable active copy of the shipped mapping and display the approved warning that sample edits affect only the active interpretation; a reset action restores the canonical sample mapping. Mapping sections are directly navigable, while Back/Next remain convenience progression controls and Cancel is separated from that pair.
 
@@ -965,7 +979,10 @@ These areas still deserve narrow, explicit passes:
 
 ## 11. Active Technical Backlog
 
-**Cartographic Editorial active visual work (separate from the older technical priority order):** `27e3cf7` is the latest clean, synchronized checkpoint; the earlier `4e6fb11` editorial Home and button work has since been refined by `7280e30`, `2117659`, and `60b8643`. The Florence/paper hero, full-width banner, corner-collage frame, and optical content position are accepted; do not revive the earlier green title card or rejected H2f diagonal. Remaining visual work is targeted CSS/token cleanup, consistent buttons and workspaces, tutorial content, and verification across supported desktop viewport sizes. Asset publication is confirmed by Git, but licensing/redistribution rights are **not** established merely by the push. Preserve attribution notes and verify the applicable licenses separately. The present art direction prioritizes full-screen desktop; minimum supported viewport enforcement remains unresolved.
+**Deferred mapping architecture (2026-10-28):** multiple independent relationships per source row need a new grouping layer above `relationshipParts`, with corresponding workbook, runtime, canonical model, Inspector, Network, and export handling. Progressive form activation is already implemented and should not be mistaken for this feature.
+
+
+**Cartographic Editorial active visual work (separate from the older technical priority order):** `87d6955` is the latest clean, synchronized checkpoint; the earlier `4e6fb11` editorial Home and button work has since been refined by `7280e30`, `2117659`, and `60b8643`. The Florence/paper hero, full-width banner, corner-collage frame, and optical content position are accepted; do not revive the earlier green title card or rejected H2f diagonal. Remaining visual work is targeted CSS/token cleanup, consistent buttons and workspaces, tutorial content, and verification across supported desktop viewport sizes. Asset publication is confirmed by Git, but licensing/redistribution rights are **not** established merely by the push. Preserve attribution notes and verify the applicable licenses separately. The present art direction prioritizes full-screen desktop; minimum supported viewport enforcement remains unresolved.
 
 
 1. **Timeline relationship rendering / connection legibility — immediate.**
@@ -1086,7 +1103,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`27e3cf7` — `Update interface mockups and genealogy retirement audit`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
+- current synchronized checkpoint: **`87d6955` — `Refine informational workspace presentation and restore Creator layout`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
 - local development command on the user's machine: **`npm.cmd run dev`**
 - current Timeline state: canonical assertion-level projection, horizontal/vertical visualization workspace, smooth wheel/button zoom, scrollbars + click-drag panning, zoom-adaptive axis, evidence-driven plural categories with OR visibility, shared Inspector handoff, subject-strict mapped relationship projection, continuous secondary-axis layout, and revised duration treatment are committed; relationship-line routing/presentation is the immediate unfinished item.
 - the existing bottom Timeline/playback control remains intact and separate from the dedicated Timeline visualization workspace.
@@ -1111,5 +1128,5 @@ A future chat should also be told that:
 - the accepted Home is the art-directed Cartographic Editorial Florence composition with distinct Upload your data and Explore sample data actions, New to Peridot? guidance, and an informational three-column parchment banner framed by two corner collages; the earlier Home CTAs and the historical centered disabled Tutorial button belong to previous Home versions. The dedicated Tutorials public navigation destination remains; existing tutorial code is retained for later revision;
 - MapLibre remains archived.
 
-For the current **visual redesign continuation**, start from the committed Cartographic Editorial Home/Visualize layout through `27e3cf7`, preserve both lower-banner corner collages and the optically shifted informational grid, and distinguish asset-license verification from code-push status. Further visual changes should be separately bounded rather than reopening the accepted composition. The pre-existing **technical backlog priority** remains Timeline relationship-line rendering/presentation, using the current `a32ef05` subject-strict connection model and continuous secondary-axis layout as the source of truth. Before changing `PeridotTimelineWorkspace.jsx`, reread the entire exact current file under the Project Workflow Charter. Preserve adaptive-axis, zoom/pan, categories, Search scope, Inspector behavior, and relationship endpoint semantics while changing only connection/duration presentation.
+For the current **visual redesign continuation**, start from the committed Cartographic Editorial Home/Visualize layout through `87d6955`, preserve both lower-banner corner collages and the optically shifted informational grid, and distinguish asset-license verification from code-push status. Further visual changes should be separately bounded rather than reopening the accepted composition. The pre-existing **technical backlog priority** remains Timeline relationship-line rendering/presentation, using the current `a32ef05` subject-strict connection model and continuous secondary-axis layout as the source of truth. Before changing `PeridotTimelineWorkspace.jsx`, reread the entire exact current file under the Project Workflow Charter. Preserve adaptive-axis, zoom/pan, categories, Search scope, Inspector behavior, and relationship endpoint semantics while changing only connection/duration presentation.
 

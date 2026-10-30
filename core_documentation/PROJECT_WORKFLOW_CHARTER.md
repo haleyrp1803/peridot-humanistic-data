@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-27e3cf7 — Update interface mockups and genealogy retirement audit
+87d6955 — Refine informational workspace presentation and restore Creator layout
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-26)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-28)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -312,7 +312,7 @@ Future cluster changes should preserve:
 
 ### Data import, canonical normalization, and mapping caution
 
-Data import is a fragile boundary. Keep the public direction intact: one generalized CSV / TSV / XLSX / XLS mapping system, explicit user-owned semantics, permissive database-first admission, editable post-import mappings, and no silent standardization. The former public Correspondence-versus-Genealogy profile gate and separate experimental universal-mapper surface are superseded; compatibility/profile modules may remain internally only where current runtime behavior still requires them.
+Data import is a fragile boundary. Keep the public direction intact: one generalized CSV / TSV / XLSX / XLSM / XLS mapping system, explicit user-owned semantics, permissive database-first admission, editable post-import mappings, and no silent standardization. The former public Correspondence-versus-Genealogy profile gate and separate experimental universal-mapper surface are superseded; compatibility/profile modules may remain internally only where current runtime behavior still requires them.
 
 Peridot must begin with **no active dataset**. Do not restore an implicit sample fallback. Sample data must be explicitly selected by the user and should remain ordinary files processed by ordinary generalized mappings. Canonical sample mappings may be edited in the active session for learning/QA, but the shipped mapping and source file remain preserved and resettable.
 
@@ -516,6 +516,28 @@ Atomic subject-predicate-value assertions remain simpler for Inspector, Search, 
 
 Maintenance consequence:
 Do not infer participant ownership from co-occurrence in a row. Preserve record-only Evidence as record-level, participant-specific Evidence as canonical entity assertions, and the shared subject-selection compatibility normalization.
+```
+
+#### User-activated optional mapping decision (2026-10-28)
+
+```text
+Decision:
+Reveal optional Relations, Time, and Places configuration through explicit Add actions, while preserving automatic suggestion detection.
+
+Context:
+Automatically detected fields made full mapping forms appear before researchers asked to configure those aspects of their sources. Earlier collapsed-summary experiments obscured the intended Add workflow and displaced the Places editing grid.
+
+Chosen approach:
+Present Add a Relationship / Add a Date or Time Period / Add a Location at the top of the relevant page. Only populate a new visible form after the user activates it, while preserving the original full-width editing layout and mapped-data semantics.
+
+Rejected alternative:
+Automatically expand every inferred mapping, replace Add with an Edit summary, or insert disclosure wrappers as new children inside the Places two-column grid.
+
+Reason:
+Researchers should decide which semantic categories to configure without losing the benefit of likely column suggestions.
+
+Maintenance consequence:
+Retain the accepted single-group multipart `relationshipParts` model. Multiple independently configured relationships require a separate architectural pass, not a UI-only duplicate button.
 ```
 
 ### 7.2 Routing and workspace model

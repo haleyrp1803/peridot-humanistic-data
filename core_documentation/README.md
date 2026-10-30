@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system uses one generalized mapping model for ordinary CSV, TSV, XLSX, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The current interface uses a persistent site-wide editorial header—Peridot wordmark/Home, Data, Visualize, Explore, Tutorials, and About—while workspace-local navigation handles visualization, query, mapping, and About subsections without unloading the active dataset. The Timeline workspace remains additive: the existing bottom Timeline/playback control is still the shared chronological playback control for the visualization environment.
+Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system uses one generalized mapping model for ordinary CSV, TSV, XLSX, XLSM, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The current interface uses a persistent site-wide editorial header—Peridot wordmark/Home, Data, Visualize, Explore, Tutorials, and About—while workspace-local navigation handles visualization, query, mapping, and About subsections without unloading the active dataset. The Timeline workspace remains additive: the existing bottom Timeline/playback control is still the shared chronological playback control for the visualization environment.
 
 Peridot was created by Haley Price in direct and continuous collaboration with ChatGPT. There is a robust AI disclosure and discussion of AI ethics (and ethical concerns) in the tool's **About → AI Disclosure** section where credit is documented. Please go there for more details. For the purposes of README, it bears mentioning that the reason the documentation is so meticulous (and so robotic) is because Price made ChatGPT record every single decision, commit, redirection, success, and failure throughout Peridot's development so that the full record of labor would be documented and disclosed. This paragraph was written by Price (hi!) but the remainder of the documentation was written by ChatGPT under exacting human direction and quality assurance supervision.
 
@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-27e3cf7 — Update interface mockups and genealogy retirement audit
+87d6955 — Refine informational workspace presentation and restore Creator layout
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-26)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-28)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -64,7 +64,7 @@ Peridot is designed for researchers working with humanistic records that may be 
 
 - Peridot’s simple template CSV.
 - Arbitrary CSV and TSV tables mapped through explicit generalized roles.
-- XLSX and XLS workbooks, including multi-sheet joins configured by unique ID.
+- XLSX, XLSM, and XLS workbooks, including multi-sheet joins configured by unique ID.
 - Correspondence and other directed-record structures.
 - Person-centered genealogy/family-tree structures with stable IDs, parents, partners, life events, places, and attributes.
 - Point/site datasets with one or more mapped locations.
@@ -88,13 +88,13 @@ The sample chooser currently offers three ordinary project files:
 - **Family Tree** — a CSV person-centered genealogy example with stable relationship IDs, life events, and places.
 - **Cardinals Active from 1600–1640** — an XLSX example that demonstrates a different research structure and supplies useful future QA cases for repeated/multi-valued historical information.
 
-Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. The current compact sample chooser starts collapsed, expands in place when requested, and exposes direct **Use**, **Edit**, **Download**, and **Details** actions for each row. Sample selection is repeatable: choosing one sample does not lock the Data workspace, and a later sample cleanly replaces the active sample. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
+Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. The current Sample Selection page presents three historical-image cards, with correspondence-letter, Medici-family-tree, and cardinal-portrait artwork, and provides sample actions alongside a template/upload entry. The older compact, expandable row chooser remains a historical presentation. Sample selection is repeatable: choosing one sample does not lock the Data workspace, and a later sample cleanly replaces the active sample. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
 
 **Historical Home note:** the former small disabled Tutorial button is not part of the accepted Cartographic Editorial Home composition. Tutorials remains a separate persistent header destination, with substantive tutorial work still deferred. The earlier floating tutorial invitation remains retired.
 
 ### 3.2 Load and map data
 
-The **Data** page provides three explicit paths: **Start with a Template**, **Start with Sample Data**, and **Upload Your Data**. The unified uploader accepts CSV, TSV, XLSX, and XLS files. Once a file or editable mapping is opened, mapping occupies the Data page itself beneath the persistent global header rather than appearing in a modal overlay.
+The **Data** page provides three explicit paths: **Start with a Template**, **Start with Sample Data**, and **Upload Your Data**. The unified uploader accepts CSV, TSV, XLSX, XLSM, and XLS files. Once a file or editable mapping is opened, mapping occupies the Data page itself beneath the persistent global header rather than appearing in a modal overlay.
 
 The public mapper is now one generalized workflow rather than a Correspondence / Directed Record versus Genealogy / Person-Centered profile choice. Users describe what their data means through directly navigable mapping sections:
 
@@ -108,7 +108,10 @@ The public mapper is now one generalized workflow rather than a Correspondence /
 
 The pill-and-icon section rail is navigation among relevant mapping categories, not a requirement to map every category or a locked wizard: users can revisit available mapping sections directly. **Cancel** is visually separated from the grouped **Back / Next** progression controls, and opening the mapping workspace uses the established heavier transition so the full-page surface does not flash into place.
 
-**Current mapping interface (2026-10-26):** Relations, Time, and Places have received a substantial Cartographic Editorial readability pass. Their shared design uses compact stage headings, prominent primary questions, indented subordinate questions, content-sized selection cards, `(i)` explanatory popovers, and a contextual column for examples, current interpretation, and Additional Context / Good to know. This is a presentation improvement, not a change to mapping rules or a completed redesign of Preview, Sheets, Evidence, Review, or recurring-entity Identity. The categories in the mapping bar are options determined by the source data rather than compulsory steps.
+**Mapping interface milestone (2026-10-26; subsequently refined):** Relations, Time, and Places have received a substantial Cartographic Editorial readability pass. Their shared design uses compact stage headings, prominent primary questions, indented subordinate questions, content-sized selection cards, `(i)` explanatory popovers, and a contextual column for examples, current interpretation, and Additional Context / Good to know. This is a presentation improvement, not a change to mapping rules or a completed redesign of Preview, Sheets, Evidence, Review, or recurring-entity Identity. The categories in the mapping bar are options determined by the source data rather than compulsory steps.
+
+
+**Progressive mapping disclosure (committed at `c0e1fb3`):** Relations, Time, and Places begin with an explicit **Add a Relationship**, **Add a Date or Time Period**, or **Add a Location** control. Recognized source-column suggestions can populate the form after the researcher chooses Add; merely recognizing potential fields does not require exposing a full configuration form immediately. The relationship editor still supports one relationship group with Part A/B/C/etc. participants, **not** multiple independently configured relationship groups per source row. Existing user-confirmed mapping state must not be lost when navigating between mapping sections.
 
 Identity is researcher-owned and authoritative at runtime, but it is no longer a separate required mapping page. Simple datasets default to the same column used for the displayed name or label. When stronger recognition is needed, relationship/place Identity controls can use a stable source ID or a structured alternate recipe such as `(Name A + Title A) OR (Name B + Title B)`. This lets one historical person remain one entity across roles while still allowing same-named people to remain distinct when their mapped identities differ. Canonical display labels are resolved separately from identity, so known IDs display human-readable names while genuinely unresolved source references remain visible as IDs.
 
@@ -129,6 +132,8 @@ Sample mappings use the same editor. When a user edits one, Peridot shows:
 Peridot does not silently standardize names, places, dates, relationships, titles, controlled vocabularies, or other source values. Suggestions can help users map recognizable structures, but accepted scholarly semantics remain explicit and user-owned.
 
 For suitable mapped fields, researchers can declare whether one cell contains one value or several values and provide the delimiter. Peridot does not guess punctuation. Common quoted delimiter entries such as `"/"`, `'/'`, `" "`, and `' '` are normalized to the intended separator. Multi-valued place cells cannot also use one row-level coordinate pair; coordinates remain available for single-valued place mappings so several distinct places are never silently assigned the same coordinates.
+
+**File format and error handling:** `.xlsm` (macro-enabled workbook) is accepted for worksheet-data parsing; Peridot does not execute VBA macros. Unrecognized extensions, unreadable/corrupt or password-protected workbooks, and sources with no usable table should produce explanatory feedback rather than being presented as successfully staged data.
 
 ### 3.3 Visualize
 
@@ -162,11 +167,13 @@ The Visualizations header provides SVG and PNG export for map/network views, CSV
 
 **About** is a first-class scholarly project section with local pages for **About Peridot**, **Creator**, **AI Disclosure**, **Open Source**, and **Feedback**. The public Feedback page supports questions, bug reports, issue reports, feature suggestions, and other feedback, with optional context and email fields; submission continues through the project’s Formspree integration. The feedback component retains its modal-capable implementation path for compatibility, but the normal public destination is the inline About subpage.
 
+**Tutorials:** The Tutorials destination now states that tutorials are coming soon; it does not present an operational guided-tutorial launch button. The previous experimental tutorial implementation is retained in source, not a currently offered user walkthrough.
+
 ## 4. Interface Examples and Current-State Note
 
-### Cartographic Editorial Home — current synchronized implementation (2026-10-26)
+### Cartographic Editorial Home — current design (established 2026-10-26, refined through 2026-10-28)
 
-The Cartographic Editorial Home originated at `4e6fb11` and was subsequently refined through the clean `27e3cf7` checkpoint. The Rosselli-attributed *Pianta della Catena* Florence panorama, paper-textured left reading surface, torn-paper boundary, serif display typography, and two forest-green primary **Upload your data** / **Explore sample data** actions occupy the upper composition. A full-width parchment-textured lower banner introduces **Manage data**, **Visualize**, and **Explore evidence** as three *informational*, non-clickable columns. The banner also carries a compact **New to Peridot?** explanation toward its right side. Two layered decorative corner collages frame this content at lower-left and upper-right. The numbered step labels and Home compass-rose ornament were retired. Their art-directed crop and the content's optical centering are preserved independently. The homepage fills the space beneath the persistent global header, avoiding a bottom gap without a second hard-coded header subtraction. The stronger H2f diagonal was a rejected historical experiment, not the active mask.
+The Cartographic Editorial Home originated at `4e6fb11` and was subsequently refined through the clean `87d6955` checkpoint. The Rosselli-attributed *Pianta della Catena* Florence panorama, paper-textured left reading surface, torn-paper boundary, serif display typography, and two forest-green primary **Upload your data** / **Explore sample data** actions occupy the upper composition. A full-width parchment-textured lower banner introduces **Manage data**, **Visualize**, and **Explore evidence** as three *informational*, non-clickable columns. The banner also carries a compact **New to Peridot?** explanation toward its right side. Two layered decorative corner collages frame this content at lower-left and upper-right. The numbered step labels and Home compass-rose ornament were retired. Their art-directed crop and the content's optical centering are preserved independently. The homepage fills the space beneath the persistent global header, avoiding a bottom gap without a second hard-coded header subtraction. The stronger H2f diagonal was a rejected historical experiment, not the active mask.
 
 **Publication and attribution:** the homepage refinements and new corner assets have been committed and pushed to `main`. This confirms Git publication, **not** unrestricted licensing of every stock-derived or third-party source asset. Existing historical-map credits and stock-provenance notes remain important; redistribution terms should be checked separately. The earlier documentation's `fd02d84` local-only/pending-push note is historical. The screenshot gallery below still primarily contains dated June 2026 interface states, not evidence of the current rendering.
 
@@ -277,11 +284,11 @@ The screenshots in this section document Peridot as it appeared on **2026-06-21*
 <details>
 <summary><strong>Earlier Home layout design references — June 2026</strong></summary>
 
-![Homepage layout mockup](../assets/Homepage%20Layout%20Mockup.png)
+![Homepage layout mockup](../planning_documents/Homepage%20Layout%20Mockup.png)
 
-*Earlier Home layout concept used during the fixed-ratio title-card design process.*
+*Earlier Home layout concept used during the fixed-ratio title-card design process; archived with design references in `planning_documents/`.*
 
-![Homepage layout mockup annotated](../assets/Homepage%20Layout%20Mockup%20Annotated.png)
+![Homepage layout mockup annotated](../planning_documents/Homepage%20Layout%20Mockup%20Annotated.png)
 
 *Annotated earlier Home layout concept documenting design decisions during development.*
 
@@ -403,7 +410,7 @@ Peridot currently uses React 18, Vite, Tailwind CSS, D3 (`d3-geo` and `d3-force`
 
 ## 7. Data-Input Guide
 
-Peridot accepts ordinary CSV, TSV, XLSX, and XLS files through one generalized mapping workflow. It also provides a simple downloadable template and three downloadable sample datasets. The active public workflow no longer asks the user to choose Correspondence versus Genealogy before mapping.
+Peridot accepts ordinary CSV, TSV, XLSX, XLSM, and XLS files through one generalized mapping workflow. It also provides a simple downloadable template and three downloadable sample datasets. The active public workflow no longer asks the user to choose Correspondence versus Genealogy before mapping.
 
 The Data workspace provides:
 
@@ -472,7 +479,7 @@ Mapped Time is repeatable. Users can name each Date or Period/range in ordinary 
 
 ### Workbook / Excel import
 
-For `.xlsx` and `.xls` files, Peridot supports workbook-aware mapping:
+For `.xlsx`, `.xlsm`, and `.xls` files, Peridot supports workbook-aware mapping:
 
 - review workbook sheets;
 - choose a primary record sheet;
@@ -505,7 +512,7 @@ Peridot supports researcher-declared multiple values on suitable mapped fields. 
 ### Typical workflow
 
 1. Open Peridot; no dataset is active yet.
-2. Choose a sample, download the template, or upload your own CSV/TSV/XLSX/XLS file.
+2. Choose a sample, download the template, or upload your own CSV/TSV/XLSX/XLSM/XLS file.
 3. Review **Preview** and workbook **Sheets** if applicable.
 4. Move among **Relations**, **Time**, **Places**, and **Evidence** as needed; configure stronger participant Identity only where the default displayed-name rule is insufficient.
 5. Use **Review and Upload** to inspect the full interpretation and warnings.
@@ -551,9 +558,11 @@ One bounded Search limitation remains: **Any record text** does not yet guarante
 
 Phase 3 of the universal data work—the generalized Chart Builder—also remains deferred. The intended direction is to build charts from saved/generalized variables through structured, human-readable controls rather than unrestricted natural-language prompting.
 
-The existing guided tutorial implementation remains in source, but the new Home emphasizes explicit upload and sample-selection actions rather than the former disabled tutorial button. Tutorials has a persistent header destination; tutorial content, choreography, accessibility, and the walkthrough remain later bounded work.
+The existing guided-tutorial implementation remains in source, but the public Tutorials destination now accurately displays a Coming Soon message. The Home emphasizes upload and explicit sample selection; no guided walkthrough is offered to users at this checkpoint. Completing and validating tutorial content, choreography, and accessibility remain deferred.
 
 MapLibre work is archived and should not be treated as part of current `main`. For active technical caveats, regression expectations, and compatibility paths, see the Maintainer’s Guide.
+
+**Multiple independent relationships remain a limitation:** a single mapping may contain Part A/B/C/etc. participants, but adding several distinct relationship groups per record is deferred. This would require coordinated mapping-schema and runtime/Network changes, not simply duplicating the form.
 
 ## 9. Documentation and Project References
 
