@@ -531,3 +531,26 @@
   .pd-data-entry__content--tab-switch.pd-data-entry__content--templates .pd-data-entry__note,
   .pd-data-entry__content--tab-switch.pd-data-entry__content--upload .pd-data-entry__note { animation-delay: 960ms; }
 }
+
+
+/* Active dataset: make the mapping action a prominent oxblood primary CTA. */
+.pd-data-entry__status--active .pd-data-entry__status-actions { min-width: 220px; }
+.pd-data-entry__status--active .pd-data-entry__status-actions button.peridot-button-primary {
+  min-height: 54px;
+  padding: 13px 30px;
+  border-radius: 999px;
+  border: 1px solid #812d26;
+  background: #812d26;
+  color: #fffaf1;
+  font: 700 17px/1.2 var(--pd-font-editorial, Georgia, serif);
+  box-shadow: 0 3px 9px #50301f27;
+}
+.pd-data-entry__status--active .pd-data-entry__status-actions button.peridot-button-primary:hover {
+  background: #651f1b; border-color: #651f1b; color: #fffaf1;
+}
+.pd-data-entry__status--active .pd-data-entry__status-actions button.peridot-button-primary:active {
+  background: #521917; border-color: #521917;
+}
+@media (max-width: 750px) {
+  .pd-data-entry__status--active .pd-data-entry__status-actions { min-width: 0; width: 100%; }
+}

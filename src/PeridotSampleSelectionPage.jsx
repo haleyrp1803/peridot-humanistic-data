@@ -25,7 +25,7 @@ const cardCopy = {
 };
 
 function DataIcon({ kind }) {
-  if (kind === 'sample') return <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="32" cy="32" r="22"/><circle cx="32" cy="32" r="6"/><path d="M32 5v18m0 18v18M5 32h18m18 0h18M16 16l12 12m8 8 12 12m0-32L36 28m-8 8L16 48"/></svg>;
+  if (kind === 'sample') return <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinejoin="round" aria-hidden="true"><rect x="11" y="11" width="18" height="18" rx="2"/><rect x="35" y="11" width="18" height="18" rx="2"/><rect x="11" y="35" width="18" height="18" rx="2"/><rect x="35" y="35" width="18" height="18" rx="2"/></svg>;
   if (kind === 'upload') return <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M32 44V9m-13 13L32 9l13 13"/><path d="M12 44v10a4 4 0 0 0 4 4h32a4 4 0 0 0 4-4V44"/></svg>;
   return <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinejoin="round" aria-hidden="true"><path d="M15 5h25l10 10v44H15z"/><path d="M40 5v11h10M22 27h21M22 34h21M22 41h16M22 48h13"/></svg>;
 }
