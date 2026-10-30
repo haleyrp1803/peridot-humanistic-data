@@ -88,8 +88,8 @@
   left: -1%; top: -2%; width: 72%; height: 105%;
   clip-path: none;
   overflow: visible;
-  -webkit-mask-image: url('../../../assets/ChatGPT_Home_ParchmentTear1.png');
-  mask-image: url('../../../assets/ChatGPT_Home_ParchmentTear1.png');
+  -webkit-mask-image: url('../../../assets/panel_parchment_tear_1.png');
+  mask-image: url('../../../assets/panel_parchment_tear_1.png');
   -webkit-mask-size: 124% 112%;
   mask-size: 124% 112%;
   -webkit-mask-position: left top;
@@ -150,7 +150,7 @@
   margin:14px auto 18px;
   padding:30px clamp(35px,3.3vw,60px);
   background:#f4ead7;
-  background-image:linear-gradient(#f7efdfc0,#f7efdfc5),url('../../../assets/ChatGPT_Home_ParchmentBase.png');
+  background-image:linear-gradient(#f7efdfc0,#f7efdfc5),url('../../../assets/base_parchment_1.png');
   background-size:cover;background-position:center;
   box-shadow:0 8px 15px #3d271526;
   clip-path:polygon(0 2%,8% 1%,20% 1.5%,38% .8%,54% 1.5%,76% .8%,94% 1.5%,99% 2%,100% 8%,99.8% 92%,99% 98%,86% 99%,63% 98%,40% 99%,18% 98%,2% 99%,0 96%);
@@ -226,7 +226,7 @@
     width:min(86%,1490px);transform:translateX(-2%);
     min-height:210px;margin:12px auto 20px;
     padding:29px clamp(35px,3.4vw,65px);
-    background-image:linear-gradient(#f7efdf9e,#f7efdfa6),url('../../../assets/ChatGPT_Home_ParchmentBase.png');
+    background-image:linear-gradient(#f7efdf9e,#f7efdfa6),url('../../../assets/base_parchment_1.png');
   }
   .pd-home-editorial__olive {
     left:-1.5%;bottom:-26%;width:clamp(210px,19vw,335px);
@@ -415,7 +415,7 @@
   background-color: var(--home-paper, #f5ebd8);
   /* A pale overlay keeps the existing parchment grain readable but quiet. */
   background-image: linear-gradient(#f5ebd822, #f5ebd822),
-    url('../../../assets/ChatGPT_Home_ParchmentBase.png');
+    url('../../../assets/base_parchment_1.png');
   background-position: center 43%;
   background-size: cover;
   isolation: isolate;

@@ -488,7 +488,7 @@
  * The existing About pages deliberately retain their current appearance until
  * their individual redesigns are approved. Asset is shared with Home/Samples. */
 .peridot-about-workspace.is-feedback-editorial {
-  background: #f4e9d6 url('/assets/ChatGPT_Home_ParchmentBase.png') center center / cover no-repeat;
+  background: #f4e9d6 url('/assets/base_parchment_1.png') center center / cover no-repeat;
   color: #213a31;
 }
 .peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav {
@@ -547,7 +547,7 @@
  * The image URL matches the existing Home and Sample Selection asset usage.
  */
 .peridot-about-workspace {
-  background: #f4e9d6 url('/assets/ChatGPT_Home_ParchmentBase.png') center / cover no-repeat;
+  background: #f4e9d6 url('/assets/base_parchment_1.png') center / cover no-repeat;
   color: #243b31;
 }
 .peridot-about-local-nav {

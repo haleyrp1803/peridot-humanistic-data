@@ -1,10 +1,10 @@
 /* Cartographic Editorial Home — Pass 2. Artwork is decorative; controls remain live. */
 import React from 'react';
 import florenceMap from '../assets/Rosselli_Map_of_Florence.jpg';
-import parchmentTearOne from '../assets/ChatGPT_Home_ParchmentTear1.png';
-import rightCorner from '../assets/ChatGPT_Home_TopRightCorner.png';
-import bannerLowerLeft from '../assets/ChatGPT_Home_BannerLowerLeft_Collage_20261025.png';
-import bannerUpperRight from '../assets/ChatGPT_Home_BannerUpperRight_Collage_20261025.png';
+import parchmentTearOne from '../assets/panel_parchment_tear_1.png';
+import rightCorner from '../assets/corner_web_TR.png';
+import bannerLowerLeft from '../assets/corner_olive_parchment_BL.png';
+import bannerUpperRight from '../assets/corner_cartographic_tear_TR.png';
 import './styles/workspaces/home.css';
 
 const features = [

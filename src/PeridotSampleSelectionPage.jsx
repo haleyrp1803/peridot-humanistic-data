@@ -9,9 +9,9 @@
 import React, { useState } from 'react';
 import './styles/workspaces/sample-selection.css';
 
-import letterImage from '../assets/early_modern_letter.png';
-import mediciFamilyTreeImage from '../assets/1569_medici_family_tree.jpg';
-import cardinalPortrait from "../assets/Cardinal_Carlo_de'_Medici.jpg";
+import letterImage from '../assets/img_early_modern_letter.png';
+import mediciFamilyTreeImage from '../assets/img_1569_medici_family_tree.jpg';
+import cardinalPortrait from "../assets/img_cardinal_carlo_de_medici.jpg";
 
 const sampleImages = {
   'correspondence-network': { src: letterImage, alt: 'Early modern letter', position: 'center' },

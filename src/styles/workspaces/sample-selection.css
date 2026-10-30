@@ -10,7 +10,7 @@
   height: 100%; min-height: 0; width: 100%; overflow: hidden;
   color: var(--pd-samples-ink);
   background-color: #eadfc9;
-  background-image: url('../../../assets/ChatGPT_Home_ParchmentBase.png');
+  background-image: url('../../../assets/base_parchment_1.png');
   background-position: center;
   background-size: cover;
   font-family: var(--pd-font-editorial, Georgia, serif);

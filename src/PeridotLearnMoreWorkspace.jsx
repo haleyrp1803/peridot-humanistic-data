@@ -9,7 +9,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
-import priceHeadshot from '../assets/2026_Price_Headshot.jpg';
+import priceHeadshot from '../assets/img_2026_price_headshot.jpg';
 import priceCvUrl from '../assets/Price_CV.pdf?url';
 import { PeridotFeedbackForm } from './PeridotFeedbackForm';
 
