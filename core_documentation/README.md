@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-87d6955 — Refine informational workspace presentation and restore Creator layout
+c71e265 — Repair asset references after decorative asset renaming
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-28)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-30)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -80,7 +80,7 @@ Peridot follows a **database-first** model: a record or normalized research item
 
 Peridot opens with **no active dataset**. Nothing is silently preloaded underneath the interface. The persistent header is still available in this no-data state; destinations that require data must route the researcher toward choosing/uploading data rather than inventing hidden sample state.
 
-Home is a Cartographic Editorial composition. The large Peridot wordmark and humanities-data introduction sit on paper at left; a historical Florence panorama occupies the right side, separated by a textured torn-paper edge. **Upload your data** and **Explore sample data** are the two prominent Home actions. The former opens the native file chooser and proceeds through the existing upload/mapping workflow after a file is selected; the latter opens the existing explicit sample chooser without silently loading data. A **New to Peridot?** explainer sits inside the lower informational banner. **Data** remains the full entry point for templates, samples, uploads, and editing an existing mapping. The full-width three-column parchment banner introduces **Manage data**, **Visualize**, and **Explore evidence**; two layered corner collages frame this information rather than creating another set of interactive navigation buttons.
+Home is a Cartographic Editorial composition. The large Peridot wordmark and humanities-data introduction sit on paper at left; a historical Florence panorama occupies the right side, separated by a textured torn-paper edge. A single prominent Home **Get Started** action opens the Data onboarding workspace; the researcher then chooses a sample, template, or upload explicitly. A **New to Peridot?** explainer sits inside the lower informational banner. **Data** remains the full entry point for templates, samples, uploads, and editing an existing mapping. The full-width three-column parchment banner introduces **Manage data**, **Visualize**, and **Explore evidence**; two layered corner collages frame this information rather than creating another set of interactive navigation buttons.
 
 The sample chooser currently offers three ordinary project files:
 
@@ -88,13 +88,13 @@ The sample chooser currently offers three ordinary project files:
 - **Family Tree** — a CSV person-centered genealogy example with stable relationship IDs, life events, and places.
 - **Cardinals Active from 1600–1640** — an XLSX example that demonstrates a different research structure and supplies useful future QA cases for repeated/multi-valued historical information.
 
-Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. The current Sample Selection page presents three historical-image cards, with correspondence-letter, Medici-family-tree, and cardinal-portrait artwork, and provides sample actions alongside a template/upload entry. The older compact, expandable row chooser remains a historical presentation. Sample selection is repeatable: choosing one sample does not lock the Data workspace, and a later sample cleanly replaces the active sample. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
+Each sample can be explored, downloaded as its actual source file, and opened in the same generalized mapping workspace used for researcher data. The **Sample Datasets** tab displays three historical-image cards, with correspondence-letter, Medici-family-tree, and cardinal-portrait artwork, and provides **Use Sample**, **Edit mapping**, **Download source**, and **Details** actions. The older compact, expandable row chooser remains a historical presentation. Sample selection is repeatable: choosing one sample does not lock the Data workspace, and a later sample cleanly replaces the active sample. Sample mappings are editable so users can test why one column was assigned to a particular role. The original sample mapping is preserved and can be restored at any time.
 
 **Historical Home note:** the former small disabled Tutorial button is not part of the accepted Cartographic Editorial Home composition. Tutorials remains a separate persistent header destination, with substantive tutorial work still deferred. The earlier floating tutorial invitation remains retired.
 
 ### 3.2 Load and map data
 
-The **Data** page provides three explicit paths: **Start with a Template**, **Start with Sample Data**, and **Upload Your Data**. The unified uploader accepts CSV, TSV, XLSX, XLSM, and XLS files. Once a file or editable mapping is opened, mapping occupies the Data page itself beneath the persistent global header rather than appearing in a modal overlay.
+The **Data** page presents four tabs: **Get Started**, **Sample Datasets**, **Templates**, and **Upload Data**. Get Started offers three standalone entry cards; Templates contains the existing correspondence-oriented CSV starter; Sample Datasets supplies source files and mapping examples; Upload Data opens the file chooser. A persistent bottom panel always identifies **No Dataset Loaded** or **Your Active Dataset**, with an oxblood **Edit Mapping** action when data is active. The unified uploader accepts CSV, TSV, XLSX, XLSM, and XLS files. Once a file or editable mapping is opened, mapping occupies the Data page itself beneath the persistent global header rather than appearing in a modal overlay.
 
 The public mapper is now one generalized workflow rather than a Correspondence / Directed Record versus Genealogy / Person-Centered profile choice. Users describe what their data means through directly navigable mapping sections:
 
@@ -169,11 +169,17 @@ The Visualizations header provides SVG and PNG export for map/network views, CSV
 
 **Tutorials:** The Tutorials destination now states that tutorials are coming soon; it does not present an operational guided-tutorial launch button. The previous experimental tutorial implementation is retained in source, not a currently offered user walkthrough.
 
+### Present-day Data entry and asset organization (2026-10-30)
+
+The current Data entry screen uses four tabs—**Get Started / Sample Datasets / Templates / Upload Data**—and retains a bottom active-dataset panel on each tab. After a sample or upload becomes active, researchers may return to Data and select **Edit Mapping** without restarting the session. Sample dataset illustrations remain the correspondence letter, Medici genealogy chart, and Cardinal Carlo portrait. The one-screen desktop layout uses gentle, ordered entrance animations when entering Data or switching tabs. These changes were committed in `ee4c3ff` and refined in `761d72d`; image paths were repaired in `c71e265` after the asset renaming in `52cf1f8`.
+
+The repository contains a larger catalog of cartographic, parchment, manuscript, botanical, alchemical, and gemstone ornaments. These are optional visual resources, not active decorations on every page. The experimental later 44-label/frame collection was not accepted into the committed assets. Current image paths follow descriptive role-based filenames with directional corner suffixes and numbers, where needed, at the end of the filename. Asset provenance and redistribution review remain separate from Git synchronization.
+
 ## 4. Interface Examples and Current-State Note
 
 ### Cartographic Editorial Home — current design (established 2026-10-26, refined through 2026-10-28)
 
-The Cartographic Editorial Home originated at `4e6fb11` and was subsequently refined through the clean `87d6955` checkpoint. The Rosselli-attributed *Pianta della Catena* Florence panorama, paper-textured left reading surface, torn-paper boundary, serif display typography, and two forest-green primary **Upload your data** / **Explore sample data** actions occupy the upper composition. A full-width parchment-textured lower banner introduces **Manage data**, **Visualize**, and **Explore evidence** as three *informational*, non-clickable columns. The banner also carries a compact **New to Peridot?** explanation toward its right side. Two layered decorative corner collages frame this content at lower-left and upper-right. The numbered step labels and Home compass-rose ornament were retired. Their art-directed crop and the content's optical centering are preserved independently. The homepage fills the space beneath the persistent global header, avoiding a bottom gap without a second hard-coded header subtraction. The stronger H2f diagonal was a rejected historical experiment, not the active mask.
+The Cartographic Editorial Home originated at `4e6fb11` and was subsequently refined through `c71e265`. The Rosselli-attributed *Pianta della Catena* Florence panorama, paper-textured left reading surface, torn-paper boundary, serif display typography, and one forest-green primary **Get Started** action occupy the upper composition and leads to the Data onboarding tabs. A full-width parchment-textured lower banner introduces **Manage data**, **Visualize**, and **Explore evidence** as three *informational*, non-clickable columns. The banner also carries a compact **New to Peridot?** explanation toward its right side. Two layered decorative corner collages frame this content at lower-left and upper-right. The numbered step labels and Home compass-rose ornament were retired. Their art-directed crop and the content's optical centering are preserved independently. The homepage fills the space beneath the persistent global header, avoiding a bottom gap without a second hard-coded header subtraction. The stronger H2f diagonal was a rejected historical experiment, not the active mask.
 
 **Publication and attribution:** the homepage refinements and new corner assets have been committed and pushed to `main`. This confirms Git publication, **not** unrestricted licensing of every stock-derived or third-party source asset. Existing historical-map credits and stock-provenance notes remain important; redistribution terms should be checked separately. The earlier documentation's `fd02d84` local-only/pending-push note is historical. The screenshot gallery below still primarily contains dated June 2026 interface states, not evidence of the current rendering.
 
@@ -414,9 +420,10 @@ Peridot accepts ordinary CSV, TSV, XLSX, XLSM, and XLS files through one general
 
 The Data workspace provides:
 
-- **Start with a Template**
-- **Start with Sample Data**
-- **Upload Your Data**
+- **Get Started**
+- **Sample Datasets**
+- **Templates**
+- **Upload Data**
 - active-source identification after a dataset has been selected
 - **Edit mapped data** for researcher uploads
 - **Edit sample mapping** for an active sample
@@ -558,7 +565,7 @@ One bounded Search limitation remains: **Any record text** does not yet guarante
 
 Phase 3 of the universal data work—the generalized Chart Builder—also remains deferred. The intended direction is to build charts from saved/generalized variables through structured, human-readable controls rather than unrestricted natural-language prompting.
 
-The existing guided-tutorial implementation remains in source, but the public Tutorials destination now accurately displays a Coming Soon message. The Home emphasizes upload and explicit sample selection; no guided walkthrough is offered to users at this checkpoint. Completing and validating tutorial content, choreography, and accessibility remain deferred.
+The existing guided-tutorial implementation remains in source, but the public Tutorials destination now accurately displays a Coming Soon message. The Home directs the reader to Data onboarding for upload and explicit sample selection; no guided walkthrough is offered to users at this checkpoint. Completing and validating tutorial content, choreography, and accessibility remain deferred.
 
 MapLibre work is archived and should not be treated as part of current `main`. For active technical caveats, regression expectations, and compatibility paths, see the Maintainer’s Guide.
 

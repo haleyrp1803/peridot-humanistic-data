@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-87d6955 — Refine informational workspace presentation and restore Creator layout
+c71e265 — Repair asset references after decorative asset renaming
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-28)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-30)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -49,13 +49,13 @@ Inspector has likewise crossed the generalized semantic boundary. Compact and fu
 
 Mapped uploads are now editable after import. The Data workspace can reopen the original source with the active mapping, and **Apply changes** recompiles the dataset through the generalized import path. Workbook joins remain explicit unique-ID joins; unsafe duplicate join IDs are blocked rather than multiplied silently. Identity suggestions shown in the mapper are materialized into authoritative mapping state when accepted untouched, while intentionally cleared suggestions remain cleared.
 
-Sample data is now first-class generalized data rather than hidden embedded fallback state. Peridot starts with **no active dataset**. A researcher must explicitly select a sample or upload their own data. `public/sample_data/` contains three ordinary downloadable source files—correspondence network, family tree, and cardinals—and `src/peridotSampleDatasets.js` pairs each with a preserved generalized mapping. The sample chooser starts collapsed and may be reopened repeatedly; selection state is owned at the application level so choosing one sample does not prevent replacement with another. Sample mappings can be edited for learning/QA without mutating the shipped mapping; **Reset to sample mapping** restores the canonical interpretation.
+Sample data is now first-class generalized data rather than hidden embedded fallback state. Peridot starts with **no active dataset**. A researcher must explicitly select a sample or upload their own data. `public/sample_data/` contains three ordinary downloadable source files—correspondence network, family tree, and cardinals—and `src/peridotSampleDatasets.js` pairs each with a preserved generalized mapping. The Sample Datasets tab remains accessible and may be revisited repeatedly; selection state is owned at the application level so choosing one sample does not prevent replacement with another. Sample mappings can be edited for learning/QA without mutating the shipped mapping; **Reset to sample mapping** restores the canonical interpretation.
 
 Canonical temporal semantics remain fully authoritative across active consumers. The former `parsedDate`, `parseHistoricalDate`, duplicate capability parser, and lexical date-sorting fallbacks are retired from active `src`. ISO 8601 timestamp strings are accepted as day-precision temporal values while preserving the complete source text; parsing uses the lexical source calendar date rather than timezone-shifting historical dates. Search consumes generalized relationships and places plus canonical subject-aware Evidence; its Results presentation is generalized rather than route-shaped, and the Search/Timeline/Analytics scope audit is complete.
 
 Network semantics have now crossed the principal generalized boundary as well. Geographic relationship scope respects Timeline-visible dated relationship observations while retaining genuinely undated structural relationships; `peridotEntityNetwork.js` provides generalized geographic anchor semantics; the old separate place/person map distinction has been collapsed into one Geographic Map; Map settings apply anchor roles, display identities, relationship-line location rules, and fallbacks transactionally; geographic edges require both exact visible endpoint node instances; hover/provenance language is generalized; and playback highlighting consumes the rendered generalized graph rather than rebuilding a correspondence-shaped Source→Target pair. The accepted playback/interaction performance sequence from `c8a7c46` remains current: the bottom playback scrubber uses transient local preview state, pointer panning and wheel zoom use transient SVG transforms before durable state commits, and Force playback reuses a stable full-scope graph instead of rebuilding/re-simulating geometry on every playback tick. The discarded playback tween/geometry-animation prototypes remain absent.
 
-The active public workflow now uses a persistent site-wide header rather than a hamburger-first route model. The Peridot logo returns to Home; **Data**, **Visualize**, and **Explore** occupy the primary task group; **Tutorials** and **About** occupy the project/help group. The header persists across public pages, and page navigation does not intentionally unload the active dataset or reset accepted workspace state. Visualize owns Map, Network, Timeline, Charts, and Export; Explore owns Browse, Advanced Query, and Refine; Data owns project start/edit plus the full-page mapping workspace; About owns About Peridot, Creator, AI Disclosure, Open Source, and Feedback. Themes and Accessibility remains implemented as an internal compatibility/development route but is not a public header destination. The Home tutorial placeholder remains deferred pending the dedicated Tutorials/Home pass.
+The active public workflow now uses a persistent site-wide header rather than a hamburger-first route model. The Peridot logo returns to Home; **Data**, **Visualize**, and **Explore** occupy the primary task group; **Tutorials** and **About** occupy the project/help group. The header persists across public pages, and page navigation does not intentionally unload the active dataset or reset accepted workspace state. Visualize owns Map, Network, Timeline, Charts, and Export; Explore owns Browse, Advanced Query, and Refine; Data owns project start/edit plus the full-page mapping workspace; About owns About Peridot, Creator, AI Disclosure, Open Source, and Feedback. Themes and Accessibility remains implemented as an internal compatibility/development route but is not a public header destination. The historical Home tutorial placeholder remains retired; the active Home now has one Get Started entry action. Substantive guided Tutorials remain deferred.
 
 ### Current source context
 
@@ -98,7 +98,7 @@ Peridot uses a workspace-first route model with a **persistent global header**. 
 | Surface | User-facing role | Primary boundary | Important maintenance condition |
 |---|---|---|---|
 | Home | concise start surface and return anchor | `PeridotHomeWorkspace.jsx` + global header/logo routing | preserve branded entry composition; logo remains a reliable Home action |
-| Data | project start, source replacement, mapping, validation | `PeridotDataWorkspace.jsx`, `PeridotColumnMappingModal.jsx`, mapping/import helpers | preserve permissive database-first ingestion, explicit user mapping, and full-page mapping behavior |
+| Data | project start, source replacement, mapping, validation | `PeridotDataWorkspace.jsx`, `PeridotSampleSelectionPage.jsx`, `PeridotColumnMappingModal.jsx`, mapping/import helpers | preserve permissive database-first ingestion, explicit user mapping, and full-page mapping behavior |
 | Visualize | Map, Network, dedicated Timeline visualization, Charts, shared playback, Export | `PeridotVisualizationsWorkspace.jsx`, `PeridotTimelineWorkspace.jsx` | preserve stage sizing, mounted Inspector behavior, state persistence, Timeline viewport/navigation, and header/playback layering |
 | Explore | Browse, Advanced Query, Refine, applied research scope | `PeridotSearchWorkspace.jsx` | preserve draft/apply semantics, three-mode local navigation, result/facet/capability placement, and return-to-state Inspector handoff |
 | Tutorials | public help/tutorial destination | current tutorial routing/placeholder boundaries | destination is established; substantive Tutorials redesign remains deferred |
@@ -112,7 +112,7 @@ The tutorial is a retained guided overlay system rather than a separate workspac
 
 When tutorial work resumes, preserve the existing seven-stage implementation as the starting baseline unless an explicit redesign supersedes it: Visualizations → Timeline → Inspector → Explore → Browse / Apply → Working Set → Export. The existing draggable/minimized panel, Back/Continue, recovery, target-observation, and keyboard-accessibility behavior remains source/history to protect during revision; do not silently revive the old floating Home invitation.
 
-Current minimum regression check: Home displays separate **Upload your data** and **Explore sample data** actions, the **New to Peridot?** banner guidance, and informational three-column banner, Tutorials remains a global navigation destination, and no obsolete floating tutorial invitation or disabled Home placeholder reappears. When the guided launcher is re-enabled, rerun the full seven-stage, drag, minimize/restore, keyboard, Inspector-close, anchor, and recovery regression suite.
+Current minimum regression check: Home displays the single **Get Started** action linking to Data onboarding, the **New to Peridot?** banner guidance, and informational three-column banner, Tutorials remains a global navigation destination, and no obsolete floating tutorial invitation or disabled Home placeholder reappears. When the guided launcher is re-enabled, rerun the full seven-stage, drag, minimize/restore, keyboard, Inspector-close, anchor, and recovery regression suite.
 
 ### Current route and visualization model
 
@@ -313,7 +313,7 @@ Older correspondence and genealogy profile/normalizer modules remain in source w
 
 ### Import contract
 
-- `PeridotDataWorkspace.jsx` owns user entry through **Start with a Template**, **Start with Sample Data**, and **Upload Your Data**. It no longer exposes the old Correspondence/Genealogy profile selector or a separate experimental universal-mapper surface.
+- `PeridotDataWorkspace.jsx` and `PeridotSampleSelectionPage.jsx` own the four-tab entry through **Get Started**, **Sample Datasets**, **Templates**, and **Upload Data**. It no longer exposes the old Correspondence/Genealogy profile selector or a separate experimental universal-mapper surface.
 - Peridot starts with **no active dataset**. Do not restore a hidden sample fallback beneath Home/Data. A dataset becomes active only after an explicit sample selection or user upload.
 - `PeridotColumnMappingModal.jsx` retains its historical filename but now renders the generalized mapping workflow as a **full-page Data workspace**, not a modal overlay. The local mapping rail is directly navigable and uses Preview, Sheets where applicable, Relations, Time, Places, Evidence, and **Review and Upload**. Recurring-entity Identity controls are integrated into Relations/Places when needed rather than occupying a separate required page. Cancel is separated from the Back/Next progression group; entering mapping uses the established heavier transition to avoid a flash of unstyled/settling content.
 - Mapping is explicit, progressive, reversible, and user-owned. Peridot may propose recognizable structures, but it does not silently standardize values, merge entities, assign scholarly meaning, or infer irreversible relationships.
@@ -350,7 +350,7 @@ Rules:
 
 - samples are ordinary source files passing through ordinary generalized mappings;
 - the user must explicitly choose a sample before it becomes active;
-- the sample chooser starts collapsed on Data entry, can be reopened after a sample is active, and supports replacing one active sample with another without stale local gating state;
+- the Sample Datasets tab is explicitly available and revisitable after a sample is active and supports replacing one active sample with another without stale local gating state;
 - sample source files are downloadable and may be modified/re-uploaded as ordinary user data;
 - sample mappings are inspectable and editable in the active session;
 - editing a sample changes the active interpretation only, not the shipped sample mapping or source file;
@@ -449,6 +449,16 @@ The sample chooser is now a dedicated parchment-backed selection page with three
 
 The public Tutorials page now presents a Coming Soon state; do not claim the retained guided overlay is publicly launched. The no-dataset Visualize/Explore and About/Tutorials pages have had redundant eyebrow labels removed. The Creator page was returned to its earlier smaller-portrait and adjacent-biography layout after an experimental large profile-card series was rejected. The revised Creator bio from that experiment is not the accepted live copy. The Feedback form remains the two-column editorial design. These are presentation decisions, not semantic or routing changes.
 
+### Current Data onboarding and persistent dataset-management surface (2026-10-30)
+
+At `ee4c3ff` (refined by `761d72d`), the Data landing surface has four top-level tabs: **Get Started**, **Sample Datasets**, **Templates**, and **Upload Data**. Get Started contains three standalone cards with a four-tile sample-choice icon, a template entry, and an upload entry. Sample Datasets retains historical-image cards for Correspondence, Genealogy, and Cardinals with **Use Sample**, **Edit mapping**, **Download source**, and **Details**. Templates offers the existing correspondence-oriented template, not a claim of several newly authored templates. Upload Data retains CSV/TSV/XLSX/XLSM/XLS support. The always-visible bottom status panel distinguishes no active dataset from **Your Active Dataset**, names the active source, and offers a prominent oxblood **Edit Mapping** action.
+
+The Home's single **Get Started** CTA now enters this Data start surface. Entry and tab transitions use staggered top-to-bottom motion with prompt onset; the accepted desktop layout preserves room for the bottom status panel without forcing page-level scrolling. Mapping itself remains the established full-page generalized editor. Maintain continuity across tab switches and public navigation, preserve source/download/edit actions, and test no-data, active upload, active sample, sample replacement, and map-edit states. Do not conflate these presentation changes with a new parser or semantic model.
+
+### Current asset naming and path ownership (2026-10-30)
+
+Commit `52cf1f8` standardized the active decorative asset collection in top-level `assets/` using semantic prefixes including `base_`, `corner_`, `divider_`, `detail_`, `panel_`, `label_`, and `img_`. Directional corner variants use `TL`, `TR`, `BL`, `BR`; numeric differentiators, when needed, go at the end. All runtime image imports and CSS URLs must reference the actual committed names and preserve exact letter case on GitHub Pages. Commit `c71e265` repaired Home, Data sample, parchment, and Creator references after renaming; the user verified rendering. The later 44-file experimental labels/frames set was rejected and must not be assumed present. Historical asset names in earlier commits are provenance/history, not current source paths. Any later asset work requires alpha-edge inspection, viewport checks, and separate provenance/licensing review; adding a PNG to the repository does not automatically authorize its use everywhere.
+
 ## 8. Theme and Stylesheet Architecture
 
 ### Semantic theme ownership
@@ -491,7 +501,7 @@ CSS extraction, dead-rule removal, behavior repairs, and visual redesign are dis
 
 The visual overhaul uses a **centralized styling foundation** established by `ec5152c` through `f667329`, followed by palette/contrast (`2e20bba`), typography (`243ea6c`), compact global-header typography (`fe9634b`), and the art-directed Home (`fd02d84`). The earlier stylesheet-extraction history above is retained, but it is **not** a complete inventory of the newer `src/styles/` ownership layers. Before changing any style, inspect actual `src/main.jsx` imports, affected workspace CSS and shared tokens, and the residual cascade audit; do not assume an obsolete selector has ceased to apply.
 
-- **Current Home:** `src/PeridotHomeWorkspace.jsx` plus `src/styles/workspaces/home.css` own the accepted layered Home. The left area is a paper-textured editorial reading surface with large oxblood **PERIDOT**, a compact serif subtitle/description and two primary actions, **Upload your data** and **Explore sample data**. The right side uses a cropped historic Florence panorama. An irregular stock-paper mask separates these layers. This is the accepted **H2e** hero boundary restored in H2g; do not reuse the rejected H2f diagonal mask.
+- **Current Home:** `src/PeridotHomeWorkspace.jsx` plus `src/styles/workspaces/home.css` own the accepted layered Home. The left area is a paper-textured editorial reading surface with large oxblood **PERIDOT**, a compact serif subtitle/description and one primary **Get Started** action leading to the Data onboarding surface. The right side uses a cropped historic Florence panorama. An irregular stock-paper mask separates these layers. This is the accepted **H2e** hero boundary restored in H2g; do not reuse the rejected H2f diagonal mask.
 - **Current lower banner:** a full-width, parchment-textured rectangular lower section with **three informational columns** (Manage data / Visualize / Explore evidence) and two independently placed transparent corner-collage PNGs, `assets/ChatGPT_Home_BannerLowerLeft_Collage_20261025.png` and `assets/ChatGPT_Home_BannerUpperRight_Collage_20261025.png`. The column grid is shifted slightly right/down for optical balance without changing its internal spacing; the corner assets are positioned independently. Prior banner arrows were removed because the columns are not live buttons. Future interactions must be chosen explicitly.
 - **Current global header:** compact ivory bar with a large serif `Peridot` Home wordmark, editorial-sized serif navigation, active underline close to the corresponding label, hover feedback on Home, and no old gemstone graphic. The thin-line, forest-green gemstone and its possible network-line animation are deferred concepts, not part of current routing.
 - **Type and color:** visual foundation emphasizes editorial display serif and substantial readable serif use, with functional controls legible and efficient. Paper, oxblood, forest green, and near-black ink are brand roles; analytics series and relationship encodings must not be silently recolored for decorative consistency.
@@ -924,7 +934,7 @@ Pure export utilities and export row-builder helpers.
 
 These areas still deserve narrow, explicit passes:
 
-- workspace routing and hamburger-menu behavior;
+- workspace routing and persistent header behavior;
 - first-time tutorial placeholder now, plus progression/target/panel/minimize/workspace behavior when the launcher is re-enabled;
 - shared `src/index.css` delivery: broad replacements can silently overwrite newer unrelated visual rules;
 - map viewport centering/reset behavior and map/network viewport measurement after switching visualization modes;
@@ -982,7 +992,7 @@ These areas still deserve narrow, explicit passes:
 **Deferred mapping architecture (2026-10-28):** multiple independent relationships per source row need a new grouping layer above `relationshipParts`, with corresponding workbook, runtime, canonical model, Inspector, Network, and export handling. Progressive form activation is already implemented and should not be mistaken for this feature.
 
 
-**Cartographic Editorial active visual work (separate from the older technical priority order):** `87d6955` is the latest clean, synchronized checkpoint; the earlier `4e6fb11` editorial Home and button work has since been refined by `7280e30`, `2117659`, and `60b8643`. The Florence/paper hero, full-width banner, corner-collage frame, and optical content position are accepted; do not revive the earlier green title card or rejected H2f diagonal. Remaining visual work is targeted CSS/token cleanup, consistent buttons and workspaces, tutorial content, and verification across supported desktop viewport sizes. Asset publication is confirmed by Git, but licensing/redistribution rights are **not** established merely by the push. Preserve attribution notes and verify the applicable licenses separately. The present art direction prioritizes full-screen desktop; minimum supported viewport enforcement remains unresolved.
+**Cartographic Editorial active visual work (separate from the older technical priority order):** `c71e265` is the latest clean, synchronized checkpoint; the earlier `4e6fb11` editorial Home and button work has since been refined by `7280e30`, `2117659`, and `60b8643`. The Florence/paper hero, full-width banner, corner-collage frame, and optical content position are accepted; do not revive the earlier green title card or rejected H2f diagonal. Remaining visual work is targeted CSS/token cleanup, consistent buttons and workspaces, tutorial content, and verification across supported desktop viewport sizes. Asset publication is confirmed by Git, but licensing/redistribution rights are **not** established merely by the push. Preserve attribution notes and verify the applicable licenses separately. The present art direction prioritizes full-screen desktop; minimum supported viewport enforcement remains unresolved.
 
 
 1. **Timeline relationship rendering / connection legibility — immediate.**
@@ -1019,7 +1029,7 @@ These areas still deserve narrow, explicit passes:
 
 6. **Navigation/interface and playback follow-up.**
    - **Completed:** persistent global navigation, logo-as-Home behavior, active dataset/workspace-state persistence, compact centered Visualize local navigation, flattened Visualize framing, three-mode Explore navigation, full-page Data mapping, and normalized About/Feedback hierarchy.
-   - **Completed:** sample selection uses the compact chooser with direct **Use / Edit / Download / Details** actions, starts collapsed, and supports replacing one active sample with another.
+   - **Completed:** sample selection now uses the visible **Sample Datasets** tab with direct **Use / Edit / Download / Details** actions and supports replacing one active sample with another; the earlier compact collapsed chooser is historical.
    - **Completed:** direct Timeline playback scrubbing uses transient preview during drag and canonical commit on release.
    - **Completed foundation:** dedicated Timeline workspace with horizontal/vertical orientations, smooth zoom, drag/scroll navigation, adaptive temporal axis, evidence-driven categories, and relationship-aware event layout.
    - **Explore redesign:** the Browse / Advanced Query / Refine architecture is accepted, but Explore remains dense and needs a later content/layout redesign without undoing its scope semantics.
@@ -1103,7 +1113,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`87d6955` — `Refine informational workspace presentation and restore Creator layout`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
+- current synchronized checkpoint: **`c71e265` — `Repair asset references after decorative asset renaming`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
 - local development command on the user's machine: **`npm.cmd run dev`**
 - current Timeline state: canonical assertion-level projection, horizontal/vertical visualization workspace, smooth wheel/button zoom, scrollbars + click-drag panning, zoom-adaptive axis, evidence-driven plural categories with OR visibility, shared Inspector handoff, subject-strict mapped relationship projection, continuous secondary-axis layout, and revised duration treatment are committed; relationship-line routing/presentation is the immediate unfinished item.
 - the existing bottom Timeline/playback control remains intact and separate from the dedicated Timeline visualization workspace.
@@ -1112,7 +1122,7 @@ A future chat should also be told that:
 
 - generalized mapping is the ordinary public upload model; there is no public Correspondence/Genealogy profile-choice gate or separate experimental universal-mapper surface;
 - Peridot starts with no active dataset; samples are ordinary source files with editable/resettable generalized mappings;
-- the sample chooser starts collapsed and can be reopened repeatedly; switching Correspondence → Family Tree → Cardinals → Correspondence should replace the active sample cleanly;
+- the Sample Datasets tab remains accessible and can be revisited repeatedly; switching Correspondence → Family Tree → Cardinals → Correspondence should replace the active sample cleanly;
 - recurring-entity Identity is integrated into relationship/place mapping. Simple entities use their displayed name/label; stronger identity can use stable IDs or alternate compound recognition recipes;
 - canonical entity display labels are authoritative downstream: known IDs resolve to canonical human-readable labels, unresolved references remain visible IDs;
 - cardinality is implemented per mapped item with researcher-declared delimiters. Peridot does not guess punctuation or zip parallel list-valued fields; multi-value place cells cannot reuse row-level coordinates;
@@ -1128,5 +1138,5 @@ A future chat should also be told that:
 - the accepted Home is the art-directed Cartographic Editorial Florence composition with distinct Upload your data and Explore sample data actions, New to Peridot? guidance, and an informational three-column parchment banner framed by two corner collages; the earlier Home CTAs and the historical centered disabled Tutorial button belong to previous Home versions. The dedicated Tutorials public navigation destination remains; existing tutorial code is retained for later revision;
 - MapLibre remains archived.
 
-For the current **visual redesign continuation**, start from the committed Cartographic Editorial Home/Visualize layout through `87d6955`, preserve both lower-banner corner collages and the optically shifted informational grid, and distinguish asset-license verification from code-push status. Further visual changes should be separately bounded rather than reopening the accepted composition. The pre-existing **technical backlog priority** remains Timeline relationship-line rendering/presentation, using the current `a32ef05` subject-strict connection model and continuous secondary-axis layout as the source of truth. Before changing `PeridotTimelineWorkspace.jsx`, reread the entire exact current file under the Project Workflow Charter. Preserve adaptive-axis, zoom/pan, categories, Search scope, Inspector behavior, and relationship endpoint semantics while changing only connection/duration presentation.
+For the current **visual redesign continuation**, start from the committed Cartographic Editorial Home/Visualize layout through `c71e265`, preserve both lower-banner corner collages and the optically shifted informational grid, and distinguish asset-license verification from code-push status. Further visual changes should be separately bounded rather than reopening the accepted composition. The pre-existing **technical backlog priority** remains Timeline relationship-line rendering/presentation, using the current `a32ef05` subject-strict connection model and continuous secondary-axis layout as the source of truth. Before changing `PeridotTimelineWorkspace.jsx`, reread the entire exact current file under the Project Workflow Charter. Preserve adaptive-axis, zoom/pan, categories, Search scope, Inspector behavior, and relationship endpoint semantics while changing only connection/duration presentation.
 
