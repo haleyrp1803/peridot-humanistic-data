@@ -13,7 +13,7 @@ const features = [
   { key: 'explore', title: 'Explore evidence', description: 'Browse, search, and refine the information in your data.', path: <><circle cx="21" cy="21" r="13"/><path d="M31 31l12 12"/></> },
 ];
 
-export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
+export function PeridotHomeWorkspace({ onUseSampleData }) {
   return (
     <main className="pd-home-editorial" aria-label="Peridot home">
       <section className="pd-home-scene" aria-labelledby="pd-home-title">
@@ -30,17 +30,9 @@ export function PeridotHomeWorkspace({ onUploadData, onUseSampleData }) {
           <p className="pd-home-editorial__lead">Humanities Data Visualizations</p>
           <p className="pd-home-editorial__description">Turn your data into interactive maps, networks, and timelines. Move seamlessly from visualization to individual record and back again, without interrupting your research flow.</p>
           <div className="pd-home-editorial__actions">
-            <label className="peridot-button-primary pd-home-editorial__primary" style={{ cursor: 'pointer' }}>
-              Upload your data
-              <input
-                type="file"
-                accept=".csv,.tsv,.xlsx,.xlsm,.xls,text/csv,text/tab-separated-values"
-                onChange={onUploadData}
-                className="sr-only"
-                aria-label="Choose a file to upload to Peridot"
-              />
-            </label>
-            <button type="button" className="peridot-button-primary pd-home-editorial__primary" onClick={onUseSampleData}>Explore sample data</button>
+            {/* The established entry callback navigates to Data without selecting a sample.
+                Data defaults to its Get Started tab, where all three paths are visible. */}
+            <button type="button" className="peridot-button-primary pd-home-editorial__primary" onClick={onUseSampleData}>Get Started</button>
           </div>
         </div>
       </section>

@@ -813,13 +813,9 @@
     animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) .72s both;
   }
 
-  /* Animate the buttons individually, not their flex container: both remain
-     in their established positions and retain their native interaction paths. */
+  /* Animate the single Get Started action independently of its container. */
   .pd-home-editorial__actions > :nth-child(1) {
     animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) .98s both;
-  }
-  .pd-home-editorial__actions > :nth-child(2) {
-    animation: pd-home-editorial-enter-rise 1.12s cubic-bezier(.19, 1, .22, 1) 1.14s both;
   }
 
   /* The reading columns assemble over the rising banner, left to right,
