@@ -19,7 +19,7 @@
 
 // Core React hooks used throughout the app.
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { geoContains, geoNaturalEarth1, geoPath } from 'd3-geo';
+import { geoContains, geoMercator, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import countries50m from 'world-atlas/countries-50m.json';
 import {
@@ -601,7 +601,92 @@ function aggregateEdgesFromRows(rows, letters) {
 // ============================================================
 // These helpers convert normalized data into map-ready structures.
 // Basemap projection helpers.
-function createWorldProjection(width, height) {
+// Geographic map uses Web Mercator for a tile-compatible coordinate reference.
+// Retain the Natural Earth helper branch as a non-active fallback during the
+// forthcoming viewport and tiled-basemap integration work.
+const PERIDOT_PROJECTION_NATURAL_EARTH = 'natural-earth';
+const PERIDOT_PROJECTION_WEB_MERCATOR = 'web-mercator';
+const PERIDOT_MAX_MERCATOR_LAT = 85.05112878;
+// Standard 256px Web Mercator tiles. Geographic zoom is measured against the
+// full projected world width, not the SVG's arbitrary view.scale multiplier.
+// Level 20 covers CARTO's advertised raster zoom range.
+const PERIDOT_TILE_SIZE = 256;
+const PERIDOT_TEST_MIN_TILE_ZOOM = 3.2;
+const PERIDOT_TEST_MAX_TILE_ZOOM = 20;
+function geographicWorldExtent(width, height) {
+  return Math.max(1, Math.min(width - 48, height - 48));
+}
+function mercatorTileZoom(width, height, viewScale) {
+  const pixelWorldWidth = geographicWorldExtent(width, height) * viewScale;
+  return Math.log2(pixelWorldWidth / PERIDOT_TILE_SIZE);
+}
+function mercatorScaleForTileZoom(width, height, tileZoom) {
+  return (PERIDOT_TILE_SIZE * Math.pow(2, tileZoom)) / geographicWorldExtent(width, height);
+}
+// Pass 1C CARTO comparison: one tile coordinate system and three CARTO raster
+// styles. CARTO raster is a temporary D3/SVG integration choice, not a promise
+// of long-term availability: CARTO recommends vector tiles for new projects.
+// A browser-exposed Vite key must be restricted by the CARTO dashboard; never
+// describe VITE_ environment variables as secrets.
+const PERIDOT_DETAIL_MIN_ZOOM = 0;
+// Allow deeper zoom testing before we blank the basemap; if a requested
+// integer zoom would exceed this count, the loader falls back to the nearest
+// coarser level instead of returning an empty basemap.
+const PERIDOT_DETAIL_TILE_CAP = 144;
+const PERIDOT_CARTO_STYLES = [
+  { id: 'light_all', label: 'Positron' },
+  { id: 'dark_all', label: 'Dark Matter' },
+  { id: 'rastertiles/voyager', label: 'Voyager' },
+];
+const PERIDOT_CARTO_API_KEY = String(import.meta.env.VITE_CARTO_BASEMAP_KEY || '').trim();
+const PERIDOT_DETAIL_TILE_URL = (style, z, x, y) => {
+  const prefix = `https://basemaps.cartocdn.com/${style}/${z}/${x}/${y}.png`;
+  return PERIDOT_CARTO_API_KEY ? `${prefix}?key=${encodeURIComponent(PERIDOT_CARTO_API_KEY)}` : prefix;
+};
+function calculateVisibleMercatorTiles(width, height, view, zoom) {
+  if (!width || !height || !Number.isFinite(view?.scale) || view.scale <= 0 || !Number.isFinite(zoom) || zoom < PERIDOT_DETAIL_MIN_ZOOM) return [];
+  const requestedZoom = Math.max(PERIDOT_DETAIL_MIN_ZOOM, Math.min(PERIDOT_TEST_MAX_TILE_ZOOM, Math.floor(zoom)));
+  const extent = geographicWorldExtent(width, height);
+  const worldX = (svgX) => (svgX - width / 2) / extent + 0.5;
+  const worldY = (svgY) => (svgY - height / 2) / extent + 0.5;
+  const left = (0 - view.tx) / view.scale;
+  const right = (width - view.tx) / view.scale;
+  const top = (0 - view.ty) / view.scale;
+  const bottom = (height - view.ty) / view.scale;
+
+  for (let z = requestedZoom; z >= PERIDOT_DETAIL_MIN_ZOOM; z -= 1) {
+    const count = 2 ** z;
+    const baseTile = extent / count;
+    const xMin = Math.max(0, Math.floor(worldX(left) * count));
+    const xMax = Math.min(count - 1, Math.floor(worldX(right) * count));
+    const yMin = Math.max(0, Math.floor(worldY(top) * count));
+    const yMax = Math.min(count - 1, Math.floor(worldY(bottom) * count));
+    const tileCount = (xMax - xMin + 1) * (yMax - yMin + 1);
+    if (xMax < xMin || yMax < yMin || tileCount > PERIDOT_DETAIL_TILE_CAP) continue;
+
+    const tiles = [];
+    for (let y = yMin; y <= yMax; y += 1) {
+      for (let x = xMin; x <= xMax; x += 1) {
+        tiles.push({ z, requestedZ: requestedZoom, x, y, left: width / 2 + (x / count - 0.5) * extent, top: height / 2 + (y / count - 0.5) * extent, size: baseTile });
+      }
+    }
+    return tiles;
+  }
+
+  return [];
+}
+
+function createWorldProjection(width, height, projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH) {
+  if (projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR) {
+    // The EPSG:3857 tile latitude cutoff creates a square world in projected
+    // coordinates. Using an explicit scale avoids fitting a dateline-crossing
+    // GeoJSON polygon, whose seam can otherwise produce surprising results.
+    const extent = geographicWorldExtent(width, height);
+    return geoMercator()
+      .scale(extent / (2 * Math.PI))
+      .translate([width / 2, height / 2])
+      .clipExtent([[0, 0], [width, height]]);
+  }
   return geoNaturalEarth1()
     .fitExtent(
       [
@@ -612,9 +697,14 @@ function createWorldProjection(width, height) {
     );
 }
 
-function projectToSvg(lon, lat, width, height) {
-  const projection = createWorldProjection(width, height);
-  const point = projection([lon, lat]);
+function projectToSvg(lon, lat, width, height, projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH) {
+  const projection = createWorldProjection(width, height, projectionMode);
+  // Coordinates outside Web Mercator's practical tile domain are clipped to
+  // the projection edge for this comparison only; source values are untouched.
+  const visibleLat = projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
+    ? Math.max(-PERIDOT_MAX_MERCATOR_LAT, Math.min(PERIDOT_MAX_MERCATOR_LAT, Number(lat)))
+    : lat;
+  const point = projection([lon, visibleLat]);
   if (!point) return { x: width / 2, y: height / 2 };
   return { x: point[0], y: point[1] };
 }
@@ -732,7 +822,7 @@ function createAdaptiveNodeRadiusScale(values, minRadius, maxRadius, contrastPow
 }
 
 // Geographic graph builder: projected place nodes plus curved route paths.
-function buildGraph(places, aggregatedEdges, width, height) {
+function buildGraph(places, aggregatedEdges, width, height, projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH) {
   const placeById = new Map(places.map((place) => [place.id, place]));
   const edgeCountsByPlaceId = new Map();
 
@@ -742,7 +832,7 @@ function buildGraph(places, aggregatedEdges, width, height) {
   });
 
   const nodeDrafts = places.map((place) => {
-    const projected = projectToSvg(place.lon, place.lat, width, height);
+    const projected = projectToSvg(place.lon, place.lat, width, height, projectionMode);
     const degree = edgeCountsByPlaceId.get(place.id) || 0;
     return {
       ...place,
@@ -768,8 +858,8 @@ function buildGraph(places, aggregatedEdges, width, height) {
       const source = placeById.get(edge.sourcePlaceId);
       const target = placeById.get(edge.targetPlaceId);
       if (!source || !target) return null;
-      const a = projectToSvg(source.lon, source.lat, width, height);
-      const b = projectToSvg(target.lon, target.lat, width, height);
+      const a = projectToSvg(source.lon, source.lat, width, height, projectionMode);
+      const b = projectToSvg(target.lon, target.lat, width, height, projectionMode);
       return {
         ...edge,
         sourceLabel: source.label,
@@ -795,6 +885,7 @@ function computePersonEdgeWidth(count) {
 // Relationship semantics are derived in peridotEntityNetwork.js so layout no
 // longer determines (or reconstructs) what the user's relationships mean.
 function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', semanticOptions = null) {
+  const projectionMode = semanticOptions?.projectionMode || PERIDOT_PROJECTION_NATURAL_EARTH;
   const personMap = new Map();
   const { relationships, locations } = layoutMode === 'geographic' && semanticOptions
     ? derivePeridotGeographicEntityNetworkSemantics(
@@ -927,7 +1018,7 @@ function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', sem
     const people = resolvedAnchors
       .filter((anchor) => peopleInUse.has(anchor.personKey))
       .map((anchor) => {
-        const projected = projectToSvg(anchor.longitude, anchor.latitude, width, height);
+        const projected = projectToSvg(anchor.longitude, anchor.latitude, width, height, projectionMode);
         return {
           id: anchor.id,
           entityKey: anchor.personKey,
@@ -1030,7 +1121,7 @@ function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', sem
         } else {
           const best = Array.from(person.locationCounts.entries()).sort((a, b) => b[1] - a[1])[0][0];
           const [label, lat, lon] = best.split('__');
-          const projected = projectToSvg(Number(lon), Number(lat), width, height);
+          const projected = projectToSvg(Number(lon), Number(lat), width, height, projectionMode);
           x = projected.x;
           y = projected.y;
           anchorLabel = label;
@@ -2049,6 +2140,7 @@ function buildMapStageProps(args) {
     viewResetKey: args.viewResetKey,
     viewStateRef: args.viewStateRef,
     initialFocusStrategy: args.initialFocusStrategy,
+    projectionMode: args.projectionMode,
     hoverCard: args.hoverCard,
   };
 }
@@ -2193,7 +2285,7 @@ function buildInspectorPanelProps(args) {
 function areMapViewResetKeysEqual(left, right) {
   if (left === right) return true;
   if (!left || !right || typeof left !== 'object' || typeof right !== 'object') return false;
-  return left.dataset === right.dataset && left.layout === right.layout;
+  return left.dataset === right.dataset && left.layout === right.layout && left.projection === right.projection;
 }
 
 // Main map renderer.
@@ -2231,6 +2323,7 @@ function SvgMap({
   viewResetKey = 'default',
   viewStateRef = null,
   initialFocusStrategy = 'fit-all',
+  projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH,
 }) {
   const svgRef = useRef(null);
   const transientViewportRef = useRef(null);
@@ -2244,6 +2337,12 @@ function SvgMap({
   const [view, setView] = useState(rememberedInitialView || { scale: 1, tx: 0, ty: 0 });
   const [dragState, setDragState] = useState(null);
   const [basemapError, setBasemapError] = useState('');
+  const [cartoStyle, setCartoStyle] = useState('rastertiles/voyager');
+  // Until a key is configured, request watermarked preview tiles ONLY when a
+  // developer intentionally opts in. The default remains an offline-capable
+  // SVG background and never sends automatic third-party map requests.
+  const [allowWatermarkedCartoPreview, setAllowWatermarkedCartoPreview] = useState(false);
+  const showDetailTiles = Boolean(PERIDOT_CARTO_API_KEY) || allowWatermarkedCartoPreview;
   const animationFrameRef = useRef(null);
   const holdActionRef = useRef(null);
   const hasInitializedViewRef = useRef(false);
@@ -2251,12 +2350,31 @@ function SvgMap({
   const skipViewPersistenceRef = useRef(false);
   const lastViewportSizeRef = useRef({ width: 0, height: 0 });
 
-  const clampScale = (scale) => Math.max(0.6, Math.min(160, scale));
+  // Force graph keeps its established 0.6–160 range. The geographic Web
+  // Mercator map needs a zoom ceiling based on tile scale, not an SVG factor.
+  const maxScale = showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
+    ? mercatorScaleForTileZoom(width, height, PERIDOT_TEST_MAX_TILE_ZOOM)
+    : 160;
+  const minScale = showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
+    ? mercatorScaleForTileZoom(width, height, PERIDOT_TEST_MIN_TILE_ZOOM)
+    : 0.6;
+  const clampScale = (scale) => Math.max(minScale, Math.min(maxScale, scale));
+  const tileZoom = showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
+    ? mercatorTileZoom(width, height, view.scale)
+    : null;
+  const detailTiles = useMemo(
+    () => showDetailTiles && showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
+      ? calculateVisibleMercatorTiles(width, height, view, tileZoom)
+      : [],
+    [showDetailTiles, showGeographicBackdrop, projectionMode, width, height, view, tileZoom]
+  );
+  const detailTilesActive = detailTiles.length > 0;
+  const renderedTileZoom = detailTilesActive ? detailTiles[0]?.z ?? null : null;
   // Use the entire SVG drawing surface. The single visible frame belongs to
   // the outer CSS plate; SVG clipping and node/label bounds share these limits.
   const frame = { x: 0, y: 0, w: width, h: height };
 
-  const projection = useMemo(() => createWorldProjection(width, height), [width, height]);
+  const projection = useMemo(() => createWorldProjection(width, height, projectionMode), [width, height, projectionMode]);
 
   const defaultView = useMemo(() => {
     if (initialFocusStrategy === 'force-dense-cluster') {
@@ -2281,14 +2399,14 @@ function SvgMap({
 
   const screenWaterLabels = useMemo(() => {
     return MAP_WATER_LABELS.map((item) => {
-      const point = projectToSvg(item.lon, item.lat, width, height);
+      const point = projectToSvg(item.lon, item.lat, width, height, projectionMode);
       return {
         ...item,
         x: point.x,
         y: point.y,
       };
     });
-  }, [width, height]);
+  }, [width, height, projectionMode]);
   const basemapFeatures = useMemo(() => {
     try {
       const collection = feature(countries50m, countries50m.objects.countries);
@@ -2409,14 +2527,40 @@ function SvgMap({
 
     if (!deltaWidth && !deltaHeight) return;
 
-    setView((prev) => ({
-      ...prev,
-      tx: prev.tx + deltaWidth / 2,
-      ty: prev.ty + deltaHeight / 2,
-    }));
+    // Geographic SVG coordinates are reprojected when the viewport changes
+    // size. Preserve the geographic point beneath the old screen center rather
+    // than only shifting the pixel translation: the underlying projection's
+    // translate/scale can change too. Force layout keeps its original rule.
+    setView((prev) => {
+      const centeredTranslation = {
+        ...prev,
+        tx: prev.tx + deltaWidth / 2,
+        ty: prev.ty + deltaHeight / 2,
+      };
+      if (!showGeographicBackdrop || !Number.isFinite(prev.scale) || prev.scale <= 0) {
+        return centeredTranslation;
+      }
+
+      const oldProjection = createWorldProjection(previous.width, previous.height, projectionMode);
+      const newProjection = createWorldProjection(width, height, projectionMode);
+      const oldMapCenter = [
+        (previous.width / 2 - prev.tx) / prev.scale,
+        (previous.height / 2 - prev.ty) / prev.scale,
+      ];
+      const geographicCenter = oldProjection.invert(oldMapCenter);
+      const projectedCenter = geographicCenter && newProjection(geographicCenter);
+      if (!projectedCenter || !projectedCenter.every(Number.isFinite)) {
+        return centeredTranslation;
+      }
+      return {
+        ...prev,
+        tx: width / 2 - projectedCenter[0] * prev.scale,
+        ty: height / 2 - projectedCenter[1] * prev.scale,
+      };
+    });
 
     lastViewportSizeRef.current = { width, height };
-  }, [width, height]);
+  }, [width, height, projectionMode, showGeographicBackdrop]);
 
   const tuning = {
     nodeMinRadius: 6.4,
@@ -2826,105 +2970,29 @@ function SvgMap({
             <text x="0" y="-30" textAnchor="middle" fontSize="10" fontWeight="700" fill="var(--map-texture-compass)">N</text>
           </g>
         </defs>
-        <rect x="0" y="0" width={width} height={height} fill="var(--map-canvas-bg)" />
-        {showGeographicBackdrop ? (
-          <>
-            <rect x="0" y="0" width={width} height={height} fill="var(--map-texture-sea)" opacity="0.35" filter="url(#map-paper-grain)" />
-            <rect x="0" y="0" width={width} height={height} fill="url(#map-sea-lines)" opacity="0.78" />
-          </>
-        ) : null}
-        <rect
-          x={frame.x}
-          y={frame.y}
-          width={frame.w}
-          height={frame.h}
-          fill={showGeographicBackdrop ? 'var(--map-texture-sea)' : 'var(--map-frame-bg)'}
-        />
-        {showGeographicBackdrop ? (
-          <>
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-sea)" opacity="0.24" filter="url(#map-paper-grain)" />
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="url(#map-sea-lines)" opacity="0.34" />
-            <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.06" filter="url(#map-paper-grain)" />
-          </>
-        ) : (
-          <rect x={frame.x} y={frame.y} width={frame.w} height={frame.h} fill="var(--map-texture-frame-wash)" opacity="0.26" filter="url(#map-paper-grain)" />
-        )}
+        {/* CARTO is the sole Geographic Map basemap. A neutral surface remains
+            outside the finite Web Mercator tile world; no legacy map textures,
+            countries, grid, compass, or water labels are rendered. */}
+        <rect x="0" y="0" width={width} height={height} fill={showGeographicBackdrop ? '#ffffff' : 'var(--map-canvas-bg)'} />
         <g clipPath="url(#map-frame-clip)">
           <g ref={transientViewportRef}>
           <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
-            {showGeographicBackdrop ? (
-              <>
-                {showBasemap && basemapFeatures.length ? basemapFeatures.map((featureItem, featureIndex) => (
-                  <g key={`basemap-${featureItem.id}-${featureIndex}`}>
-                    <path
-                      d={featureItem.d}
-                      fill={activeCountryIds.has(featureItem.id) ? 'var(--map-land-active-fill)' : 'var(--map-land-fill)'}
-                      stroke="var(--map-land-stroke)"
-                      strokeWidth="1"
-                      vectorEffect="non-scaling-stroke"
-                      opacity="0.94"
-                    />
-                    <path
-                      d={featureItem.d}
-                      fill="url(#map-land-lines)"
-                      opacity="0.42"
-                    />
-                    <path
-                      d={featureItem.d}
-                      fill="var(--map-texture-land-tint)"
-                      opacity="0.08"
-                      filter="url(#map-paper-grain)"
-                    />
-                  </g>
-                )) : showBasemap ? (
-                  <rect x="24" y="24" width={width - 48} height={height - 48} rx="24" fill="var(--map-land-fill)" opacity="0.55" />
-                ) : null}
-                <g opacity="0.14" stroke="var(--map-grid-stroke)" strokeWidth="1">
-                  <line x1="140" y1="120" x2="140" y2="680" />
-                  <line x1="260" y1="120" x2="260" y2="680" />
-                  <line x1="380" y1="120" x2="380" y2="680" />
-                  <line x1="500" y1="120" x2="500" y2="680" />
-                  <line x1="620" y1="120" x2="620" y2="680" />
-                  <line x1="740" y1="120" x2="740" y2="680" />
-                  <line x1="100" y1="180" x2="860" y2="180" />
-                  <line x1="100" y1="300" x2="860" y2="300" />
-                  <line x1="100" y1="420" x2="860" y2="420" />
-                  <line x1="100" y1="540" x2="860" y2="540" />
-                  <line x1="100" y1="660" x2="860" y2="660" />
-                </g>
-                <use href="#map-compass-rose" x={frame.x + frame.w - 70} y={frame.y + 72} opacity="0.5" />
-                <g pointerEvents="none" opacity="0.62">
-                  {screenWaterLabels.map((item) => {
-                    const lines = Array.isArray(item.lines) && item.lines.length ? item.lines : [item.label || ''];
-                    const lineStep = item.size * 1.02;
-                    const startDy = lines.length > 1 ? -((lines.length - 1) * lineStep) / 2 : 0;
-                    return (
-                      <text
-                        key={item.id}
-                        x={item.x}
-                        y={item.y}
-                        fill="var(--map-texture-compass)"
-                        fillOpacity="0.72"
-                        fontSize={item.size}
-                        fontStyle="italic"
-                        fontFamily="var(--map-water-label-font-family)"
-                        textAnchor="middle"
-                        letterSpacing="0.08em"
-                      >
-                        {lines.map((line, index) => (
-                          <tspan
-                            key={`${item.id}-line-${index}`}
-                            x={item.x}
-                            dy={index === 0 ? startDy : lineStep}
-                          >
-                            {line}
-                          </tspan>
-                        ))}
-                      </text>
-                    );
-                  })}
-                </g>
-              </>
+            {showGeographicBackdrop && detailTilesActive ? (
+              <g pointerEvents="none" aria-label="CARTO geographic basemap">
+                {detailTiles.map((tile) => (
+                  <image
+                    key={`carto-${cartoStyle}-${tile.z}-${tile.x}-${tile.y}`}
+                    href={PERIDOT_DETAIL_TILE_URL(cartoStyle, tile.z, tile.x, tile.y)}
+                    x={tile.left}
+                    y={tile.top}
+                    width={tile.size}
+                    height={tile.size}
+                    preserveAspectRatio="none"
+                    opacity="1"
+                    style={{ filter: 'none', mixBlendMode: 'normal' }}
+                  />
+                ))}
+              </g>
             ) : null}
             <g>
               {screenEdges.map((edge) => {
@@ -3058,7 +3126,52 @@ function SvgMap({
         </g>
       </svg>
 
-      {showBasemap && basemapError ? (
+      {showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR ? (
+        <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-2">
+          <div className="flex flex-col gap-1 rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-3 py-2 text-xs shadow-sm">
+          <label className="flex items-center gap-2">
+            <span className="font-medium">CARTO basemap (test)</span>
+            <select
+              aria-label="CARTO basemap style"
+              value={cartoStyle}
+              onChange={(event) => setCartoStyle(event.target.value)}
+              className="rounded border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-1 py-1"
+            >
+              {PERIDOT_CARTO_STYLES.map((style) => <option key={style.id} value={style.id}>{style.label}</option>)}
+            </select>
+          </label>
+          {!PERIDOT_CARTO_API_KEY ? (
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={allowWatermarkedCartoPreview} onChange={(event) => setAllowWatermarkedCartoPreview(event.target.checked)} />
+              Preview watermarked tiles (no API key)
+            </label>
+          ) : null}
+          {!PERIDOT_CARTO_API_KEY ? <span>Unwatermarked maps require VITE_CARTO_BASEMAP_KEY.</span> : null}
+          </div>
+          {tileZoom != null && Number.isFinite(tileZoom) ? (
+            <div
+              className="pointer-events-none rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-2 py-1 text-xs shadow-sm"
+              aria-label="Development diagnostic: approximate map tile zoom level"
+            >
+              <span className="font-medium">Tile zoom (test): </span>
+              {tileZoom.toFixed(1)} / {PERIDOT_TEST_MAX_TILE_ZOOM}
+              {Number.isFinite(renderedTileZoom) ? ` · tiles z${renderedTileZoom}` : ''}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {detailTilesActive ? (
+        <div className="absolute bottom-3 right-3 z-10 rounded bg-[var(--map-canvas-bg)]/95 px-2 py-1 text-xs shadow-sm">
+          © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">OpenStreetMap contributors</a>
+          {' · '}© <a href="https://carto.com/attributions/" target="_blank" rel="noopener noreferrer" className="underline">CARTO</a>
+        </div>
+      ) : null}
+      {showDetailTiles && !detailTilesActive ? (
+        <div className="pointer-events-none absolute bottom-32 left-3 rounded bg-[var(--map-warning-bg)] px-2 py-1 text-xs text-[var(--map-warning-text)]">
+          CARTO tiles unavailable at this view (tile request limit or map bounds)
+        </div>
+      ) : null}
+      {!showGeographicBackdrop && showBasemap && basemapError ? (
         <div className="pointer-events-none absolute left-4 top-4 rounded-2xl bg-[var(--map-warning-bg)] px-3 py-2 text-xs text-[var(--map-warning-text)] shadow">
           {basemapError}
         </div>
@@ -3312,6 +3425,7 @@ function LinkedLettersPanel({
 }
 
 function LegacyD3MapStage({
+  projectionMode,
   mapViewportRef,
   mapViewportSize,
   graph,
@@ -3365,6 +3479,7 @@ function LegacyD3MapStage({
           viewResetKey={viewResetKey}
           viewStateRef={viewStateRef}
           initialFocusStrategy={initialFocusStrategy}
+          projectionMode={projectionMode}
         />
       ) : null}
 
@@ -3757,6 +3872,9 @@ export default function EuropeNetworkMapApp() {
   const [showAllLinkedLetters, setShowAllLinkedLetters] = useState(false);
   const [expandedLetterSections, setExpandedLetterSections] = useState({});
   const [viewMode, setViewMode] = useState('person');
+  // Accepted geographic projection following the Phase 1A visual comparison.
+  // Keep this fixed for the viewport compatibility and map-tile prototypes.
+  const geographicProjectionMode = PERIDOT_PROJECTION_WEB_MERCATOR;
   const [personLayoutMode, setPersonLayoutMode] = useState('geographic');
   const [geographicAnchorSettings, setGeographicAnchorSettings] = useState({
     selectedRoles: [],
@@ -4198,8 +4316,8 @@ export default function EuropeNetworkMapApp() {
     [places, placeIdsInUse]
   );
   const geographicGraph = useMemo(
-    () => buildGraph(filteredPlaces, filteredAggregatedEdges, mapViewportSize.width, mapViewportSize.height),
-    [filteredPlaces, filteredAggregatedEdges, mapViewportSize.width, mapViewportSize.height]
+    () => buildGraph(filteredPlaces, filteredAggregatedEdges, mapViewportSize.width, mapViewportSize.height, geographicProjectionMode),
+    [filteredPlaces, filteredAggregatedEdges, mapViewportSize.width, mapViewportSize.height, geographicProjectionMode]
   );
   // Force layout is intentionally expensive (hundreds of synchronous D3 ticks).
   // Do not compute it merely because Force Directed was the last selected person
@@ -4351,6 +4469,7 @@ export default function EuropeNetworkMapApp() {
         && cached.relationshipRows === geographicRelationshipRows
         && cached.width === mapViewportSize.width
         && cached.height === mapViewportSize.height
+        && cached.projectionMode === geographicProjectionMode
         && cached.entityLabelById === entityDisplayLabelById
         && cached.anchorSettings === geographicAnchorSettings
         && cached.relationshipLineSettings === geographicRelationshipLineSettings
@@ -4370,6 +4489,7 @@ export default function EuropeNetworkMapApp() {
           entityLabelById: entityDisplayLabelById,
           geographicAnchorSettings,
           geographicRelationshipLineSettings,
+          projectionMode: geographicProjectionMode,
         }
       );
       geographicPersonGraphCacheRef.current = {
@@ -4377,6 +4497,7 @@ export default function EuropeNetworkMapApp() {
         relationshipRows: geographicRelationshipRows,
         width: mapViewportSize.width,
         height: mapViewportSize.height,
+        projectionMode: geographicProjectionMode,
         entityLabelById: entityDisplayLabelById,
         anchorSettings: geographicAnchorSettings,
         relationshipLineSettings: geographicRelationshipLineSettings,
@@ -4401,6 +4522,7 @@ export default function EuropeNetworkMapApp() {
     entityDisplayLabelById,
     geographicAnchorSettings,
     geographicRelationshipLineSettings,
+    geographicProjectionMode,
   ]);
   const unifiedGeographicGraph = useMemo(() => {
     // Generalized entity/place semantics are authoritative whenever they can
@@ -4569,8 +4691,8 @@ export default function EuropeNetworkMapApp() {
     : 'geographic';
   const mapViewDatasetKey = peridotNormalizedData || normalizedRows;
   const viewResetKey = useMemo(
-    () => ({ dataset: mapViewDatasetKey, layout: activeMapLayoutKey }),
-    [mapViewDatasetKey, activeMapLayoutKey]
+    () => ({ dataset: mapViewDatasetKey, layout: activeMapLayoutKey, projection: activeMapLayoutKey === 'geographic' ? geographicProjectionMode : null }),
+    [mapViewDatasetKey, activeMapLayoutKey, geographicProjectionMode]
   );
   const activeMapViewStateRef = activeMapLayoutKey === 'force'
     ? forceNetworkViewStateRef
@@ -5848,6 +5970,7 @@ export default function EuropeNetworkMapApp() {
     zoomTuning,
     viewResetKey,
     viewStateRef: activeMapViewStateRef,
+    projectionMode: geographicProjectionMode,
     initialFocusStrategy: viewMode === 'person' && personLayoutMode === 'force' ? 'force-dense-cluster' : 'fit-all',
     hoverCard,
     personLayoutMode,
