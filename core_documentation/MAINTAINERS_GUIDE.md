@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-5e785ed — Refine About manuscript design and Data workspace responsiveness
+fc42306 — Vite-managed editorial gateway asset imports (commit message not independently supplied)
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-30)
+Status: clean working tree; HEAD and origin/main aligned (user-confirmed 2026-10-31)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -80,7 +80,7 @@ The following tracked planning documents remain relevant maintenance references:
 |---|---|---|---|---|
 | Top-level orchestration | `App.jsx` | state, derived data, routing, Inspector history, export wiring | filters, timeline, compact/full Inspector bridge | open each workspace; upload/use sample; click node/edge/cluster |
 | Workspace navigation | `App.jsx`, global header/navigation boundaries, `peridotWorkspaceConfig.js` | persistent public routing, state continuity, hidden Theme compatibility | active dataset, workspace/viewport state, Inspector presentation | logo/Home; Data/Visualize/Explore/Tutorials/About; cross-page state persistence |
-| First-time tutorial | tutorial state, panel, dock, anchor/highlight, and Home-entry boundaries | retained seven-stage guided workflow; Home launcher currently disabled pending revision | workspace routing, Inspector close behavior, target observation, keyboard focus | verify disabled Home placeholder now; rerun full seven-stage regression when launcher is re-enabled |
+| First-time tutorial | tutorial state, panel, dock, anchor/highlight, and Home-entry boundaries | retained seven-stage guided workflow; public Tutorials page remains Coming Soon | workspace routing, Inspector close behavior, target observation, keyboard focus | verify no Home tutorial launcher; rerun full seven-stage regression when launcher is re-enabled |
 | Data import | Data workspace + mapping/import helpers | parse, map, validate, normalize, capability audit | upload reset and downstream data scope | template, CSV, TSV, XLSX, XLSM, XLS, mapped import |
 | Visualizations | `PeridotVisualizationsWorkspace.jsx`, `PeridotTimelineWorkspace.jsx` | map/network/chart modes, dedicated Timeline workspace, shared playback control, header, stage, Export menu | stage sizing, Inspector overlay, search/playback scope, portal layers | map/network/timeline/chart switch; Timeline orientation/zoom/pan/categories; header/playback controls |
 | Search | `PeridotSearchWorkspace.jsx` | draft/apply search and Explore UI | active dataset, facets, Inspector handoff | Apply/Clear, suggestion, pagination, Inspect return |
@@ -88,6 +88,16 @@ The following tracked planning documents remain relevant maintenance references:
 | Analytics | Analytics modules | controls, derivation, SVG rendering and chart export | scope/date handling, palette roles | chart switch, series selection, export |
 | Theme/CSS | theme modules + stylesheets | semantic colors and component presentation | import order, dropdown/z-index, reduced motion | theme role/palette change; each workspace |
 | Export | `exportHelpers.js` + Visualizations header | image/tabular export | visible/selected/charted scope | SVG/PNG/CSV output |
+
+### Current no-data editorial gateway and asset-loading contract (2026-10-31)
+
+The public **Visualize**, **Explore**, and **Tutorials** no-dataset/coming-soon surfaces use a coordinated parchment-background gateway with a prominent heading, explanatory text, one **Go to Data** CTA, and an illustrated full-width tear below the action. Visualize and Explore use **No Dataset Active**, while Tutorials uses **Tutorials Coming Soon** and remains a placeholder, **not** an activated guided tutorial. The three tears are `divider_tear_illuminated.png`, `divider_tear_celestial.png`, and `divider_tear_alchemy_mineral.png`; `base_parchment_2.png` is the shared background. These images are visual, not controls; the CTA uses the existing Data navigation and may not silently load a sample or change mapping state.
+
+`PeridotDatasetRequiredWorkspace.jsx` owns the shared Visualize/Explore no-dataset presentation; `PeridotTutorialsWorkspace.jsx` owns the public tutorial placeholder; `PeridotEditorialGatewayAnimation.css` owns their staged editorial entrance effects; `App.jsx` remains the routing/prop-wiring owner. Preserve approximately 24px explanatory text, prominent button sizing, stationary full-width tear, first-entry staggered fade/rise (heading → explanatory text → CTA) followed by a tear fade, replay on relevant page changes, and `prefers-reduced-motion` behavior. The **horizontal outgoing/incoming** cross-route prototype was rolled back after an `App.jsx` reference/scope crash; it is not part of the approved route contract.
+
+**Production assets:** Image references inside React components must use Vite-managed static imports from the existing repository `assets/` directory, as already established on Home, or an equivalently build-verified method. JavaScript literals such as `/assets/foo.png` and manually base-prefixed strings do **not** make Vite emit files from an arbitrary top-level assets directory. Do not move or duplicate these images into `public/assets/` as an undocumented workaround. For changes, verify that the production build emits the required images and that their URLs work from GitHub Pages' `/peridot-humanistic-data/` base. Localhost rendering, Git push, and deployment are separate verification steps.
+
+Minimum regression: visit Visualize, Explore, and Tutorials with no dataset; inspect all parchment and tear imagery at laptop and desktop sizes; verify title, text, and button; navigate to Data; confirm that active-data Visualize/Explore functionality and session state are not affected; switch among the three pages and verify approved animation replay and reduced-motion behavior; run `npm.cmd run build` and inspect `dist/assets` output; verify the actual deployed site after publication. The latest confirmed Git state is `fc42306`; a post-fix deployed rendering check remains unreported.
 
 ## 2. Application Boundaries and Route Model
 
@@ -1002,7 +1012,7 @@ These areas still deserve narrow, explicit passes:
 **Deferred mapping architecture (2026-10-28):** multiple independent relationships per source row need a new grouping layer above `relationshipParts`, with corresponding workbook, runtime, canonical model, Inspector, Network, and export handling. Progressive form activation is already implemented and should not be mistaken for this feature.
 
 
-**Cartographic Editorial active visual work (separate from the older technical priority order):** `c71e265` is the latest clean, synchronized checkpoint; the earlier `4e6fb11` editorial Home and button work has since been refined by `7280e30`, `2117659`, and `60b8643`. The Florence/paper hero, full-width banner, corner-collage frame, and optical content position are accepted; do not revive the earlier green title card or rejected H2f diagonal. Remaining visual work is targeted CSS/token cleanup, consistent buttons and workspaces, tutorial content, and verification across supported desktop viewport sizes. Asset publication is confirmed by Git, but licensing/redistribution rights are **not** established merely by the push. Preserve attribution notes and verify the applicable licenses separately. The present art direction prioritizes full-screen desktop; minimum supported viewport enforcement remains unresolved.
+**Cartographic Editorial active visual work (separate from the older technical priority order):** `c71e265` was an earlier clean, synchronized checkpoint; the earlier `4e6fb11` editorial Home and button work has since been refined by `7280e30`, `2117659`, and `60b8643`. The Florence/paper hero, full-width banner, corner-collage frame, and optical content position are accepted; do not revive the earlier green title card or rejected H2f diagonal. Remaining visual work is targeted CSS/token cleanup, consistent buttons and workspaces, tutorial content, and verification across supported desktop viewport sizes. Asset publication is confirmed by Git, but licensing/redistribution rights are **not** established merely by the push. Preserve attribution notes and verify the applicable licenses separately. The present art direction prioritizes full-screen desktop; minimum supported viewport enforcement remains unresolved.
 
 
 1. **Timeline relationship rendering / connection legibility — immediate.**
@@ -1123,7 +1133,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`5e785ed` — `Refine About manuscript design and Data workspace responsiveness`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
+- current synchronized checkpoint: **`fc42306`**, with `HEAD` and `origin/main` aligned and a clean working tree in the latest user-provided sync output
 - local development command on the user's machine: **`npm.cmd run dev`**
 - current Timeline state: canonical assertion-level projection, horizontal/vertical visualization workspace, smooth wheel/button zoom, scrollbars + click-drag panning, zoom-adaptive axis, evidence-driven plural categories with OR visibility, shared Inspector handoff, subject-strict mapped relationship projection, continuous secondary-axis layout, and revised duration treatment are committed; relationship-line routing/presentation is the immediate unfinished item.
 - the existing bottom Timeline/playback control remains intact and separate from the dedicated Timeline visualization workspace.

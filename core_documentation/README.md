@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-5e785ed — Refine About manuscript design and Data workspace responsiveness
+fc42306 — Vite-managed editorial gateway asset imports (commit message not independently supplied)
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-30)
+Status: clean working tree; HEAD and origin/main aligned (user-confirmed 2026-10-31)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -180,6 +180,14 @@ The repository contains a larger catalog of cartographic, parchment, manuscript,
 The five **About** pages now resemble individual leaves of an illustrated manuscript. Decorative torn-paper corners reveal manuscript, alchemical, botanical, and celestial motifs; they are attached to the page edges rather than floating inside content blocks. The surrounding writing and appropriate form fields follow the irregular art with comfortable separation, and dividing rules avoid the illustrated areas. **About Peridot** uses an illuminated initial at upper left; **Creator** has upper-right alchemical imagery and a red four-corner frame surrounding the profile photograph; **AI Disclosure** uses a lower-left celestial corner; **Open Source** uses a lower-right botanical/pomegranate corner; **Feedback** uses alchemical corners at upper left and lower right. These illustrations are visual framing, not interactive features.
 
 The **Feedback** page retains its two-column reporting form and emphasizes a large, left-aligned **Send feedback** button. The message and contextual fields remain usable at narrower laptop widths and clear the decorative lower-right corner. Data's Sample Datasets layout has also been compressed vertically for laptop screens while preserving legible text and the persistent active-dataset/no-data status panel near the bottom, with a small bottom margin. This treatment was accepted and committed as `5e785ed`; the preceding documentation checkpoint is `7df38d0`.
+
+### Illustrated no-dataset and Tutorials gateways (2026-10-31)
+
+Until a researcher selects a sample or uploads data, **Visualize** and **Explore** display **No Dataset Active** in a parchment-backed editorial layout. Both explain that a dataset is required and provide one prominent **Go to Data** button rather than duplicating upload/sample actions on those pages. A full-width illustrated tear visually separates that guidance from the unavailable research workspace: illuminated botanical imagery for Visualize, celestial imagery for Explore.
+
+**Tutorials** uses the same visual presentation, with the heading **Tutorials Coming Soon**, a short explanation, a **Go to Data** action, and an alchemical/mineral tear. This is an informational placeholder, not a launched guided tutorial. All three pages use restrained staged entrance animations, including replay on relevant navigation, with a reduced-motion alternative. They share `base_parchment_2` as a visual background and retain their distinct illustrations. Loaded-data Visualize and Explore workflows remain separate and available when supported by mapped data.
+
+The illustrations are imported as build-managed assets from Peridot's existing `assets/` directory so their paths remain valid on GitHub Pages; copying files into a second public asset catalog is not part of the accepted approach. The corrective code was pushed through `fc42306`, but a successful push does not by itself verify the published site's final image rendering. Asset provenance/distribution obligations remain applicable.
 
 ## 4. Interface Examples and Current-State Note
 

@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-5e785ed — Refine About manuscript design and Data workspace responsiveness
+fc42306 — Vite-managed editorial gateway asset imports (commit message not independently supplied)
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-30)
+Status: clean working tree; HEAD and origin/main aligned (user-confirmed 2026-10-31)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -573,6 +573,28 @@ Onboarding and map-edit access should be obvious without changing the generalize
 
 Maintenance consequence:
 Preserve Data tab continuity, dataset state, sample actions, safe viewport fit, and low-latency staggered entry animation. Repair image references when filenames move; never assume unaccepted artwork exists in the committed repository.
+```
+
+#### No-data editorial gateway, transition rollback, and production asset decision (2026-10-31)
+
+```text
+Decision:
+Present Visualize/Explore no-dataset and Tutorials Coming Soon as coordinated editorial gateway pages, and load their artwork through Vite imports.
+
+Context:
+The same research-start prerequisite appears in multiple destinations; the earlier two-CTA treatment duplicated Data onboarding. An experimental horizontal cross-page transition later caused an undefined-variable crash. Root-relative and manually base-prefixed image URL strings failed to reliably package artwork for GitHub Pages.
+
+Chosen approach:
+Give each page one prominent Go to Data action, common parchment and full-width illustrative tear, and staged first-entry/page-replay animation with reduced-motion support. Keep the approved simpler animation model; use static asset imports from the established assets directory so Vite manages deployment paths.
+
+Rejected alternative:
+Offer competing upload/sample choices on every gateway, restore a default sample, keep the faulty horizontal outgoing/incoming transition, rely on hardcoded /assets/ URLs, or duplicate top-level artwork into public/assets as an unreviewed workaround.
+
+Reason:
+One clear route to Data reduces friction and keeps onboarding semantics centralized. Source-aware image imports preserve both local rendering and build output; rollback of a fragile routing experiment protects the established working interface.
+
+Maintenance consequence:
+Preserve the Visualize/Explore/Tutorials gateway distinction from active-data workspaces, App routing, CTA behavior, animation replay, and reduced-motion handling. Inspect exact current files before route changes; build and verify production asset outputs as well as the deployed site before declaring publication success.
 ```
 
 ### 7.3 Inspector
