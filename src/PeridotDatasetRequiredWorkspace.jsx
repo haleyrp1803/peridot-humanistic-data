@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import './PeridotEditorialGatewayAnimation.css';
 
 export function PeridotDatasetRequiredWorkspace({
   destination = 'visualize',
@@ -19,9 +20,13 @@ export function PeridotDatasetRequiredWorkspace({
     ? '/assets/divider_tear_celestial.png'
     : '/assets/divider_tear_illuminated.png';
 
+  // Key the rendered root by destination so the shared Visualize/Explore gateway
+  // gets fresh animation-bearing DOM when navigating between those two pages.
+  // Tutorials uses a separate transient workspace and remounts on navigation.
   // onOpenData navigates to Data onboarding; it does not launch the file chooser.
   return (
     <section
+      key={`peridot-no-dataset-${destination}`}
       className="h-full overflow-auto text-[var(--text-main)]"
       style={{
         backgroundColor: '#f4e9d6',
@@ -32,13 +37,13 @@ export function PeridotDatasetRequiredWorkspace({
       }}
     >
       <div className="mx-auto max-w-4xl px-8 pt-[clamp(2.25rem,5vh,3.8rem)]">
-        <h1 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[clamp(2.6rem,5vw,4.5rem)] font-bold leading-[1.03] tracking-[-0.045em] text-[var(--heading-text)]">
+        <h1 className="peridot-gateway-enter peridot-gateway-enter--heading [font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[clamp(2.6rem,5vw,4.5rem)] font-bold leading-[1.03] tracking-[-0.045em] text-[var(--heading-text)]">
           No Dataset Active
         </h1>
-        <p className="mt-5 max-w-2xl text-[1.5rem] leading-[1.35] text-[var(--text-main)]">
+        <p className="peridot-gateway-enter peridot-gateway-enter--description mt-5 max-w-2xl text-[1.5rem] leading-[1.35] text-[var(--text-main)]">
           {description}
         </p>
-        <div className="mt-8">
+        <div className="peridot-gateway-enter peridot-gateway-enter--action mt-8">
           <button
             type="button"
             className="peridot-button-primary"
@@ -57,7 +62,7 @@ export function PeridotDatasetRequiredWorkspace({
       </div>
 
       {/* Full-width decorative rupture marks the unavailable research workspace. */}
-      <div className="mt-12 w-full" aria-hidden="true">
+      <div className="peridot-gateway-enter peridot-gateway-enter--tear mt-12 w-full" aria-hidden="true">
         <img
           src={tear}
           alt=""

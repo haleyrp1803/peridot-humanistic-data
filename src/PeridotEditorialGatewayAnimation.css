@@ -1,0 +1,35 @@
+/* Shared manuscript gateway entrances for empty Visualize, Explore and Tutorials.
+   Elements remain in document flow; opacity and transform alone are animated.
+   The tear only fades in so it continues to read as a physical rupture. */
+@keyframes peridot-gateway-rise-in {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes peridot-gateway-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.peridot-gateway-enter {
+  animation-name: peridot-gateway-rise-in;
+  animation-duration: 1050ms;
+  animation-timing-function: cubic-bezier(.19, 1, .22, 1);
+  animation-fill-mode: both;
+}
+.peridot-gateway-enter--heading { animation-delay: 0ms; }
+.peridot-gateway-enter--description { animation-delay: 220ms; }
+.peridot-gateway-enter--action { animation-delay: 480ms; }
+.peridot-gateway-enter--tear {
+  animation-name: peridot-gateway-fade-in;
+  animation-delay: 750ms;
+  animation-duration: 1200ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peridot-gateway-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

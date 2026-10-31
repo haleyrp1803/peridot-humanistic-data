@@ -6533,6 +6533,8 @@ export default function EuropeNetworkMapApp() {
 
   const tutorialsWorkspaceProps = {
     onStartTutorial: startTutorial,
+    // Tutorials currently shows a coming-soon gateway; reuse Data onboarding.
+    onOpenData: openDataWorkspace,
   };
 
   const learnMoreWorkspaceProps = {
