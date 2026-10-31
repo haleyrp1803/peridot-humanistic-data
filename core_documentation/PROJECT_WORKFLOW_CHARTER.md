@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-c71e265 — Repair asset references after decorative asset renaming
+5e785ed — Refine About manuscript design and Data workspace responsiveness
 Branch: main
 Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-30)
 ```
@@ -632,6 +632,28 @@ Parent-relative geometry resolves the actual layout boundary, while independent 
 
 Maintenance consequence:
 Preserve the one-screen desktop composition and its decorative crop, prevent bottom gaps and scrollbars, and test button semantics in Data, Visualize/playback, and other relevant workspaces. Do not change canonical data interpretation as part of visual adjustments. The provenance of imagery remains subject to source-specific licensing checks, independently of Git publication.
+```
+
+#### About manuscript-style layout and responsive Data presentation decision (2026-10-30)
+
+```text
+Decision:
+Use outer-edge torn-illustration corners as part of the About page's manuscript composition, and favor close shape-aware content wrapping rather than oversized fixed rectangular image exclusions.
+
+Context:
+The original rigid column offsets either put text and divider rules over irregular artwork or left large unused cushions. About and Feedback also had to remain usable in narrower laptop windows. Data's sample cards and bottom dataset-status panel needed to share a shorter viewport without sacrificing text size.
+
+Chosen approach:
+Anchor each corner to the outer About content boundary; let content and rules clear the actual image with modest padding. Keep the Creator photo framed by four red ornaments outside its edges. Retain Feedback's two-column workflow, using a prominent left-aligned submit button and avoiding bottom-right image collisions. For Data, reduce sample-card vertical padding/footprint while preserving text scale and bottom-panel visibility.
+
+Rejected alternative:
+Overlay content with decorative images, impose a large universal rectangular left/right spacer, shrink all card text, or resize the persistent dataset-status panel merely to fit the sample cards.
+
+Reason:
+The design aims to resemble a page in an illustrated manuscript without sacrificing readable, responsive research workflows.
+
+Maintenance consequence:
+Regression-test About pages, Feedback submission, the Creator portrait, and Data entry across laptop and larger viewports. Use the latest exact source before changing breakpoints or CSS; these visual decisions do not alter generalized data or application scope contracts.
 ```
 
 ### 7.7 Export

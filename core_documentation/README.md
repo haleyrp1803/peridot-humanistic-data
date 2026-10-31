@@ -32,7 +32,7 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-c71e265 — Repair asset references after decorative asset renaming
+5e785ed — Refine About manuscript design and Data workspace responsiveness
 Branch: main
 Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-30)
 ```
@@ -174,6 +174,12 @@ The Visualizations header provides SVG and PNG export for map/network views, CSV
 The current Data entry screen uses four tabs—**Get Started / Sample Datasets / Templates / Upload Data**—and retains a bottom active-dataset panel on each tab. After a sample or upload becomes active, researchers may return to Data and select **Edit Mapping** without restarting the session. Sample dataset illustrations remain the correspondence letter, Medici genealogy chart, and Cardinal Carlo portrait. The one-screen desktop layout uses gentle, ordered entrance animations when entering Data or switching tabs. These changes were committed in `ee4c3ff` and refined in `761d72d`; image paths were repaired in `c71e265` after the asset renaming in `52cf1f8`.
 
 The repository contains a larger catalog of cartographic, parchment, manuscript, botanical, alchemical, and gemstone ornaments. These are optional visual resources, not active decorations on every page. The experimental later 44-label/frame collection was not accepted into the committed assets. Current image paths follow descriptive role-based filenames with directional corner suffixes and numbers, where needed, at the end of the filename. Asset provenance and redistribution review remain separate from Git synchronization.
+
+### About manuscript pages and laptop Data presentation (2026-10-30)
+
+The five **About** pages now resemble individual leaves of an illustrated manuscript. Decorative torn-paper corners reveal manuscript, alchemical, botanical, and celestial motifs; they are attached to the page edges rather than floating inside content blocks. The surrounding writing and appropriate form fields follow the irregular art with comfortable separation, and dividing rules avoid the illustrated areas. **About Peridot** uses an illuminated initial at upper left; **Creator** has upper-right alchemical imagery and a red four-corner frame surrounding the profile photograph; **AI Disclosure** uses a lower-left celestial corner; **Open Source** uses a lower-right botanical/pomegranate corner; **Feedback** uses alchemical corners at upper left and lower right. These illustrations are visual framing, not interactive features.
+
+The **Feedback** page retains its two-column reporting form and emphasizes a large, left-aligned **Send feedback** button. The message and contextual fields remain usable at narrower laptop widths and clear the decorative lower-right corner. Data's Sample Datasets layout has also been compressed vertically for laptop screens while preserving legible text and the persistent active-dataset/no-data status panel near the bottom, with a small bottom margin. This treatment was accepted and committed as `5e785ed`; the preceding documentation checkpoint is `7df38d0`.
 
 ## 4. Interface Examples and Current-State Note
 

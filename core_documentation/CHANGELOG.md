@@ -20,12 +20,12 @@ This document owns the detailed checkpoint, milestone chronology, deferred/archi
 ## 1. Current Synchronized Checkpoint
 
 ```text
-c71e265 — Repair asset references after decorative asset renaming
+5e785ed — Refine About manuscript design and Data workspace responsiveness
 Branch: main
 Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-30)
 ```
 
-The user-confirmed 2026-10-30 sync ritual establishes `c71e265` as the latest clean, pushed checkpoint. The previous `87d6955` milestone is historical. The prior `27e3cf7` state remains an earlier historical checkpoint, following `f3cf4fb` (shared mapping workspace layout/contextual guidance), `89aaa50` (mapping palette and contrast), `60b8643` (direct Home file chooser), and the intervening Home onboarding/asset-retirement commits. `27e3cf7` updates tracked design mockups and the genealogy retirement audit; **it does not retire genealogy code**. Earlier statements about uncommitted Adobe filigree deletions, a sole Home “Get started” button, and a wholly deferred mapping-content redesign describe earlier stages, not the current implementation. Browser observations and source changes are distinguished from verified Git synchronization; asset licensing is a separate unresolved review.
+The user-confirmed 2026-10-30 sync ritual establishes `5e785ed` as the latest clean, pushed checkpoint. The `c71e265` asset-reference repair is a prior accepted milestone; commits `7df38d0` and `5e785ed` supersede it as the latest documentation and interface checkpoints. The previous `87d6955` milestone is historical. The prior `27e3cf7` state remains an earlier historical checkpoint, following `f3cf4fb` (shared mapping workspace layout/contextual guidance), `89aaa50` (mapping palette and contrast), `60b8643` (direct Home file chooser), and the intervening Home onboarding/asset-retirement commits. `27e3cf7` updates tracked design mockups and the genealogy retirement audit; **it does not retire genealogy code**. Earlier statements about uncommitted Adobe filigree deletions, a sole Home “Get started” button, and a wholly deferred mapping-content redesign describe earlier stages, not the current implementation. Browser observations and source changes are distinguished from verified Git synchronization; asset licensing is a separate unresolved review.
 
 **Historical checkpoint narrative (`cd625a2`):** This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
 
@@ -43,6 +43,15 @@ Current architectural significance:
 - The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
 
 ## 2. Recent Milestones, Newest First
+
+### About manuscript presentation and responsive Data refinements — 2026-10-30 (committed)
+
+- **`5e785ed` — `Refine About manuscript design and Data workspace responsiveness`** is the latest user-confirmed clean, pushed checkpoint. The About section now uses an illustrated-manuscript treatment: page-specific torn-corner graphics remain anchored to the outermost About content bounds, with parchment coordinated to the artwork. About Peridot, Creator, AI Disclosure, Open Source, and Feedback retain their existing navigation and content semantics. Rather than rigidly reserving a large rectangular blank area for an irregular illustration, text and supported content flow around the corner art with a small readable buffer. Dividers and controls should not visually cross the illustrations.
+- The **Creator** portrait now has a four-corner red ornamental frame outside the photo edges, with visible breathing room between image and ornament. The biography wraps around the top-right illustrated corner rather than overlaying it or leaving a disproportionately wide gap. The **Feedback** form retains two columns with a prominent left-aligned **Send feedback** action in its right column; explanatory text and form fields avoid the bottom-right illustration. Smaller-window behavior was visually tested and refined separately from desktop placement.
+- The **Data** entry and Sample Datasets card layout was refined for laptop-height viewports: sample-card vertical density and padding were reduced without shrinking text, while the persistent **No Dataset Loaded / active dataset** status panel remains distinct and preserves a small, comfortable bottom-viewport clearance. These changes are presentation/responsiveness, not altered sample semantics, upload parsing, navigation state, or mapping logic. The latest user-provided screenshots and commit verification establish the accepted appearance; precise CSS selectors and breakpoint values must be verified against current raw source before further implementation.
+- **`7df38d0` — `Synchronize documentation through Data onboarding and asset organization`** committed the prior core-documentation synchronization. It precedes the new About/Data refinement checkpoint.
+- Corner tests involving alternate homepage assets and other experimental ornament placements were subject to explicit rollback during the design cycle; do not describe those trials as accepted homepage state. Asset licensing/provenance review remains a separate obligation.
+
 
 ### Data onboarding, decorative asset organization, and reference repair — 2026-10-30 (committed)
 
@@ -668,6 +677,8 @@ The following milestone narratives are retained as historical records. They rema
 ---
 ## 3. Deferred, Archived, and Rolled-Back Work
 
+**2026-10-30 current visual status:** About manuscript-corner treatment and red portrait framing are accepted through `5e785ed`; responsive page wrapping requires continued viewport regression checks as content changes. The historical Creator profile-card experiment remains rejected. The core-documentation governance protocol was reviewed during this documentation pass and remains unchanged.
+
 **2026-10-30 asset/design deferrals:** The 44-file small-label/modular-frame experiment was rejected for messy crops/edges and is not part of the committed asset catalog. Additional decorative placement and edge QA remain exploratory; added assets are not presumed deployed.
 
 **2026-10-28 deferrals and rejected interface trials:** The multi-relationship design (separate Mother/Father/Spouse groups within one record) remains unimplemented because runtime and graph consumers assume one relationship group with multipart participants; a future implementation must preserve group boundaries and never infer edges between unrelated groups. The sample card color treatments (ivory/green/oxblood accents) were discussed but not applied. The larger Creator profile-card experiment and alternative biography were reversed; the earlier portrait/biography layout is accepted. The dotted SVG Home route treatment and early collapsed-summary/offset-grid mapping variants were rejected. The corrected Add-on-demand mapping form activation is committed.
@@ -733,10 +744,12 @@ A responsive panel-sizing experiment attempted to make the shared side panel abs
 
 ## 4. Full Development History
 
-The entries immediately below extend the original history with **verified recent checkpoint commits** explicitly reported during the Cartographic Editorial sequence; the complete intervening commit list has not been independently reproduced in this pass. The older rows and their original historical refs remain intact. The latest user-confirmed synchronized HEAD is `c71e265`; older local-only status annotations below are historical at their respective commits.
+The entries immediately below extend the original history with **verified recent checkpoint commits** explicitly reported during the Cartographic Editorial sequence; the complete intervening commit list has not been independently reproduced in this pass. The older rows and their original historical refs remain intact. The latest user-confirmed synchronized HEAD is `5e785ed`; older local-only status annotations below are historical at their respective commits.
 
 | Date | Commit | Message | Checkpoint note |
-| 2026-10-30 | `c71e265` | Repair asset references after decorative asset renaming | current clean synchronized checkpoint; user-tested image paths |
+| 2026-10-30 | `5e785ed` | Refine About manuscript design and Data workspace responsiveness | latest clean aligned checkpoint; About corner/wrapping/portrait and laptop Data density |
+| 2026-10-30 | `7df38d0` | Synchronize documentation through Data onboarding and asset organization | preceding documentation synchronization |
+| 2026-10-30 | `c71e265` | Repair asset references after decorative asset renaming | historical accepted checkpoint; user-tested image paths |
 | 2026-10-30 | `52cf1f8` | add and rename decorative assets | role-based naming and asset catalog; 44 experimental labels/frames excluded |
 | 2026-10-30 | `761d72d` | Refine Data workspace controls and sample selection icon | oxblood Edit Mapping and four-tiles icon |
 | 2026-10-30 | `ee4c3ff` | Redesign Data onboarding and refine workspace animations | four Data tabs, status panel, sample actions, Home Get Started |
