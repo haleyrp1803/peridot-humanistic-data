@@ -11,14 +11,15 @@ export function PeridotDatasetRequiredWorkspace({
   onUseSampleData,
 }) {
   const isExplore = destination === 'explore';
+  const assetBase = `${import.meta.env.BASE_URL}assets/`;
   // Both no-data workspaces use the same editorial gateway. Only the
   // destination-specific explanation and illustrated rupture differ.
   const description = isExplore
     ? 'To search records and inspect evidence, first upload your research data or choose a prepared sample on the Data page.'
     : 'To explore maps, networks, timelines, and charts, first upload your research data or choose a prepared sample on the Data page.';
   const tear = isExplore
-    ? '/assets/divider_tear_celestial.png'
-    : '/assets/divider_tear_illuminated.png';
+    ? `${assetBase}divider_tear_celestial.png`
+    : `${assetBase}divider_tear_illuminated.png`;
 
   // Key the rendered root by destination so the shared Visualize/Explore gateway
   // gets fresh animation-bearing DOM when navigating between those two pages.
@@ -30,7 +31,7 @@ export function PeridotDatasetRequiredWorkspace({
       className="h-full overflow-auto text-[var(--text-main)]"
       style={{
         backgroundColor: '#f4e9d6',
-        backgroundImage: "url('/assets/base_parchment_2.png')",
+        backgroundImage: `url("${assetBase}base_parchment_2.png")`,
         backgroundPosition: 'center center',
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
