@@ -10,28 +10,60 @@ export function PeridotDatasetRequiredWorkspace({
   onUseSampleData,
 }) {
   const isExplore = destination === 'explore';
-  const heading = isExplore ? 'Explore Your Data' : 'Visualize Your Data';
+  // Both no-data workspaces use the same editorial gateway. Only the
+  // destination-specific explanation and illustrated rupture differ.
   const description = isExplore
-    ? 'Peridot needs an active dataset before you can search records or inspect evidence.'
-    : 'Peridot needs an active dataset before you can create visualizations.';
+    ? 'To search records and inspect evidence, first upload your research data or choose a prepared sample on the Data page.'
+    : 'To explore maps, networks, timelines, and charts, first upload your research data or choose a prepared sample on the Data page.';
+  const tear = isExplore
+    ? '/assets/divider_tear_celestial.png'
+    : '/assets/divider_tear_illuminated.png';
 
+  // onOpenData navigates to Data onboarding; it does not launch the file chooser.
   return (
-    <section className="h-full overflow-auto bg-[var(--peridot-role-interface-app-background)] px-8 py-12 text-[var(--text-main)]">
-      <div className="mx-auto max-w-4xl">
-        <h1 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[clamp(2.4rem,5vw,4.5rem)] font-bold leading-[0.98] tracking-[-0.045em] text-[var(--heading-text)]">
-          {heading}
+    <section
+      className="h-full overflow-auto text-[var(--text-main)]"
+      style={{
+        backgroundColor: '#f4e9d6',
+        backgroundImage: "url('/assets/base_parchment_2.png')",
+        backgroundPosition: 'center center',
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+      }}
+    >
+      <div className="mx-auto max-w-4xl px-8 pt-[clamp(2.25rem,5vh,3.8rem)]">
+        <h1 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[clamp(2.6rem,5vw,4.5rem)] font-bold leading-[1.03] tracking-[-0.045em] text-[var(--heading-text)]">
+          No Dataset Active
         </h1>
-        <p className="mt-5 max-w-2xl text-base leading-7 text-[var(--text-main)]">
+        <p className="mt-5 max-w-2xl text-[1.5rem] leading-[1.35] text-[var(--text-main)]">
           {description}
         </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <button type="button" className="peridot-button-primary" onClick={onOpenData}>
-            Upload Your Data
-          </button>
-          <button type="button" className="peridot-button-primary" onClick={onUseSampleData}>
-            Choose Sample Data
+        <div className="mt-8">
+          <button
+            type="button"
+            className="peridot-button-primary"
+            onClick={onOpenData}
+            style={{
+              minHeight: '3.75rem',
+              padding: '0.95rem 2.25rem',
+              fontSize: '1.125rem',
+              fontWeight: 700,
+              boxShadow: '0 5px 15px rgba(28, 42, 34, 0.20)',
+            }}
+          >
+            Go to Data <span aria-hidden="true" className="ml-3">→</span>
           </button>
         </div>
+      </div>
+
+      {/* Full-width decorative rupture marks the unavailable research workspace. */}
+      <div className="mt-12 w-full" aria-hidden="true">
+        <img
+          src={tear}
+          alt=""
+          className="block h-auto w-full max-w-none select-none"
+          draggable="false"
+        />
       </div>
     </section>
   );
