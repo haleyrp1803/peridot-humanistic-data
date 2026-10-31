@@ -6,16 +6,17 @@
  */
 
 import React from 'react';
+import parchmentBackground from '../assets/base_parchment_2.png';
+import mineralTear from '../assets/divider_tear_alchemy_mineral.png';
 import './PeridotEditorialGatewayAnimation.css';
 
 export function PeridotTutorialsWorkspace({ onOpenData }) {
-  const assetBase = `${import.meta.env.BASE_URL}assets/`;
   return (
     <section
       className="h-full overflow-auto text-[var(--text-main)]"
       style={{
         backgroundColor: '#f4e9d6',
-        backgroundImage: `url("${assetBase}base_parchment_2.png")`,
+        backgroundImage: `url("${parchmentBackground}")`,
         backgroundPosition: 'center center',
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
@@ -49,7 +50,7 @@ export function PeridotTutorialsWorkspace({ onOpenData }) {
       {/* Full-width torn manuscript illustration; decorative, not a control. */}
       <div className="peridot-gateway-enter peridot-gateway-enter--tear mt-12 w-full" aria-hidden="true">
         <img
-          src={`${assetBase}divider_tear_alchemy_mineral.png`}
+          src={mineralTear}
           alt=""
           className="block h-auto w-full max-w-none select-none"
           draggable="false"
