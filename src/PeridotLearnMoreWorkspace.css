@@ -488,7 +488,7 @@
  * The existing About pages deliberately retain their current appearance until
  * their individual redesigns are approved. Asset is shared with Home/Samples. */
 .peridot-about-workspace.is-feedback-editorial {
-  background: #f4e9d6 url('/assets/base_parchment_1.png') center center / cover no-repeat;
+  background: #f4e9d6 url('/assets/base_parchment_2.png') center center / cover no-repeat;
   color: #213a31;
 }
 .peridot-about-workspace.is-feedback-editorial .peridot-about-local-nav {
@@ -547,7 +547,7 @@
  * The image URL matches the existing Home and Sample Selection asset usage.
  */
 .peridot-about-workspace {
-  background: #f4e9d6 url('/assets/base_parchment_1.png') center / cover no-repeat;
+  background: #f4e9d6 url('/assets/base_parchment_2.png') center / cover no-repeat;
   color: #243b31;
 }
 .peridot-about-local-nav {
@@ -614,3 +614,779 @@
 .peridot-about-source-link:is(:hover,:focus-visible) small { color: #405647; }
 /* The Feedback tab retains its previously accepted green treatment,
  * including hiding only its redundant FEEDBACK eyebrow. */
+
+
+/* Illustrated About page corners — each local tab reads as a page in a larger
+ * manuscript. Corners sit flush to the content viewport edges and may bleed
+ * slightly off-screen so the torn-paper illusion feels structural rather than
+ * decorative. Scale-only v5: increase v4 widths by 70%; preserve edge anchors. */
+/* This stage spans the entire About page below the local navigation.
+ * It does not participate in the centered reading-column width. */
+.peridot-about-page-stage {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.peridot-about-page-corners {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.peridot-about-page-stage > .peridot-about-content {
+  position: relative;
+  z-index: 1;
+  /* Keep the original scrollable centered content layout intact. */
+}
+
+.peridot-about-content-body {
+  position: relative;
+}
+
+.peridot-about-page-corner {
+  position: absolute;
+  line-height: 0;
+}
+
+.peridot-about-page-corner img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.peridot-about-page-corner--top-left {
+  top: -0.4rem;
+  left: -0.4rem;
+}
+
+.peridot-about-page-corner--top-right {
+  top: -0.4rem;
+  right: -0.4rem;
+}
+
+.peridot-about-page-corner--bottom-left {
+  bottom: -0.4rem;
+  left: -0.4rem;
+}
+
+.peridot-about-page-corner--bottom-right {
+  right: -0.4rem;
+  bottom: -0.4rem;
+}
+
+.peridot-about-page-corner--overview-tl,
+.peridot-about-page-corner--creator-tr,
+.peridot-about-page-corner--feedback-tl {
+  width: clamp(30.6rem, 37.4vw, 37.4rem);
+}
+
+.peridot-about-page-corner--ai-bl {
+  width: clamp(27.2rem, 34vw, 32.3rem);
+}
+
+.peridot-about-page-corner--source-br,
+.peridot-about-page-corner--feedback-br {
+  width: clamp(25.5rem, 30.6vw, 30.6rem);
+}
+
+@media (max-width: 900px) {
+  .peridot-about-page-corner--overview-tl,
+  .peridot-about-page-corner--creator-tr,
+  .peridot-about-page-corner--feedback-tl {
+    width: clamp(22.95rem, 57.8vw, 28.9rem);
+  }
+
+  .peridot-about-page-corner--ai-bl {
+    width: clamp(21.25rem, 52.7vw, 26.35rem);
+  }
+
+  .peridot-about-page-corner--source-br,
+  .peridot-about-page-corner--feedback-br {
+    width: clamp(20.4rem, 51vw, 25.5rem);
+  }
+}
+
+@media (max-width: 600px) {
+  .peridot-about-page-corner--top-left,
+  .peridot-about-page-corner--top-right {
+    top: -0.25rem;
+  }
+
+  .peridot-about-page-corner--bottom-left,
+  .peridot-about-page-corner--bottom-right {
+    bottom: -0.25rem;
+  }
+
+  .peridot-about-page-corner--top-left,
+  .peridot-about-page-corner--bottom-left {
+    left: -0.25rem;
+  }
+
+  .peridot-about-page-corner--top-right,
+  .peridot-about-page-corner--bottom-right {
+    right: -0.25rem;
+  }
+}
+
+
+/* v6: shaped editorial text wraps. The actual art stays the same size and
+ * at the same viewport edges as v5; these invisible floated copies affect
+ * layout only. shape-outside uses the PNG alpha channel and shape-margin
+ * supplies comfortable separation from the irregular paper tear. */
+.peridot-about-content {
+  --about-content-side-inset: clamp(1.15rem, 3.2vw, 3rem);
+}
+
+.peridot-about-wrap-guide {
+  position: relative;
+  display: block;
+  height: auto;
+  max-width: none;
+  opacity: 0;
+  pointer-events: none;
+  shape-margin: 20px;
+  object-fit: contain;
+}
+
+.peridot-about-wrap-guide.peridot-about-page-corner--top-left,
+.peridot-about-wrap-guide.peridot-about-page-corner--bottom-left {
+  float: left;
+  margin-left: calc(-1 * var(--about-content-side-inset));
+  margin-right: 0;
+}
+
+.peridot-about-wrap-guide.peridot-about-page-corner--top-right,
+.peridot-about-wrap-guide.peridot-about-page-corner--bottom-right {
+  float: right;
+  margin-right: calc(-1 * var(--about-content-side-inset));
+  margin-left: 0;
+}
+
+.peridot-about-wrap-guide.peridot-about-page-corner--top-left,
+.peridot-about-wrap-guide.peridot-about-page-corner--top-right {
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  margin-top: calc(-1 * clamp(.9rem, 1.7vh, 1.35rem));
+}
+
+.peridot-about-wrap-guide.peridot-about-page-corner--bottom-left,
+.peridot-about-wrap-guide.peridot-about-page-corner--bottom-right {
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  /* The About stage fills the viewport underneath the ~200px global + local
+   * headers. Position the exclusion around the bottom corner, without using a
+   * rigid rectangular safe zone across the whole page. */
+  margin-top: max(0px, calc(100dvh - 12.5rem - var(--about-wrap-height) - 1.5rem));
+}
+
+.peridot-about-wrap-guide.peridot-about-page-corner--overview-tl,
+.peridot-about-wrap-guide.peridot-about-page-corner--feedback-tl {
+  width: clamp(30.6rem, 37.4vw, 37.4rem);
+  shape-outside: url('/assets/corner_block_letter_TL.png');
+}
+.peridot-about-wrap-guide.peridot-about-page-corner--feedback-tl {
+  shape-outside: url('/assets/corner_alchemy_TL.png');
+}
+.peridot-about-wrap-guide.peridot-about-page-corner--creator-tr {
+  width: clamp(30.6rem, 37.4vw, 37.4rem);
+  shape-outside: url('/assets/corner_alchemy_TR.png');
+}
+.peridot-about-wrap-guide.peridot-about-page-corner--ai-bl {
+  width: clamp(27.2rem, 34vw, 32.3rem);
+  --about-wrap-height: calc(clamp(27.2rem, 34vw, 32.3rem) * 454 / 516);
+  shape-outside: url('/assets/corner_celestial_BL.png');
+}
+.peridot-about-wrap-guide.peridot-about-page-corner--source-br {
+  width: clamp(25.5rem, 30.6vw, 30.6rem);
+  --about-wrap-height: calc(clamp(25.5rem, 30.6vw, 30.6rem) * 457 / 505);
+  shape-outside: url('/assets/corner_pomegranate_BR.png');
+}
+.peridot-about-wrap-guide.peridot-about-page-corner--feedback-br {
+  width: clamp(25.5rem, 30.6vw, 30.6rem);
+  --about-wrap-height: calc(clamp(25.5rem, 30.6vw, 30.6rem) * 459 / 446);
+  shape-outside: url('/assets/corner_alchemy_BR.png');
+}
+
+@media (max-width: 900px) {
+  .peridot-about-wrap-guide.peridot-about-page-corner--overview-tl,
+  .peridot-about-wrap-guide.peridot-about-page-corner--creator-tr,
+  .peridot-about-wrap-guide.peridot-about-page-corner--feedback-tl {
+    width: clamp(22.95rem, 57.8vw, 28.9rem);
+  }
+  .peridot-about-wrap-guide.peridot-about-page-corner--ai-bl {
+    width: clamp(21.25rem, 52.7vw, 26.35rem);
+    --about-wrap-height: calc(clamp(21.25rem, 52.7vw, 26.35rem) * 454 / 516);
+  }
+  .peridot-about-wrap-guide.peridot-about-page-corner--source-br {
+    width: clamp(20.4rem, 51vw, 25.5rem);
+    --about-wrap-height: calc(clamp(20.4rem, 51vw, 25.5rem) * 457 / 505);
+  }
+  .peridot-about-wrap-guide.peridot-about-page-corner--feedback-br {
+    width: clamp(20.4rem, 51vw, 25.5rem);
+    --about-wrap-height: calc(clamp(20.4rem, 51vw, 25.5rem) * 459 / 446);
+  }
+}
+
+
+/* v8 — structured-page exclusions and divider protection.
+ * The visible image layer is unchanged. About Peridot and Feedback reserve the
+ * upper-left part of the manuscript page using responsive, page-specific
+ * offsets rather than clearing a full-height invisible float. That keeps grids
+ * and form controls rectangular while leaving the illustrated reveal visible.
+ * Creator alone keeps its alpha-shaped float for running biography prose.
+ */
+
+/* The top-left page illustrations extend roughly 37.4rem into the stage at
+ * desktop scale. Use a slightly larger inset for comfortable reading clearance.
+ * The reserved region is restricted to the opening material; lower sections
+ * reclaim the ordinary reading width once they are below the illustrated edge. */
+.peridot-about-content--overview .peridot-about-page-heading,
+.peridot-about-content--feedback .peridot-about-page-heading {
+  margin-left: clamp(29rem, 37.8vw, 39rem);
+  min-height: 0;
+}
+
+/* Under the descending tear, the illustration occupies progressively less
+ * horizontal space. The first structured row can therefore begin beside it
+ * without waiting for the entire image's vertical bounding rectangle. */
+.peridot-about-content--overview .peridot-about-overview-grid {
+  margin-left: clamp(17rem, 25vw, 26rem);
+  clear: none;
+}
+
+.peridot-about-content--overview .peridot-about-principles,
+.peridot-about-content--overview .peridot-about-prose-section:last-child {
+  clear: none;
+}
+
+/* Avoid the full-width headings/rules cutting through the illustrated page.
+ * The opening rule begins at the same safe boundary as the headline. */
+.peridot-about-content--overview .peridot-about-page-heading,
+.peridot-about-content--feedback .peridot-about-page-heading {
+  border-bottom: 0;
+  position: relative;
+}
+.peridot-about-content--overview .peridot-about-page-heading::after,
+.peridot-about-content--feedback .peridot-about-page-heading::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-bottom: 1px solid #c6b59a;
+}
+
+/* Purpose and Audience use top rules only inside the space occupied by their
+ * own columns. The ornamental paper never receives a crossing rule. */
+.peridot-about-content--overview .peridot-about-overview-grid .peridot-about-prose-section {
+  border-top: 1px solid #c6b59a;
+}
+
+/* Feedback's full two-column form begins beside the broad upper-left reveal,
+ * not below its entire height. Keep it as one coherent group. */
+.peridot-about-content--feedback .peridot-feedback-inline {
+  clear: none;
+  margin-left: clamp(13rem, 19vw, 19rem);
+}
+
+/* The other structured destinations retain their grids and do not acquire
+ * the float created for the Creator biography. */
+.peridot-about-content--ai .peridot-about-disclosure-grid,
+.peridot-about-content--source .peridot-about-source-list {
+  clear: none;
+}
+
+/* Protect form actions from the lower-right reveal at desktop sizes. */
+@media (min-width: 901px) {
+  .peridot-about-content--feedback .peridot-feedback-actions {
+    padding-right: clamp(13rem, 23vw, 23rem);
+  }
+}
+
+@media (max-width: 1200px) {
+  .peridot-about-content--overview .peridot-about-overview-grid {
+    margin-left: clamp(11rem, 20vw, 17rem);
+  }
+  .peridot-about-content--feedback .peridot-feedback-inline {
+    margin-left: clamp(9rem, 15vw, 13rem);
+  }
+}
+
+/* On narrower windows, stack the structured sections after the introductory
+ * illustration rather than letting grids collapse into unusably thin strips.
+ * The illustration itself is never rescaled or moved by these rules. */
+@media (max-width: 900px) {
+  .peridot-about-content--overview .peridot-about-page-heading,
+  .peridot-about-content--feedback .peridot-about-page-heading {
+    margin-left: min(58vw, 29rem);
+  }
+  .peridot-about-content--overview .peridot-about-overview-grid,
+  .peridot-about-content--feedback .peridot-feedback-inline {
+    margin-left: 0;
+    padding-top: clamp(11rem, 28vw, 18rem);
+  }
+  .peridot-about-content--overview .peridot-about-principles {
+    margin-left: 0;
+  }
+  .peridot-about-content--feedback .peridot-feedback-inline {
+    padding-bottom: clamp(9rem, 25vw, 16rem);
+  }
+}
+
+@media (max-width: 600px) {
+  .peridot-about-content--overview .peridot-about-page-heading,
+  .peridot-about-content--feedback .peridot-about-page-heading {
+    margin-left: min(54vw, 18rem);
+  }
+  .peridot-about-content--overview .peridot-about-page-heading h1,
+  .peridot-about-content--feedback .peridot-about-page-heading h1 {
+    font-size: clamp(1.35rem, 4.4vw, 1.8rem);
+  }
+}
+
+/* Divider endpoints respect the manuscript reveals. The Creator heading rule
+ * ends before the upper-right alchemical leaf, and the overview principles
+ * rule begins beyond the narrow tail of the upper-left illumination. */
+.peridot-about-content--creator .peridot-about-page-heading {
+  border-bottom: 0;
+  position: relative;
+}
+.peridot-about-content--creator .peridot-about-page-heading::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: clamp(17rem, 27vw, 28rem);
+  bottom: 0;
+  border-bottom: 1px solid #c6b59a;
+}
+.peridot-about-content--overview .peridot-about-principles {
+  border-top: 0;
+  position: relative;
+}
+.peridot-about-content--overview .peridot-about-principles::before {
+  content: '';
+  position: absolute;
+  left: clamp(5rem, 9vw, 9rem);
+  right: 0;
+  top: 0;
+  border-top: 1px solid #c6b59a;
+}
+
+/* v9 — editorial typesetting refinement (About Peridot + Feedback only).
+ * Keep the approved illustrated corners, the v8 safe heading treatment, and
+ * the stable interactive grids. The first content lines progressively reclaim
+ * horizontal space where the paper tear has already receded. */
+@media (min-width: 1201px) {
+  /* The Purpose column begins lower along the diagonal than the introduction,
+   * so it can use more of the available left margin. */
+  .peridot-about-content--overview .peridot-about-overview-grid {
+    margin-left: clamp(15.5rem, 20.5vw, 21rem);
+    gap: clamp(1.3rem, 2.4vw, 2.5rem);
+  }
+  /* Subsections need not form a rigid newspaper table: a small vertical
+   * stagger makes the second column read as independent editorial matter. */
+  .peridot-about-content--overview .peridot-about-overview-grid > .peridot-about-prose-section:nth-child(2) {
+    margin-top: 1.2rem;
+  }
+  /* Only the first form fieldset intersects the broad upper portion of the
+   * torn page. Shift its contents; leave other fields and column sizes alone. */
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > fieldset:first-child {
+    padding-left: clamp(5rem, 7.5vw, 8rem);
+  }
+}
+
+/* The paper tail on About Peridot descends beside the principles heading.
+ * A small inset protects the heading without moving the full three-column grid. */
+.peridot-about-content--overview .peridot-about-principles > h2 {
+  margin-left: clamp(1.2rem, 2.8vw, 2.8rem);
+}
+
+/* Rules near the upper-left manuscript corner start only in unobstructed
+ * paper. Do not draw horizontal borders underneath the illustrated layer. */
+.peridot-about-content--overview .peridot-about-overview-grid > .peridot-about-prose-section {
+  border-top-color: #c6b59a;
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .peridot-about-content--overview .peridot-about-overview-grid > .peridot-about-prose-section:nth-child(2) {
+    margin-top: .65rem;
+  }
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > fieldset:first-child {
+    padding-left: clamp(2.5rem, 6vw, 5rem);
+  }
+}
+
+/* At narrow widths, keep the accepted v8 single-column/scrolling behavior;
+ * do not squeeze choice controls to imitate desktop-shaped typography. */
+@media (max-width: 900px) {
+  .peridot-about-content--overview .peridot-about-overview-grid > .peridot-about-prose-section:nth-child(2) {
+    margin-top: 0;
+  }
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > fieldset:first-child {
+    padding-left: 0;
+  }
+}
+
+
+/* v10 — Purpose editorial flow. The text occupies the available paper beside
+ * the diagonal manuscript tear, instead of using a constant left offset.
+ * Artwork dimensions, anchors, and the other About destinations are unchanged.
+ */
+@media (min-width: 901px) {
+  .peridot-about-content--overview .peridot-about-overview-grid {
+    margin-left: 0;
+    grid-template-columns: minmax(0, 1.9fr) minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .peridot-about-content--overview .peridot-about-overview-grid > .peridot-about-prose-section:first-child {
+    border-top: 0; /* no line across the illuminated tear */
+    display: flow-root;
+  }
+
+  .peridot-about-content--overview .peridot-about-purpose-tear-flow {
+    float: left;
+    display: block;
+    width: clamp(16rem, 18.5vw, 20rem);
+    height: clamp(10rem, 14vw, 14rem);
+    shape-outside: polygon(0 0, 100% 0, 90% 14%, 75% 33%, 57% 52%, 37% 72%, 14% 91%, 0 100%);
+    shape-margin: 20px;
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .peridot-about-purpose-tear-flow { display: none; }
+}
+
+
+/* v11 — extend the approved overview manuscript-flow logic to the remaining
+ * About destinations. Keep artwork size/position unchanged; only the nearby
+ * reading structures are reshaped so they respect the corners more naturally.
+ */
+@media (min-width: 901px) {
+  /* Creator: allow the opening biography paragraphs to taper around the
+   * upper-right manuscript corner instead of forming a hard rectangle. */
+  .peridot-about-content--creator .peridot-about-creator-copy {
+    display: flow-root;
+  }
+
+  .peridot-about-content--creator .peridot-about-creator-tear-flow {
+    float: right;
+    display: block;
+    width: clamp(13.5rem, 16.5vw, 17.5rem);
+    height: clamp(8rem, 10.5vw, 11.5rem);
+    shape-outside: polygon(100% 0, 18% 0, 40% 17%, 56% 34%, 70% 53%, 84% 73%, 94% 88%, 100% 100%);
+    shape-margin: 18px;
+    margin: 0.15rem 0 0.25rem 1rem;
+    pointer-events: none;
+  }
+
+  /* AI Disclosure: keep the paired statements, but make the layout slightly
+   * less rigid and leave comfortable breathing room above the lower-left reveal. */
+  .peridot-about-content--ai .peridot-about-disclosure-grid {
+    grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+    align-items: start;
+    padding-bottom: clamp(5rem, 9vw, 7.5rem);
+  }
+
+  .peridot-about-content--ai .peridot-about-disclosure-grid > :first-child {
+    margin-top: 0.65rem;
+  }
+
+  /* Open Source: preserve the two-column link field, but let the lower-right
+   * corner stay visually open by keeping the last card in the left column and
+   * giving the list bottom clearance. */
+  .peridot-about-content--source .peridot-about-source-list {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.98fr);
+    padding-bottom: clamp(6rem, 11vw, 8.5rem);
+  }
+
+  .peridot-about-content--source .peridot-about-source-link:last-child {
+    grid-column: 1;
+    max-width: min(100%, 35rem);
+  }
+
+  /* Feedback: the upper-left reveal is already respected. Also shape the
+   * lower-right field/note zone so the explanatory text and controls sit above
+   * the corner rather than reading through it. */
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(2) {
+    padding-right: clamp(4.5rem, 9vw, 8rem);
+  }
+
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note {
+    max-width: min(100%, 42rem);
+    padding-right: clamp(7rem, 14vw, 12rem);
+  }
+
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+    justify-content: flex-end;
+    padding-right: clamp(5rem, 10vw, 8rem);
+  }
+}
+
+@media (max-width: 900px) {
+  .peridot-about-content--creator .peridot-about-creator-tear-flow {
+    display: none;
+  }
+
+  .peridot-about-content--ai .peridot-about-disclosure-grid {
+    padding-bottom: clamp(6rem, 18vw, 9rem);
+  }
+
+  .peridot-about-content--source .peridot-about-source-list {
+    padding-bottom: clamp(6rem, 18vw, 9rem);
+  }
+}
+
+
+/* v12 — corner-flow correction: keep the single alpha-shaped upper-right guide
+ * on Creator (the extra v11 float doubled the exclusion width), and shape the
+ * Feedback privacy note around the lower-right manuscript tear. Art is fixed. */
+@media (min-width: 901px) {
+  .peridot-about-content--creator .peridot-about-wrap-guide.peridot-about-page-corner--creator-tr {
+    shape-margin: 14px;
+  }
+
+  /* The confirmation note must wrap before the rising edge of the lower-right
+   * reveal. The transparent floated silhouette grows toward the left farther
+   * down the line box; its margin provides a comfortable paper-to-text gutter.
+   * Unlike a blanket right padding, this does not reserve a rectangle. */
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note {
+    max-width: none;
+    padding-right: 0;
+    display: flow-root;
+  }
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note::before {
+    content: '';
+    display: block;
+    float: right;
+    width: clamp(7rem, 12vw, 12rem);
+    height: clamp(3.8rem, 5.6vw, 5.2rem);
+    shape-outside: polygon(100% 0, 75% 0, 61% 24%, 42% 53%, 15% 100%, 100% 100%);
+    shape-margin: 20px;
+    pointer-events: none;
+  }
+}
+
+
+/* v13 — Creator only: replace the oversized page-level image exclusion with
+ * an inline taper next to the opening biography. The image layer, portrait,
+ * page headings, and all other About destinations remain unchanged. */
+.peridot-about-content--creator .peridot-about-creator-tear-flow {
+  display: none;
+}
+@media (min-width: 901px) {
+  .peridot-about-content--creator .peridot-about-creator-tear-flow {
+    display: block;
+    float: right;
+    width: clamp(15rem, 23vw, 24rem);
+    height: clamp(10rem, 15vw, 15rem);
+    margin: 0 0 .35rem 0;
+    shape-outside: polygon(0 0, 100% 0, 100% 100%, 86% 85%, 67% 61%, 44% 38%, 20% 15%);
+    shape-margin: 18px;
+    pointer-events: none;
+  }
+}
+
+
+/* v14 — Creator manuscript flow repair: v13 contained CSS for this element
+ * but no corresponding JSX. Its right-floating polygon now participates in
+ * the same formatting context as the portrait and biography paragraphs.
+ * Preserve the artwork itself, which remains absolutely anchored to the stage.
+ */
+@media (min-width: 901px) {
+  .peridot-about-content--creator .peridot-about-creator-tear-flow {
+    display: block;
+    float: right;
+    width: clamp(22rem, 37.4vw, 37.4rem);
+    height: clamp(14rem, 22vw, 22rem);
+    margin: 0 -0.6rem 0.3rem 0;
+    shape-outside: polygon(
+      20% 0%, 100% 0%, 100% 100%,
+      96% 91%, 87% 78%, 76% 64%,
+      62% 49%, 46% 29%, 31% 13%
+    );
+    shape-margin: 18px;
+    pointer-events: none;
+  }
+}
+@media (max-width: 900px) {
+  .peridot-about-content--creator .peridot-about-creator-tear-flow {
+    display: none;
+  }
+}
+
+/* Peridot Feedback — prominent left-aligned submission action (v16).
+   Additive, scoped override: does not change the About corners or form fields. */
+.is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+  grid-column: 2 / 3 !important;
+  justify-content: flex-start !important;
+  justify-self: stretch;
+  padding-right: 0 !important;
+  margin-left: 0;
+  width: 100%;
+}
+
+.is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions .peridot-button-primary {
+  min-width: 15.5rem;
+  min-height: 3.65rem;
+  padding: 0.95rem 2.1rem;
+  font-size: 1.12rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(35, 49, 31, 0.17);
+}
+
+@media (max-width: 900px) {
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+    grid-column: 1 / -1 !important;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions .peridot-button-primary {
+    width: min(100%, 22rem);
+  }
+}
+
+
+/* Peridot — Feedback laptop flow v17.
+   Append AFTER v16. Scoped to the inline Feedback page at laptop widths;
+   preserve custom corner image dimensions and positions. */
+@media (min-width: 901px) and (max-width: 1600px) {
+  /* The upper-left tear narrows quickly below the heading. Give that
+     available paper back to the form without moving the illustration. */
+  .peridot-about-content--feedback .peridot-feedback-inline {
+    margin-left: clamp(9rem, 13vw, 13rem);
+  }
+
+  .is-feedback-editorial .peridot-feedback-form.is-inline {
+    grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+    column-gap: clamp(1.25rem, 2vw, 2rem);
+  }
+
+  /* Keep fields broad and functional, but within the safe paper before
+     the lower-right tear. No fixed width is imposed on the first textarea. */
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(2) {
+    padding-right: clamp(3rem, 6vw, 6rem);
+    min-width: 0;
+  }
+
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note {
+    padding-right: clamp(3.5rem, 7vw, 7rem);
+    max-width: 100%;
+    min-width: 0;
+    align-self: start;
+    overflow-wrap: break-word;
+  }
+
+  /* Preserve the approved prominent button at the LEFT of the right column.
+     Avoid additional horizontal padding that would force it onto the artwork. */
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+    grid-column: 2 / 3 !important;
+    justify-content: flex-start !important;
+    padding-right: 0 !important;
+    min-width: 0;
+  }
+}
+
+/* When the window is genuinely narrow, return to a full-width vertical form
+   rather than forcing a narrow two-column newspaper layout. */
+@media (max-width: 900px) {
+  .peridot-about-content--feedback .peridot-feedback-inline {
+    margin-left: 0;
+  }
+  .is-feedback-editorial .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+    grid-column: 1 / -1 !important;
+    justify-content: flex-start !important;
+  }
+}
+
+
+/* Peridot Creator headshot — botanical four-corner frame v18.
+ * Additive only: does not alter page corners, manuscript flow, portrait width,
+ * CV action, or the feedback workspace. Uses four transparent PNGs as-is.
+ */
+.peridot-about-content--creator .peridot-about-creator-portrait {
+  position: relative;
+  isolation: isolate;
+  /* Retain the original photo cropping and existing float dimensions. */
+  overflow: hidden;
+}
+
+.peridot-about-content--creator .peridot-about-creator-portrait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-image:
+    url('/assets/corner_simple_leaves_TL.png'),
+    url('/assets/corner_simple_leaves_TR.png'),
+    url('/assets/corner_simple_leaves_BL.png'),
+    url('/assets/corner_simple_leaves_BR.png');
+  background-repeat: no-repeat;
+  background-position: left top, right top, left bottom, right bottom;
+  background-size: 52% auto, 52% auto, 52% auto, 52% auto;
+}
+
+
+/* Creator botanical portrait frame v19 — outer-edge positioning only.
+ * Append after v18; preserves the photo size, float, and all About layouts.
+ */
+.peridot-about-content--creator .peridot-about-creator-portrait {
+  overflow: visible; /* previously hidden: allow ornaments beyond photograph */
+}
+
+.peridot-about-content--creator .peridot-about-creator-portrait > img {
+  border-radius: 0.65rem; /* keep existing photo corners clipped */
+}
+
+.peridot-about-content--creator .peridot-about-creator-portrait::after {
+  /* Shift the four decorative border lines outside the photograph. */
+  inset: -17px;
+  background-size: 48% auto, 48% auto, 48% auto, 48% auto;
+}
+
+
+/* Creator botanical portrait frame v20 — outward offset refinement.
+ * Append after v18 and v19; does not alter photo or surrounding layout.
+ */
+.peridot-about-content--creator .peridot-about-creator-portrait::after {
+  inset: -25px; /* 8px farther outside than v19's -17px */
+  background-size: 47% auto, 47% auto, 47% auto, 47% auto;
+}
+
+
+/* Creator red ornamental portrait corners v21 — asset swap only.
+ * Append after the v18–v20 frame rules to preserve approved geometry.
+ */
+.peridot-about-content--creator .peridot-about-creator-portrait::after {
+  background-image:
+    url('/assets/corner_simple_red_TL.png'),
+    url('/assets/corner_simple_red_TR.png'),
+    url('/assets/corner_simple_red_BL.png'),
+    url('/assets/corner_simple_red_BR.png');
+}
+
+
+/* Creator red ornamental frame v22 — add comfortable prose clearance.
+ * The visible ornament projects 25px beyond the photo, while the float's
+ * original right margin is only 1.2rem. Increase the float margin by 20px
+ * so the text does not meet the ornamental right border. No art changes. */
+@media (min-width: 901px) {
+  .peridot-about-content--creator .peridot-about-creator-portrait {
+    margin-right: calc(1.2rem + 20px);
+  }
+}
+

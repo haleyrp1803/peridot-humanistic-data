@@ -13,6 +13,13 @@ import priceHeadshot from '../assets/img_2026_price_headshot.jpg';
 import priceCvUrl from '../assets/Price_CV.pdf?url';
 import { PeridotFeedbackForm } from './PeridotFeedbackForm';
 
+import cornerBlockLetterTl from '../assets/corner_block_letter_TL.png';
+import cornerAlchemyTr from '../assets/corner_alchemy_TR.png';
+import cornerCelestialBl from '../assets/corner_celestial_BL.png';
+import cornerPomegranateBr from '../assets/corner_pomegranate_BR.png';
+import cornerAlchemyBr from '../assets/corner_alchemy_BR.png';
+import cornerAlchemyTl from '../assets/corner_alchemy_TL.png';
+
 const BROWN_PROFILE_URL = 'https://history.brown.edu/people/haley-price';
 const JAPANLAB_PROFILE_URL = 'https://www.utjapanlab.com/team';
 const PAZZI_CONSPIRACY_URL = 'https://haleyrp1803.itch.io/the-pazzi-conspiracy';
@@ -30,6 +37,50 @@ const ABOUT_MODES = [
   { id: 'source', label: 'Open Source' },
   { id: 'feedback', label: 'Feedback' },
 ];
+
+
+const ABOUT_PAGE_CORNERS = {
+  overview: [
+    {
+      src: cornerBlockLetterTl,
+      positionClassName: 'peridot-about-page-corner--top-left',
+      sizeClassName: 'peridot-about-page-corner--overview-tl',
+    },
+  ],
+  creator: [
+    {
+      src: cornerAlchemyTr,
+      positionClassName: 'peridot-about-page-corner--top-right',
+      sizeClassName: 'peridot-about-page-corner--creator-tr',
+    },
+  ],
+  ai: [
+    {
+      src: cornerCelestialBl,
+      positionClassName: 'peridot-about-page-corner--bottom-left',
+      sizeClassName: 'peridot-about-page-corner--ai-bl',
+    },
+  ],
+  source: [
+    {
+      src: cornerPomegranateBr,
+      positionClassName: 'peridot-about-page-corner--bottom-right',
+      sizeClassName: 'peridot-about-page-corner--source-br',
+    },
+  ],
+  feedback: [
+    {
+      src: cornerAlchemyTl,
+      positionClassName: 'peridot-about-page-corner--top-left',
+      sizeClassName: 'peridot-about-page-corner--feedback-tl',
+    },
+    {
+      src: cornerAlchemyBr,
+      positionClassName: 'peridot-about-page-corner--bottom-right',
+      sizeClassName: 'peridot-about-page-corner--feedback-br',
+    },
+  ],
+};
 
 const githubDestinations = [
   {
@@ -92,6 +143,9 @@ function AboutOverview() {
 
       <div className="peridot-about-overview-grid">
       <section className="peridot-about-prose-section" aria-labelledby="peridot-about-purpose-heading">
+        {/* A tapered, nonvisual float guides the Purpose lines around the
+            illuminated torn edge without displacing the entire grid. */}
+        <span className="peridot-about-purpose-tear-flow" aria-hidden="true" />
         <h2 id="peridot-about-purpose-heading">Purpose</h2>
         <p>
           Peridot derives only the structures that a researcher&apos;s mapped data can safely support, then provides linked ways to visualize, search, inspect, and export that evidence. Its mature first use case grew from correspondence research, but its public import system now uses one generalized mapping model for ordinary CSV, TSV, XLSX, and XLS data.
@@ -153,6 +207,8 @@ function AboutCreator() {
             <img src={priceHeadshot} alt="Haley Price" />
           </figure>
 
+          {/* Flow text along the diagonal of the upper-right manuscript reveal. */}
+          <span className="peridot-about-creator-tear-flow" aria-hidden="true" />
           <h2 id="peridot-about-creator-bio-heading">Creator and maintainer</h2>
           <p>
             Haley Price created Peridot as an open-source, open-access digital scholarship tool with the help of ChatGPT. Aware of the fraught ethics of the current AI landscape, Price advocates for humanists to be well-informed about AI. Rather than avoid it altogether, Price sees the need for scholars to engage with it as responsibly and ethically as possible so that humanists have a voice in shaping AI&apos;s impact on the production and maintenance of humanistic knowledge and in humanities pedagogy.
@@ -256,6 +312,34 @@ function AboutFeedback() {
   );
 }
 
+
+// Only top-corner pages receive a shaped prose guide. Bottom-corner pages use
+// normal structured layouts; floats must not shift entire card/form grids.
+// The visible corner artwork is anchored to the full-width stage. Creator's
+// biography uses a shorter local shaped float rather than a full-size global
+// image guide, so text can reclaim width as the upper-right tear recedes.
+function AboutCornerWrapGuides() {
+  return null;
+}
+
+function AboutPageCorners({ mode }) {
+  const corners = ABOUT_PAGE_CORNERS[mode] ?? [];
+  if (!corners.length) return null;
+
+  return (
+    <div className="peridot-about-page-corners" aria-hidden="true">
+      {corners.map((corner) => (
+        <div
+          key={`${mode}-${corner.positionClassName}-${corner.sizeClassName}`}
+          className={`peridot-about-page-corner ${corner.positionClassName} ${corner.sizeClassName}`}
+        >
+          <img src={corner.src} alt="" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function PeridotLearnMoreWorkspace() {
   const [activeMode, setActiveMode] = useState('overview');
   const contentRef = useRef(null);
@@ -282,13 +366,21 @@ export function PeridotLearnMoreWorkspace() {
         ))}
       </nav>
 
-      <main className="peridot-about-content" ref={contentRef}>
-        {activeMode === 'overview' ? <AboutOverview /> : null}
-        {activeMode === 'creator' ? <AboutCreator /> : null}
-        {activeMode === 'ai' ? <AboutAI /> : null}
-        {activeMode === 'source' ? <AboutOpenSource /> : null}
-        {activeMode === 'feedback' ? <AboutFeedback /> : null}
-      </main>
+      {/* The illustrated corners belong to the full-width page beneath the
+          About navigation, not to the narrower, centered reading column. */}
+      <div className="peridot-about-page-stage">
+        <AboutPageCorners mode={activeMode} />
+        <main className={`peridot-about-content peridot-about-content--${activeMode}`} ref={contentRef}>
+          <div className="peridot-about-content-body">
+            <AboutCornerWrapGuides mode={activeMode} />
+            {activeMode === 'overview' ? <AboutOverview /> : null}
+            {activeMode === 'creator' ? <AboutCreator /> : null}
+            {activeMode === 'ai' ? <AboutAI /> : null}
+            {activeMode === 'source' ? <AboutOpenSource /> : null}
+            {activeMode === 'feedback' ? <AboutFeedback /> : null}
+          </div>
+        </main>
+      </div>
     </section>
   );
 }
