@@ -811,6 +811,65 @@ function curvedPath(a, b, bend = 0.16) {
   return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
 }
 
+// Clip quadratic relationship geometry before creating SVG paths. Projecting
+// enormous offscreen curves into an SVG transform creates costly paint bounds
+// at city-level zoom. Recursive subdivision retains the visible curve and
+// rejects branches whose entire control hull is outside the viewport.
+function clippedResearchCurvePath(curve, copyOffset, view, bounds, coarse = false) {
+  if (!curve) return null;
+  const scale = view.scale;
+  const tx = view.tx + copyOffset * scale;
+  const ty = view.ty;
+  const points = [
+    [curve.ax * scale + tx, curve.ay * scale + ty],
+    [curve.cx * scale + tx, curve.cy * scale + ty],
+    [curve.bx * scale + tx, curve.by * scale + ty],
+  ];
+  if (points.flat().some((value) => !Number.isFinite(value))) return null;
+  const { left, right, top, bottom } = bounds;
+  const inside = (p) => p[0] >= left && p[0] <= right && p[1] >= top && p[1] <= bottom;
+  const commands = [];
+  let end = null;
+  let leafCount = 0;
+  // Liang-Barsky segment clipping keeps all emitted coordinates near the viewport.
+  const append = (a, b) => {
+    const dx = b[0] - a[0];
+    const dy = b[1] - a[1];
+    let u0 = 0; let u1 = 1;
+    for (const [p, q] of [[-dx, a[0] - left], [dx, right - a[0]], [-dy, a[1] - top], [dy, bottom - a[1]]]) {
+      if (Math.abs(p) < 1e-12) { if (q < 0) return; continue; }
+      const r = q / p;
+      if (p < 0) u0 = Math.max(u0, r);
+      else u1 = Math.min(u1, r);
+      if (u0 > u1) return;
+    }
+    const x0 = a[0] + u0 * dx; const y0 = a[1] + u0 * dy;
+    const x1 = a[0] + u1 * dx; const y1 = a[1] + u1 * dy;
+    if (!end || Math.abs(end[0] - x0) + Math.abs(end[1] - y0) > 0.05) commands.push(`M${x0.toFixed(2)},${y0.toFixed(2)}`);
+    commands.push(`L${x1.toFixed(2)},${y1.toFixed(2)}`);
+    end = [x1, y1];
+  };
+  const walk = (a, c, b, depth) => {
+    if (leafCount > 1200) return;
+    const minX = Math.min(a[0], c[0], b[0]); const maxX = Math.max(a[0], c[0], b[0]);
+    const minY = Math.min(a[1], c[1], b[1]); const maxY = Math.max(a[1], c[1], b[1]);
+    if (maxX < left || minX > right || maxY < top || minY > bottom) return;
+    const deviation = Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])) / Math.max(1, Math.hypot(b[0] - a[0], b[1] - a[1]));
+    if (depth >= 26 || (deviation <= (coarse ? 5 : 0.7) && Math.max(maxX - minX, maxY - minY) <= (coarse ? 70 : 40))) {
+      leafCount += 1;
+      append(a, b);
+      return;
+    }
+    const ac = [(a[0] + c[0]) / 2, (a[1] + c[1]) / 2];
+    const cb = [(c[0] + b[0]) / 2, (c[1] + b[1]) / 2];
+    const mid = [(ac[0] + cb[0]) / 2, (ac[1] + cb[1]) / 2];
+    walk(a, ac, mid, depth + 1);
+    walk(mid, cb, b, depth + 1);
+  };
+  walk(points[0], points[1], points[2], 0);
+  return commands.length ? { path: commands.join(' '), endpointVisible: inside(points[2]) } : null;
+}
+
 function createAdaptiveNodeRadiusScale(values, minRadius, maxRadius, contrastPower = 1.35) {
   const sortedValues = values
     .map((value) => Number(value) || 0)
@@ -2346,6 +2405,48 @@ function SvgMap({
   initialFocusStrategy = 'fit-all',
   projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH,
 }) {
+  // Temporary diagnostics only: collect samples in refs so instrumentation
+  // does not trigger React renders on pointer movement or tile requests.
+  const perfMetricsRef = useRef({ frames: [], clusterMs: 0, clusterCount: 0, nodeMs: 0, nodeCount: 0, tileHits: 0, tileMisses: 0, tileErrors: 0, tileSelectionMs: 0, tileSelectionCount: 0 });
+  const [perfSnapshot, setPerfSnapshot] = useState(null);
+  useEffect(() => {
+    if (projectionMode !== PERIDOT_PROJECTION_WEB_MERCATOR) return undefined;
+    let active = true;
+    let frameId = null;
+    let prior = null;
+    const sampleFrame = (time) => {
+      if (!active) return;
+      if (prior !== null) {
+        const delta = time - prior;
+        if (delta > 0 && delta < 1000) {
+          const frames = perfMetricsRef.current.frames;
+          frames.push(delta);
+          if (frames.length > 120) frames.shift();
+        }
+      }
+      prior = time;
+      frameId = window.requestAnimationFrame(sampleFrame);
+    };
+    frameId = window.requestAnimationFrame(sampleFrame);
+    const timerId = window.setInterval(() => {
+      if (!active || document.hidden) return;
+      const stats = perfMetricsRef.current;
+      const frames = [...stats.frames].sort((a, b) => a - b);
+      const percentile = frames.length ? frames[Math.min(frames.length - 1, Math.floor(frames.length * .95))] : null;
+      setPerfSnapshot({
+        frameP95: percentile,
+        slowFrames: frames.filter((duration) => duration > 33.3).length,
+        frameSamples: frames.length,
+        clusterMs: stats.clusterCount ? stats.clusterMs / stats.clusterCount : null,
+        nodeMs: stats.nodeCount ? stats.nodeMs / stats.nodeCount : null,
+        tileSelectionMs: stats.tileSelectionCount ? stats.tileSelectionMs / stats.tileSelectionCount : null,
+        tileHits: stats.tileHits,
+        tileMisses: stats.tileMisses,
+        tileErrors: stats.tileErrors,
+      });
+    }, 1000);
+    return () => { active = false; window.cancelAnimationFrame(frameId); window.clearInterval(timerId); };
+  }, [projectionMode]);
   const svgRef = useRef(null);
   const transientViewportRef = useRef(null);
   const transientPanDeltaRef = useRef({ x: 0, y: 0 });
@@ -2362,6 +2463,15 @@ function SvgMap({
   const [dragState, setDragState] = useState(null);
   const [basemapError, setBasemapError] = useState('');
   const [cartoStyle, setCartoStyle] = useState('rastertiles/voyager');
+  // Diagnostic isolation only. Retain the loaded dataset in every mode.
+  // Inactive rendering calculations are skipped, not merely made transparent.
+  const [performanceIsolation, setPerformanceIsolation] = useState('all');
+  const renderCartoForDiagnostic = performanceIsolation !== 'research';
+  const renderResearchForDiagnostic = performanceIsolation !== 'carto';
+  const renderResearchNodesForDiagnostic = renderResearchForDiagnostic && performanceIsolation !== 'edges';
+  const renderResearchEdgesForDiagnostic = renderResearchForDiagnostic && performanceIsolation !== 'nodes';
+  const renderResearchLabelsForDiagnostic = renderResearchForDiagnostic && !['nodes', 'edges', 'nodes-edges'].includes(performanceIsolation);
+  const renderResearchSymbolsForDiagnostic = renderResearchNodesForDiagnostic && performanceIsolation !== 'edges';
   // Until a key is configured, request watermarked preview tiles ONLY when a
   // developer intentionally opts in. The default remains an offline-capable
   // SVG background and never sends automatic third-party map requests.
@@ -2419,12 +2529,16 @@ function SvgMap({
   const tileRequestZoom = showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
     ? mercatorTileZoom(width, height, tileRequestView.scale)
     : null;
-  const detailTiles = useMemo(
-    () => showDetailTiles && showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
+  const detailTiles = useMemo(() => {
+    const began = performance.now();
+    const result = renderCartoForDiagnostic && showDetailTiles && showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
       ? calculateVisibleMercatorTiles(width, height, tileRequestView, tileRequestZoom)
-      : [],
-    [showDetailTiles, showGeographicBackdrop, projectionMode, width, height, tileRequestView, tileRequestZoom]
-  );
+      : [];
+    const stats = perfMetricsRef.current;
+    stats.tileSelectionMs += performance.now() - began;
+    stats.tileSelectionCount += 1;
+    return result;
+  }, [renderCartoForDiagnostic, showDetailTiles, showGeographicBackdrop, projectionMode, width, height, tileRequestView, tileRequestZoom]);
   // Retain the last complete CARTO layer as a fallback. Newly loaded tiles
   // appear above it in visible-first batches; incomplete downloads never
   // remove previously available geography.
@@ -2437,7 +2551,7 @@ function SvgMap({
   const [cartoTileDiagnostics, setCartoTileDiagnostics] = useState({ status: 'idle', attemptedZ: null, requested: 0, failed: 0 });
   const cartoDiagnosticSequenceRef = useRef(0);
   useEffect(() => {
-    if (!showDetailTiles || !showGeographicBackdrop || projectionMode !== PERIDOT_PROJECTION_WEB_MERCATOR) {
+    if (!renderCartoForDiagnostic || !showDetailTiles || !showGeographicBackdrop || projectionMode !== PERIDOT_PROJECTION_WEB_MERCATOR) {
       setReadyCartoLayer(null);
       setProgressiveCartoLayer(null);
       setCartoTileDiagnostics({ status: 'disabled', attemptedZ: null, requested: 0, failed: 0 });
@@ -2448,16 +2562,18 @@ function SvgMap({
     const cache = cartoImageCacheRef.current;
     const loadTile = (url) => {
       if (cache.has(url)) {
+        perfMetricsRef.current.tileHits += 1;
         const entry = cache.get(url);
         // Refresh insertion order for bounded LRU-style eviction.
         cache.delete(url);
         cache.set(url, entry);
         return entry;
       }
+      perfMetricsRef.current.tileMisses += 1;
       const promise = new Promise((resolve) => {
         const img = new window.Image();
         img.onload = () => resolve(true);
-        img.onerror = () => resolve(false);
+        img.onerror = () => { perfMetricsRef.current.tileErrors += 1; resolve(false); };
         img.src = url;
       });
       cache.set(url, promise);
@@ -2740,13 +2856,18 @@ function SvgMap({
   const labelFontSize = Math.max(0, tuning.labelFontSize);
   const labelOffset = Math.max(0, tuning.labelOffset);
 
-  const clusteredNodes = useMemo(
-    () => buildClusteredNodes(nodes, clusterThresholdPx, clusterSingularLabel, clusterPluralLabel),
-    [nodes, clusterThresholdPx, clusterPluralLabel, clusterSingularLabel]
-  );
+  const clusteredNodes = useMemo(() => {
+    const began = performance.now();
+    const result = renderResearchNodesForDiagnostic ? buildClusteredNodes(nodes, clusterThresholdPx, clusterSingularLabel, clusterPluralLabel) : [];
+    const stats = perfMetricsRef.current;
+    stats.clusterMs += performance.now() - began;
+    stats.clusterCount += 1;
+    return result;
+  }, [renderResearchNodesForDiagnostic, nodes, clusterThresholdPx, clusterPluralLabel, clusterSingularLabel]);
 
   const screenNodes = useMemo(() => {
-    return clusteredNodes.map((node) => {
+    const began = performance.now();
+    const result = clusteredNodes.map((node) => {
       const screenX = view.tx + node.x * view.scale;
       const screenY = view.ty + node.y * view.scale;
       const minRadius = tuning.nodeMinRadius;
@@ -2760,6 +2881,10 @@ function SvgMap({
         clusterTextSize: 8.8,
       };
     });
+    const stats = perfMetricsRef.current;
+    stats.nodeMs += performance.now() - began;
+    stats.nodeCount += 1;
+    return result;
   }, [clusteredNodes, view.tx, view.ty, view.scale, semanticNodeScale, tuning.nodeMinRadius]);
 
   const renderedScreenNodes = useMemo(() => worldCopies.flatMap((copy) => screenNodes.map((node) => ({
@@ -2769,15 +2894,17 @@ function SvgMap({
   }))), [screenNodes, worldCopies, worldWidth, view.scale]);
 
   const labelCandidates = useMemo(() => {
+    if (!renderResearchLabelsForDiagnostic) return [];
     return renderedScreenNodes
       .map((node) => ({
         ...node,
         priority: (node.degree || 0) * 10 + (node.radius || 0),
       }))
       .sort((a, b) => b.priority - a.priority);
-  }, [renderedScreenNodes]);
+  }, [renderResearchLabelsForDiagnostic, renderedScreenNodes]);
 
   const screenEdges = useMemo(() => {
+    if (!renderResearchEdgesForDiagnostic) return [];
     return edges.map((edge) => {
       let path = edge.path;
       if (isWrappedMap && typeof path === 'string') {
@@ -2801,11 +2928,28 @@ function SvgMap({
         curve: parseQuadraticPath(path),
       };
     });
-  }, [edges, semanticEdgeScale, baseEdgeOpacity, tuning.edgeMinWidth, isWrappedMap, worldWidth]);
+  }, [renderResearchEdgesForDiagnostic, edges, semanticEdgeScale, baseEdgeOpacity, tuning.edgeMinWidth, isWrappedMap, worldWidth]);
+
+  // Only intersecting research geometry reaches SVG. Keep research data and
+  // full quadratic curves unchanged for Inspector hit tests and exports.
+  const visibleResearchEdgePaths = useMemo(() => {
+    if (!renderResearchEdgesForDiagnostic) return [];
+    const coarse = Boolean(dragState);
+    const bounds = { left: frame.x - 24, top: frame.y - 24, right: frame.x + frame.w + 24, bottom: frame.y + frame.h + 24 };
+    const copies = Array.from(new Set(worldCopies.flatMap((copy) => isWrappedMap ? [copy - 1, copy, copy + 1] : [copy])));
+    const result = [];
+    for (const edge of screenEdges) {
+      for (const copy of copies) {
+        const clipped = clippedResearchCurvePath(edge.curve, copy * worldWidth, view, bounds, coarse);
+        if (clipped) result.push({ edge, copy, ...clipped });
+      }
+    }
+    return result;
+  }, [renderResearchEdgesForDiagnostic, dragState, screenEdges, worldCopies, isWrappedMap, worldWidth, view, frame.x, frame.y, frame.w, frame.h]);
 
   const visibleLabelIds = useMemo(
-    () => buildVisibleLabelIds(labelCandidates, showLabels, labelDensityThreshold, labelFontSize, labelOffset),
-    [showLabels, labelCandidates, labelDensityThreshold, labelFontSize, labelOffset]
+    () => renderResearchLabelsForDiagnostic ? buildVisibleLabelIds(labelCandidates, showLabels, labelDensityThreshold, labelFontSize, labelOffset) : new Set(),
+    [renderResearchLabelsForDiagnostic, showLabels, labelCandidates, labelDensityThreshold, labelFontSize, labelOffset]
   );
 
   const constrainGeographicView = (candidate) => {
@@ -2877,6 +3021,8 @@ function SvgMap({
 
   const handleWheel = (event) => {
     event.preventDefault();
+    // Do not combine a transient wheel transform with an active pointer pan.
+    if (dragState) return;
     const svg = svgRef.current;
     if (!svg || !transientViewportRef.current) return;
 
@@ -2942,10 +3088,16 @@ function SvgMap({
       wheelCommitTimerRef.current = null;
     }
     if (transientWheelViewRef.current) {
+      // Rapid wheel -> mouse-down can interrupt the 120ms wheel commit. Remove
+      // its imperative group transform immediately; otherwise both the raster
+      // basemap and research overlays may be translated out of the SVG viewport.
       const committedView = transientWheelViewRef.current;
       transientWheelViewRef.current = null;
-      clearTransientPanAfterCommitRef.current = true;
+      if (transientViewportRef.current) transientViewportRef.current.removeAttribute('transform');
+      clearTransientPanAfterCommitRef.current = false;
       setView(committedView);
+      // Wait for React to render the committed zoom before beginning a new pan.
+      // This intentionally discards only the mouse-down that interrupted zoom.
       return;
     }
     if (event.button !== 0) return;
@@ -3135,7 +3287,7 @@ function SvgMap({
   };
 
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[var(--map-canvas-bg)]">
+    <div className="relative h-full w-full overflow-hidden bg-[var(--map-canvas-bg)]" style={{ userSelect: 'none', WebkitUserSelect: 'none' }}>
       <svg
         ref={svgRef}
         viewBox={`0 0 ${width} ${height}`}
@@ -3144,6 +3296,7 @@ function SvgMap({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onDragStart={(event) => event.preventDefault()}
         onClick={(event) => {
           if (dragState) return;
           dispatchSelectionFromPoint(getPointerPosition(event));
@@ -3218,7 +3371,7 @@ function SvgMap({
               Mercator zoom, tiny world-coordinate SVG images under a huge parent
               scale can vanish even after all their image requests succeed.
               Keep the existing geographic transform for research edges below. */}
-          {showGeographicBackdrop && displayedCartoTiles.length > 0 ? (
+          {renderCartoForDiagnostic && showGeographicBackdrop && displayedCartoTiles.length > 0 ? (
             <g pointerEvents="none" aria-label="CARTO geographic basemap">
               {displayedCartoTiles.map((tile) => (
                 <image
@@ -3235,7 +3388,7 @@ function SvgMap({
               ))}
             </g>
           ) : null}
-          {showGeographicBackdrop && progressiveCartoTiles.length > 0 ? (
+          {renderCartoForDiagnostic && showGeographicBackdrop && progressiveCartoTiles.length > 0 ? (
             <g pointerEvents="none" aria-label="Newly loaded CARTO tiles">
               {progressiveCartoTiles.map((tile) => (
                 <image
@@ -3252,9 +3405,9 @@ function SvgMap({
               ))}
             </g>
           ) : null}
-          <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
+          <g>
             <g>
-              {Array.from(new Set(worldCopies.flatMap((copy) => isWrappedMap ? [copy - 1, copy, copy + 1] : [copy]))).flatMap((copy) => screenEdges.map((edge) => ({ edge, copy }))).map(({ edge, copy }) => {
+              {visibleResearchEdgePaths.map(({ edge, copy, path, endpointVisible }) => {
                 const isAnimated = activeAnimationEdgeIds?.has(edge.id);
                 const isSelected = selectedKind === 'edge' && selectedId === edge.id;
                 const edgeStroke = isSelected
@@ -3279,29 +3432,29 @@ function SvgMap({
                 return (
                   <path
                     key={`${edge.id}-world-${copy}`}
-                    d={edge.screenPath}
-                    transform={copy ? `translate(${copy * worldWidth} 0)` : undefined}
+                    d={path}
+                    
                     fill="none"
                     stroke={edgeStroke}
                     strokeOpacity={edgeOpacity}
                     strokeWidth={edgeStrokeWidth}
                     vectorEffect="non-scaling-stroke"
                     strokeLinecap="round"
-                    strokeDasharray={isAnimated ? 'none' : edge.count <= 2 ? '2.5 2' : 'none'}
-                    markerEnd={edge.direction === 'directed' ? 'url(#peridot-directed-edge-arrow)' : undefined}
-                    onMouseEnter={(event) => onEdgeEnter(edge, getPointerPosition(event))}
+                    strokeDasharray={dragState ? 'none' : isAnimated ? 'none' : edge.count <= 2 ? '2.5 2' : 'none'}
+                    markerEnd={!dragState && endpointVisible && edge.direction === 'directed' ? 'url(#peridot-directed-edge-arrow)' : undefined}
+                    onMouseEnter={dragState ? undefined : (event) => onEdgeEnter(edge, getPointerPosition(event))}
                     onClick={(event) => {
                       event.stopPropagation();
                       dispatchSelectionFromPoint(getPointerPosition(event), 'edge', edge);
                     }}
-                    style={{ cursor: 'pointer' }}
+                    style={{ cursor: dragState ? 'grabbing' : 'pointer', pointerEvents: dragState ? 'none' : 'auto' }}
                   />
                 );
               })}
             </g>
           </g>
           <g>
-            {renderedScreenNodes.map((node) => {
+            {(renderResearchSymbolsForDiagnostic ? renderedScreenNodes : []).map((node) => {
               const isAnimated = node.isCluster
                 ? (node.members || []).some((member) => activeAnimationNodeIds?.has(member.id))
                 : activeAnimationNodeIds?.has(node.id);
@@ -3355,7 +3508,7 @@ function SvgMap({
             })}
           </g>
           <g pointerEvents="none">
-            {renderedScreenNodes.map((node) => {
+            {(renderResearchLabelsForDiagnostic ? renderedScreenNodes : []).map((node) => {
               const shouldShowLabel = visibleLabelIds.has(node.id);
               const inFrame = node.screenX >= frame.x && node.screenX <= frame.x + frame.w && node.screenY >= frame.y && node.screenY <= frame.y + frame.h;
               if (!shouldShowLabel || !inFrame) return null;
@@ -3388,6 +3541,25 @@ function SvgMap({
 
       {showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR ? (
         <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-2">
+          <div className="rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-3 py-2 text-xs shadow-sm">
+            <label className="flex items-center gap-2">
+              <span className="font-medium">Performance isolation:</span>
+              <select
+                aria-label="Performance isolation mode"
+                value={performanceIsolation}
+                onChange={(event) => setPerformanceIsolation(event.target.value)}
+                className="rounded border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-1 py-1"
+              >
+                <option value="all">All layers</option>
+                <option value="carto">CARTO only</option>
+                <option value="research">Research only (all research layers)</option>
+                <option value="nodes">Nodes only (no relationships or labels)</option>
+                <option value="edges">Relationships only (no nodes or labels)</option>
+                <option value="nodes-edges">Nodes + relationships (no labels)</option>
+              </select>
+            </label>
+            <div className="mt-1 text-[11px]">Diagnostic isolation: inactive node, edge, label, and tile rendering work is bypassed. Dataset stays loaded.</div>
+          </div>
           <div className="flex flex-col gap-1 rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-3 py-2 text-xs shadow-sm">
           <label className="flex items-center gap-2">
             <span className="font-medium">CARTO basemap (test)</span>
@@ -3426,6 +3598,11 @@ function SvgMap({
               <div><strong>Viewport:</strong> {view.scale.toExponential(2)}× · x={Math.round(view.tx)} · y={Math.round(view.ty)}</div>
               <div><strong>Tile X:</strong> {detailTiles.length ? `${Math.min(...detailTiles.map((tile) => tile.worldX))}…${Math.max(...detailTiles.map((tile) => tile.worldX))}` : 'none'}</div>
               <div><strong>Tile Y:</strong> {detailTiles.length ? `${Math.min(...detailTiles.map((tile) => tile.y))}…${Math.max(...detailTiles.map((tile) => tile.y))}` : 'none'}</div>
+              <div className="mt-1 border-t border-current/20 pt-1"><strong>Performance (diagnostic; 1 s refresh)</strong></div>
+              <div><strong>Frame p95:</strong> {perfSnapshot?.frameP95 != null ? `${perfSnapshot.frameP95.toFixed(1)} ms` : 'sampling'} · <strong>slow frames:</strong> {perfSnapshot?.slowFrames ?? '—'}/{perfSnapshot?.frameSamples ?? '—'} (&gt;33 ms)</div>
+              <div><strong>Tile cache:</strong> {perfSnapshot?.tileHits ?? 0} hits / {perfSnapshot?.tileMisses ?? 0} new · {perfSnapshot?.tileErrors ?? 0} errors (cumulative)</div>
+              <div><strong>Avg computation:</strong> tiles {perfSnapshot?.tileSelectionMs?.toFixed(2) ?? '—'} ms · clusters {perfSnapshot?.clusterMs?.toFixed(2) ?? '—'} ms · nodes {perfSnapshot?.nodeMs?.toFixed(2) ?? '—'} ms</div>
+              <div><strong>Mode:</strong> {performanceIsolation} · <strong>Research:</strong> {nodes.length} input nodes · {clusteredNodes.length} clustered · {edges.length} edges</div>
             </div>
           ) : null}
         </div>
@@ -3436,7 +3613,7 @@ function SvgMap({
           {' · '}© <a href="https://carto.com/attributions/" target="_blank" rel="noopener noreferrer" className="underline">CARTO</a>
         </div>
       ) : null}
-      {showDetailTiles && !detailTilesActive ? (
+      {renderCartoForDiagnostic && showDetailTiles && !detailTilesActive ? (
         <div className="pointer-events-none absolute bottom-32 left-3 rounded bg-[var(--map-warning-bg)] px-2 py-1 text-xs text-[var(--map-warning-text)]">
           CARTO tiles unavailable at this view (tile request limit or map bounds)
         </div>
