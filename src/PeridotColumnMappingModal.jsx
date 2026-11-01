@@ -2245,6 +2245,9 @@ export function PeridotColumnMappingModal({
   const stepKeys = isGenealogyProfile ? GENEALOGY_STEP_KEYS : (isWorkbookMode ? WORKBOOK_STEP_KEYS : SINGLE_TABLE_STEP_KEYS);
 
   const [activeStep, setActiveStep] = useState(stepKeys[0]);
+  // Existing mappings should display their saved assignments immediately. A new
+  // upload may contain automatic suggestions, but those must remain behind Add.
+  const isEditingExistingMapping = Boolean(staging?.editingActiveData || staging?.editingSampleMapping);
   const [revealedMappingSteps, setRevealedMappingSteps] = useState({});
   const revealMappingStep = (key) => setRevealedMappingSteps((current) => ({ ...current, [key]: true }));
   const [coreMapping, setCoreMapping] = useState(mappingState.coreMapping || {});
@@ -3267,7 +3270,7 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'time' ? (
             <TimeMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["time"]) || temporalAssertionsMapping.some(temporalAssertionHasAssignment)}
+              disclosureActive={Boolean(revealedMappingSteps["time"]) || (isEditingExistingMapping && temporalAssertionsMapping.some(temporalAssertionHasAssignment))}
               onDisclosureActivate={() => { if (!temporalAssertionsMapping.length) handleTemporalAssertionsChange((current) => [...(current || []), { id: `time-${Date.now()}`, role: "", kind: "date", sourceMode: "single", column: "", noteColumns: [], subjectSelection: { includeRecord: true, participantIndices: [] } }]); revealMappingStep("time"); }}
               headers={headers}
               rows={rows}
@@ -3279,9 +3282,9 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'places' ? (
             <PlacesMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["places"]) || hasConfiguredSinglePlaceParts(placeParts)}
+              disclosureActive={Boolean(revealedMappingSteps["places"]) || (isEditingExistingMapping && hasConfiguredSinglePlaceParts(placeParts))}
               onDisclosureActivate={() => {
-                if (!hasConfiguredSinglePlaceParts(placeParts) && placeParts.length > 1) {
+                if (!isEditingExistingMapping && placeParts.length > 1) {
                   setPlaceParts((current) => current.length ? [current[0]] : current);
                 }
                 revealMappingStep("places");
@@ -3298,7 +3301,7 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'relationships' ? (
             <RelationshipsMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["relationships"]) || hasAssignedSingleRelationshipParts(relationshipParts)}
+              disclosureActive={Boolean(revealedMappingSteps["relationships"]) || (isEditingExistingMapping && hasAssignedSingleRelationshipParts(relationshipParts))}
               onDisclosureActivate={() => revealMappingStep("relationships")}
               headers={headers}
               rows={rows}
@@ -3364,7 +3367,7 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-time' ? (
             <WorkbookTimeMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["workbook-time"]) || (workbookMapping.temporalAssertionMappings || []).some(workbookTemporalAssertionHasAssignment)}
+              disclosureActive={Boolean(revealedMappingSteps["workbook-time"]) || (isEditingExistingMapping && (workbookMapping.temporalAssertionMappings || []).some(workbookTemporalAssertionHasAssignment))}
               onDisclosureActivate={() => { if (!(workbookMapping.temporalAssertionMappings || []).length) handleWorkbookTemporalAssertionsChange((current) => [...(current || []), { id: `time-${Date.now()}`, role: "", kind: "date", sourceMode: "single", column: makeWorkbookColumnRef("", ""), noteColumns: [], subjectSelection: { includeRecord: true, participantIndices: [] } }]); revealMappingStep("workbook-time"); }}
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
@@ -3374,9 +3377,9 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-places' ? (
             <WorkbookPlacesMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["workbook-places"]) || hasConfiguredWorkbookPlaceParts(workbookMapping.placeParts)}
+              disclosureActive={Boolean(revealedMappingSteps["workbook-places"]) || (isEditingExistingMapping && hasConfiguredWorkbookPlaceParts(workbookMapping.placeParts))}
               onDisclosureActivate={() => {
-                if (!hasConfiguredWorkbookPlaceParts(workbookMapping.placeParts)) {
+                if (!isEditingExistingMapping && (workbookMapping.placeParts || []).length > 1) {
                   setWorkbookMapping((current) => ({
                     ...current,
                     placeParts: (current.placeParts || []).slice(0, 1),
@@ -3395,7 +3398,7 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-relationships' ? (
             <WorkbookRelationshipsMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["workbook-relationships"]) || hasAssignedWorkbookRelationshipParts(workbookMapping.relationshipParts)}
+              disclosureActive={Boolean(revealedMappingSteps["workbook-relationships"]) || (isEditingExistingMapping && hasAssignedWorkbookRelationshipParts(workbookMapping.relationshipParts))}
               onDisclosureActivate={() => revealMappingStep("workbook-relationships")}
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
