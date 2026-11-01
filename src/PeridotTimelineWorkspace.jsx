@@ -6,6 +6,26 @@ import {
   filterPeridotTimelineEventsByCategories,
 } from './peridotTimelineWorkspaceModel.js';
 
+// The scrolling stage and its fixed chronological ruler share these dimensions.
+// Always constrain BOTH ends of the absolutely positioned scroller: leaving
+// bottom undefined caused the v6 Vertical viewport to grow to content height.
+const TIMELINE_STAGE_LAYOUT = Object.freeze({
+  horizontal: Object.freeze({ scrollerTop: 57, scrollerBottom: 53, rulerBottom: 0, rulerHeight: 53 }),
+  vertical: Object.freeze({ scrollerTop: 110, scrollerBottom: 0, rulerTop: 110, rulerBottom: 12, rulerWidth: 107 }),
+});
+
+function timelineStageLayout(orientation) {
+  return TIMELINE_STAGE_LAYOUT[orientation === 'vertical' ? 'vertical' : 'horizontal'];
+}
+
+// Project calendar coordinates into the non-scrolling ruler from the same
+// scroll position used to window its ticks; do not modify source dates.
+function projectRulerTick(tick, renderWindow, orientation) {
+  return orientation === 'vertical'
+    ? { top: tick.y - renderWindow.scrollTop }
+    : { left: tick.x - renderWindow.scrollLeft };
+}
+
 function asArray(value) {
   return Array.isArray(value) ? value : [];
 }
@@ -25,12 +45,25 @@ function sortKeyParts(value) {
   return { year, month, day };
 }
 
+// One civil-calendar coordinate shared by events and axis ticks. Unlike the
+// former (month-1)/12 + (day-1)/366 approximation, this respects month length
+// and leap years, including historical/BCE years represented numerically.
+function daysInYear(year) {
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 366 : 365;
+}
+
+function calendarFraction(year, month, day) {
+  let dayIndex = 0;
+  for (let m = 1; m < month; m += 1) dayIndex += daysInMonth(year, m);
+  return (dayIndex + day - 1) / daysInYear(year);
+}
+
 function scalarFromSortKey(value) {
   const parts = sortKeyParts(value);
   if (!parts) return null;
   const month = parts.month >= 1 && parts.month <= 12 ? parts.month : 1;
-  const day = parts.day >= 1 && parts.day <= 31 ? parts.day : 1;
-  return parts.year + (month - 1) / 12 + (day - 1) / 366;
+  const day = parts.day >= 1 && parts.day <= daysInMonth(parts.year, month) ? parts.day : 1;
+  return scalarFromCalendarDate(parts.year, month, day);
 }
 
 function eventTitle(event) {
@@ -95,58 +128,67 @@ function categoryIdentity(fieldKey, value) {
   return `${String(fieldKey ?? '').trim()}\u0000${String(value ?? '').trim()}`;
 }
 
-function hashText(value) {
-  const text = String(value ?? '');
-  let hash = 2166136261;
-  for (let index = 0; index < text.length; index += 1) {
-    hash ^= text.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-}
+// Approved manuscript-inspired category slots. The associated white symbols
+// are always displayed with the colors; slot names are not data semantics.
+const CATEGORY_SLOTS = [
+  ['#A63D2B', 'square'], ['#7C211E', 'triangle'],
+  ['#B85C38', 'diamond'], ['#C49A3A', 'star'],
+  ['#7A7A32', 'plus'], ['#2F4A3E', 'cross'],
+  ['#6B7F6B', 'hexagon'], ['#2F6F73', 'flower'],
+  ['#5F7C8B', 'chevron-up'], ['#4B5E8C', 'chevron-down'],
+  ['#6E4A7F', 'vertical-bar'], ['#9A4E68', 'horizontal-bar'],
+];
 
-function categoryColor(fieldKey, value) {
-  const hue = hashText(categoryIdentity(fieldKey, value)) % 360;
-  return `hsl(${hue} 62% 62%)`;
-}
-
-function categoryShape(fieldKey, value) {
-  const shapes = ['circle', 'square', 'diamond', 'triangle'];
-  return shapes[hashText(categoryIdentity(fieldKey, value)) % shapes.length];
-}
-
-function CategoryMarker({ membership, mode }) {
-  const color = categoryColor(membership.fieldKey, membership.value);
-  const shape = categoryShape(membership.fieldKey, membership.value);
-  const label = `${membership.fieldLabel || membership.fieldKey}: ${membership.value}`;
-  const commonStyle = mode === 'color'
-    ? { backgroundColor: color, borderColor: 'rgba(245,236,210,0.88)' }
-    : { backgroundColor: 'var(--peridot-color-hex-f5ecd2)', borderColor: 'var(--peridot-role-interface-panel-background-strong)' };
-
-  let shapeStyle = {};
-  if (mode === 'shape') {
-    if (shape === 'square') shapeStyle = { borderRadius: '2px' };
-    if (shape === 'diamond') shapeStyle = { borderRadius: '2px', transform: 'rotate(45deg)' };
-    if (shape === 'triangle') {
-      shapeStyle = {
-        width: 0,
-        height: 0,
-        borderLeft: '5px solid transparent',
-        borderRight: '5px solid transparent',
-        borderBottom: '9px solid var(--peridot-color-hex-f5ecd2)',
-        backgroundColor: 'transparent',
-        borderTop: 0,
-      };
+// Module memory deliberately survives switching workspaces, but never writes
+// browser storage. Assign slots by shuffled 1–12 cycles; do not re-roll upon
+// React rendering, filtering, or reopening the Timeline within this session.
+const sessionCategorySlots = new Map();
+const sessionCategoryOverrides = new Map();
+let pendingCategorySlots = [];
+function nextShuffledSlot() {
+  if (!pendingCategorySlots.length) {
+    pendingCategorySlots = CATEGORY_SLOTS.map((_, index) => index);
+    for (let i = pendingCategorySlots.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pendingCategorySlots[i], pendingCategorySlots[j]] = [pendingCategorySlots[j], pendingCategorySlots[i]];
     }
   }
+  return pendingCategorySlots.pop();
+}
+function slotForCategory(identity) {
+  if (!sessionCategorySlots.has(identity)) sessionCategorySlots.set(identity, nextShuffledSlot());
+  return sessionCategorySlots.get(identity);
+}
+function CategorySymbol({ shape }) {
+  const common = { fill: 'white', stroke: 'white', strokeWidth: 1.5, strokeLinejoin: 'round' };
+  const points = (n, rotation = -Math.PI / 2, radius = 7) => Array.from({ length: n }, (_, i) => {
+    const angle = rotation + i * Math.PI * 2 / n;
+    return `${12 + radius * Math.cos(angle)},${12 + radius * Math.sin(angle)}`;
+  }).join(' ');
+  if (shape === 'square') return <rect x="6.5" y="6.5" width="11" height="11" {...common} />;
+  if (shape === 'triangle') return <polygon points={points(3)} {...common} />;
+  if (shape === 'diamond') return <polygon points={points(4, 0)} {...common} />;
+  if (shape === 'star') return <polygon points={Array.from({ length: 10 }, (_, i) => { const angle = -Math.PI / 2 + i * Math.PI / 5; const r = i % 2 ? 3.2 : 8; return `${12 + r * Math.cos(angle)},${12 + r * Math.sin(angle)}`; }).join(' ')} {...common} />;
+  if (shape === 'plus') return <path d="M12 5 V19 M5 12 H19" fill="none" stroke="white" strokeWidth="4" />;
+  if (shape === 'cross') return <path d="M6.5 6.5 L17.5 17.5 M17.5 6.5 L6.5 17.5" fill="none" stroke="white" strokeWidth="4" />;
+  if (shape === 'hexagon') return <polygon points={points(6)} {...common} />;
+  if (shape === 'flower') return <><g fill="white">{Array.from({ length: 5 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI * 2 / 5; return <circle key={i} cx={12 + 5 * Math.cos(a)} cy={12 + 5 * Math.sin(a)} r="3.8" />; })}</g><circle cx="12" cy="12" r="2.2" fill="#2F6F73" /></>;
+  if (shape === 'chevron-up') return <path d="M5 15 L12 8 L19 15" fill="none" stroke="white" strokeWidth="4" strokeLinejoin="round" />;
+  if (shape === 'chevron-down') return <path d="M5 9 L12 16 L19 9" fill="none" stroke="white" strokeWidth="4" strokeLinejoin="round" />;
+  if (shape === 'vertical-bar') return <rect x="10" y="5" width="4" height="14" fill="white" />;
+  return <rect x="5" y="10" width="14" height="4" fill="white" />;
+}
 
+function CategoryMarker({ membership, assignments }) {
+  const identity = categoryIdentity(membership.fieldKey, membership.value);
+  const [color, shape] = CATEGORY_SLOTS[assignments[identity] ?? slotForCategory(identity)];
+  const label = `${membership.fieldLabel || membership.fieldKey}: ${membership.value}; ${shape}`;
   return (
-    <span
-      aria-label={label}
-      title={label}
-      className="inline-block h-2.5 w-2.5 shrink-0 rounded-full border"
-      style={{ ...commonStyle, ...shapeStyle }}
-    />
+    <svg aria-label={label} role="img" title={label} viewBox="0 0 24 24" className="inline-block h-5 w-5 shrink-0" style={{ overflow: 'visible' }}>
+      <title>{label}</title>
+      <circle cx="12" cy="12" r="11" fill={color} stroke="rgba(255,255,255,.95)" strokeWidth="1.2" />
+      <CategorySymbol shape={shape} />
+    </svg>
   );
 }
 
@@ -173,7 +215,7 @@ function daysInMonth(year, month) {
 }
 
 function scalarFromCalendarDate(year, month = 1, day = 1) {
-  return year + (month - 1) / 12 + (day - 1) / 366;
+  return year + calendarFraction(year, month, day);
 }
 
 function buildTemporalTicks(minYear, maxYear, pixelsPerYear) {
@@ -300,6 +342,18 @@ function buildConnectionLayoutHints(positioned, connections = []) {
   });
 
   return { hints, adjacency };
+}
+
+// Deterministic FNV-style hash used solely for Timeline layout stability.
+// The category palette uses separately assigned visual slots.
+function hashText(value) {
+  const text = String(value ?? '');
+  let hash = 2166136261;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
 
 function deterministicUnit(eventId = '') {
@@ -430,6 +484,37 @@ function assignContinuousSecondaryPositions(items, connections, {
   });
 }
 
+// Event-card packing is a presentation-only projection. Calendar coordinates are
+// never altered: simultaneous events share an x/y position and occupy separate
+// orthogonal lanes. Unlike force relaxation, this final pass does not leave
+// cards colliding when a dense time cluster exceeds the viewport height.
+function packTimelineCardLanes(items, orientation, {
+  secondaryStart,
+  temporalSize,
+  secondarySize,
+  gap = 14,
+}) {
+  const horizontal = orientation === 'horizontal';
+  const temporalKey = horizontal ? 'x' : 'y';
+  const ordered = [...items].sort((a, b) =>
+    a[temporalKey] - b[temporalKey] || String(a.event.id).localeCompare(String(b.event.id))
+  );
+  const laneEnds = [];
+  const positions = new Map();
+  ordered.forEach((item) => {
+    const start = item[temporalKey];
+    let lane = laneEnds.findIndex((end) => end + gap <= start);
+    if (lane < 0) lane = laneEnds.length;
+    laneEnds[lane] = start + temporalSize;
+    positions.set(item.event.id, secondaryStart + lane * (secondarySize + gap));
+  });
+  return {
+    items: items.map((item) => ({ ...item, [horizontal ? 'top' : 'left']: positions.get(item.event.id) })),
+    requiredSecondaryEnd: secondaryStart + laneEnds.length * (secondarySize + gap) + 96,
+    laneCount: laneEnds.length,
+  };
+}
+
 function buildHorizontalGeometry(positioned, viewportSize = { width: 0, height: 0 }, zoom = 1, connections = []) {
   if (!positioned.length) {
     return { items: [], minYear: null, maxYear: null, width: 0, height: 0, ticks: [] };
@@ -459,13 +544,15 @@ function buildHorizontalGeometry(positioned, viewportSize = { width: 0, height: 
     x: xFor(item.start),
     endX: xFor(item.end),
   }));
-  const items = assignContinuousSecondaryPositions(baseItems, connections, {
-    orientation: 'horizontal',
+  // Exact calendar x coordinates remain fixed. Pack close dates into distinct
+  // vertical lanes, growing the scrollable stage rather than overlapping cards.
+  const packing = packTimelineCardLanes(baseItems, 'horizontal', {
     secondaryStart,
-    secondaryEnd,
-    cardSecondarySize: cardHeight,
-    cardTemporalSize: 210,
+    temporalSize: 210,
+    secondarySize: 110,
   });
+  const items = packing.items;
+  const packedHeight = Math.max(height, packing.requiredSecondaryEnd);
 
   const ticks = buildTemporalTicks(minYear, maxYear, pixelsPerYear).map((tick) => ({ ...tick, x: xFor(tick.scalar) }));
 
@@ -474,7 +561,7 @@ function buildHorizontalGeometry(positioned, viewportSize = { width: 0, height: 
     minYear,
     maxYear,
     width,
-    height,
+    height: packedHeight,
     axisY,
     ticks,
     leadingPadding,
@@ -512,13 +599,13 @@ function buildVerticalGeometry(positioned, viewportSize = { width: 0, height: 0 
     y: yFor(item.start),
     endY: yFor(item.end),
   }));
-  const items = assignContinuousSecondaryPositions(baseItems, connections, {
-    orientation: 'vertical',
+  const packing = packTimelineCardLanes(baseItems, 'vertical', {
     secondaryStart,
-    secondaryEnd,
-    cardSecondarySize: cardWidth,
-    cardTemporalSize: 68,
+    temporalSize: 110,
+    secondarySize: cardWidth,
   });
+  const items = packing.items;
+  const packedWidth = Math.max(width, packing.requiredSecondaryEnd);
 
   const ticks = buildTemporalTicks(minYear, maxYear, pixelsPerYear).map((tick) => ({ ...tick, y: yFor(tick.scalar) }));
 
@@ -526,7 +613,7 @@ function buildVerticalGeometry(positioned, viewportSize = { width: 0, height: 0 
     items,
     minYear,
     maxYear,
-    width,
+    width: packedWidth,
     height,
     axisX,
     ticks,
@@ -742,11 +829,11 @@ function TimelineConnectionLayer({ geometry, connections = [], orientation, sele
   );
 }
 
-function EventCard({ event, onEventClick, className = '', style, activeCategoryFields = [], hiddenCategoryKeys = [], markerMode = 'color' }) {
+function EventCard({ event, onEventClick, className = '', style, activeCategoryFields = [], hiddenCategoryKeys = [], categoryAssignments = {} }) {
   const temporal = temporalPresentation(event);
   const memberships = visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys);
-  const displayedMemberships = memberships.slice(0, 6);
-  const hiddenMembershipCount = Math.max(0, memberships.length - displayedMemberships.length);
+  const displayedMemberships = memberships;
+  const hiddenMembershipCount = 0;
   const dateLabel = event.displayLabel || event.sourceText || 'Date available';
   const title = eventTitle(event);
 
@@ -779,7 +866,7 @@ function EventCard({ event, onEventClick, className = '', style, activeCategoryF
             <CategoryMarker
               key={`${membership.fieldKey}::${membership.value}::${membership.id}`}
               membership={membership}
-              mode={markerMode}
+              assignments={categoryAssignments}
             />
           ))}
           {hiddenMembershipCount ? (
@@ -920,7 +1007,7 @@ function resolveVerticalTickLabelCollisions(ticks = []) {
   return kept;
 }
 
-function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow, connections = [], selectedEventId = '' }) {
+function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, categoryAssignments, renderWindow, connections = [], selectedEventId = '' }) {
   const renderedItems = visibleHorizontalItems(geometry.items, renderWindow);
   const renderedTicks = resolveHorizontalTickLabelCollisions(visibleHorizontalTicks(geometry.ticks, renderWindow));
   return (
@@ -955,10 +1042,13 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
         const intervalWidth = Math.max(18, endX - x);
         return (
           <div key={event.id} className="absolute" style={{ left: x, top }}>
+            {/* The chronology guide is at x, never at a collision-offset card position. */}
+            <div aria-hidden="true" className="pointer-events-none absolute z-[2] w-px" style={{ left: 0, top: geometry.axisY - top, height: Math.max(0, top - geometry.axisY + 14), background: event.id === selectedEventId ? '#7C211E' : 'rgba(61,49,42,.33)' }} />
+            <div aria-hidden="true" className="pointer-events-none absolute z-[5] h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-white" style={{ left: 0, top: geometry.axisY - top - 5, background: event.id === selectedEventId ? '#7C211E' : '#253C32' }} />
             {isInterval ? (
               <IntervalSpanHorizontal event={event} width={intervalWidth} />
             ) : null}
-            <EventCard event={event} onEventClick={onEventClick} className="-translate-x-3" activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} />
+            <EventCard event={event} onEventClick={onEventClick} className="-translate-x-3" activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={categoryAssignments} />
           </div>
         );
       })}
@@ -966,7 +1056,7 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
   );
 }
 
-function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, markerMode, renderWindow, connections = [], selectedEventId = '' }) {
+function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hiddenCategoryKeys, categoryAssignments, renderWindow, connections = [], selectedEventId = '' }) {
   const renderedItems = visibleVerticalItems(geometry.items, renderWindow);
   const renderedTicks = resolveVerticalTickLabelCollisions(visibleVerticalTicks(geometry.ticks, renderWindow));
   return (
@@ -990,9 +1080,8 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
             style={{ width: Math.max(0, geometry.width - 96) }}
           />
           <div className={`absolute left-[80px] -top-3 w-6 border-l border-[var(--peridot-role-ornament-line)] ${tick.major ? 'h-6' : 'h-4 opacity-75'}`} />
-          <div className={`absolute left-[22px] whitespace-nowrap font-bold text-[var(--peridot-role-interface-panel-background-strong)] ${tick.granularity === 'year' ? '-top-2 text-[11px] tracking-[0.08em]' : '-top-2 text-[10px] tracking-[0.03em]'}`}>
-            {tick.label}
-          </div>
+          {/* The fixed vertical ruler owns date labels; this layer retains only
+              calendar gridlines in the scrolling research canvas. */}
         </div>
       ))}
 
@@ -1002,10 +1091,13 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
         const intervalHeight = Math.max(18, Math.abs(y - endY));
         return (
           <div key={event.id} className="absolute" style={{ left, top: y - 16 }}>
+            {/* In vertical mode, y remains the exact chronology coordinate. */}
+            <div aria-hidden="true" className="pointer-events-none absolute z-[2] h-px" style={{ top: 16, left: geometry.axisX - left, width: Math.max(0, left - geometry.axisX), background: event.id === selectedEventId ? '#7C211E' : 'rgba(61,49,42,.33)' }} />
+            <div aria-hidden="true" className="pointer-events-none absolute z-[5] h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white" style={{ top: 16, left: geometry.axisX - left, background: event.id === selectedEventId ? '#7C211E' : '#253C32' }} />
             {isInterval ? (
               <IntervalSpanVertical event={event} top={intervalTop - y + 16} height={intervalHeight} />
             ) : null}
-            <EventCard event={event} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} />
+            <EventCard event={event} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={categoryAssignments} />
           </div>
         );
       })}
@@ -1026,11 +1118,11 @@ function CategoryControls({
   hiddenCategoryKeys,
   showUncategorized,
   uncategorizedCount,
-  markerMode,
+  categoryAssignments,
+  onCategorySlotChange,
   onToggleField,
   onToggleValue,
   onToggleUncategorized,
-  onMarkerModeChange,
   onReset,
 }) {
   const [open, setOpen] = useState(false);
@@ -1107,7 +1199,16 @@ function CategoryControls({
                               onChange={() => onToggleValue(field.key, value.value)}
                               className="h-3.5 w-3.5 accent-[var(--peridot-role-ornament-line)]"
                             />
-                            <CategoryMarker membership={{ fieldKey: field.key, fieldLabel: field.label, value: value.value }} mode={markerMode} />
+                            <CategoryMarker membership={{ fieldKey: field.key, fieldLabel: field.label, value: value.value }} assignments={categoryAssignments} />
+                            <select
+                              aria-label={`Color and symbol for ${value.value}`}
+                              title="Choose a color and paired symbol (session only)"
+                              value={categoryAssignments[identity] ?? slotForCategory(identity)}
+                              onChange={(event) => onCategorySlotChange(identity, Number(event.target.value))}
+                              className="max-w-[60px] rounded border border-current bg-transparent px-1 py-0.5 text-[10px]"
+                            >
+                              {CATEGORY_SLOTS.map(([color, shape], index) => <option key={index} value={index} style={{ color: '#222', background: '#fff' }}>{index + 1} · {shape}</option>)}
+                            </select>
                             <span className="min-w-0 flex-1 truncate text-xs">{value.value}</span>
                             <span className="text-[10px] tabular-nums text-[var(--peridot-color-hex-dfe9c8)]">{value.eventCount}</span>
                           </label>
@@ -1133,27 +1234,9 @@ function CategoryControls({
             ) : null}
           </div>
 
-          {activeCount ? (
-            <div className="flex items-center justify-between gap-3 border-t border-[var(--peridot-color-hex-dfe9c8-a18)] px-4 py-3">
-              <span className="text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">Markers</span>
-              <div className="flex rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] p-1">
-                {['color', 'shape'].map((mode) => (
-                  <button
-                    key={mode}
-                    type="button"
-                    aria-pressed={markerMode === mode}
-                    onClick={() => onMarkerModeChange(mode)}
-                    className={`rounded-full px-3 py-1.5 text-[9px] font-extrabold uppercase tracking-[0.12em] ${markerMode === mode
-                      ? 'bg-[var(--peridot-role-ornament-line)] text-[var(--peridot-role-interface-panel-background-strong)]'
-                      : 'text-[var(--peridot-color-hex-f5ecd2)] hover:bg-[var(--peridot-color-hex-dfe9c8-a08)]'
-                    }`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
+          <div className="border-t border-[var(--peridot-color-hex-dfe9c8-a18)] px-4 py-2 text-[11px] text-[var(--peridot-color-hex-dfe9c8)]">
+            Colors and shapes are always paired. The first 12 categories receive unique shuffled slots; additional categories reuse slots. Changes last for this browser session only.
+          </div>
         </div>
       ) : null}
     </div>
@@ -1168,7 +1251,7 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
   const [activeCategoryFields, setActiveCategoryFields] = useState([]);
   const [hiddenCategoryKeys, setHiddenCategoryKeys] = useState([]);
   const [showUncategorized, setShowUncategorized] = useState(true);
-  const [markerMode, setMarkerMode] = useState('color');
+  const [categoryAssignments, setCategoryAssignments] = useState(() => Object.fromEntries(sessionCategoryOverrides));
   const [isPanning, setIsPanning] = useState(false);
   const scrollerRef = useRef(null);
   const pendingChronologyFractionRef = useRef(null);
@@ -1178,6 +1261,16 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
   const pendingWheelDeltaRef = useRef(0);
   const panStateRef = useRef(null);
   const categoryFields = useMemo(() => buildPeridotTimelineCategoryFields(events), [events]);
+  // Allocate new Evidence values only once for the session; manual overrides
+  // remain presentation preferences and never modify mapped categories.
+  const allocatedCategoryAssignments = useMemo(() => {
+    const current = {};
+    categoryFields.forEach((field) => field.values.forEach((value) => {
+      const identity = categoryIdentity(field.key, value.value);
+      current[identity] = categoryAssignments[identity] ?? slotForCategory(identity);
+    }));
+    return current;
+  }, [categoryFields, categoryAssignments]);
   const activeCategoryFieldSet = useMemo(() => new Set(activeCategoryFields), [activeCategoryFields]);
   const visibleCategories = useMemo(() => categoryFields
     .filter((field) => activeCategoryFieldSet.has(field.key))
@@ -1478,7 +1571,8 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
         onPointerUp={endPan}
         onPointerCancel={endPan}
         onLostPointerCapture={endPan}
-        className={`absolute inset-0 min-h-0 min-w-0 overflow-auto bg-[color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_76%,var(--peridot-color-hex-f5ecd2))] ${isPanning ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
+        style={{ top: timelineStageLayout(orientation).scrollerTop, bottom: timelineStageLayout(orientation).scrollerBottom }}
+        className={`absolute inset-x-0 min-h-0 min-w-0 overflow-auto bg-[color-mix(in_srgb,var(--peridot-color-hex-dfe9c8)_76%,var(--peridot-color-hex-f5ecd2))] ${isPanning ? 'cursor-grabbing select-none' : 'cursor-grab'}`}
       >
         {!geometry.items.length ? (
           <div className="flex h-full w-full items-center justify-center p-8 text-center">
@@ -1488,13 +1582,40 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
             </div>
           </div>
         ) : orientation === 'vertical' ? (
-          <VerticalTimeline geometry={verticalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} renderWindow={renderWindow} connections={timelineConnections} selectedEventId={selectedEventId} />
+          <VerticalTimeline geometry={verticalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={allocatedCategoryAssignments} renderWindow={renderWindow} connections={timelineConnections} selectedEventId={selectedEventId} />
         ) : (
-          <HorizontalTimeline geometry={horizontalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} markerMode={markerMode} renderWindow={renderWindow} connections={timelineConnections} selectedEventId={selectedEventId} />
+          <HorizontalTimeline geometry={horizontalGeometry} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={allocatedCategoryAssignments} renderWindow={renderWindow} connections={timelineConnections} selectedEventId={selectedEventId} />
         )}
       </div>
 
-      <div className="pointer-events-none absolute left-3 top-3 z-30 flex flex-col items-start gap-2">
+      {/* Fixed calendar rulers live outside the scrolling canvas. Their tick
+          coordinates follow scroll offsets, but event cards cannot pass over
+          the ruler. The source temporal coordinates remain unchanged. */}
+      {geometry.ticks?.length && (orientation === 'horizontal' ? renderWindow.width : renderWindow.height) ? (
+        orientation === 'horizontal' ? (
+          <div aria-label="Visible chronological ruler" style={{ bottom: timelineStageLayout(orientation).rulerBottom, height: timelineStageLayout(orientation).rulerHeight }} className="pointer-events-none absolute left-0 right-3 z-[22] overflow-hidden border-t border-[#A68E6B] bg-[#F3E8D5] shadow-sm">
+            <div className="absolute inset-x-0 top-[14px] h-px bg-[#897356]" />
+            {resolveHorizontalTickLabelCollisions(visibleHorizontalTicks(geometry.ticks, renderWindow, 0)).map((tick) => (
+              <div key={tick.key} className="absolute top-0 whitespace-nowrap" style={projectRulerTick(tick, renderWindow, orientation)}>
+                <span className="absolute top-[20px] -translate-x-1/2 text-[11px] font-bold text-[#362B26]">{tick.label}</span>
+                <span className="absolute top-[3px] h-[11px] w-px bg-[#745E45]" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div aria-label="Visible vertical chronological ruler" style={{ top: timelineStageLayout(orientation).rulerTop, bottom: timelineStageLayout(orientation).rulerBottom, width: timelineStageLayout(orientation).rulerWidth }} className="pointer-events-none absolute left-0 z-[22] overflow-hidden border-r border-[#A68E6B] bg-[#F3E8D5] shadow-sm">
+            <div className="absolute top-0 bottom-0 right-[11px] w-px bg-[#897356]" />
+            {resolveVerticalTickLabelCollisions(visibleVerticalTicks(geometry.ticks, renderWindow, 0)).map((tick) => (
+              <div key={tick.key} className="absolute left-0" style={projectRulerTick(tick, renderWindow, orientation)}>
+                <span className="absolute left-2 -translate-y-1/2 whitespace-nowrap text-[11px] font-bold text-[#362B26]">{tick.label}</span>
+                <span className="absolute right-[5px] top-0 h-px w-4 bg-[#745E45]" />
+              </div>
+            ))}
+          </div>
+        )
+      ) : null}
+
+      <div className="pointer-events-none absolute left-3 top-2 z-30 flex flex-row flex-wrap items-start gap-2">
         <div className="peridot-timeline-toolbar-group pointer-events-auto flex items-center gap-3 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a25)] bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_92%,transparent)] px-3 py-1.5 backdrop-blur-sm">
           <div className="shrink-0 text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
             Timeline view
@@ -1513,11 +1634,11 @@ export function PeridotTimelineWorkspace({ events = [], relationshipRows = [], s
             hiddenCategoryKeys={hiddenCategoryKeys}
             showUncategorized={showUncategorized}
             uncategorizedCount={uncategorizedEventIds.size}
-            markerMode={markerMode}
+            categoryAssignments={allocatedCategoryAssignments}
             onToggleField={handleToggleCategoryField}
             onToggleValue={handleToggleCategoryValue}
             onToggleUncategorized={() => setShowUncategorized((value) => !value)}
-            onMarkerModeChange={setMarkerMode}
+            onCategorySlotChange={(identity, slot) => { sessionCategoryOverrides.set(identity, slot); setCategoryAssignments((previous) => ({ ...previous, [identity]: slot })); }}
             onReset={handleResetCategories}
           />
         </div>
