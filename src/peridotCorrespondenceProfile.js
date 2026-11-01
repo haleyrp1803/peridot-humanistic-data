@@ -261,14 +261,25 @@ function deriveDatasetCapabilities(dataset) {
     inspectorReady: Boolean(dataset.records.length || dataset.entities.length || dataset.places.length),
     searchReady: Boolean(dataset.records.length || dataset.entities.length || dataset.places.length),
     pointMapReady: geolocatedPlaces.length > 0,
-    routeMapReady: dataset.records.some((record) => {
-      const predicates = new Set(
-        dataset.assertions
-          .filter((assertion) => assertion.subjectId === record.id)
-          .map((assertion) => assertion.predicate)
-      );
-      return predicates.has('source-place') && predicates.has('target-place');
-    }),
+    routeMapReady: (() => {
+      // Read assertions once; only record-subject source/target place pairs count.
+      // The record membership check preserves the previous per-record semantics.
+      const predicatesBySubject = new Map();
+      for (const assertion of dataset.assertions) {
+        const predicate = assertion.predicate;
+        if (predicate !== 'source-place' && predicate !== 'target-place') continue;
+        let predicates = predicatesBySubject.get(assertion.subjectId);
+        if (!predicates) {
+          predicates = new Set();
+          predicatesBySubject.set(assertion.subjectId, predicates);
+        }
+        predicates.add(predicate);
+      }
+      return dataset.records.some((record) => {
+        const predicates = predicatesBySubject.get(record.id);
+        return predicates?.has('source-place') && predicates.has('target-place');
+      });
+    })(),
     networkReady: Boolean(senderParticipations.length && recipientParticipations.length),
     timelineReady: temporalItems.length > 0,
     chartReady: dataset.records.length > 0,
@@ -1040,11 +1051,18 @@ export function normalizePeridotGeneralizedMappedRows(rows = [], options = {}) {
 
   const validation = validatePeridotNormalizedDataset(baseDataset);
   const baseCapabilities = deriveDatasetCapabilities(baseDataset);
+  // Count participations once instead of rescanning the full collection for
+  // every record. Only participations targeting an actual record qualify.
+  const participationCountByRecord = new Map();
+  for (const participation of participations) {
+    participationCountByRecord.set(
+      participation.targetId,
+      (participationCountByRecord.get(participation.targetId) || 0) + 1
+    );
+  }
   const capabilities = Object.freeze({
     ...baseCapabilities,
-    networkReady: records.some((record) => (
-      participations.filter((participation) => participation.targetId === record.id).length >= 2
-    )),
+    networkReady: records.some((record) => (participationCountByRecord.get(record.id) || 0) >= 2),
   });
 
   return makePeridotNormalizedDataset({
