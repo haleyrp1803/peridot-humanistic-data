@@ -1287,6 +1287,37 @@ function WorkbookReviewAssignments({ workbookMapping = {} }) {
   );
 }
 
+function hasConfiguredSinglePlaceParts(placeParts = []) {
+  return (placeParts || []).some((part) => [
+    part?.placeColumn, part?.coordinatePairColumn, part?.latitudeColumn,
+    part?.longitudeColumn, part?.roleColumn, part?.roleLabel,
+  ].some(Boolean));
+}
+
+function hasConfiguredWorkbookPlaceParts(placeParts = []) {
+  const hasRef = (ref) => Boolean(ref?.sheetName && ref?.columnName);
+  return (placeParts || []).some((part) =>
+    [part?.placeRef, part?.coordinatePairRef, part?.latitudeRef,
+      part?.longitudeRef, part?.roleRef].some(hasRef) || Boolean(part?.roleLabel)
+  );
+}
+
+function temporalAssertionHasAssignment(mapping) {
+  return [mapping?.column, mapping?.yearColumn, mapping?.monthColumn,
+    mapping?.dayColumn, mapping?.startColumn, mapping?.startYearColumn,
+    mapping?.startMonthColumn, mapping?.startDayColumn, mapping?.endColumn,
+    mapping?.endYearColumn, mapping?.endMonthColumn, mapping?.endDayColumn]
+    .some((column) => typeof column === 'string' && Boolean(column));
+}
+
+function workbookTemporalAssertionHasAssignment(mapping) {
+  return [mapping?.column, mapping?.yearColumn, mapping?.monthColumn,
+    mapping?.dayColumn, mapping?.startColumn, mapping?.startYearColumn,
+    mapping?.startMonthColumn, mapping?.startDayColumn, mapping?.endColumn,
+    mapping?.endYearColumn, mapping?.endMonthColumn, mapping?.endDayColumn]
+    .some((ref) => Boolean(ref?.sheetName && ref?.columnName));
+}
+
 function hasAssignedSinglePlaceParts(placeParts = []) {
   return (placeParts || []).some((part) => Boolean(part?.placeColumn));
 }
@@ -2376,6 +2407,13 @@ export function PeridotColumnMappingModal({
     [mappedRows]
   );
 
+  // Single-table Review needs its own capability audit. Workbook Review uses
+  // the separately prepared worker result below.
+  const mappedRowsCapabilityAudit = useMemo(
+    () => auditPeridotDataCapabilities(mappedRows, { headers: PERIDOT_TEMPLATE_COLUMNS }),
+    [mappedRows]
+  );
+
   const workbookValidation = useMemo(
     () => (isWorkbookMode && workbookModel ? validatePeridotWorkbookMapping(workbookModel, workbookMapping) : null),
     [isWorkbookMode, workbookModel, workbookMapping]
@@ -3224,7 +3262,7 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'time' ? (
             <TimeMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["time"])}
+              disclosureActive={Boolean(revealedMappingSteps["time"]) || temporalAssertionsMapping.some(temporalAssertionHasAssignment)}
               onDisclosureActivate={() => { if (!temporalAssertionsMapping.length) handleTemporalAssertionsChange((current) => [...(current || []), { id: `time-${Date.now()}`, role: "", kind: "date", sourceMode: "single", column: "", noteColumns: [], subjectSelection: { includeRecord: true, participantIndices: [] } }]); revealMappingStep("time"); }}
               headers={headers}
               rows={rows}
@@ -3236,8 +3274,13 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'places' ? (
             <PlacesMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["places"])}
-              onDisclosureActivate={() => revealMappingStep("places")}
+              disclosureActive={Boolean(revealedMappingSteps["places"]) || hasConfiguredSinglePlaceParts(placeParts)}
+              onDisclosureActivate={() => {
+                if (!hasConfiguredSinglePlaceParts(placeParts) && placeParts.length > 1) {
+                  setPlaceParts((current) => current.length ? [current[0]] : current);
+                }
+                revealMappingStep("places");
+              }}
               headers={headers}
               rows={rows}
               placeParts={placeParts}
@@ -3250,7 +3293,7 @@ export function PeridotColumnMappingModal({
 
           {!isWorkbookMode && stepForRender === 'relationships' ? (
             <RelationshipsMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["relationships"])}
+              disclosureActive={Boolean(revealedMappingSteps["relationships"]) || hasAssignedSingleRelationshipParts(relationshipParts)}
               onDisclosureActivate={() => revealMappingStep("relationships")}
               headers={headers}
               rows={rows}
@@ -3316,7 +3359,7 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-time' ? (
             <WorkbookTimeMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["workbook-time"])}
+              disclosureActive={Boolean(revealedMappingSteps["workbook-time"]) || (workbookMapping.temporalAssertionMappings || []).some(workbookTemporalAssertionHasAssignment)}
               onDisclosureActivate={() => { if (!(workbookMapping.temporalAssertionMappings || []).length) handleWorkbookTemporalAssertionsChange((current) => [...(current || []), { id: `time-${Date.now()}`, role: "", kind: "date", sourceMode: "single", column: makeWorkbookColumnRef("", ""), noteColumns: [], subjectSelection: { includeRecord: true, participantIndices: [] } }]); revealMappingStep("workbook-time"); }}
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
@@ -3326,8 +3369,16 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-places' ? (
             <WorkbookPlacesMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["workbook-places"])}
-              onDisclosureActivate={() => revealMappingStep("workbook-places")}
+              disclosureActive={Boolean(revealedMappingSteps["workbook-places"]) || hasConfiguredWorkbookPlaceParts(workbookMapping.placeParts)}
+              onDisclosureActivate={() => {
+                if (!hasConfiguredWorkbookPlaceParts(workbookMapping.placeParts)) {
+                  setWorkbookMapping((current) => ({
+                    ...current,
+                    placeParts: (current.placeParts || []).slice(0, 1),
+                  }));
+                }
+                revealMappingStep("workbook-places");
+              }}
               workbookModel={workbookModel}
               placeParts={workbookMapping.placeParts || []}
               relationshipParts={workbookMapping.relationshipParts || []}
@@ -3339,7 +3390,7 @@ export function PeridotColumnMappingModal({
 
           {isWorkbookMode && stepForRender === 'workbook-relationships' ? (
             <WorkbookRelationshipsMappingStep
-              disclosureActive={Boolean(revealedMappingSteps["workbook-relationships"])}
+              disclosureActive={Boolean(revealedMappingSteps["workbook-relationships"]) || hasAssignedWorkbookRelationshipParts(workbookMapping.relationshipParts)}
               onDisclosureActivate={() => revealMappingStep("workbook-relationships")}
               workbookModel={workbookModel}
               workbookMapping={workbookMapping}
