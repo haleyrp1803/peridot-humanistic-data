@@ -649,16 +649,23 @@ function calculateVisibleMercatorTiles(width, height, view, zoom) {
   const extent = geographicWorldExtent(width, height);
   const worldX = (svgX) => (svgX - width / 2) / extent + 0.5;
   const worldY = (svgY) => (svgY - height / 2) / extent + 0.5;
-  const left = (0 - view.tx) / view.scale;
-  const right = (width - view.tx) / view.scale;
-  const top = (0 - view.ty) / view.scale;
-  const bottom = (height - view.ty) / view.scale;
+  // Prefetch around the live geographic viewport. These tiles are not a
+  // second basemap: they are real CARTO tiles that will enter the view when
+  // the user drags. Keep request caps in force for slow connections.
+  const bufferX = width * 0.65;
+  const bufferY = height * 0.65;
+  const left = (-bufferX - view.tx) / view.scale;
+  const right = (width + bufferX - view.tx) / view.scale;
+  const top = (-bufferY - view.ty) / view.scale;
+  const bottom = (height + bufferY - view.ty) / view.scale;
 
   for (let z = requestedZoom; z >= PERIDOT_DETAIL_MIN_ZOOM; z -= 1) {
     const count = 2 ** z;
     const baseTile = extent / count;
-    const xMin = Math.max(0, Math.floor(worldX(left) * count));
-    const xMax = Math.min(count - 1, Math.floor(worldX(right) * count));
+  // X is deliberately unbounded: repeated tile columns represent repeated
+  // copies of the same world when the viewport crosses the antimeridian.
+  const xMin = Math.floor(worldX(left) * count);
+  const xMax = Math.floor(worldX(right) * count);
     const yMin = Math.max(0, Math.floor(worldY(top) * count));
     const yMax = Math.min(count - 1, Math.floor(worldY(bottom) * count));
     const tileCount = (xMax - xMin + 1) * (yMax - yMin + 1);
@@ -667,13 +674,27 @@ function calculateVisibleMercatorTiles(width, height, view, zoom) {
     const tiles = [];
     for (let y = yMin; y <= yMax; y += 1) {
       for (let x = xMin; x <= xMax; x += 1) {
-        tiles.push({ z, requestedZ: requestedZoom, x, y, left: width / 2 + (x / count - 0.5) * extent, top: height / 2 + (y / count - 0.5) * extent, size: baseTile });
+        tiles.push({ z, requestedZ: requestedZoom, x: ((x % count) + count) % count, worldX: x, y, left: width / 2 + (x / count - 0.5) * extent, top: height / 2 + (y / count - 0.5) * extent, size: baseTile });
       }
     }
     return tiles;
   }
 
   return [];
+}
+
+// Determine the visible horizontal copies of the finite projected world.
+// At tile zoom >= 3.2 this is usually one or two copies, not an unbounded list.
+function visibleWorldCopies(width, height, view) {
+  if (!width || !height || !Number.isFinite(view?.scale) || view.scale <= 0) return [0];
+  const extent = geographicWorldExtent(width, height);
+  const left = (0 - view.tx) / view.scale;
+  const right = (width - view.tx) / view.scale;
+  const minCopy = Math.ceil((left - width / 2) / extent - 0.5);
+  const maxCopy = Math.floor((right - width / 2) / extent + 0.5);
+  const result = [];
+  for (let copy = minCopy; copy <= maxCopy && result.length < 4; copy += 1) result.push(copy);
+  return result.length ? result : [0];
 }
 
 function createWorldProjection(width, height, projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH) {
@@ -2328,6 +2349,9 @@ function SvgMap({
   const svgRef = useRef(null);
   const transientViewportRef = useRef(null);
   const transientPanDeltaRef = useRef({ x: 0, y: 0 });
+  const liveGeographicDragFrameRef = useRef(null);
+  const liveGeographicDragCandidateRef = useRef(null);
+  const lastGeographicDragCommitRef = useRef(0);
   const clearTransientPanAfterCommitRef = useRef(false);
   const transientWheelViewRef = useRef(null);
   const wheelCommitTimerRef = useRef(null);
@@ -2362,14 +2386,146 @@ function SvgMap({
   const tileZoom = showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
     ? mercatorTileZoom(width, height, view.scale)
     : null;
+  // The visible viewport moves continuously, but buffered tile selection does
+  // not need to be recomputed and re-requested on every pointer event.
+  // Sample tile coverage at most about five times per second while moving,
+  // with one trailing update so the final resting viewport is covered.
+  const [tileRequestView, setTileRequestView] = useState(view);
+  const tileRequestLastUpdateRef = useRef(0);
+  const tileRequestTimerRef = useRef(null);
+  useEffect(() => {
+    const now = performance.now();
+    const elapsed = now - tileRequestLastUpdateRef.current;
+    if (elapsed >= 180) {
+      if (tileRequestTimerRef.current != null) clearTimeout(tileRequestTimerRef.current);
+      tileRequestTimerRef.current = null;
+      tileRequestLastUpdateRef.current = now;
+      setTileRequestView(view);
+    } else {
+      if (tileRequestTimerRef.current != null) clearTimeout(tileRequestTimerRef.current);
+      tileRequestTimerRef.current = setTimeout(() => {
+        tileRequestTimerRef.current = null;
+        tileRequestLastUpdateRef.current = performance.now();
+        setTileRequestView(view);
+      }, Math.max(0, 180 - elapsed));
+    }
+    return () => {
+      if (tileRequestTimerRef.current != null) {
+        clearTimeout(tileRequestTimerRef.current);
+        tileRequestTimerRef.current = null;
+      }
+    };
+  }, [view]);
+  const tileRequestZoom = showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
+    ? mercatorTileZoom(width, height, tileRequestView.scale)
+    : null;
   const detailTiles = useMemo(
     () => showDetailTiles && showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
-      ? calculateVisibleMercatorTiles(width, height, view, tileZoom)
+      ? calculateVisibleMercatorTiles(width, height, tileRequestView, tileRequestZoom)
       : [],
-    [showDetailTiles, showGeographicBackdrop, projectionMode, width, height, view, tileZoom]
+    [showDetailTiles, showGeographicBackdrop, projectionMode, width, height, tileRequestView, tileRequestZoom]
   );
+  // Retain the last complete CARTO layer as a fallback. Newly loaded tiles
+  // appear above it in visible-first batches; incomplete downloads never
+  // remove previously available geography.
+  const [readyCartoLayer, setReadyCartoLayer] = useState(null);
+  const [progressiveCartoLayer, setProgressiveCartoLayer] = useState(null);
+  // Component-lifetime cache shared by successive pans, zooms and styles.
+  // Entries store promises, so simultaneous requests to a URL share one load.
+  // Bound the cache to avoid retaining an unlimited navigation history.
+  const cartoImageCacheRef = useRef(new Map());
+  const [cartoTileDiagnostics, setCartoTileDiagnostics] = useState({ status: 'idle', attemptedZ: null, requested: 0, failed: 0 });
+  const cartoDiagnosticSequenceRef = useRef(0);
+  useEffect(() => {
+    if (!showDetailTiles || !showGeographicBackdrop || projectionMode !== PERIDOT_PROJECTION_WEB_MERCATOR) {
+      setReadyCartoLayer(null);
+      setProgressiveCartoLayer(null);
+      setCartoTileDiagnostics({ status: 'disabled', attemptedZ: null, requested: 0, failed: 0 });
+      return undefined;
+    }
+    let cancelled = false;
+    const sequence = ++cartoDiagnosticSequenceRef.current;
+    const cache = cartoImageCacheRef.current;
+    const loadTile = (url) => {
+      if (cache.has(url)) {
+        const entry = cache.get(url);
+        // Refresh insertion order for bounded LRU-style eviction.
+        cache.delete(url);
+        cache.set(url, entry);
+        return entry;
+      }
+      const promise = new Promise((resolve) => {
+        const img = new window.Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+      });
+      cache.set(url, promise);
+      promise.then((success) => { if (!success && cache.get(url) === promise) cache.delete(url); });
+      while (cache.size > 700) cache.delete(cache.keys().next().value);
+      return promise;
+    };
+    const loadLayer = async () => {
+      const topZoom = detailTiles[0]?.z;
+      if (!Number.isFinite(topZoom)) {
+        setProgressiveCartoLayer(null);
+        setCartoTileDiagnostics({ status: 'no-tile-selection', attemptedZ: null, requested: 0, failed: 0 });
+        return;
+      }
+      setProgressiveCartoLayer(null);
+      setCartoTileDiagnostics({ status: 'loading', attemptedZ: topZoom, requested: detailTiles.length, failed: 0 });
+      for (let z = topZoom; z >= PERIDOT_DETAIL_MIN_ZOOM; z -= 1) {
+        if (cancelled) return;
+        const tiles = z === topZoom ? detailTiles : calculateVisibleMercatorTiles(width, height, tileRequestView, z);
+        if (!tiles.length || tiles[0].z !== z) continue;
+        // Prioritize tiles intersecting the visible viewport over the 65%
+        // drag buffer; within each tier, request nearest the center first.
+        const ordered = tiles.map((tile) => {
+          const x = tile.left * tileRequestView.scale + tileRequestView.tx;
+          const y = tile.top * tileRequestView.scale + tileRequestView.ty;
+          const size = tile.size * tileRequestView.scale;
+          const visible = x < width && x + size > 0 && y < height && y + size > 0;
+          const distance = Math.abs(x + size / 2 - width / 2) + Math.abs(y + size / 2 - height / 2);
+          return { tile, visible, distance };
+        }).sort((a, b) => Number(b.visible) - Number(a.visible) || a.distance - b.distance);
+        const loaded = [];
+        let failed = 0;
+        // Small bounded batches avoid firing the entire buffered viewport's
+        // requests simultaneously. Previously loaded cache entries resolve fast.
+        for (let index = 0; index < ordered.length; index += 12) {
+          if (cancelled) return;
+          const batch = ordered.slice(index, index + 12);
+          const results = await Promise.all(batch.map(({ tile }) => loadTile(PERIDOT_DETAIL_TILE_URL(cartoStyle, tile.z, tile.x, tile.y))));
+          if (cancelled) return;
+          results.forEach((ok, position) => {
+            if (ok) loaded.push(batch[position].tile);
+            else failed += 1;
+          });
+          setProgressiveCartoLayer({ style: cartoStyle, tiles: [...loaded] });
+          setCartoTileDiagnostics({ status: index + batch.length < ordered.length ? 'loading-progressive' : failed ? 'retrying-coarser' : 'ready', attemptedZ: z, requested: tiles.length, failed, sequence });
+        }
+        if (!failed) {
+          setReadyCartoLayer({ style: cartoStyle, tiles });
+          setProgressiveCartoLayer(null);
+          return;
+        }
+      }
+      if (!cancelled) {
+        setCartoTileDiagnostics((previous) => ({ ...previous, status: 'all-levels-failed' }));
+      }
+    };
+    loadLayer();
+    return () => { cancelled = true; };
+  }, [cartoStyle, detailTiles, height, projectionMode, showDetailTiles, showGeographicBackdrop, tileRequestView, width]);
+  const displayedCartoTiles = readyCartoLayer?.tiles || [];
+  const displayedCartoStyle = readyCartoLayer?.style || cartoStyle;
+  const progressiveCartoTiles = progressiveCartoLayer?.tiles || [];
+  const progressiveCartoStyle = progressiveCartoLayer?.style || cartoStyle;
   const detailTilesActive = detailTiles.length > 0;
-  const renderedTileZoom = detailTilesActive ? detailTiles[0]?.z ?? null : null;
+  const isWrappedMap = showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR;
+  const worldCopies = useMemo(() => isWrappedMap ? visibleWorldCopies(width, height, view) : [0], [isWrappedMap, width, height, view]);
+  const worldWidth = geographicWorldExtent(width, height);
+  const renderedTileZoom = displayedCartoTiles.length ? displayedCartoTiles[0]?.z ?? null : null;
   // Use the entire SVG drawing surface. The single visible frame belongs to
   // the outer CSS plate; SVG clipping and node/label bounds share these limits.
   const frame = { x: 0, y: 0, w: width, h: height };
@@ -2606,29 +2762,59 @@ function SvgMap({
     });
   }, [clusteredNodes, view.tx, view.ty, view.scale, semanticNodeScale, tuning.nodeMinRadius]);
 
+  const renderedScreenNodes = useMemo(() => worldCopies.flatMap((copy) => screenNodes.map((node) => ({
+    ...node,
+    worldCopy: copy,
+    screenX: node.screenX + copy * worldWidth * view.scale,
+  }))), [screenNodes, worldCopies, worldWidth, view.scale]);
+
   const labelCandidates = useMemo(() => {
-    return screenNodes
+    return renderedScreenNodes
       .map((node) => ({
         ...node,
         priority: (node.degree || 0) * 10 + (node.radius || 0),
       }))
       .sort((a, b) => b.priority - a.priority);
-  }, [screenNodes]);
+  }, [renderedScreenNodes]);
 
   const screenEdges = useMemo(() => {
-    return edges.map((edge) => ({
-      ...edge,
-      screenPath: edge.path,
-      screenWidth: Math.max(tuning.edgeMinWidth, edge.width * semanticEdgeScale),
-      screenOpacity: baseEdgeOpacity,
-      curve: parseQuadraticPath(edge.path),
-    }));
-  }, [edges, semanticEdgeScale, baseEdgeOpacity, tuning.edgeMinWidth]);
+    return edges.map((edge) => {
+      let path = edge.path;
+      if (isWrappedMap && typeof path === 'string') {
+        const numbers = path.match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi)?.map(Number);
+        if (numbers?.length === 6) {
+          const [sx, sy, , , tx, ty] = numbers;
+          const delta = tx - sx;
+          if (Math.abs(delta) > worldWidth / 2) {
+            // Use the shorter dateline-crossing manifestation; duplicate it
+            // with the research layer in other visible world copies.
+            const shiftedTargetX = tx - Math.round(delta / worldWidth) * worldWidth;
+            path = curvedPath({ x: sx, y: sy }, { x: shiftedTargetX, y: ty }, 0.12);
+          }
+        }
+      }
+      return {
+        ...edge,
+        screenPath: path,
+        screenWidth: Math.max(tuning.edgeMinWidth, edge.width * semanticEdgeScale),
+        screenOpacity: baseEdgeOpacity,
+        curve: parseQuadraticPath(path),
+      };
+    });
+  }, [edges, semanticEdgeScale, baseEdgeOpacity, tuning.edgeMinWidth, isWrappedMap, worldWidth]);
 
   const visibleLabelIds = useMemo(
     () => buildVisibleLabelIds(labelCandidates, showLabels, labelDensityThreshold, labelFontSize, labelOffset),
     [showLabels, labelCandidates, labelDensityThreshold, labelFontSize, labelOffset]
   );
+
+  const constrainGeographicView = (candidate) => {
+    if (!isWrappedMap || !Number.isFinite(candidate?.scale) || candidate.scale <= 0) return candidate;
+    const projectedTop = candidate.scale * (height / 2 - worldWidth / 2);
+    const projectedBottom = candidate.scale * (height / 2 + worldWidth / 2);
+    // Ensure no latitude outside Mercator's finite supported range is exposed.
+    return { ...candidate, ty: Math.max(height - projectedBottom, Math.min(-projectedTop, candidate.ty)) };
+  };
 
   const zoomAtPoint = (clientX, clientY, nextScale) => {
     const svg = svgRef.current;
@@ -2641,11 +2827,11 @@ function SvgMap({
       const clamped = clampScale(nextScale);
       const worldX = (px - prev.tx) / prev.scale;
       const worldY = (py - prev.ty) / prev.scale;
-      return {
+      return constrainGeographicView({
         scale: clamped,
         tx: px - worldX * clamped,
         ty: py - worldY * clamped,
-      };
+      });
     });
   };
 
@@ -2661,7 +2847,7 @@ function SvgMap({
     };
   };
 
-  const getNearbyCandidates = (point) => buildNearbyCandidates(point, screenNodes, screenEdges, clusterSingularLabel, clusterPluralLabel);
+  const getNearbyCandidates = (point) => buildNearbyCandidates(point, renderedScreenNodes, screenEdges, clusterSingularLabel, clusterPluralLabel);
 
   const dispatchSelectionFromPoint = (point, fallbackKind = null, fallbackPayload = null) => {
     const candidates = getNearbyCandidates(point);
@@ -2705,11 +2891,11 @@ function SvgMap({
 
     const worldX = (px - currentView.tx) / currentView.scale;
     const worldY = (py - currentView.ty) / currentView.scale;
-    const nextView = {
+    const nextView = constrainGeographicView({
       scale: nextScale,
       tx: px - worldX * nextScale,
       ty: py - worldY * nextScale,
-    };
+    });
     transientWheelViewRef.current = nextView;
 
     const relativeScale = nextView.scale / view.scale;
@@ -2763,6 +2949,8 @@ function SvgMap({
       return;
     }
     if (event.button !== 0) return;
+    liveGeographicDragCandidateRef.current = null;
+    lastGeographicDragCommitRef.current = 0;
     setDragState({
       startX: event.clientX,
       startY: event.clientY,
@@ -2777,6 +2965,40 @@ function SvgMap({
       x: event.clientX - dragState.startX,
       y: event.clientY - dragState.startY,
     };
+    if (isWrappedMap) {
+      // Geographic maps need live committed coordinates for tile selection.
+      // Clamp while moving so the SVG never overshoots a pole and snaps back.
+      // Queue at most one map-state update per animation frame.
+      liveGeographicDragCandidateRef.current = constrainGeographicView({
+        ...view,
+        tx: dragState.startTx + nextDelta.x,
+        ty: dragState.startTy + nextDelta.y,
+      });
+      if (liveGeographicDragFrameRef.current == null) {
+        liveGeographicDragFrameRef.current = requestAnimationFrame(() => {
+          liveGeographicDragFrameRef.current = null;
+          const candidate = liveGeographicDragCandidateRef.current;
+          if (candidate) {
+            const now = performance.now();
+            // At most ~30 state commits/s: keep the most recent pointer
+            // position for the next frame, never accumulate stale updates.
+            if (now - lastGeographicDragCommitRef.current >= 32) {
+              lastGeographicDragCommitRef.current = now;
+              setView(candidate);
+            } else {
+              liveGeographicDragFrameRef.current = requestAnimationFrame(() => {
+                liveGeographicDragFrameRef.current = null;
+                lastGeographicDragCommitRef.current = performance.now();
+                const latest = liveGeographicDragCandidateRef.current;
+                if (latest) setView(latest);
+              });
+            }
+          }
+        });
+      }
+      return;
+    }
+    // Preserve the established low-cost transient behavior for Force Network.
     transientPanDeltaRef.current = nextDelta;
     if (transientViewportRef.current) {
       transientViewportRef.current.setAttribute('transform', `translate(${nextDelta.x} ${nextDelta.y})`);
@@ -2785,10 +3007,22 @@ function SvgMap({
 
   const commitPointerPan = () => {
     if (!dragState) return;
+    if (isWrappedMap) {
+      if (liveGeographicDragFrameRef.current != null) {
+        cancelAnimationFrame(liveGeographicDragFrameRef.current);
+        liveGeographicDragFrameRef.current = null;
+      }
+      if (liveGeographicDragCandidateRef.current) {
+        setView(liveGeographicDragCandidateRef.current);
+        liveGeographicDragCandidateRef.current = null;
+      }
+      setDragState(null);
+      return;
+    }
     const { x, y } = transientPanDeltaRef.current;
     if (x || y) {
       clearTransientPanAfterCommitRef.current = true;
-      setView((prev) => ({
+      setView((prev) => constrainGeographicView({
         ...prev,
         tx: dragState.startTx + x,
         ty: dragState.startTy + y,
@@ -2802,6 +3036,10 @@ function SvgMap({
   useEffect(() => {
     return () => {
       stopControlAnimation();
+      if (liveGeographicDragFrameRef.current != null) {
+        cancelAnimationFrame(liveGeographicDragFrameRef.current);
+        liveGeographicDragFrameRef.current = null;
+      }
       if (wheelCommitTimerRef.current) {
         window.clearTimeout(wheelCommitTimerRef.current);
         wheelCommitTimerRef.current = null;
@@ -2826,12 +3064,12 @@ function SvgMap({
     const centerY = height / 2;
     const worldX = (centerX - prev.tx) / prev.scale;
     const worldY = (centerY - prev.ty) / prev.scale;
-    return {
+    return constrainGeographicView({
       ...prev,
       scale: nextScale,
       tx: centerX - worldX * nextScale,
       ty: centerY - worldY * nextScale,
-    };
+    });
   };
 
   const startControlAnimation = (action) => {
@@ -2849,9 +3087,9 @@ function SvgMap({
       setView((prev) => {
         switch (holdActionRef.current) {
           case 'panUp':
-            return { ...prev, ty: prev.ty + panStep * frameScale };
+            return constrainGeographicView({ ...prev, ty: prev.ty + panStep * frameScale });
           case 'panDown':
-            return { ...prev, ty: prev.ty - panStep * frameScale };
+            return constrainGeographicView({ ...prev, ty: prev.ty - panStep * frameScale });
           case 'panLeft':
             return { ...prev, tx: prev.tx + panStep * frameScale };
           case 'panRight':
@@ -2976,26 +3214,47 @@ function SvgMap({
         <rect x="0" y="0" width={width} height={height} fill={showGeographicBackdrop ? '#ffffff' : 'var(--map-canvas-bg)'} />
         <g clipPath="url(#map-frame-clip)">
           <g ref={transientViewportRef}>
+          {/* Render CARTO raster tiles directly in viewport coordinates. At high
+              Mercator zoom, tiny world-coordinate SVG images under a huge parent
+              scale can vanish even after all their image requests succeed.
+              Keep the existing geographic transform for research edges below. */}
+          {showGeographicBackdrop && displayedCartoTiles.length > 0 ? (
+            <g pointerEvents="none" aria-label="CARTO geographic basemap">
+              {displayedCartoTiles.map((tile) => (
+                <image
+                  key={`carto-${displayedCartoStyle}-${tile.z}-${tile.worldX}-${tile.y}`}
+                  href={PERIDOT_DETAIL_TILE_URL(displayedCartoStyle, tile.z, tile.x, tile.y)}
+                  x={tile.left * view.scale + view.tx}
+                  y={tile.top * view.scale + view.ty}
+                  width={tile.size * view.scale}
+                  height={tile.size * view.scale}
+                  preserveAspectRatio="none"
+                  opacity="1"
+                  style={{ filter: 'none', mixBlendMode: 'normal' }}
+                />
+              ))}
+            </g>
+          ) : null}
+          {showGeographicBackdrop && progressiveCartoTiles.length > 0 ? (
+            <g pointerEvents="none" aria-label="Newly loaded CARTO tiles">
+              {progressiveCartoTiles.map((tile) => (
+                <image
+                  key={`carto-progress-${progressiveCartoStyle}-${tile.z}-${tile.worldX}-${tile.y}`}
+                  href={PERIDOT_DETAIL_TILE_URL(progressiveCartoStyle, tile.z, tile.x, tile.y)}
+                  x={tile.left * view.scale + view.tx}
+                  y={tile.top * view.scale + view.ty}
+                  width={tile.size * view.scale}
+                  height={tile.size * view.scale}
+                  preserveAspectRatio="none"
+                  opacity="1"
+                  style={{ filter: 'none', mixBlendMode: 'normal' }}
+                />
+              ))}
+            </g>
+          ) : null}
           <g transform={`translate(${view.tx} ${view.ty}) scale(${view.scale})`}>
-            {showGeographicBackdrop && detailTilesActive ? (
-              <g pointerEvents="none" aria-label="CARTO geographic basemap">
-                {detailTiles.map((tile) => (
-                  <image
-                    key={`carto-${cartoStyle}-${tile.z}-${tile.x}-${tile.y}`}
-                    href={PERIDOT_DETAIL_TILE_URL(cartoStyle, tile.z, tile.x, tile.y)}
-                    x={tile.left}
-                    y={tile.top}
-                    width={tile.size}
-                    height={tile.size}
-                    preserveAspectRatio="none"
-                    opacity="1"
-                    style={{ filter: 'none', mixBlendMode: 'normal' }}
-                  />
-                ))}
-              </g>
-            ) : null}
             <g>
-              {screenEdges.map((edge) => {
+              {Array.from(new Set(worldCopies.flatMap((copy) => isWrappedMap ? [copy - 1, copy, copy + 1] : [copy]))).flatMap((copy) => screenEdges.map((edge) => ({ edge, copy }))).map(({ edge, copy }) => {
                 const isAnimated = activeAnimationEdgeIds?.has(edge.id);
                 const isSelected = selectedKind === 'edge' && selectedId === edge.id;
                 const edgeStroke = isSelected
@@ -3019,8 +3278,9 @@ function SvgMap({
                     : edge.screenWidth;
                 return (
                   <path
-                    key={edge.id}
+                    key={`${edge.id}-world-${copy}`}
                     d={edge.screenPath}
+                    transform={copy ? `translate(${copy * worldWidth} 0)` : undefined}
                     fill="none"
                     stroke={edgeStroke}
                     strokeOpacity={edgeOpacity}
@@ -3041,7 +3301,7 @@ function SvgMap({
             </g>
           </g>
           <g>
-            {screenNodes.map((node) => {
+            {renderedScreenNodes.map((node) => {
               const isAnimated = node.isCluster
                 ? (node.members || []).some((member) => activeAnimationNodeIds?.has(member.id))
                 : activeAnimationNodeIds?.has(node.id);
@@ -3067,7 +3327,7 @@ function SvgMap({
 
               return (
                 <g
-                  key={node.id}
+                  key={`${node.id}-world-${node.worldCopy}`}
                   onMouseEnter={(event) => onNodeHover(node, getPointerPosition(event))}
                   onMouseLeave={() => onNodeLeave?.()}
                   onClick={(event) => {
@@ -3095,14 +3355,14 @@ function SvgMap({
             })}
           </g>
           <g pointerEvents="none">
-            {screenNodes.map((node) => {
+            {renderedScreenNodes.map((node) => {
               const shouldShowLabel = visibleLabelIds.has(node.id);
               const inFrame = node.screenX >= frame.x && node.screenX <= frame.x + frame.w && node.screenY >= frame.y && node.screenY <= frame.y + frame.h;
               if (!shouldShowLabel || !inFrame) return null;
               const labelText = node.isCluster && node.topLabel ? `${node.topLabel} +${node.clusterSize - 1}` : node.label;
               return (
                 <text
-                  key={`label-${node.id}`}
+                  key={`label-${node.id}-world-${node.worldCopy}`}
                   x={node.screenX}
                   y={node.screenY + node.screenRadius + labelOffset}
                   textAnchor="middle"
@@ -3156,6 +3416,16 @@ function SvgMap({
               <span className="font-medium">Tile zoom (test): </span>
               {tileZoom.toFixed(1)} / {PERIDOT_TEST_MAX_TILE_ZOOM}
               {Number.isFinite(renderedTileZoom) ? ` · tiles z${renderedTileZoom}` : ''}
+            </div>
+          ) : null}
+          {tileZoom != null && Number.isFinite(tileZoom) ? (
+            <div className="pointer-events-none max-w-[290px] rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-2 py-1 text-[11px] leading-relaxed shadow-sm" aria-label="Diagnostic tile loading and viewport measurements">
+              <div><strong>Tile state:</strong> {cartoTileDiagnostics.status}</div>
+              <div><strong>Selected:</strong> z{detailTiles[0]?.z ?? 'none'} / {detailTiles.length} tiles · <strong>displayed:</strong> {displayedCartoTiles.length} · <strong>progressive:</strong> {progressiveCartoTiles.length}</div>
+              <div><strong>Attempt:</strong> z{cartoTileDiagnostics.attemptedZ ?? '—'} · {cartoTileDiagnostics.requested} requested · {cartoTileDiagnostics.failed} failed</div>
+              <div><strong>Viewport:</strong> {view.scale.toExponential(2)}× · x={Math.round(view.tx)} · y={Math.round(view.ty)}</div>
+              <div><strong>Tile X:</strong> {detailTiles.length ? `${Math.min(...detailTiles.map((tile) => tile.worldX))}…${Math.max(...detailTiles.map((tile) => tile.worldX))}` : 'none'}</div>
+              <div><strong>Tile Y:</strong> {detailTiles.length ? `${Math.min(...detailTiles.map((tile) => tile.y))}…${Math.max(...detailTiles.map((tile) => tile.y))}` : 'none'}</div>
             </div>
           ) : null}
         </div>
