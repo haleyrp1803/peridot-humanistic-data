@@ -3166,7 +3166,12 @@ export function PeridotColumnMappingModal({
   const handleConfirmImport = () => {
     if (!datasetProfile.canConfirmImport) return;
     if (isGenealogyProfile && !genealogyValidation?.isValid) return;
-    if (!isGenealogyProfile && isWorkbookMode && !workbookValidation?.isValid) return;
+    if (!isGenealogyProfile && isWorkbookMode) {
+      if (!workbookValidation?.isValid) return;
+      // Mirror the Review button's guard inside the handler. Only a review
+      // generated for the current workbook and mapping may authorize import.
+      if (!workbookReviewCurrent || workbookReviewStatus !== 'ready') return;
+    }
     const payload = buildCurrentMappingPayload();
     onSaveMapping?.(payload);
     onConfirmImport?.(payload);
