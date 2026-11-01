@@ -31,6 +31,7 @@ import { createPortal } from 'react-dom';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 import { PeridotTimelineWorkspace } from './PeridotTimelineWorkspace.jsx';
+import { PeridotTimelineII } from './PeridotTimelineII.jsx';
 import { VisualizationTimelineScrubber } from './timelinePlaybackComponents.jsx';
 
 const VISUALIZATION_TOOLS = Object.freeze({
@@ -38,6 +39,7 @@ const VISUALIZATION_TOOLS = Object.freeze({
   FORCE_NETWORK: 'force-network',
   CHART_WORKSPACE: 'chart-workspace',
   TIMELINE_WORKSPACE: 'timeline-workspace',
+  TIMELINE_II: 'timeline-ii',
   CAPABILITY_SUMMARY: 'capability-summary',
 });
 
@@ -1099,6 +1101,15 @@ export function PeridotVisualizationsWorkspace({
         availability.hasExploreData ? 'Explore Your Data' : null,
       ].filter(Boolean),
     },
+    [VISUALIZATION_TOOLS.TIMELINE_II]: {
+      label: 'Timeline II',
+      available: availability.hasTimeline,
+      // The existing App timeline context supplies the same filtered event set.
+      action: onSelectTimeline,
+      unavailableTitle: 'Timeline II is not available for this dataset.',
+      why: 'No usable mapped temporal assertions are available in the current scope.',
+      availableInstead: [availability.hasCharts ? 'Chart Visualizations' : null, availability.hasExploreData ? 'Explore Your Data' : null].filter(Boolean),
+    },
     [VISUALIZATION_TOOLS.CHART_WORKSPACE]: {
       label: 'Chart Visualizations',
       available: availability.hasCharts,
@@ -1131,6 +1142,7 @@ export function PeridotVisualizationsWorkspace({
     { label: 'Map', tool: VISUALIZATION_TOOLS.GEOGRAPHIC_MAP },
     { label: 'Network', tool: VISUALIZATION_TOOLS.FORCE_NETWORK },
     { label: 'Timeline', tool: VISUALIZATION_TOOLS.TIMELINE_WORKSPACE },
+    { label: 'Timeline II', tool: VISUALIZATION_TOOLS.TIMELINE_II },
     { label: 'Charts', tool: VISUALIZATION_TOOLS.CHART_WORKSPACE },
   ];
 
@@ -1207,6 +1219,10 @@ export function PeridotVisualizationsWorkspace({
           counts={counts}
         />
       );
+    }
+
+    if (selectedTool === VISUALIZATION_TOOLS.TIMELINE_II) {
+      return <PeridotTimelineII {...(timelineWorkspaceProps || {})} />;
     }
 
     if (selectedTool === VISUALIZATION_TOOLS.TIMELINE_WORKSPACE) {

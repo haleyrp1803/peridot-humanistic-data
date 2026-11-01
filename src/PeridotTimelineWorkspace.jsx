@@ -103,6 +103,22 @@ function temporalPresentation(event) {
   return { tone: 'exact', label: '' };
 }
 
+// Phase 1B: precision is derived from the canonical assertion contract, never
+// from the fallback day/month used to calculate a chronological coordinate.
+// This classifies point events only. Period extents remain a separate concern.
+function pointDatePrecision(event) {
+  if (event?.temporalKind === 'interval' || event?.temporalKind === 'openInterval') return null;
+  const contract = event?.temporalPresentationContract;
+  if (!contract || contract.kind !== 'point') return null;
+  const endpoint = contract.start || contract.end;
+  const known = endpoint?.knownComponents;
+  if (!known?.year) return { label: 'Partial date', tone: 'partial', detail: 'Incomplete source date; anchor is a positioning convention' };
+  if (known.month && known.day) return { label: 'Exact day', tone: 'day', detail: 'Source specifies a calendar day' };
+  if (known.month && !known.day) return { label: 'Month only', tone: 'month', detail: 'Source specifies a month, not a particular day' };
+  if (!known.month && !known.day) return { label: 'Year only', tone: 'year', detail: 'Source specifies a year, not a particular month or day' };
+  return { label: 'Partial date', tone: 'partial', detail: 'Incomplete source date; anchor is a positioning convention' };
+}
+
 function visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys) {
   return asArray(event?.categoryMemberships).filter((membership) => (
     activeCategoryFields.includes(membership.fieldKey)
@@ -189,6 +205,168 @@ function CategoryMarker({ membership, assignments }) {
       <circle cx="12" cy="12" r="11" fill={color} stroke="rgba(255,255,255,.95)" strokeWidth="1.2" />
       <CategorySymbol shape={shape} />
     </svg>
+  );
+}
+
+
+function primaryVisibleMembership(event, activeCategoryFields, hiddenCategoryKeys) {
+  const memberships = visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys);
+  return memberships[0] || null;
+}
+
+function categoryStyleForMembership(membership, assignments) {
+  if (!membership) return { color: '#253C32', shape: 'circle', identity: '' };
+  const identity = categoryIdentity(membership.fieldKey, membership.value);
+  const [color, shape] = CATEGORY_SLOTS[assignments[identity] ?? slotForCategory(identity)];
+  return { color, shape, identity };
+}
+
+function hexToRgba(hex, alpha = 1) {
+  const normalized = String(hex || '').trim().replace('#', '');
+  const expanded = normalized.length === 3
+    ? normalized.split('').map((char) => char + char).join('')
+    : normalized;
+  if (!/^[0-9a-fA-F]{6}$/.test(expanded)) return `rgba(37,60,50,${alpha})`;
+  const red = parseInt(expanded.slice(0, 2), 16);
+  const green = parseInt(expanded.slice(2, 4), 16);
+  const blue = parseInt(expanded.slice(4, 6), 16);
+  return `rgba(${red},${green},${blue},${alpha})`;
+}
+
+function formatEndpointLabel(endpoint) {
+  if (!endpoint) return '';
+  const year = Number.isInteger(endpoint.year) ? endpoint.year : null;
+  const month = Number.isInteger(endpoint.month) ? endpoint.month : null;
+  const day = Number.isInteger(endpoint.day) ? endpoint.day : null;
+  if (year === null && month === null && day === null) return '';
+  if (year !== null && month !== null && day !== null) return `${day} ${MONTH_LABELS[month - 1]} ${year}`;
+  if (year !== null && month !== null) return `${MONTH_LABELS[month - 1]} ${year}`;
+  if (year !== null) return `${year}`;
+  if (month !== null && day !== null) return `${day} ${MONTH_LABELS[month - 1]}`;
+  if (month !== null) return MONTH_LABELS[month - 1];
+  return String(day ?? '');
+}
+
+function presentationalDateLabel(event) {
+  const contract = event?.temporalPresentationContract;
+  if (!contract) return event?.displayLabel || event?.sourceText || 'Date available';
+  if (contract.kind === 'period') {
+    const start = formatEndpointLabel(contract.start);
+    const end = formatEndpointLabel(contract.end);
+    if (contract.openStart && end) return `Before ${end}`;
+    if (contract.openEnd && start) return `${start} onward`;
+    if (start && end) return `${start} — ${end}`;
+    return contract.display || contract.sourceText || event?.displayLabel || 'Period available';
+  }
+  const point = contract.start || contract.end;
+  const formatted = formatEndpointLabel(point);
+  return formatted || contract.display || contract.sourceText || event?.displayLabel || 'Date available';
+}
+
+function PointEventCard({ event, onEventClick, className = '', style, activeCategoryFields = [], hiddenCategoryKeys = [], categoryAssignments = {} }) {
+  const temporal = temporalPresentation(event);
+  const pointPrecision = pointDatePrecision(event);
+  const memberships = visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys);
+  const primaryMembership = memberships[0] || null;
+  const hiddenMembershipCount = Math.max(0, memberships.length - 3);
+  const displayedMemberships = memberships.slice(0, 3);
+  const dateLabel = presentationalDateLabel(event);
+  const title = eventTitle(event);
+  const primaryStyle = categoryStyleForMembership(primaryMembership, categoryAssignments);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onEventClick?.(event)}
+      aria-label={`${event.temporalRole || 'Time'}: ${title}, ${dateLabel}${temporal.label ? `, ${temporal.label}` : ''}${pointPrecision ? `, ${pointPrecision.label}; ${pointPrecision.detail}` : ''}`}
+      className={`peridot-timeline-event-card group relative z-10 w-[182px] rounded-xl border bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_91%,transparent)] px-2.5 py-2 text-left text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-24)] backdrop-blur-[1px] transition hover:-translate-y-0.5 hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] ${temporal.tone === 'approximate' || temporal.tone === 'partial' ? 'border-dashed border-[var(--peridot-color-hex-dfe9c8-a55)]' : 'border-[var(--peridot-color-hex-dfe9c8-a35)]'} ${className}`}
+      style={style}
+    >
+      <span className="flex min-w-0 items-start gap-2">
+        {primaryMembership ? (
+          <span className="mt-0.5 shrink-0 rounded-full p-[1px]" style={{ boxShadow: `0 0 0 1px ${hexToRgba(primaryStyle.color, 0.6)}` }}>
+            <CategoryMarker membership={primaryMembership} assignments={categoryAssignments} />
+          </span>
+        ) : null}
+        <span className="min-w-0 flex-1">
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span className="peridot-timeline-event-role min-w-0 flex-1 truncate text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
+              {event.temporalRole || 'Time'}
+            </span>
+            {pointPrecision && pointPrecision.tone !== 'day' ? (
+              <span
+                className="shrink-0 rounded-full border border-[var(--peridot-role-ornament-line)] border-dashed px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.04em] text-[var(--peridot-color-hex-f5ecd2)]"
+                title={pointPrecision.detail}
+              >
+                {pointPrecision.label}
+              </span>
+            ) : null}
+            {temporal.label ? (
+              <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a30)] bg-[var(--peridot-color-hex-dfe9c8-a08)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.09em] text-[var(--peridot-color-hex-dfe9c8)]">
+                {temporal.label}
+              </span>
+            ) : null}
+          </span>
+          <span className="mt-0.5 block truncate text-[13px] font-bold" title={title}>{title}</span>
+          <span className="peridot-timeline-event-date mt-1 block truncate text-[11px] text-[var(--peridot-color-hex-dfe9c8)]" title={dateLabel}>
+            {dateLabel}
+          </span>
+        </span>
+      </span>
+      {activeCategoryFields.length && memberships.length > 1 ? (
+        <span className="mt-2 flex min-h-[14px] flex-wrap items-center gap-1" aria-label="Timeline categories">
+          {displayedMemberships.slice(1).map((membership) => (
+            <CategoryMarker
+              key={`${membership.fieldKey}::${membership.value}::${membership.id}`}
+              membership={membership}
+              assignments={categoryAssignments}
+            />
+          ))}
+          {hiddenMembershipCount ? (
+            <span className="peridot-timeline-event-overflow ml-0.5 text-[9px] font-bold text-[var(--peridot-color-hex-dfe9c8)]" title={`${hiddenMembershipCount} additional visible categories`}>
+              +{hiddenMembershipCount}
+            </span>
+          ) : null}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+function PeriodEventCard({ event, onEventClick, className = '', style, activeCategoryFields = [], hiddenCategoryKeys = [], categoryAssignments = {} }) {
+  const temporal = temporalPresentation(event);
+  const memberships = visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys);
+  const primaryMembership = memberships[0] || null;
+  const primaryStyle = categoryStyleForMembership(primaryMembership, categoryAssignments);
+  const dateLabel = presentationalDateLabel(event);
+  const title = eventTitle(event);
+  return (
+    <button
+      type="button"
+      onClick={() => onEventClick?.(event)}
+      aria-label={`${event.temporalRole || 'Period'}: ${title}, ${dateLabel}${temporal.label ? `, ${temporal.label}` : ''}`}
+      className={`peridot-timeline-period-card group relative z-10 w-[194px] rounded-xl border bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_90%,transparent)] px-3 py-2 text-left text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-18)] backdrop-blur-[1px] transition hover:-translate-y-0.5 hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] ${temporal.tone === 'approximate' || temporal.tone === 'partial' ? 'border-dashed border-[var(--peridot-color-hex-dfe9c8-a55)]' : 'border-[var(--peridot-color-hex-dfe9c8-a35)]'} ${className}`}
+      style={style}
+    >
+      <span className="pointer-events-none absolute inset-x-3 top-0 h-[3px] rounded-b-full" style={{ background: hexToRgba(primaryStyle.color, 0.9) }} />
+      <span className="flex items-start gap-2">
+        {primaryMembership ? <CategoryMarker membership={primaryMembership} assignments={categoryAssignments} /> : null}
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className="truncate text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
+              {event.temporalRole || 'Period'}
+            </span>
+            {temporal.label ? (
+              <span className="shrink-0 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a30)] bg-[var(--peridot-color-hex-dfe9c8-a08)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.09em] text-[var(--peridot-color-hex-dfe9c8)]">
+                {temporal.label}
+              </span>
+            ) : null}
+          </span>
+          <span className="mt-0.5 block truncate text-[13px] font-bold" title={title}>{title}</span>
+          <span className="mt-1 block truncate text-[11px] text-[var(--peridot-color-hex-dfe9c8)]" title={dateLabel}>{dateLabel}</span>
+        </span>
+      </span>
+    </button>
   );
 }
 
@@ -830,88 +1008,57 @@ function TimelineConnectionLayer({ geometry, connections = [], orientation, sele
 }
 
 function EventCard({ event, onEventClick, className = '', style, activeCategoryFields = [], hiddenCategoryKeys = [], categoryAssignments = {} }) {
-  const temporal = temporalPresentation(event);
-  const memberships = visibleCategoryMemberships(event, activeCategoryFields, hiddenCategoryKeys);
-  const displayedMemberships = memberships;
-  const hiddenMembershipCount = 0;
-  const dateLabel = event.displayLabel || event.sourceText || 'Date available';
-  const title = eventTitle(event);
-
-  return (
-    <button
-      type="button"
-      onClick={() => onEventClick?.(event)}
-      aria-label={`${event.temporalRole || 'Time'}: ${title}, ${dateLabel}${temporal.label ? `, ${temporal.label}` : ''}`}
-      className={`peridot-timeline-event-card group relative z-10 w-[210px] rounded-xl border bg-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_90%,transparent)] px-3 py-2 text-left text-[var(--peridot-color-hex-f5ecd2)] shadow-[0_8px_20px_var(--peridot-color-rgba-rgba-0-0-0-0-28)] backdrop-blur-[1px] transition hover:-translate-y-0.5 hover:border-[var(--peridot-role-ornament-line)] focus:outline-none focus:ring-2 focus:ring-[var(--peridot-role-interface-focus-ring)] ${temporal.tone === 'approximate' || temporal.tone === 'partial' ? 'border-dashed border-[var(--peridot-color-hex-dfe9c8-a55)]' : 'border-[var(--peridot-color-hex-dfe9c8-a35)]'} ${className}`}
-      style={style}
-    >
-      <span aria-hidden="true" className={`absolute -left-[7px] top-[13px] h-3 w-3 rounded-full border-2 ${anchorMarkerClassName(event)}`} />
-      <span className="flex min-w-0 items-center gap-2">
-        <span className="peridot-timeline-event-role min-w-0 flex-1 truncate text-[10px] font-extrabold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-dfe9c8)]">
-          {event.temporalRole || 'Time'}
-        </span>
-        {temporal.label ? (
-          <span className="peridot-timeline-event-qualifier shrink-0 rounded-full border border-[var(--peridot-color-hex-dfe9c8-a30)] bg-[var(--peridot-color-hex-dfe9c8-a08)] px-1.5 py-0.5 text-[8px] font-extrabold uppercase tracking-[0.09em] text-[var(--peridot-color-hex-dfe9c8)]">
-            {temporal.label}
-          </span>
-        ) : null}
-      </span>
-      <span className="mt-0.5 block truncate text-sm font-bold" title={title}>{title}</span>
-      <span className="peridot-timeline-event-date mt-1 block truncate text-[11px] text-[var(--peridot-color-hex-dfe9c8)]" title={dateLabel}>
-        {dateLabel}
-      </span>
-      {activeCategoryFields.length && memberships.length ? (
-        <span className="mt-2 flex min-h-[14px] flex-wrap items-center gap-1" aria-label="Timeline categories">
-          {displayedMemberships.map((membership) => (
-            <CategoryMarker
-              key={`${membership.fieldKey}::${membership.value}::${membership.id}`}
-              membership={membership}
-              assignments={categoryAssignments}
-            />
-          ))}
-          {hiddenMembershipCount ? (
-            <span className="peridot-timeline-event-overflow ml-0.5 text-[9px] font-bold text-[var(--peridot-color-hex-dfe9c8)]" title={`${hiddenMembershipCount} additional visible categories`}>
-              +{hiddenMembershipCount}
-            </span>
-          ) : null}
-        </span>
-      ) : null}
-    </button>
-  );
+  const isInterval = event?.temporalKind === 'interval' || event?.temporalKind === 'openInterval';
+  if (isInterval) {
+    return <PeriodEventCard event={event} onEventClick={onEventClick} className={className} style={style} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={categoryAssignments} />;
+  }
+  return <PointEventCard event={event} onEventClick={onEventClick} className={className} style={style} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={categoryAssignments} />;
 }
 
-function IntervalSpanHorizontal({ event, width }) {
+function IntervalSpanHorizontal({ event, width, color = '#6B7F6B' }) {
   const temporal = temporalPresentation(event);
   const dashed = temporal.tone === 'approximate' || temporal.tone === 'partial';
   const openStart = event?.boundedness === 'openStart';
   const openEnd = event?.boundedness === 'openEnd' || event?.boundedness === 'ongoing';
   return (
-    <div aria-hidden="true" className="absolute left-0 top-[28px] z-0" style={{ width }}>
+    <div aria-hidden="true" className="absolute left-0 top-[36px] z-0" style={{ width }}>
       <div
-        className={`h-[9px] rounded-full border opacity-55 ${dashed
-          ? 'border-dashed border-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_48%,transparent)] bg-[color-mix(in_srgb,var(--peridot-role-ornament-line)_18%,transparent)]'
-          : 'border-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_32%,transparent)] bg-[color-mix(in_srgb,var(--peridot-role-ornament-line)_22%,transparent)]'}`}
-      />
-      {openStart ? <span className="absolute -left-2 -top-[8px] text-lg font-bold text-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_58%,transparent)]">‹</span> : null}
-      {openEnd ? <span className="absolute -right-2 -top-[8px] text-lg font-bold text-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_58%,transparent)]">›</span> : null}
+        className={`relative h-[12px] rounded-full border ${dashed ? 'border-dashed' : ''}`}
+        style={{
+          borderColor: hexToRgba(color, dashed ? 0.7 : 0.55),
+          background: `linear-gradient(90deg, ${hexToRgba(color, 0.14)}, ${hexToRgba(color, 0.28)}, ${hexToRgba(color, 0.14)})`,
+          boxShadow: `inset 0 0 0 1px ${hexToRgba('#ffffff', 0.35)}`,
+        }}
+      >
+        <span className="absolute -left-[3px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border border-white" style={{ background: hexToRgba(color, 0.95) }} />
+        <span className="absolute -right-[3px] top-1/2 h-3 w-3 -translate-y-1/2 rounded-full border border-white" style={{ background: openEnd ? '#F5ECD2' : hexToRgba(color, 0.95), borderStyle: openEnd ? 'dashed' : 'solid', borderColor: openEnd ? color : '#fff' }} />
+      </div>
+      {openStart ? <span className="absolute -left-3 -top-[8px] text-lg font-bold" style={{ color }}>‹</span> : null}
+      {openEnd ? <span className="absolute -right-3 -top-[8px] text-lg font-bold" style={{ color }}>›</span> : null}
     </div>
   );
 }
 
-function IntervalSpanVertical({ event, top, height }) {
+function IntervalSpanVertical({ event, top, height, color = '#6B7F6B' }) {
   const temporal = temporalPresentation(event);
   const dashed = temporal.tone === 'approximate' || temporal.tone === 'partial';
   const openStart = event?.boundedness === 'openStart';
   const openEnd = event?.boundedness === 'openEnd' || event?.boundedness === 'ongoing';
   return (
-    <div aria-hidden="true" className="absolute left-[100px] z-0" style={{ top, height }}>
+    <div aria-hidden="true" className="absolute left-[96px] z-0" style={{ top, height }}>
       <div
-        className={`h-full w-[9px] rounded-full border opacity-55 ${dashed
-          ? 'border-dashed border-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_48%,transparent)] bg-[color-mix(in_srgb,var(--peridot-role-ornament-line)_18%,transparent)]'
-          : 'border-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_32%,transparent)] bg-[color-mix(in_srgb,var(--peridot-role-ornament-line)_22%,transparent)]'}`}
-      />
-      {openEnd ? <span className="absolute -left-[3px] -top-3 text-lg font-bold text-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_58%,transparent)]">⌃</span> : null}
-      {openStart ? <span className="absolute -bottom-3 -left-[3px] text-lg font-bold text-[color-mix(in_srgb,var(--peridot-role-interface-panel-background-strong)_58%,transparent)]">⌄</span> : null}
+        className={`relative h-full w-[12px] rounded-full border ${dashed ? 'border-dashed' : ''}`}
+        style={{
+          borderColor: hexToRgba(color, dashed ? 0.7 : 0.55),
+          background: `linear-gradient(180deg, ${hexToRgba(color, 0.14)}, ${hexToRgba(color, 0.28)}, ${hexToRgba(color, 0.14)})`,
+          boxShadow: `inset 0 0 0 1px ${hexToRgba('#ffffff', 0.35)}`,
+        }}
+      >
+        <span className="absolute -left-[1px] -top-[3px] h-3 w-3 rounded-full border border-white" style={{ background: openEnd ? '#F5ECD2' : hexToRgba(color, 0.95), borderStyle: openEnd ? 'dashed' : 'solid', borderColor: openEnd ? color : '#fff' }} />
+        <span className="absolute -left-[1px] -bottom-[3px] h-3 w-3 rounded-full border border-white" style={{ background: hexToRgba(color, 0.95) }} />
+      </div>
+      {openEnd ? <span className="absolute -left-[4px] -top-3 text-lg font-bold" style={{ color }}>⌃</span> : null}
+      {openStart ? <span className="absolute -bottom-3 -left-[4px] text-lg font-bold" style={{ color }}>⌄</span> : null}
     </div>
   );
 }
@@ -1040,15 +1187,18 @@ function HorizontalTimeline({ geometry, onEventClick, activeCategoryFields, hidd
       {renderedItems.map(({ event, x, endX, top }) => {
         const isInterval = event.temporalKind === 'interval' || event.temporalKind === 'openInterval';
         const intervalWidth = Math.max(18, endX - x);
+        const pointPrecision = pointDatePrecision(event);
+        const primaryMembership = primaryVisibleMembership(event, activeCategoryFields, hiddenCategoryKeys);
+        const primaryStyle = categoryStyleForMembership(primaryMembership, categoryAssignments);
         return (
           <div key={event.id} className="absolute" style={{ left: x, top }}>
             {/* The chronology guide is at x, never at a collision-offset card position. */}
             <div aria-hidden="true" className="pointer-events-none absolute z-[2] w-px" style={{ left: 0, top: geometry.axisY - top, height: Math.max(0, top - geometry.axisY + 14), background: event.id === selectedEventId ? '#7C211E' : 'rgba(61,49,42,.33)' }} />
-            <div aria-hidden="true" className="pointer-events-none absolute z-[5] h-2.5 w-2.5 -translate-x-1/2 rounded-full border border-white" style={{ left: 0, top: geometry.axisY - top - 5, background: event.id === selectedEventId ? '#7C211E' : '#253C32' }} />
+            <div aria-hidden="true" className="pointer-events-none absolute z-[5] h-3 w-3 -translate-x-1/2 rounded-full border border-white" style={{ left: 0, top: geometry.axisY - top - 6, background: pointPrecision?.tone === 'day' || !pointPrecision ? (event.id === selectedEventId ? '#7C211E' : primaryStyle.color) : '#F5ECD2', borderStyle: pointPrecision && pointPrecision.tone !== 'day' ? 'dashed' : 'solid', borderColor: pointPrecision && pointPrecision.tone !== 'day' ? primaryStyle.color : '#fff', boxShadow: `0 0 0 2px ${hexToRgba('#253C32', 0.08)}` }} />
             {isInterval ? (
-              <IntervalSpanHorizontal event={event} width={intervalWidth} />
+              <IntervalSpanHorizontal event={event} width={intervalWidth} color={primaryStyle.color} />
             ) : null}
-            <EventCard event={event} onEventClick={onEventClick} className="-translate-x-3" activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={categoryAssignments} />
+            <EventCard event={event} onEventClick={onEventClick} className={isInterval ? 'translate-x-2' : '-translate-x-2'} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={categoryAssignments} />
           </div>
         );
       })}
@@ -1089,15 +1239,18 @@ function VerticalTimeline({ geometry, onEventClick, activeCategoryFields, hidden
         const isInterval = event.temporalKind === 'interval' || event.temporalKind === 'openInterval';
         const intervalTop = Math.min(y, endY);
         const intervalHeight = Math.max(18, Math.abs(y - endY));
+        const pointPrecision = pointDatePrecision(event);
+        const primaryMembership = primaryVisibleMembership(event, activeCategoryFields, hiddenCategoryKeys);
+        const primaryStyle = categoryStyleForMembership(primaryMembership, categoryAssignments);
         return (
           <div key={event.id} className="absolute" style={{ left, top: y - 16 }}>
             {/* In vertical mode, y remains the exact chronology coordinate. */}
             <div aria-hidden="true" className="pointer-events-none absolute z-[2] h-px" style={{ top: 16, left: geometry.axisX - left, width: Math.max(0, left - geometry.axisX), background: event.id === selectedEventId ? '#7C211E' : 'rgba(61,49,42,.33)' }} />
-            <div aria-hidden="true" className="pointer-events-none absolute z-[5] h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white" style={{ top: 16, left: geometry.axisX - left, background: event.id === selectedEventId ? '#7C211E' : '#253C32' }} />
+            <div aria-hidden="true" className="pointer-events-none absolute z-[5] h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white" style={{ top: 16, left: geometry.axisX - left, background: pointPrecision?.tone === 'day' || !pointPrecision ? (event.id === selectedEventId ? '#7C211E' : primaryStyle.color) : '#F5ECD2', borderStyle: pointPrecision && pointPrecision.tone !== 'day' ? 'dashed' : 'solid', borderColor: pointPrecision && pointPrecision.tone !== 'day' ? primaryStyle.color : '#fff', boxShadow: `0 0 0 2px ${hexToRgba('#253C32', 0.08)}` }} />
             {isInterval ? (
-              <IntervalSpanVertical event={event} top={intervalTop - y + 16} height={intervalHeight} />
+              <IntervalSpanVertical event={event} top={intervalTop - y + 16} height={intervalHeight} color={primaryStyle.color} />
             ) : null}
-            <EventCard event={event} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={categoryAssignments} />
+            <EventCard event={event} onEventClick={onEventClick} activeCategoryFields={activeCategoryFields} hiddenCategoryKeys={hiddenCategoryKeys} categoryAssignments={categoryAssignments} className={isInterval ? 'translate-x-2' : ''} />
           </div>
         );
       })}

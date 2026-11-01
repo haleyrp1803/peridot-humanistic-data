@@ -12,6 +12,7 @@
  */
 
 import { buildTimelineEntries } from './timelinePlaybackHelpers.js';
+import { buildPeridotTimelineTemporalPresentation } from './peridotTimelineTemporalPresentation.js';
 import {
   derivePeridotEntityNetworkSemantics,
   getPeridotRowEntityParticipantEntries,
@@ -147,6 +148,8 @@ export function buildPeridotTimelineWorkspaceEvents(rows = [], options = {}) {
       sourceRowNumber: sourceRowNumberForRow(row),
       row,
       assertion,
+      // Scholarly precision metadata; no changes to existing chronological geometry.
+      temporalPresentationContract: buildPeridotTimelineTemporalPresentation(assertion),
       temporalRole: entry.role,
       temporalShape: asText(assertion?.temporalShape) || 'unknown',
       temporalKind: temporalShapeKind(assertion),
