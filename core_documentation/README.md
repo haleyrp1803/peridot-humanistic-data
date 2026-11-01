@@ -32,7 +32,7 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-ae3574c — Finalize geographic map interface and improve workbook review processing
+973d40d — Refine mapping disclosure and subject selection and repair Review
 Branch: main
 Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-31)
 ```
@@ -110,6 +110,8 @@ The pill-and-icon section rail is navigation among relevant mapping categories, 
 
 **Mapping interface milestone (2026-10-26; subsequently refined):** Relations, Time, and Places have received a substantial Cartographic Editorial readability pass. Their shared design uses compact stage headings, prominent primary questions, indented subordinate questions, content-sized selection cards, `(i)` explanatory popovers, and a contextual column for examples, current interpretation, and Additional Context / Good to know. This is a presentation improvement, not a change to mapping rules or a completed redesign of Preview, Sheets, Evidence, Review, or recurring-entity Identity. The categories in the mapping bar are options determined by the source data rather than compulsory steps.
 
+
+**Mapping usability refinement (committed at `973d40d`):** When a researcher revisits a mapped dataset or inspects an editable sample mapping, existing Relations, Time, and Places assignments appear immediately; no extra Add click is required to reveal saved assignments. **Add a Location** exposes one new place mapping at a time. The subject chooser explicitly supports selecting the record and/or several mapped participants, and selected checkboxes remain visually active rather than greyed out. The Review & Upload crash caused by an undefined capability-audit result has been repaired.
 
 **Progressive mapping disclosure (committed at `c0e1fb3`):** Relations, Time, and Places begin with an explicit **Add a Relationship**, **Add a Date or Time Period**, or **Add a Location** control. Recognized source-column suggestions can populate the form after the researcher chooses Add; merely recognizing potential fields does not require exposing a full configuration form immediately. The relationship editor still supports one relationship group with Part A/B/C/etc. participants, **not** multiple independently configured relationship groups per source row. Existing user-confirmed mapping state must not be lost when navigating between mapping sections.
 
@@ -505,6 +507,8 @@ Mapped Time is repeatable. Users can name each Date or Period/range in ordinary 
 ### CARTO basemap and geographic export attribution
 
 The Geographic Map offers CARTO Voyager, Positron, and Dark Matter through Map settings and retains source-backed research overlays. Geographic PNG and SVG exports embed the displayed map imagery and include readable Peridot, © OpenStreetMap contributors, and © CARTO attribution. If the required tiles cannot be embedded, Peridot should report the export problem rather than silently omit the geography. The CARTO credential is supplied through a local environment variable (`VITE_CARTO_BASEMAP_KEY`); do not publish `.env.local` or share an old SVG containing keyed external tile URLs. Deployment and external provider availability are separate from local map/export verification.
+
+**Spreadsheet dependency maintenance (2026-10-31):** Peridot now uses SheetJS (`xlsx`) 0.20.3 from the version-pinned publisher distribution, replacing the older npm 0.18.5 release. Browser-compatibility data (`caniuse-lite`) was also refreshed. Import behavior was user-regression-tested; the dependency upgrades do not change the researcher's mapping responsibilities. Both dependencies are reviewed every six months; the Maintainer's Guide maintains the exact version/update/review register.
 
 ### Workbook / Excel import
 

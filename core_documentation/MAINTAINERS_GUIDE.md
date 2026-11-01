@@ -29,7 +29,7 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-ae3574c — Finalize geographic map interface and improve workbook review processing
+973d40d — Refine mapping disclosure and subject selection and repair Review
 Branch: main
 Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-31)
 ```
@@ -109,7 +109,7 @@ The public **Visualize**, **Explore**, and **Tutorials** no-dataset/coming-soon 
 
 **Production assets:** Image references inside React components must use Vite-managed static imports from the existing repository `assets/` directory, as already established on Home, or an equivalently build-verified method. JavaScript literals such as `/assets/foo.png` and manually base-prefixed strings do **not** make Vite emit files from an arbitrary top-level assets directory. Do not move or duplicate these images into `public/assets/` as an undocumented workaround. For changes, verify that the production build emits the required images and that their URLs work from GitHub Pages' `/peridot-humanistic-data/` base. Localhost rendering, Git push, and deployment are separate verification steps.
 
-Minimum regression: visit Visualize, Explore, and Tutorials with no dataset; inspect all parchment and tear imagery at laptop and desktop sizes; verify title, text, and button; navigate to Data; confirm that active-data Visualize/Explore functionality and session state are not affected; switch among the three pages and verify approved animation replay and reduced-motion behavior; run `npm.cmd run build` and inspect `dist/assets` output; verify the actual deployed site after publication. The latest confirmed Git state is `ae3574c`; post-`fc42306` deployed gateway rendering remains separately unverified in this documentation pass.
+Minimum regression: visit Visualize, Explore, and Tutorials with no dataset; inspect all parchment and tear imagery at laptop and desktop sizes; verify title, text, and button; navigate to Data; confirm that active-data Visualize/Explore functionality and session state are not affected; switch among the three pages and verify approved animation replay and reduced-motion behavior; run `npm.cmd run build` and inspect `dist/assets` output; verify the actual deployed site after publication. The latest confirmed Git state is `973d40d`; post-`fc42306` deployed gateway rendering remains separately unverified in this documentation pass.
 
 ## 2. Application Boundaries and Route Model
 
@@ -316,6 +316,24 @@ The current accepted chart model uses a quarter-width control rail and three-qua
 Analytics receives the Search-filtered/playback-visible dated scope while preserving genuinely undated/non-positionable Search-matching records for charting. Its local Start/End Year controls constrain dated records; **Exclude undated records?** is a separate explicit checkbox and is off by default. This contract was verified during the `656010d` scope pass and must remain aligned across chart derivation, visible totals/legends, category inventories, and PNG export.
 
 ## 7. Data Import and Workbook Contract
+
+### Verified mapping display and Review behavior (2026-10-31, `973d40d`)
+
+When the researcher opens an existing or sample mapping, accepted Places, Time, and Relations assignments must be visible immediately without another Add action. In Places, **Add a Location** creates/reveals only one new unmapped place card per activation; it does not convert the full historical `placeParts` array into newly added visible cards. Existing substantive mappings remain intact and visible even if there are several. Preserve the generalized `placeParts` schema, field references, and subject provenance.
+
+The shared `PeridotSubjectSelectionControl.jsx` communicates **choose any that apply**: record subject and several participant subjects may be selected concurrently, with a clear selected state that never appears greyed out or disabled. An at-least-one-subject constraint remains; switching the sole selected subject requires selecting another before clearing the original. Do not change the accepted multiplicative subject-attribution logic to match visual checkbox expectations. The Review page must be able to access its `mappedRowsCapabilityAudit` calculation without a reference error. Regression: sample Correspondence and Family Tree mapping revisit, repeated single-place Add, Part A+Part B toggling, Review after changes, Apply/Confirm, and ordinary uploaded workbook/CSV paths.
+
+### Six-month SheetJS and Browserslist maintenance register
+
+Review both dependencies every **six calendar months**, and preserve **last installed/verified update** and **last review** as separate recorded events. If a review determines an update is unnecessary, advance the last-reviewed date and next due date without changing the last-updated date. Record the observed installed version, security/advisory outcome, target-browser changes (if any), Vite build result, and relevant import test results. The review is a maintenance obligation, not authorization for silent upgrades or `npm audit fix --force`.
+
+| Dependency | Verified current version | Last updated (user-local) | Last reviewed | Next six-month review due | Verification and distribution |
+|---|---|---|---|---|---|
+| SheetJS (`xlsx`) | `0.20.3` | **2026-10-31** | **2026-10-31** | **2027-04-30** | Installed from version-pinned official `https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz`; npm version/tree checks and Vite build passed; user reported CSV/XLS/XLSX/XLSM/browser mapping regressions passed |
+| Browserslist compatibility database (`caniuse-lite`) | `1.0.30001820` | **2026-10-31** | **2026-10-31** | **2027-04-30** | Updated with `npx.cmd update-browserslist-db@latest` (Windows PowerShell execution policy blocks `npx.ps1`); updater reported success and no target browser changes; a separate post-update build output is not present in the supplied log |
+
+On each review, check SheetJS official release/advisory notices as well as npm advisory results; npm's public `xlsx` version history may not represent the current official CDN release, so a lower npm audit count is not itself proof of a fix. Retest workbook sheet reading, explicit unique-ID joins, XLSM worksheet-only processing, source mappings, revisits, worker Review, Confirm/Apply, and stale-result protection when changing SheetJS. For Browserslist, refresh its data only after determining the update is needed, examine any target-browser changes, and run the production build. Record the actual results and update date; do not assume a nominal scheduled review has occurred.
+
 
 Peridot supports a simple downloadable template, arbitrary CSV/TSV mapping, workbook-aware XLSX/XLSM/XLS import, editable post-import mappings, and three first-class sample datasets. The public import model is now **one generalized mapping system** rather than a Correspondence-versus-Genealogy profile choice. The canonical model remains database-first: source material may remain useful even when it is not map-, network-, timeline-, or chart-ready.
 
@@ -1149,7 +1167,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`fc42306`**, with `HEAD` and `origin/main` aligned and a clean working tree in the latest user-provided sync output
+- current synchronized checkpoint: **`973d40d`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
 - local development command on the user's machine: **`npm.cmd run dev`**
 - current Timeline state: canonical assertion-level projection, horizontal/vertical visualization workspace, smooth wheel/button zoom, scrollbars + click-drag panning, zoom-adaptive axis, evidence-driven plural categories with OR visibility, shared Inspector handoff, subject-strict mapped relationship projection, continuous secondary-axis layout, and revised duration treatment are committed; relationship-line routing/presentation is the immediate unfinished item.
 - the existing bottom Timeline/playback control remains intact and separate from the dedicated Timeline visualization workspace.
@@ -1171,7 +1189,7 @@ A future chat should also be told that:
 - one bounded Search text gap remains: **Any record text** does not yet guarantee every generalized mapped semantic value;
 - generalized Geographic/Force relationship and playback semantics remain accepted; playback animation experiments were rolled back and are not part of current `main`;
 - Phase 3 Chart Builder and the no-loss compatibility retirement audit remain later major tasks;
-- the accepted Home is the art-directed Cartographic Editorial Florence composition with distinct Upload your data and Explore sample data actions, New to Peridot? guidance, and an informational three-column parchment banner framed by two corner collages; the earlier Home CTAs and the historical centered disabled Tutorial button belong to previous Home versions. The dedicated Tutorials public navigation destination remains; existing tutorial code is retained for later revision;
+- the accepted Home is the art-directed Cartographic Editorial Florence composition with one Get Started action leading to the Data onboarding tabs, New to Peridot? guidance, and an informational three-column parchment banner framed by two corner collages; the earlier Home CTAs and the historical centered disabled Tutorial button belong to previous Home versions. The dedicated Tutorials public navigation destination remains; existing tutorial code is retained for later revision;
 - MapLibre remains archived.
 
 For the current **visual redesign continuation**, start from the committed Cartographic Editorial Home/Visualize layout through `5e785ed`, preserve both lower-banner corner collages and the optically shifted informational grid, and distinguish asset-license verification from code-push status. Further visual changes should be separately bounded rather than reopening the accepted composition. The pre-existing **technical backlog priority** remains Timeline relationship-line rendering/presentation, using the current `a32ef05` subject-strict connection model and continuous secondary-axis layout as the source of truth. Before changing `PeridotTimelineWorkspace.jsx`, reread the entire exact current file under the Project Workflow Charter. Preserve adaptive-axis, zoom/pan, categories, Search scope, Inspector behavior, and relationship endpoint semantics while changing only connection/duration presentation.

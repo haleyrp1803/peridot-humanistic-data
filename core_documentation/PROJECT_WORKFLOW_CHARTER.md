@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-ae3574c — Finalize geographic map interface and improve workbook review processing
+973d40d — Refine mapping disclosure and subject selection and repair Review
 Branch: main
 Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-31)
 ```
@@ -252,6 +252,14 @@ Each core document—`README.md`, `MAINTAINERS_GUIDE.md`, `PROJECT_WORKFLOW_CHAR
 The Executive Summary is the sole documentation region that may be revised non-additively during a documentation pass. It is a stable orientation layer, not a miniature changelog: update it only when the document’s purpose, audience, or high-level scope has materially changed. All remaining documentation should remain additive, meticulous, and exhaustive by default, subject only to the existing rule allowing clearly obsolete, duplicated, or misleading text to be corrected.
 
 For every core-documentation pass, also follow `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md` and the current `planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md`. Read the protocol and all four core documents in full before editing them.
+
+### Six-month dependency maintenance review — SheetJS and Browserslist
+
+**Decision (2026-10-31):** check SheetJS (`xlsx`) and the Browserslist compatibility database (`caniuse-lite`) every six calendar months. A review is required even if no package update is made. Maintain in the Maintainer's Guide a ledger with each dependency's exact installed version, the date it was last successfully installed and verified, the separate last-review date, the review findings and test evidence, and the next due date. As the initial updates were completed on **2026-10-31**, the first due date is **2027-04-30**. After a review, schedule the next check six calendar months after that review; record a new *last updated* date only after actual upgrade verification.
+
+Keep this as a bounded tooling/maintenance pass: inspect official security advisories and distribution sources, assess necessity and compatibility, inspect exact manifest/lockfile diffs, run the build and appropriate import regressions, then commit only tested changes. `npm audit` is informative but not exhaustive for the official SheetJS CDN tarball. Avoid forcing transitive upgrades or mixing importer redesign with a dependency refresh. The Maintainer's Guide owns version-specific verification and test instructions.
+
+---
 
 ## 5. Dependency and Tooling Freeze
 
