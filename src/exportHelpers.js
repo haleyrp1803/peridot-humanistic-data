@@ -130,6 +130,11 @@ export function serializeSvgForExport(svgElement, options = {}) {
   const titleText = String(options.title || '').trim();
   const subtitleLines = Array.isArray(options.subtitleLines) ? options.subtitleLines.map((line) => String(line).trim()).filter(Boolean) : [];
   const footerLines = Array.isArray(options.footerLines) ? options.footerLines.map((line) => String(line).trim()).filter(Boolean) : [];
+  // CARTO requires legible attribution on static map exports, independently
+  // of which optional title or metadata fields the researcher selected.
+  if (options.cartoAttribution) {
+    footerLines.push('Visualization: Peridot  |  Basemap: © OpenStreetMap contributors, © CARTO');
+  }
 
   /*
    * Export composition is opt-in. With no title or metadata selected, PNG/SVG
@@ -161,6 +166,9 @@ export function serializeSvgForExport(svgElement, options = {}) {
   const height = baseHeight + headerHeight + footerHeight;
   const serifFont = "Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif";
   const uiFont = "Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+  // Export annotations must be fully opaque. The theme token HEX_475569
+  // currently resolves to a 22%-opacity color, making static credits illegible.
+  const exportAnnotationInk = "#263b35";
 
   clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
   clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
@@ -204,7 +212,7 @@ export function serializeSvgForExport(svgElement, options = {}) {
       const subtitleNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       subtitleNode.setAttribute('x', String(annotationInset));
       subtitleNode.setAttribute('y', String(currentY + subtitleFontSize));
-      subtitleNode.setAttribute('fill', PERIDOT_COLORS.HEX_475569);
+      subtitleNode.setAttribute('fill', exportAnnotationInk);
       subtitleNode.setAttribute('font-size', String(subtitleFontSize));
       subtitleNode.setAttribute('font-weight', '600');
       subtitleNode.setAttribute('font-family', uiFont);
@@ -219,10 +227,39 @@ export function serializeSvgForExport(svgElement, options = {}) {
     let currentY = headerHeight + baseHeight + footerTopGap;
 
     footerLines.forEach((line) => {
+      if (options.cartoAttribution && line.startsWith('Visualization: Peridot  |  Basemap:')) {
+        // Use independently linked text segments in SVG; the same text renders
+        // visibly in raster PNG exports, where hyperlinks are not possible.
+        const segments = [
+          { text: 'Visualization: Peridot  |  Basemap: ', x: annotationInset },
+          { text: '© OpenStreetMap contributors', x: annotationInset + 300, href: 'https://www.openstreetmap.org/copyright' },
+          { text: '© CARTO', x: annotationInset + 588, href: 'https://carto.com/attribution/' },
+        ];
+        segments.forEach(({ text, x, href }) => {
+          const textNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          textNode.setAttribute('x', String(x));
+          textNode.setAttribute('y', String(currentY + footerFontSize));
+          textNode.setAttribute('fill', exportAnnotationInk);
+          textNode.setAttribute('font-size', String(footerFontSize));
+          textNode.setAttribute('font-weight', '600');
+          textNode.setAttribute('font-family', uiFont);
+          textNode.textContent = text;
+          if (href) {
+            const link = document.createElementNS('http://www.w3.org/2000/svg', 'a');
+            link.setAttribute('href', href);
+            link.appendChild(textNode);
+            clone.appendChild(link);
+          } else {
+            clone.appendChild(textNode);
+          }
+        });
+        currentY += footerLineHeight;
+        return;
+      }
       const footerNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
       footerNode.setAttribute('x', String(annotationInset));
       footerNode.setAttribute('y', String(currentY + footerFontSize));
-      footerNode.setAttribute('fill', PERIDOT_COLORS.HEX_475569);
+      footerNode.setAttribute('fill', exportAnnotationInk);
       footerNode.setAttribute('font-size', String(footerFontSize));
       footerNode.setAttribute('font-weight', '600');
       footerNode.setAttribute('font-family', uiFont);
@@ -236,6 +273,55 @@ export function serializeSvgForExport(svgElement, options = {}) {
   const markup = `<?xml version="1.0" encoding="UTF-8"?>
 ${new XMLSerializer().serializeToString(clone)}`;
   return { markup, width, height };
+}
+
+// Embed raster basemap images before exporting. External <image> references are
+// not portable in downloaded SVGs and often disappear during SVG-to-canvas
+// conversion. Never let an exported SVG retain tile URLs containing API keys.
+async function embedExternalSvgImages(sourceSvg) {
+  const cloned = sourceSvg.cloneNode(true);
+  inlineSvgVariables(sourceSvg, cloned, window.getComputedStyle(sourceSvg));
+  const images = Array.from(cloned.querySelectorAll('image'));
+  const external = images.map((image) => ({
+    image,
+    url: image.getAttribute('href') || image.getAttributeNS('http://www.w3.org/1999/xlink', 'href') || '',
+  })).filter(({ url }) => /^https?:\/\//i.test(url));
+  const urls = [...new Set(external.map(({ url }) => url))];
+  const resolved = new Map();
+  let index = 0;
+  const concurrency = Math.min(8, urls.length);
+  await Promise.all(Array.from({ length: concurrency }, async () => {
+    while (index < urls.length) {
+      const url = urls[index++];
+      // Do not include the URL in errors: CARTO tile URLs contain the key.
+      let response;
+      try {
+        response = await fetch(url, { mode: 'cors', credentials: 'omit' });
+      } catch {
+        throw new Error('Basemap export blocked by the tile server or browser CORS policy. No incomplete export was downloaded.');
+      }
+      if (!response.ok) throw new Error(`Basemap export tile request failed (HTTP ${response.status}). No incomplete export was downloaded.`);
+      const blob = await response.blob();
+      if (!blob.type.startsWith('image/')) throw new Error('Basemap export received a non-image response.');
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Could not embed a basemap tile in the export.'));
+        reader.readAsDataURL(blob);
+      });
+      resolved.set(url, dataUrl);
+    }
+  }));
+  external.forEach(({ image, url }) => {
+    image.setAttribute('href', resolved.get(url));
+    image.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
+  });
+  return cloned;
+}
+
+export async function serializeSvgWithEmbeddedImagesForExport(svgElement, options = {}) {
+  const preparedSvg = await embedExternalSvgImages(svgElement);
+  return serializeSvgForExport(preparedSvg, options);
 }
 
 function loadImage(src) {
@@ -255,7 +341,9 @@ function svgMarkupToDataUrl(svgMarkup) {
 }
 
 export async function renderSvgElementToPngBlob(svgElement, options = {}) {
-  const serialized = serializeSvgForExport(svgElement, options);
+  const serialized = options.embedExternalImages
+    ? await serializeSvgWithEmbeddedImagesForExport(svgElement, options)
+    : serializeSvgForExport(svgElement, options);
   let image;
   try {
     image = await loadImage(svgMarkupToDataUrl(serialized.markup));

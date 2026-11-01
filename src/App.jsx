@@ -55,6 +55,7 @@ import {
   renderSvgElementToPngBlob,
   rowsToCsv,
   serializeSvgForExport,
+  serializeSvgWithEmbeddedImagesForExport,
   slugifyFilenamePart,
   makeDownloadUrl,
   revokeObjectUrl,
@@ -3071,7 +3072,7 @@ function SvgMap({
     const onWheel = (event) => handleWheel(event);
     svg.addEventListener('wheel', onWheel, { passive: false });
     return () => svg.removeEventListener('wheel', onWheel);
-  }, [view]);
+  }, [view, dragState]);
 
   const stopControlAnimation = () => {
     holdActionRef.current = null;
@@ -6213,17 +6214,24 @@ export default function EuropeNetworkMapApp() {
 
   const getMapSvgElement = () => mapViewportRef.current?.querySelector('svg') || null;
 
-  const handleExportSvg = () => {
+  const handleExportSvg = async () => {
     try {
       const svgElement = getMapSvgElement();
       if (!svgElement) {
         setExportStatus({ kind: 'error', message: 'SVG export failed: map not found.' });
         return;
       }
-      const serialized = serializeSvgForExport(svgElement, {
-        title: pageTitle,
-        subtitleLines: exportSubtitleLines,
-      });
+      const cartoMap = viewMode === 'geographic' || (viewMode === 'person' && personLayoutMode === 'geographic');
+      const serialized = cartoMap
+        ? await serializeSvgWithEmbeddedImagesForExport(svgElement, {
+          title: pageTitle,
+          subtitleLines: exportSubtitleLines,
+          cartoAttribution: true,
+        })
+        : serializeSvgForExport(svgElement, {
+          title: pageTitle,
+          subtitleLines: exportSubtitleLines,
+        });
       const result = triggerDownload(
         new Blob([serialized.markup], { type: 'image/svg+xml;charset=utf-8' }),
         `${slugifyFilenamePart(pageTitle, 'correspondence-visualizer')}-${viewMode}-map.svg`
@@ -6245,9 +6253,12 @@ export default function EuropeNetworkMapApp() {
       const includeTitle = Boolean(exportOptions.includeTitle);
       const title = includeTitle ? String(exportOptions.title || pageTitle || '').trim() : '';
       const footerLines = buildMapPngExportFooterLines(exportOptions);
+      const cartoMap = viewMode === 'geographic' || (viewMode === 'person' && personLayoutMode === 'geographic');
       const pngBlob = await renderSvgElementToPngBlob(svgElement, {
         title,
         footerLines,
+        embedExternalImages: cartoMap,
+        cartoAttribution: cartoMap,
       });
       const result = triggerDownload(
         pngBlob,
