@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-fc42306 — Vite-managed editorial gateway asset imports (commit message not independently supplied)
+ae3574c — Finalize geographic map interface and improve workbook review processing
 Branch: main
-Status: clean working tree; HEAD and origin/main aligned (user-confirmed 2026-10-31)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-31)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -363,6 +363,28 @@ Detailed historical decision rationale remains preserved in the archived invento
 - Phase 3 should build chart controls from saved/generalized variables, including a structured autocomplete sentence builder that mirrors scholarly questions without implementing unrestricted natural-language prompting.
 
 
+#### Provisional background review and researcher edit authority decision (2026-10-31)
+
+```text
+Decision:
+Allow debounced, provisional workbook-review processing in a worker without locking researcher mapping edits.
+
+Context:
+Multi-sheet workbooks with thousands of mapped records caused a browser freeze upon entering Review & Upload when assembly and capability auditing occurred synchronously in React rendering.
+
+Chosen approach:
+Run full-workbook review assembly and auditing in a Web Worker, start provisional processing after stable mapping changes, reuse a result only for its matching mapping revision, and reject superseded worker results. Keep Confirm upload gated on current successful validation.
+
+Rejected alternative:
+Treat a short editing pause as finalized scholarly approval, disable Time/Places/Relations edits during processing, accept a worker result from an older mapping revision, or claim independent mapping-category caches already exist.
+
+Reason:
+Researcher-owned, reversible interpretation must remain authoritative while expensive computation moves off the interface thread.
+
+Maintenance consequence:
+Test rapid corrections, worker failure, changed workbook joins, navigation between mapping tabs, stale-result races, and final confirmation separately. Full independent per-category caching remains deferred. See Maintainer’s Guide Section 7.
+```
+
 #### Generalized-mapper authority decision
 
 ```text
@@ -676,6 +698,28 @@ The design aims to resemble a page in an illustrated manuscript without sacrific
 
 Maintenance consequence:
 Regression-test About pages, Feedback submission, the Creator portrait, and Data entry across laptop and larger viewports. Use the latest exact source before changing breakpoints or CSS; these visual decisions do not alter generalized data or application scope contracts.
+```
+
+#### CARTO geographic basemap and self-contained export decision (2026-10-31)
+
+```text
+Decision:
+Retain the existing D3/SVG geographic research system while using CARTO Web Mercator raster tiles and self-contained attributed exports.
+
+Context:
+The initial tile renderer suffered vertical overshoot, blank gaps, high-zoom SVG positioning failure, slow research-edge rendering, and missing basemap images in exports.
+
+Chosen approach:
+Use viewport-relative raster tile positioning, horizontal world wrapping, bounded vertical panning, buffered/cached tile loading, clipped/culling edges, and a basemap selector in transactional Map settings. Embed tiles into exported SVG/PNG and include readable Peridot, OpenStreetMap contributors, and CARTO attribution.
+
+Rejected alternative:
+Treat a tile-request success flag as successful high-zoom rendering, ship research-only image exports without visible basemap errors, expose private API key URLs in exported SVG, or migrate away from the accepted D3/SVG engine without a bounded architectural review.
+
+Reason:
+Preserve research semantics, responsive interaction, shareable images, and map-provider attribution within the current architecture.
+
+Maintenance consequence:
+Keep the CARTO key untracked and excluded from export URLs; regression-test zoom, wrapping, drag/scroll races, Inspector edges, style Apply/Reset, playback, and exported PNG/SVG imagery and credits.
 ```
 
 ### 7.7 Export

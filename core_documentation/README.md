@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-fc42306 — Vite-managed editorial gateway asset imports (commit message not independently supplied)
+ae3574c — Finalize geographic map interface and improve workbook review processing
 Branch: main
-Status: clean working tree; HEAD and origin/main aligned (user-confirmed 2026-10-31)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-31)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -135,11 +135,13 @@ For suitable mapped fields, researchers can declare whether one cell contains on
 
 **File format and error handling:** `.xlsm` (macro-enabled workbook) is accepted for worksheet-data parsing; Peridot does not execute VBA macros. Unrecognized extensions, unreadable/corrupt or password-protected workbooks, and sources with no usable table should produce explanatory feedback rather than being presented as successfully staged data.
 
+**Workbook review responsiveness (2026-10-31):** For larger multi-sheet uploads, Peridot can prepare a provisional Review & Upload result in a background Web Worker as mapping choices settle. The researcher may continue to edit or correct fields; obsolete calculations must not supersede updated mappings. A processing message may appear while validation runs. This optimization currently prepares full-workbook review early rather than independently caching the Time, Places, Relations, and Evidence stages; final upload may still require processing.
+
 ### 3.3 Visualize
 
 **Visualize** provides capability-aware access to one unified **Geographic Map**, a separate **Force-Directed Network**, a dedicated **Timeline** visualization workspace, and Chart Visualizations. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
 
-The Geographic Map includes compact **Map settings** for visible node identities, researcher-selected geographic anchor roles, relationship-line location rules, and fallback behavior. Settings are transactional: changes are drafted, **Apply** commits them, and **Reset** affects the draft rather than silently recomputing the graph. Geographic edges render only when both exact endpoint node instances are visible under the applied settings.
+The Geographic Map uses a tiled Web Mercator basemap from CARTO. **Voyager** is the default; researchers can select **Positron** or **Dark Matter** in compact **Map settings**, alongside visible node identities, researcher-selected geographic anchor roles, relationship-line location rules, and fallback behavior. Settings are transactional: changes are drafted, **Apply** commits them, and **Reset** affects the draft rather than silently recomputing the graph. Geographic edges render only when both exact endpoint node instances are visible under the applied settings.
 
 The dedicated Timeline workspace projects canonical mapped temporal assertions into event cards without replacing the existing playback control. Its default orientation is horizontal, earliest to latest from left to right; researchers can switch to a vertical orientation, earliest to latest from bottom to top. Timeline navigation supports scrollbars, click-and-drag panning, smooth mouse-wheel zoom, and +/- controls. The temporal axis changes granularity with zoom and suppresses colliding labels rather than keeping one fixed year scale.
 
@@ -149,7 +151,9 @@ Mapped relationships are being projected into the Timeline only when explicit re
 
 The existing bottom Timeline/playback control remains shared across Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
 
-The playback range control includes a draggable playhead/scrubber in addition to its left/right range clamps. Dragging the playhead updates a local preview continuously and commits the canonical playback position on release, avoiding expensive full-state churn on every pointer movement. Export remains a shared header menu rather than a separate workspace. Map PNG export defaults to an unbranded map-only image, with optional title and metadata annotations.
+The playback range control includes a draggable playhead/scrubber in addition to its left/right range clamps. Dragging the playhead updates a local preview continuously and commits the canonical playback position on release, avoiding expensive full-state churn on every pointer movement. Export remains a shared header menu rather than a separate workspace. Geographic map PNG/SVG exports include the basemap, research overlays, and legible **Peridot / OpenStreetMap contributors / CARTO** attribution even when optional title and metadata annotations are omitted.
+
+**Geographic navigation and performance (2026-10-31):** The CARTO map supports continuous east–west panning across the date line, bounded north–south movement, and geographic zoom through level 20. Tile buffering and retained imagery reduce white flashes, while clipped/culling relationship lines improve responsiveness during movement. These features were user-tested with the 500 Letters sample and an additional dataset containing approximately 3,000 nodes; performance for all larger datasets is not guaranteed.
 
 ### 3.4 Explore and inspect
 
@@ -497,6 +501,10 @@ Peridot does **not** clean or standardize person names, place names, dates, topi
 Temporal parsing is conservative and humanities-aware. Peridot preserves original temporal text while deriving machine-usable structure for ordinary dates, ISO 8601 timestamps such as `1397-02-21T00:00:00Z`, year/month/day precision, approximate forms, mixed-precision ranges, open-ended periods, and partial dates such as `1607/00/02`, where zero represents an unknown component rather than a literal zero. ISO timestamps are interpreted from their lexical calendar date for historical chronology rather than timezone-shifting the source into a different day. Structurally inconsistent ranges are preserved and flagged rather than silently reversed. Competing date possibilities remain preserved for review rather than being collapsed into false certainty.
 
 Mapped Time is repeatable. Users can name each Date or Period/range in ordinary language; use one source field or separate year/month/day fields; reuse fields across assertions; and preserve related researcher-note columns without treating those notes as visualization rules.
+
+### CARTO basemap and geographic export attribution
+
+The Geographic Map offers CARTO Voyager, Positron, and Dark Matter through Map settings and retains source-backed research overlays. Geographic PNG and SVG exports embed the displayed map imagery and include readable Peridot, © OpenStreetMap contributors, and © CARTO attribution. If the required tiles cannot be embedded, Peridot should report the export problem rather than silently omit the geography. The CARTO credential is supplied through a local environment variable (`VITE_CARTO_BASEMAP_KEY`); do not publish `.env.local` or share an old SVG containing keyed external tile URLs. Deployment and external provider availability are separate from local map/export verification.
 
 ### Workbook / Excel import
 
