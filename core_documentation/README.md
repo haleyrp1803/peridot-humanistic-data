@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-973d40d — Refine mapping disclosure and subject selection and repair Review
+481acd9 — Optimize canonical capability readiness calculations
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-31)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-01)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -112,6 +112,8 @@ The pill-and-icon section rail is navigation among relevant mapping categories, 
 
 
 **Mapping usability refinement (committed at `973d40d`):** When a researcher revisits a mapped dataset or inspects an editable sample mapping, existing Relations, Time, and Places assignments appear immediately; no extra Add click is required to reveal saved assignments. **Add a Location** exposes one new place mapping at a time. The subject chooser explicitly supports selecting the record and/or several mapped participants, and selected checkboxes remain visually active rather than greyed out. The Review & Upload crash caused by an undefined capability-audit result has been repaired.
+
+**Fresh-upload correction (`8dd208a`):** Automatic source-field suggestions no longer expand Relations, Time, or Places on a new upload. Those sections remain behind their **Add** controls until the researcher activates them. Existing/uploaded and sample mappings continue to show accepted assignments immediately when revisited; the same behavior applies after editing and reopening mappings.
 
 **Progressive mapping disclosure (committed at `c0e1fb3`):** Relations, Time, and Places begin with an explicit **Add a Relationship**, **Add a Date or Time Period**, or **Add a Location** control. Recognized source-column suggestions can populate the form after the researcher chooses Add; merely recognizing potential fields does not require exposing a full configuration form immediately. The relationship editor still supports one relationship group with Part A/B/C/etc. participants, **not** multiple independently configured relationship groups per source row. Existing user-confirmed mapping state must not be lost when navigating between mapping sections.
 
@@ -510,6 +512,8 @@ The Geographic Map offers CARTO Voyager, Positron, and Dark Matter through Map s
 
 **Spreadsheet dependency maintenance (2026-10-31):** Peridot now uses SheetJS (`xlsx`) 0.20.3 from the version-pinned publisher distribution, replacing the older npm 0.18.5 release. Browser-compatibility data (`caniuse-lite`) was also refreshed. Import behavior was user-regression-tested; the dependency upgrades do not change the researcher's mapping responsibilities. Both dependencies are reviewed every six months; the Maintainer's Guide maintains the exact version/update/review register.
 
+**Live CARTO deployment (verified 2026-11-01):** The published map now receives its CARTO API key during the GitHub Actions/Vite production build (`54dfa2c`), correcting the former `API KEY REQUIRED` basemap images. This value is configured as a GitHub Actions repository secret, but is ultimately browser-visible because Vite embeds `VITE_` environment variables in client assets. Project maintainers should apply CARTO-side restrictions/monitoring where available; researchers do not need to configure a key to use the deployed site.
+
 ### Workbook / Excel import
 
 For `.xlsx`, `.xlsm`, and `.xls` files, Peridot supports workbook-aware mapping:
@@ -523,6 +527,10 @@ For `.xlsx`, `.xlsm`, and `.xls` files, Peridot supports workbook-aware mapping:
 - review the final interpretation before import.
 
 Header names for joined IDs do not have to match. The user-selected join is authoritative. Row order is not used as the primary join strategy. Duplicate IDs that would make the join unsafe are blocked or surfaced rather than silently creating repeated assembled records.
+
+**Primary versus supporting workbook sheets:** The selected primary sheet determines which source rows become records. A supporting geographic sheet can contain placeholder-bearing rows that count as records if it is chosen as primary. Researchers should choose the sheet representing their intended record unit and use explicit joins for supporting attributes. Peridot does not silently discard placeholders or decide what counts as substantive historical evidence.
+
+**Import performance (2026-11-01):** A capability-calculation optimization committed at `481acd9` reduced canonical construction time in the tested large-workbook cases. The measured before/after cases were not strictly identical, so the timings are not a performance guarantee. Import semantics, review validation, and subject attribution were preserved in the reported browser tests.
 
 ### First-class sample datasets
 

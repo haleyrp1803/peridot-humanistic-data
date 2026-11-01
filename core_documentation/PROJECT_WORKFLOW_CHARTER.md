@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-973d40d — Refine mapping disclosure and subject selection and repair Review
+481acd9 — Optimize canonical capability readiness calculations
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-31)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-01)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -356,6 +356,28 @@ Maintenance consequence:
 Detailed historical decision rationale remains preserved in the archived inventory below.
 
 ### 7.1 Data policy and imports
+
+#### Performance optimization without semantic reclassification (2026-11-01)
+
+```text
+Decision:
+Optimize repeated per-record capability lookups without changing the conditions under which a mapped record supports a Network or geographic route.
+
+Context:
+Profiling workbook confirmation found canonical construction, not workbook assembly or the legacy adapter, dominated the measured synchronous import time. Repeated whole-collection scans occurred in capability readiness calculations.
+
+Chosen approach:
+At 481acd9, precompute record-indexed participation counts and geographic assertion flags, preserving current eligibility logic and normalized output. Remove temporary performance instrumentation after accepted browser tests.
+
+Rejected alternative:
+Treat placeholder data as disposable, redefine capability readiness for speed, or redesign the workbook worker without evidence that repeated assembly was the primary cost.
+
+Reason:
+Peridot's researcher-owned mapped semantics must remain stable across implementation-level performance improvements.
+
+Maintenance consequence:
+Retest capability availability, multipart relations, mapped route geography, and ordinary sample/workbook import after future changes. Measured before/after runs used different mapping conditions and are not a controlled benchmark; see the Maintainer's Guide and Changelog.
+```
 
 - Peridot is database-first: accepted research items may be incomplete, and coordinates/dates are capability-enabling rather than admission requirements.
 - Peridot does not silently standardize, merge, infer domain meaning, or enforce controlled vocabularies.

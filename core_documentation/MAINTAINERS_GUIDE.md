@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-973d40d — Refine mapping disclosure and subject selection and repair Review
+481acd9 — Optimize canonical capability readiness calculations
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-10-31)
+Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-01)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -58,6 +58,8 @@ Network semantics have now crossed the principal generalized boundary as well. G
 The active public workflow now uses a persistent site-wide header rather than a hamburger-first route model. The Peridot logo returns to Home; **Data**, **Visualize**, and **Explore** occupy the primary task group; **Tutorials** and **About** occupy the project/help group. The header persists across public pages, and page navigation does not intentionally unload the active dataset or reset accepted workspace state. Visualize owns Map, Network, Timeline, Charts, and Export; Explore owns Browse, Advanced Query, and Refine; Data owns project start/edit plus the full-page mapping workspace; About owns About Peridot, Creator, AI Disclosure, Open Source, and Feedback. Themes and Accessibility remains implemented as an internal compatibility/development route but is not a public header destination. The historical Home tutorial placeholder remains retired; the active Home now has one Get Started entry action. Substantive guided Tutorials remain deferred.
 
 ### Current geographic basemap, export, and importer worker contract (2026-10-31)
+
+**Production CARTO configuration (repaired at `54dfa2c`, live-site verified 2026-11-01):** `.github/workflows/deploy-pages.yml` builds `./dist` with `GITHUB_PAGES: 'true'` and forwards `VITE_CARTO_BASEMAP_KEY` from the GitHub Actions repository secret to the Vite build. An absent build-time variable caused CARTO to return `API KEY REQUIRED` tiles on GitHub Pages despite successful localhost rendering. GitHub Actions secrets keep credentials out of tracked workflow text, but Vite embeds `VITE_` values in publicly served client assets; **do not describe this as a private server-side key**. Apply provider-side domain/usage restrictions and monitoring where supported; never commit or disclose the raw value. Test deployed Voyager, Positron, and Dark Matter after changes to this build contract.
 
 The active **Geographic Map** remains D3/SVG, but now uses a tiled **Web Mercator** CARTO basemap, replacing the earlier Natural Earth geographic backdrop in that view. CARTO **Voyager** is the default, with **Positron** and **Dark Matter** alternatives selected inside transactional **Map settings** (draft, Apply, Reset). The basemap key is read from `VITE_CARTO_BASEMAP_KEY` in local configuration and must never be placed in tracked files, logs, exported SVG URLs, or public documentation. Attribution to **© OpenStreetMap contributors** and **© CARTO** must be retained alongside Peridot attribution in geographic PNG/SVG exports and the relevant live view.
 
@@ -109,7 +111,7 @@ The public **Visualize**, **Explore**, and **Tutorials** no-dataset/coming-soon 
 
 **Production assets:** Image references inside React components must use Vite-managed static imports from the existing repository `assets/` directory, as already established on Home, or an equivalently build-verified method. JavaScript literals such as `/assets/foo.png` and manually base-prefixed strings do **not** make Vite emit files from an arbitrary top-level assets directory. Do not move or duplicate these images into `public/assets/` as an undocumented workaround. For changes, verify that the production build emits the required images and that their URLs work from GitHub Pages' `/peridot-humanistic-data/` base. Localhost rendering, Git push, and deployment are separate verification steps.
 
-Minimum regression: visit Visualize, Explore, and Tutorials with no dataset; inspect all parchment and tear imagery at laptop and desktop sizes; verify title, text, and button; navigate to Data; confirm that active-data Visualize/Explore functionality and session state are not affected; switch among the three pages and verify approved animation replay and reduced-motion behavior; run `npm.cmd run build` and inspect `dist/assets` output; verify the actual deployed site after publication. The latest confirmed Git state is `973d40d`; post-`fc42306` deployed gateway rendering remains separately unverified in this documentation pass.
+Minimum regression: visit Visualize, Explore, and Tutorials with no dataset; inspect all parchment and tear imagery at laptop and desktop sizes; verify title, text, and button; navigate to Data; confirm that active-data Visualize/Explore functionality and session state are not affected; switch among the three pages and verify approved animation replay and reduced-motion behavior; run `npm.cmd run build` and inspect `dist/assets` output; verify the actual deployed site after publication. The latest confirmed Git state is `481acd9`; post-`fc42306` deployed gateway rendering remains separately unverified in this documentation pass.
 
 ## 2. Application Boundaries and Route Model
 
@@ -316,6 +318,15 @@ The current accepted chart model uses a quarter-width control rail and three-qua
 Analytics receives the Search-filtered/playback-visible dated scope while preserving genuinely undated/non-positionable Search-matching records for charting. Its local Start/End Year controls constrain dated records; **Exclude undated records?** is a separate explicit checkbox and is off by default. This contract was verified during the `656010d` scope pass and must remain aligned across chart derivation, visible totals/legends, category inventories, and PNG export.
 
 ## 7. Data Import and Workbook Contract
+
+### Confirmed import safeguards and performance findings (2026-11-01)
+
+- `64dfbae` strengthens `PeridotColumnMappingModal.jsx`: the workbook confirm handler independently requires a successful current Review result for the current workbook/mapping, rather than trusting the disabled button alone. This is defense-in-depth, **not** a claim that every rapid-edit stale-result race has been exercised.
+- `8dd208a` restores the intended **fresh versus previously mapped** distinction. Suggested mappings on a new upload do not pre-open Relations, Time, or Places; explicit Add actions reveal new configuration. Already accepted/sample mappings display their substantive assignments immediately. Preserve the previously accepted one-new-place-per-Add interaction and visually active, multi-subject checkboxes.
+- `481acd9` optimizes capability readiness in `peridotCorrespondenceProfile.js`: precompute per-record participation counts and route-related assertion flags rather than repeatedly scanning all participations/assertions for each record. This is a **semantic-preservation** optimization, not a new definition of network or route eligibility. Test ordinary correspondence, multipart relations, geographic assertions, empty records, and non-correspondence datasets after future changes to these calculations.
+- The workbook performance investigation used **temporary, since removed** timing instrumentation in `App.jsx` and `peridotCanonicalRuntimeModel.js`. In a 4,999-record run, synchronous import measured ~4.08 s, dominated by canonical construction (~3.67 s) rather than repeated assembly (~0.17 s) or legacy compatibility (~0.10 s). A post-optimization 4,999-record case measured ~0.49 s canonical construction. Different primary sheets/mappings prevent calling this a controlled benchmark; the observed ~86.8% reduction is descriptive only.
+- A multi-sheet workbook's **primary sheet determines the source-record set**. Supporting geographic sheets with placeholder-bearing rows can have a different row cardinality even if the researcher considers fewer rows substantively informative. Never silently drop those rows as a performance optimization; use researcher-selected record sheets and explicit unique-ID joins. Separating support-sheet counts from primary research-record counts is future usability work, not a change made here.
+- Final assembly can still run synchronously after Review; optimization of worker-result reuse is **deferred**, not implemented. The user elected not to undertake a separate worker-race/security follow-up in this cleanup cycle. The deeper regression-fixture review is deferred.
 
 ### Verified mapping display and Review behavior (2026-10-31, `973d40d`)
 
@@ -1043,6 +1054,8 @@ These areas still deserve narrow, explicit passes:
 
 ## 11. Active Technical Backlog
 
+**Cleanup status update (2026-11-01):** The previous import-performance investigation closed with the `481acd9` capability-scan optimization. The repository-level legacy importer audit was completed read-only and recommended **no code deletions**; future retirement requires a fresh dependency/fixture review. Dedicated worker-race and dependency-security follow-ups are excluded from the present cleanup cycle by researcher choice, while comprehensive regression-fixture review is **deferred**. This does not change the existing active Timeline, Network, Explore, and Analytics priorities below.
+
 **Deferred mapping architecture (2026-10-28):** multiple independent relationships per source row need a new grouping layer above `relationshipParts`, with corresponding workbook, runtime, canonical model, Inspector, Network, and export handling. Progressive form activation is already implemented and should not be mistaken for this feature.
 
 
@@ -1125,6 +1138,12 @@ The project deliberately rolled back to the clean generalized **pre-animation** 
 
 ## 12. Archived and Compatibility Paths
 
+### Legacy importer retirement classification — read-only audit (2026-11-01)
+
+The November 1 source/import-graph audit classified the old Universal Upload Prototype UI, test harness, and related prototype engine as **outside the inspected active-app import graph**, not as automatically safe deletions. `peridotUniversalRuntimeCompatibility.js` and `peridotNormalizationShadowAudit.js` still have regression-fixture/parity roles. The production model still depends on `peridotLegacyCompatibilityAdapter.js`, correspondence-profile processing, and genealogy-related mapping/runtime code. The repository-level check did not find legacy-importer entries in normal npm scripts, the GitHub Pages workflow, or the itch.io packaging script, but this is not an exhaustive audit of manually invoked tests or every historical entry point.
+
+**Disposition: retain all of these files; no deletion performed.** The regression-fixture review is explicitly deferred. The available source archive predates the optimization at `481acd9`; inspect exact current source and dependent fixtures before any future retirement. Historical experiment preservation is a project goal, not evidence of a production dependency.
+
 
 
 ### Canonical correspondence/genealogy adapters and profile vocabulary — active internal compatibility paths
@@ -1167,7 +1186,7 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`973d40d`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
+- current synchronized checkpoint: **`481acd9`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned and a clean working tree in the latest user-provided sync output
 - local development command on the user's machine: **`npm.cmd run dev`**
 - current Timeline state: canonical assertion-level projection, horizontal/vertical visualization workspace, smooth wheel/button zoom, scrollbars + click-drag panning, zoom-adaptive axis, evidence-driven plural categories with OR visibility, shared Inspector handoff, subject-strict mapped relationship projection, continuous secondary-axis layout, and revised duration treatment are committed; relationship-line routing/presentation is the immediate unfinished item.
 - the existing bottom Timeline/playback control remains intact and separate from the dedicated Timeline visualization workspace.
