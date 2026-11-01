@@ -43,6 +43,7 @@ jobs:
         run: npm run build
         env:
           GITHUB_PAGES: 'true'
+          VITE_CARTO_BASEMAP_KEY: ${{ secrets.VITE_CARTO_BASEMAP_KEY }}
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
