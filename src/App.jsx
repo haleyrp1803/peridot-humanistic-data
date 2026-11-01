@@ -2222,6 +2222,7 @@ function buildMapStageProps(args) {
     viewStateRef: args.viewStateRef,
     initialFocusStrategy: args.initialFocusStrategy,
     projectionMode: args.projectionMode,
+    cartoStyle: args.cartoStyle,
     hoverCard: args.hoverCard,
   };
 }
@@ -2405,49 +2406,11 @@ function SvgMap({
   viewStateRef = null,
   initialFocusStrategy = 'fit-all',
   projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH,
+  cartoStyle = 'rastertiles/voyager',
 }) {
   // Temporary diagnostics only: collect samples in refs so instrumentation
   // does not trigger React renders on pointer movement or tile requests.
   const perfMetricsRef = useRef({ frames: [], clusterMs: 0, clusterCount: 0, nodeMs: 0, nodeCount: 0, tileHits: 0, tileMisses: 0, tileErrors: 0, tileSelectionMs: 0, tileSelectionCount: 0 });
-  const [perfSnapshot, setPerfSnapshot] = useState(null);
-  useEffect(() => {
-    if (projectionMode !== PERIDOT_PROJECTION_WEB_MERCATOR) return undefined;
-    let active = true;
-    let frameId = null;
-    let prior = null;
-    const sampleFrame = (time) => {
-      if (!active) return;
-      if (prior !== null) {
-        const delta = time - prior;
-        if (delta > 0 && delta < 1000) {
-          const frames = perfMetricsRef.current.frames;
-          frames.push(delta);
-          if (frames.length > 120) frames.shift();
-        }
-      }
-      prior = time;
-      frameId = window.requestAnimationFrame(sampleFrame);
-    };
-    frameId = window.requestAnimationFrame(sampleFrame);
-    const timerId = window.setInterval(() => {
-      if (!active || document.hidden) return;
-      const stats = perfMetricsRef.current;
-      const frames = [...stats.frames].sort((a, b) => a - b);
-      const percentile = frames.length ? frames[Math.min(frames.length - 1, Math.floor(frames.length * .95))] : null;
-      setPerfSnapshot({
-        frameP95: percentile,
-        slowFrames: frames.filter((duration) => duration > 33.3).length,
-        frameSamples: frames.length,
-        clusterMs: stats.clusterCount ? stats.clusterMs / stats.clusterCount : null,
-        nodeMs: stats.nodeCount ? stats.nodeMs / stats.nodeCount : null,
-        tileSelectionMs: stats.tileSelectionCount ? stats.tileSelectionMs / stats.tileSelectionCount : null,
-        tileHits: stats.tileHits,
-        tileMisses: stats.tileMisses,
-        tileErrors: stats.tileErrors,
-      });
-    }, 1000);
-    return () => { active = false; window.cancelAnimationFrame(frameId); window.clearInterval(timerId); };
-  }, [projectionMode]);
   const svgRef = useRef(null);
   const transientViewportRef = useRef(null);
   const transientPanDeltaRef = useRef({ x: 0, y: 0 });
@@ -2463,21 +2426,18 @@ function SvgMap({
   const [view, setView] = useState(rememberedInitialView || { scale: 1, tx: 0, ty: 0 });
   const [dragState, setDragState] = useState(null);
   const [basemapError, setBasemapError] = useState('');
-  const [cartoStyle, setCartoStyle] = useState('rastertiles/voyager');
   // Diagnostic isolation only. Retain the loaded dataset in every mode.
   // Inactive rendering calculations are skipped, not merely made transparent.
-  const [performanceIsolation, setPerformanceIsolation] = useState('all');
-  const renderCartoForDiagnostic = performanceIsolation !== 'research';
-  const renderResearchForDiagnostic = performanceIsolation !== 'carto';
-  const renderResearchNodesForDiagnostic = renderResearchForDiagnostic && performanceIsolation !== 'edges';
-  const renderResearchEdgesForDiagnostic = renderResearchForDiagnostic && performanceIsolation !== 'nodes';
-  const renderResearchLabelsForDiagnostic = renderResearchForDiagnostic && !['nodes', 'edges', 'nodes-edges'].includes(performanceIsolation);
-  const renderResearchSymbolsForDiagnostic = renderResearchNodesForDiagnostic && performanceIsolation !== 'edges';
+  // Production geographic maps always render all research layers.
+  const renderCartoForDiagnostic = true;
+  const renderResearchNodesForDiagnostic = true;
+  const renderResearchEdgesForDiagnostic = true;
+  const renderResearchLabelsForDiagnostic = true;
+  const renderResearchSymbolsForDiagnostic = true;
   // Until a key is configured, request watermarked preview tiles ONLY when a
   // developer intentionally opts in. The default remains an offline-capable
   // SVG background and never sends automatic third-party map requests.
-  const [allowWatermarkedCartoPreview, setAllowWatermarkedCartoPreview] = useState(false);
-  const showDetailTiles = Boolean(PERIDOT_CARTO_API_KEY) || allowWatermarkedCartoPreview;
+  const showDetailTiles = true; // CARTO displays watermarked preview tiles when no key is configured.
   const animationFrameRef = useRef(null);
   const holdActionRef = useRef(null);
   const hasInitializedViewRef = useRef(false);
@@ -3540,83 +3500,10 @@ function SvgMap({
         </g>
       </svg>
 
-      {showGeographicBackdrop && projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR ? (
-        <div className="absolute left-3 top-3 z-10 flex flex-col items-start gap-2">
-          <div className="rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-3 py-2 text-xs shadow-sm">
-            <label className="flex items-center gap-2">
-              <span className="font-medium">Performance isolation:</span>
-              <select
-                aria-label="Performance isolation mode"
-                value={performanceIsolation}
-                onChange={(event) => setPerformanceIsolation(event.target.value)}
-                className="rounded border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-1 py-1"
-              >
-                <option value="all">All layers</option>
-                <option value="carto">CARTO only</option>
-                <option value="research">Research only (all research layers)</option>
-                <option value="nodes">Nodes only (no relationships or labels)</option>
-                <option value="edges">Relationships only (no nodes or labels)</option>
-                <option value="nodes-edges">Nodes + relationships (no labels)</option>
-              </select>
-            </label>
-            <div className="mt-1 text-[11px]">Diagnostic isolation: inactive node, edge, label, and tile rendering work is bypassed. Dataset stays loaded.</div>
-          </div>
-          <div className="flex flex-col gap-1 rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-3 py-2 text-xs shadow-sm">
-          <label className="flex items-center gap-2">
-            <span className="font-medium">CARTO basemap (test)</span>
-            <select
-              aria-label="CARTO basemap style"
-              value={cartoStyle}
-              onChange={(event) => setCartoStyle(event.target.value)}
-              className="rounded border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-1 py-1"
-            >
-              {PERIDOT_CARTO_STYLES.map((style) => <option key={style.id} value={style.id}>{style.label}</option>)}
-            </select>
-          </label>
-          {!PERIDOT_CARTO_API_KEY ? (
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={allowWatermarkedCartoPreview} onChange={(event) => setAllowWatermarkedCartoPreview(event.target.checked)} />
-              Preview watermarked tiles (no API key)
-            </label>
-          ) : null}
-          {!PERIDOT_CARTO_API_KEY ? <span>Unwatermarked maps require VITE_CARTO_BASEMAP_KEY.</span> : null}
-          </div>
-          {tileZoom != null && Number.isFinite(tileZoom) ? (
-            <div
-              className="pointer-events-none rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-2 py-1 text-xs shadow-sm"
-              aria-label="Development diagnostic: approximate map tile zoom level"
-            >
-              <span className="font-medium">Tile zoom (test): </span>
-              {tileZoom.toFixed(1)} / {PERIDOT_TEST_MAX_TILE_ZOOM}
-              {Number.isFinite(renderedTileZoom) ? ` · tiles z${renderedTileZoom}` : ''}
-            </div>
-          ) : null}
-          {tileZoom != null && Number.isFinite(tileZoom) ? (
-            <div className="pointer-events-none max-w-[290px] rounded-md border border-[var(--map-warning-bg)] bg-[var(--map-canvas-bg)] px-2 py-1 text-[11px] leading-relaxed shadow-sm" aria-label="Diagnostic tile loading and viewport measurements">
-              <div><strong>Tile state:</strong> {cartoTileDiagnostics.status}</div>
-              <div><strong>Selected:</strong> z{detailTiles[0]?.z ?? 'none'} / {detailTiles.length} tiles · <strong>displayed:</strong> {displayedCartoTiles.length} · <strong>progressive:</strong> {progressiveCartoTiles.length}</div>
-              <div><strong>Attempt:</strong> z{cartoTileDiagnostics.attemptedZ ?? '—'} · {cartoTileDiagnostics.requested} requested · {cartoTileDiagnostics.failed} failed</div>
-              <div><strong>Viewport:</strong> {view.scale.toExponential(2)}× · x={Math.round(view.tx)} · y={Math.round(view.ty)}</div>
-              <div><strong>Tile X:</strong> {detailTiles.length ? `${Math.min(...detailTiles.map((tile) => tile.worldX))}…${Math.max(...detailTiles.map((tile) => tile.worldX))}` : 'none'}</div>
-              <div><strong>Tile Y:</strong> {detailTiles.length ? `${Math.min(...detailTiles.map((tile) => tile.y))}…${Math.max(...detailTiles.map((tile) => tile.y))}` : 'none'}</div>
-              <div className="mt-1 border-t border-current/20 pt-1"><strong>Performance (diagnostic; 1 s refresh)</strong></div>
-              <div><strong>Frame p95:</strong> {perfSnapshot?.frameP95 != null ? `${perfSnapshot.frameP95.toFixed(1)} ms` : 'sampling'} · <strong>slow frames:</strong> {perfSnapshot?.slowFrames ?? '—'}/{perfSnapshot?.frameSamples ?? '—'} (&gt;33 ms)</div>
-              <div><strong>Tile cache:</strong> {perfSnapshot?.tileHits ?? 0} hits / {perfSnapshot?.tileMisses ?? 0} new · {perfSnapshot?.tileErrors ?? 0} errors (cumulative)</div>
-              <div><strong>Avg computation:</strong> tiles {perfSnapshot?.tileSelectionMs?.toFixed(2) ?? '—'} ms · clusters {perfSnapshot?.clusterMs?.toFixed(2) ?? '—'} ms · nodes {perfSnapshot?.nodeMs?.toFixed(2) ?? '—'} ms</div>
-              <div><strong>Mode:</strong> {performanceIsolation} · <strong>Research:</strong> {nodes.length} input nodes · {clusteredNodes.length} clustered · {edges.length} edges</div>
-            </div>
-          ) : null}
-        </div>
-      ) : null}
       {detailTilesActive ? (
         <div className="absolute bottom-3 right-3 z-10 rounded bg-[var(--map-canvas-bg)]/95 px-2 py-1 text-xs shadow-sm">
           © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer" className="underline">OpenStreetMap contributors</a>
           {' · '}© <a href="https://carto.com/attributions/" target="_blank" rel="noopener noreferrer" className="underline">CARTO</a>
-        </div>
-      ) : null}
-      {renderCartoForDiagnostic && showDetailTiles && !detailTilesActive ? (
-        <div className="pointer-events-none absolute bottom-32 left-3 rounded bg-[var(--map-warning-bg)] px-2 py-1 text-xs text-[var(--map-warning-text)]">
-          CARTO tiles unavailable at this view (tile request limit or map bounds)
         </div>
       ) : null}
       {!showGeographicBackdrop && showBasemap && basemapError ? (
@@ -3896,6 +3783,7 @@ function LegacyD3MapStage({
   viewResetKey,
   viewStateRef,
   initialFocusStrategy,
+  cartoStyle,
   hoverCard,
 }) {
   return (
@@ -3928,6 +3816,7 @@ function LegacyD3MapStage({
           viewStateRef={viewStateRef}
           initialFocusStrategy={initialFocusStrategy}
           projectionMode={projectionMode}
+          cartoStyle={cartoStyle}
         />
       ) : null}
 
@@ -4336,6 +4225,7 @@ export default function EuropeNetworkMapApp() {
     showPlaces: true,
     showEntities: false,
   });
+  const [geographicCartoStyle, setGeographicCartoStyle] = useState('rastertiles/voyager');
   const [analyticsChartType, setAnalyticsChartType] = useState(DEFAULT_ANALYTICS_STATE.chartType); const [analyticsBarGroupBy, setAnalyticsBarGroupBy] = useState(DEFAULT_ANALYTICS_STATE.barGroupBy); const [analyticsTopN, setAnalyticsTopN] = useState(DEFAULT_ANALYTICS_STATE.topN);
 
   
@@ -4555,6 +4445,7 @@ export default function EuropeNetworkMapApp() {
       showPlaces: nextSettings.showPlaceLabels !== false,
       showEntities: Boolean(nextSettings.showEntityLabels),
     });
+    setGeographicCartoStyle(nextSettings.cartoStyle || 'rastertiles/voyager');
   };
 
   // ------------------------------------------------------------
@@ -6429,6 +6320,7 @@ export default function EuropeNetworkMapApp() {
     viewResetKey,
     viewStateRef: activeMapViewStateRef,
     projectionMode: geographicProjectionMode,
+    cartoStyle: geographicCartoStyle,
     initialFocusStrategy: viewMode === 'person' && personLayoutMode === 'force' ? 'force-dense-cluster' : 'fit-all',
     hoverCard,
     personLayoutMode,
@@ -6973,6 +6865,9 @@ export default function EuropeNetworkMapApp() {
       lineFallbackRule: geographicRelationshipLineSettings.fallbackRule,
       defaultLineAnchorRule: 'event-location',
       defaultLineFallbackRule: 'most-frequent',
+      cartoStyle: geographicCartoStyle,
+      defaultCartoStyle: 'rastertiles/voyager',
+      cartoStyles: PERIDOT_CARTO_STYLES,
       showPlaceLabels: geographicNodeLabelSettings.showPlaces,
       showEntityLabels: geographicNodeLabelSettings.showEntities,
       defaultShowPlaceLabels: true,

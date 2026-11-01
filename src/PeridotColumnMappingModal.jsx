@@ -2391,38 +2391,66 @@ export function PeridotColumnMappingModal({
     [isWorkbookMode, workbookModel, workbookMapping]
   );
 
-  const workbookMappedRowsForAudit = useMemo(() => {
-    if (!isWorkbookMode || !workbookModel || activeStep !== 'workbook-review') return [];
-    try {
-      return buildPeridotRowsFromWorkbookMapping(workbookModel, workbookMapping);
-    } catch (error) {
-      return [];
+  // Provisional workbook review is prepared while the researcher maps, rather
+  // than waiting for Review & Upload. Mapping selections remain authoritative:
+  // results are usable only for the exact workbook and mapping snapshot that
+  // produced them. Each edit cancels (or supersedes) previous worker work.
+  const [workbookReview, setWorkbookReview] = useState({ status: 'idle', result: null, error: null, mapping: null, model: null });
+  const workbookReviewRevisionRef = useRef(0);
+  useEffect(() => {
+    const revision = ++workbookReviewRevisionRef.current;
+    if (!open || !isWorkbookMode || !workbookModel || !workbookValidation?.isValid) {
+      setWorkbookReview({ status: 'idle', result: null, error: null, mapping: null, model: null });
+      return undefined;
     }
-  }, [activeStep, isWorkbookMode, workbookModel, workbookMapping]);
+    let cancelled = false;
+    let worker = null;
+    // A debounce schedules provisional work, not a mapping lock or approval.
+    // Revisiting a mapping remains possible even while the worker runs.
+    const timeoutId = window.setTimeout(() => {
+      if (cancelled || revision !== workbookReviewRevisionRef.current) return;
+      setWorkbookReview({ status: 'loading', result: null, error: null, mapping: workbookMapping, model: workbookModel });
+      try {
+        worker = new Worker(new URL('./peridotWorkbookReview.worker.js', import.meta.url), { type: 'module' });
+        worker.onmessage = ({ data }) => {
+          if (cancelled || revision !== workbookReviewRevisionRef.current) return;
+          if (data?.type === 'ready') {
+            setWorkbookReview({ status: 'ready', result: data.result, error: null, mapping: workbookMapping, model: workbookModel });
+          } else {
+            setWorkbookReview({ status: 'error', result: null, error: data?.message || 'Workbook review failed.', mapping: workbookMapping, model: workbookModel });
+          }
+          worker.terminate();
+          worker = null;
+        };
+        worker.onerror = (event) => {
+          if (cancelled || revision !== workbookReviewRevisionRef.current) return;
+          setWorkbookReview({ status: 'error', result: null, error: event.message || 'Workbook review worker failed.', mapping: workbookMapping, model: workbookModel });
+          worker.terminate();
+          worker = null;
+        };
+        worker.postMessage({ workbookModel, workbookMapping });
+      } catch (error) {
+        if (!cancelled && revision === workbookReviewRevisionRef.current) {
+          setWorkbookReview({ status: 'error', result: null, error: error?.message || 'Unable to start workbook review.', mapping: workbookMapping, model: workbookModel });
+        }
+        worker?.terminate();
+        worker = null;
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+      worker?.terminate();
+    };
+  }, [open, isWorkbookMode, workbookModel, workbookMapping, workbookValidation?.isValid]);
 
-  const workbookTemporalReviewSummary = useMemo(
-    () => summarizeTemporalAssertionsForReview(workbookMappedRowsForAudit, 'workbook-temporal-review'),
-    [workbookMappedRowsForAudit]
-  );
-
-  const mappedRowsCapabilityAudit = useMemo(() => {
-    if (isWorkbookMode || activeStep !== 'review') return null;
-    try {
-      return auditPeridotDataCapabilities(mappedRows, { headers: Object.keys(mappedRows[0] || {}) });
-    } catch (error) {
-      return null;
-    }
-  }, [activeStep, isWorkbookMode, mappedRows]);
-
-  const workbookCapabilityAudit = useMemo(() => {
-    if (!isWorkbookMode || activeStep !== 'workbook-review') return null;
-    try {
-      return auditPeridotDataCapabilities(workbookMappedRowsForAudit, { headers: Object.keys(workbookMappedRowsForAudit[0] || {}) });
-    } catch (error) {
-      return null;
-    }
-  }, [activeStep, isWorkbookMode, workbookMappedRowsForAudit]);
-
+  // Check the source references in render as well as in worker callbacks. This
+  // prevents an already-ready result from being used during the render in
+  // which a researcher makes a new mapping selection (before effect cleanup).
+  const workbookReviewCurrent = workbookReview.mapping === workbookMapping && workbookReview.model === workbookModel;
+  const workbookReviewStatus = workbookReviewCurrent ? workbookReview.status : 'idle';
+  const workbookCapabilityAudit = workbookReviewStatus === 'ready' ? workbookReview.result?.capabilityAudit : null;
+  const workbookTemporalReviewSummary = workbookReviewStatus === 'ready' ? workbookReview.result?.temporalReviewSummary : null;
 
   const genealogySourceSheet = useMemo(() => (
     isWorkbookMode
@@ -3334,15 +3362,28 @@ export function PeridotColumnMappingModal({
           ) : null}
 
           {isWorkbookMode && stepForRender === 'workbook-review' ? (
-            <WorkbookReviewStep
-              workbookModel={workbookModel}
-              workbookMapping={workbookMapping}
-              validation={workbookValidation}
-              summary={workbookMappingSummary}
-              previewRows={workbookMappedPreviewRows}
-              capabilityAudit={workbookCapabilityAudit}
-              temporalReviewSummary={workbookTemporalReviewSummary}
-            />
+            workbookReviewStatus === 'loading' || workbookReviewStatus === 'idle' ? (
+              <div role="status" aria-live="polite" className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-6">
+                <div className="text-lg font-semibold text-[var(--panel-card-text)]">Checking workbook records…</div>
+                <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">Peridot prepares linked records in the background as you map. You can edit any mapping while it works; only the latest choices will be reviewed.</p>
+              </div>
+            ) : workbookReviewStatus === 'error' ? (
+              <div role="alert" className="peridot-mapping-section-card rounded-2xl border border-[var(--panel-card-border)] bg-[var(--section-bg)] p-6">
+                <div className="text-lg font-semibold text-[var(--panel-card-text)]">Workbook review could not be completed</div>
+                <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">{workbookReview.error}</p>
+                <p className="mt-2 text-sm text-[var(--panel-card-muted-text)]">Your original workbook and mapping choices have not been changed.</p>
+              </div>
+            ) : (
+              <WorkbookReviewStep
+                workbookModel={workbookModel}
+                workbookMapping={workbookMapping}
+                validation={workbookValidation}
+                summary={workbookMappingSummary}
+                previewRows={workbookMappedPreviewRows}
+                capabilityAudit={workbookCapabilityAudit}
+                temporalReviewSummary={workbookTemporalReviewSummary}
+              />
+            )
           ) : null}
           </>) : null}
     </>
@@ -3474,7 +3515,7 @@ export function PeridotColumnMappingModal({
                     <button
                       type="button"
                       onClick={handleConfirmImport}
-                      disabled={!workbookValidation?.isValid}
+                      disabled={!workbookValidation?.isValid || (activeStep === 'workbook-review' && workbookReviewStatus !== 'ready')}
                       className={buttonClassName({ variant: 'primary' })}
                     >
                       {staging?.editingActiveData ? 'Apply changes' : 'Confirm upload'}

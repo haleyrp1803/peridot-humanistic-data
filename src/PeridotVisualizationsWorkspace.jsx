@@ -188,6 +188,7 @@ function GeographicMapSettingsPanel({ controls }) {
     includeMostFrequent: Boolean(safeControls.includeMostFrequent),
     lineAnchorRule: safeControls.lineAnchorRule || 'event-location',
     lineFallbackRule: safeControls.lineFallbackRule || 'most-frequent',
+    cartoStyle: safeControls.cartoStyle || 'rastertiles/voyager',
     showPlaceLabels: safeControls.showPlaceLabels !== false,
     showEntityLabels: Boolean(safeControls.showEntityLabels),
   };
@@ -196,6 +197,7 @@ function GeographicMapSettingsPanel({ controls }) {
     includeMostFrequent: safeControls.defaultIncludeMostFrequent !== false,
     lineAnchorRule: safeControls.defaultLineAnchorRule || 'event-location',
     lineFallbackRule: safeControls.defaultLineFallbackRule || 'most-frequent',
+    cartoStyle: safeControls.defaultCartoStyle || 'rastertiles/voyager',
     showPlaceLabels: safeControls.defaultShowPlaceLabels !== false,
     showEntityLabels: Boolean(safeControls.defaultShowEntityLabels),
   };
@@ -214,6 +216,7 @@ function GeographicMapSettingsPanel({ controls }) {
   }, [appliedSignature]);
 
   const selectedRoles = new Set(Array.isArray(draftSettings.selectedRoles) ? draftSettings.selectedRoles : []);
+  const cartoStyle = draftSettings.cartoStyle || 'rastertiles/voyager';
   const includeMostFrequent = Boolean(draftSettings.includeMostFrequent);
   const lineAnchorRule = draftSettings.lineAnchorRule || 'event-location';
   const lineFallbackRule = draftSettings.lineFallbackRule || 'most-frequent';
@@ -252,6 +255,7 @@ function GeographicMapSettingsPanel({ controls }) {
     includeMostFrequent: Boolean(draftSettings.includeMostFrequent),
     lineAnchorRule: draftSettings.lineAnchorRule || 'event-location',
     lineFallbackRule: draftSettings.lineFallbackRule || 'most-frequent',
+    cartoStyle: draftSettings.cartoStyle || 'rastertiles/voyager',
     showPlaceLabels: draftSettings.showPlaceLabels !== false,
     showEntityLabels: Boolean(draftSettings.showEntityLabels),
   });
@@ -299,6 +303,21 @@ function GeographicMapSettingsPanel({ controls }) {
               ×
             </button>
           </div>
+
+          <section className="mt-2 rounded-[14px] border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fbf7ea)] p-2.5">
+            <h4 className="[font-family:Georgia,'Palatino_Linotype','Book_Antiqua',Palatino,serif] text-[15px] font-bold text-[var(--peridot-color-hex-172b20)]">Basemap</h4>
+            <label htmlFor="peridot-geographic-basemap-style" className="mt-1 block text-[12px] text-[var(--peridot-color-hex-52675a)]">Map style</label>
+            <select
+              id="peridot-geographic-basemap-style"
+              aria-label="Geographic basemap style"
+              value={cartoStyle}
+              onChange={(event) => updateDraft({ cartoStyle: event.target.value })}
+              className="mt-1 w-full rounded-lg border border-[var(--peridot-color-hex-d8c79a)] bg-[var(--peridot-color-hex-fffaf0)] px-2 py-1.5 text-[13px] text-[var(--peridot-color-hex-172b20)]"
+            >
+              {(safeControls.cartoStyles || []).map((style) => <option key={style.id} value={style.id}>{style.label}</option>)}
+            </select>
+            <p className="mt-1 text-[10px] leading-snug text-[var(--peridot-color-hex-6f6554)]">Map imagery © CARTO and © OpenStreetMap contributors.</p>
+          </section>
 
           <section className="mt-2 rounded-[14px] border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fbf7ea)] p-2.5">
             <div className="flex items-center gap-2">
