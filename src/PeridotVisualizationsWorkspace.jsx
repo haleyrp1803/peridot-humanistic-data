@@ -1297,7 +1297,7 @@ export function PeridotVisualizationsWorkspace({
             {renderWorkspaceBody()}
           </div>
         </div>
-        {timelineControlsProps ? (
+        {timelineControlsProps && selectedTool !== VISUALIZATION_TOOLS.TIMELINE_II ? (
           <div className="peridot-visualization-timeline-sequence shrink-0">
             <VisualizationTimelineScrubber {...timelineControlsProps} />
           </div>

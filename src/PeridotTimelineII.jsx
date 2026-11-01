@@ -13,6 +13,11 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 const MIN_DAYS = 7;
 const MAX_DAYS = 365.2425 * 250;
 const TRACK_GUTTER = 76;
+const CHRONOLOGY_RULER_HEIGHT = 92;
+const CHRONOLOGY_RULER_WIDTH = 186;
+const VERTICAL_CONTROL_MIN_HEIGHT = 218;
+const VERTICAL_RULER_FOOTER = 30;
+const VERTICAL_AXIS_START = 58;
 // II-1: 50% larger than the v16 marks (31px nodes and 23px bands).
 // Secondary-axis lanes are bounded by the visible viewport, never by event count.
 const NODE_DIAMETER = 46.5;
@@ -93,6 +98,60 @@ function calendarTicks(lower, upper, pixels) {
   return ticks.sort((a,b)=>a.day-b.day);
 }
 
+
+// Invert the proleptic-Gregorian ordinal without relying on JavaScript Date.
+function civilFromDay(ordinalDay) {
+  let year = Math.floor(ordinalDay / 365.2425);
+  while (civilDay(year + 1) <= ordinalDay) year++;
+  while (civilDay(year) > ordinalDay) year--;
+  let month = 1;
+  while (month < 12 && civilDay(year, month + 1) <= ordinalDay) month++;
+  return {year, month, day: Math.floor(ordinalDay - civilDay(year,month)) + 1};
+}
+function windowDate(day, span) {
+  const date = civilFromDay(Math.floor(day));
+  return span > 365 * 8 ? String(date.year)
+    : span > 45 ? `${MONTHS[date.month - 1]} ${date.year}`
+    : `${date.day} ${MONTHS[date.month - 1]} ${date.year}`;
+}
+// Ruler labels describe the same actual calendar positions as plotted marks.
+function rulerTicks(lower,upper,pixels) {
+  const span = upper - lower;
+  const start = civilFromDay(Math.floor(lower));
+  const end = civilFromDay(Math.ceil(upper));
+  const out = [];
+  if (span <= 35) {
+    for (let day = Math.ceil(lower); day <= upper; day++) {
+      const date = civilFromDay(day);
+      out.push({day,label:span <= 12 || date.day === 1 || (date.day % 7 === 0) ? String(date.day) : '',major:date.day === 1});
+    }
+  } else if (span <= 365.2425 * 2) {
+    let year=start.year, month=start.month;
+    while (year < end.year + 1 && out.length < 36) {
+      const day=civilDay(year,month);
+      if (day >= lower && day <= upper) out.push({day,label:span <= 390 ? MONTHS[month-1] : `${MONTHS[month-1]} ${year}`,major:month===1});
+      month++;if(month>12){month=1;year++;}
+    }
+  } else {
+    const yearPixels=pixels * 365.2425 / span;
+    const step=yearPixels >= 100 ? 1 : yearPixels >= 50 ? 2 : yearPixels >= 23 ? 5 : yearPixels >= 12 ? 10 : yearPixels >= 5 ? 25 : 50;
+    const first=Math.ceil(start.year / step) * step;
+    for(let year=first; year <= end.year && out.length < 80;year+=step){
+      const day=civilDay(year);
+      if(day>=lower && day<=upper)out.push({day,label:String(year),major:true});
+    }
+  }
+  // On narrow viewports suppress text that would collide, but retain tick strokes.
+  const minSpacing = span <= 35 ? 20 : span <= 365.2425 * 2 ? 42 : 33;
+  let lastLabel=-Infinity;
+  return out.map(tick=>{
+    const pixel=(tick.day-lower)/span*pixels;
+    const label=tick.label && pixel-lastLabel >= minSpacing ? tick.label : '';
+    if(label)lastLabel=pixel;
+    return {...tick,label};
+  });
+}
+
 function spanCaption(days) {
   if (days <= 7.01) return '1 week';
   if (days < 365) return `${Math.round(days)} days`;
@@ -110,7 +169,21 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   const [hoveredId,setHoveredId] = useState('');
   const [hoverPosition,setHoverPosition] = useState(null);
   const [size,setSize] = useState({width:1200,height:500});
+  const [verticalControlHeight,setVerticalControlHeight] = useState(VERTICAL_CONTROL_MIN_HEIGHT);
+  // Timeline II-only playback. This does not modify the shared Visualize scrubber.
+  const [playhead,setPlayhead] = useState(null);
+  const [playing,setPlaying] = useState(false);
+  const [playbackSpeed,setPlaybackSpeed] = useState(1);
+  const [playbackMode,setPlaybackMode] = useState('cumulative');
+  const [playbackStarted,setPlaybackStarted] = useState(false);
+  const animationRef = useRef({last:null});
   const viewportRef = useRef(null);
+  const verticalControlsRef = useRef(null);
+  const rulerDragRef = useRef(null);
+  // Dragging is strictly chronological. Do not start panning until the pointer
+  // moves far enough to distinguish a drag from selecting a Timeline mark.
+  const dragRef = useRef(null);
+  const suppressSelectionClickRef = useRef(false);
   // The lane map is local to this Timeline II instance. It never modifies data.
   // Pan preserves assignments; changes in scale, orientation, dataset, or
   // cross-axis geometry start a new layout context.
@@ -127,18 +200,19 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   const safeCenter = Math.min(max + half, Math.max(min - half, actualCenter));
   const lower = safeCenter-half, upper = safeCenter+half;
   const horizontal = direction === 'horizontal';
-  const length = Math.max(120,horizontal?size.width:size.height) - TRACK_GUTTER - 18;
+  const axisStart = horizontal ? TRACK_GUTTER : VERTICAL_AXIS_START;
+  const length = Math.max(120,(horizontal?size.width:size.height) - axisStart - (horizontal ? 18 : verticalControlHeight + VERTICAL_RULER_FOOTER));
   // Lanes fill the full *perpendicular* plotting dimension. The only navigation
   // dimension remains chronological; no secondary-axis overflow is created.
   const secondary = Math.max(90,horizontal?size.height:size.width);
-  const crossStart = horizontal ? 91 : 102;
-  const crossEnd = secondary - (horizontal ? 78 : 54);
+  const crossStart = horizontal ? NODE_DIAMETER / 2 + 32 : CHRONOLOGY_RULER_WIDTH + NODE_DIAMETER / 2 + 12;
+  const crossEnd = secondary - (horizontal ? CHRONOLOGY_RULER_HEIGHT + NODE_DIAMETER / 2 + 12 : NODE_DIAMETER / 2 + 26);
   const crossSpan = Math.max(0, crossEnd - crossStart);
   const laneCount = LANE_COUNT;
   const lanePosition = lane => laneCount === 1
     ? crossStart + crossSpan / 2
     : crossStart + lane * crossSpan / (laneCount - 1);
-  const pos = day => TRACK_GUTTER + (day - lower) / visibleDays * length;
+  const pos = day => axisStart + (day - lower) / visibleDays * length;
   // Select only events whose actual times intersect the visible chronology.
   const inWindow = filtered.filter(item => item.endDay >= lower && item.day <= upper);
   // Packing A: globally aware temporal-neighborhood placement followed by
@@ -175,7 +249,67 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   }));
   const selected = all.find(item=>item.event.id === (selectedEventId || localSelected));
   const hovered = all.find(item=>item.event.id === hoveredId);
-  const ticks = calendarTicks(lower,upper,length);
+  const ticks = rulerTicks(lower,upper,length);
+  const rulerStart = windowDate(lower,visibleDays);
+  const rulerEnd = windowDate(upper,visibleDays);
+  const playbackDate = Math.max(lower,Math.min(upper,playhead ?? lower));
+  const playbackPosition = axisStart + (playbackDate - min) / Math.max(1,max-min) * length;
+  const playbackItems = playbackStarted
+    ? packed.filter(item=>playbackMode==='cumulative'
+      ? item.day <= playbackDate
+      : item.day <= playbackDate && item.endDay >= playbackDate)
+    : packed;
+  // Overview positions always use the full dataset domain; detailed ticks
+  // continue to use the current visible chronology.
+  const overviewSpan = Math.max(1, max - min);
+  const overviewStart = Math.max(min, Math.min(max, lower));
+  const overviewEnd = Math.max(min, Math.min(max, upper));
+  const overviewLeft = axisStart + (overviewStart - min) / overviewSpan * length;
+  const overviewRight = axisStart + (overviewEnd - min) / overviewSpan * length;
+  const overviewWidth = Math.max(0, overviewRight - overviewLeft);
+  // Overview ticks use full-domain positions. Minor strokes may be closer
+  // together, but labels are measured and suppressed independently.
+  const overviewTicks = useMemo(() => {
+    const domain = Math.max(1, max - min);
+    const targetPixels = 23;
+    const rawStep = domain / Math.max(1, length / targetPixels);
+    const steps = [1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000];
+    const step = steps.find(value => value * 365.2425 >= rawStep) || 50000;
+    const beginYear = civilFromDay(Math.floor(min)).year;
+    const endYear = civilFromDay(Math.ceil(max)).year;
+    const firstYear = Math.ceil(beginYear / step) * step;
+    const marks = [];
+    let lastLabelEnd = -Infinity;
+    for (let year = firstYear; year <= endYear && marks.length < 240; year += step) {
+      const day = civilDay(year);
+      if (day < min || day > max) continue;
+      const px = (day - min) / domain * length;
+      const label = String(year);
+      const estimatedLabelWidth = label.length * 7 + 14;
+      // Vertical labels need line-height clearance, horizontal labels need width.
+      const gap = horizontal ? estimatedLabelWidth : 24;
+      const showLabel = px - gap / 2 >= lastLabelEnd + 9 && px + gap / 2 <= length;
+      if (showLabel) lastLabelEnd = px + gap / 2;
+      marks.push({day, label:showLabel ? label : '', major:showLabel});
+    }
+    return marks;
+  }, [min, max, length, horizontal]);
+  const axisCoord = event => horizontal ? event.clientX : event.clientY;
+  const overviewDayAt = event => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const px = (horizontal ? event.clientX - rect.left : event.clientY - rect.top) - axisStart;
+    return min + Math.max(0, Math.min(1, px / Math.max(1, length))) * overviewSpan;
+  };
+  const clampWindow = (start, end) => {
+    const domain = Math.max(0, max - min);
+    const available = Math.min(MAX_DAYS, Math.max(MIN_DAYS, domain));
+    const span = Math.max(MIN_DAYS, Math.min(available, end - start));
+    const left = domain >= span
+      ? Math.max(min, Math.min(max - span, start))
+      : (min + max - span) / 2;
+    setVisibleDays(span);
+    setCenter(left + span / 2);
+  };
   useEffect(()=>{
     const el=viewportRef.current;
     if(!el)return undefined;
@@ -185,6 +319,56 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
     observer?.observe(el);
     return ()=>observer?.disconnect();
   },[]);
+  // Measure the control stack at its natural height. Fixed pixels clipped Reset
+  // on laptop viewports; ruler length follows the actual controls instead.
+  useEffect(()=>{
+    if (horizontal) return undefined;
+    const panel=verticalControlsRef.current;
+    if (!panel) return undefined;
+    const measure=()=>setVerticalControlHeight(Math.max(VERTICAL_CONTROL_MIN_HEIGHT,Math.ceil(panel.getBoundingClientRect().height)));
+    measure();
+    const observer=typeof ResizeObserver!=='undefined' ? new ResizeObserver(measure) : null;
+    observer?.observe(panel);
+    return ()=>observer?.disconnect();
+  },[horizontal]);
+  useEffect(()=>{
+    if (!playing) {animationRef.current.last=null;return undefined;}
+    let frame;
+    const advance=timestamp=>{
+      const last=animationRef.current.last;
+      animationRef.current.last=timestamp;
+      if(last!==null){
+        const elapsed=Math.min(100,timestamp-last)/1000;
+        const step=elapsed * visibleDays / 30 * playbackSpeed;
+        setPlayhead(current=>{
+          const next=Math.min(upper,(current??lower)+step);
+          if(next>=upper)setPlaying(false);
+          return next;
+        });
+      }
+      frame=requestAnimationFrame(advance);
+    };
+    frame=requestAnimationFrame(advance);
+    return ()=>{cancelAnimationFrame(frame);animationRef.current.last=null;};
+  },[playing,visibleDays,playbackSpeed,lower,upper]);
+  useEffect(()=>{
+    if(playhead!==null && (playhead<lower || playhead>upper)){
+      setPlayhead(Math.max(lower,Math.min(upper,playhead)));
+      setPlaying(false);
+    }
+  },[lower,upper,playhead]);
+  const pausePlayback=()=>setPlaying(false);
+  const togglePlayback=()=>{
+    if(playing){setPlaying(false);return;}
+    setPlaybackStarted(true);
+    setPlayhead(current=>current===null || current>=upper ? lower : Math.max(lower,current));
+    setPlaying(true);
+  };
+  const stepPlayback=direction=>{
+    pausePlayback();setPlaybackStarted(true);
+    setPlayhead(current=>Math.max(lower,Math.min(upper,(current??lower)+direction*Math.max(1,visibleDays/24))));
+  };
+  const resetPlayback=()=>{pausePlayback();setPlayhead(null);setPlaybackStarted(false);};
   const zoomBy = factor => setVisibleDays(days=>Math.max(MIN_DAYS,Math.min(MAX_DAYS,days*factor)));
   const panBy = delta => setCenter(current=>{
     const old=current===null?actualCenter:current;
@@ -209,6 +393,79 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   },[]);
   const wheelRef=useRef(null);
   wheelRef.current=wheel;
+  const startDrag = event => {
+    pausePlayback();
+    if (event.button !== 0 || !event.isPrimary) return;
+    suppressSelectionClickRef.current = false;
+    dragRef.current = {pointerId:event.pointerId,coordinate:horizontal?event.clientX:event.clientY,dragging:false};
+  };
+  const moveDrag = event => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const coordinate = horizontal ? event.clientX : event.clientY;
+    const delta = coordinate - drag.coordinate;
+    if (!drag.dragging && Math.abs(delta) < 6) return;
+    if (!drag.dragging) {
+      drag.dragging = true;
+      suppressSelectionClickRef.current = true;
+      setHoveredId('');
+      setHoverPosition(null);
+      viewportRef.current?.setPointerCapture(event.pointerId);
+    }
+    drag.coordinate = coordinate;
+    // A displacement along the chronological screen axis pans in the opposite
+    // temporal direction. The existing panBy clamps the allowed domain.
+    if (delta) panBy(-delta / Math.max(1,length) * visibleDays);
+    event.preventDefault();
+  };
+  const finishDrag = event => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    if (viewportRef.current?.hasPointerCapture(event.pointerId)) {
+      viewportRef.current.releasePointerCapture(event.pointerId);
+    }
+  };
+  // Range selector: body pans; either clamp adjusts one boundary and zoom.
+  // Clicking the remaining track centers the visible range at that date.
+  const rulerPointerDown = event => {
+    if (event.button !== 0 || !event.isPrimary) return;
+    pausePlayback();
+    event.stopPropagation(); event.preventDefault();
+    const role = event.target.closest('[data-scrub-part]')?.dataset.scrubPart || 'track';
+    const position = overviewDayAt(event);
+    const start = Math.max(min, lower), end = Math.min(max, upper);
+    const span = visibleDays;
+    if (role === 'playhead') {
+      setPlaybackStarted(true);
+      setPlayhead(Math.max(lower,Math.min(upper,position)));
+    }
+    if (role === 'track') {
+      clampWindow(position - span / 2, position + span / 2);
+    }
+    rulerDragRef.current = {pointerId:event.pointerId, coordinate:axisCoord(event), role,
+      start:role === 'track' ? position - span / 2 : lower,
+      end:role === 'track' ? position + span / 2 : upper};
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const rulerPointerMove = event => {
+    const drag=rulerDragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    event.stopPropagation(); event.preventDefault();
+    const delta=(axisCoord(event)-drag.coordinate)/Math.max(1,length)*Math.max(1,max-min);
+    if (drag.role === 'playhead') {
+      setPlaybackStarted(true);
+      setPlayhead(Math.max(lower, Math.min(upper, overviewDayAt(event))));
+    } else if (drag.role === 'start') clampWindow(Math.max(min, Math.min(drag.end-MIN_DAYS,drag.start+delta)), drag.end);
+    else if (drag.role === 'end') clampWindow(drag.start,Math.min(max, Math.max(drag.start+MIN_DAYS,drag.end+delta)));
+    else clampWindow(drag.start+delta,drag.end+delta);
+  };
+  const rulerPointerEnd = event => {
+    if(rulerDragRef.current?.pointerId !== event.pointerId)return;
+    event.stopPropagation();
+    rulerDragRef.current=null;
+    if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
+  };
   const select=item=>{setLocalSelected(item.event.id);onEventClick?.(item.event);};
   const placeHover = event => {
     const element = viewportRef.current;
@@ -238,22 +495,28 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
       if(['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(e.key)){e.preventDefault();panBy((e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1)*visibleDays*0.12);}
       if(e.key==='Home'){e.preventDefault();setCenter(min+visibleDays/2);}
       if(e.key==='End'){e.preventDefault();setCenter(max-visibleDays/2);}
-    }} className="relative min-h-0 flex-1 overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-[#7C211E]">
+    }}
+      onPointerDown={startDrag}
+      onPointerMove={moveDrag}
+      onPointerUp={finishDrag}
+      onPointerCancel={finishDrag}
+      onClickCapture={event=>{
+        if (suppressSelectionClickRef.current) {
+          event.preventDefault();
+          event.stopPropagation();
+          suppressSelectionClickRef.current = false;
+        }
+      }}
+      className="relative min-h-0 flex-1 cursor-grab touch-none select-none overflow-hidden outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#7C211E]">
       <div className="absolute inset-0 pointer-events-none" style={{background:'#eee0c7'}}/>
-      <div className="pointer-events-none absolute" style={horizontal?{top:44,left:TRACK_GUTTER,right:18,borderTop:'1px solid #a99373'}:{left:TRACK_GUTTER,top:18,bottom:18,borderLeft:'1px solid #a99373'}} />
-      {ticks.map((tick,index)=>{
-        const p=pos(tick.day);
-        return <div key={`${tick.day}-${index}`} className="pointer-events-none absolute" style={horizontal?{left:p,top:44,bottom:0,borderLeft:`1px solid ${tick.major?'#bbaa90':'#d2c2a8'}`}:{top:p,left:TRACK_GUTTER,right:0,borderTop:`1px solid ${tick.major?'#bbaa90':'#d2c2a8'}`}}>
-          {tick.label?<span className="absolute whitespace-nowrap text-[10px] font-semibold text-[#655646]" style={horizontal?{top:-19,left:3}:{left:-TRACK_GUTTER+5,top:-8}}>{tick.label}</span>:null}
-        </div>;
-      })}
-      {packed.map(item=>{
+
+      {playbackItems.map(item=>{
         const categoryStyle=colors.get(item.category)||{color:'#253C32',symbol:'●'};
         const active=item.event.id === (selectedEventId || localSelected);
         const hoveredMark=item.event.id === hoveredId;
         const secondaryPos=lanePosition(item.lane);
-        const bandStart=Math.max(TRACK_GUTTER,item.start);
-        const bandEnd=Math.min(TRACK_GUTTER+length,item.finish);
+        const bandStart=Math.max(axisStart,item.start);
+        const bandEnd=Math.min(axisStart+length,item.finish);
         const bandLength=Math.max(BAND_THICKNESS,bandEnd-bandStart);
         const fullLabel=item.period
           ? `${item.title} · ${item.event.temporalRole||'Period'} · ${dateLabel(item.start)} – ${dateLabel(item.end)}`
@@ -313,8 +576,104 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
           <div className="text-[10px] text-[#695e50]">Select a mark to open its Inspector record</div>
         </div>
       ) : null}
-      <div className="pointer-events-none absolute bottom-2 right-3 rounded bg-[#faf5eb]/90 px-2 py-1 text-[10px] text-[#695e50]">Scroll or use arrow keys to move through time</div>
+      {/* Two synchronized scales: a full-domain navigator with editable clamps,
+          and detailed visible-window calendar labels outside the navigator. */}
+      <div
+        role="group" aria-label="Timeline chronology navigator: drag selection to pan, drag either end to zoom, click track to jump"
+        onPointerDown={rulerPointerDown}
+        onPointerMove={rulerPointerMove}
+        onPointerUp={rulerPointerEnd}
+        onPointerCancel={rulerPointerEnd}
+        className="absolute z-[20] touch-none select-none overflow-hidden border-[#b4a087] bg-[#fbf7ed]/95 text-[#554538] shadow-[0_-2px_9px_#654c301b]"
+        style={horizontal
+          ? {left:0,right:0,bottom:0,height:CHRONOLOGY_RULER_HEIGHT,borderTopWidth:1}
+          : {left:0,top:0,bottom:0,width:CHRONOLOGY_RULER_WIDTH,borderRightWidth:1}}
+      >
+        <div className="pointer-events-none absolute text-[10px] font-bold text-[#7C211E]" style={horizontal?{left:12,top:5}:{left:8,top:10}}>CHRONOLOGY</div>
+        <div className="pointer-events-none absolute text-[10px] text-[#695e50]" style={horizontal?{right:12,top:5}:{left:7,bottom:verticalControlHeight+10}}>Drag window · ends zoom</div>
+        <div data-scrub-part="track" className="absolute rounded-lg border border-[#b5a083] bg-[#e8dcc6] cursor-crosshair" style={horizontal
+          ? {left:TRACK_GUTTER,top:25,width:length,height:29}
+          : {top:axisStart,left:94,height:length,width:52}} />
+        {overviewTicks.map((tick,index)=>{
+          const px=axisStart + (tick.day-min)/overviewSpan*length;
+          return <div key={`overview-${index}`} className="pointer-events-none absolute text-[12px] font-semibold text-[#574538]" style={horizontal?{left:px,top:55}:{top:px,left:77}}>
+            <span className="absolute" style={horizontal?{height:tick.major?13:8,borderLeft:'1px solid #957857'}:{width:tick.major?13:8,borderTop:'1px solid #957857'}} />
+            {tick.label?<span className="absolute whitespace-nowrap" style={horizontal?{top:14,left:0,transform:'translateX(-50%)'}:{right:20,top:-9}}>{tick.label}</span>:null}
+          </div>;
+        })}
+        <div data-scrub-part="body" className="absolute rounded-md border-2 border-[#2F6F73] bg-[#2F6F73]/20 cursor-grab active:cursor-grabbing" style={horizontal
+          ? {left:overviewLeft,top:23,width:Math.max(2,overviewWidth),height:33}
+          : {top:overviewLeft,left:92,height:Math.max(2,overviewWidth),width:56}} />
+        {playbackStarted && (
+          <div data-scrub-part="playhead" className="absolute z-[9] cursor-pointer" title="Drag playback date" style={horizontal
+            ? {left:playbackPosition-7,top:15,height:51,width:14,borderLeft:'2px solid #7C211E',borderLeftWidth:2,transform:'translateX(6px)'}
+            : {top:playbackPosition-7,left:89,width:62,height:14,borderTop:'2px solid #7C211E',transform:'translateY(6px)'}}>
+            <span className="pointer-events-none absolute rounded-full bg-[#7C211E]" style={horizontal
+              ? {left:-5,top:-5,width:10,height:10}
+              : {left:-5,top:-5,width:10,height:10}} />
+          </div>
+        )}
+        {['start','end'].map(side=>{
+          const at=side==='start'?overviewLeft:overviewRight;
+          return <div key={side} data-scrub-part={side} role="slider" tabIndex={0}
+            aria-label={`${side==='start'?'Beginning':'End'} of visible chronology; drag to change zoom`}
+            aria-valuemin={Math.round(min)} aria-valuemax={Math.round(max)}
+            aria-valuenow={Math.round(side==='start'?lower:upper)}
+            aria-valuetext={windowDate(side==='start'?lower:upper,visibleDays)}
+            onKeyDown={event=>{
+              if(!['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(event.key))return;
+              event.preventDefault(); event.stopPropagation();
+              const amount=(event.key==='ArrowLeft'||event.key==='ArrowUp'?-1:1)*visibleDays*0.08;
+              if(side==='start')clampWindow(Math.max(min,Math.min(upper-MIN_DAYS,lower+amount)),upper);
+              else clampWindow(lower,Math.min(max,Math.max(lower+MIN_DAYS,upper+amount)));
+            }}
+            className="absolute z-10 rounded border-2 border-[#245A5E] bg-[#2F6F73] outline-none focus-visible:ring-2 focus-visible:ring-[#7C211E]"
+            style={horizontal
+              ? {left:at-5,top:19,width:10,height:41,cursor:'ew-resize'}
+              : {top:at-5,left:88,height:10,width:64,cursor:'ns-resize'}} />;
+        })}
+        {!horizontal && <div ref={verticalControlsRef} className="absolute bottom-0 left-0 right-0 z-[22] border-t border-[#b4a087] bg-[#fbf7ed] p-2 text-xs" style={{minHeight:VERTICAL_CONTROL_MIN_HEIGHT}} onPointerDown={event=>event.stopPropagation()} onPointerMove={event=>event.stopPropagation()}>
+          <div className="mb-1 text-center text-[11px] font-semibold text-[#7C211E]">{playbackStarted ? windowDate(playbackDate,visibleDays) : 'Playback ready'}</div>
+          <div className="mb-1 flex items-center justify-center gap-1">
+            <button type="button" onClick={()=>stepPlayback(-1)} aria-label="Step backward" className="rounded-full border border-[#c9b89d] px-2 py-1.5">◀|</button>
+            <button type="button" onClick={togglePlayback} className="rounded-full bg-[#253C32] px-3 py-1.5 font-semibold text-white">{playing?'Ⅱ Pause':'▶ Play'}</button>
+            <button type="button" onClick={()=>stepPlayback(1)} aria-label="Step forward" className="rounded-full border border-[#c9b89d] px-2 py-1.5">|▶</button>
+          </div>
+          <label htmlFor="timeline-ii-vertical-speed" className="mb-1 block text-[10px] font-semibold">Speed</label>
+          <select id="timeline-ii-vertical-speed" value={playbackSpeed} onChange={event=>setPlaybackSpeed(Number(event.target.value))} className="mb-1 w-full rounded-md border border-[#c9b89d] bg-[#faf5eb] px-2 py-1">
+            <option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option>
+          </select>
+          <div className="mb-1 flex items-center justify-between"><label htmlFor="timeline-ii-vertical-mode" className="text-[10px] font-semibold">Playback type</label><span tabIndex={0} role="note" title="Cumulative: Adds records over time as playback advances. Concurrent: Shows only records whose dates or spans include the selected playback date." aria-label="Playback mode explanation: Cumulative adds records over time as playback advances. Concurrent shows only records whose dates or spans include the selected playback date." className="cursor-help rounded-full border border-[#b4a087] px-1.5 text-[10px]">i</span></div>
+          <select id="timeline-ii-vertical-mode" value={playbackMode} onChange={event=>setPlaybackMode(event.target.value)} className="w-full rounded-md border border-[#c9b89d] bg-[#faf5eb] px-2 py-1">
+            <option value="cumulative">Cumulative</option><option value="current">Concurrent</option>
+          </select>
+          <button type="button" onClick={resetPlayback} aria-label="Reset playback" className="mt-1 w-full rounded-full border border-[#c9b89d] py-1">↺ Reset</button>
+        </div>}
+      </div>
+      <div className="pointer-events-none absolute z-[21] rounded bg-[#faf5eb]/95 px-2 py-1 text-[11px] font-semibold text-[#7C211E]" style={horizontal?{bottom:95,left:10}:{left:CHRONOLOGY_RULER_WIDTH+8,top:7}}>
+        {rulerStart} — {rulerEnd}
+      </div>
     </div>
+    {horizontal && <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[#b4a087] bg-[#fbf7ed] px-3 py-2 text-xs">
+      <div className="flex min-w-0 items-center gap-2">
+        <label className="sr-only" htmlFor="timeline-ii-speed">Playback speed</label>
+        <select id="timeline-ii-speed" value={playbackSpeed} onChange={event=>setPlaybackSpeed(Number(event.target.value))} className="rounded-full border border-[#c9b89d] bg-[#faf5eb] px-3 py-1.5">
+          <option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option>
+        </select>
+        <label className="sr-only" htmlFor="timeline-ii-mode">Playback type</label>
+        <select id="timeline-ii-mode" value={playbackMode} onChange={event=>setPlaybackMode(event.target.value)} className="rounded-full border border-[#c9b89d] bg-[#faf5eb] px-3 py-1.5">
+          <option value="cumulative">Cumulative</option><option value="current">Concurrent</option>
+        </select>
+        <span tabIndex={0} role="note" title="Cumulative: Adds records over time as playback advances. Concurrent: Shows only records whose dates or spans include the selected playback date." aria-label="Playback type explanation" className="cursor-help rounded-full border border-[#b4a087] px-1.5 text-[#7C211E]">i</span>
+        <span className="hidden text-[#7C211E] sm:inline" aria-live="off">{playbackStarted ? windowDate(playbackDate,visibleDays) : 'Ready'}</span>
+      </div>
+      <div className="flex shrink-0 items-center gap-2">
+        <button type="button" onClick={resetPlayback} aria-label="Reset playback" className="rounded-full border border-[#c9b89d] px-3 py-1.5">↺ Reset</button>
+        <button type="button" onClick={()=>stepPlayback(-1)} aria-label="Step backward" className="rounded-full border border-[#c9b89d] px-3 py-1.5">◀|</button>
+        <button type="button" onClick={()=>stepPlayback(1)} aria-label="Step forward" className="rounded-full border border-[#c9b89d] px-3 py-1.5">|▶</button>
+        <button type="button" onClick={togglePlayback} className="rounded-full bg-[#253C32] px-4 py-1.5 font-semibold text-white">{playing?'Ⅱ Pause':'▶ Play'}</button>
+      </div>
+    </div>}
     {selected?<div className="shrink-0 border-t border-[#b4a087] bg-[#fbf7ed] px-4 py-2 text-xs"><strong>{selected.title}</strong> · {selected.event.temporalRole||'Event'} · {dateLabel(selected.start)}{selected.period?` – ${dateLabel(selected.end)}`:''}</div>:null}
   </div>;
 }
