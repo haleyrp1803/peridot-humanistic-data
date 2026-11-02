@@ -19,7 +19,7 @@
 
 // Core React hooks used throughout the app.
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { geoContains, geoMercator, geoNaturalEarth1, geoPath } from 'd3-geo';
+import { geoMercator, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import countries50m from 'world-atlas/countries-50m.json';
 import {
@@ -719,8 +719,8 @@ function createWorldProjection(width, height, projectionMode = PERIDOT_PROJECTIO
     );
 }
 
-function projectToSvg(lon, lat, width, height, projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH) {
-  const projection = createWorldProjection(width, height, projectionMode);
+function projectToSvg(lon, lat, width, height, projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH, sharedProjection = null) {
+  const projection = sharedProjection || createWorldProjection(width, height, projectionMode);
   // Coordinates outside Web Mercator's practical tile domain are clipped to
   // the projection edge for this comparison only; source values are untouched.
   const visibleLat = projectionMode === PERIDOT_PROJECTION_WEB_MERCATOR
@@ -904,6 +904,9 @@ function createAdaptiveNodeRadiusScale(values, minRadius, maxRadius, contrastPow
 
 // Geographic graph builder: projected place nodes plus curved route paths.
 function buildGraph(places, aggregatedEdges, width, height, projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH) {
+  // A projection is a viewport property, not a per-node or per-edge property.
+  // Reuse one instance throughout this graph build (especially during playback).
+  const sharedProjection = createWorldProjection(width, height, projectionMode);
   const placeById = new Map(places.map((place) => [place.id, place]));
   const edgeCountsByPlaceId = new Map();
 
@@ -913,7 +916,7 @@ function buildGraph(places, aggregatedEdges, width, height, projectionMode = PER
   });
 
   const nodeDrafts = places.map((place) => {
-    const projected = projectToSvg(place.lon, place.lat, width, height, projectionMode);
+    const projected = projectToSvg(place.lon, place.lat, width, height, projectionMode, sharedProjection);
     const degree = edgeCountsByPlaceId.get(place.id) || 0;
     return {
       ...place,
@@ -939,8 +942,8 @@ function buildGraph(places, aggregatedEdges, width, height, projectionMode = PER
       const source = placeById.get(edge.sourcePlaceId);
       const target = placeById.get(edge.targetPlaceId);
       if (!source || !target) return null;
-      const a = projectToSvg(source.lon, source.lat, width, height, projectionMode);
-      const b = projectToSvg(target.lon, target.lat, width, height, projectionMode);
+      const a = projectToSvg(source.lon, source.lat, width, height, projectionMode, sharedProjection);
+      const b = projectToSvg(target.lon, target.lat, width, height, projectionMode, sharedProjection);
       return {
         ...edge,
         sourceLabel: source.label,
@@ -967,6 +970,11 @@ function computePersonEdgeWidth(count) {
 // longer determines (or reconstructs) what the user's relationships mean.
 function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', semanticOptions = null) {
   const projectionMode = semanticOptions?.projectionMode || PERIDOT_PROJECTION_NATURAL_EARTH;
+  // A geographic graph's projection is fixed for this build. Creating it once
+  // avoids repeated D3 projection setup as the chronology selection changes.
+  const sharedProjection = layoutMode === 'geographic'
+    ? createWorldProjection(width, height, projectionMode)
+    : null;
   const personMap = new Map();
   const { relationships, locations } = layoutMode === 'geographic' && semanticOptions
     ? derivePeridotGeographicEntityNetworkSemantics(
@@ -1099,7 +1107,7 @@ function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', sem
     const people = resolvedAnchors
       .filter((anchor) => peopleInUse.has(anchor.personKey))
       .map((anchor) => {
-        const projected = projectToSvg(anchor.longitude, anchor.latitude, width, height, projectionMode);
+        const projected = projectToSvg(anchor.longitude, anchor.latitude, width, height, projectionMode, sharedProjection);
         return {
           id: anchor.id,
           entityKey: anchor.personKey,
@@ -1202,7 +1210,7 @@ function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', sem
         } else {
           const best = Array.from(person.locationCounts.entries()).sort((a, b) => b[1] - a[1])[0][0];
           const [label, lat, lon] = best.split('__');
-          const projected = projectToSvg(Number(lon), Number(lat), width, height, projectionMode);
+          const projected = projectToSvg(Number(lon), Number(lat), width, height, projectionMode, sharedProjection);
           x = projected.x;
           y = projected.y;
           anchorLabel = label;
@@ -2221,6 +2229,7 @@ function buildMapStageProps(args) {
     viewResetKey: args.viewResetKey,
     viewStateRef: args.viewStateRef,
     initialFocusStrategy: args.initialFocusStrategy,
+    initialFitReady: args.initialFitReady,
     projectionMode: args.projectionMode,
     cartoStyle: args.cartoStyle,
     hoverCard: args.hoverCard,
@@ -2405,6 +2414,7 @@ function SvgMap({
   viewResetKey = 'default',
   viewStateRef = null,
   initialFocusStrategy = 'fit-all',
+  initialFitReady = true,
   projectionMode = PERIDOT_PROJECTION_NATURAL_EARTH,
   cartoStyle = 'rastertiles/voyager',
 }) {
@@ -2673,40 +2683,20 @@ function SvgMap({
     }
   }, [basemapPathGenerator]);
 
-  const activeCountryIds = useMemo(() => {
-    if (!showGeographicBackdrop || !showBasemap || !basemapFeatures.length || !nodes.length) return new Set();
-
-    const matchedIds = new Set();
-
-    const findCountryByHint = (hint) => {
-      return basemapFeatures.find((featureItem) => featureItem.matchKeys.includes(hint));
-    };
-
-    nodes.forEach((node) => {
-      const hints = extractPoliticalHintsFromNode(node);
-      const hintedCountry = hints.map(findCountryByHint).find(Boolean);
-      if (hintedCountry) {
-        matchedIds.add(hintedCountry.id);
-        return;
-      }
-
-      if (typeof projection.invert !== 'function') return;
-      const lonLat = projection.invert([node.x, node.y]);
-      if (!lonLat || !Number.isFinite(lonLat[0]) || !Number.isFinite(lonLat[1])) return;
-
-      const containingCountry = basemapFeatures.find((featureItem) => geoContains(featureItem.geometry, lonLat));
-      if (containingCountry) matchedIds.add(containingCountry.id);
-    });
-
-    return matchedIds;
-  }, [basemapFeatures, nodes, projection, showBasemap, showGeographicBackdrop]);
+  // The former activeCountryIds computation was never consumed by the SVG.
+  // It performed geographic containment searches on every playback graph change,
+  // even though CARTO is the only active geographic basemap. Do not reinstate
+  // this calculation without an actual consumer.
 
   useEffect(() => {
     setBasemapError(basemapFeatures.length ? '' : 'Basemap unavailable');
   }, [basemapFeatures.length]);
 
   useEffect(() => {
-    if ((!nodes.length && !edges.length) || !width || !height) return;
+    // Wait for dataset-derived chronology roles and full-range initialization
+    // before taking the one-time geographic fit. Otherwise an intermediate
+    // filtered graph can become the permanently remembered initial view.
+    if (!initialFitReady || (!nodes.length && !edges.length) || !width || !height) return;
 
     const shouldRecenter =
       !hasInitializedViewRef.current ||
@@ -2722,7 +2712,7 @@ function SvgMap({
     hasInitializedViewRef.current = true;
     lastViewResetKeyRef.current = viewResetKey;
     lastViewportSizeRef.current = { width, height };
-  }, [defaultView, edges.length, nodes.length, viewResetKey, viewStateRef, width, height]);
+  }, [defaultView, edges.length, initialFitReady, nodes.length, viewResetKey, viewStateRef, width, height]);
 
   useEffect(() => {
     if (!viewStateRef || !hasInitializedViewRef.current) return;
@@ -3783,6 +3773,7 @@ function LegacyD3MapStage({
   viewResetKey,
   viewStateRef,
   initialFocusStrategy,
+  initialFitReady = true,
   cartoStyle,
   hoverCard,
 }) {
@@ -3815,6 +3806,7 @@ function LegacyD3MapStage({
           viewResetKey={viewResetKey}
           viewStateRef={viewStateRef}
           initialFocusStrategy={initialFocusStrategy}
+          initialFitReady={initialFitReady}
           projectionMode={projectionMode}
           cartoStyle={cartoStyle}
         />
@@ -6298,6 +6290,11 @@ export default function EuropeNetworkMapApp() {
     };
   }, [hoverCard]);
 
+  // The first geographic fit must use the complete dataset-derived chronology.
+  // Later user range changes and playback do not trigger a new fit.
+  const mapInitialFitReady = availableTemporalRoles.every((role) => enabledTemporalRoleSet.has(role))
+    && (timelineMonths.length === 0 || (rangeStart === 0 && rangeEnd === timelineMonths.length - 1));
+
   const mapStageProps = buildMapStageProps({
     mapViewportRef,
     mapViewportSize,
@@ -6322,6 +6319,7 @@ export default function EuropeNetworkMapApp() {
     projectionMode: geographicProjectionMode,
     cartoStyle: geographicCartoStyle,
     initialFocusStrategy: viewMode === 'person' && personLayoutMode === 'force' ? 'force-dense-cluster' : 'fit-all',
+    initialFitReady: mapInitialFitReady,
     hoverCard,
     personLayoutMode,
   });

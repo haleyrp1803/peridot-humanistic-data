@@ -32,7 +32,7 @@ import { createPortal } from 'react-dom';
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 import { PeridotTimelineWorkspace } from './PeridotTimelineWorkspace.jsx';
 import { PeridotTimelineII } from './PeridotTimelineII.jsx';
-import { VisualizationTimelineScrubber } from './timelinePlaybackComponents.jsx';
+import { PeridotSharedChronologyAdapter } from './PeridotSharedChronologyAdapter.jsx';
 
 const VISUALIZATION_TOOLS = Object.freeze({
   GEOGRAPHIC_MAP: 'geographic-map',
@@ -1299,7 +1299,7 @@ export function PeridotVisualizationsWorkspace({
         </div>
         {timelineControlsProps && selectedTool !== VISUALIZATION_TOOLS.TIMELINE_II ? (
           <div className="peridot-visualization-timeline-sequence shrink-0">
-            <VisualizationTimelineScrubber {...timelineControlsProps} />
+            <PeridotSharedChronologyAdapter {...timelineControlsProps} />
           </div>
         ) : null}
       </div>
