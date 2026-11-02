@@ -45,6 +45,24 @@ function getEndpoint(event, side) {
   return fallbackParts(side === 'start' ? (event.windowStart ?? event.playbackSortKey) : event.windowEnd);
 }
 function ordinal(ep) { return ep && Number.isInteger(ep.year) ? civilDay(ep.year, ep.month || 1, ep.day || 1) : null; }
+// Playback has a different semantic obligation from plotting: a year/month-only
+// point can occur anywhere in its source-supported calendar window. Prefer the
+// canonical endpoint's conservative possible bounds, not its January/first-day
+// drawing anchor. No historical-calendar conversion or inferred exact day occurs.
+function possibleOrdinal(ep, side) {
+  const value = ep?.possibleBounds?.[side] ?? ep?.sortBounds?.[side];
+  if (Number.isInteger(value)) {
+    const year = Math.trunc(value / 10000);
+    const month = Math.trunc(Math.abs(value) % 10000 / 100);
+    const day = Math.abs(value) % 100;
+    if (month >= 1 && month <= 12 && day >= 1 && day <= 31) return civilDay(year, month, day);
+  }
+  if (!ep || !Number.isInteger(ep.year)) return null;
+  if (side === 'start') return civilDay(ep.year, ep.month || 1, ep.day || 1);
+  if (!ep.month) return civilDay(ep.year + 1) - 1;
+  if (!ep.day) return civilDay(ep.year, ep.month + 1) - 1;
+  return civilDay(ep.year, ep.month, ep.day);
+}
 function dateLabel(ep) {
   if (!ep || !Number.isInteger(ep.year)) return 'Date unspecified';
   if (!ep.month) return String(ep.year);
@@ -64,7 +82,16 @@ function eventRows(events) {
     const title = String(event.subject?.label || row.title || row.Title || row.name || row.Name || event.temporalRole || 'Untitled event');
     const uncertain = !start?.month || !start?.day || /circa|approximate|partial|uncertain/i.test(`${event.temporalShape} ${event.qualifier}`);
     const contract = event.temporalPresentationContract;
-    return {event,start,end,day: Math.min(a,b),endDay:period ? Math.max(a,b) : a,period,category,title,uncertain,
+    // Use possible occurrence bounds for playback only. Keep the existing
+    // date-to-pixel positions unchanged for this narrowly scoped behavior pass.
+    const playbackStart = possibleOrdinal(start, 'start') ?? possibleOrdinal(end, 'start') ?? Math.min(a,b);
+    const playbackEnd = period
+      ? possibleOrdinal(end, 'end') ?? possibleOrdinal(start, 'end') ?? Math.max(a,b)
+      : possibleOrdinal(start, 'end') ?? possibleOrdinal(end, 'end') ?? a;
+    return {event,start,end,day: Math.min(a,b),endDay:period ? Math.max(a,b) : a,
+      playbackStart: Math.min(playbackStart, playbackEnd),
+      playbackEnd: Math.max(playbackStart, playbackEnd),
+      period,category,title,uncertain,
       openStart: Boolean(contract?.openStart), openEnd: Boolean(contract?.openEnd)};
   }).filter(Boolean).sort((a,b) => a.day - b.day || String(a.event.id).localeCompare(String(b.event.id)));
 }
@@ -116,41 +143,86 @@ function windowDate(day, span) {
     : `${date.day} ${MONTHS[date.month - 1]} ${date.year}`;
 }
 // Ruler labels describe the same actual calendar positions as plotted marks.
-function rulerTicks(lower,upper,pixels) {
-  const span = upper - lower;
+// Detailed field only: these ticks share the exact Gregorian day coordinates
+// used by event marks. The full-domain ChronologyDock overview is independent.
+// Tick frequency is determined by available pixels, while label collision
+// avoidance is a separate concern: unlabeled lines remain useful guides.
+function rulerTicks(lower, upper, pixels, vertical = false) {
+  const span = Math.max(1, upper - lower);
+  const pxPerDay = pixels / span;
+  const pxPerYear = pxPerDay * 365.2425;
   const start = civilFromDay(Math.floor(lower));
   const end = civilFromDay(Math.ceil(upper));
-  const out = [];
-  if (span <= 35) {
-    for (let day = Math.ceil(lower); day <= upper; day++) {
-      const date = civilFromDay(day);
-      out.push({day,label:span <= 12 || date.day === 1 || (date.day % 7 === 0) ? String(date.day) : '',major:date.day === 1});
-    }
-  } else if (span <= 365.2425 * 2) {
-    let year=start.year, month=start.month;
-    while (year < end.year + 1 && out.length < 36) {
-      const day=civilDay(year,month);
-      if (day >= lower && day <= upper) out.push({day,label:span <= 390 ? MONTHS[month-1] : `${MONTHS[month-1]} ${year}`,major:month===1});
-      month++;if(month>12){month=1;year++;}
-    }
-  } else {
-    const yearPixels=pixels * 365.2425 / span;
-    const step=yearPixels >= 100 ? 1 : yearPixels >= 50 ? 2 : yearPixels >= 23 ? 5 : yearPixels >= 12 ? 10 : yearPixels >= 5 ? 25 : 50;
-    const first=Math.ceil(start.year / step) * step;
-    for(let year=first; year <= end.year && out.length < 80;year+=step){
-      const day=civilDay(year);
-      if(day>=lower && day<=upper)out.push({day,label:String(year),major:true});
+  const ticks = new Map();
+  const add = (day, label, level) => {
+    if (day < lower || day > upper) return;
+    const key = Math.round(day);
+    const previous = ticks.get(key);
+    // Keep the most significant calendar boundary when year/month/day coincide.
+    if (!previous || level > previous.level) ticks.set(key, {day:key,label,level});
+  };
+
+  // Decade/year resolution for long windows. At a multi-decade zoom, draw
+  // annual guides whenever they are at least ~7px apart; labels remain sparse.
+  const yearStep = pxPerYear >= 7 ? 1 : pxPerYear >= 3.5 ? 2
+    : pxPerYear >= 1.4 ? 5 : pxPerYear >= 0.7 ? 10
+    : pxPerYear >= 0.28 ? 25 : 50;
+  const firstYear = Math.ceil(start.year / yearStep) * yearStep;
+  for (let year = firstYear; year <= end.year && ticks.size < 600; year += yearStep) {
+    const level = year % (yearStep * 5) === 0 ? 3 : 2;
+    add(civilDay(year), String(year), level);
+  }
+
+  // Use real calendar boundaries, never fractional 30-day or 365-day steps.
+  // Month lines appear when sufficiently spaced, including in multi-year views.
+  if (pxPerDay * 28 >= 7) {
+    let year = start.year, month = start.month;
+    let guard = 0;
+    while ((year < end.year || (year === end.year && month <= end.month)) && guard++ < 650) {
+      const day = civilDay(year, month);
+      if (month === 1) add(day, String(year), 3);
+      else add(day, `${MONTHS[month - 1]} ${year}`, 2);
+      month += 1;
+      if (month > 12) { month = 1; year += 1; }
     }
   }
-  // On narrow viewports suppress text that would collide, but retain tick strokes.
-  const minSpacing = span <= 35 ? 20 : span <= 365.2425 * 2 ? 42 : 33;
-  let lastLabel=-Infinity;
-  return out.map(tick=>{
-    const pixel=(tick.day-lower)/span*pixels;
-    const label=tick.label && pixel-lastLabel >= minSpacing ? tick.label : '';
-    if(label)lastLabel=pixel;
-    return {...tick,label};
-  });
+
+  // In closer views weekly guides give a bridge between months and days.
+  // Anchoring to civil-day integers guarantees that guides don't drift.
+  if (pxPerDay * 7 >= 7 && span <= 500) {
+    for (let day = Math.ceil(lower / 7) * 7, count = 0;
+      day <= upper && count++ < 600; day += 7) {
+      const date = civilFromDay(day);
+      add(day, `${date.day} ${MONTHS[date.month - 1]}`, 1);
+    }
+  }
+
+  // At close zoom draw EVERY calendar day if at least 7px apart. Day labels
+  // are emitted only when there is enough room, by collision suppression.
+  if (pxPerDay >= 7 && span <= 240) {
+    for (let day = Math.ceil(lower), count = 0;
+      day <= upper && count++ < 300; day++) {
+      const date = civilFromDay(day);
+      add(day, `${date.day} ${MONTHS[date.month - 1]}`, 0);
+    }
+  }
+
+  const sorted = [...ticks.values()].sort((a,b) => a.day - b.day);
+  // Reserve label room for the strongest boundaries first (year, then month,
+  // then week/day). Otherwise an arbitrary daily label can hide January 1.
+  const occupied = [];
+  const labels = new Set();
+  const candidates = [...sorted].sort((a,b) => b.level-a.level || a.day-b.day);
+  for (const tick of candidates) {
+    const coordinate = (tick.day - lower) * pxPerDay;
+    const width = tick.label.length === 4 && /^-?\d{4}$/.test(tick.label)
+      ? 32 : Math.max(35, tick.label.length * 6 + 8);
+    const halfWidth = (vertical ? 17 : Math.max(38, width + 8)) / 2;
+    if (occupied.some(box => coordinate-halfWidth < box.end+5 && coordinate+halfWidth > box.start-5)) continue;
+    occupied.push({start:coordinate-halfWidth,end:coordinate+halfWidth});
+    labels.add(tick.day);
+  }
+  return sorted.map(tick => ({...tick,label:labels.has(tick.day)?tick.label:'',major:tick.level>=2}));
 }
 
 function spanCaption(days) {
@@ -247,19 +319,22 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   });
   inWindow.forEach((item,index)=>history.lanes.set(String(item.event.id),lanes[index]));
   const packed = inWindow.map((item,index)=>({
-    ...item,lane:lanes[index],start:footprintItems[index].start,finish:footprintItems[index].finish,
+    ...item,lane:lanes[index],plotStart:footprintItems[index].start,plotFinish:footprintItems[index].finish,
   }));
   const selected = all.find(item=>item.event.id === (selectedEventId || localSelected));
   const hovered = all.find(item=>item.event.id === hoveredId);
-  const ticks = rulerTicks(lower,upper,length);
+  // One temporary reading aid at a time. A hover/focus takes precedence over
+  // selection, and playback-hidden events must not leave phantom guide lines.
+  const guideItem = packed.find(item => item.event.id === (hoveredId || (selectedEventId || localSelected)));
+  const ticks = rulerTicks(lower,upper,length,!horizontal);
   const rulerStart = windowDate(lower,visibleDays);
   const rulerEnd = windowDate(upper,visibleDays);
   const playbackDate = Math.max(lower,Math.min(upper,playhead ?? lower));
   const playbackPosition = axisStart + (playbackDate - min) / Math.max(1,max-min) * length;
   const playbackItems = playbackStarted
     ? packed.filter(item=>playbackMode==='cumulative'
-      ? item.day <= playbackDate
-      : item.day <= playbackDate && item.endDay >= playbackDate)
+      ? item.playbackStart <= playbackDate
+      : item.playbackStart <= playbackDate && item.playbackEnd >= playbackDate)
     : packed;
   // Overview positions always use the full dataset domain; detailed ticks
   // continue to use the current visible chronology.
@@ -542,14 +617,71 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
       }}
       className="relative min-h-0 flex-1 cursor-grab touch-none select-none overflow-hidden outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#7C211E]">
       <div className="absolute inset-0 pointer-events-none" style={{background:'#eee0c7'}}/>
+      {/* Chronological reading guides share the exact calendar ticks and
+          date-to-pixel mapping of the approved ruler. They are deliberately
+          presentation-only: never intercept pointer navigation or mark selection.
+          Keep them underneath duration bands, event nodes, and future links. */}
+      <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden="true">
+        {ticks.map(tick => {
+          const coordinate = pos(tick.day);
+          const guideStyle = tick.level >= 3
+            ? '1px solid rgba(112, 91, 67, 0.36)'
+            : tick.level === 2
+              ? '1px solid rgba(112, 91, 67, 0.25)'
+              : '1px solid rgba(112, 91, 67, 0.12)';
+          return <React.Fragment key={`chronology-guide-${tick.day}`}>
+            <div className="absolute pointer-events-none"
+              style={horizontal
+                ? {left:coordinate,top:0,bottom:CHRONOLOGY_RULER_HEIGHT,borderLeft:guideStyle}
+                : {top:coordinate,left:CHRONOLOGY_RULER_WIDTH,right:0,borderTop:guideStyle}
+              }
+            />
+            {/* The dock below/alongside is a full-domain navigator, not an
+                axis for the zoomed event field. These local labels are. */}
+            {tick.label ? <div className="absolute whitespace-nowrap rounded-sm bg-[#eee0c7]/90 px-1 text-[10px] font-medium text-[#725b43]"
+              style={horizontal
+                ? {left:coordinate+3,bottom:CHRONOLOGY_RULER_HEIGHT+2}
+                : {left:CHRONOLOGY_RULER_WIDTH+4,top:coordinate+2}}
+            >{tick.label}</div> : null}
+          </React.Fragment>;
+        })}
+      </div>
+      {/* An individual mark's date projection is separate from the subdued
+          background grid and is based on the same pos() as the mark itself.
+          The date badge uses source precision, not the plotting anchor's day. */}
+      {guideItem && (!playbackStarted || (playbackMode === 'cumulative'
+        ? guideItem.playbackStart <= playbackDate
+        : guideItem.playbackStart <= playbackDate && guideItem.playbackEnd >= playbackDate)) ? (
+        <div className="pointer-events-none absolute inset-0 z-[4] overflow-hidden" aria-hidden="true">
+          {[
+            {day:guideItem.day,label:dateLabel(guideItem.period ? guideItem.start : (guideItem.start ?? guideItem.end)),end:false},
+            ...(guideItem.period && guideItem.endDay !== guideItem.day
+              ? [{day:guideItem.endDay,label:dateLabel(guideItem.end),end:true}] : []),
+          ].filter(guide => pos(guide.day) >= axisStart && pos(guide.day) <= axisStart + length).map(guide => {
+            const coordinate=pos(guide.day);
+            const guideBorder=guide.end ? '1px dashed rgba(124,33,30,0.7)' : '1px solid rgba(124,33,30,0.85)';
+            return <React.Fragment key={`event-date-guide-${guide.end?'end':'start'}`}>
+              <div className="absolute" style={horizontal
+                ? {left:coordinate,top:0,bottom:CHRONOLOGY_RULER_HEIGHT,borderLeft:guideBorder}
+                : {top:coordinate,left:CHRONOLOGY_RULER_WIDTH,right:0,borderTop:guideBorder}} />
+              <div className="absolute max-w-[145px] whitespace-nowrap rounded border border-[#a67a62] bg-[#fbf7ed] px-1.5 py-0.5 text-[11px] font-semibold text-[#7C211E] shadow-sm"
+                style={horizontal
+                  ? {left:Math.max(4,Math.min(size.width-150,coordinate+6)),bottom:CHRONOLOGY_RULER_HEIGHT+5}
+                  : {left:CHRONOLOGY_RULER_WIDTH+8,top:Math.max(30,Math.min(size.height-26,coordinate+5))}}>
+                {guide.label}
+              </div>
+            </React.Fragment>;
+          })}
+        </div>
+      ) : null}
 
       {playbackItems.map(item=>{
         const categoryStyle=colors.get(item.category)||{color:'#253C32',symbol:'●'};
         const active=item.event.id === (selectedEventId || localSelected);
         const hoveredMark=item.event.id === hoveredId;
         const secondaryPos=lanePosition(item.lane);
-        const bandStart=Math.max(axisStart,item.start);
-        const bandEnd=Math.min(axisStart+length,item.finish);
+        const bandStart=Math.max(axisStart,item.plotStart);
+        const bandEnd=Math.min(axisStart+length,item.plotFinish);
         const bandLength=Math.max(BAND_THICKNESS,bandEnd-bandStart);
         const fullLabel=item.period
           ? `${item.title} · ${item.event.temporalRole||'Period'} · ${dateLabel(item.start)} – ${dateLabel(item.end)}`
@@ -588,8 +720,8 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
             className="absolute z-[3] flex items-center justify-center rounded-full border-[3px] font-bold shadow-md transition hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]"
             style={{
               ...(horizontal
-                ? {left:item.start-NODE_DIAMETER/2,top:secondaryPos-NODE_DIAMETER/2}
-                : {top:item.start-NODE_DIAMETER/2,left:secondaryPos-NODE_DIAMETER/2}),
+                ? {left:item.plotStart-NODE_DIAMETER/2,top:secondaryPos-NODE_DIAMETER/2}
+                : {top:item.plotStart-NODE_DIAMETER/2,left:secondaryPos-NODE_DIAMETER/2}),
               width:NODE_DIAMETER,height:NODE_DIAMETER,
               background:item.uncertain?'#eee0c7':categoryStyle.color,
               color:item.uncertain?categoryStyle.color:'white',
