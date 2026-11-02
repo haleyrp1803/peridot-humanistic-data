@@ -24,7 +24,7 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-481acd9 — Optimize canonical capability readiness calculations
+ddee7e2 — Extend Timeline II vertical chronology to full plotting height
 Branch: main
 Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-01)
 ```
@@ -590,6 +590,29 @@ Researchers should decide which semantic categories to configure without losing 
 
 Maintenance consequence:
 Retain the accepted single-group multipart `relationshipParts` model. Multiple independently configured relationships require a separate architectural pass, not a UI-only duplicate button.
+```
+
+
+#### One authoritative chronology component and evidence-first geometry repair (2026-11-01)
+
+```text
+Decision:
+Reuse the exact approved Timeline II chronology presentation across Visualize rather than duplicating its appearance, and diagnose geometry/initialization failures through complete state and coordinate tracing before modifying layout.
+
+Context:
+The initial shared-playback implementation independently recreated Timeline II controls, causing visual and pointer/temporal differences. Subsequent speculative Map framing and ruler-width changes failed until diagnostic logs revealed a delayed-mount measurement problem. Vertical Timeline II likewise remained truncated after compaction-only changes because its date-to-pixel axis length was itself shortened by the playback control reservation.
+
+Chosen approach:
+Extract PeridotChronologyDock.jsx as the single presentation owner, use a shared-state adapter for the existing App timeline index contract, and preserve Timeline II's calendar-day controller. Measure the shared ruler when chronology entries become available. Compute vertical event and ruler positions from the same full-height axis, using a narrow left-rail navigator beside playback controls.
+
+Rejected alternative:
+A second copy of the approved UI, unverified source-state assumptions, repeated speculative patching, or adjusting the playback controls instead of inspecting date-to-pixel geometry.
+
+Reason:
+Shared controls should remain consistent and independently testable, while temporal filtering remains faithful to researcher evidence. Cross-workspace lifecycle defects must be diagnosed using runtime values and full related source, not screenshots alone.
+
+Maintenance consequence:
+Read all exact affected sources, compare initial vs remounted state and actual container dimensions, preserve shared markup, and run first-load/return/resize/playback/horizontal-vertical regression checks. See the Maintainer's Guide chronology contract and Changelog commits 8cb1cbc and ddee7e2.
 ```
 
 ### 7.2 Routing and workspace model
