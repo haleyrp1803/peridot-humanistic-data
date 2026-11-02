@@ -30,24 +30,24 @@ export function ChronologyRuler(ui) {
           : {left:0,top:0,bottom:0,width:CHRONOLOGY_RULER_WIDTH,borderRightWidth:1}}
       >
         <div className="pointer-events-none absolute text-[10px] font-bold text-[#7C211E]" style={horizontal?{left:12,top:5}:{left:8,top:10}}>CHRONOLOGY</div>
-        <div className="pointer-events-none absolute text-[10px] text-[#695e50]" style={horizontal?{right:12,top:5}:{left:7,bottom:verticalControlHeight+10}}>Drag window · ends zoom</div>
+        <div className="pointer-events-none absolute text-[10px] text-[#695e50]" style={horizontal?{right:12,top:5}:{left:7,bottom:8,maxWidth:78}}>Drag window · ends zoom</div>
         <div data-scrub-part="track" className="absolute rounded-lg border border-[#b5a083] bg-[#e8dcc6] cursor-crosshair" style={horizontal
           ? {left:TRACK_GUTTER,top:25,width:length,height:29}
-          : {top:axisStart,left:94,height:length,width:52}} />
+          : {top:axisStart,left:130,height:length,width:35}} />
         {overviewTicks.map((tick,index)=>{
           const px=axisStart + (tick.day-min)/overviewSpan*length;
-          return <div key={`overview-${index}`} className="pointer-events-none absolute text-[12px] font-semibold text-[#574538]" style={horizontal?{left:px,top:55}:{top:px,left:77}}>
+          return <div key={`overview-${index}`} className="pointer-events-none absolute text-[12px] font-semibold text-[#574538]" style={horizontal?{left:px,top:55}:{top:px,left:114}}>
             <span className="absolute" style={horizontal?{height:tick.major?13:8,borderLeft:'1px solid #957857'}:{width:tick.major?13:8,borderTop:'1px solid #957857'}} />
             {tick.label?<span className="absolute whitespace-nowrap" style={horizontal?{top:14,left:0,transform:'translateX(-50%)'}:{right:20,top:-9}}>{tick.label}</span>:null}
           </div>;
         })}
         <div data-scrub-part="body" className="absolute rounded-md border-2 border-[#2F6F73] bg-[#2F6F73]/20 cursor-grab active:cursor-grabbing" style={horizontal
           ? {left:overviewLeft,top:23,width:Math.max(2,overviewWidth),height:33}
-          : {top:overviewLeft,left:92,height:Math.max(2,overviewWidth),width:56}} />
+          : {top:overviewLeft,left:128,height:Math.max(2,overviewWidth),width:39}} />
         {playbackStarted && (
           <div data-scrub-part="playhead" className="absolute z-[9] cursor-pointer" aria-label="Drag playback date" style={horizontal
             ? {left:playbackPosition-7,top:15,height:51,width:14,borderLeft:'2px solid #7C211E',borderLeftWidth:2,transform:'translateX(6px)'}
-            : {top:playbackPosition-7,left:89,width:62,height:14,borderTop:'2px solid #7C211E',transform:'translateY(6px)'}}>
+            : {top:playbackPosition-7,left:126,width:43,height:14,borderTop:'2px solid #7C211E',transform:'translateY(6px)'}}>
             <span className="pointer-events-none absolute rounded-full bg-[#7C211E]" style={horizontal
               ? {left:-5,top:-5,width:10,height:10}
               : {left:-5,top:-5,width:10,height:10}} />
@@ -70,24 +70,29 @@ export function ChronologyRuler(ui) {
             className="absolute z-10 rounded border-2 border-[#245A5E] bg-[#2F6F73] outline-none focus-visible:ring-2 focus-visible:ring-[#7C211E]"
             style={horizontal
               ? {left:at-5,top:19,width:10,height:41,cursor:'ew-resize'}
-              : {top:at-5,left:88,height:10,width:64,cursor:'ns-resize'}} />;
+              : {top:at-5,left:124,height:10,width:47,cursor:'ns-resize'}} />;
         })}
-        {!horizontal && <div ref={verticalControlsRef} className="absolute bottom-0 left-0 right-0 z-[22] border-t border-[#b4a087] bg-[#fbf7ed] p-2 text-xs" style={{minHeight:VERTICAL_CONTROL_MIN_HEIGHT}} onPointerDown={event=>event.stopPropagation()} onPointerMove={event=>event.stopPropagation()}>
-          <div className="mb-1 text-center text-[11px] font-semibold text-[#7C211E]">{playbackStarted ? windowDate(playbackDate,visibleDays) : 'Playback ready'}</div>
-          <div className="mb-1 flex items-center justify-center gap-1">
-            <button type="button" onClick={()=>stepPlayback(-1)} aria-label="Step backward" className="rounded-full border border-[#c9b89d] px-2 py-1.5">◀|</button>
-            <button type="button" onClick={togglePlayback} className="rounded-full bg-[#253C32] px-3 py-1.5 font-semibold text-white">{playing?'Ⅱ Pause':'▶ Play'}</button>
-            <button type="button" onClick={()=>stepPlayback(1)} aria-label="Step forward" className="rounded-full border border-[#c9b89d] px-2 py-1.5">|▶</button>
+        {!horizontal && <div ref={verticalControlsRef} className="absolute bottom-0 left-0 z-[22] w-[94px] border-r border-t border-[#b4a087] bg-[#fbf7ed] px-1 py-1 text-xs" style={{minHeight:VERTICAL_CONTROL_MIN_HEIGHT}} onPointerDown={event=>event.stopPropagation()} onPointerMove={event=>event.stopPropagation()}>
+          <div className="mb-1 truncate text-center text-[10px] font-semibold text-[#7C211E]">{playbackStarted ? windowDate(playbackDate,visibleDays) : 'Playback ready'}</div>
+          <div className="mb-1 flex items-center justify-center gap-0.5">
+            <button type="button" onClick={()=>stepPlayback(-1)} aria-label="Step backward" className="rounded-full border border-[#c9b89d] px-1 py-0.5 text-[9px]">◀|</button>
+            <button type="button" onClick={togglePlayback} className="rounded-full bg-[#253C32] px-1 py-0.5 text-[9px] font-semibold text-white">{playing?'Ⅱ Pause':'▶ Play'}</button>
+            <button type="button" onClick={()=>stepPlayback(1)} aria-label="Step forward" className="rounded-full border border-[#c9b89d] px-1 py-0.5 text-[9px]">|▶</button>
           </div>
-          <label htmlFor="timeline-ii-vertical-speed" className="mb-1 block text-[10px] font-semibold">Speed</label>
-          <select id="timeline-ii-vertical-speed" value={playbackSpeed} onChange={event=>setPlaybackSpeed(Number(event.target.value))} className="mb-1 w-full rounded-md border border-[#c9b89d] bg-[#faf5eb] px-2 py-1">
-            <option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option>
-          </select>
-          <div className="mb-1 flex items-center justify-between"><label htmlFor="timeline-ii-vertical-mode" className="text-[10px] font-semibold">Playback type</label><button type="button" aria-label="Explain playback types" aria-expanded={playbackHelpOpen} onMouseEnter={()=>setPlaybackHelpOpen(true)} onMouseLeave={()=>setPlaybackHelpOpen(false)} onFocus={()=>setPlaybackHelpOpen(true)} onBlur={()=>setPlaybackHelpOpen(false)} onClick={()=>setPlaybackHelpOpen(v=>!v)} className="cursor-help rounded-full border border-[#b4a087] bg-[#f5e9d5] px-1.5 text-[10px] font-bold text-[#7C211E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]">i</button></div>
-          <select id="timeline-ii-vertical-mode" value={playbackMode} onChange={event=>setPlaybackMode(event.target.value)} className="w-full rounded-md border border-[#c9b89d] bg-[#faf5eb] px-2 py-1">
-            <option value="cumulative">Cumulative</option><option value="current">Concurrent</option>
-          </select>
-          <button type="button" onClick={resetPlayback} aria-label="Reset playback" className="mt-1 w-full rounded-full border border-[#c9b89d] py-1">↺ Reset</button>
+          <div className="mb-1 flex flex-col gap-0.5">
+            <label htmlFor="timeline-ii-vertical-speed" className="text-[9px] font-semibold">Speed</label>
+            <select id="timeline-ii-vertical-speed" value={playbackSpeed} onChange={event=>setPlaybackSpeed(Number(event.target.value))} className="w-full min-w-0 rounded-md border border-[#c9b89d] bg-[#faf5eb] px-1 py-0.5 text-[10px]">
+              <option value={0.5}>0.5×</option><option value={1}>1×</option><option value={2}>2×</option><option value={4}>4×</option>
+            </select>
+          </div>
+          <div className="mb-1 flex flex-col gap-0.5">
+            <label htmlFor="timeline-ii-vertical-mode" className="text-[9px] font-semibold leading-tight">Playback type</label>
+            <select id="timeline-ii-vertical-mode" value={playbackMode} onChange={event=>setPlaybackMode(event.target.value)} className="w-full min-w-0 rounded-md border border-[#c9b89d] bg-[#faf5eb] px-1 py-0.5 text-[10px]">
+              <option value="cumulative">Cumulative</option><option value="current">Concurrent</option>
+            </select>
+            <button type="button" aria-label="Explain playback types" aria-expanded={playbackHelpOpen} onMouseEnter={()=>setPlaybackHelpOpen(true)} onMouseLeave={()=>setPlaybackHelpOpen(false)} onFocus={()=>setPlaybackHelpOpen(true)} onBlur={()=>setPlaybackHelpOpen(false)} onClick={()=>setPlaybackHelpOpen(v=>!v)} className="shrink-0 cursor-help rounded-full border border-[#b4a087] bg-[#f5e9d5] px-1 text-[10px] font-bold text-[#7C211E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]">i</button>
+          </div>
+          <button type="button" onClick={resetPlayback} aria-label="Reset playback" className="w-full rounded-full border border-[#c9b89d] py-0.5 text-[11px]">↺ Reset</button>
         </div>}
       </div>
   </>;

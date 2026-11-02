@@ -16,8 +16,8 @@ const MAX_DAYS = 365.2425 * 250;
 const TRACK_GUTTER = 76;
 const CHRONOLOGY_RULER_HEIGHT = 92;
 const CHRONOLOGY_RULER_WIDTH = 186;
-const VERTICAL_CONTROL_MIN_HEIGHT = 218;
-const VERTICAL_RULER_FOOTER = 30;
+const VERTICAL_CONTROL_MIN_HEIGHT = 154;
+const VERTICAL_RULER_FOOTER = 16;
 const VERTICAL_AXIS_START = 58;
 // II-1: 50% larger than the v16 marks (31px nodes and 23px bands).
 // Secondary-axis lanes are bounded by the visible viewport, never by event count.
@@ -203,7 +203,7 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   const lower = safeCenter-half, upper = safeCenter+half;
   const horizontal = direction === 'horizontal';
   const axisStart = horizontal ? TRACK_GUTTER : VERTICAL_AXIS_START;
-  const length = Math.max(120,(horizontal?size.width:size.height) - axisStart - (horizontal ? 18 : verticalControlHeight + VERTICAL_RULER_FOOTER));
+  const length = Math.max(120,(horizontal?size.width:size.height) - axisStart - (horizontal ? 18 : 20));
   // Lanes fill the full *perpendicular* plotting dimension. The only navigation
   // dimension remains chronological; no secondary-axis overflow is created.
   const secondary = Math.max(90,horizontal?size.height:size.width);
