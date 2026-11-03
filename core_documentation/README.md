@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-ddee7e2 — Extend Timeline II vertical chronology to full plotting height
+81c3719 — Implement persistent loading animation and repair initial Map mounting
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-01)
+Status: commit pushed to origin/main (user-confirmed 2026-11-03); post-push clean working-tree status not yet supplied
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -140,6 +140,8 @@ For suitable mapped fields, researchers can declare whether one cell contains on
 **File format and error handling:** `.xlsm` (macro-enabled workbook) is accepted for worksheet-data parsing; Peridot does not execute VBA macros. Unrecognized extensions, unreadable/corrupt or password-protected workbooks, and sources with no usable table should produce explanatory feedback rather than being presented as successfully staged data.
 
 **Workbook review responsiveness (2026-10-31):** For larger multi-sheet uploads, Peridot can prepare a provisional Review & Upload result in a background Web Worker as mapping choices settle. The researcher may continue to edit or correct fields; obsolete calculations must not supersede updated mappings. A processing message may appear while validation runs. This optimization currently prepares full-workbook review early rather than independently caching the Time, Places, Relations, and Evidence stages; final upload may still require processing.
+
+**Loading and first visualization display (2026-11-03):** Peridot now uses a forest-green peridot-and-compass loading animation during substantial data processing and visualization transitions. The initial still is matched to the first animation frame for a smoother handoff; a browser-supported rendering worker helps the animation continue during lengthy main-thread work, with a fallback and reduced-motion treatment. The initial Geographic Map viewport also now registers when its stage first mounts, avoiding the previously observed blank-first-load state for a large workbook. Local production preview startup was user-tested and appeared nearly instantaneous; this is not a promise of identical loading times across devices or deployed connections. For implementation and regression details, see the Maintainer's Guide.
 
 ### 3.3 Visualize
 

@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-ddee7e2 — Extend Timeline II vertical chronology to full plotting height
+81c3719 — Implement persistent loading animation and repair initial Map mounting
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-01)
+Status: commit pushed to origin/main (user-confirmed 2026-11-03); post-push clean working-tree status not yet supplied
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -184,6 +184,10 @@ A **checkpoint** is a tested intermediate state that may still be revised soon. 
 - For image, brand, screenshot, or other asset passes, include the assets inside the same pass bundle and provide exact copy destinations.
 - Do not use `git add .` while generated artifacts such as `itch_upload/` or unrelated working files are untracked.
 - Use targeted `git add <file>...` commands by default. Use `git add -A src` only when an intentional source-file rename or deletion requires it.
+
+### Diagnostic-output requests and source-workflow clarification (2026-11-03)
+
+Do not routinely ask the researcher to paste successful build output or repeat routine build logs when no particular diagnostic question requires them. State any concrete reason for requesting build/console output, and distinguish a local syntax/build check from browser acceptance and deployed-site verification. Use targeted console measurements or an actual browser exception early when a runtime regression warrants it. Keep source handoffs as complete, versioned ordinary replacement files with checked ZIP paths and transparent `Copy-Item` commands; do not deliver executable patch scripts by default. This clarification reinforces, rather than supersedes, the full-file review, applied-file continuity, and recovery rules above.
 
 ### Sync ritual
 
@@ -613,6 +617,28 @@ Shared controls should remain consistent and independently testable, while tempo
 
 Maintenance consequence:
 Read all exact affected sources, compare initial vs remounted state and actual container dimensions, preserve shared markup, and run first-load/return/resize/playback/horizontal-vertical regression checks. See the Maintainer's Guide chronology contract and Changelog commits 8cb1cbc and ddee7e2.
+```
+
+#### Persistent OffscreenCanvas loader and first-mount Map decision (2026-11-03)
+
+```text
+Decision:
+Retain a visually faithful Peridot loading animation independently of main-thread processing and correct first-load Geographic Map viewport registration.
+
+Context:
+The approved main-thread Canvas animation stalled during large workbook processing and visualization changes. A preliminary worker implementation imperatively replaced React-managed Canvas elements and was rolled back after a white-screen regression. A completed-ring startup still jumped when the animated frame-zero state began. Initial large-data Map activation could also leave the viewport unmeasured until navigation away and back.
+
+Chosen approach:
+Use the approved Forest Study through shared procedural Canvas drawing in an OffscreenCanvas worker with a React-owned lifecycle and fallback. Keep the transition worker mounted across workspace switches and pause it when hidden. Use an exact frame-zero embedded preboot image with first-frame handoff. Register Map viewport measurement when its DOM element actually mounts; retain existing chronology-first fit semantics. Source commit: 81c3719.
+
+Rejected alternative:
+Return to SVG/CSS artwork that failed the approved visual comparison; rely on additional main-thread frame delays; imperatively replace a transferred React-owned Canvas; or conceal an unmeasured Map viewport behind an arbitrary longer loader timer.
+
+Reason:
+Separate loader animation from long synchronous application work without changing the generalized research data model, while addressing the actual first-mount Map lifecycle defect rather than masking it.
+
+Maintenance consequence:
+Preserve worker/fallback/reduced-motion behavior, the exact Forest Study design, persistent pause/resume and startup handoff, and mount-aware Map measurement. Test large-data first load and repeated Map/Network/Timeline/Charts switching. Source-worker details and regression matrix live in the Maintainer's Guide; rollback chronology lives in the Changelog. Other-chat Timeline II work is outside this decision's scope.
 ```
 
 ### 7.2 Routing and workspace model

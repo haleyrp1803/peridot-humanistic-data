@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-ddee7e2 — Extend Timeline II vertical chronology to full plotting height
+81c3719 — Implement persistent loading animation and repair initial Map mounting
 Branch: main
-Status: clean working tree; HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-01)
+Status: commit pushed to origin/main (user-confirmed 2026-11-03); post-push clean working-tree status not yet supplied
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -112,6 +112,18 @@ The public **Visualize**, **Explore**, and **Tutorials** no-dataset/coming-soon 
 **Production assets:** Image references inside React components must use Vite-managed static imports from the existing repository `assets/` directory, as already established on Home, or an equivalently build-verified method. JavaScript literals such as `/assets/foo.png` and manually base-prefixed strings do **not** make Vite emit files from an arbitrary top-level assets directory. Do not move or duplicate these images into `public/assets/` as an undocumented workaround. For changes, verify that the production build emits the required images and that their URLs work from GitHub Pages' `/peridot-humanistic-data/` base. Localhost rendering, Git push, and deployment are separate verification steps.
 
 Minimum regression: visit Visualize, Explore, and Tutorials with no dataset; inspect all parchment and tear imagery at laptop and desktop sizes; verify title, text, and button; navigate to Data; confirm that active-data Visualize/Explore functionality and session state are not affected; switch among the three pages and verify approved animation replay and reduced-motion behavior; run `npm.cmd run build` and inspect `dist/assets` output; verify the actual deployed site after publication. The latest confirmed Git state is `481acd9`; post-`fc42306` deployed gateway rendering remains separately unverified in this documentation pass.
+
+### Persistent loading renderer and first-load Map viewport contract (committed `81c3719`, 2026-11-03)
+
+**Presentation and ownership:** `index.html` provides the forest preboot background and an embedded still generated from the approved renderer at animation time zero; the outer graduated ring is absent at that instant. `src/main.jsx` coordinates React's initial loading/Suspense boundary, with `src/PeridotBootLoader.css` and `src/PeridotLoadingGem.css` styling the first-load surfaces. The initial still should remain visually aligned with the Canvas until first-frame readiness or normal app mount triggers the handoff. Do not replace this with a simplified SVG or a fully completed-ring frame, and do not impose a mandatory startup delay solely for aesthetics.
+
+**Canvas/worker contract:** `src/PeridotLoadingGem.jsx` owns the React-managed HTML Canvas and the worker/fallback lifecycle. `src/PeridotLoadingGemRenderer.js` owns the shared actual drawing calculations and approved colors/phase behavior; `src/PeridotLoadingGem.worker.js` renders via `OffscreenCanvas` with worker-side scheduling. A Canvas element transferred through `transferControlToOffscreen()` must not be reused for a conflicting main-thread context or imperatively swapped outside React. Respect React Strict Mode's development effect replay, transfer once per Canvas instance, terminate or pause workers intentionally, and handle initialization failures through React-managed fallback. Preserve reduced-motion behavior and the 75%-speed Forest Study, including pine-ink `#2D5942`, eight-arm pulse, individually shaded facets, diagonal illumination, and two-origin clockwise ring draw/erase. Worker compositing can still be affected by overall browser resource contention; test rather than guarantee unlimited animation smoothness.
+
+**Persistent transition lifecycle:** `src/PeridotTransitionOverlay.jsx` keeps the animated loader mounted across transitions and toggles its active state. The rendering worker is retained and paused while hidden; subsequent substantial workspace changes resume/restart the animation rather than remounting a new worker. `src/PeridotTransitionOverlay.css` owns overlay presentation. `src/App.jsx` owns `runPeridotTransition()`, its pre-processing paint opportunity and minimum-duration behavior, and the mapped-data confirmation wrapper. Development-only loader/workbook timing and frame-gap diagnostics distinguish wrapper duration from subsequent browser/React work, but a short operation duration does not certify that a visualization has finished rendering. The workbook-review worker (`src/peridotWorkbookReview.worker.js`) is separate and continues to protect revision-specific provisional mapping reviews.
+
+**Initial Geographic Map readiness (bounded repair, not a general protocol):** the Map viewport starts with zero dimensions and the Map SVG requires positive measured width/height. On first import, conditional mounting could occur after a measurement effect attempted to observe a nonexistent element, leaving a blank stage until a later visualization switch retriggered measurement. The accepted `App.jsx` Map viewport callback-ref/`ResizeObserver` wiring measures when the **actual Map DOM element mounts** and tears down observation when appropriate. Initial map fitting still respects existing chronology role/range readiness; do not re-fit on every playback step, pan, or zoom. `runPeridotTransition()` is not a universal Map-ready signal and does not wait for every CARTO tile. If future blank-first-load bugs arise, inspect DOM mount, nonzero dimensions, chronology initialization, and tile status separately rather than blindly extending the loading duration.
+
+**Minimum regressions:** cold development startup and local production preview; exact still/frame-zero alignment; animation across mapped-data confirmation and large-dataset Map/Network/Timeline/Timeline II/Charts switches; hidden-worker pause/resume and repeated navigation; worker startup failure and main-thread fallback; reduced motion; first Map after upload without navigating away; resize and return-to-Map; preserve viewport and chronology range/playback; no-data startup and ordinary sample/upload flow. User browser tests confirmed the principal large-data animations, startup handoff, fast local production preview, and initial Map recovery; a complete automated/cross-browser/deployed-site matrix has not been claimed.
 
 ## 2. Application Boundaries and Route Model
 
@@ -612,6 +624,18 @@ Use this index by subsystem rather than as an alphabetical file list. Module des
 - [Theme, styles, and visual language](#theme-styles-and-visual-language)
 - [Export and shared utilities](#export-and-shared-utilities)
 
+### Loading and transition ownership (2026-11-03)
+
+| File | Present responsibility |
+|---|---|
+| `index.html` | Early static frame-zero forest preboot before React initialization |
+| `src/main.jsx`, `src/PeridotBootLoader.css` | Initial React boot/Suspense handoff and loading presentation |
+| `src/PeridotTransitionOverlay.jsx`, `src/PeridotTransitionOverlay.css` | Session-persistent transition overlay, retained Canvas, visibility and presentation |
+| `src/PeridotLoadingGem.jsx`, `src/PeridotLoadingGem.css` | React-owned Canvas, worker/fallback startup, pause/resume, readiness and accessibility |
+| `src/PeridotLoadingGem.worker.js` | Independent OffscreenCanvas animation scheduling and worker-message handling |
+| `src/PeridotLoadingGemRenderer.js` | Shared exact Forest Study drawing and animation timing for worker/main-thread fallback |
+| `src/App.jsx` | Transition orchestration, mapping-confirmation wrapper, and first-mount Map viewport observation |
+
 ### Application shell and workspace routing
 
 #### `src/App.jsx`
@@ -1047,6 +1071,8 @@ These areas still deserve narrow, explicit passes:
 ### Practical regression matrix
 
 | Fragile zone | Typical regression | Minimum test |
+| Loading overlay / preboot | wrong first-frame still, blank handoff, remounted/stalled worker, missing switch animation | cold boot and production preview; long mapped-data confirmation; repeated heavy visualization switches; reduced motion and fallback |
+| First-load Map viewport | empty stage on first upload; viewport measured only on return | load large workbook directly into Map, assert positive viewport and populated stage without switching; resize/return, preserve chronology-first fit |
 |---|---|---|
 | Workspace routing | wrong workspace or lost state | Home/upload/sample actions and each persistent-header route; preserve cross-page data and viewport state |
 | First-time tutorial | placeholder disappears/becomes primary, or future launcher regresses overlay behavior | now: disabled secondary Home button + tooltip + no floating invitation; when re-enabled: full seven-stage suite |
