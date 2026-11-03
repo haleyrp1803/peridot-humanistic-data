@@ -31,15 +31,17 @@ export function PeridotSharedChronologyAdapter({
   const [help,setHelp]=useState(false);
   const count=timelineMonths.length;
   const last=Math.max(0,count-1);
-  const min=0,max=Math.max(1,last);
+  // Preserve indexed playback buckets; the padded ruler is presentation only.
+  const padding = last > 0 ? last * 0.1 : 0.1;
+  const min = -padding, max = Math.max(1,last) + padding;
   const lower=clamp(Math.min(rangeStart,rangeEnd),0,last);
   const upper=clamp(Math.max(rangeStart,rangeEnd),lower,last);
   const visibleDays=Math.max(1,upper-lower);
   const axisStart=TRACK_GUTTER;
   const length=Math.max(160,width-TRACK_GUTTER-18);
   const overviewSpan=Math.max(1,max-min);
-  const overviewLeft=axisStart+lower/overviewSpan*length;
-  const overviewRight=axisStart+upper/overviewSpan*length;
+  const overviewLeft=axisStart+(lower-min)/overviewSpan*length;
+  const overviewRight=axisStart+(upper-min)/overviewSpan*length;
   const overviewWidth=Math.max(0,overviewRight-overviewLeft);
   const valueLabel=i=>entryDateLabel(timelineMonths[clamp(Math.round(i),0,last)]);
   const rulerStart=valueLabel(lower),rulerEnd=valueLabel(upper);
@@ -102,7 +104,7 @@ export function PeridotSharedChronologyAdapter({
       if(Number.isFinite(candidates[0]?.d))approximatePlaybackBucket=candidates[0].i;
     }
   }
-  const playbackPosition=axisStart+approximatePlaybackBucket/overviewSpan*length;
+  const playbackPosition=axisStart+(approximatePlaybackBucket-min)/overviewSpan*length;
   const stop=()=>setIsPlaying?.(false);
   const commit=(a,b)=>{
     const start=clamp(Math.round(a),0,last);
@@ -114,7 +116,7 @@ export function PeridotSharedChronologyAdapter({
   const coordinate=e=>e.clientX;
   const getBucket=e=>{
     const rect=e.currentTarget.getBoundingClientRect();
-    return clamp((e.clientX-rect.left-axisStart)/Math.max(1,length)*overviewSpan,0,last);
+    return clamp(min+(e.clientX-rect.left-axisStart)/Math.max(1,length)*overviewSpan,0,last);
   };
   const rulerPointerDown=e=>{
     if(e.button!==0||!e.isPrimary)return;

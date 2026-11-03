@@ -24,8 +24,9 @@ export function packTimelineIIMarks(items, lanePositions, {nodeDiameter=46.5,ban
     const t1=period?Math.max(Math.max(start,finish),t0+bandThickness):start+nodeDiameter/2;
     return {index,id:String(item.id??index),period,start:t0,end:t1,radius:(period?bandThickness:nodeDiameter)/2};
   });
-  // A conflict graph prevents repeatedly scanning unrelated marks. It also
-  // makes chronological neighborhoods independent of the input order.
+  // Preserve the deterministic conflict graph and its original neighbor order.
+  // Dense temporal datasets can have nearly every interval overlapping; in that
+  // case the direct pair scan is faster than maintaining a sweep-line active set.
   const neighbors=Array.from({length:n},()=>[]);
   for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){
     const a=footprints[i],b=footprints[j];
@@ -59,17 +60,16 @@ export function packTimelineIIMarks(items, lanePositions, {nodeDiameter=46.5,ban
     return kindWeight*(Math.max(0,temporalOverlap)+padding*0.15)*crossOverlap;
   };
   const score=(i,lane)=>{
-    let impact=0, collisions=0, crowded=0;
+    let impact=0, collisions=0, crowded=0, localUsage=0;
     for(const j of neighbors[i]){
       if(assignments[j]<0)continue;
+      if(assignments[j]===lane)localUsage++;
       const c=conflictCost(i,lane,j,assignments[j]);
       if(c>0){impact+=c;collisions++;}
       else if(Math.abs(lanePositions[lane]-lanePositions[assignments[j]])<laneSpace*1.4)crowded++;
     }
     // Actual occupancy of a lane in the local temporal neighborhood, rather
     // than a global count of all events ever assigned to it.
-    let localUsage=0;
-    for(const j of neighbors[i])if(assignments[j]===lane)localUsage++;
     return [impact,collisions,localUsage,crowded,Math.abs(lane-(laneCount-1)/2)*0.001,lane];
   };
   // Place the most constrained marks first, independent of original event order.

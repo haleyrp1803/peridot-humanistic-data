@@ -7,12 +7,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {packTimelineIIMarks, TIMELINE_II_LANE_COUNT} from './peridotTimelineIIPacking.js';
 import {ChronologyRuler, ChronologyTransport} from './PeridotChronologyDock.jsx';
+import { buildPeridotTimelineConnections } from './peridotTimelineWorkspaceModel.js';
 
 const PALETTE = ['#A63D2B','#7C211E','#B85C38','#C49A3A','#7A7A32','#2F4A3E','#6B7F6B','#2F6F73','#5F7C8B','#4B5E8C','#6E4A7F','#9A4E68'];
 const GLYPHS = ['■','▲','◆','★','+','×','⬡','✿','⌃','⌄','▮','▬'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MIN_DAYS = 7;
-const MAX_DAYS = 365.2425 * 250;
 const TRACK_GUTTER = 76;
 const CHRONOLOGY_RULER_HEIGHT = 92;
 const CHRONOLOGY_RULER_WIDTH = 186;
@@ -25,6 +25,55 @@ const NODE_DIAMETER = 46.5;
 const BAND_THICKNESS = 34.5;
 const LANE_COUNT = TIMELINE_II_LANE_COUNT; // Shared with pure Packing A module.
 const MARK_PADDING = 9;
+// P2C presentation-only entrance: 18 deterministic temporal-independent waves.
+// All marks retain their plotted coordinates and remain individually rendered.
+const TIMELINE_II_REVEAL_WAVES = 18;
+const TIMELINE_II_REVEAL_STEP_MS = 48;
+const TIMELINE_II_REVEAL_DURATION_MS = 410;
+const TIMELINE_II_REVEAL_TOTAL_MS = (TIMELINE_II_REVEAL_WAVES - 1) * TIMELINE_II_REVEAL_STEP_MS + TIMELINE_II_REVEAL_DURATION_MS + 100;
+function timelineIIRevealWave(value) {
+  let hash = 2166136261;
+  const id = String(value ?? '');
+  for (let i = 0; i < id.length; i++) {
+    hash ^= id.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % TIMELINE_II_REVEAL_WAVES;
+}
+
+
+// P1 diagnostics only. Passive measurements; no console spam and no production
+// instrumentation. Run window.peridotTimelineIIPerf.report() in DevTools.
+const TIMELINE_II_PROFILE_ENABLED = import.meta.env.DEV;
+const timelineIIPerf = {
+  samples: [],
+  record(stage, duration, details = {}) {
+    if (!TIMELINE_II_PROFILE_ENABLED) return;
+    this.samples.push({stage, ms:duration, ...details});
+    if (this.samples.length > 2000) this.samples.splice(0, this.samples.length - 2000);
+  },
+  report() {
+    const grouped = new Map();
+    for (const sample of this.samples) {
+      if (!grouped.has(sample.stage)) grouped.set(sample.stage, []);
+      grouped.get(sample.stage).push(sample.ms);
+    }
+    const rows = [...grouped].map(([stage, durations]) => {
+      const sorted = [...durations].sort((a,b) => a-b);
+      return {stage, calls:sorted.length, totalMs:Number(sorted.reduce((a,b)=>a+b,0).toFixed(1)),
+        avgMs:Number((sorted.reduce((a,b)=>a+b,0)/sorted.length).toFixed(2)),
+        p95Ms:Number(sorted[Math.min(sorted.length-1,Math.ceil(sorted.length*0.95)-1)].toFixed(2)),
+        maxMs:Number(sorted[sorted.length-1].toFixed(2))};
+    });
+    console.table(rows);
+    console.log('Recent Timeline II samples (up to 25):', this.samples.slice(-25));
+    return rows;
+  },
+  clear() {this.samples.length = 0; console.info('Timeline II performance samples cleared');},
+};
+if (TIMELINE_II_PROFILE_ENABLED && typeof window !== 'undefined') {
+  window.peridotTimelineIIPerf = timelineIIPerf;
+}
 
 // Integer Gregorian day ordinal, including years preceding 1970. Date is never
 // converted with the host's local timezone or interpreted as Julian.
@@ -68,6 +117,142 @@ function dateLabel(ep) {
   if (!ep.month) return String(ep.year);
   if (!ep.day) return `${MONTHS[ep.month - 1]} ${ep.year}`;
   return `${ep.day} ${MONTHS[ep.month - 1]} ${ep.year}`;
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+function connectionLabel(connection) {
+  const relationship = String(connection?.relationshipLabel || connection?.relationshipType || 'Mapped relationship').trim();
+  const connector = connection?.direction === 'directed' ? '→' : '—';
+  return `${connection?.source || 'Source'} ${connector} ${connection?.target || 'Target'} · ${relationship}`;
+}
+function eventTemporalCenter(item) {
+  return item?.period ? (item.plotStart + item.plotFinish) / 2 : item?.plotStart;
+}
+function relationshipAnchor(item, counterpart, horizontal, lanePosition) {
+  if (!item) return { x: 0, y: 0 };
+  const cross = lanePosition(item.lane);
+  let temporal = eventTemporalCenter(item);
+  if (item.period) {
+    const midpoint = eventTemporalCenter(item);
+    const otherTemporal = eventTemporalCenter(counterpart);
+    const extent = Math.max(1, item.plotFinish - item.plotStart);
+    if (Number.isFinite(otherTemporal)) {
+      if (otherTemporal > midpoint + extent * 0.06) temporal = item.plotFinish;
+      else if (otherTemporal < midpoint - extent * 0.06) temporal = item.plotStart;
+      else temporal = midpoint;
+    }
+  }
+  return horizontal ? { x: temporal, y: cross } : { x: cross, y: temporal };
+}
+function TimelineIIRelationshipLayer({
+  items = [],
+  connections = [],
+  horizontal = true,
+  activeEventId = '',
+  size = { width: 0, height: 0 },
+  lanePosition,
+}) {
+  if (!connections.length || !items.length || typeof lanePosition !== 'function') return null;
+  const itemById = new Map(items.map((item) => [item.event.id, item]));
+  const visibleConnections = connections.filter((connection) => (
+    itemById.has(connection?.sourceEventId)
+    && itemById.has(connection?.targetEventId)
+    && connection.sourceEventId !== connection.targetEventId
+  ));
+  if (!visibleConnections.length) return null;
+
+  const orderedConnections = [...visibleConnections]
+    .map((connection) => {
+      const sourceItem = itemById.get(connection.sourceEventId);
+      const targetItem = itemById.get(connection.targetEventId);
+      return {
+        connection,
+        sourceItem,
+        targetItem,
+        span: Math.abs((eventTemporalCenter(targetItem) ?? 0) - (eventTemporalCenter(sourceItem) ?? 0)),
+      };
+    })
+    .filter(({ sourceItem, targetItem }) => sourceItem && targetItem)
+    .sort((a, b) => (
+      a.span - b.span
+      || (a.sourceItem.day - b.sourceItem.day)
+      || String(a.connection.id).localeCompare(String(b.connection.id))
+    ));
+
+  const arrowId = `peridot-timelineii-relationship-arrow-${horizontal ? 'h' : 'v'}`;
+  const activeArrowId = `peridot-timelineii-relationship-arrow-active-${horizontal ? 'h' : 'v'}`;
+
+  const segments = orderedConnections.map(({ connection, sourceItem, targetItem }, index) => {
+    const source = relationshipAnchor(sourceItem, targetItem, horizontal, lanePosition);
+    const target = relationshipAnchor(targetItem, sourceItem, horizontal, lanePosition);
+    const separation = horizontal ? Math.abs(target.x - source.x) : Math.abs(target.y - source.y);
+    const tier = index % 6;
+    let path = '';
+    if (horizontal) {
+      const ceiling = Math.max(18, Math.min(source.y, target.y) - 26);
+      const lift = clamp(38 + separation * 0.16 + tier * 10, 28, Math.max(34, ceiling));
+      const controlY = clamp(Math.min(source.y, target.y) - lift, 16, Math.max(16, Math.min(size.height - CHRONOLOGY_RULER_HEIGHT - 18, Math.min(source.y, target.y) - 14)));
+      path = `M ${source.x} ${source.y} C ${source.x} ${controlY}, ${target.x} ${controlY}, ${target.x} ${target.y}`;
+    } else {
+      const roomRight = Math.max(24, size.width - Math.max(source.x, target.x) - 24);
+      const push = clamp(40 + separation * 0.14 + tier * 12, 28, roomRight);
+      const controlX = clamp(Math.max(source.x, target.x) + push, Math.max(source.x, target.x) + 18, size.width - 18);
+      path = `M ${source.x} ${source.y} C ${controlX} ${source.y}, ${controlX} ${target.y}, ${target.x} ${target.y}`;
+    }
+    const focused = activeEventId && (connection.sourceEventId === activeEventId || connection.targetEventId === activeEventId);
+    const unrelatedWhileFocused = activeEventId && !focused;
+    const structural = connection.temporalGrounding === 'structural';
+    return {
+      id: connection.id,
+      connection,
+      path,
+      focused,
+      unrelatedWhileFocused,
+      structural,
+      span: separation,
+    };
+  }).sort((a, b) => Number(a.focused) - Number(b.focused) || a.span - b.span || String(a.id).localeCompare(String(b.id)));
+
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 z-[2] overflow-hidden"
+      width={size.width}
+      height={size.height}
+      viewBox={`0 0 ${size.width} ${size.height}`}
+    >
+      <defs>
+        <marker id={arrowId} markerWidth="8" markerHeight="8" refX="6.5" refY="4" orient="auto" markerUnits="strokeWidth">
+          <path d="M 0 0 L 8 4 L 0 8 z" fill="#705b43" />
+        </marker>
+        <marker id={activeArrowId} markerWidth="9" markerHeight="9" refX="7.2" refY="4.5" orient="auto" markerUnits="strokeWidth">
+          <path d="M 0 0 L 9 4.5 L 0 9 z" fill="#7C211E" />
+        </marker>
+      </defs>
+      {segments.map(({ id, connection, path, focused, unrelatedWhileFocused, structural }) => {
+        const stroke = focused ? '#7C211E' : structural ? 'rgba(37, 60, 50, 0.34)' : 'rgba(112, 91, 67, 0.44)';
+        const opacity = focused ? 0.98 : unrelatedWhileFocused ? 0.12 : structural ? 0.5 : 0.64;
+        const width = focused ? 2.7 : structural ? 1.6 : 1.85;
+        return (
+          <path
+            key={id}
+            d={path}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={width}
+            strokeOpacity={opacity}
+            strokeLinecap="round"
+            strokeDasharray={structural ? '6 6' : undefined}
+            markerEnd={connection.direction === 'directed' ? `url(#${focused ? activeArrowId : arrowId})` : undefined}
+          >
+            <title>{connectionLabel(connection)}</title>
+          </path>
+        );
+      })}
+    </svg>
+  );
 }
 function eventRows(events) {
   return (Array.isArray(events) ? events : []).map(event => {
@@ -232,12 +417,15 @@ function spanCaption(days) {
   return `${Math.round(days/365.2425)} years`;
 }
 
-export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick}) {
+export function PeridotTimelineII({events = [],relationshipRows = [],selectedEventId = '',onEventClick}) {
+  const renderStartedAt = TIMELINE_II_PROFILE_ENABLED ? performance.now() : 0;
   const [direction,setDirection] = useState('horizontal');
-  const [visibleDays,setVisibleDays] = useState(365.2425 * 75);
+  // Null means the untouched, dataset-fitted opening scale.
+  const [requestedVisibleDays,setVisibleDays] = useState(null);
   const [center,setCenter] = useState(null);
   const [showPoints,setShowPoints] = useState(true);
   const [showPeriods,setShowPeriods] = useState(true);
+  const [showRelationships,setShowRelationships] = useState(true);
   const [localSelected,setLocalSelected] = useState('');
   const [hoveredId,setHoveredId] = useState('');
   const [hoverPosition,setHoverPosition] = useState(null);
@@ -262,16 +450,43 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   // Pan preserves assignments; changes in scale, orientation, dataset, or
   // cross-axis geometry start a new layout context.
   const packingHistoryRef = useRef({context:null,lanes:new Map()});
-  const all = useMemo(()=>eventRows(events),[events]);
+  // Capture only first-view identities; any navigation ends the entrance
+  // so off-screen marks entering later never receive a new raindrop animation.
+  const revealInitialIdsRef = useRef(null);
+  const [revealPhase,setRevealPhase] = useState('before');
+  const stopEntranceOnNavigation = () => setRevealPhase(current => current === 'complete' ? current : 'complete');
+
+  const all = useMemo(()=>{
+    const t0 = TIMELINE_II_PROFILE_ENABLED ? performance.now() : 0;
+    const result = eventRows(events);
+    timelineIIPerf.record('event normalization', performance.now()-t0, {inputEvents:events.length,positionable:result.length});
+    return result;
+  },[events]);
   const categoryKeys = useMemo(()=>[...new Set(all.map(item=>item.category))].sort(),[all]);
   const colors = useMemo(()=>new Map(categoryKeys.map((key,i)=>[key,{color:PALETTE[i % PALETTE.length],symbol:GLYPHS[i % GLYPHS.length]}])),[categoryKeys]);
   const filtered = useMemo(()=>all.filter(item=>item.period?showPeriods:showPoints),[all,showPoints,showPeriods]);
+  const timelineConnections = useMemo(() => {
+    const t0 = TIMELINE_II_PROFILE_ENABLED ? performance.now() : 0;
+    const result = buildPeridotTimelineConnections(events, relationshipRows);
+    timelineIIPerf.record('relationship derivation', performance.now()-t0, {events:events.length,relationshipRows:relationshipRows.length,links:result.length});
+    return result;
+  }, [events, relationshipRows]);
   const min = all.length ? all[0].day : 0;
   const max = all.length ? Math.max(...all.map(item=>item.endDay)) : 365;
   const domainCenter = (min + max) / 2;
-  const actualCenter = center === null ? (min + Math.min(MAX_DAYS,max-min)/2) : center;
+  // Fit the complete temporal extent with 10% of the source span on EACH side.
+  // This changes only the opening field window, not actual dataset boundaries,
+  // playback limits, or the full-domain overview ruler.
+  const sourceSpanDays = Math.max(0, max - min);
+  const openingDays = Math.max(MIN_DAYS, sourceSpanDays * 1.2);
+  // Maximum zoom-out equals the 10%-padded opening domain.
+  const maximumVisibleDays = openingDays;
+  const visibleDays = requestedVisibleDays ?? openingDays;
+  const actualCenter = center === null ? domainCenter : center;
   const half = visibleDays / 2;
-  const safeCenter = Math.min(max + half, Math.max(min - half, actualCenter));
+  const paddedMin = domainCenter - openingDays / 2;
+  const paddedMax = domainCenter + openingDays / 2;
+  const safeCenter = Math.min(paddedMax - half, Math.max(paddedMin + half, actualCenter));
   const lower = safeCenter-half, upper = safeCenter+half;
   const horizontal = direction === 'horizontal';
   const axisStart = horizontal ? TRACK_GUTTER : VERTICAL_AXIS_START;
@@ -296,28 +511,65 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
     return {id:item.event.id,start,finish,period:item.period};
   });
   const lanePositions = Array.from({length:laneCount},(_,lane)=>lanePosition(lane));
-  const packingContext = {
-    events, direction, visibleDays,
-    crossStart, crossSpan, showPoints, showPeriods,
-  };
+  // P2B: lane identity is stable across time-scale changes and panning.
+  // Repack only when the dataset or perpendicular geometry fundamentally changes.
+  // Individual newly visible events get an inexpensive deterministic lane assignment.
+  const packingContext = {events, direction, crossStart, crossSpan};
   const history = packingHistoryRef.current;
   const sameContext = history.context
     && history.context.events === packingContext.events
     && history.context.direction === packingContext.direction
-    && history.context.visibleDays === packingContext.visibleDays
     && history.context.crossStart === packingContext.crossStart
-    && Math.abs(history.context.crossSpan - packingContext.crossSpan) < 1
-    && history.context.showPoints === packingContext.showPoints
-    && history.context.showPeriods === packingContext.showPeriods;
+    && Math.abs(history.context.crossSpan - packingContext.crossSpan) < 1;
   if (!sameContext) {
     history.context = packingContext;
     history.lanes = new Map();
+    history.cachedPacking = null;
   }
-  const lanes = packTimelineIIMarks(footprintItems,lanePositions,{
-    nodeDiameter:NODE_DIAMETER,bandThickness:BAND_THICKNESS,padding:MARK_PADDING,sweeps:2,
-    lockedLanes:history.lanes,
-  });
-  inWindow.forEach((item,index)=>history.lanes.set(String(item.event.id),lanes[index]));
+  const previousPacking = history.cachedPacking;
+  const sameFootprints = Boolean(previousPacking)
+    && previousPacking.lower === lower
+    && previousPacking.length === length
+    && previousPacking.items.length === footprintItems.length
+    && footprintItems.every((item,index) => {
+      const prior = previousPacking.items[index];
+      return item.id === prior.id && item.start === prior.start
+        && item.finish === prior.finish && item.period === prior.period;
+    });
+  let lanes;
+  if (sameFootprints) {
+    lanes = previousPacking.lanes;
+    timelineIIPerf.record('lane packing cache hit',0,{visibleEvents:inWindow.length,orientation:direction,zoomDays:visibleDays});
+  } else if (history.lanes.size) {
+    // The chronologic projection changes at every zoom step, but this does not
+    // require moving known marks to different secondary-axis lanes.
+    // New arrivals are assigned a stable, deterministic lane. Never mutate
+    // existing assignments merely because a viewport boundary moved.
+    lanes = footprintItems.map(item => {
+      const id = String(item.id);
+      let lane = history.lanes.get(id);
+      if (!Number.isInteger(lane) || lane < 0 || lane >= laneCount) {
+        let hash = 2166136261;
+        for (let i=0;i<id.length;i++) {
+          hash ^= id.charCodeAt(i);
+          hash = Math.imul(hash,16777619);
+        }
+        lane = (hash >>> 0) % laneCount;
+        history.lanes.set(id,lane);
+      }
+      return lane;
+    });
+    timelineIIPerf.record('lane packing stable reuse',0,{visibleEvents:inWindow.length,orientation:direction,zoomDays:visibleDays});
+  } else {
+    const packingStartedAt = TIMELINE_II_PROFILE_ENABLED ? performance.now() : 0;
+    lanes = packTimelineIIMarks(footprintItems,lanePositions,{
+      nodeDiameter:NODE_DIAMETER,bandThickness:BAND_THICKNESS,padding:MARK_PADDING,sweeps:2,
+      lockedLanes:history.lanes,
+    });
+    timelineIIPerf.record('lane packing',performance.now()-packingStartedAt,{visibleEvents:inWindow.length,lanes:laneCount,orientation:direction,zoomDays:visibleDays});
+    inWindow.forEach((item,index) => history.lanes.set(String(item.event.id),lanes[index]));
+  }
+  history.cachedPacking = {lower,length,items:footprintItems,lanes};
   const packed = inWindow.map((item,index)=>({
     ...item,lane:lanes[index],plotStart:footprintItems[index].start,plotFinish:footprintItems[index].finish,
   }));
@@ -326,7 +578,9 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   // One temporary reading aid at a time. A hover/focus takes precedence over
   // selection, and playback-hidden events must not leave phantom guide lines.
   const guideItem = packed.find(item => item.event.id === (hoveredId || (selectedEventId || localSelected)));
+  const ticksStartedAt = TIMELINE_II_PROFILE_ENABLED ? performance.now() : 0;
   const ticks = rulerTicks(lower,upper,length,!horizontal);
+  timelineIIPerf.record('detailed grid', performance.now()-ticksStartedAt, {tickCount:ticks.length,zoomDays:visibleDays});
   const rulerStart = windowDate(lower,visibleDays);
   const rulerEnd = windowDate(upper,visibleDays);
   const playbackDate = Math.max(lower,Math.min(upper,playhead ?? lower));
@@ -336,31 +590,36 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
       ? item.playbackStart <= playbackDate
       : item.playbackStart <= playbackDate && item.playbackEnd >= playbackDate)
     : packed;
+  if (revealInitialIdsRef.current === null && all.length) {
+    revealInitialIdsRef.current = new Set(playbackItems.map(item => String(item.event.id)));
+  }
+
+  const activeConnectionEventId = hoveredId || (selectedEventId || localSelected);
   // Overview positions always use the full dataset domain; detailed ticks
   // continue to use the current visible chronology.
-  const overviewSpan = Math.max(1, max - min);
-  const overviewStart = Math.max(min, Math.min(max, lower));
-  const overviewEnd = Math.max(min, Math.min(max, upper));
-  const overviewLeft = axisStart + (overviewStart - min) / overviewSpan * length;
-  const overviewRight = axisStart + (overviewEnd - min) / overviewSpan * length;
+  const overviewSpan = Math.max(1, paddedMax - paddedMin);
+  const overviewStart = Math.max(paddedMin, Math.min(paddedMax, lower));
+  const overviewEnd = Math.max(paddedMin, Math.min(paddedMax, upper));
+  const overviewLeft = axisStart + (overviewStart - paddedMin) / overviewSpan * length;
+  const overviewRight = axisStart + (overviewEnd - paddedMin) / overviewSpan * length;
   const overviewWidth = Math.max(0, overviewRight - overviewLeft);
   // Overview ticks use full-domain positions. Minor strokes may be closer
   // together, but labels are measured and suppressed independently.
   const overviewTicks = useMemo(() => {
-    const domain = Math.max(1, max - min);
+    const domain = overviewSpan;
     const targetPixels = 23;
     const rawStep = domain / Math.max(1, length / targetPixels);
     const steps = [1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000];
     const step = steps.find(value => value * 365.2425 >= rawStep) || 50000;
-    const beginYear = civilFromDay(Math.floor(min)).year;
-    const endYear = civilFromDay(Math.ceil(max)).year;
+    const beginYear = civilFromDay(Math.floor(paddedMin)).year;
+    const endYear = civilFromDay(Math.ceil(paddedMax)).year;
     const firstYear = Math.ceil(beginYear / step) * step;
     const marks = [];
     let lastLabelEnd = -Infinity;
     for (let year = firstYear; year <= endYear && marks.length < 240; year += step) {
       const day = civilDay(year);
-      if (day < min || day > max) continue;
-      const px = (day - min) / domain * length;
+      if (day < paddedMin || day > paddedMax) continue;
+      const px = (day - paddedMin) / domain * length;
       const label = String(year);
       const estimatedLabelWidth = label.length * 7 + 14;
       // Vertical labels need line-height clearance, horizontal labels need width.
@@ -370,23 +629,39 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
       marks.push({day, label:showLabel ? label : '', major:showLabel});
     }
     return marks;
-  }, [min, max, length, horizontal]);
+  }, [paddedMin, paddedMax, overviewSpan, length, horizontal]);
   const axisCoord = event => horizontal ? event.clientX : event.clientY;
   const overviewDayAt = event => {
     const rect = event.currentTarget.getBoundingClientRect();
     const px = (horizontal ? event.clientX - rect.left : event.clientY - rect.top) - axisStart;
-    return min + Math.max(0, Math.min(1, px / Math.max(1, length))) * overviewSpan;
+    return paddedMin + Math.max(0, Math.min(1, px / Math.max(1, length))) * overviewSpan;
   };
   const clampWindow = (start, end) => {
-    const domain = Math.max(0, max - min);
-    const available = Math.min(MAX_DAYS, Math.max(MIN_DAYS, domain));
-    const span = Math.max(MIN_DAYS, Math.min(available, end - start));
-    const left = domain >= span
-      ? Math.max(min, Math.min(max - span, start))
-      : (min + max - span) / 2;
+    stopEntranceOnNavigation();
+    const span = Math.max(MIN_DAYS, Math.min(maximumVisibleDays, end - start));
+    const left = Math.max(paddedMin, Math.min(paddedMax - span, start));
     setVisibleDays(span);
     setCenter(left + span / 2);
   };
+  useEffect(() => {
+    if (revealPhase !== 'before' || !revealInitialIdsRef.current?.size) return undefined;
+    // The scene and its geometry have committed before the reveal starts.
+    // Timers control just two React state changes, not individual marks.
+    let frame1 = 0;
+    let frame2 = 0;
+    let finished = 0;
+    frame1 = requestAnimationFrame(() => {
+      frame2 = requestAnimationFrame(() => {
+        setRevealPhase('revealing');
+        finished = window.setTimeout(() => setRevealPhase('complete'), TIMELINE_II_REVEAL_TOTAL_MS);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(frame1);
+      cancelAnimationFrame(frame2);
+      window.clearTimeout(finished);
+    };
+  }, [revealPhase, all.length]);
   useEffect(()=>{
     const el=viewportRef.current;
     if(!el)return undefined;
@@ -436,21 +711,29 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   },[lower,upper,playhead]);
   const pausePlayback=()=>setPlaying(false);
   const togglePlayback=()=>{
+    stopEntranceOnNavigation();
     if(playing){setPlaying(false);return;}
     setPlaybackStarted(true);
     setPlayhead(current=>current===null || current>=upper ? lower : Math.max(lower,current));
     setPlaying(true);
   };
   const stepPlayback=direction=>{
+    stopEntranceOnNavigation();
     pausePlayback();setPlaybackStarted(true);
     setPlayhead(current=>Math.max(lower,Math.min(upper,(current??lower)+direction*Math.max(1,visibleDays/24))));
   };
   const resetPlayback=()=>{pausePlayback();setPlayhead(null);setPlaybackStarted(false);};
-  const zoomBy = factor => setVisibleDays(days=>Math.max(MIN_DAYS,Math.min(MAX_DAYS,days*factor)));
-  const panBy = delta => setCenter(current=>{
+  const zoomBy = factor => {
+    stopEntranceOnNavigation();
+    setVisibleDays(days=>Math.max(MIN_DAYS,Math.min(maximumVisibleDays,(days ?? visibleDays)*factor)));
+  };
+  const panBy = delta => {
+    stopEntranceOnNavigation();
+    setCenter(current=>{
     const old=current===null?actualCenter:current;
-    return Math.max(min-visibleDays/2,Math.min(max+visibleDays/2,old+delta));
-  });
+    return Math.max(paddedMin+visibleDays/2,Math.min(paddedMax-visibleDays/2,old+delta));
+    });
+  };
   const wheel = event=>{
     // One chronological navigation axis regardless of input device direction.
     // Shift and trackpad horizontal scroll work in horizontal mode too.
@@ -473,6 +756,7 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   const startDrag = event => {
     pausePlayback();
     if (event.button !== 0 || !event.isPrimary) return;
+    stopEntranceOnNavigation();
     suppressSelectionClickRef.current = false;
     dragRef.current = {pointerId:event.pointerId,coordinate:horizontal?event.clientX:event.clientY,dragging:false};
   };
@@ -507,6 +791,7 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   // Clicking the remaining track centers the visible range at that date.
   const rulerPointerDown = event => {
     if (event.button !== 0 || !event.isPrimary) return;
+    stopEntranceOnNavigation();
     event.stopPropagation(); event.preventDefault();
     const role = event.target.closest('[data-scrub-part]')?.dataset.scrubPart || 'track';
     // Do not alter the time window on pointer-down. In particular, an initial
@@ -526,22 +811,24 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
     if (!drag.moved && Math.abs(pixelDelta) < 5) return;
     drag.moved = true;
     pausePlayback();
-    const delta = pixelDelta / Math.max(1,length) * Math.max(1,max-min);
+    const delta = pixelDelta / Math.max(1,length) * overviewSpan;
     if (drag.role === 'playhead') {
+      stopEntranceOnNavigation();
       setPlaybackStarted(true);
       setPlayhead(Math.max(lower,Math.min(upper,overviewDayAt(event))));
     } else if (drag.role === 'start') {
-      clampWindow(Math.max(min,Math.min(drag.end-MIN_DAYS,drag.start+delta)),drag.end);
+      clampWindow(Math.max(paddedMin,Math.min(drag.end-MIN_DAYS,drag.start+delta)),drag.end);
     } else if (drag.role === 'end') {
-      clampWindow(drag.start,Math.min(max,Math.max(drag.start+MIN_DAYS,drag.end+delta)));
+      clampWindow(drag.start,Math.min(paddedMax,Math.max(drag.start+MIN_DAYS,drag.end+delta)));
     } else if (drag.role === 'body') {
       const span=drag.end-drag.start;
-      if (span >= max-min) {
+      if (span >= overviewSpan - 0.0001) {
         // Full-domain (or wider) views have no meaningful overview travel.
         // Keep zoom and center unchanged until the user explicitly adjusts a clamp.
         return;
       }
-      const left=Math.max(min,Math.min(max-span,drag.start+delta));
+      const left=Math.max(paddedMin,Math.min(paddedMax-span,drag.start+delta));
+      stopEntranceOnNavigation();
       setCenter(left+span/2);
     } else {
       // A drag beginning on empty track is not an implicit zoom operation.
@@ -556,7 +843,7 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
       pausePlayback();
       const date=overviewDayAt(event);
       const span=drag.end-drag.start;
-      if (span < max-min) clampWindow(date-span/2,date+span/2);
+      if (span < overviewSpan) clampWindow(date-span/2,date+span/2);
     }
     rulerDragRef.current=null;
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
@@ -578,7 +865,7 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
   };
   const chronologyDockProps = {
     horizontal, verticalControlHeight, axisStart, length,
-    min, max, lower, upper, visibleDays, overviewSpan,
+    min:paddedMin, max:paddedMax, lower, upper, visibleDays, overviewSpan,
     overviewLeft, overviewRight, overviewWidth, overviewTicks,
     playbackStarted, playbackDate, playbackPosition,
     playing, playbackSpeed, setPlaybackSpeed,
@@ -589,20 +876,24 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
     clampWindow, stepPlayback, togglePlayback, resetPlayback,
     verticalControlsRef, rulerStart, rulerEnd,
   };
+  timelineIIPerf.record('render calculations (pre-JSX)', performance.now()-renderStartedAt, {totalEvents:all.length,visibleEvents:inWindow.length,playbackVisible:playbackItems.length,links:timelineConnections.length,orientation:direction,zoomDays:visibleDays});
   if(!all.length)return <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl bg-[#eee0c7] text-[#4b4236]">No positionable events available to Timeline II.</div>;
   return <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#b4a087] bg-[#eee0c7] text-[#302b24]">
+    <style>{`@keyframes peridot-timelineii-raindrop { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
+      @media (prefers-reduced-motion: reduce) { .peridot-timelineii-reveal { animation: none !important; opacity: 1 !important; transform: none !important; } }`}</style>
     <div className="z-10 flex shrink-0 flex-wrap items-center gap-3 border-b border-[#b4a087] bg-[#fbf7ed] px-4 py-2 text-xs">
       <strong className="mr-2 font-serif text-lg text-[#7C211E]">Timeline II</strong>
-      <div className="flex overflow-hidden rounded-full border border-[#b4a087]">{['horizontal','vertical'].map(mode=><button key={mode} type="button" onClick={()=>setDirection(mode)} className={`px-3 py-1.5 font-semibold capitalize ${direction===mode?'bg-[#253C32] text-white':'bg-[#fbf7ed]'}`}>{mode}</button>)}</div>
-      <div className="flex items-center gap-2"><button type="button" aria-label="Zoom out" disabled={visibleDays >= MAX_DAYS} onClick={()=>zoomBy(2)} className="rounded border border-[#b4a087] px-2 py-1 disabled:opacity-40">−</button><span className="min-w-[72px] text-center">{spanCaption(visibleDays)}</span><button type="button" aria-label="Zoom in" disabled={visibleDays <= MIN_DAYS} onClick={()=>zoomBy(0.5)} className="rounded border border-[#b4a087] px-2 py-1 disabled:opacity-40">+</button></div>
-      <label className="flex items-center gap-1"><input type="checkbox" checked={showPoints} onChange={e=>setShowPoints(e.target.checked)}/>Dates</label>
-      <label className="flex items-center gap-1"><input type="checkbox" checked={showPeriods} onChange={e=>setShowPeriods(e.target.checked)}/>Periods</label>
+      <div className="flex overflow-hidden rounded-full border border-[#b4a087]">{['horizontal','vertical'].map(mode=><button key={mode} type="button" onClick={()=>{stopEntranceOnNavigation();setDirection(mode);}} className={`px-3 py-1.5 font-semibold capitalize ${direction===mode?'bg-[#253C32] text-white':'bg-[#fbf7ed]'}`}>{mode}</button>)}</div>
+      <div className="flex items-center gap-2"><button type="button" aria-label="Zoom out" disabled={visibleDays >= maximumVisibleDays} onClick={()=>zoomBy(2)} className="rounded border border-[#b4a087] px-2 py-1 disabled:opacity-40">−</button><span className="min-w-[72px] text-center">{spanCaption(visibleDays)}</span><button type="button" aria-label="Zoom in" disabled={visibleDays <= MIN_DAYS} onClick={()=>zoomBy(0.5)} className="rounded border border-[#b4a087] px-2 py-1 disabled:opacity-40">+</button></div>
+      <label className="flex items-center gap-1"><input type="checkbox" checked={showPoints} onChange={e=>{stopEntranceOnNavigation();setShowPoints(e.target.checked);}}/>Dates</label>
+      <label className="flex items-center gap-1"><input type="checkbox" checked={showPeriods} onChange={e=>{stopEntranceOnNavigation();setShowPeriods(e.target.checked);}}/>Periods</label>
+      {timelineConnections.length ? <label className="flex items-center gap-1"><input type="checkbox" checked={showRelationships} onChange={e=>{stopEntranceOnNavigation();setShowRelationships(e.target.checked);}}/>Relationships</label> : null}
       <span className="ml-auto text-[#6b5d4c]">{inWindow.length} in view · {all.length} total</span>
     </div>
     <div ref={viewportRef} role="region" aria-label={`Timeline II ${direction} chronological field; scroll through time`} tabIndex={0} onKeyDown={e=>{
       if(['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(e.key)){e.preventDefault();panBy((e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1)*visibleDays*0.12);}
-      if(e.key==='Home'){e.preventDefault();setCenter(min+visibleDays/2);}
-      if(e.key==='End'){e.preventDefault();setCenter(max-visibleDays/2);}
+      if(e.key==='Home'){e.preventDefault();stopEntranceOnNavigation();setCenter(min+visibleDays/2);}
+      if(e.key==='End'){e.preventDefault();stopEntranceOnNavigation();setCenter(max-visibleDays/2);}
     }}
       onPointerDown={startDrag}
       onPointerMove={moveDrag}
@@ -646,6 +937,14 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
           </React.Fragment>;
         })}
       </div>
+      {showRelationships && timelineConnections.length ? <TimelineIIRelationshipLayer
+        items={playbackItems}
+        connections={timelineConnections}
+        horizontal={horizontal}
+        activeEventId={activeConnectionEventId}
+        size={size}
+        lanePosition={lanePosition}
+      /> : null}
       {/* An individual mark's date projection is separate from the subdued
           background grid and is based on the same pos() as the mark itself.
           The date badge uses source precision, not the plotting anchor's day. */}
@@ -677,6 +976,13 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
 
       {playbackItems.map(item=>{
         const categoryStyle=colors.get(item.category)||{color:'#253C32',symbol:'●'};
+        const entranceEligible = revealPhase !== 'complete' && revealInitialIdsRef.current?.has(String(item.event.id));
+        const revealStyle = entranceEligible
+          ? revealPhase === 'before'
+            ? {opacity:0}
+            : {animation:`peridot-timelineii-raindrop ${TIMELINE_II_REVEAL_DURATION_MS}ms cubic-bezier(0.22, 0.68, 0.2, 1) both`,animationDelay:`${timelineIIRevealWave(item.event.id) * TIMELINE_II_REVEAL_STEP_MS}ms`}
+          : {};
+
         const active=item.event.id === (selectedEventId || localSelected);
         const hoveredMark=item.event.id === hoveredId;
         const secondaryPos=lanePosition(item.lane);
@@ -695,12 +1001,12 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
           onClick:()=>select(item),
         };
         if(item.period) return (
-          <button key={item.event.id} type="button" {...interactiveProps}
+          <button key={`${direction}:${item.event.id}`} type="button" {...interactiveProps}
             aria-label={`Period: ${fullLabel}`}
-            className="group absolute z-[2] rounded-full border-0 text-left shadow-sm transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]"
+            className={`group absolute z-[2] rounded-full border-0 text-left shadow-sm hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${entranceEligible ? 'peridot-timelineii-reveal' : ''}`}
             style={horizontal
-              ? {left:bandStart,top:secondaryPos-BAND_THICKNESS/2,width:bandLength,height:BAND_THICKNESS}
-              : {top:bandStart,left:secondaryPos-BAND_THICKNESS/2,height:bandLength,width:BAND_THICKNESS}
+              ? {left:bandStart,top:secondaryPos-BAND_THICKNESS/2,width:bandLength,height:BAND_THICKNESS,transition:"top 360ms ease-in-out, transform 150ms ease",...revealStyle}
+              : {top:bandStart,left:secondaryPos-BAND_THICKNESS/2,height:bandLength,width:BAND_THICKNESS,transition:"left 360ms ease-in-out, transform 150ms ease",...revealStyle}
             }
           >
             <span className="pointer-events-none absolute inset-0 rounded-full" style={{background:`color-mix(in srgb, ${categoryStyle.color} 58%, #eee0c7)`,border:`2px ${item.uncertain?'dashed':'solid'} ${categoryStyle.color}`,borderRadius:999,boxShadow:(active||hoveredMark)?`0 0 0 3px ${categoryStyle.color}`:undefined}} />
@@ -715,18 +1021,20 @@ export function PeridotTimelineII({events = [],selectedEventId = '',onEventClick
           </button>
         );
         return (
-          <button key={item.event.id} type="button" {...interactiveProps}
+          <button key={`${direction}:${item.event.id}`} type="button" {...interactiveProps}
             aria-label={`Event: ${fullLabel}`}
-            className="absolute z-[3] flex items-center justify-center rounded-full border-[3px] font-bold shadow-md transition hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]"
+            className={`absolute z-[3] flex items-center justify-center rounded-full border-[3px] font-bold shadow-md hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${entranceEligible ? 'peridot-timelineii-reveal' : ''}`}
             style={{
               ...(horizontal
                 ? {left:item.plotStart-NODE_DIAMETER/2,top:secondaryPos-NODE_DIAMETER/2}
                 : {top:item.plotStart-NODE_DIAMETER/2,left:secondaryPos-NODE_DIAMETER/2}),
               width:NODE_DIAMETER,height:NODE_DIAMETER,
+              transition:horizontal?"top 360ms ease-in-out, transform 150ms ease":"left 360ms ease-in-out, transform 150ms ease",
               background:item.uncertain?'#eee0c7':categoryStyle.color,
               color:item.uncertain?categoryStyle.color:'white',
               borderColor:categoryStyle.color,
               fontSize:22,
+              ...revealStyle,
               outline:(active||hoveredMark)?'3px solid #7C211E':undefined,
             }}
           >{categoryStyle.symbol}</button>
