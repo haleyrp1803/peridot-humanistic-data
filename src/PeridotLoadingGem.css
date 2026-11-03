@@ -1,0 +1,7 @@
+.peridot-loading-gem {
+  display: block;
+  width: min(380px, 74vw, 42vh);
+  height: auto;
+  aspect-ratio: 1;
+  flex: none;
+}

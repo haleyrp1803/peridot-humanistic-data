@@ -1,20 +1,14 @@
-/*
- * Shared Peridot workspace transition overlay.
- *
- * The overlay gives expensive workspace changes an immediate visual response
- * while preserving the destination workspace's mounted state underneath it.
- * It deliberately stays visually restrained in this first pass so later
- * animation work can build on one stable transition boundary.
- */
-
+/* Shared workspace transition overlay. App.jsx owns activation.
+ * Keep the Canvas mounted so visualization switches reuse the same worker.
+ * Inactive periods pause drawing rather than tearing down the renderer. */
 import React from 'react';
-import peridotLogo from '../assets/Peridot Logo Gilded Transparent.png';
+import { PeridotLoadingGem, DEFAULT_PERIDOT_LOADER_THEME } from './PeridotLoadingGem.jsx';
 import './PeridotTransitionOverlay.css';
 
 export function PeridotTransitionOverlay({ active = false, label = 'Opening…' }) {
   return (
     <div
-      className={`peridot-transition-overlay${active ? ' is-active' : ''}`}
+      className={`peridot-transition-overlay peridot-loader-theme-${DEFAULT_PERIDOT_LOADER_THEME}${active ? ' is-active' : ''}`}
       aria-hidden={active ? undefined : 'true'}
       aria-live="polite"
       aria-busy={active ? 'true' : 'false'}
@@ -22,13 +16,7 @@ export function PeridotTransitionOverlay({ active = false, label = 'Opening…' 
       data-peridot-transition-overlay="true"
     >
       <div className="peridot-transition-overlay-content">
-        <img
-          src={peridotLogo}
-          alt=""
-          className="peridot-transition-overlay-logo"
-          draggable="false"
-        />
-        <div className="peridot-transition-overlay-name">Peridot</div>
+        <PeridotLoadingGem active={active} />
         <div className="peridot-transition-overlay-label">{label}</div>
       </div>
     </div>

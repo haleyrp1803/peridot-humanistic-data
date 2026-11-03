@@ -1,0 +1,21 @@
+/* Initial application code-load fallback; no imposed minimum duration. */
+.peridot-boot-loader {
+  position: fixed;
+  z-index: 5001;
+  inset: 0;
+  background: #253a30;
+  color: #e0cdaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.peridot-boot-loader.peridot-loader-theme-parchment {
+  background: #eee7d8;
+  color: #836e5b;
+}
+.peridot-boot-loader-label {
+  font: 700 .76rem system-ui, sans-serif;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}

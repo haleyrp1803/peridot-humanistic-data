@@ -18,7 +18,7 @@
  */
 
 // Core React hooks used throughout the app.
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { geoMercator, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import countries50m from 'world-atlas/countries-50m.json';
@@ -4285,6 +4285,14 @@ export default function EuropeNetworkMapApp() {
   const [pageTitle, setPageTitle] = useState('Correspondence Visualizer');
   const [exportStatus, setExportStatus] = useState(null);
   const mapViewportRef = useRef(null);
+  // The Map stage mounts conditionally inside the visualization workspace.
+  // A ref-only observer effect can run before the stage exists and never retry.
+  // Track the actual DOM attachment so measurement follows its lifecycle.
+  const [mapViewportElement, setMapViewportElement] = useState(null);
+  const registerMapViewport = useCallback((element) => {
+    mapViewportRef.current = element; // Preserve the existing map interaction/export ref contract.
+    setMapViewportElement(element);
+  }, []);
   const geographicMapViewStateRef = useRef(null);
   const forceNetworkViewStateRef = useRef(null);
   const geographicPersonGraphCacheRef = useRef(null);
@@ -5493,8 +5501,16 @@ export default function EuropeNetworkMapApp() {
       // does heavier Excel work on the main thread.
       await new Promise((resolve) => window.requestAnimationFrame(resolve));
 
+      const workbookParseStartedAt = window.performance.now();
       const workbookModel = await parsePeridotTableFile(file);
       const workbookSummary = summarizePeridotWorkbook(workbookModel);
+      if (import.meta.env.DEV) {
+        console.info('[Peridot workbook timing]', {
+          operation: 'Workbook parse and summary',
+          fileType: displayFileType,
+          elapsedMs: Math.round((window.performance.now() - workbookParseStartedAt) * 10) / 10,
+        });
+      }
 
       if (workbookModel.fileType === 'unsupported') {
         throw new Error(workbookSummary.warnings?.[0]?.message || 'Unsupported file type.');
@@ -6242,9 +6258,18 @@ export default function EuropeNetworkMapApp() {
   };
 
 
-  useEffect(() => {
-    const element = mapViewportRef.current;
-    if (!element) return undefined;
+  // Measure whenever the Map stage actually attaches, not only when a route
+  // selection changes. On initial workbook activation the visualization shell
+  // and its selected Map stage can commit in separate React renders.
+  useLayoutEffect(() => {
+    const element = mapViewportElement;
+    if (!element) {
+      // An absent stage must not retain dimensions from a previous view.
+      setMapViewportSize((prev) => (
+        prev.width === 0 && prev.height === 0 ? prev : { width: 0, height: 0 }
+      ));
+      return undefined;
+    }
 
     const updateSize = () => {
       const nextWidth = Math.max(0, Math.round(element.clientWidth || 0));
@@ -6258,7 +6283,7 @@ export default function EuropeNetworkMapApp() {
 
     updateSize();
 
-    const observer = new ResizeObserver(() => updateSize());
+    const observer = new ResizeObserver(updateSize);
     observer.observe(element);
     window.addEventListener('resize', updateSize);
 
@@ -6266,7 +6291,7 @@ export default function EuropeNetworkMapApp() {
       observer.disconnect();
       window.removeEventListener('resize', updateSize);
     };
-  }, [workspaceMode, visualizationsWorkspacePanel, viewMode, personLayoutMode]);
+  }, [mapViewportElement]);
 
   useEffect(() => {
     if (!hoverCard) return undefined;
@@ -6296,7 +6321,7 @@ export default function EuropeNetworkMapApp() {
     && (timelineMonths.length === 0 || (rangeStart === 0 && rangeEnd === timelineMonths.length - 1));
 
   const mapStageProps = buildMapStageProps({
-    mapViewportRef,
+    mapViewportRef: registerMapViewport,
     mapViewportSize,
     graph,
     hoveredEdgeId,
@@ -6474,53 +6499,74 @@ export default function EuropeNetworkMapApp() {
     ),
   };
 
+  // PERIDOT_LOADER_ORCHESTRATION_V3
+  // Diagnostics are development-only. Keep the Canvas on the main thread
+  // until measured processing stalls justify a more invasive approach.
   const runPeridotTransition = (label, action, options = {}) => {
     if (typeof action !== 'function') return;
-    if (typeof window === 'undefined') {
-      action();
-      return;
-    }
+    if (typeof window === 'undefined') return action();
 
-    const sequence = transitionSequenceRef.current + 1;
-    transitionSequenceRef.current = sequence;
+    const sequence = ++transitionSequenceRef.current;
     clearPeridotTransitionSchedule();
-
     const minimumDuration = Number.isFinite(options.minimumDuration)
-      ? Math.max(0, options.minimumDuration)
-      : 650;
-    const startedAt = window.performance?.now?.() ?? Date.now();
-
+      ? Math.max(0, options.minimumDuration) : 350;
+    const startedAt = window.performance.now();
+    const diagnostics = import.meta.env.DEV;
+    const timings = { label: label || 'Opening…', sequence, activatedAt: startedAt };
     setTransitionState({ active: true, label: label || 'Opening…' });
 
     const scheduleFrame = (callback) => {
       const frameId = window.requestAnimationFrame(() => {
-        transitionFrameIdsRef.current = transitionFrameIdsRef.current.filter((id) => id !== frameId);
-        callback();
+        transitionFrameIdsRef.current = transitionFrameIdsRef.current.filter(id => id !== frameId);
+        if (transitionSequenceRef.current === sequence) callback();
       });
       transitionFrameIdsRef.current.push(frameId);
     };
-
-    // Two frames guarantee that the overlay can paint before an expensive
-    // workspace state change begins. Two reveal frames then give the newly
-    // visible preserved workspace a layout/paint opportunity before fade-out.
-    scheduleFrame(() => {
-      scheduleFrame(() => {
+    const finishTransition = () => {
+      timings.operationDoneAt = window.performance.now();
+      scheduleFrame(() => scheduleFrame(() => {
+        timings.destinationFramesAt = window.performance.now();
+        const remaining = Math.max(0, minimumDuration - (timings.destinationFramesAt - startedAt));
+        transitionTimerRef.current = window.setTimeout(() => {
+          transitionTimerRef.current = null;
+          if (transitionSequenceRef.current !== sequence) return;
+          timings.dismissAt = window.performance.now();
+          if (diagnostics) {
+            const rounded = (value) => Math.round(value * 10) / 10;
+            console.info('[Peridot loader timing]', {
+              operation: timings.label,
+              firstPaintOpportunityMs: rounded((timings.paintOpportunityAt ?? startedAt) - startedAt),
+              operationMs: rounded(timings.operationDoneAt - (timings.actionStartAt ?? startedAt)),
+              postOperationFramesMs: rounded(timings.destinationFramesAt - timings.operationDoneAt),
+              totalOverlayMs: rounded(timings.dismissAt - startedAt),
+              status: timings.failed ? 'failed' : 'completed',
+            });
+          }
+          setTransitionState(current => ({ ...current, active: false }));
+        }, remaining);
+      }));
+    };
+    // Two animation frames establish a paint opportunity. A separate task
+    // boundary allows the browser to paint before synchronous mapping starts.
+    scheduleFrame(() => scheduleFrame(() => {
+      timings.paintOpportunityAt = window.performance.now();
+      transitionTimerRef.current = window.setTimeout(() => {
+        transitionTimerRef.current = null;
         if (transitionSequenceRef.current !== sequence) return;
-        action();
-        scheduleFrame(() => {
-          scheduleFrame(() => {
-            if (transitionSequenceRef.current !== sequence) return;
-            const now = window.performance?.now?.() ?? Date.now();
-            const remaining = Math.max(0, minimumDuration - (now - startedAt));
-            transitionTimerRef.current = window.setTimeout(() => {
-              transitionTimerRef.current = null;
-              if (transitionSequenceRef.current !== sequence) return;
-              setTransitionState((current) => ({ ...current, active: false }));
-            }, remaining);
+        timings.actionStartAt = window.performance.now();
+        try {
+          Promise.resolve(action()).then(finishTransition, error => {
+            timings.failed = true;
+            console.error('Peridot transition operation failed:', error);
+            finishTransition();
           });
-        });
-      });
-    });
+        } catch (error) {
+          timings.failed = true;
+          console.error('Peridot transition operation failed:', error);
+          finishTransition();
+        }
+      }, 0);
+    }));
   };
 
   const openDataWorkspace = () => {
@@ -6756,7 +6802,12 @@ export default function EuropeNetworkMapApp() {
     staging: columnMappingStaging,
     onClose: discardColumnMappingStaging,
     onSaveMapping: handleSaveColumnMappingState,
-    onConfirmImport: handleConfirmColumnMappingImport,
+    // PERIDOT_LOADER_MAPPING_CONFIRM_V2: preserve the existing mapping handler.
+    onConfirmImport: (...args) => runPeridotTransition(
+      'Processing mapped data…',
+      () => handleConfirmColumnMappingImport(...args),
+      { minimumDuration: 350 }
+    ),
     onResetSampleMapping: resetPeridotSampleMapping,
   };
 

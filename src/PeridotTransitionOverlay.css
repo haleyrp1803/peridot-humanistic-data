@@ -1,3 +1,4 @@
+/* Peridot workspace loader. Palette can be switched in PeridotLoadingGem.jsx. */
 .peridot-transition-overlay {
   position: fixed;
   inset: 0;
@@ -5,17 +6,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(3, 18, 12, 0.92);
+  background: #253a30;
   opacity: 0;
   pointer-events: none;
   transition: opacity 220ms ease-in-out;
 }
-
-.peridot-transition-overlay.is-active {
-  opacity: 1;
-  pointer-events: auto;
-}
-
+.peridot-transition-overlay.peridot-loader-theme-parchment { background: #eee7d8; }
+.peridot-transition-overlay.is-active { opacity: 1; pointer-events: auto; }
 .peridot-transition-overlay-content {
   display: flex;
   min-width: 13rem;
@@ -23,36 +20,20 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: var(--peridot-color-hex-fbf7ea);
 }
-
-.peridot-transition-overlay-logo {
-  display: block;
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-}
-
-.peridot-transition-overlay-name {
-  margin-top: 0.45rem;
-  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
-  font-size: 1.3rem;
-  font-weight: 700;
-  letter-spacing: 0.045em;
-  color: var(--peridot-color-hex-f5ecd2);
-}
-
 .peridot-transition-overlay-label {
-  margin-top: 0.45rem;
-  font-size: 0.76rem;
-  font-weight: 800;
-  letter-spacing: 0.14em;
+  margin-top: .65rem;
+  font: 700 .76rem system-ui, sans-serif;
+  letter-spacing: .14em;
   text-transform: uppercase;
-  color: var(--peridot-color-hex-dfe9c8);
+  color: #e0cdaa;
+}
+.peridot-loader-theme-parchment .peridot-transition-overlay-label { color: #836e5b; }
+@media (prefers-reduced-motion: reduce) {
+  .peridot-transition-overlay { transition-duration: 1ms; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .peridot-transition-overlay {
-    transition-duration: 1ms;
-  }
-}
+/* PERIDOT_LOADER_PAINT_V2: instant cover on entry; brief fade only on exit. */
+.peridot-transition-overlay { transition: opacity 150ms ease-out; }
+.peridot-transition-overlay.is-active { transition-duration: 0ms; }
+@media (prefers-reduced-motion: reduce) { .peridot-transition-overlay { transition-duration: 0ms; } }

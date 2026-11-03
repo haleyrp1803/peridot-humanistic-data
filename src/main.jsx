@@ -12,11 +12,17 @@
  * to bare structural markup.
  */
 
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
+import { PeridotLoadingGem, DEFAULT_PERIDOT_LOADER_THEME } from './PeridotLoadingGem.jsx';
+
+// Load the large application bundle asynchronously so the branded loading
+// emblem can appear during genuine initial JS/module loading, without
+// imposing a fixed artificial waiting period.
+const App = lazy(() => import('./App.jsx'));
 
 import './index.css';
+import './PeridotBootLoader.css';
 // Central non-color foundations; existing workspace styles retain cascade precedence.
 import './styles/foundations/tokens.css';
 // Opt-in editorial typography roles and font loading (V2a).
@@ -45,6 +51,13 @@ applyPeridotColorVariables();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <App />
+    <Suspense fallback={(
+      <div className={`peridot-boot-loader peridot-loader-theme-${DEFAULT_PERIDOT_LOADER_THEME}`} role="status" aria-label="Loading Peridot">
+        <PeridotLoadingGem />
+        <span className="peridot-boot-loader-label">Loading Peridot…</span>
+      </div>
+    )}>
+      <App />
+    </Suspense>
   </React.StrictMode>
 );
