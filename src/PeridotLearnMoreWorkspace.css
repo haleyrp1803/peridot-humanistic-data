@@ -1390,3 +1390,169 @@
   }
 }
 
+
+/* About manuscript-page entrances — Feedback-section refinement v04 (2026-11-05).
+ * The local navigation and parchment stage remain fixed. Every local About
+ * destination mounts its own reading body and corner art; the animations thus
+ * replay on page changes without route state, timeouts, or a loading overlay.
+ * Only opacity and small composited translations change: no layout geometry,
+ * wrapping guides, portrait float, form controls, or scrolling is altered.
+ */
+@keyframes peridot-about-manuscript-reveal {
+  from { opacity: 0; transform: translate3d(0, 7px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes peridot-about-manuscript-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes peridot-about-manuscript-corner {
+  from { opacity: 0; transform: translate3d(var(--about-corner-in-x, 0px), var(--about-corner-in-y, 0px), 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+/* Corner artwork belongs to the manuscript, not an independently moving
+ * illustration. It settles once and never loops or moves with scrolling.
+ * Decorative corners now arrive as the final compositional beat, after the
+ * main reading content has already begun to establish the page. */
+.peridot-about-page-corner {
+  --about-corner-in-x: 5px;
+  --about-corner-in-y: 5px;
+  animation: peridot-about-manuscript-corner 1200ms cubic-bezier(.19, 1, .22, 1) both;
+  animation-delay: 1120ms;
+}
+.peridot-about-page-corner--top-right { --about-corner-in-x: -5px; }
+.peridot-about-page-corner--bottom-left { --about-corner-in-y: -5px; }
+.peridot-about-page-corner--bottom-right {
+  --about-corner-in-x: -5px;
+  --about-corner-in-y: -5px;
+}
+/* Single-corner pages use a late reveal tailored to their own content rhythm.
+ * Feedback's upper-left and lower-right corners intentionally enter together
+ * as one final framing gesture. */
+.peridot-about-page-stage:has(.peridot-about-content--overview) .peridot-about-page-corner {
+  animation-delay: 1140ms;
+}
+.peridot-about-page-stage:has(.peridot-about-content--creator) .peridot-about-page-corner {
+  animation-delay: 1160ms;
+}
+.peridot-about-page-stage:has(.peridot-about-content--ai) .peridot-about-page-corner {
+  animation-delay: 900ms;
+}
+.peridot-about-page-stage:has(.peridot-about-content--source) .peridot-about-page-corner {
+  animation-delay: 1180ms;
+}
+.peridot-about-page-stage:has(.peridot-about-content--feedback) .peridot-about-page-corner {
+  /* Both corners frame the completed entrance together, after the form groups. */
+  animation-delay: 1490ms;
+}
+
+/* Typography leads the page. Text remains selectable and interactive while
+ * the entrance plays; the established About heading/divider geometry survives. */
+.peridot-about-content .peridot-about-page-heading h1 {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 80ms both;
+}
+.peridot-about-content .peridot-about-page-heading .peridot-about-lede {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 290ms both;
+}
+.peridot-about-content .peridot-about-page-heading .peridot-section-label {
+  animation: peridot-about-manuscript-fade 900ms ease-out 40ms both;
+}
+
+/* About Peridot: short overlapping beats for Purpose, Audience, principles,
+ * and status. Each section enters as a unit rather than withholding paragraphs. */
+.peridot-about-content--overview .peridot-about-overview-grid > .peridot-about-prose-section:first-child {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 470ms both;
+}
+.peridot-about-content--overview .peridot-about-overview-grid > .peridot-about-prose-section:nth-child(2) {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 650ms both;
+}
+.peridot-about-content--overview .peridot-about-principles {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 820ms both;
+}
+.peridot-about-content--overview .peridot-about-reading-column > .peridot-about-prose-section:last-child {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 970ms both;
+}
+
+/* Creator: the four-corner portrait frame and photograph enter together.
+ * Animate the existing figure as a unit; do not disturb its float or framing. */
+.peridot-about-content--creator .peridot-about-creator-portrait {
+  animation: peridot-about-manuscript-fade 1200ms ease-out 180ms both;
+}
+.peridot-about-content--creator .peridot-about-creator-copy > h2 {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 460ms both;
+}
+.peridot-about-content--creator .peridot-about-creator-copy > p {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 630ms both;
+}
+.peridot-about-content--creator .peridot-about-creator-copy > p:nth-of-type(2) { animation-delay: 810ms; }
+.peridot-about-content--creator .peridot-about-creator-copy > p:nth-of-type(3) { animation-delay: 980ms; }
+.peridot-about-content--creator .peridot-about-inline-actions {
+  animation: peridot-about-manuscript-fade 1050ms ease-out 1000ms both;
+}
+
+/* AI Disclosure: two reading cards arrive without changing disclosure state. */
+.peridot-about-content--ai .peridot-about-disclosure-grid > :first-child {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 470ms both;
+}
+.peridot-about-content--ai .peridot-about-disclosure-grid > :nth-child(2) {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) 700ms both;
+}
+
+/* Open Source: stagger the document entries without changing the link hover
+ * transitions, targets, or keyboard interaction. */
+.peridot-about-content--source .peridot-about-source-link {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) both;
+}
+.peridot-about-content--source .peridot-about-source-link:nth-child(1) { animation-delay: 470ms; }
+.peridot-about-content--source .peridot-about-source-link:nth-child(2) { animation-delay: 610ms; }
+.peridot-about-content--source .peridot-about-source-link:nth-child(3) { animation-delay: 750ms; }
+.peridot-about-content--source .peridot-about-source-link:nth-child(4) { animation-delay: 890ms; }
+.peridot-about-content--source .peridot-about-source-link:nth-child(5) { animation-delay: 1030ms; }
+
+/* Feedback: reveal coherent form sections in the established reading order.
+ * Never stagger the individual choice buttons or animate validation/status
+ * messages; the existing two-column grid and submission behavior are unchanged.
+ * Scoped to the inline About form, not the legacy dialog variant. */
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > fieldset,
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-field,
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note,
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+  animation: peridot-about-manuscript-reveal 1050ms cubic-bezier(.19, 1, .22, 1) both;
+}
+/* Selection groups, writing fields, then contact / submission details. */
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > fieldset:first-child { animation-delay: 470ms; }
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > fieldset:nth-child(2) { animation-delay: 640ms; }
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(1) { animation-delay: 800ms; }
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(2) { animation-delay: 950ms; }
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-field:nth-of-type(3) { animation-delay: 1090ms; }
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note { animation-delay: 1200ms; }
+.peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-actions { animation-delay: 1330ms; }
+
+/* Motion preference is authoritative for every About surface and subpage.
+ * Explicit final states avoid hidden content on disabled animation. */
+@media (prefers-reduced-motion: reduce) {
+  .peridot-about-page-corner,
+  .peridot-about-content .peridot-about-page-heading h1,
+  .peridot-about-content .peridot-about-page-heading .peridot-about-lede,
+  .peridot-about-content .peridot-about-page-heading .peridot-section-label,
+  .peridot-about-content--overview .peridot-about-overview-grid > .peridot-about-prose-section,
+  .peridot-about-content--overview .peridot-about-principles,
+  .peridot-about-content--overview .peridot-about-reading-column > .peridot-about-prose-section:last-child,
+  .peridot-about-content--creator .peridot-about-creator-portrait,
+  .peridot-about-content--creator .peridot-about-creator-copy > h2,
+  .peridot-about-content--creator .peridot-about-creator-copy > p,
+  .peridot-about-content--creator .peridot-about-inline-actions,
+  .peridot-about-content--ai .peridot-about-disclosure-grid > *,
+  .peridot-about-content--source .peridot-about-source-link,
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > fieldset,
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-field,
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-privacy-note,
+  .peridot-about-content--feedback .peridot-feedback-form.is-inline > .peridot-feedback-actions {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
