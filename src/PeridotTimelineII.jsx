@@ -417,27 +417,39 @@ function spanCaption(days) {
   return `${Math.round(days/365.2425)} years`;
 }
 
-export function PeridotTimelineII({events = [],relationshipRows = [],selectedEventId = '',onEventClick}) {
+export function PeridotTimelineII({
+  events = [], relationshipRows = [], selectedEventId = '', onEventClick,
+  initialChronologySession = null, onChronologySessionChange,
+  datasetSessionKey = 0, isChronologyActive = true,
+}) {
   const renderStartedAt = TIMELINE_II_PROFILE_ENABLED ? performance.now() : 0;
-  const [direction,setDirection] = useState('horizontal');
-  // Null means the untouched, dataset-fitted opening scale.
-  const [requestedVisibleDays,setVisibleDays] = useState(null);
-  const [center,setCenter] = useState(null);
-  const [showPoints,setShowPoints] = useState(true);
-  const [showPeriods,setShowPeriods] = useState(true);
-  const [showRelationships,setShowRelationships] = useState(true);
+  // Restored values are source-independent calendar-day coordinates, not
+  // indices into Map/Network's chronology. Null still means initial full fit.
+  // Preserve orientation and marker visibility alongside the chronology session.
+  const [direction,setDirection] = useState(() => initialChronologySession?.direction ?? 'horizontal');
+  const [requestedVisibleDays,setVisibleDays] = useState(() => initialChronologySession?.requestedVisibleDays ?? null);
+  const [center,setCenter] = useState(() => initialChronologySession?.center ?? null);
+  const [showPoints,setShowPoints] = useState(() => initialChronologySession?.showPoints ?? true);
+  const [showPeriods,setShowPeriods] = useState(() => initialChronologySession?.showPeriods ?? true);
+  const [showRelationships,setShowRelationships] = useState(() => initialChronologySession?.showRelationships ?? true);
   const [localSelected,setLocalSelected] = useState('');
   const [hoveredId,setHoveredId] = useState('');
   const [hoverPosition,setHoverPosition] = useState(null);
   const [size,setSize] = useState({width:1200,height:500});
   const [verticalControlHeight,setVerticalControlHeight] = useState(VERTICAL_CONTROL_MIN_HEIGHT);
   // Timeline II-only playback. This does not modify the shared Visualize scrubber.
-  const [playhead,setPlayhead] = useState(null);
+  const [playhead,setPlayhead] = useState(() => initialChronologySession?.playhead ?? null);
+  // Returning to Timeline is always paused, even if it was playing on exit.
   const [playing,setPlaying] = useState(false);
-  const [playbackSpeed,setPlaybackSpeed] = useState(1);
-  const [playbackMode,setPlaybackMode] = useState('cumulative');
-  const [playbackStarted,setPlaybackStarted] = useState(false);
+  const [playbackSpeed,setPlaybackSpeed] = useState(() => initialChronologySession?.playbackSpeed ?? 1);
+  const [playbackMode,setPlaybackMode] = useState(() => initialChronologySession?.playbackMode ?? 'cumulative');
+  const [playbackStarted,setPlaybackStarted] = useState(() => initialChronologySession?.playbackStarted ?? false);
   const [playbackHelpOpen,setPlaybackHelpOpen] = useState(false);
+  // Visualize may stay mounted while another public page is open. Never let
+  // Timeline II's animation advance invisibly beneath that page.
+  useEffect(() => {
+    if (!isChronologyActive) setPlaying(false);
+  }, [isChronologyActive]);
   const animationRef = useRef({last:null});
   const viewportRef = useRef(null);
   const verticalControlsRef = useRef(null);
@@ -453,7 +465,26 @@ export function PeridotTimelineII({events = [],relationshipRows = [],selectedEve
   // Capture only first-view identities; any navigation ends the entrance
   // so off-screen marks entering later never receive a new raindrop animation.
   const revealInitialIdsRef = useRef(null);
-  const [revealPhase,setRevealPhase] = useState('before');
+  // The dispersed entrance happens only on a new dataset's first Timeline
+  // opening, not when restoring an already visited visualization.
+  const [revealPhase,setRevealPhase] = useState(() => initialChronologySession ? 'complete' : 'before');
+  // Session snapshots use a ref and a passive effect. This avoids sending
+  // playback-frame React updates through App's large graph/Map data pipeline.
+  const sessionChangeRef = useRef(onChronologySessionChange);
+  sessionChangeRef.current = onChronologySessionChange;
+  // Bind the writer to the dataset on which this component was first mounted.
+  const mountedDatasetRevisionRef = useRef(datasetSessionKey);
+  const savedSessionRef = useRef(null);
+  savedSessionRef.current = {
+    direction, requestedVisibleDays, center, showPoints, showPeriods,
+    showRelationships, playhead, playbackSpeed, playbackMode, playbackStarted,
+  };
+  useEffect(() => {
+    sessionChangeRef.current?.(savedSessionRef.current, mountedDatasetRevisionRef.current);
+  }, [direction, requestedVisibleDays, center, showPoints, showPeriods,
+      showRelationships, playhead, playbackSpeed, playbackMode, playbackStarted]);
+  // Also flush the last committed state when the visualization unmounts.
+  useEffect(() => () => sessionChangeRef.current?.(savedSessionRef.current, mountedDatasetRevisionRef.current), []);
   const stopEntranceOnNavigation = () => setRevealPhase(current => current === 'complete' ? current : 'complete');
 
   const all = useMemo(()=>{

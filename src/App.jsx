@@ -4180,24 +4180,91 @@ export default function EuropeNetworkMapApp() {
     inspectorNavigationRef.current = false;
   }, [selectedSelection]);
 
-  const [timelineMode, setTimelineMode] = useState('range');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [rangeStart, setRangeStart] = useState(0);
-  const [rangeEnd, setRangeEnd] = useState(0);
-  const [playbackIndex, setPlaybackIndex] = useState(-1);
-  const [playbackSpeed, setPlaybackSpeed] = useState(700);
-  const [timelinePlaybackMode, setTimelinePlaybackMode] = useState(PERIDOT_TIMELINE_PLAYBACK_MODES.CUMULATIVE);
+  // A separate chronology session belongs to each Map, Network, and Charts
+  // visualization. The shared chronology dock remains one presentation
+  // component; switching views must not transplant its controls or playhead.
+  // Timeline II retains its calendar-day controller and is consolidated in a
+  // separate pass to avoid changing its packing and animation lifecycle here.
+  const createIndexedChronologySession = () => ({
+    timelineMode: 'range',
+    isPlaying: false,
+    rangeStart: 0,
+    rangeEnd: null, // Resolved from the complete dataset chronology below.
+    playbackIndex: -1,
+    playbackSpeed: 700,
+    timelinePlaybackMode: PERIDOT_TIMELINE_PLAYBACK_MODES.CUMULATIVE,
+  });
+  // Timeline II has its own Gregorian-day controller. Save its session in a ref
+  // rather than App state: a playback frame must not rerender the whole app or
+  // rebuild expensive geographic/force calculations. A new mapped dataset
+  // increments this identity; Search filters and visualization navigation do not.
+  const timelineIIDatasetIdentityRef = useRef({dataset: peridotNormalizedData, revision: 0});
+  if (timelineIIDatasetIdentityRef.current.dataset !== peridotNormalizedData) {
+    timelineIIDatasetIdentityRef.current = {
+      dataset: peridotNormalizedData,
+      revision: timelineIIDatasetIdentityRef.current.revision + 1,
+    };
+  }
+  const timelineIIDatasetRevision = timelineIIDatasetIdentityRef.current.revision;
+  const timelineIISavedSessionRef = useRef(null);
+  const restoreTimelineIISession = timelineIISavedSessionRef.current?.revision === timelineIIDatasetRevision
+    ? timelineIISavedSessionRef.current.session : null;
+  const saveTimelineIISession = (session, sourceRevision) => {
+    // A departing old-dataset component cannot replace a new dataset's state,
+    // even when React updates its callback props before unmount cleanup.
+    if (sourceRevision !== timelineIIDatasetIdentityRef.current.revision) return;
+    timelineIISavedSessionRef.current = {revision: sourceRevision, session};
+  };
+  const [indexedChronologySessions, setIndexedChronologySessions] = useState(() => ({
+    'geographic-map': createIndexedChronologySession(),
+    'force-directed': createIndexedChronologySession(),
+    analytics: createIndexedChronologySession(),
+  }));
+  const chronologySessionKey = visualizationsWorkspacePanel === 'force-directed'
+    ? 'force-directed'
+    : visualizationsWorkspacePanel === 'analytics'
+      ? 'analytics'
+      : 'geographic-map';
+  const activeChronologySession = indexedChronologySessions[chronologySessionKey];
+  // React-compatible setter facade. Functional updates apply to the stored
+  // session even when a playback timer advances its index asynchronously.
+  const updateChronologySetting = (field, value) => {
+    setIndexedChronologySessions((previous) => {
+      const current = previous[chronologySessionKey];
+      const oldValue = current[field];
+      const nextValue = typeof value === 'function' ? value(oldValue) : value;
+      return Object.is(nextValue, oldValue) ? previous : {
+        ...previous,
+        [chronologySessionKey]: { ...current, [field]: nextValue },
+      };
+    });
+  };
+  const timelineMode = activeChronologySession.timelineMode;
+  const setTimelineMode = (value) => updateChronologySetting('timelineMode', value);
+  const isPlaying = activeChronologySession.isPlaying;
+  const setIsPlaying = (value) => updateChronologySetting('isPlaying', value);
+  const rangeStart = activeChronologySession.rangeStart;
+  const setRangeStart = (value) => updateChronologySetting('rangeStart', value);
+  const setRangeEnd = (value) => updateChronologySetting('rangeEnd', value);
+  const playbackIndex = activeChronologySession.playbackIndex;
+  const setPlaybackIndex = (value) => updateChronologySetting('playbackIndex', value);
+  const playbackSpeed = activeChronologySession.playbackSpeed;
+  const setPlaybackSpeed = (value) => updateChronologySetting('playbackSpeed', value);
+  const timelinePlaybackMode = activeChronologySession.timelinePlaybackMode;
+  const setTimelinePlaybackMode = (value) => updateChronologySetting('timelinePlaybackMode', value);
   const [enabledTemporalRoles, setEnabledTemporalRoles] = useState([]);
 
   useEffect(() => {
-    const visualizationIsVisible = [
-      PERIDOT_WORKSPACE_MODES.VISUALIZATIONS,
-      PERIDOT_WORKSPACE_MODES.INSPECTOR,
-    ].includes(workspaceMode);
-    if (!visualizationIsVisible) {
-      setIsPlaying(false);
-    }
-  }, [workspaceMode]);
+    // Leaving a view pauses its playback; neither its playhead nor its clamps
+    // are reset. Pausing all sessions also avoids background playback when the
+    // researcher moves to Data, Explore, or Timeline II.
+    setIndexedChronologySessions((previous) => {
+      if (!Object.values(previous).some((session) => session.isPlaying)) return previous;
+      return Object.fromEntries(Object.entries(previous).map(([key, session]) => [
+        key, session.isPlaying ? { ...session, isPlaying: false } : session,
+      ]));
+    });
+  }, [workspaceMode, visualizationsWorkspacePanel]);
   const [showAllLinkedLetters, setShowAllLinkedLetters] = useState(false);
   const [expandedLetterSections, setExpandedLetterSections] = useState({});
   const [viewMode, setViewMode] = useState('person');
@@ -4482,8 +4549,13 @@ export default function EuropeNetworkMapApp() {
   // historian-specific role names such as Creation date or Lifespan.
   useEffect(() => {
     setEnabledTemporalRoles(availableTemporalRoles);
-    setIsPlaying(false);
-    setPlaybackIndex(-1);
+    // Reconfigured temporal roles must not leave a stale playback index in
+    // another visualization's session.
+    setIndexedChronologySessions((previous) => Object.fromEntries(
+      Object.entries(previous).map(([key, session]) => [
+        key, { ...session, isPlaying: false, playbackIndex: -1 },
+      ])
+    ));
   }, [temporalRoleSignature]);
 
   const enabledTemporalRoleSet = useMemo(() => new Set(enabledTemporalRoles), [enabledTemporalRoles]);
@@ -4491,16 +4563,26 @@ export default function EuropeNetworkMapApp() {
     enabledRoles: enabledTemporalRoleSet,
   }), [searchRecords, enabledTemporalRoleSet]);
 
+  // `timelineMonths` comes from the complete mapped dataset, not the
+  // current Search result or playback selection. A null range end means the
+  // session has never been adjusted: its initial end tracks the actual full
+  // dataset domain without resetting the other sessions on navigation.
+  const rangeEnd = activeChronologySession.rangeEnd ?? Math.max(0, timelineMonths.length - 1);
   useEffect(() => {
-    if (!timelineMonths.length) {
-      setRangeStart(0);
-      setRangeEnd(0);
-      setPlaybackIndex(-1);
-      return;
-    }
-    setRangeStart(0);
-    setRangeEnd(timelineMonths.length - 1);
-    setPlaybackIndex(-1);
+    // Clamp saved indices if the available chronology actually changes. Do
+    // not reset to the full range merely because the researcher changes tabs.
+    setIndexedChronologySessions((previous) => {
+      const last = Math.max(0, timelineMonths.length - 1);
+      let changed = false;
+      const next = Object.fromEntries(Object.entries(previous).map(([key, session]) => {
+        const start = Math.min(session.rangeStart, last);
+        const end = session.rangeEnd === null ? null : Math.min(Math.max(start, session.rangeEnd), last);
+        if (start === session.rangeStart && end === session.rangeEnd) return [key, session];
+        changed = true;
+        return [key, { ...session, rangeStart: start, rangeEnd: end, playbackIndex: -1, isPlaying: false }];
+      }));
+      return changed ? next : previous;
+    });
   }, [timelineMonths.length]);
 
   // Entity relationships can be structural and therefore legitimately lack a
@@ -4941,17 +5023,18 @@ export default function EuropeNetworkMapApp() {
     [analyticsRows, analyticsChartType, analyticsBarGroupBy, analyticsTopN]
   );
 
+  // Timeline II has its own calendar-day clamps and playback. Its input must
+  // therefore be the Search-applied dataset, not the active indexed session's
+  // Timeline-window or playback rows (which belong to Map/Network/Charts).
+  // This also keeps the complete available temporal extent stable when the
+  // researcher returns from a narrowed Map or Network chronology.
   const timelineWorkspaceAvailabilityEvents = useMemo(() => (
-    buildPeridotTimelineWorkspaceEvents(filteredRowsForActiveFilters, {
+    buildPeridotTimelineWorkspaceEvents(entityRelationshipStructureRows, {
       enabledRoles: enabledTemporalRoleSet,
     })
-  ), [filteredRowsForActiveFilters, enabledTemporalRoleSet]);
+  ), [entityRelationshipStructureRows, enabledTemporalRoleSet]);
 
-  const timelineWorkspaceEvents = useMemo(() => (
-    buildPeridotTimelineWorkspaceEvents(filteredRowsByTime, {
-      enabledRoles: enabledTemporalRoleSet,
-    })
-  ), [filteredRowsByTime, enabledTemporalRoleSet]);
+  const timelineWorkspaceEvents = timelineWorkspaceAvailabilityEvents;
 
   const visualizationAvailability = useMemo(() => {
     const rowCount = filteredRowsForActiveFilters.length;
@@ -5399,9 +5482,13 @@ export default function EuropeNetworkMapApp() {
     setPlaceFilter('');
     setRoutePlaceFilter('');
     setRoutePeopleFilter('');
-    setTimelineMode('range');
-    setIsPlaying(false);
-    setPlaybackIndex(-1);
+    // A genuinely new upload/sample is the session reset boundary. Ordinary
+    // filtering, playback, and cross-visualization navigation are not.
+    setIndexedChronologySessions({
+      'geographic-map': createIndexedChronologySession(),
+      'force-directed': createIndexedChronologySession(),
+      analytics: createIndexedChronologySession(),
+    });
     clearSelection();
   };
 
@@ -6871,8 +6958,17 @@ export default function EuropeNetworkMapApp() {
     onSelectForceDirected: selectForceDirectedVisualization,
     onSelectTimeline: selectTimelineVisualization,
     timelineWorkspaceProps: {
+      // Key remounts Timeline only for a genuinely different mapped dataset.
+      // The session itself persists across visualization and page switches.
+      datasetSessionKey: timelineIIDatasetRevision,
+      initialChronologySession: restoreTimelineIISession,
+      onChronologySessionChange: saveTimelineIISession,
+      // Visualize may remain mounted beneath Data/Explore/Inspector.
+      isChronologyActive: workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS,
       events: timelineWorkspaceEvents,
-      relationshipRows: geographicAvailabilityRelationshipRows,
+      // Structural relationships respect applied Search filters, not the
+      // most recently active indexed chronology window.
+      relationshipRows: entityRelationshipStructureRows,
       selectedEventId: selectedSelection?.kind === 'timeline-event' ? selectedSelection?.event?.id || '' : '',
       onEventClick: handleTimelineEventClick,
     },

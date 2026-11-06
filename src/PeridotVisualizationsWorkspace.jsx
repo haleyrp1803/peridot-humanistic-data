@@ -1206,7 +1206,7 @@ export function PeridotVisualizationsWorkspace({
     }
 
     if (selectedTool === VISUALIZATION_TOOLS.TIMELINE_II) {
-      return <PeridotTimelineII {...(timelineWorkspaceProps || {})} />;
+      return <PeridotTimelineII key={timelineWorkspaceProps?.datasetSessionKey ?? 0} {...(timelineWorkspaceProps || {})} />;
     }
 
     if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
