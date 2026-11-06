@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-81c3719 — Implement persistent loading animation and repair initial Map mounting
+71833b3 — Add staggered manuscript entrance animations to About pages
 Branch: main
-Status: commit pushed to origin/main (user-confirmed 2026-11-03); post-push clean working-tree status not yet supplied
+Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-05); working tree contains unrelated ongoing source changes and is not clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -192,6 +192,10 @@ The repository contains a larger catalog of cartographic, parchment, manuscript,
 The five **About** pages now resemble individual leaves of an illustrated manuscript. Decorative torn-paper corners reveal manuscript, alchemical, botanical, and celestial motifs; they are attached to the page edges rather than floating inside content blocks. The surrounding writing and appropriate form fields follow the irregular art with comfortable separation, and dividing rules avoid the illustrated areas. **About Peridot** uses an illuminated initial at upper left; **Creator** has upper-right alchemical imagery and a red four-corner frame surrounding the profile photograph; **AI Disclosure** uses a lower-left celestial corner; **Open Source** uses a lower-right botanical/pomegranate corner; **Feedback** uses alchemical corners at upper left and lower right. These illustrations are visual framing, not interactive features.
 
 The **Feedback** page retains its two-column reporting form and emphasizes a large, left-aligned **Send feedback** button. The message and contextual fields remain usable at narrower laptop widths and clear the decorative lower-right corner. Data's Sample Datasets layout has also been compressed vertically for laptop screens while preserving legible text and the persistent active-dataset/no-data status panel near the bottom, with a small bottom margin. This treatment was accepted and committed as `5e785ed`; the preceding documentation checkpoint is `7df38d0`.
+
+### About manuscript entrance animations (accepted 2026-11-05)
+
+All five About pages now reveal their titles and reading content in gentle, overlapping stages that match Peridot's editorial animation language. Page-specific illuminated-manuscript corners arrive last, and Feedback's two corners appear together after the form's sections have entered in readable groups. The parchment and About navigation remain steady; the animation is decorative, does not interrupt navigation or form submission, and respects reduced-motion preferences. The user accepted the final sequence, committed as `71833b3`.
 
 ### Illustrated no-dataset and Tutorials gateways (2026-10-31)
 

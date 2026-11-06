@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-81c3719 — Implement persistent loading animation and repair initial Map mounting
+71833b3 — Add staggered manuscript entrance animations to About pages
 Branch: main
-Status: commit pushed to origin/main (user-confirmed 2026-11-03); post-push clean working-tree status not yet supplied
+Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-05); working tree contains unrelated ongoing source changes and is not clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -112,6 +112,14 @@ The public **Visualize**, **Explore**, and **Tutorials** no-dataset/coming-soon 
 **Production assets:** Image references inside React components must use Vite-managed static imports from the existing repository `assets/` directory, as already established on Home, or an equivalently build-verified method. JavaScript literals such as `/assets/foo.png` and manually base-prefixed strings do **not** make Vite emit files from an arbitrary top-level assets directory. Do not move or duplicate these images into `public/assets/` as an undocumented workaround. For changes, verify that the production build emits the required images and that their URLs work from GitHub Pages' `/peridot-humanistic-data/` base. Localhost rendering, Git push, and deployment are separate verification steps.
 
 Minimum regression: visit Visualize, Explore, and Tutorials with no dataset; inspect all parchment and tear imagery at laptop and desktop sizes; verify title, text, and button; navigate to Data; confirm that active-data Visualize/Explore functionality and session state are not affected; switch among the three pages and verify approved animation replay and reduced-motion behavior; run `npm.cmd run build` and inspect `dist/assets` output; verify the actual deployed site after publication. The latest confirmed Git state is `481acd9`; post-`fc42306` deployed gateway rendering remains separately unverified in this documentation pass.
+
+### About manuscript entrance animation contract (committed `71833b3`, 2026-11-05)
+
+**Ownership and intent:** `src/PeridotLearnMoreWorkspace.css` owns the CSS-only entrance animations for the five About subpages. `src/PeridotLearnMoreWorkspace.jsx` owns About page structure/local navigation, and `src/PeridotFeedbackForm.jsx` with `src/PeridotFeedbackForm.css` retains Feedback form behavior/layout. The About manuscript choreography is **not** the worker-backed `PeridotTransitionOverlay` used for expensive workspace changes; lightweight About navigation stays immediate and the local header, parchment, and scroll region remain stationary.
+
+**Accepted sequence:** on entering or switching an About subpage, the heading/lede and major reading blocks fade in with subtle upward movement and overlapping staggered timing (typically approximately 1,050 ms per text beat). Creator's portrait and red frame enter as a unit; AI Disclosure panels and Open Source links reveal in reading order. Feedback reveals the selection areas, writing/contact sections, and submission/privacy material as coherent grouped beats, never individual checkboxes. After main content begins its staged entrance, the manuscript corner illustrations make the **final** appearance, with approximately 1,200 ms gentle fade/translation; **both Feedback corners begin simultaneously**, framing that subpage together. Once settled, illustrations are stationary. CSS `prefers-reduced-motion: reduce` must remove the animation and leave all content fully visible.
+
+**Fragile zones and minimum regression:** preserve the approved page-specific corner positions, alpha-shaped content wraps, responsive text separation, Creator portrait frame/float, Feedback two-column layout, live field focus/validation/submission, scroll containment, and persistent About navigation. Check initial entry, all five local tabs, replay after switching away/back, appropriate stagger order and last-corner timing (including simultaneous paired Feedback corners), laptop/desktop viewport widths, keyboard operation while animations play, and reduced-motion preferences. This milestone was user visually accepted in-browser and committed, but no comprehensive automated/accessibility/deployed-site suite is asserted.
 
 ### Persistent loading renderer and first-load Map viewport contract (committed `81c3719`, 2026-11-03)
 

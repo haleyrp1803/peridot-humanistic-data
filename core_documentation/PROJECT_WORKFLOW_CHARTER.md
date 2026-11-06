@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-81c3719 — Implement persistent loading animation and repair initial Map mounting
+71833b3 — Add staggered manuscript entrance animations to About pages
 Branch: main
-Status: commit pushed to origin/main (user-confirmed 2026-11-03); post-push clean working-tree status not yet supplied
+Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-05); working tree contains unrelated ongoing source changes and is not clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
