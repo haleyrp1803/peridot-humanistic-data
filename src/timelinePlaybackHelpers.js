@@ -1,3 +1,5 @@
+import { chronologyWindowSortBounds } from './peridotChronologyWindow.js';
+
 /*
  * Pure timeline and playback helpers.
  *
@@ -288,6 +290,19 @@ export function filterRowsByTimelineWindow(rows, timelineMode, timelineMonths, r
   if (!bounds) return rows;
 
   return asArray(rows).filter((row) => getRowTemporalAssertions(row).some((assertion) => (
+    roleEnabled(assertion, options.enabledRoles)
+    && assertionIntersectsWindow(assertion, bounds.start, bounds.end)
+  )));
+}
+
+// The shared Gregorian navigator feeds a continuous date interval into the
+// existing canonical assertion-intersection semantics. A selected interval
+// with no whole calendar day is empty, never snapped to nearby source years.
+export function filterRowsByTimelineCalendarWindow(rows, timelineMode, startDay, endDay, options = {}) {
+  if (timelineMode === 'all') return rows;
+  const bounds = chronologyWindowSortBounds(startDay, endDay);
+  if (!bounds) return [];
+  return asArray(rows).filter(row => getRowTemporalAssertions(row).some(assertion => (
     roleEnabled(assertion, options.enabledRoles)
     && assertionIntersectsWindow(assertion, bounds.start, bounds.end)
   )));

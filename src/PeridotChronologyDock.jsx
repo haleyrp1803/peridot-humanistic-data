@@ -5,7 +5,7 @@ import React from 'react';
 
 export function ChronologyRuler(ui) {
   const {
-    horizontal, verticalControlHeight, axisStart, length, min, max, lower, upper,
+    horizontal, verticalControlHeight, axisStart, length, min, max, sourceMin, sourceMax, lower, upper,
     visibleDays, overviewSpan, overviewLeft, overviewRight, overviewWidth,
     overviewTicks, playbackStarted, playbackDate, playbackPosition,
     playing, playbackSpeed, setPlaybackSpeed, playbackMode, setPlaybackMode,
@@ -34,6 +34,28 @@ export function ChronologyRuler(ui) {
         <div data-scrub-part="track" className="absolute rounded-lg border border-[#b5a083] bg-[#e8dcc6] cursor-crosshair" style={horizontal
           ? {left:TRACK_GUTTER,top:25,width:length,height:29}
           : {top:axisStart,left:130,height:length,width:35}} />
+        {/* Dataset extent is a semantic annotation, not part of the draggable
+            selection. Gold diamonds mark the earliest and latest recorded
+            dates; the dotted guide and label distinguish the intervening
+            source extent from the 10%-padded navigator domain. All decoration
+            is pointer-transparent so dragging, handles, and playback keep
+            exactly the same hit targets. */}
+        {Number.isFinite(sourceMin) && Number.isFinite(sourceMax) && max > min && (() => {
+          const sourceStartPx = axisStart + (sourceMin - min) / (max - min) * length;
+          const sourceEndPx = axisStart + (sourceMax - min) / (max - min) * length;
+          const sourceLengthPx = Math.max(1, sourceEndPx - sourceStartPx);
+          return <div aria-label="Recorded dataset extent within the padded chronology" className="pointer-events-none absolute inset-0 z-[4]">
+            {horizontal ? <>
+              <span className="absolute whitespace-nowrap bg-[#fbf7ed]/95 px-1 text-[10px] font-medium italic text-[#335b54]" style={{left:(sourceStartPx + sourceEndPx)/2,top:2,transform:'translateX(-50%)'}}>Data extent</span>
+              <span className="absolute border-t border-dashed border-[#47716c]" style={{left:sourceStartPx,top:18,width:sourceLengthPx}} />
+              {[sourceStartPx, sourceEndPx].map((px,index)=><span key={index} className="absolute h-[8px] w-[8px] rotate-45 border border-[#8a6420] bg-[#b78a31]" style={{left:px-4,top:14}} />)}
+            </> : <>
+              <span className="absolute border-l border-dashed border-[#47716c]" style={{left:110,top:sourceStartPx,height:sourceLengthPx}} />
+              {[sourceStartPx, sourceEndPx].map((px,index)=><span key={index} className="absolute h-[8px] w-[8px] rotate-45 border border-[#8a6420] bg-[#b78a31]" style={{left:106,top:px-4}} />)}
+              {sourceLengthPx >= 100 && <span className="absolute whitespace-nowrap bg-[#fbf7ed]/95 px-1 text-[10px] font-medium italic text-[#335b54]" style={{left:91,top:(sourceStartPx+sourceEndPx)/2,writingMode:'vertical-rl',transform:'translateY(-50%)'}}>Data extent</span>}
+            </>}
+          </div>;
+        })()}
         {overviewTicks.map((tick,index)=>{
           const px=axisStart + (tick.day-min)/overviewSpan*length;
           return <div key={`overview-${index}`} className="pointer-events-none absolute text-[12px] font-semibold text-[#574538]" style={horizontal?{left:px,top:55}:{top:px,left:114}}>
@@ -100,7 +122,7 @@ export function ChronologyRuler(ui) {
 
 export function ChronologyTransport(ui) {
   const {
-    horizontal, verticalControlHeight, axisStart, length, min, max, lower, upper,
+    horizontal, verticalControlHeight, axisStart, length, min, max, sourceMin, sourceMax, lower, upper,
     visibleDays, overviewSpan, overviewLeft, overviewRight, overviewWidth,
     overviewTicks, playbackStarted, playbackDate, playbackPosition,
     playing, playbackSpeed, setPlaybackSpeed, playbackMode, setPlaybackMode,

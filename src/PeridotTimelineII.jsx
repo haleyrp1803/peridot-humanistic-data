@@ -8,6 +8,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {packTimelineIIMarks, TIMELINE_II_LANE_COUNT} from './peridotTimelineIIPacking.js';
 import {ChronologyRuler, ChronologyTransport} from './PeridotChronologyDock.jsx';
 import { buildPeridotTimelineConnections } from './peridotTimelineWorkspaceModel.js';
+import {civilDay, civilFromDay, createChronologyDomain, clampChronologyWindow, chronologyPosition, chronologyDayAtPosition, chronologyOverviewTicks} from './peridotChronologyWindow.js';
 
 const PALETTE = ['#A63D2B','#7C211E','#B85C38','#C49A3A','#7A7A32','#2F4A3E','#6B7F6B','#2F6F73','#5F7C8B','#4B5E8C','#6E4A7F','#9A4E68'];
 const GLYPHS = ['■','▲','◆','★','+','×','⬡','✿','⌃','⌄','▮','▬'];
@@ -75,13 +76,6 @@ if (TIMELINE_II_PROFILE_ENABLED && typeof window !== 'undefined') {
   window.peridotTimelineIIPerf = timelineIIPerf;
 }
 
-// Integer Gregorian day ordinal, including years preceding 1970. Date is never
-// converted with the host's local timezone or interpreted as Julian.
-function civilDay(year, month = 1, day = 1) {
-  const y = year - (month <= 2 ? 1 : 0), era = Math.floor(y / 400), yoe = y - era * 400;
-  const mp = month + (month > 2 ? -3 : 9);
-  return era * 146097 + yoe * 365 + Math.floor(yoe / 4) - Math.floor(yoe / 100) + Math.floor((153 * mp + 2) / 5) + day - 1;
-}
 function fallbackParts(value) {
   const match = String(value ?? '').match(/^(-?\d{1,6})[-/](\d\d)[-/](\d\d)/);
   if (!match) return null;
@@ -109,7 +103,7 @@ function possibleOrdinal(ep, side) {
   if (!ep || !Number.isInteger(ep.year)) return null;
   if (side === 'start') return civilDay(ep.year, ep.month || 1, ep.day || 1);
   if (!ep.month) return civilDay(ep.year + 1) - 1;
-  if (!ep.day) return civilDay(ep.year, ep.month + 1) - 1;
+  if (!ep.day) return (ep.month === 12 ? civilDay(ep.year + 1) : civilDay(ep.year, ep.month + 1)) - 1;
   return civilDay(ep.year, ep.month, ep.day);
 }
 function dateLabel(ep) {
@@ -312,15 +306,6 @@ function calendarTicks(lower, upper, pixels) {
 }
 
 
-// Invert the proleptic-Gregorian ordinal without relying on JavaScript Date.
-function civilFromDay(ordinalDay) {
-  let year = Math.floor(ordinalDay / 365.2425);
-  while (civilDay(year + 1) <= ordinalDay) year++;
-  while (civilDay(year) > ordinalDay) year--;
-  let month = 1;
-  while (month < 12 && civilDay(year, month + 1) <= ordinalDay) month++;
-  return {year, month, day: Math.floor(ordinalDay - civilDay(year,month)) + 1};
-}
 function windowDate(day, span) {
   const date = civilFromDay(Math.floor(day));
   return span > 365 * 8 ? String(date.year)
@@ -418,7 +403,8 @@ function spanCaption(days) {
 }
 
 export function PeridotTimelineII({
-  events = [], relationshipRows = [], selectedEventId = '', onEventClick,
+  events = [], domainEvents = [], chronologySourceBounds = null,
+  relationshipRows = [], selectedEventId = '', onEventClick,
   initialChronologySession = null, onChronologySessionChange,
   datasetSessionKey = 0, isChronologyActive = true,
 }) {
@@ -493,6 +479,10 @@ export function PeridotTimelineII({
     timelineIIPerf.record('event normalization', performance.now()-t0, {inputEvents:events.length,positionable:result.length});
     return result;
   },[events]);
+  // The domain is built from every mapped temporal assertion, not the
+  // Search-filtered event list. Filters alter marks and relationships, never
+  // the horizontal/vertical chronology boundaries or a saved viewport.
+  const domainAll = useMemo(() => eventRows(domainEvents), [domainEvents]);
   const categoryKeys = useMemo(()=>[...new Set(all.map(item=>item.category))].sort(),[all]);
   const colors = useMemo(()=>new Map(categoryKeys.map((key,i)=>[key,{color:PALETTE[i % PALETTE.length],symbol:GLYPHS[i % GLYPHS.length]}])),[categoryKeys]);
   const filtered = useMemo(()=>all.filter(item=>item.period?showPeriods:showPoints),[all,showPoints,showPeriods]);
@@ -502,21 +492,24 @@ export function PeridotTimelineII({
     timelineIIPerf.record('relationship derivation', performance.now()-t0, {events:events.length,relationshipRows:relationshipRows.length,links:result.length});
     return result;
   }, [events, relationshipRows]);
-  const min = all.length ? all[0].day : 0;
-  const max = all.length ? Math.max(...all.map(item=>item.endDay)) : 365;
-  const domainCenter = (min + max) / 2;
-  // Fit the complete temporal extent with 10% of the source span on EACH side.
-  // This changes only the opening field window, not actual dataset boundaries,
-  // playback limits, or the full-domain overview ruler.
-  const sourceSpanDays = Math.max(0, max - min);
-  const openingDays = Math.max(MIN_DAYS, sourceSpanDays * 1.2);
+  // Use precisely the same canonical assertion endpoint domain as the shared
+  // adapter. The eventRows fallback remains for standalone fixture consumers.
+  const min = Number.isFinite(chronologySourceBounds?.min)
+    ? chronologySourceBounds.min : (domainAll.length ? domainAll[0].day : 0);
+  const max = Number.isFinite(chronologySourceBounds?.max)
+    ? chronologySourceBounds.max : (domainAll.length ? Math.max(...domainAll.map(item=>item.endDay)) : 365);
+  // The shared calendar engine owns the padded domain; source-supported
+  // Timeline event endpoints continue to determine its unfiltered input.
+  const chronologyDomain = createChronologyDomain(min, max, {minimumSpanDays:MIN_DAYS});
+  const domainCenter = chronologyDomain.center;
+  const openingDays = chronologyDomain.span;
   // Maximum zoom-out equals the 10%-padded opening domain.
   const maximumVisibleDays = openingDays;
   const visibleDays = requestedVisibleDays ?? openingDays;
   const actualCenter = center === null ? domainCenter : center;
   const half = visibleDays / 2;
-  const paddedMin = domainCenter - openingDays / 2;
-  const paddedMax = domainCenter + openingDays / 2;
+  const paddedMin = chronologyDomain.min;
+  const paddedMax = chronologyDomain.max;
   const safeCenter = Math.min(paddedMax - half, Math.max(paddedMin + half, actualCenter));
   const lower = safeCenter-half, upper = safeCenter+half;
   const horizontal = direction === 'horizontal';
@@ -532,7 +525,7 @@ export function PeridotTimelineII({
   const lanePosition = lane => laneCount === 1
     ? crossStart + crossSpan / 2
     : crossStart + lane * crossSpan / (laneCount - 1);
-  const pos = day => axisStart + (day - lower) / visibleDays * length;
+  const pos = day => chronologyPosition(day, lower, upper, axisStart, length);
   // Select only events whose actual times intersect the visible chronology.
   const inWindow = filtered.filter(item => item.endDay >= lower && item.day <= upper);
   // Packing A: globally aware temporal-neighborhood placement followed by
@@ -615,7 +608,8 @@ export function PeridotTimelineII({
   const rulerStart = windowDate(lower,visibleDays);
   const rulerEnd = windowDate(upper,visibleDays);
   const playbackDate = Math.max(lower,Math.min(upper,playhead ?? lower));
-  const playbackPosition = axisStart + (playbackDate - min) / Math.max(1,max-min) * length;
+  // The playhead uses the same padded calendar axis as the navigator.
+  const playbackPosition = axisStart + (playbackDate - paddedMin) / Math.max(1,paddedMax-paddedMin) * length;
   const playbackItems = playbackStarted
     ? packed.filter(item=>playbackMode==='cumulative'
       ? item.playbackStart <= playbackDate
@@ -636,43 +630,21 @@ export function PeridotTimelineII({
   const overviewWidth = Math.max(0, overviewRight - overviewLeft);
   // Overview ticks use full-domain positions. Minor strokes may be closer
   // together, but labels are measured and suppressed independently.
-  const overviewTicks = useMemo(() => {
-    const domain = overviewSpan;
-    const targetPixels = 23;
-    const rawStep = domain / Math.max(1, length / targetPixels);
-    const steps = [1,2,5,10,20,50,100,200,500,1000,2000,5000,10000,20000,50000];
-    const step = steps.find(value => value * 365.2425 >= rawStep) || 50000;
-    const beginYear = civilFromDay(Math.floor(paddedMin)).year;
-    const endYear = civilFromDay(Math.ceil(paddedMax)).year;
-    const firstYear = Math.ceil(beginYear / step) * step;
-    const marks = [];
-    let lastLabelEnd = -Infinity;
-    for (let year = firstYear; year <= endYear && marks.length < 240; year += step) {
-      const day = civilDay(year);
-      if (day < paddedMin || day > paddedMax) continue;
-      const px = (day - paddedMin) / domain * length;
-      const label = String(year);
-      const estimatedLabelWidth = label.length * 7 + 14;
-      // Vertical labels need line-height clearance, horizontal labels need width.
-      const gap = horizontal ? estimatedLabelWidth : 24;
-      const showLabel = px - gap / 2 >= lastLabelEnd + 9 && px + gap / 2 <= length;
-      if (showLabel) lastLabelEnd = px + gap / 2;
-      marks.push({day, label:showLabel ? label : '', major:showLabel});
-    }
-    return marks;
-  }, [paddedMin, paddedMax, overviewSpan, length, horizontal]);
+  // Match the exact labels/positions used by Map, Network and Charts.
+  const overviewTicks = useMemo(() => chronologyOverviewTicks(
+    paddedMin, paddedMax, length, {horizontal}
+  ), [paddedMin, paddedMax, length, horizontal]);
   const axisCoord = event => horizontal ? event.clientX : event.clientY;
   const overviewDayAt = event => {
     const rect = event.currentTarget.getBoundingClientRect();
     const px = (horizontal ? event.clientX - rect.left : event.clientY - rect.top) - axisStart;
-    return paddedMin + Math.max(0, Math.min(1, px / Math.max(1, length))) * overviewSpan;
+    return chronologyDayAtPosition(Math.max(0, Math.min(length, px)), paddedMin, paddedMax, 0, length);
   };
   const clampWindow = (start, end) => {
     stopEntranceOnNavigation();
-    const span = Math.max(MIN_DAYS, Math.min(maximumVisibleDays, end - start));
-    const left = Math.max(paddedMin, Math.min(paddedMax - span, start));
-    setVisibleDays(span);
-    setCenter(left + span / 2);
+    const window = clampChronologyWindow(start, end, chronologyDomain, {minimumSpanDays:MIN_DAYS});
+    setVisibleDays(window.span);
+    setCenter(window.center);
   };
   useEffect(() => {
     if (revealPhase !== 'before' || !revealInitialIdsRef.current?.size) return undefined;
@@ -753,7 +725,12 @@ export function PeridotTimelineII({
     pausePlayback();setPlaybackStarted(true);
     setPlayhead(current=>Math.max(lower,Math.min(upper,(current??lower)+direction*Math.max(1,visibleDays/24))));
   };
-  const resetPlayback=()=>{pausePlayback();setPlayhead(null);setPlaybackStarted(false);};
+  // Reset both the chronology viewport and playback to this dataset's
+  // complete 10%-padded opening domain. This is local to Timeline II.
+  const resetPlayback=()=>{
+    pausePlayback();setPlayhead(null);setPlaybackStarted(false);
+    setVisibleDays(null);setCenter(null);
+  };
   const zoomBy = factor => {
     stopEntranceOnNavigation();
     setVisibleDays(days=>Math.max(MIN_DAYS,Math.min(maximumVisibleDays,(days ?? visibleDays)*factor)));
@@ -896,7 +873,9 @@ export function PeridotTimelineII({
   };
   const chronologyDockProps = {
     horizontal, verticalControlHeight, axisStart, length,
-    min:paddedMin, max:paddedMax, lower, upper, visibleDays, overviewSpan,
+    min:paddedMin, max:paddedMax,
+    sourceMin:min, sourceMax:max,
+    lower, upper, visibleDays, overviewSpan,
     overviewLeft, overviewRight, overviewWidth, overviewTicks,
     playbackStarted, playbackDate, playbackPosition,
     playing, playbackSpeed, setPlaybackSpeed,
@@ -908,7 +887,7 @@ export function PeridotTimelineII({
     verticalControlsRef, rulerStart, rulerEnd,
   };
   timelineIIPerf.record('render calculations (pre-JSX)', performance.now()-renderStartedAt, {totalEvents:all.length,visibleEvents:inWindow.length,playbackVisible:playbackItems.length,links:timelineConnections.length,orientation:direction,zoomDays:visibleDays});
-  if(!all.length)return <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl bg-[#eee0c7] text-[#4b4236]">No positionable events available to Timeline II.</div>;
+  if(!domainAll.length)return <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl bg-[#eee0c7] text-[#4b4236]">No positionable events available to Timeline II.</div>;
   return <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#b4a087] bg-[#eee0c7] text-[#302b24]">
     <style>{`@keyframes peridot-timelineii-raindrop { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
       @media (prefers-reduced-motion: reduce) { .peridot-timelineii-reveal { animation: none !important; opacity: 1 !important; transform: none !important; } }`}</style>

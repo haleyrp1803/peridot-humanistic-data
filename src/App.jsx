@@ -37,6 +37,8 @@ import { buildMapInteractionHandlers } from './mapInteractionHandlers';
 import {
   buildPlaybackRows,
   buildTimelineMonths,
+  buildTimelineEntries,
+  filterRowsByTimelineCalendarWindow,
   getAvailableTemporalRoles,
   getRowPrimaryTemporalDisplay,
   getRowTemporalDateParts,
@@ -125,6 +127,7 @@ import {
   resolvePeridotDatasetProfileId,
 } from './peridotDatasetProfiles.js';
 import { PERIDOT_APP_THEME_DEFAULTS, PERIDOT_MAP_STYLE_PRESETS } from './peridotTheme.js';
+import {chronologySourceBoundsFromEntries, chronologyWindowSortBounds} from './peridotChronologyWindow.js';
 import {
   PERIDOT_SAMPLE_DATASETS,
   getPeridotSampleDataset,
@@ -4189,7 +4192,9 @@ export default function EuropeNetworkMapApp() {
     timelineMode: 'range',
     isPlaying: false,
     rangeStart: 0,
-    rangeEnd: null, // Resolved from the complete dataset chronology below.
+    rangeEnd: null, // Indexed projection retained for legacy filtering until pass C.
+    calendarWindowStart: null, // Null pair means full padded dataset domain.
+    calendarWindowEnd: null,
     playbackIndex: -1,
     playbackSpeed: 700,
     timelinePlaybackMode: PERIDOT_TIMELINE_PLAYBACK_MODES.CUMULATIVE,
@@ -4246,6 +4251,25 @@ export default function EuropeNetworkMapApp() {
   const rangeStart = activeChronologySession.rangeStart;
   const setRangeStart = (value) => updateChronologySetting('rangeStart', value);
   const setRangeEnd = (value) => updateChronologySetting('rangeEnd', value);
+  const calendarWindowStart = activeChronologySession.calendarWindowStart;
+  const calendarWindowEnd = activeChronologySession.calendarWindowEnd;
+  // Save the continuous navigation window AND its temporary indexed data-scope
+  // projection in one React update. Other visualization sessions are untouched.
+  const setCalendarWindow = (startDay, endDay, projectedStart, projectedEnd) => {
+    setIndexedChronologySessions((previous) => {
+      const session = previous[chronologySessionKey];
+      return { ...previous, [chronologySessionKey]: {
+        ...session,
+        calendarWindowStart: startDay,
+        calendarWindowEnd: endDay,
+        rangeStart: projectedStart,
+        rangeEnd: projectedEnd,
+        timelineMode: 'range',
+        isPlaying: false,
+        playbackIndex: -1,
+      } };
+    });
+  };
   const playbackIndex = activeChronologySession.playbackIndex;
   const setPlaybackIndex = (value) => updateChronologySetting('playbackIndex', value);
   const playbackSpeed = activeChronologySession.playbackSpeed;
@@ -4559,9 +4583,10 @@ export default function EuropeNetworkMapApp() {
   }, [temporalRoleSignature]);
 
   const enabledTemporalRoleSet = useMemo(() => new Set(enabledTemporalRoles), [enabledTemporalRoles]);
-  const timelineMonths = useMemo(() => buildTimelineMonths(searchRecords, {
-    enabledRoles: enabledTemporalRoleSet,
-  }), [searchRecords, enabledTemporalRoleSet]);
+  // Ruler extent is based on all positionable date roles in the complete
+  // dataset. Disabling a playback role must not shrink the historical domain;
+  // the role selection is still applied when deciding which events can play.
+  const timelineMonths = useMemo(() => buildTimelineMonths(searchRecords), [searchRecords]);
 
   // `timelineMonths` comes from the complete mapped dataset, not the
   // current Search result or playback selection. A null range end means the
@@ -4612,11 +4637,26 @@ export default function EuropeNetworkMapApp() {
     ))
   ), [entityRelationshipStructureRows]);
 
+  // One unfiltered source-supported domain governs the Timeline and every
+  // Map/Network/Charts chronology dock. Search and playback cannot resize it.
+  const chronologySourceBounds = useMemo(() => (
+    chronologySourceBoundsFromEntries(buildTimelineEntries(searchRecords))
+  ), [searchRecords]);
+
   const timelineWindowRows = useMemo(() => {
+    // Exact day-coordinate filtering starts only after a researcher adjusts
+    // the continuous window. A new/Reset session retains the established full
+    // dataset handling, including role-selection and undated-row semantics.
+    if (Number.isFinite(calendarWindowStart) && Number.isFinite(calendarWindowEnd)) {
+      return filterRowsByTimelineCalendarWindow(searchRecords, timelineMode, calendarWindowStart, calendarWindowEnd, {
+        enabledRoles: enabledTemporalRoleSet,
+      });
+    }
     return filterRowsByTimelineWindow(searchRecords, timelineMode, timelineMonths, rangeStart, rangeEnd, {
       enabledRoles: enabledTemporalRoleSet,
     });
-  }, [searchRecords, timelineMode, timelineMonths, rangeStart, rangeEnd, enabledTemporalRoleSet]);
+  }, [searchRecords, timelineMode, timelineMonths, rangeStart, rangeEnd,
+      calendarWindowStart, calendarWindowEnd, enabledTemporalRoleSet]);
 
   const filteredRowsForActiveFilters = useMemo(() => {
     return filterRowsBySearchAndEntity(timelineWindowRows, {
@@ -4632,10 +4672,11 @@ export default function EuropeNetworkMapApp() {
   }, [timelineWindowRows, search, personFilter, placeFilter, routePlaceFilter, routePeopleFilter, capabilityFilters, structuredCriteria]);
 
   const playbackWindowBounds = useMemo(() => (
-    timelineMode === 'range'
-      ? getTimelineRangeSortBounds(timelineMonths, rangeStart, rangeEnd)
-      : null
-  ), [timelineMode, timelineMonths, rangeStart, rangeEnd]);
+    timelineMode !== 'range' ? null
+      : Number.isFinite(calendarWindowStart) && Number.isFinite(calendarWindowEnd)
+        ? chronologyWindowSortBounds(calendarWindowStart, calendarWindowEnd)
+        : getTimelineRangeSortBounds(timelineMonths, rangeStart, rangeEnd)
+  ), [timelineMode, timelineMonths, rangeStart, rangeEnd, calendarWindowStart, calendarWindowEnd]);
 
   const selectedRowsForPlayback = useMemo(() => {
     return buildPlaybackRows(filteredRowsForActiveFilters, {
@@ -5035,6 +5076,12 @@ export default function EuropeNetworkMapApp() {
   ), [entityRelationshipStructureRows, enabledTemporalRoleSet]);
 
   const timelineWorkspaceEvents = timelineWorkspaceAvailabilityEvents;
+  // Dataset-level chronology is independent of Search, indexed ranges, and
+  // playback. Timeline II uses these events only to establish its calendar
+  // domain; the Search-scoped events above remain the displayed evidence.
+  const timelineWorkspaceDomainEvents = useMemo(() => (
+    buildPeridotTimelineWorkspaceEvents(searchRecords)
+  ), [searchRecords]);
 
   const visualizationAvailability = useMemo(() => {
     const rowCount = filteredRowsForActiveFilters.length;
@@ -6920,12 +6967,16 @@ export default function EuropeNetworkMapApp() {
   };
 
   const timelineControlsProps = {
+    chronologySourceBounds,
     currentRangeLabel,
     timelineMonths,
     rangeStart,
     setRangeStart,
     rangeEnd,
     setRangeEnd,
+    calendarWindowStart,
+    calendarWindowEnd,
+    setCalendarWindow,
     currentPlaybackLabel,
     currentPlaybackSpeedLabel,
     playbackSpeedOptions,
@@ -6966,6 +7017,8 @@ export default function EuropeNetworkMapApp() {
       // Visualize may remain mounted beneath Data/Explore/Inspector.
       isChronologyActive: workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS,
       events: timelineWorkspaceEvents,
+      domainEvents: timelineWorkspaceDomainEvents,
+      chronologySourceBounds,
       // Structural relationships respect applied Search filters, not the
       // most recently active indexed chronology window.
       relationshipRows: entityRelationshipStructureRows,

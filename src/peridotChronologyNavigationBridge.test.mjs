@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {civilDay} from './peridotChronologyWindow.js';
+import {indexedCalendarDomain,projectCalendarWindowToIndexedYears} from './peridotChronologyNavigationBridge.js';
+const years=['1900','1950','2000'];
+const domain=indexedCalendarDomain(years);
+const span=civilDay(2000)-civilDay(1900);
+assert.ok(Math.abs((civilDay(1900)-domain.min)/span-0.1)<1e-10);
+assert.ok(Math.abs((domain.max-civilDay(2000))/span-0.1)<1e-10);
+assert.deepEqual(projectCalendarWindowToIndexedYears(years,null,null),{rangeStart:0,rangeEnd:2});
+assert.deepEqual(projectCalendarWindowToIndexedYears(years,civilDay(1942),civilDay(1970)),{rangeStart:1,rangeEnd:1});
+assert.deepEqual(projectCalendarWindowToIndexedYears(years,civilDay(1950),civilDay(1950)),{rangeStart:1,rangeEnd:1});
+assert.equal(indexedCalendarDomain([]),null);
+console.log('Chronology indexed-compatibility bridge checks passed');
