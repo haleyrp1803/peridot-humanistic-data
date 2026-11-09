@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-71833b3 — Add staggered manuscript entrance animations to About pages
+4fca872 — Unify shared chronology navigation, filtering, and dataset extent presentation
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-05); working tree contains unrelated ongoing source changes and is not clean
+Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-09); unrelated Charts II and planning work remains uncommitted; working tree is not clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -619,6 +619,28 @@ Maintenance consequence:
 Read all exact affected sources, compare initial vs remounted state and actual container dimensions, preserve shared markup, and run first-load/return/resize/playback/horizontal-vertical regression checks. See the Maintainer's Guide chronology contract and Changelog commits 8cb1cbc and ddee7e2.
 ```
 
+#### Unified calendar chronology, independent sessions, and source-extent presentation (2026-11-09)
+
+```text
+Decision:
+Give Map, Network, Timeline and Charts one chronologically faithful padded ruler while maintaining per-visualization navigation/playback sessions and canonical event eligibility.
+
+Context:
+A shared-looking dock originally concealed distinct year-index and Gregorian-day domains. Map and Timeline could display inconsistent year ticks; empty time windows could be projected to the nearest populated year. Even after 10% padding worked, selected handles at the outer reset boundaries made the source-versus-padded distinction unclear.
+
+Chosen approach:
+Retain PeridotChronologyDock.jsx as the single presentation authority. Calculate domain bounds from the unfiltered complete dataset's source-supported temporal endpoints and add 10% on each side; use shared day-based window/ruler helpers and canonical date filtering. Keep sessions independent across visualization navigation. Mark the source endpoints with two gold diamonds, a dashed guide and a Data extent label (approved visual Option C). Commit the focused chronology tests alongside the implementation at 4fca872.
+
+Rejected alternative:
+Separate visually similar docks, year-index snapping of continuous windows, domain recomputation from applied Search filters or active roles, a lone unlabeled red extent line, or combining chronology implementation with concurrent Charts II development.
+
+Reason:
+The selected interval, full allowed domain, and source-backed actual record extent are different analytical objects. Users must be able to explore even empty historical time without Peridot inventing evidence; the chronology controls must also remain visually self-explanatory and preserve separate work sessions.
+
+Maintenance consequence:
+Preserve exact date/tick alignment, source-derived padding, period and partial-date intersection, Cumulative/Concurrent behavior, Search/role isolation, original source provenance, and dataset-switch resets. Check all four visualizations and both Timeline orientations; retain and run focused chronology Node tests. Keep uncommitted Charts II work outside the chronology commit. For architecture and regression details use the Maintainer's Guide; for milestone and verification limits use the Changelog.
+```
+
 #### Persistent OffscreenCanvas loader and first-mount Map decision (2026-11-03)
 
 ```text
@@ -1013,7 +1035,7 @@ Each implementation pass should end with:
 
 ### Fresh-chat handoff
 
-A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual. At the current checkpoint, local development on the user's Windows machine is started with `npm.cmd run dev`. It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents. Each new conversation should begin by rereading the four core documents before any development work is done.
+A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual. At the `4fca872` checkpoint, local development on the user's Windows machine is started with `npm.cmd run dev`; local Charts II changes remain intentionally uncommitted. It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents. Each new conversation should begin by rereading the four core documents before any development work is done.
 
 For core documentation work, provide all four core documents and `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md` before edits begin.
 
