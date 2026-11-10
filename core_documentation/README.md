@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-4fca872 — Unify shared chronology navigation, filtering, and dataset extent presentation
+9c2bb0e — Generalize Timeline categories across mapped dataset attributes
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-09); unrelated Charts II and planning work remains uncommitted; working tree is not clean
+Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-10); unrelated Charts II, planning files, and the tracked src.zip deletion remain uncommitted; working tree is not clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -151,9 +151,9 @@ The Geographic Map uses a tiled Web Mercator basemap from CARTO. **Voyager** is 
 
 The dedicated Timeline workspace projects canonical mapped temporal assertions into event cards without replacing the existing playback control. Its default orientation is horizontal, earliest to latest from left to right; researchers can switch to a vertical orientation, earliest to latest from bottom to top. Timeline navigation supports scrollbars, click-and-drag panning, smooth mouse-wheel zoom, and +/- controls. The temporal axis changes granularity with zoom and suppresses colliding labels rather than keeping one fixed year scale.
 
-Timeline event categories are derived from mapped Evidence fields. Researchers choose which Evidence fields act as categories and can toggle individual values on or off; an event with several category memberships remains visible when **any** enabled membership matches. Category membership is plural rather than one-category-per-event. Compact card markers can use color or shape so category information is not dependent on color alone. The same applied Advanced Search / Explore scope that constrains other visualizations also constrains Timeline events.
+The active Timeline has **Timeline** and **Categories** tabs. In Categories, researchers select source columns drawn from their uploaded dataset's mapped Evidence, people/participants, places, relationships and eligible original fields; choose all or individual values; and assign editable category names, colors and optional symbols. The primary category-source labels reflect the original uploaded column headers rather than internal mapping identifiers. For generalized sources, association can be applied to the record, the mapped subject, or the specific temporal assertion where supported. Peridot uses existing mapping provenance and does not invent links across unrelated rows. Categories are visual annotations of historical events, not a rewrite of the original data or an automatic Search filter. Events can have several category memberships; point symbols and striped period bars remain legible in **Colors only**, **Colors and symbols**, or **Expanded labels** modes. The category selection and appearance settings are retained within the active dataset session but are not saved between browser sessions.
 
-Mapped relationships are being projected into the Timeline only when explicit relationship semantics support them; shared participants, categories, or chronological proximity do not manufacture connections. The current relationship-layout foundation uses subject-strict endpoints and a continuous secondary-axis layout so chronology remains exact while cards can move in the orthogonal dimension for collision avoidance and connection legibility. Relationship-line presentation remains active polish work at this checkpoint.
+Event-to-event relationship connections remain deferred. Peridot does not infer event relationships merely from shared participants, categories, or chronological proximity; future connections require researcher-defensible explicit evidence. The historical original Timeline relationship layout must not be mistaken for a completed feature in the active Timeline.
 
 The existing bottom Timeline/playback control remains shared across Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
 
@@ -603,7 +603,7 @@ The principal generalized Network semantic migration is now complete through pla
 
 Playback **animation** experiments conducted after generalized highlighting were rolled back before `ddc0aca`. The active checkpoint contains generalized static highlighting only. Do not treat the discarded animation/tweening prototypes as current behavior. Performance work after that rollback now keeps pointer panning and wheel zoom transient during interaction, commits durable viewport state at bounded points, and preloads the stable full-scope Force graph so playback does not rerun force simulation on every tick. These changes improve interaction/playback smoothness without changing generalized relationship semantics.
 
-The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, evidence-driven categories, and initial relationship-aware event layout are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. The first compact shared Relations/Time/Places mapping-interface redesign is implemented, while the remaining mapping pages and the Explore content overhaul remain deferred, along with Tutorials, future targeted Home content/interaction work, and later cross-site animation and visual refinement. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
+The sample-selection redesign, repeatable sample switching, Timeline playhead/scrubber restoration, dedicated Timeline workspace foundation, adaptive axis, zoom/pan navigation, generalized researcher-selected categories, and curated color/symbol markings are now implemented. The global navigation redesign is also in place: persistent header navigation, flattened Visualize framing, the three-mode Explore shell, full-page Data mapping, and the normalized About hierarchy are current. The Timeline relationship-line treatment is still visibly unfinished. The first compact shared Relations/Time/Places mapping-interface redesign is implemented, while the remaining mapping pages and the Explore content overhaul remain deferred, along with Tutorials, future targeted Home content/interaction work, and later cross-site animation and visual refinement. Playback-speed calibration and any future playback presentation/animation should begin from the current stable architecture rather than the discarded tween prototypes.
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 
@@ -625,6 +625,10 @@ MapLibre work is archived and should not be treated as part of current `main`. F
 - [Repository](https://github.com/haleyrp1803/peridot-humanistic-data) — current public source repository.
 
 ## 10. Author, License, and Attribution
+
+### Tabler Timeline icon attribution
+
+The Timeline Categories symbol picker uses a curated collection of 100 symbols from **Tabler Icons v3.50.0**, through the locally bundled `@tabler/icons-react` package. Tabler Icons are MIT-licensed; see the [Tabler Icons license and copyright notice](../public/TABLER_ICONS_LICENSE.md). The [curated symbol inventory](../assets/TIMELINE_CATEGORY_ICON_INVENTORY.csv) documents the chosen icons and themes. These two supporting resources are intentionally stored **outside** `core_documentation/`, which is reserved for Peridot's recurring core-documentation review set.
 
 ### Current Cartographic Editorial imagery and distribution status
 

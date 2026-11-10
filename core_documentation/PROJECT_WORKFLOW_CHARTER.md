@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-4fca872 — Unify shared chronology navigation, filtering, and dataset extent presentation
+9c2bb0e — Generalize Timeline categories across mapped dataset attributes
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-09); unrelated Charts II and planning work remains uncommitted; working tree is not clean
+Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-10); unrelated Charts II, planning files, and the tracked src.zip deletion remain uncommitted; working tree is not clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -639,6 +639,28 @@ The selected interval, full allowed domain, and source-backed actual record exte
 
 Maintenance consequence:
 Preserve exact date/tick alignment, source-derived padding, period and partial-date intersection, Cumulative/Concurrent behavior, Search/role isolation, original source provenance, and dataset-switch resets. Check all four visualizations and both Timeline orientations; retain and run focused chronology Node tests. Keep uncommitted Charts II work outside the chronology commit. For architecture and regression details use the Maintainer's Guide; for milestone and verification limits use the Changelog.
+```
+
+#### Generalized, researcher-owned Timeline category decision (2026-11-10)
+
+```text
+Decision:
+Make Timeline categories a researcher-controlled visual interpretation of source-backed event attributes, not a fixed Evidence-only list or an automatically assigned taxonomy.
+
+Context:
+The correspondence, family-tree and cardinals samples expose different useful attributes. An Evidence-only category inventory concealed mapped people and places; automatic mapping-to-event assignments can misattribute values when one record contains multiple subjects or dates.
+
+Chosen approach:
+Discover candidate sources and values from actual uploaded/mapped data; preserve original column labels plus stable source provenance; allow explicit record-, subject- and assertion-level association policies; retain plural memberships, user-editable names, colors and optional symbols. Preserve the three-column category editor and curated local Tabler icon library. Keep these presentation choices session-only pending a separately designed researcher-owned project format.
+
+Rejected alternative:
+Treat one sample's columns as universal, infer joins across unrelated sheets, equate all subjects within a record, or change canonical research evidence when a user chooses a visualization category.
+
+Reason:
+Visual categories help historians interrogate their own sources without asserting unsupported relationships or standardizing heterogeneous uploaded data.
+
+Maintenance consequence:
+Maintain field/source provenance, exact historical event associations, category identity and appearance across navigation; rerun the four category test modules and representative Correspondence, Family Tree and Cardinals browser cases. Do not restart automatically projected event-to-event arcs; their intended authoring/persistence semantics remain deferred.
 ```
 
 #### Persistent OffscreenCanvas loader and first-mount Map decision (2026-11-03)

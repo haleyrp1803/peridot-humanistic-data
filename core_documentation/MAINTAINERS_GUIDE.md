@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-4fca872 — Unify shared chronology navigation, filtering, and dataset extent presentation
+9c2bb0e — Generalize Timeline categories across mapped dataset attributes
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-09); unrelated Charts II and planning work remains uncommitted; working tree is not clean
+Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-10); unrelated Charts II, planning files, and the tracked src.zip deletion remain uncommitted; working tree is not clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -218,9 +218,21 @@ Ownership remains:
 
 Minimum regression checks: node, edge, and cluster click; compact close; Expand; related person/place; record and legitimate route navigation; at least a five-step linked-data chain; repeated Back; branch from an earlier history state; Explore-to-Inspector return; full Inspector open/close without stage reanimation; genealogy mother/father/partner coverage; participant-specific time/place attribution; duplicate-label identity cases; and correspondence sender/recipient preservation.
 
+### Timeline Categories: current generalized source and presentation contracts (`9c2bb0e`)
+
+The sole active dedicated Timeline is `src/PeridotTimelineII.jsx`. Its **Timeline / Categories** tabs preserve the independently navigable chronological view and researcher-controlled category configuration. The Categories editor has **Source columns**, **Values to track**, and **Appearance** regions. Eligible category sources include mapped Evidence, participant/place/relationship attributes, and original uploaded fields where the existing mapped record can support a defensible event association; availability does not itself establish an event relationship. The UI presents the original uploaded column header as its main label while retaining sheet, mapping role and source provenance separately. Identity must not collapse same-named columns on different sheets or in distinct mapped roles.
+
+**Core modules and preservation rules:** `peridotTimelineCategorySourceInventory.js` discovers available values and available provenance without assigning memberships; `peridotTimelineCategoryAssociationResolver.js` evaluates researcher-specified **record**, **subject**, or **temporal assertion** association and rejects unsupported joins; `peridotTimelineGeneralizedCategories.js` integrates the discovered sources into the existing Timeline categories; `peridotTimelineCategoryConfiguration.js` owns session-level selection, display names, independent colors and symbols; `PeridotTimelineCategoryEditor.jsx` renders the editor; `PeridotTimelineCategoryMarks.jsx` renders the marks and shared previews; `PeridotTimelineCategorySymbols.jsx` supplies the curated symbols. Record-scoped mapping can legitimately apply a letter's sending location to its record-derived date event; subject-specific and assertion-specific assignments must remain narrower when chosen. A category must never silently modify the original mapped data, search filters or historical event identity. Unselected fields do not become categories automatically, and the researcher can choose all values or a subset.
+
+**Presentation:** the category palette includes 42 preset colors in ordered swatches plus a custom hex color; a **100-icon** locally bundled Tabler Icons selection is offered with symbols optional. Three user-facing modes are **Colors only** (default), **Colors and symbols**, and **Expanded labels**. Plural category membership is supported; point events can show divided colored discs and a count for additional memberships; periods are striped. Uncategorized events remain visible with a neutral charcoal mark. Category chips/large previews show the actual colored symbol rather than a color dot. Category appearance and selection persist across navigation within the dataset session but are not saved across browser sessions or embedded in the original upload.
+
+**Tabler licensing and asset organization:** dependency `@tabler/icons-react@3.50.0`; Tabler Icons are MIT-licensed. The full third-party notice belongs at `public/TABLER_ICONS_LICENSE.md` (included in Vite's built public files), while the curated icon list belongs at `assets/TIMELINE_CATEGORY_ICON_INVENTORY.csv` (repository research/design resource, not a runtime fetch or an additional mandatory core document). Retain attribution in distributed output, confirm the license is present in `dist/` after production builds, and review the installed exports and license when updating the icon package. Original Peridot symbol artwork is retained only where required for compatibility.
+
+**Verification:** focused Node tests `peridotTimelineCategoryConfiguration.test.mjs`, `peridotTimelineCategorySourceInventory.test.mjs`, `peridotTimelineCategoryAssociationResolver.test.mjs`, and `peridotTimelineGeneralizedCategories.test.mjs` test configuration and association contracts. The researcher reported build/test success and visually accepted correspondence sending-place, Family Tree person attribute, and Cardinals mapping cases. These are meaningful representative checks, not every workbook configuration. Recheck field identity/provenance, record versus subject versus assertion scope, zero and multiple memberships, category color persistence, Timeline orientation/zoom/playback, Inspector selection, and display mode after changes.
+
 ### Visualizations and Timeline
 
-#### Current Timeline and shared chronology architecture (committed through `4fca872`; earlier implementation history retained below)
+#### Current Timeline and shared chronology architecture (chronology through `4fca872`; categories through `9c2bb0e`; earlier history retained below)
 
 **One active Timeline visualization, one shared chronology presentation.** Commit `688bc17` retired Timeline I from public visualization navigation and promoted the Timeline II implementation as the sole **Timeline** tab. `PeridotTimelineII.jsx` is the active dedicated Timeline renderer, using calendar-day coordinates, assertion-level dates and periods, stable orthogonal-axis event packing, and horizontal/vertical layouts. Older `PeridotTimelineWorkspace.jsx` / `peridotTimelineWorkspaceModel.js` discussion below is retained as historical/compatibility information; do not confuse legacy card UI or its mapped relationship presentation with features already implemented in the current Timeline. Verify any retained model helpers against current imports before retiring them.
 
@@ -238,7 +250,7 @@ Minimum regression checks: node, edge, and cluster click; compact close; Expand;
 
 **Historical verification limits:** the earlier v45 vertical-layout pass was browser-reviewed at `ddee7e2` without a separately observed post-v45 build. **Current chronology QA:** the researcher explicitly accepted consistent ruler ticks, full-dataset padded-domain behavior, calendar filtering, and the Option C extent indicators before confirming push `4fca872`. Four focused Node tests cover calendar windows, navigation compatibility, ruler parity and calendar filtering. These do not replace end-to-end browser, accessibility, production build or deployed-site regression checks.
 
-**Active Timeline follow-up and fragile zone:** Next investigate source-backed event relationship arcs in both orientations, beginning with a read-only source/data audit. Preserve exact temporal positions, stable packing and performance, explicit mapped relationship endpoints, Search scope, Inspector linkage, orientation/ruler alignment and period-duration distinction. A 12-color/12-symbol category presentation, optional Grouped swimlanes with primary-category ordering, density histogram, adaptive simultaneous-event clustering and uncertainty display remain approved/planned directions but are not certified fully implemented by the latest chronology pass. The old Timeline I connection code is not proof of present Timeline functionality. **Relationship Option C is distinct from dataset-extent Option C.**
+**Active Timeline follow-up and fragile zone:** Next implement the already-planned Grouped category swimlanes and examine dense-event readability; event-to-event relationship arcs are deliberately deferred pending defensible explicit event relationships. Preserve exact temporal positions, stable packing and performance, explicit mapped relationship endpoints, Search scope, Inspector linkage, orientation/ruler alignment and period-duration distinction. A 12-color/12-symbol category presentation, optional Grouped swimlanes with primary-category ordering, density histogram, adaptive simultaneous-event clustering and uncertainty display remain approved/planned directions but are not certified fully implemented by the latest chronology pass. The old Timeline I connection code is not proof of present Timeline functionality. **Relationship Option C is distinct from dataset-extent Option C.**
 
 
 Visualizations owns the unified Geographic Map, Force-Directed Network, the sole dedicated Timeline visualization, chart entry points, header presentation, shared chronology dock, and shared Export menu. The dedicated Timeline workspace and the bottom playback control are separate responsibilities. Both consume canonical `temporalAssertions[]`; the former `parsedDate` fallback has been retired from active source. A record may contribute multiple assertion-level timeline events, and interval filtering uses temporal intersection rather than only an interval start.
@@ -899,6 +911,22 @@ Phase 1 compatibility classifier. It explicitly permits current correspondence a
 
 Each of these model/profile modules has dependency-free fixture or audit companions where present. The universal fixture set includes correspondence, genealogy, wide/transposed stock-price, Alaskan-airfield, and Maria-Maddalena-style structures so future changes can test generality without encoding those examples as special-case application logic.
 
+### Active Timeline category module index (added 2026-11-10)
+
+| Module | Responsibility |
+|---|---|
+| `PeridotTimelineII.jsx` | active Timeline and Categories tab orchestration; calendar-faithful rendering and category application |
+| `PeridotTimelineCategoryEditor.jsx` | three-column category source/value/appearance selection UI |
+| `PeridotTimelineCategoryMarks.jsx` | colored point/period marks and visual previews |
+| `PeridotTimelineCategorySymbols.jsx` | curated Tabler symbol dictionary and rendering |
+| `peridotTimelineCategoryConfiguration.js` | pure category settings, selection and identity; session-only presentation overrides |
+| `peridotTimelineCategorySourceInventory.js` | discover source-backed candidate fields and distinct values with provenance |
+| `peridotTimelineCategoryAssociationResolver.js` | explicit record/subject/assertion membership applicability; refuses unsupported joins |
+| `peridotTimelineGeneralizedCategories.js` | connect generalized source candidates and association policy to Timeline events |
+| `*.test.mjs` companions for the four pure modules | focused behavior/regression contracts |
+
+The historical `PeridotTimelineWorkspace.jsx` module notes below describe the retired original Timeline and must not be used as ownership guidance for the active rendered category editor.
+
 ### Visualizations, map, and timeline
 
 #### `src/mapLayoutHelpers.js`
@@ -1111,6 +1139,10 @@ These areas still deserve narrow, explicit passes:
 
 ## 11. Active Technical Backlog
 
+**Timeline priorities updated 2026-11-10 (`9c2bb0e`):** The researcher has accepted generalized categories across Correspondence, Family Tree and Cardinals. Next: **Grouped category swimlanes** (ordered primary-category precedence, one event in one lane, separate Uncategorized lane, no arbitrary semantic clustering); **event-density overview and carefully justified handling of coincident events**; then multi-orientation/keyboard/Inspector/uncertainty/large-data regression checks. **Event-to-event relationship arcs are on hold** following concerns that selecting arbitrary representative events from entity links fabricates relationships. Return only after explicit source-backed/event-authored connection semantics have been designed; portable researcher-owned project persistence is a separate future architecture discussion. Charts II remains a parallel, separately uncommitted workstream. The older numbered priority list below is retained as a historical technical backlog; its statement that relationship rendering is “immediate” is superseded by this update.
+
+
+
 **Cleanup status update (2026-11-01):** The previous import-performance investigation closed with the `481acd9` capability-scan optimization. The repository-level legacy importer audit was completed read-only and recommended **no code deletions**; future retirement requires a fresh dependency/fixture review. Dedicated worker-race and dependency-security follow-ups are excluded from the present cleanup cycle by researcher choice, while comprehensive regression-fixture review is **deferred**. This does not change the existing active Timeline, Network, Explore, and Analytics priorities below.
 
 **Deferred mapping architecture (2026-10-28):** multiple independent relationships per source row need a new grouping layer above `relationshipParts`, with corresponding workbook, runtime, canonical model, Inspector, Network, and export handling. Progressive form activation is already implemented and should not be mistaken for this feature.
@@ -1119,7 +1151,7 @@ These areas still deserve narrow, explicit passes:
 **Cartographic Editorial active visual work (separate from the older technical priority order):** `c71e265` was an earlier clean, synchronized checkpoint; the earlier `4e6fb11` editorial Home and button work has since been refined by `7280e30`, `2117659`, and `60b8643`. The Florence/paper hero, full-width banner, corner-collage frame, and optical content position are accepted; do not revive the earlier green title card or rejected H2f diagonal. Remaining visual work is targeted CSS/token cleanup, consistent buttons and workspaces, tutorial content, and verification across supported desktop viewport sizes. Asset publication is confirmed by Git, but licensing/redistribution rights are **not** established merely by the push. Preserve attribution notes and verify the applicable licenses separately. The present art direction prioritizes full-screen desktop; minimum supported viewport enforcement remains unresolved.
 
 
-1. **Timeline relationship rendering / connection legibility — immediate.**
+1. **Timeline relationship rendering / connection legibility — historical priority; now deferred.**
    - Preserve the `a32ef05` subject-strict relationship projection and continuous secondary-axis layout.
    - Redesign relationship-line routing/presentation so each explicit connection reads unambiguously as card → relationship → card in both Horizontal and Vertical views.
    - Use Peridot's curved-edge visual language, but do not let lifespan/period duration graphics resemble relationship edges.
@@ -1243,9 +1275,9 @@ A future chat should start from:
 
 - source of truth folder: `C:\Users\haley\OneDrive\Desktop\Peridot\`
 - active branch: `main`
-- current synchronized checkpoint: **`4fca872`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned in the latest user-provided sync output; the working tree is intentionally **not clean** due to separate Charts II/planning work
+- current synchronized checkpoint: **`9c2bb0e`**, with `HEAD`, `origin/main`, and `origin/HEAD` aligned in the latest user-provided sync output; the working tree is intentionally **not clean** due to separate Charts II/planning work
 - local development command on the user's machine: **`npm.cmd run dev`**
-- current active Timeline: the Timeline II implementation is the sole public Timeline tab, with horizontal/vertical calendar-day rendering and optimized event packing. Earlier original Timeline I category/card/connection contracts remain historical unless verified in the live implementation. Event-to-event relationship arcs are the next priority, beginning with a read-only audit; do not assume original Timeline I relationship projections have been ported.
+- current active Timeline: the Timeline II implementation is the sole public Timeline tab, with horizontal/vertical calendar-day rendering and optimized event packing. Earlier original Timeline I category/card/connection contracts remain historical unless verified in the live implementation. Generalized categories are accepted; grouped swimlanes and density/readability are next. Event-to-event relationship arcs remain deferred rather than automatically inferred.
 - `PeridotChronologyDock.jsx` is the single shared chronology interface; Map/Network/Charts use `PeridotSharedChronologyAdapter.jsx` and the active Timeline uses `PeridotTimelineII.jsx`, with consistent calendar-day domain/ticks, independent session persistence, canonical calendar filtering, source-extent 10% padding and approved gold-diamond Data extent markers. Tests in `src/peridotChronology*.test.mjs` are focused regressions, not browser automation.
 
 A future chat should also be told that:
