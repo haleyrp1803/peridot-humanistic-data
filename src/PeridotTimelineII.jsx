@@ -9,6 +9,7 @@ import {packTimelineIIMarks, TIMELINE_II_LANE_COUNT} from './peridotTimelineIIPa
 import {ChronologyRuler, ChronologyTransport} from './PeridotChronologyDock.jsx';
 import { buildPeridotTimelineConnections, buildPeridotTimelineCategoryFields } from './peridotTimelineWorkspaceModel.js';
 import { PeridotTimelineCategoryEditor } from './PeridotTimelineCategoryEditor.jsx';
+import {buildPeridotGeneralizedCategoryFields,projectPeridotGeneralizedCategoryEvents} from './peridotTimelineGeneralizedCategories.js';
 import { createTimelineCategoryConfiguration, reconcileTimelineCategoryConfiguration, resolveTimelineCategories, TIMELINE_UNCATEGORIZED_COLOR } from './peridotTimelineCategoryConfiguration.js';
 import { TimelineCategoryPoint, TimelinePeriodSymbolBadge, timelineMarkCategories, timelineMarkColors, timelinePeriodFill, timelineCategoryDescription } from './PeridotTimelineCategoryMarks.jsx';
 import {civilDay, civilFromDay, createChronologyDomain, clampChronologyWindow, chronologyPosition, chronologyDayAtPosition, chronologyOverviewTicks} from './peridotChronologyWindow.js';
@@ -501,15 +502,20 @@ export function PeridotTimelineII({
   const domainAll = useMemo(() => eventRows(domainEvents), [domainEvents]);
   // Use the complete dataset inventory: Search narrowing never drops a field
   // or a category choice from the editor. No category choice filters events.
-  const categoryFields = useMemo(() => buildPeridotTimelineCategoryFields(domainEvents), [domainEvents]);
+  const categoryFields = useMemo(() => [
+    ...buildPeridotTimelineCategoryFields(domainEvents),
+    ...buildPeridotGeneralizedCategoryFields(domainEvents),
+  ], [domainEvents]);
   const activeCategoryConfiguration = useMemo(
     () => reconcileTimelineCategoryConfiguration(categoryConfiguration, categoryFields),
     [categoryConfiguration, categoryFields]);
   // Pass 3: project selected, exact Evidence identities onto displayed events.
   // Search, playback, packing and dataset bounds remain independently owned;
   // category selection changes visual encoding only and never hides a mark.
-  const resolvedCategories = useMemo(() => resolveTimelineCategories(events,categoryFields,activeCategoryConfiguration),
-    [events,categoryFields,activeCategoryConfiguration]);
+  const categorizedEvents = useMemo(() => projectPeridotGeneralizedCategoryEvents(
+    events,categoryFields,activeCategoryConfiguration),[events,categoryFields,activeCategoryConfiguration]);
+  const resolvedCategories = useMemo(() => resolveTimelineCategories(categorizedEvents,categoryFields,activeCategoryConfiguration),
+    [categorizedEvents,categoryFields,activeCategoryConfiguration]);
   const categoriesById = useMemo(()=>new Map(resolvedCategories.categories.map(category=>[category.id,category])),[resolvedCategories]);
   const eventCategoriesById = useMemo(()=>new Map(resolvedCategories.eventCategories.map(entry=>[entry.eventId,entry])),[resolvedCategories]);
   const filtered = useMemo(()=>all.filter(item=>item.period?showPeriods:showPoints),[all,showPoints,showPeriods]);

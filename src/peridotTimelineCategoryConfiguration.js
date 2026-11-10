@@ -58,6 +58,8 @@ export function createTimelineCategoryConfiguration() {
     // The researcher selects a field, then either all its distinct values or
     // an explicit subset. A field absent here is not an active category source.
     fields: [],
+    // Explicit per-source association semantics; these never alter canonical data.
+    fieldScopes: {},
     // Keyed by stable field/value identity. Overrides are not evidence edits.
     overrides: {},
     // Optional order for deterministic primary-category selection in Grouped.
@@ -115,6 +117,14 @@ export function reconcileTimelineCategoryConfiguration(configuration, availableF
     values.forEach((value) => activeIdentities.add(timelineCategoryIdentity(entry.key, value)));
   });
 
+  const fieldScopes = {};
+  for (const entry of fields) {
+    const inventoryField = inventory.get(entry.key)?.field;
+    const requested = inventoryField?.associationScopes || ['record'];
+    const fallback = inventoryField?.defaultAssociationScope || 'record';
+    fieldScopes[entry.key] = requested.includes(source.fieldScopes?.[entry.key])
+      ? source.fieldScopes[entry.key] : fallback;
+  }
   const overrides = {};
   for (const id of activeIdentities) {
     const entry = source.overrides?.[id];
@@ -135,6 +145,7 @@ export function reconcileTimelineCategoryConfiguration(configuration, availableF
   return {
     version: TIMELINE_CATEGORY_CONFIG_VERSION,
     fields,
+    fieldScopes,
     overrides,
     priority: [...ordered, ...remaining],
     displayMode: TIMELINE_CATEGORY_DISPLAY_MODES.includes(source.displayMode)
@@ -196,6 +207,19 @@ export function configureTimelineCategoryAppearance(configuration, availableFiel
 export function configureTimelineCategoryPriority(configuration, availableFields, orderedIds) {
   const current = reconcileTimelineCategoryConfiguration(configuration, availableFields);
   return reconcileTimelineCategoryConfiguration({...current, priority: list(orderedIds)}, availableFields);
+}
+
+
+/** Select only a supported, explicit association scope for an active field. */
+export function configureTimelineCategoryFieldScope(configuration, availableFields, fieldKey, scope) {
+  const current = reconcileTimelineCategoryConfiguration(configuration, availableFields);
+  const field = list(availableFields).find((item) => item?.key === fieldKey);
+  if (!current.fields.some((item) => item.key === fieldKey) || !field) return current;
+  const scopes = list(field.associationScopes);
+  if (!scopes.includes(scope)) return current;
+  return reconcileTimelineCategoryConfiguration({
+    ...current, fieldScopes: {...current.fieldScopes, [fieldKey]:scope},
+  }, availableFields);
 }
 
 /**

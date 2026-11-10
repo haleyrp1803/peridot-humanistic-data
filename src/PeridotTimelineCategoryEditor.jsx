@@ -9,6 +9,7 @@ import React, {useMemo, useState} from 'react';
 import {
   configureTimelineCategoryAppearance, configureTimelineCategoryField,
   removeTimelineCategoryField, reconcileTimelineCategoryConfiguration,
+  configureTimelineCategoryFieldScope,
   resolveTimelineCategories,
 } from './peridotTimelineCategoryConfiguration.js';
 
@@ -62,9 +63,9 @@ export function PeridotTimelineCategoryEditor({availableFields=[], events=[], co
     <div className="grid min-h-0 flex-1 grid-cols-1 gap-0 overflow-y-auto lg:grid-cols-[minmax(180px,23fr)_minmax(235px,30fr)_minmax(340px,47fr)] lg:overflow-hidden">
       <section className="flex min-h-[220px] flex-col border-b border-[#d5c1a5] px-3 py-3 lg:min-h-0 lg:border-b-0 lg:border-r" aria-label="Source columns">
         <h3 className={sectionTitle}>1. Source columns</h3>
-        <p className="mt-1 text-xs text-[#695e50]">Select a field to inspect its values. Enable only the fields you want to categorize.</p>
+        <p className="mt-1 text-xs text-[#695e50]">Inspect available dataset fields, then select those you want to use as categories.</p>
         <label className="mt-2 block text-xs font-semibold" htmlFor="tl-category-field-search">Find a column</label>
-        <input id="tl-category-field-search" className={inputClass} value={fieldQuery} onChange={e=>setFieldQuery(e.target.value)} placeholder="Search Evidence fields"/>
+        <input id="tl-category-field-search" className={inputClass} value={fieldQuery} onChange={e=>setFieldQuery(e.target.value)} placeholder="Search mapped and original fields"/>
         <div className="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto pr-1">
           {visibleFields.map(field=>{
             const enabled=config.fields.some(s=>s.key===field.key);
@@ -73,17 +74,26 @@ export function PeridotTimelineCategoryEditor({availableFields=[], events=[], co
               <input type="checkbox" checked={enabled} aria-label={`Track all values in ${field.label||field.key}`} onChange={e=>{setSelectedFieldKey(field.key);setSelectedCategoryId('');change(e.target.checked?configureTimelineCategoryField(config,fields,field.key,'all'):removeTimelineCategoryField(config,fields,field.key));}}/>
               <button type="button" onClick={()=>{setSelectedFieldKey(field.key);setSelectedCategoryId('');setValueQuery('');}} className="min-w-0 flex-1 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]" aria-current={active?'true':undefined}>
                 <span className="block break-words text-[13px] font-semibold leading-tight">{field.label||field.key}</span>
-                <span className="block text-[11px] leading-tight text-[#695e50]">{field.values?.length||0} values</span>
+                <span className="block text-[11px] leading-tight text-[#695e50]">{field.values?.length||0} values{field.domain ? ` · ${field.domain}` : ' · Evidence'}{field.sourceSheet ? ` · ${field.sourceSheet}` : ''}{field.sourceRole ? ` · ${field.sourceRole}` : ''}</span>
               </button>
             </div>;
           })}
-          {!visibleFields.length && <p className="text-sm text-[#695e50]">No matching mapped Evidence fields.</p>}
+          {!visibleFields.length && <p className="text-sm text-[#695e50]">No matching category sources.</p>}
         </div>
       </section>
       <section className="flex min-h-[250px] flex-col border-b border-[#d5c1a5] px-3 py-3 lg:min-h-0 lg:border-b-0 lg:border-r" aria-label="Category values">
         <h3 className={sectionTitle}>2. Values to track</h3>
-        {!selectedField ? <p className="mt-3 text-sm text-[#695e50]">No mapped Evidence fields available. Add Evidence in Data → Edit Mapping.</p> : <>
-          <p className="mt-1 break-words text-xs text-[#695e50]">{selectedField.label||selectedField.key} · {selectedField.values?.length||0} distinct values</p>
+        {!selectedField ? <p className="mt-3 text-sm text-[#695e50]">No category sources are available for these Timeline events.</p> : <>
+          <p className="mt-1 break-words text-xs text-[#695e50]">{selectedField.label||selectedField.key} · {selectedField.values?.length||0} distinct values{selectedField.sourceSheet ? ` · Sheet: ${selectedField.sourceSheet}` : ''}{selectedField.sourceRole ? ` · Role: ${selectedField.sourceRole}` : ''}</p>
+          {selectedField.source && <div className="mt-2 rounded-md border border-[#d5c1a5] bg-[#fff9ec] p-2 text-xs text-[#5c5142]">
+            <label htmlFor="tl-category-association-scope" className="block font-semibold">Apply categories to</label>
+            <select id="tl-category-association-scope" className={`${inputClass} mt-1`} value={config.fieldScopes?.[selectedField.key] || selectedField.defaultAssociationScope}
+              onChange={e=>change(configureTimelineCategoryFieldScope(config,fields,selectedField.key,e.target.value))}
+              disabled={!selection}>
+              {selectedField.associationScopes.map(scope=><option key={scope} value={scope}>{scope==='subject'?'Events belonging to this mapped subject':scope==='assertion'?'Only this mapped temporal assertion':'All events from this source record'}</option>)}
+            </select>
+            <p className="mt-1">{selectedField.requiresExplicitRawAuthorization?'Original uploaded column: tracking explicitly authorizes record-level use. No linked-sheet joins are inferred.':'Uses existing mapped provenance; no relationships are inferred between unrelated records.'} Record scope includes events from this source record; subject scope requires a matching mapped event subject.</p>
+          </div>}
           <div className="mt-2 flex flex-wrap gap-1.5">
             <button className={actionClass} type="button" onClick={()=>change(configureTimelineCategoryField(config,fields,selectedField.key,'all'))}>Track all values</button>
             <button className={actionClass} type="button" onClick={()=>change(configureTimelineCategoryField(config,fields,selectedField.key,'selected',[]))}>Select individually</button>
