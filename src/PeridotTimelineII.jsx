@@ -7,11 +7,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {packTimelineIIMarks, TIMELINE_II_LANE_COUNT} from './peridotTimelineIIPacking.js';
 import {ChronologyRuler, ChronologyTransport} from './PeridotChronologyDock.jsx';
-import { buildPeridotTimelineConnections } from './peridotTimelineWorkspaceModel.js';
+import { buildPeridotTimelineConnections, buildPeridotTimelineCategoryFields } from './peridotTimelineWorkspaceModel.js';
+import { PeridotTimelineCategoryEditor } from './PeridotTimelineCategoryEditor.jsx';
+import { createTimelineCategoryConfiguration, reconcileTimelineCategoryConfiguration, resolveTimelineCategories, TIMELINE_UNCATEGORIZED_COLOR } from './peridotTimelineCategoryConfiguration.js';
+import { TimelineCategoryPoint, TimelinePeriodSymbolBadge, timelineMarkCategories, timelineMarkColors, timelinePeriodFill, timelineCategoryDescription } from './PeridotTimelineCategoryMarks.jsx';
 import {civilDay, civilFromDay, createChronologyDomain, clampChronologyWindow, chronologyPosition, chronologyDayAtPosition, chronologyOverviewTicks} from './peridotChronologyWindow.js';
 
-const PALETTE = ['#A63D2B','#7C211E','#B85C38','#C49A3A','#7A7A32','#2F4A3E','#6B7F6B','#2F6F73','#5F7C8B','#4B5E8C','#6E4A7F','#9A4E68'];
-const GLYPHS = ['■','▲','◆','★','+','×','⬡','✿','⌃','⌄','▮','▬'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 const MIN_DAYS = 7;
 const TRACK_GUTTER = 76;
@@ -22,10 +23,20 @@ const VERTICAL_RULER_FOOTER = 16;
 const VERTICAL_AXIS_START = 58;
 // II-1: 50% larger than the v16 marks (31px nodes and 23px bands).
 // Secondary-axis lanes are bounded by the visible viewport, never by event count.
-const NODE_DIAMETER = 46.5;
+// Reduced by approximately 18% after the category legibility review.
+// Pass this same diameter into packing; do not shrink marks only with CSS.
+const NODE_DIAMETER = 38;
 const BAND_THICKNESS = 34.5;
 const LANE_COUNT = TIMELINE_II_LANE_COUNT; // Shared with pure Packing A module.
 const MARK_PADDING = 9;
+// Darker, hue-matched outlines preserve boundaries when marks overlap.
+// Multicolor pies receive a neutral dark outline (no category is privileged).
+function categoryNodeOutline(color, isMulti) {
+  if (isMulti) return '#3B352E';
+  const hex = /^#([0-9a-f]{6})$/i.exec(color || '');
+  if (!hex) return '#272421';
+  return `#${[0,2,4].map(i=>Math.round(parseInt(hex[1].slice(i,i+2),16)*0.63).toString(16).padStart(2,'0')).join('')}`;
+}
 // P2C presentation-only entrance: 18 deterministic temporal-independent waves.
 // All marks retain their plotted coordinates and remain individually rendered.
 const TIMELINE_II_REVEAL_WAVES = 18;
@@ -255,8 +266,6 @@ function eventRows(events) {
     if (!Number.isFinite(a)) return null;
     const b = ordinal(end) ?? a;
     const period = event.temporalPresentationContract?.kind === 'period' || ['interval','openInterval'].includes(event.temporalKind);
-    const member = event.categoryMemberships?.[0];
-    const category = member ? `${member.fieldKey}:${member.value}` : 'Uncategorized';
     const row = event.row || {};
     const title = String(event.subject?.label || row.title || row.Title || row.name || row.Name || event.temporalRole || 'Untitled event');
     const uncertain = !start?.month || !start?.day || /circa|approximate|partial|uncertain/i.test(`${event.temporalShape} ${event.qualifier}`);
@@ -270,7 +279,7 @@ function eventRows(events) {
     return {event,start,end,day: Math.min(a,b),endDay:period ? Math.max(a,b) : a,
       playbackStart: Math.min(playbackStart, playbackEnd),
       playbackEnd: Math.max(playbackStart, playbackEnd),
-      period,category,title,uncertain,
+      period,title,uncertain,
       openStart: Boolean(contract?.openStart), openEnd: Boolean(contract?.openEnd)};
   }).filter(Boolean).sort((a,b) => a.day - b.day || String(a.event.id).localeCompare(String(b.event.id)));
 }
@@ -418,6 +427,13 @@ export function PeridotTimelineII({
   const [showPoints,setShowPoints] = useState(() => initialChronologySession?.showPoints ?? true);
   const [showPeriods,setShowPeriods] = useState(() => initialChronologySession?.showPeriods ?? true);
   const [showRelationships,setShowRelationships] = useState(() => initialChronologySession?.showRelationships ?? true);
+  // Category choices are researcher-selected presentation, not Evidence edits.
+  // The dataset-keyed parent session saves them across public page navigation.
+  const [categoryConfiguration,setCategoryConfiguration] = useState(() => initialChronologySession?.categoryConfiguration ?? createTimelineCategoryConfiguration());
+  // Local stage navigation only; configuration stays in the same dataset session.
+  // Never unmount the Timeline viewport: its ResizeObserver, packing cache and
+  // continuous chronology interactions are owned by this component.
+  const [categoryEditorOpen,setCategoryEditorOpen] = useState(false);
   const [localSelected,setLocalSelected] = useState('');
   const [hoveredId,setHoveredId] = useState('');
   const [hoverPosition,setHoverPosition] = useState(null);
@@ -463,12 +479,12 @@ export function PeridotTimelineII({
   const savedSessionRef = useRef(null);
   savedSessionRef.current = {
     direction, requestedVisibleDays, center, showPoints, showPeriods,
-    showRelationships, playhead, playbackSpeed, playbackMode, playbackStarted,
+    showRelationships, categoryConfiguration, playhead, playbackSpeed, playbackMode, playbackStarted,
   };
   useEffect(() => {
     sessionChangeRef.current?.(savedSessionRef.current, mountedDatasetRevisionRef.current);
   }, [direction, requestedVisibleDays, center, showPoints, showPeriods,
-      showRelationships, playhead, playbackSpeed, playbackMode, playbackStarted]);
+      showRelationships, categoryConfiguration, playhead, playbackSpeed, playbackMode, playbackStarted]);
   // Also flush the last committed state when the visualization unmounts.
   useEffect(() => () => sessionChangeRef.current?.(savedSessionRef.current, mountedDatasetRevisionRef.current), []);
   const stopEntranceOnNavigation = () => setRevealPhase(current => current === 'complete' ? current : 'complete');
@@ -483,8 +499,19 @@ export function PeridotTimelineII({
   // Search-filtered event list. Filters alter marks and relationships, never
   // the horizontal/vertical chronology boundaries or a saved viewport.
   const domainAll = useMemo(() => eventRows(domainEvents), [domainEvents]);
-  const categoryKeys = useMemo(()=>[...new Set(all.map(item=>item.category))].sort(),[all]);
-  const colors = useMemo(()=>new Map(categoryKeys.map((key,i)=>[key,{color:PALETTE[i % PALETTE.length],symbol:GLYPHS[i % GLYPHS.length]}])),[categoryKeys]);
+  // Use the complete dataset inventory: Search narrowing never drops a field
+  // or a category choice from the editor. No category choice filters events.
+  const categoryFields = useMemo(() => buildPeridotTimelineCategoryFields(domainEvents), [domainEvents]);
+  const activeCategoryConfiguration = useMemo(
+    () => reconcileTimelineCategoryConfiguration(categoryConfiguration, categoryFields),
+    [categoryConfiguration, categoryFields]);
+  // Pass 3: project selected, exact Evidence identities onto displayed events.
+  // Search, playback, packing and dataset bounds remain independently owned;
+  // category selection changes visual encoding only and never hides a mark.
+  const resolvedCategories = useMemo(() => resolveTimelineCategories(events,categoryFields,activeCategoryConfiguration),
+    [events,categoryFields,activeCategoryConfiguration]);
+  const categoriesById = useMemo(()=>new Map(resolvedCategories.categories.map(category=>[category.id,category])),[resolvedCategories]);
+  const eventCategoriesById = useMemo(()=>new Map(resolvedCategories.eventCategories.map(entry=>[entry.eventId,entry])),[resolvedCategories]);
   const filtered = useMemo(()=>all.filter(item=>item.period?showPeriods:showPoints),[all,showPoints,showPeriods]);
   const timelineConnections = useMemo(() => {
     const t0 = TIMELINE_II_PROFILE_ENABLED ? performance.now() : 0;
@@ -889,6 +916,17 @@ export function PeridotTimelineII({
   timelineIIPerf.record('render calculations (pre-JSX)', performance.now()-renderStartedAt, {totalEvents:all.length,visibleEvents:inWindow.length,playbackVisible:playbackItems.length,links:timelineConnections.length,orientation:direction,zoomDays:visibleDays});
   if(!domainAll.length)return <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl bg-[#eee0c7] text-[#4b4236]">No positionable events available to Timeline II.</div>;
   return <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#b4a087] bg-[#eee0c7] text-[#302b24]">
+    {/* Timeline-owned subnavigation mirrors the Charts II two-tab pattern.
+        The shared Visualize workspace is deliberately untouched while its
+        parallel Charts II branch contains uncommitted source changes. */}
+    <nav className="z-20 flex h-12 shrink-0 items-center justify-center gap-1 border-b border-[#d5c1a5] bg-[#fbf7ed]" aria-label="Timeline workspace">
+      <button type="button" aria-current={!categoryEditorOpen?'page':undefined} onClick={()=>setCategoryEditorOpen(false)} className={`rounded-md border px-4 py-1.5 text-xs font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${!categoryEditorOpen?'border-[#b4a087] bg-[#e7d7b9] text-[#253C32]':'border-transparent text-[#302b24] hover:bg-[#eee0c7]'}`}>Timeline</button>
+      <button type="button" aria-current={categoryEditorOpen?'page':undefined} onClick={()=>{setPlaying(false);setCategoryEditorOpen(true);}} className={`rounded-md border px-4 py-1.5 text-xs font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${categoryEditorOpen?'border-[#b4a087] bg-[#e7d7b9] text-[#253C32]':'border-transparent text-[#302b24] hover:bg-[#eee0c7]'}`}>Categories</button>
+    </nav>
+    {/* Keep the plotted stage mounted and measured even while its separate
+        editor occupies the full workspace. This preserves exact zoom/window
+        and avoids re-running the entrance animation when returning. */}
+    <div aria-hidden={categoryEditorOpen} className={`flex min-h-0 flex-1 flex-col ${categoryEditorOpen?'invisible pointer-events-none absolute inset-x-0 bottom-0 top-12':''}`}>
     <style>{`@keyframes peridot-timelineii-raindrop { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: scale(1); } }
       @media (prefers-reduced-motion: reduce) { .peridot-timelineii-reveal { animation: none !important; opacity: 1 !important; transform: none !important; } }`}</style>
     <div className="z-10 flex shrink-0 flex-wrap items-center gap-3 border-b border-[#b4a087] bg-[#fbf7ed] px-4 py-2 text-xs">
@@ -898,7 +936,20 @@ export function PeridotTimelineII({
       <label className="flex items-center gap-1"><input type="checkbox" checked={showPoints} onChange={e=>{stopEntranceOnNavigation();setShowPoints(e.target.checked);}}/>Dates</label>
       <label className="flex items-center gap-1"><input type="checkbox" checked={showPeriods} onChange={e=>{stopEntranceOnNavigation();setShowPeriods(e.target.checked);}}/>Periods</label>
       {timelineConnections.length ? <label className="flex items-center gap-1"><input type="checkbox" checked={showRelationships} onChange={e=>{stopEntranceOnNavigation();setShowRelationships(e.target.checked);}}/>Relationships</label> : null}
-      <span className="ml-auto text-[#6b5d4c]">{inWindow.length} in view · {all.length} total</span>
+      {/* Display preference changes visual annotations only. Category membership,
+          Search scope, event positions and chronology remain unchanged. */}
+      <label className="ml-auto flex items-center gap-2 whitespace-nowrap" htmlFor="peridot-timeline-category-display">
+        <span className="font-semibold">Category display</span>
+        <select id="peridot-timeline-category-display" aria-label="Category display mode"
+          value={activeCategoryConfiguration.displayMode}
+          onChange={event=>setCategoryConfiguration(current=>({...current,displayMode:event.target.value}))}
+          className="max-w-[175px] rounded border border-[#b4a087] bg-[#fbf7ed] px-2 py-1 text-xs text-[#302b24] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]">
+          <option value="colors">Colors only</option>
+          <option value="colors-and-symbols">Colors and symbols</option>
+          <option value="expanded">Expanded labels</option>
+        </select>
+      </label>
+      <span className="text-[#6b5d4c]">{inWindow.length} in view · {all.length} total</span>
     </div>
     <div ref={viewportRef} role="region" aria-label={`Timeline II ${direction} chronological field; scroll through time`} tabIndex={0} onKeyDown={e=>{
       if(['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(e.key)){e.preventDefault();panBy((e.key==='ArrowLeft'||e.key==='ArrowUp'?-1:1)*visibleDays*0.12);}
@@ -985,7 +1036,10 @@ export function PeridotTimelineII({
       ) : null}
 
       {playbackItems.map(item=>{
-        const categoryStyle=colors.get(item.category)||{color:'#253C32',symbol:'●'};
+        const markCategories=timelineMarkCategories(item.event.id,categoriesById,eventCategoriesById);
+        const markColors=timelineMarkColors(markCategories);
+        const primaryColor=markColors[0] || TIMELINE_UNCATEGORIZED_COLOR;
+        const categoryDetails=timelineCategoryDescription(markCategories);
         const entranceEligible = revealPhase !== 'complete' && revealInitialIdsRef.current?.has(String(item.event.id));
         const revealStyle = entranceEligible
           ? revealPhase === 'before'
@@ -1012,42 +1066,54 @@ export function PeridotTimelineII({
         };
         if(item.period) return (
           <button key={`${direction}:${item.event.id}`} type="button" {...interactiveProps}
-            aria-label={`Period: ${fullLabel}`}
+            aria-label={`Period: ${fullLabel}. ${categoryDetails}`}
             className={`group absolute z-[2] rounded-full border-0 text-left shadow-sm hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${entranceEligible ? 'peridot-timelineii-reveal' : ''}`}
             style={horizontal
               ? {left:bandStart,top:secondaryPos-BAND_THICKNESS/2,width:bandLength,height:BAND_THICKNESS,transition:"top 360ms ease-in-out, transform 150ms ease",...revealStyle}
               : {top:bandStart,left:secondaryPos-BAND_THICKNESS/2,height:bandLength,width:BAND_THICKNESS,transition:"left 360ms ease-in-out, transform 150ms ease",...revealStyle}
             }
           >
-            <span className="pointer-events-none absolute inset-0 rounded-full" style={{background:`color-mix(in srgb, ${categoryStyle.color} 58%, #eee0c7)`,border:`2px ${item.uncertain?'dashed':'solid'} ${categoryStyle.color}`,borderRadius:999,boxShadow:(active||hoveredMark)?`0 0 0 3px ${categoryStyle.color}`:undefined}} />
+            <span className="pointer-events-none absolute inset-0 rounded-full" style={{background:timelinePeriodFill(markCategories),border:`2px ${item.uncertain?'dashed':'solid'} ${primaryColor}`,borderRadius:999,boxShadow:(active||hoveredMark)?`0 0 0 3px ${primaryColor}`:undefined}} />
             <span className="pointer-events-none absolute rounded-full border-2" style={horizontal
-              ? {left:2,top:4,width:BAND_THICKNESS-12,height:BAND_THICKNESS-12,background:item.openStart?'#eee0c7':categoryStyle.color,borderColor:categoryStyle.color}
-              : {left:4,top:2,width:BAND_THICKNESS-12,height:BAND_THICKNESS-12,background:item.openEnd?'#eee0c7':categoryStyle.color,borderColor:categoryStyle.color}
+              ? {left:2,top:4,width:BAND_THICKNESS-12,height:BAND_THICKNESS-12,background:item.openStart?'#eee0c7':primaryColor,borderColor:primaryColor}
+              : {left:4,top:2,width:BAND_THICKNESS-12,height:BAND_THICKNESS-12,background:item.openEnd?'#eee0c7':primaryColor,borderColor:primaryColor}
             } />
             <span className="pointer-events-none absolute rounded-full border-2" style={horizontal
-              ? {right:2,top:4,width:BAND_THICKNESS-12,height:BAND_THICKNESS-12,background:item.openEnd?'#eee0c7':categoryStyle.color,borderColor:categoryStyle.color}
-              : {left:4,bottom:2,width:BAND_THICKNESS-12,height:BAND_THICKNESS-12,background:item.openStart?'#eee0c7':categoryStyle.color,borderColor:categoryStyle.color}
+              ? {right:2,top:4,width:BAND_THICKNESS-12,height:BAND_THICKNESS-12,background:item.openEnd?'#eee0c7':primaryColor,borderColor:primaryColor}
+              : {left:4,bottom:2,width:BAND_THICKNESS-12,height:BAND_THICKNESS-12,background:item.openStart?'#eee0c7':primaryColor,borderColor:primaryColor}
             } />
+            <TimelinePeriodSymbolBadge categories={markCategories} horizontal={horizontal} displayMode={activeCategoryConfiguration.displayMode}/>
+            {activeCategoryConfiguration.displayMode==='expanded' && markCategories.length ? <span aria-hidden="true"
+              className="pointer-events-none absolute z-[5] max-w-[180px] truncate rounded border border-[#b4a087] bg-[#fbf7ed]/95 px-1.5 py-0.5 text-[11px] font-semibold text-[#302b24] shadow-sm"
+              style={horizontal?{left:0,bottom:BAND_THICKNESS+5}:{left:BAND_THICKNESS+5,top:0}}>
+              {markCategories.slice(0,2).map(category=>category.label).join(' · ')}{markCategories.length>2?` +${markCategories.length-2}`:''}
+            </span>:null}
+            {markCategories.length>4?<span aria-hidden="true" className="pointer-events-none absolute z-[3] rounded border border-[#b4a087] bg-[#fbf7ed] px-1 text-[10px] font-bold text-[#302b24]" style={horizontal?{right:3,top:-18}:{left:BAND_THICKNESS+3,top:3}}>+{markCategories.length-4}</span>:null}
           </button>
         );
         return (
           <button key={`${direction}:${item.event.id}`} type="button" {...interactiveProps}
-            aria-label={`Event: ${fullLabel}`}
-            className={`absolute z-[3] flex items-center justify-center rounded-full border-[3px] font-bold shadow-md hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${entranceEligible ? 'peridot-timelineii-reveal' : ''}`}
+            aria-label={`Event: ${fullLabel}. ${categoryDetails}`}
+            className={`absolute z-[3] flex items-center justify-center rounded-full border-2 font-bold shadow-sm hover:scale-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${entranceEligible ? 'peridot-timelineii-reveal' : ''}`}
             style={{
               ...(horizontal
                 ? {left:item.plotStart-NODE_DIAMETER/2,top:secondaryPos-NODE_DIAMETER/2}
                 : {top:item.plotStart-NODE_DIAMETER/2,left:secondaryPos-NODE_DIAMETER/2}),
               width:NODE_DIAMETER,height:NODE_DIAMETER,
               transition:horizontal?"top 360ms ease-in-out, transform 150ms ease":"left 360ms ease-in-out, transform 150ms ease",
-              background:item.uncertain?'#eee0c7':categoryStyle.color,
-              color:item.uncertain?categoryStyle.color:'white',
-              borderColor:categoryStyle.color,
-              fontSize:22,
+              background:primaryColor,
+              color:'white',
+              borderColor:categoryNodeOutline(primaryColor, markCategories.length>1),
+              fontSize:19,
               ...revealStyle,
               outline:(active||hoveredMark)?'3px solid #7C211E':undefined,
             }}
-          >{categoryStyle.symbol}</button>
+          ><TimelineCategoryPoint categories={markCategories} uncertain={item.uncertain} displayMode={activeCategoryConfiguration.displayMode}/>
+            {activeCategoryConfiguration.displayMode==='expanded' && markCategories.length ? <span aria-hidden="true"
+              className="pointer-events-none absolute z-[5] max-w-[175px] truncate rounded border border-[#b4a087] bg-[#fbf7ed]/95 px-1.5 py-0.5 text-[11px] font-semibold text-[#302b24] shadow-sm"
+              style={horizontal?{left:NODE_DIAMETER+4,top:'50%',transform:'translateY(-50%)'}:{left:'50%',top:NODE_DIAMETER+4,transform:'translateX(-50%)'}}>
+              {markCategories.slice(0,2).map(category=>category.label).join(' · ')}{markCategories.length>2?` +${markCategories.length-2}`:''}
+            </span>:null}</button>
         );
       })}
       {hovered && hoverPosition ? (
@@ -1056,6 +1122,7 @@ export function PeridotTimelineII({
           <div className="text-[10px] font-extrabold uppercase tracking-wider text-[#7C211E]">{hovered.event.temporalRole|| (hovered.period?'Period':'Event')}{hovered.uncertain?' · date precision qualified':''}</div>
           <div className="text-sm font-bold">{hovered.title}</div>
           <div className="text-xs">{dateLabel(hovered.start)}{hovered.period?` – ${dateLabel(hovered.end)}`:''}</div>
+          <div className="mt-1 text-[10px] text-[#695e50]">{timelineCategoryDescription(timelineMarkCategories(hovered.event.id,categoriesById,eventCategoriesById))}</div>
           <div className="text-[10px] text-[#695e50]">Select a mark to open its Inspector record</div>
         </div>
       ) : null}
@@ -1066,5 +1133,12 @@ export function PeridotTimelineII({
     </div>
     <ChronologyTransport {...chronologyDockProps} />
     {selected?<div className="shrink-0 border-t border-[#b4a087] bg-[#fbf7ed] px-4 py-2 text-xs"><strong>{selected.title}</strong> · {selected.event.temporalRole||'Event'} · {dateLabel(selected.start)}{selected.period?` – ${dateLabel(selected.end)}`:''}</div>:null}
+    </div>
+    {categoryEditorOpen ? <PeridotTimelineCategoryEditor
+      availableFields={categoryFields}
+      events={domainEvents}
+      configuration={activeCategoryConfiguration}
+      onChange={setCategoryConfiguration}
+    /> : null}
   </div>;
 }

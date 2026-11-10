@@ -1,0 +1,101 @@
+theme,tabler_icon_id,display_label,source_version
+Geometric & abstract,circle,Circle,3.50.0
+Geometric & abstract,square,Square,3.50.0
+Geometric & abstract,triangle,Triangle,3.50.0
+Geometric & abstract,pentagon,Pentagon,3.50.0
+Geometric & abstract,hexagon,Hexagon,3.50.0
+Geometric & abstract,star,Star,3.50.0
+Geometric & abstract,flower,Flower,3.50.0
+Geometric & abstract,sun,Sun,3.50.0
+Geometric & abstract,moon,Moon,3.50.0
+Geometric & abstract,diamond,Diamond,3.50.0
+"Faith, ritual & belief",building-church,Building Church,3.50.0
+"Faith, ritual & belief",building-mosque,Building Mosque,3.50.0
+"Faith, ritual & belief",key,Key,3.50.0
+"Faith, ritual & belief",book,Book,3.50.0
+"Faith, ritual & belief",book-2,Book 2,3.50.0
+"Faith, ritual & belief",sparkles,Sparkles,3.50.0
+"Faith, ritual & belief",skull,Skull,3.50.0
+"Social life, kinship & identity",user,User,3.50.0
+"Social life, kinship & identity",users-group,Users Group,3.50.0
+"Social life, kinship & identity",heart,Heart,3.50.0
+"Social life, kinship & identity",hearts,Hearts,3.50.0
+"Social life, kinship & identity",home,Home,3.50.0
+"Social life, kinship & identity",building-community,Building Community,3.50.0
+"Social life, kinship & identity",gender-female,Gender Female,3.50.0
+"Social life, kinship & identity",gender-male,Gender Male,3.50.0
+"Social life, kinship & identity",gender-transgender,Gender Transgender,3.50.0
+"Social life, kinship & identity",wheelchair,Wheelchair,3.50.0
+"Social life, kinship & identity",stethoscope,Stethoscope,3.50.0
+"Social life, kinship & identity",first-aid-kit,First Aid Kit,3.50.0
+"Social life, kinship & identity",mood-kid,Baby / child,3.50.0
+"Political life, law & conflict",crown,Crown,3.50.0
+"Political life, law & conflict",flag,Flag,3.50.0
+"Political life, law & conflict",building-bank,Building Bank,3.50.0
+"Political life, law & conflict",building-castle,Building Castle,3.50.0
+"Political life, law & conflict",scale,Scale,3.50.0
+"Political life, law & conflict",gavel,Gavel,3.50.0
+"Political life, law & conflict",shield,Shield,3.50.0
+"Political life, law & conflict",swords,Swords,3.50.0
+"Political life, law & conflict",speakerphone,Speakerphone,3.50.0
+"Political life, law & conflict",biohazard,Biohazard,3.50.0
+"Political life, law & conflict",peace,Peace,3.50.0
+"Political life, law & conflict",map-pin,Map Pin,3.50.0
+"Economy, labor & material life",coins,Coins,3.50.0
+"Economy, labor & material life",building-store,Building Store,3.50.0
+"Economy, labor & material life",tool,Tool,3.50.0
+"Economy, labor & material life",pick,Pick,3.50.0
+"Economy, labor & material life",wheat,Wheat,3.50.0
+"Economy, labor & material life",plant,Plant,3.50.0
+"Economy, labor & material life",moneybag,Moneybag,3.50.0
+"Food, festivities & leisure",tools-kitchen-2,Tools Kitchen 2,3.50.0
+"Food, festivities & leisure",cup,Cup,3.50.0
+"Food, festivities & leisure",glass,Glass,3.50.0
+"Food, festivities & leisure",apple,Apple,3.50.0
+"Food, festivities & leisure",carrot,Carrot,3.50.0
+"Food, festivities & leisure",fish,Fish,3.50.0
+"Food, festivities & leisure",meat,Meat,3.50.0
+"Food, festivities & leisure",cake,Cake,3.50.0
+"Food, festivities & leisure",confetti,Confetti,3.50.0
+"Food, festivities & leisure",gift,Gift,3.50.0
+"Food, festivities & leisure",music,Music,3.50.0
+"Food, festivities & leisure",masks-theater,Masks Theater,3.50.0
+"Food, festivities & leisure",dice,Dice,3.50.0
+"Food, festivities & leisure",cards,Cards,3.50.0
+"Food, festivities & leisure",ticket,Ticket,3.50.0
+"Culture, knowledge & expression",palette,Palette,3.50.0
+"Culture, knowledge & expression",pencil,Pencil,3.50.0
+"Culture, knowledge & expression",books,Books,3.50.0
+"Culture, knowledge & expression",mail,Mail,3.50.0
+"Culture, knowledge & expression",message,Message,3.50.0
+"Culture, knowledge & expression",camera,Camera,3.50.0
+"Culture, knowledge & expression",movie,Movie,3.50.0
+"Culture, knowledge & expression",school,School,3.50.0
+"Culture, knowledge & expression",microscope,Microscope,3.50.0
+"Culture, knowledge & expression",telescope,Telescope,3.50.0
+"Culture, knowledge & expression",bulb,Bulb,3.50.0
+"Culture, knowledge & expression",language,Language,3.50.0
+"Environment, land & resources",trees,Trees,3.50.0
+"Environment, land & resources",seedling,Seedling,3.50.0
+"Environment, land & resources",map,Map,3.50.0
+"Environment, land & resources",wind,Wind,3.50.0
+"Environment, land & resources",cloud,Cloud,3.50.0
+"Environment, land & resources",cloud-rain,Cloud Rain,3.50.0
+"Environment, land & resources",cloud-storm,Cloud Storm,3.50.0
+"Environment, land & resources",snowflake,Snowflake,3.50.0
+"Environment, land & resources",droplet,Droplet,3.50.0
+"Environment, land & resources",paw,Paw,3.50.0
+"Environment, land & resources",horse,Horse,3.50.0
+"Environment, land & resources",bug,Bug,3.50.0
+"Environment, land & resources",recycle,Recycle,3.50.0
+"Environment, land & resources",axe,Axe,3.50.0
+"Environment, land & resources",trash,Trash,3.50.0
+"Travel, migration & built space",run,Run,3.50.0
+"Travel, migration & built space",compass,Compass,3.50.0
+"Travel, migration & built space",north-star,North Star,3.50.0
+"Travel, migration & built space",sailboat,Sailboat,3.50.0
+"Travel, migration & built space",anchor,Anchor,3.50.0
+"Travel, migration & built space",plane,Plane,3.50.0
+"Travel, migration & built space",car,Car,3.50.0
+"Travel, migration & built space",bike,Bike,3.50.0
+"Travel, migration & built space",road,Road,3.50.0
