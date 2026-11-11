@@ -64,7 +64,12 @@ export function createTimelineCategoryConfiguration() {
     overrides: {},
     // Optional order for deterministic primary-category selection in Grouped.
     priority: [],
-    displayMode: 'colors',
+    primaryFieldKey: null,
+    // null preserves the existing all-category priority until stars are edited.
+    // [] explicitly means no categories are eligible for swimlanes.
+    starredCategoryIds: null,
+    eventPrimaryOverrides: {},
+    displayMode: 'colors-and-symbols',
   };
 }
 
@@ -142,14 +147,29 @@ export function reconcileTimelineCategoryConfiguration(configuration, availableF
   // custom label, so display-name edits never move an event's Grouped lane.
   const remaining = [...activeIdentities].filter((id) => !ordered.includes(id))
     .sort((a, b) => a.localeCompare(b));
+  const primaryFieldKey = fields.some(entry=>entry.key===source.primaryFieldKey) ? source.primaryFieldKey : null;
+  const starredCategoryIds = Array.isArray(source.starredCategoryIds)
+    ? [...new Set(source.starredCategoryIds.filter(id=>activeIdentities.has(id)))] : null;
+  // Overrides reference only stable event IDs and currently tracked category IDs.
+  // Event membership is checked again at resolution time, so an override can
+  // never create an unsupported historical association.
+  const eventPrimaryOverrides = {};
+  if (source.eventPrimaryOverrides && typeof source.eventPrimaryOverrides==='object') {
+    for (const [eventId,categoryId] of Object.entries(source.eventPrimaryOverrides)) {
+      if (eventId && activeIdentities.has(categoryId)) eventPrimaryOverrides[eventId]=categoryId;
+    }
+  }
   return {
     version: TIMELINE_CATEGORY_CONFIG_VERSION,
     fields,
     fieldScopes,
+    primaryFieldKey,
+    starredCategoryIds,
+    eventPrimaryOverrides,
     overrides,
     priority: [...ordered, ...remaining],
     displayMode: TIMELINE_CATEGORY_DISPLAY_MODES.includes(source.displayMode)
-      ? source.displayMode : 'colors',
+      ? source.displayMode : 'colors-and-symbols',
   };
 }
 
@@ -248,6 +268,7 @@ export function resolveTimelineCategories(events = [], availableFields = [], con
     }
   }
   const categoryOrder = config.priority.filter((id) => membershipById.has(id));
+  const starredIds = new Set(config.starredCategoryIds === null ? categoryOrder : config.starredCategoryIds);
   const priorityIndex = new Map(categoryOrder.map((id, index) => [id, index]));
   const categories = Object.freeze(categoryOrder.map((id) => membershipById.get(id)));
   const eventCategories = Object.freeze(list(events).map((event) => {
@@ -257,9 +278,43 @@ export function resolveTimelineCategories(events = [], availableFields = [], con
     return Object.freeze({
       eventId: event?.id,
       categoryIds: Object.freeze(ids),
-      primaryCategoryId: ids[0] || null,
+      primaryCategoryId: (ids.includes(config.eventPrimaryOverrides[String(event?.id)])
+        && starredIds.has(config.eventPrimaryOverrides[String(event?.id)])
+        ? config.eventPrimaryOverrides[String(event?.id)]
+        : (ids.find(id=>starredIds.has(id)) || null)),
       uncategorized: ids.length === 0,
     });
   }));
-  return Object.freeze({config, categories, eventCategories});
+  return Object.freeze({config, categories, eventCategories, starredCategoryIds: Object.freeze(categoryOrder.filter(id=>starredIds.has(id)))});
+}
+
+/** Category stars define eligible swimlanes, independent of visual memberships. */
+export function configureTimelineStarredCategories(configuration,availableFields,categoryIds) {
+  const current=reconcileTimelineCategoryConfiguration(configuration,availableFields);
+  const eligible=new Set(current.priority);
+  const starredCategoryIds=[...new Set(list(categoryIds).filter(id=>eligible.has(id)))];
+  return reconcileTimelineCategoryConfiguration({...current,starredCategoryIds,primaryFieldKey:null},availableFields);
+}
+
+/** Backwards-compatible field selection converts the old field-based choice
+ * into explicit starred categories; spatial assignment remains membership-based. */
+export function configureTimelinePrimaryField(configuration,availableFields,fieldKey) {
+  const current=reconcileTimelineCategoryConfiguration(configuration,availableFields);
+  const value=current.fields.some(field=>field.key===fieldKey) ? fieldKey : null;
+  const starredCategoryIds=value ? current.priority.filter(id=>JSON.parse(id)[0]===value) : null;
+  return reconcileTimelineCategoryConfiguration({...current,primaryFieldKey:value,starredCategoryIds},availableFields);
+}
+
+/** An event override is permitted only for a category already attached to it. */
+export function configureTimelineEventPrimary(configuration,availableFields,events,eventId,categoryId) {
+  const current=reconcileTimelineCategoryConfiguration(configuration,availableFields);
+  const row=resolveTimelineCategories(events,availableFields,current).eventCategories
+    .find(entry=>String(entry.eventId)===String(eventId));
+  if(!row) return current;
+  const eligible=new Set(current.starredCategoryIds === null ? current.priority : current.starredCategoryIds);
+  if(categoryId && (!row.categoryIds.includes(categoryId) || !eligible.has(categoryId))) return current;
+  const next={...current.eventPrimaryOverrides};
+  if(categoryId) next[String(eventId)]=categoryId;
+  else delete next[String(eventId)];
+  return reconcileTimelineCategoryConfiguration({...current,eventPrimaryOverrides:next},availableFields);
 }

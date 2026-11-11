@@ -7,6 +7,7 @@ import {
   removeTimelineCategoryField,
   configureTimelineCategoryAppearance,
   configureTimelineCategoryPriority,
+  configureTimelinePrimaryField, configureTimelineEventPrimary, configureTimelineStarredCategories,
   reconcileTimelineCategoryConfiguration,
   resolveTimelineCategories,
   TIMELINE_UNCATEGORIZED_COLOR,
@@ -102,4 +103,63 @@ test('field removal and dataset changes remove unsupported category selections a
 test('field identities cannot collide via delimiter-like source values', () => {
   assert.notEqual(timelineCategoryIdentity('a:b','c'),timelineCategoryIdentity('a','b:c'));
   assert.notEqual(timelineCategoryIdentity('a\u0000b','c'),timelineCategoryIdentity('a','b\u0000c'));
+});
+
+test('primary field governs swimlane identity without erasing secondary memberships', () => {
+  let config=configureTimelineCategoryField(null,fields,'Language','all');
+  config=configureTimelineCategoryField(config,fields,'Topic','all');
+  config=configureTimelinePrimaryField(config,fields,'Topic');
+  const rows=resolveTimelineCategories(events,fields,config).eventCategories;
+  assert.equal(rows[0].primaryCategoryId,timelineCategoryIdentity('Topic','Diplomacy'));
+  assert.deepEqual(rows[0].categoryIds.length,2);
+  assert.equal(rows[1].primaryCategoryId,null);
+  assert.equal(rows[1].uncategorized,false);
+});
+
+test('one explicit event primary override is allowed only among existing memberships', () => {
+  let config=configureTimelineCategoryField(null,fields,'Language','all');
+  config=configureTimelineCategoryField(config,fields,'Topic','all');
+  config=configureTimelinePrimaryField(config,fields,'Topic');
+  const latin=timelineCategoryIdentity('Language','Latin');
+  config=configureTimelineStarredCategories(config,fields,[latin,timelineCategoryIdentity('Topic','Diplomacy')]);
+  config=configureTimelineCategoryPriority(config,fields,[timelineCategoryIdentity('Topic','Diplomacy'),latin]);
+  const french=timelineCategoryIdentity('Language','French');
+  const invalid=configureTimelineEventPrimary(config,fields,events,'letter-1',french);
+  assert.deepEqual(invalid.eventPrimaryOverrides,{});
+  config=configureTimelineEventPrimary(config,fields,events,'letter-1',latin);
+  assert.equal(resolveTimelineCategories(events,fields,config).eventCategories[0].primaryCategoryId,latin);
+  config=configureTimelineEventPrimary(config,fields,events,'letter-1','');
+  assert.equal(resolveTimelineCategories(events,fields,config).eventCategories[0].primaryCategoryId,timelineCategoryIdentity('Topic','Diplomacy'));
+});
+
+
+test('starred categories alone define eligible primary lanes while all mark categories remain', () => {
+  let config=configureTimelineCategoryField(null,fields,'Language','all');
+  config=configureTimelineCategoryField(config,fields,'Topic','all');
+  const diplomacy=timelineCategoryIdentity('Topic','Diplomacy');
+  const latin=timelineCategoryIdentity('Language','Latin');
+  const initial=resolveTimelineCategories(events,fields,config);
+  assert.equal(initial.starredCategoryIds.length,5); // legacy defaults remain intact
+  config=configureTimelineStarredCategories(config,fields,[diplomacy]);
+  const chosen=resolveTimelineCategories(events,fields,config);
+  assert.deepEqual(chosen.starredCategoryIds,[diplomacy]);
+  assert.equal(chosen.eventCategories[0].primaryCategoryId,diplomacy);
+  assert.equal(chosen.eventCategories[1].primaryCategoryId,null);
+  assert.equal(chosen.eventCategories[1].uncategorized,false);
+  assert.deepEqual([...chosen.eventCategories[0].categoryIds].sort(),[latin,diplomacy].sort());
+  assert.deepEqual(configureTimelineStarredCategories(config,fields,[]).starredCategoryIds,[]);
+});
+
+test('unstarred event primary overrides do not create lanes or memberships', () => {
+  let config=configureTimelineCategoryField(null,fields,'Language','all');
+  config=configureTimelineCategoryField(config,fields,'Topic','all');
+  const latin=timelineCategoryIdentity('Language','Latin');
+  const diplomacy=timelineCategoryIdentity('Topic','Diplomacy');
+  config=configureTimelineStarredCategories(config,fields,[latin,diplomacy]);
+  config=configureTimelineEventPrimary(config,fields,events,'letter-1',latin);
+  config=configureTimelineStarredCategories(config,fields,[diplomacy]);
+  assert.equal(resolveTimelineCategories(events,fields,config).eventCategories[0].primaryCategoryId,diplomacy);
+  assert.equal(configureTimelineEventPrimary(config,fields,events,'letter-1',latin).eventPrimaryOverrides['letter-1'],latin); // dormant previous override is retained, not newly assigned
+  config=configureTimelineStarredCategories(config,fields,[]);
+  assert.equal(resolveTimelineCategories(events,fields,config).eventCategories[0].primaryCategoryId,null);
 });

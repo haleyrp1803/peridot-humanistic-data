@@ -1269,11 +1269,11 @@ export function PeridotVisualizationsWorkspace({
       <div className="relative z-[20] flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-3">
         <div
           className={[
-            'peridot-visualization-stage-transition-shell min-h-0 flex flex-1',
+            'peridot-visualization-stage-transition-shell min-h-0 min-w-0 flex flex-1',
             isStageSwitching ? 'peridot-visualization-stage-transition-active' : '',
           ].join(' ')}
         >
-          <div className="peridot-visualization-stage-transition-content min-h-0 flex flex-1">
+          <div className="peridot-visualization-stage-transition-content min-h-0 min-w-0 flex flex-1">
             {renderWorkspaceBody()}
           </div>
         </div>

@@ -6,6 +6,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {packTimelineIIMarks, TIMELINE_II_LANE_COUNT} from './peridotTimelineIIPacking.js';
+import {groupedLaneInventory, groupedLaneDemand, groupedLaneGeometry, groupedLaneMutedColor, GROUPED_LANE_SETTLE_MS} from './peridotTimelineGroupedLanes.js';
 import {ChronologyRuler, ChronologyTransport} from './PeridotChronologyDock.jsx';
 import { buildPeridotTimelineConnections, buildPeridotTimelineCategoryFields } from './peridotTimelineWorkspaceModel.js';
 import { PeridotTimelineCategoryEditor } from './PeridotTimelineCategoryEditor.jsx';
@@ -423,6 +424,8 @@ export function PeridotTimelineII({
   // indices into Map/Network's chronology. Null still means initial full fit.
   // Preserve orientation and marker visibility alongside the chronology session.
   const [direction,setDirection] = useState(() => initialChronologySession?.direction ?? 'horizontal');
+  const [laneMode,setLaneMode] = useState(() => initialChronologySession?.laneMode ?? 'chronological');
+  const [settledDemand,setSettledDemand] = useState(null);
   const [requestedVisibleDays,setVisibleDays] = useState(() => initialChronologySession?.requestedVisibleDays ?? null);
   const [center,setCenter] = useState(() => initialChronologySession?.center ?? null);
   const [showPoints,setShowPoints] = useState(() => initialChronologySession?.showPoints ?? true);
@@ -479,12 +482,12 @@ export function PeridotTimelineII({
   const mountedDatasetRevisionRef = useRef(datasetSessionKey);
   const savedSessionRef = useRef(null);
   savedSessionRef.current = {
-    direction, requestedVisibleDays, center, showPoints, showPeriods,
+    direction, laneMode, requestedVisibleDays, center, showPoints, showPeriods,
     showRelationships, categoryConfiguration, playhead, playbackSpeed, playbackMode, playbackStarted,
   };
   useEffect(() => {
     sessionChangeRef.current?.(savedSessionRef.current, mountedDatasetRevisionRef.current);
-  }, [direction, requestedVisibleDays, center, showPoints, showPeriods,
+  }, [direction, laneMode, requestedVisibleDays, center, showPoints, showPeriods,
       showRelationships, categoryConfiguration, playhead, playbackSpeed, playbackMode, playbackStarted]);
   // Also flush the last committed state when the visualization unmounts.
   useEffect(() => () => sessionChangeRef.current?.(savedSessionRef.current, mountedDatasetRevisionRef.current), []);
@@ -512,6 +515,9 @@ export function PeridotTimelineII({
   // Pass 3: project selected, exact Evidence identities onto displayed events.
   // Search, playback, packing and dataset bounds remain independently owned;
   // category selection changes visual encoding only and never hides a mark.
+  const useCategoryEditorEvents = useMemo(()=>projectPeridotGeneralizedCategoryEvents(
+    domainEvents, categoryFields, activeCategoryConfiguration),
+    [domainEvents, categoryFields, activeCategoryConfiguration]);
   const categorizedEvents = useMemo(() => projectPeridotGeneralizedCategoryEvents(
     events,categoryFields,activeCategoryConfiguration),[events,categoryFields,activeCategoryConfiguration]);
   const resolvedCategories = useMemo(() => resolveTimelineCategories(categorizedEvents,categoryFields,activeCategoryConfiguration),
@@ -555,12 +561,43 @@ export function PeridotTimelineII({
   const crossEnd = secondary - (horizontal ? CHRONOLOGY_RULER_HEIGHT + NODE_DIAMETER / 2 + 12 : NODE_DIAMETER / 2 + 26);
   const crossSpan = Math.max(0, crossEnd - crossStart);
   const laneCount = LANE_COUNT;
-  const lanePosition = lane => laneCount === 1
-    ? crossStart + crossSpan / 2
-    : crossStart + lane * crossSpan / (laneCount - 1);
   const pos = day => chronologyPosition(day, lower, upper, axisStart, length);
   // Select only events whose actual times intersect the visible chronology.
-  const inWindow = filtered.filter(item => item.endDay >= lower && item.day <= upper);
+  const inWindow = useMemo(() => filtered.filter(item => item.endDay >= lower && item.day <= upper), [filtered,lower,upper]);
+  const grouped = laneMode === 'grouped';
+  const groupInventory = useMemo(() => {
+    const starred = new Set(resolvedCategories.starredCategoryIds);
+    return groupedLaneInventory(resolvedCategories.categories.filter(category => starred.has(category.id)));
+  }, [resolvedCategories]);
+  const instantaneousDemand = useMemo(() => groupedLaneDemand(
+    groupInventory,inWindow,eventCategoriesById,pos,axisStart,length),
+    // The view is intentionally sampled here, then committed after navigation.
+    [groupInventory,inWindow,eventCategoriesById,lower,upper,axisStart,length]);
+  const groupIdentity = groupInventory.map(lane => lane.key).join('\u0000');
+  // On category or orientation changes, install current demand immediately.
+  // During pan/zoom hold old proportions; settle once 210 ms after the last
+  // meaningful viewport change rather than rebuilding geometry every frame.
+  const demandForLayout = settledDemand?.identity === groupIdentity
+    && settledDemand.direction === direction ? settledDemand.rows : instantaneousDemand;
+  useEffect(() => {
+    if (!grouped) return undefined;
+    const handle = setTimeout(() => {
+      setSettledDemand(current => {
+        if (current?.identity === groupIdentity && current.direction === direction
+          && current.rows.length === instantaneousDemand.length
+          && current.rows.every((row,index)=>row.key===instantaneousDemand[index].key
+            && Math.abs(row.weight-instantaneousDemand[index].weight)<5)) return current;
+        return {identity:groupIdentity,direction,rows:instantaneousDemand};
+      });
+    }, GROUPED_LANE_SETTLE_MS);
+    return () => clearTimeout(handle);
+  }, [grouped,groupIdentity,direction,instantaneousDemand]);
+  const groupGeometry = grouped ? groupedLaneGeometry(groupInventory,demandForLayout,crossStart,crossSpan) : [];
+  const groupIndices = new Map(groupInventory.map((lane,index)=>[lane.key,index]));
+  const lanePosition = lane => grouped
+    ? (groupGeometry[lane]?.center ?? crossStart + crossSpan / 2)
+    : laneCount === 1 ? crossStart + crossSpan / 2
+    : crossStart + lane * crossSpan / (laneCount - 1);
   // Packing A: globally aware temporal-neighborhood placement followed by
   // bounded deterministic improvement. The chronological coordinate is fixed.
   const footprintItems = inWindow.map(item => {
@@ -594,7 +631,12 @@ export function PeridotTimelineII({
         && item.finish === prior.finish && item.period === prior.period;
     });
   let lanes;
-  if (sameFootprints) {
+  if (grouped) {
+    // A single category lane per event; multi-category precedence was already
+    // resolved against the complete researcher-controlled priority order.
+    lanes = inWindow.map(item=>groupIndices.get(
+      eventCategoriesById.get(item.event.id)?.primaryCategoryId || '__peridot_uncategorized__') ?? groupInventory.length-1);
+  } else if (sameFootprints) {
     lanes = previousPacking.lanes;
     timelineIIPerf.record('lane packing cache hit',0,{visibleEvents:inWindow.length,orientation:direction,zoomDays:visibleDays});
   } else if (history.lanes.size) {
@@ -626,7 +668,7 @@ export function PeridotTimelineII({
     timelineIIPerf.record('lane packing',performance.now()-packingStartedAt,{visibleEvents:inWindow.length,lanes:laneCount,orientation:direction,zoomDays:visibleDays});
     inWindow.forEach((item,index) => history.lanes.set(String(item.event.id),lanes[index]));
   }
-  history.cachedPacking = {lower,length,items:footprintItems,lanes};
+  if (!grouped) history.cachedPacking = {lower,length,items:footprintItems,lanes};
   const packed = inWindow.map((item,index)=>({
     ...item,lane:lanes[index],plotStart:footprintItems[index].start,plotFinish:footprintItems[index].finish,
   }));
@@ -921,7 +963,7 @@ export function PeridotTimelineII({
   };
   timelineIIPerf.record('render calculations (pre-JSX)', performance.now()-renderStartedAt, {totalEvents:all.length,visibleEvents:inWindow.length,playbackVisible:playbackItems.length,links:timelineConnections.length,orientation:direction,zoomDays:visibleDays});
   if(!domainAll.length)return <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl bg-[#eee0c7] text-[#4b4236]">No positionable events available to Timeline II.</div>;
-  return <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-[#b4a087] bg-[#eee0c7] text-[#302b24]">
+  return <div className="relative flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden rounded-xl border border-[#b4a087] bg-[#eee0c7] text-[#302b24]">
     {/* Timeline-owned subnavigation mirrors the Charts II two-tab pattern.
         The shared Visualize workspace is deliberately untouched while its
         parallel Charts II branch contains uncommitted source changes. */}
@@ -938,6 +980,7 @@ export function PeridotTimelineII({
     <div className="z-10 flex shrink-0 flex-wrap items-center gap-3 border-b border-[#b4a087] bg-[#fbf7ed] px-4 py-2 text-xs">
       <strong className="mr-2 font-serif text-lg text-[#7C211E]">Timeline II</strong>
       <div className="flex overflow-hidden rounded-full border border-[#b4a087]">{['horizontal','vertical'].map(mode=><button key={mode} type="button" onClick={()=>{stopEntranceOnNavigation();setDirection(mode);}} className={`px-3 py-1.5 font-semibold capitalize ${direction===mode?'bg-[#253C32] text-white':'bg-[#fbf7ed]'}`}>{mode}</button>)}</div>
+      <div className="flex overflow-hidden rounded-full border border-[#b4a087]" role="group" aria-label="Timeline lane layout">{[['chronological','Chronological'],['grouped','Grouped']].map(([mode,label])=><button key={mode} type="button" aria-pressed={laneMode===mode} onClick={()=>{stopEntranceOnNavigation();setLaneMode(mode);}} className={`px-3 py-1.5 font-semibold ${laneMode===mode?'bg-[#253C32] text-white':'bg-[#fbf7ed]'}`}>{label}</button>)}</div>
       <div className="flex items-center gap-2"><button type="button" aria-label="Zoom out" disabled={visibleDays >= maximumVisibleDays} onClick={()=>zoomBy(2)} className="rounded border border-[#b4a087] px-2 py-1 disabled:opacity-40">−</button><span className="min-w-[72px] text-center">{spanCaption(visibleDays)}</span><button type="button" aria-label="Zoom in" disabled={visibleDays <= MIN_DAYS} onClick={()=>zoomBy(0.5)} className="rounded border border-[#b4a087] px-2 py-1 disabled:opacity-40">+</button></div>
       <label className="flex items-center gap-1"><input type="checkbox" checked={showPoints} onChange={e=>{stopEntranceOnNavigation();setShowPoints(e.target.checked);}}/>Dates</label>
       <label className="flex items-center gap-1"><input type="checkbox" checked={showPeriods} onChange={e=>{stopEntranceOnNavigation();setShowPeriods(e.target.checked);}}/>Periods</label>
@@ -975,6 +1018,17 @@ export function PeridotTimelineII({
       }}
       className="relative min-h-0 flex-1 cursor-grab touch-none select-none overflow-hidden outline-none active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#7C211E]">
       <div className="absolute inset-0 pointer-events-none" style={{background:'#eee0c7'}}/>
+      {grouped ? <div className="pointer-events-none absolute inset-0 z-[1] overflow-hidden" aria-hidden="true">
+        {groupGeometry.map(lane=><React.Fragment key={lane.key}>
+          <div className="absolute" style={horizontal
+            ? {left:axisStart, right:0, top:lane.start, height:Math.max(0,lane.width), background:groupedLaneMutedColor(lane.color), borderTop:'1px solid rgba(77,58,44,0.23)',transition:'top 320ms ease, height 320ms ease'}
+            : {top:axisStart,left:lane.start,width:Math.max(0,lane.width),bottom:0,background:groupedLaneMutedColor(lane.color),borderLeft:'1px solid rgba(77,58,44,0.23)',transition:'left 320ms ease, width 320ms ease'}}/>
+          {lane.width >= 24 ? <div className="absolute overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-[#443c35]" title={lane.label}
+            style={horizontal
+              ? {left:3,top:lane.center-8,width:TRACK_GUTTER-8,fontSize:10,lineHeight:'16px',textAlign:'right'}
+              : {top:Math.max(0,lane.center-8),left:CHRONOLOGY_RULER_WIDTH+4,maxWidth:Math.max(0,lane.width-8),fontSize:10,lineHeight:'16px'}}>{lane.label}</div> : null}
+        </React.Fragment>)}
+      </div> : null}
       {/* Chronological reading guides share the exact calendar ticks and
           date-to-pixel mapping of the approved ruler. They are deliberately
           presentation-only: never intercept pointer navigation or mark selection.
@@ -1142,7 +1196,7 @@ export function PeridotTimelineII({
     </div>
     {categoryEditorOpen ? <PeridotTimelineCategoryEditor
       availableFields={categoryFields}
-      events={domainEvents}
+      events={useCategoryEditorEvents}
       configuration={activeCategoryConfiguration}
       onChange={setCategoryConfiguration}
     /> : null}

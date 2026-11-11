@@ -1,15 +1,15 @@
 /*
  * Timeline category editor — dedicated full-stage workspace.
  * Evidence remains canonical: all selections and visual appearance overrides are
- * session-only, source-preserving configuration. The three areas deliberately
- * separate finding source fields, choosing values, and editing one category.
+ * session-only, source-preserving configuration. Five horizontally arranged
+ * workstations separate source, values, priority, color, and symbols.
  * This component never changes Search visibility, data mapping, or event IDs.
  */
 import React, {useMemo, useState} from 'react';
 import {
   configureTimelineCategoryAppearance, configureTimelineCategoryField,
   removeTimelineCategoryField, reconcileTimelineCategoryConfiguration,
-  configureTimelineCategoryFieldScope,
+  configureTimelineCategoryFieldScope, configureTimelineStarredCategories,
   resolveTimelineCategories,
 } from './peridotTimelineCategoryConfiguration.js';
 
@@ -50,6 +50,12 @@ export function PeridotTimelineCategoryEditor({availableFields=[], events=[], co
   const visibleValues = (selectedField?.values||[]).filter(v=>v.value.toLowerCase().includes(valueQuery.toLowerCase()));
   const visibleCategories = resolved.categories.filter(c=>`${c.label} ${c.sourceLabel} ${c.sourceValue}`.toLowerCase().includes(categoryQuery.toLowerCase()));
   const change = next => onChange?.(next);
+  const starredIds = new Set(resolved.starredCategoryIds);
+  const updateStar = (id) => {
+    const next = new Set(starredIds);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    change(configureTimelineStarredCategories(config,fields,[...next]));
+  };
   const trackSelectedValue=(value,enabled)=>{
     if(!selectedField) return;
     // Switching from 'all' to 'selected' keeps all currently tracked values
@@ -59,9 +65,44 @@ export function PeridotTimelineCategoryEditor({availableFields=[], events=[], co
     change(configureTimelineCategoryField(config,fields,selectedField.key,'selected',next));
   };
   const tracked=value=>selection?.mode==='all' || (selection?.mode==='selected' && selection.values.includes(value));
-  return <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[#fbf7ed] text-[#302b24]" aria-label="Timeline category editor">
-    <div className="grid min-h-0 flex-1 grid-cols-1 gap-0 overflow-y-auto lg:grid-cols-[minmax(180px,23fr)_minmax(235px,30fr)_minmax(340px,47fr)] lg:overflow-hidden">
-      <section className="flex min-h-[220px] flex-col border-b border-[#d5c1a5] px-3 py-3 lg:min-h-0 lg:border-b-0 lg:border-r" aria-label="Source columns">
+  return <section className="flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden bg-[#fbf7ed] text-[#302b24]" aria-label="Timeline category editor">
+    {/* Style the native scrollbar on this viewport only. Chrome/Edge can render an
+        effectively invisible overlay thumb unless the track and thumb are styled.
+        Keep native scrolling and the five original column widths unchanged. */}
+    <style>{`
+      .peridot-category-horizontal-scroll::-webkit-scrollbar {
+        height: 16px;
+      }
+      .peridot-category-horizontal-scroll::-webkit-scrollbar-track {
+        background: #e7dac4;
+        border-top: 1px solid #c7b395;
+      }
+      .peridot-category-horizontal-scroll::-webkit-scrollbar-thumb {
+        background-color: #7c211e;
+        border: 3px solid #e7dac4;
+        border-radius: 10px;
+        min-width: 44px;
+      }
+      .peridot-category-horizontal-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: #9e3a2b;
+      }
+      .peridot-category-horizontal-scroll::-webkit-scrollbar-corner {
+        background: #e7dac4;
+      }
+      @supports (-moz-appearance: none) {
+        .peridot-category-horizontal-scroll {
+          scrollbar-width: auto;
+          scrollbar-color: #7c211e #e7dac4;
+        }
+      }
+    `}</style>
+    {/* The constrained viewport owns the browser-native horizontal scrollbar.
+        The separate, intrinsic-width flex track ensures that five full-size columns
+        overflow that viewport rather than being clipped or compressed by a parent.
+        Each column retains independent vertical scrolling within its contents. */}
+    <div className="peridot-category-horizontal-scroll min-h-0 min-w-0 w-full max-w-full flex-1 overflow-x-auto overflow-y-hidden" style={{scrollbarGutter:'stable'}} tabIndex={0} role="region" aria-label="Category configuration columns; scroll horizontally to view Priority, Color, and Icons">
+      <div className="flex h-full w-max min-w-full">
+      <section className="flex h-full w-[300px] min-w-[300px] flex-col border-r border-[#d5c1a5] px-3 py-3" aria-label="Source columns">
         <h3 className={sectionTitle}>1. Source columns</h3>
         <p className="mt-1 text-xs text-[#695e50]">Inspect available dataset fields, then select those you want to use as categories.</p>
         <label className="mt-2 block text-xs font-semibold" htmlFor="tl-category-field-search">Find a column</label>
@@ -81,7 +122,7 @@ export function PeridotTimelineCategoryEditor({availableFields=[], events=[], co
           {!visibleFields.length && <p className="text-sm text-[#695e50]">No matching category sources.</p>}
         </div>
       </section>
-      <section className="flex min-h-[250px] flex-col border-b border-[#d5c1a5] px-3 py-3 lg:min-h-0 lg:border-b-0 lg:border-r" aria-label="Category values">
+      <section className="flex h-full w-[340px] min-w-[340px] flex-col border-r border-[#d5c1a5] px-3 py-3" aria-label="Category values">
         <h3 className={sectionTitle}>2. Values to track</h3>
         {!selectedField ? <p className="mt-3 text-sm text-[#695e50]">No category sources are available for these Timeline events.</p> : <>
           <p className="mt-1 break-words text-xs text-[#695e50]">{selectedField.label||selectedField.key} · {selectedField.values?.length||0} distinct values{selectedField.sourceSheet ? ` · Sheet: ${selectedField.sourceSheet}` : ''}{selectedField.sourceRole ? ` · Role: ${selectedField.sourceRole}` : ''}</p>
@@ -119,62 +160,76 @@ export function PeridotTimelineCategoryEditor({availableFields=[], events=[], co
           </div>
         </>}
       </section>
-      <section className="flex min-h-[350px] flex-col px-4 py-3 lg:min-h-0" aria-label="Category appearance">
-        <h3 className={sectionTitle}>3. Appearance</h3>
-        <p className="mt-1 text-xs text-[#695e50]">Choose a tracked category to edit. The source value remains unchanged.</p>
-        <label htmlFor="tl-category-appearance-search" className="mt-2 block text-xs font-semibold">Find an active category ({resolved.categories.length})</label>
-        <input id="tl-category-appearance-search" className={inputClass} placeholder="Search selected categories" value={categoryQuery} onChange={e=>setCategoryQuery(e.target.value)}/>
-        <div className="mt-2 flex max-h-20 shrink-0 flex-wrap gap-1.5 overflow-y-auto rounded-md border border-[#dfd0b9] bg-[#fffdf8] p-2">
-          {visibleCategories.map(item=><button type="button" key={item.id} onClick={()=>setSelectedCategoryId(item.id)} aria-pressed={item.id===selectedCategory?.id} className={`flex max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-xs ${item.id===selectedCategory?.id?'border-[#7C211E] bg-[#eee0c7]':'border-[#dfd0b9] bg-white'}`}>
-            <span aria-hidden="true" className="relative block h-[20px] w-[20px] shrink-0 rounded-full border border-[#55463b]" style={{background:item.color}}><TimelineCategoryPoint categories={[item]} displayMode="colors-and-symbols"/></span><span className="max-w-52 truncate">{item.label}</span>
-          </button>)}
+      <section className="flex h-full w-[340px] min-w-[340px] shrink-0 flex-col border-r border-[#d5c1a5] px-3 py-3" aria-label="Swimlane priority">
+        <h3 className={sectionTitle}>3. Priority</h3>
+        <p className="mt-1 text-xs text-[#695e50]">Star a category to give it a swimlane. Filled star = swimlane; outline star = secondary only.</p>
+        <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-[#cfbda2] bg-[#f1e7d3] px-2.5 py-2">
+          <span className="text-xs font-semibold">{starredIds.size} starred · plus No priority category</span>
+          <button type="button" className={actionClass} disabled={!starredIds.size} onClick={()=>change(configureTimelineStarredCategories(config,fields,[]))}>Clear all</button>
+        </div>
+        <label htmlFor="tl-category-appearance-search" className="mt-2 block text-xs font-semibold">Find a category ({resolved.categories.length})</label>
+        <input id="tl-category-appearance-search" className={inputClass} placeholder="Search categories" value={categoryQuery} onChange={e=>setCategoryQuery(e.target.value)}/>
+        <div className="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto rounded-md border border-[#dfd0b9] bg-[#fffdf8] p-2" aria-label="Category swimlane stars">
+          {visibleCategories.map(item=><div key={item.id} className={`flex items-center gap-1 rounded-md border px-1 py-1 text-xs ${item.id===selectedCategory?.id?'border-[#7C211E] bg-[#eee0c7]':'border-[#dfd0b9] bg-white'}`}>
+            <button type="button" onClick={()=>setSelectedCategoryId(item.id)} aria-pressed={item.id===selectedCategory?.id} className="flex min-w-0 flex-1 items-center gap-1.5 px-1 py-0.5 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]">
+              <span aria-hidden="true" className="relative block h-[20px] w-[20px] shrink-0 rounded-full border border-[#55463b]" style={{background:item.color}}><TimelineCategoryPoint categories={[item]} displayMode="colors-and-symbols"/></span><span className="min-w-0 flex-1 truncate" title={item.label}>{item.label}</span>
+            </button>
+            <button type="button" aria-label={`${starredIds.has(item.id)?'Remove':'Add'} swimlane for ${item.label}`} aria-pressed={starredIds.has(item.id)} title={starredIds.has(item.id)?'Starred — click to remove swimlane':'Click to give category a swimlane'} onClick={()=>updateStar(item.id)} className="shrink-0 rounded p-1 text-[#986f20] hover:bg-[#eee0c7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E]">
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5" fill={starredIds.has(item.id)?'currentColor':'none'} stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="m12 2.5 2.94 6 6.62.96-4.78 4.66 1.13 6.59L12 17.6l-5.91 3.11 1.13-6.59-4.78-4.66 6.62-.96L12 2.5Z"/></svg>
+            </button>
+          </div>)}
           {!visibleCategories.length && <p className="text-xs text-[#695e50]">No active categories match.</p>}
         </div>
-        {!selectedCategory ? <p className="mt-4 text-sm text-[#695e50]">Choose a source value to start customizing categories.</p> : <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
-          {/* Keep category identity, editable name, and live preview together so
-              the researcher can see the result without scrolling to the bottom. */}
-          <p className="mb-2 text-xs text-[#695e50]">Editing <strong>{selectedCategory.sourceLabel} → {selectedCategory.sourceValue}</strong></p>
-          <div className="flex items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <label htmlFor="tl-category-display-name" className="mb-1 block text-xs font-semibold">Display name</label>
-              <input id="tl-category-display-name" className={inputClass} value={selectedCategory.label} onChange={e=>change(configureTimelineCategoryAppearance(config,fields,selectedCategory.id,{label:e.target.value}))}/>
-            </div>
+      </section>
+      <section className="flex h-full w-[370px] min-w-[370px] flex-col border-r border-[#d5c1a5] px-3 py-3" aria-label="Category color">
+        <h3 className={sectionTitle}>4. Color</h3>
+        <p className="mt-1 text-xs text-[#695e50]">Choose a color for the selected category. Its event marks and muted swimlane background update together.</p>
+        {!selectedCategory ? <p className="mt-3 text-sm text-[#695e50]">Select a category in Priority to customize its color.</p> : <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+          <p className="break-words text-sm font-semibold" title={selectedCategory.label}>{selectedCategory.label}</p>
+          <p className="mb-3 text-xs text-[#695e50]">{selectedCategory.sourceLabel} → {selectedCategory.sourceValue}</p>
+          <label htmlFor="tl-category-display-name" className="mb-1 block text-xs font-semibold">Display name</label>
+          <input id="tl-category-display-name" className={inputClass} value={selectedCategory.label} onChange={e=>change(configureTimelineCategoryAppearance(config,fields,selectedCategory.id,{label:e.target.value}))}/>
+          <div className="mt-3 flex items-center gap-3 rounded-md border border-[#d5c1a5] bg-[#fff9ec] p-2">
             <div className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-md border border-[#d5c1a5] bg-[#eee0c7]" role="img" aria-label={`Preview: ${selectedCategory.label}, ${selectedCategory.symbol==='none'?'no symbol':selectedCategory.symbol}, ${selectedCategory.color}`}>
-              <span className="relative block h-11 w-11 rounded-full border-2 shadow-sm" style={{background:selectedCategory.color,borderColor:`#${[1,3,5].map(i=>Math.round(parseInt(selectedCategory.color.slice(i,i+2),16)*0.63).toString(16).padStart(2,'0')).join('')}`}}>
-                <TimelineCategoryPoint categories={[selectedCategory]} displayMode="colors-and-symbols"/>
-              </span>
+              <span className="relative block h-11 w-11 rounded-full border-2 shadow-sm" style={{background:selectedCategory.color,borderColor:`#${[1,3,5].map(i=>Math.round(parseInt(selectedCategory.color.slice(i,i+2),16)*0.63).toString(16).padStart(2,'0')).join('')}`}}><TimelineCategoryPoint categories={[selectedCategory]} displayMode="colors-and-symbols"/></span>
             </div>
+            <span className="text-xs text-[#695e50]">Current color: {selectedCategory.color.toUpperCase()}</span>
           </div>
           <fieldset className="mt-3"><legend className="mb-1.5 text-xs font-semibold">Category color</legend>
-            {/* Single compact rainbow grid: do not hide the extended palette
-                inside a separate scrolling disclosure. Each swatch retains an
-                accessible color name and pressed state. */}
-            <div className="grid grid-cols-9 gap-1 sm:grid-cols-10" role="group" aria-label="Rainbow-ordered category color palette">
+            <div className="grid grid-cols-9 gap-1" role="group" aria-label="Rainbow-ordered category color palette">
               {RAINBOW_CATEGORY_COLORS.map(color=>{
                 const active=selectedCategory.color.toLowerCase()===color.toLowerCase();
                 return <button type="button" key={color} title={color} aria-label={`Select color ${color}`} aria-pressed={active} onClick={()=>change(configureTimelineCategoryAppearance(config,fields,selectedCategory.id,{color}))} className={`flex aspect-square min-w-0 items-center justify-center rounded border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${active?'border-[#302b24] ring-2 ring-[#b17b2c] ring-offset-1':'border-[#fffdf8]'}`} style={{background:color}}>{active&&<span aria-hidden="true" className="font-bold text-white drop-shadow-[0_1px_2px_#000]">✓</span>}</button>;
               })}
             </div>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <label htmlFor="tl-category-custom-color" className="text-xs font-semibold">Custom color</label>
               <input id="tl-category-custom-color" type="color" value={selectedCategory.color} aria-label="Choose a custom category color" onChange={e=>change(configureTimelineCategoryAppearance(config,fields,selectedCategory.id,{color:e.target.value}))} className="h-8 w-10 cursor-pointer rounded border border-[#b4a087]"/>
               <span className="text-xs text-[#695e50]">{selectedCategory.color.toUpperCase()}</span>
             </div>
           </fieldset>
+        </div>}
+      </section>
+      <section className="flex h-full w-[420px] min-w-[420px] flex-col px-3 py-3" aria-label="Category icons">
+        <h3 className={sectionTitle}>5. Icons</h3>
+        <p className="mt-1 text-xs text-[#695e50]">Choose an optional symbol for the same selected category. Symbols reinforce color distinctions on event marks.</p>
+        {!selectedCategory ? <p className="mt-3 text-sm text-[#695e50]">Select a category in Priority to customize its icon.</p> : <div className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+          <p className="break-words text-sm font-semibold" title={selectedCategory.label}>{selectedCategory.label}</p>
+          <div className="mt-2 flex items-center gap-3 rounded-md border border-[#d5c1a5] bg-[#fff9ec] p-2">
+            <span className="relative block h-11 w-11 shrink-0 rounded-full border-2 border-[#55463b]" style={{background:selectedCategory.color}}><TimelineCategoryPoint categories={[selectedCategory]} displayMode="colors-and-symbols"/></span>
+            <span className="text-xs text-[#695e50]">Current symbol: {TIMELINE_SYMBOL_LABELS[selectedCategory.symbol]||'No symbol'}</span>
+          </div>
           <fieldset className="mt-3"><legend className="mb-1.5 text-xs font-semibold">Optional symbol</legend>
-            {/* Exactly 100 researcher-approved Tabler icons, with No symbol first.
-                Some legacy symbols remain renderable for backwards compatibility
-                but do not appear as new selections. */}
-            <div className="grid grid-cols-9 gap-1 sm:grid-cols-10" role="group" aria-label="Category symbol library">
+            <div className="grid grid-cols-9 gap-1" role="group" aria-label="Category symbol library">
               <button type="button" title="No symbol (default)" aria-label="No symbol" aria-pressed={selectedCategory.symbol==='none'} onClick={()=>change(configureTimelineCategoryAppearance(config,fields,selectedCategory.id,{symbol:'none'}))} className={`flex aspect-square min-w-0 items-center justify-center rounded-md border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${selectedCategory.symbol==='none'?'border-[#7C211E] bg-[#eee0c7]':'border-[#d5c1a5] bg-white'}`}><PeridotCategorySymbolIcon name="none"/></button>
               {ALL_CATEGORY_SYMBOLS.map(([id,label])=><button type="button" key={id} title={label} aria-label={label} aria-pressed={selectedCategory.symbol===id} onClick={()=>change(configureTimelineCategoryAppearance(config,fields,selectedCategory.id,{symbol:id}))} className={`flex aspect-square min-w-0 items-center justify-center rounded-md border-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${selectedCategory.symbol===id?'border-[#7C211E] bg-[#eee0c7]':'border-[#d5c1a5] bg-white'}`}><PeridotCategorySymbolIcon name={id}/></button>)}
             </div>
           </fieldset>
-          <p className="mt-2 text-xs text-[#695e50]">{selectedCategory.symbol==='none'?'No symbol':TIMELINE_SYMBOL_LABELS[selectedCategory.symbol]||selectedCategory.symbol} · {selectedCategory.color}</p>
         </div>}
       </section>
+      </div>
     </div>
-    <footer className="shrink-0 border-t border-[#d5c1a5] bg-[#fbf7ed] px-4 py-2 text-xs text-[#695e50]">Changes apply immediately to Timeline marks and persist during this dataset session. No data is saved between browser sessions.</footer>
+    <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-[#d5c1a5] bg-[#fbf7ed] px-4 py-2 text-xs text-[#695e50]"><span>Changes apply immediately during this dataset session; no data is saved between browser sessions.</span><span className="shrink-0 font-semibold">Five columns · scroll horizontally</span></footer>
   </section>;
 }
 export default PeridotTimelineCategoryEditor;
