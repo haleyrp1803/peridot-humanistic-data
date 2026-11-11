@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-9c2bb0e — Generalize Timeline categories across mapped dataset attributes
+ea7cda8 — Remove obsolete src.zip archive
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-10); unrelated Charts II, planning files, and the tracked src.zip deletion remain uncommitted; working tree is not clean
+Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-11); only independent Charts II files and edits remain uncommitted; working tree is not clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -651,7 +651,7 @@ Context:
 The correspondence, family-tree and cardinals samples expose different useful attributes. An Evidence-only category inventory concealed mapped people and places; automatic mapping-to-event assignments can misattribute values when one record contains multiple subjects or dates.
 
 Chosen approach:
-Discover candidate sources and values from actual uploaded/mapped data; preserve original column labels plus stable source provenance; allow explicit record-, subject- and assertion-level association policies; retain plural memberships, user-editable names, colors and optional symbols. Preserve the three-column category editor and curated local Tabler icon library. Keep these presentation choices session-only pending a separately designed researcher-owned project format.
+Discover candidate sources and values from actual uploaded/mapped data; preserve original column labels plus stable source provenance; allow explicit record-, subject- and assertion-level association policies; retain plural memberships, user-editable names, colors and optional symbols. Preserve the curated local Tabler icon library. The three-column editor described here is historical and was superseded by the five-column Source/Values/Priority/Color/Icons editor in decision 2026-11-11 above. Keep these presentation choices session-only pending a separately designed researcher-owned project format.
 
 Rejected alternative:
 Treat one sample's columns as universal, infer joins across unrelated sheets, equate all subjects within a record, or change canonical research evidence when a user chooses a visualization category.
@@ -661,6 +661,28 @@ Visual categories help historians interrogate their own sources without assertin
 
 Maintenance consequence:
 Maintain field/source provenance, exact historical event associations, category identity and appearance across navigation; rerun the four category test modules and representative Correspondence, Family Tree and Cardinals browser cases. Do not restart automatically projected event-to-event arcs; their intended authoring/persistence semantics remain deferred.
+```
+
+#### Grouped swimlane interpretive priority and scoped scroll ownership (2026-11-11)
+
+```text
+Decision:
+Treat researcher-selected category swimlanes as an explicit interpretive organization and constrain their horizontal editor viewport at the Timeline II stage boundary, without changing unrelated visualization stage sizing.
+
+Context:
+Implicit first-category precedence limited the research questions a Grouped timeline could foreground. A wider five-column Categories editor initially clipped its fifth column: the scrollbar's 1,770-pixel owner reported zero internal scroll range, while a narrower ancestor clipped the editor. Repeated custom-navigation and thumb-styling passes did not fix the root width propagation.
+
+Chosen approach:
+Researchers star/unstar individual categories to establish swimlane eligibility; events occupy one eligible lane according to ordered default precedence or a legitimate explicit event-level assignment, with a No priority category fallback. Secondary memberships remain visual. Retain adaptive lane heights that settle after navigation. Use native horizontal scrollbar ownership in the Categories viewport and apply min-w-0 to both shared Visualize stage-transition wrappers only when Timeline II is selected. Keep Map, Network, Charts I and the separately developed Charts II on their existing stage sizing path.
+
+Rejected alternative:
+A single primary-dimension dropdown, conflating visual secondary memberships with spatial assignments, duplicating events across lanes, continuous per-frame regrouping, an elaborate Priority editor, custom slider/tab navigation, arbitrary scrollbar coloring as a substitute for true overflow, or unconditional shared-stage changes.
+
+Reason:
+The spatial category axis is itself a scholarly comparison; researcher authority must remain explicit and evidence-faithful. The browser needs the actual viewport to be narrower than its intrinsic content track for a native draggable thumb to exist. Conditional sizing limits unintended effects on other visualizations.
+
+Maintenance consequence:
+Preserve source-backed category membership and one-lane-per-event semantics, user-facing five-column horizontal/independent vertical scrolling, and the two Timeline-only conditional min-w-0 classes in PeridotVisualizationsWorkspace.jsx. Regression-check Timeline resizing/orientation, grouping, chronology, Inspector, and transitions to Map, Network and Charts; do not overwrite concurrent Charts II changes. See Maintainer's Guide current contract, the accepted source milestone f5791f1, and planning_documents/PERIDOT_TIMELINE_II_HORIZONTAL_SCROLL_LAYOUT_RISK_20261111.md.
 ```
 
 #### Persistent OffscreenCanvas loader and first-mount Map decision (2026-11-03)
@@ -1057,7 +1079,7 @@ Each implementation pass should end with:
 
 ### Fresh-chat handoff
 
-A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual. At the `4fca872` checkpoint, local development on the user's Windows machine is started with `npm.cmd run dev`; local Charts II changes remain intentionally uncommitted. It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents. Each new conversation should begin by rereading the four core documents before any development work is done.
+A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual. At the `ea7cda8` checkpoint, local development on the user's Windows machine is started with `npm.cmd run dev`; local Charts II changes remain intentionally uncommitted. It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents. Each new conversation should begin by rereading the four core documents before any development work is done.
 
 For core documentation work, provide all four core documents and `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md` before edits begin.
 

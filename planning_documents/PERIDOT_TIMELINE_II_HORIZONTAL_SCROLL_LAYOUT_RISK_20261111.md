@@ -1,14 +1,14 @@
 # Peridot Timeline II Categories — horizontal scrollbar width constraint and regression note
 
 **Date:** 2026-11-11  
-**Status:** Experimental, browser acceptance pending. Do not describe the scrollbar as fixed until the DevTools measurements and mouse interaction are verified.  
+**Status:** Browser-accepted 2026-11-11 after v10; the researcher explicitly confirmed that the native horizontal scrollbar works. Regression monitoring remains required; no exhaustive cross-browser or deployed-site validation is claimed.  
 **Scope:** Timeline II only; applies to the shared stage-transition wrappers *conditionally* while `selectedTool === VISUALIZATION_TOOLS.TIMELINE_II`.
 
 ## Symptom and evidence
 
 The Categories tab has five full-height configuration columns (Source columns, Values to track, Priority, Color, Icons) whose combined fixed-width track is approximately 1,770 px. The UI visibly clips at narrower widths, but the CSS element `.peridot-category-horizontal-scroll` reports `clientWidth = scrollWidth = 1770` and `scrollLeft = 0` in Chrome. Its scrollbar track has no draggable thumb. An ancestor of the editor is approximately 656 px wide with a larger scrollWidth. Chrome is therefore not scrolling inside the intended element: the scroll element itself expands to content width, while a narrower ancestor clips it.
 
-## Experimental correction (v10)
+## Accepted targeted correction (v10; previously experimental)
 
 **File:** `src/PeridotVisualizationsWorkspace.jsx`.
 
@@ -17,7 +17,7 @@ Two wrapper elements surrounding `renderWorkspaceBody()` are amended with a **Ti
 - `.peridot-visualization-stage-transition-shell` (flex wrapper, overflow hidden)
 - `.peridot-visualization-stage-transition-content` (nested flex wrapper)
 
-The condition is `selectedTool === VISUALIZATION_TOOLS.TIMELINE_II`. Other visualization selections do not receive the new width constraint. This intends to let the inner Timeline II Categories viewport shrink while the five-column track stays wide and its native horizontal scrollbar acquires a positive scroll range. This does not modify the Timeline II category assignment, colors, icon mapping, chronology, or independent vertical column scrolling. The transition's overflow clipping remains unchanged.
+The condition is `selectedTool === VISUALIZATION_TOOLS.TIMELINE_II`. Other visualization selections do not receive the new width constraint. This allows the inner Timeline II Categories viewport to shrink while the five-column track stays wide and its native horizontal scrollbar acquires a positive scroll range; the researcher subsequently reported that the scrollbar works. This does not modify the Timeline II category assignment, colors, icon mapping, chronology, or independent vertical column scrolling. The transition's overflow clipping remains unchanged.
 
 ## Potential regression surface
 
@@ -44,4 +44,4 @@ Remove the two conditional `min-w-0` additions in the shared stage-transition wr
 
 ## Documentation synchronization
 
-This technical note is intentionally standalone because the latest **current** `/core_documentation` versions and user-confirmed HEAD were not supplied with this experimental implementation. Under Peridot's documentation governance rules, the next approved core-documentation pass should incorporate the active contract and regression risks in `MAINTAINERS_GUIDE.md`, and record the experiment/outcome in `CHANGELOG.md`, after reading all current core documents and the governance protocol in full. Do not assert that the experiment was successful before browser verification.
+This technical note is intentionally standalone because the latest **current** `/core_documentation` versions and user-confirmed HEAD were not supplied with this experimental implementation. Under Peridot's documentation governance rules, the next approved core-documentation pass should incorporate the active contract and regression risks in `MAINTAINERS_GUIDE.md`, and record the experiment/outcome in `CHANGELOG.md`, after reading all current core documents and the governance protocol in full. Browser acceptance was subsequently reported on 2026-11-11. Keep the diagnosis and residual risks discoverable even though the immediate bug is resolved.
