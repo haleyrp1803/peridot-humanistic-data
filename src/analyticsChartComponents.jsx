@@ -593,7 +593,7 @@ export function AnalyticsLineChart({ data = [], title, subtitle, svgRef }) {
 }
 
 
-export function AnalyticsPieChart({ data = [], title, subtitle, svgRef }) {
+export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = false }) {
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState />;
 
@@ -639,6 +639,7 @@ export function AnalyticsPieChart({ data = [], title, subtitle, svgRef }) {
                 <path key={row.label} d={describeArc(startAngle, endAngle)} fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : PALETTE[index % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percent}% of shown total` }))} onMouseLeave={() => setTooltip(null)} />
               );
             })}
+            {donut && <circle cx={cx} cy={cy} r={radius * 0.52} fill={CHART_COLORS.chartBg} pointerEvents="none" aria-hidden="true" />}
             <SummaryPanel {...panelLayout} title="Slices and shares" rows={summaryRows} note={`Shown total: ${formatNumber(total)} records`} />
           </>
         ),

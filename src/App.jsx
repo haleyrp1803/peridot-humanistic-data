@@ -6953,6 +6953,9 @@ export default function EuropeNetworkMapApp() {
   };
 
   const analyticsWorkspaceProps = {
+    // Charts II recommendations use the Explore-filtered availability scope,
+    // independent of the currently visible playback position.
+    chartsIIProfileRows: analyticsAvailabilityRows,
     analyticsState: {
       chartType: analyticsChartType,
       setChartType: setAnalyticsChartType,

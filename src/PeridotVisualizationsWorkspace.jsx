@@ -30,6 +30,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
+import { PeridotChartsIIFoundation } from './PeridotChartsIIFoundation.jsx';
 import { PeridotTimelineII } from './PeridotTimelineII.jsx';
 import { PeridotSharedChronologyAdapter } from './PeridotSharedChronologyAdapter.jsx';
 
@@ -37,6 +38,7 @@ const VISUALIZATION_TOOLS = Object.freeze({
   GEOGRAPHIC_MAP: 'geographic-map',
   FORCE_NETWORK: 'force-network',
   CHART_WORKSPACE: 'chart-workspace',
+  CHARTS_II: 'charts-ii',
   TIMELINE_II: 'timeline-ii',
   CAPABILITY_SUMMARY: 'capability-summary',
 });
@@ -1035,13 +1037,29 @@ export function PeridotVisualizationsWorkspace({
 
   const [selectedTool, setSelectedTool] = useState(initialTool);
   const [chartExportControls, setChartExportControls] = useState(null);
+  // Charts II navigation belongs to the persistent Visualize shell, not a
+  // temporarily mounted catalogue/builder. It survives tab and route changes.
+  const [chartsIIChartKey, setChartsIIChartKey] = useState(null);
+  // Page navigation is independent of chart selection: Catalogue must not
+  // discard a configured chart just because the researcher browses again.
+  const [chartsIIPage, setChartsIIPage] = useState('catalogue');
+  const chartsIIDatasetSessionKey = timelineWorkspaceProps?.datasetSessionKey;
+  // Do not carry a previous dataset's pending chart choice into a newly
+  // mapped dataset. Normal navigation does not change this revision key.
+  useEffect(() => {
+    setChartsIIChartKey(null);
+    setChartsIIPage('catalogue');
+  }, [chartsIIDatasetSessionKey]);
   const [isStageSwitching, setIsStageSwitching] = useState(false);
   const stageSwitchTimerRef = useRef(null);
   const stageRevealFrameRef = useRef(null);
 
   useEffect(() => {
     if (visualizationsWorkspacePanel === 'analytics') {
-      setSelectedTool(VISUALIZATION_TOOLS.CHART_WORKSPACE);
+      // Choosing Charts II also activates the existing analytics data scope.
+      // Do not let the resulting App panel update bounce it back to Charts I.
+      setSelectedTool((current) => current === VISUALIZATION_TOOLS.CHARTS_II
+        ? current : VISUALIZATION_TOOLS.CHART_WORKSPACE);
     } else if (visualizationsWorkspacePanel === 'timeline') {
       setSelectedTool(VISUALIZATION_TOOLS.TIMELINE_II);
     } else if (visualizationsWorkspacePanel === 'force-directed') {
@@ -1095,6 +1113,16 @@ export function PeridotVisualizationsWorkspace({
       why: 'No usable mapped temporal assertions are available in the current scope.',
       availableInstead: [availability.hasCharts ? 'Chart Visualizations' : null, availability.hasExploreData ? 'Explore Your Data' : null].filter(Boolean),
     },
+    [VISUALIZATION_TOOLS.CHARTS_II]: {
+      label: 'Charts II',
+      // Unlike Charts I, the catalogue is available even when heuristic field
+      // discovery finds no chartable fields in an otherwise active dataset.
+      available: availability.hasExploreData || availability.hasCharts,
+      action: onOpenAnalytics,
+      unavailableTitle: 'Charts II needs usable chart data.',
+      why: 'An active dataset is required to open the Charts II catalogue.',
+      availableInstead: [availability.hasExploreData ? 'Explore Your Data' : null].filter(Boolean),
+    },
     [VISUALIZATION_TOOLS.CHART_WORKSPACE]: {
       label: 'Chart Visualizations',
       available: availability.hasCharts,
@@ -1128,6 +1156,8 @@ export function PeridotVisualizationsWorkspace({
     { label: 'Network', tool: VISUALIZATION_TOOLS.FORCE_NETWORK },
     { label: 'Timeline', tool: VISUALIZATION_TOOLS.TIMELINE_II },
     { label: 'Charts', tool: VISUALIZATION_TOOLS.CHART_WORKSPACE },
+    // Temporary parallel development entry; legacy Charts stays available.
+    { label: 'Charts II', tool: VISUALIZATION_TOOLS.CHARTS_II },
   ];
 
   const selectTool = (toolKey) => {
@@ -1191,7 +1221,10 @@ export function PeridotVisualizationsWorkspace({
   ];
 
   const isChartWorkspaceActive = selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || Boolean(chartTypeFromToolKey(selectedTool));
-  const activeExportControls = isChartWorkspaceActive ? chartExportControls : exportControls;
+  // Charts II has no renderer or export yet: never expose Charts I's stale
+  // chart export (or a Map/Network export) on its development surface.
+  const activeExportControls = selectedTool === VISUALIZATION_TOOLS.CHARTS_II
+    ? null : (isChartWorkspaceActive ? chartExportControls : exportControls);
 
   const renderWorkspaceBody = () => {
     if (!selectedDefinition.available) {
@@ -1207,6 +1240,22 @@ export function PeridotVisualizationsWorkspace({
 
     if (selectedTool === VISUALIZATION_TOOLS.TIMELINE_II) {
       return <PeridotTimelineII key={timelineWorkspaceProps?.datasetSessionKey ?? 0} {...(timelineWorkspaceProps || {})} />;
+    }
+
+    if (selectedTool === VISUALIZATION_TOOLS.CHARTS_II) {
+      return (
+        <PeridotChartsIIFoundation
+          selectedChartKey={chartsIIChartKey}
+          currentPage={chartsIIPage}
+          profileRows={analyticsWorkspaceProps?.chartsIIProfileRows || []}
+          previewRows={analyticsWorkspaceProps?.analyticsState?.rows || []}
+          onSelectChart={(key) => {
+            setChartsIIChartKey(key);
+            setChartsIIPage('builder');
+          }}
+          onNavigatePage={setChartsIIPage}
+        />
+      );
     }
 
     if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
@@ -1267,17 +1316,65 @@ export function PeridotVisualizationsWorkspace({
       </header>
 
       <div className="relative z-[20] flex min-h-0 flex-1 flex-col gap-3 px-4 pb-4 pt-3">
+        {selectedTool === VISUALIZATION_TOOLS.CHARTS_II ? (
+          /* Catalogue retains its existing overlay; Builder reserves a
+           * navigation row so controls cannot obscure the chart title. Both
+           * pages remain available even with no chart selected.
+           */
+          <nav
+            aria-label="Charts II pages"
+            className={[
+              'z-30 inline-flex items-center gap-1 rounded-md border border-[var(--peridot-color-hex-d5c7a8)] bg-[var(--peridot-color-hex-fffaf0)] p-1 shadow-sm',
+              // Only Builder needs a reserved navigation row; the Catalogue
+              // retains its accepted overlay and vertical gallery presentation.
+              chartsIIPage === 'builder'
+                ? 'relative self-center shrink-0'
+                : 'absolute left-1/2 top-2 -translate-x-1/2',
+            ].join(' ')}
+          >
+            {[
+              { label: 'Catalogue', page: 'catalogue' },
+              { label: 'Builder', page: 'builder' },
+            ].map(({ label, page }) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => setChartsIIPage(page)}
+                aria-current={chartsIIPage === page ? 'page' : undefined}
+                className={[
+                  'inline-flex h-7 items-center justify-center rounded px-3 text-[10px] font-bold uppercase tracking-[0.09em] transition',
+                  'focus:outline-none focus:ring-2 focus:ring-[var(--peridot-color-hex-d6a36a-a60)]',
+                  chartsIIPage === page
+                    ? 'border border-[var(--peridot-role-ornament-line)] bg-[var(--peridot-color-hex-f5ecd2)] text-[var(--peridot-color-hex-173120)]'
+                    : 'border border-transparent text-[var(--peridot-color-hex-8b2e23)] hover:bg-[var(--peridot-color-hex-f5ecd2)]',
+                ].join(' ')}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+        ) : null}
         <div
           className={[
-            'peridot-visualization-stage-transition-shell min-h-0 min-w-0 flex flex-1',
+            'peridot-visualization-stage-transition-shell min-h-0 flex flex-1',
+            // Timeline II Categories needs to shrink inside this shared stage to own horizontal scrolling.
+            // Keep the constraint scoped: Map, Network, and Charts II retain their existing layout contract.
+            selectedTool === VISUALIZATION_TOOLS.TIMELINE_II ? 'min-w-0' : '',
             isStageSwitching ? 'peridot-visualization-stage-transition-active' : '',
           ].join(' ')}
         >
-          <div className="peridot-visualization-stage-transition-content min-h-0 min-w-0 flex flex-1">
+          <div
+            className={[
+              'peridot-visualization-stage-transition-content min-h-0 flex flex-1',
+              selectedTool === VISUALIZATION_TOOLS.TIMELINE_II ? 'min-w-0' : '',
+            ].join(' ')}
+          >
             {renderWorkspaceBody()}
           </div>
         </div>
-        {timelineControlsProps && selectedTool !== VISUALIZATION_TOOLS.TIMELINE_II ? (
+        {timelineControlsProps
+          && selectedTool !== VISUALIZATION_TOOLS.TIMELINE_II
+          && (selectedTool !== VISUALIZATION_TOOLS.CHARTS_II || chartsIIPage === 'builder') ? (
           <div className="peridot-visualization-timeline-sequence shrink-0">
             <PeridotSharedChronologyAdapter {...timelineControlsProps} />
           </div>
