@@ -14,6 +14,7 @@ import { deriveChartsIIWideTemporalSeries } from './chartsIIWideTemporalSeries.j
 import { deriveChartsIIScatter } from './chartsIIScatterData.js';
 import { deriveChartsIIBoxPlot } from './chartsIIBoxPlotData.js';
 import { deriveChartsIIDotPlot } from './chartsIIDotPlotData.js';
+import { deriveChartsIISlope } from './chartsIISlopeData.js';
 import { deriveChartsIITemporalSeries, CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 const CHARTS_II_TIME_INTERVAL_LABELS = Object.fromEntries(CHARTS_II_TIME_INTERVALS.map(({value,label}) => [value,label]));
 
@@ -23,6 +24,7 @@ export const CHARTS_II_BUILDER_FAMILIES = Object.freeze({
   scatter: family('scatter', [{ key: 'scatterXField', label: 'X-axis (numeric)', pool: 'numericMeasureOptions' }, { key: 'scatterYField', label: 'Y-axis (numeric)', pool: 'numericMeasureOptions', distinctFrom: 'scatterXField' }]),
   box: family('box', []),
   dot: family('dot', []),
+  slope: family('slope', []),
   bar: family('bar', [{ key: 'barGroupBy', label: 'Category', pool: 'barGroupOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'grouped-bar': family('groupedBar', [{ key: 'xField', label: 'Category / x-axis', pool: 'xAxisOptions' }, { key: 'groupedBarGroupBy', label: 'Compare by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'stacked-bar': family('stackedBar', [{ key: 'xField', label: 'Category / x-axis', pool: 'xAxisOptions' }, { key: 'stackSegmentBy', label: 'Segments', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
@@ -122,6 +124,31 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
   // applies the same additive rule used by Stacked Bar.
   if (contract.chartKey === 'stacked-area') {
     args.aggregation = args.yField === 'recordCount' ? 'count' : 'sum';
+  }
+  if (contract.chartKey === 'slope') {
+    const mode = settings.slopeMode === 'columns' ? 'columns' : 'category';
+    const inventory = getChartsIIBuilderFieldInventory(settings.profileRows || args.rows);
+    const numeric = new Set((inventory.numericMeasureOptions || []).map(item => item.key));
+    const measures = new Set((inventory.yMetricOptions || []).map(item => item.key));
+    const categories = new Set((inventory.barGroupOptions || []).map(item => item.key));
+    const fields = [...new Set((settings.slopeFields || []).filter(key => numeric.has(key)))];
+    if (mode === 'columns' && !fields.length)
+      return { status:'unavailable', chart:null, problems:['Select at least one numerical column.'] };
+    if (mode === 'category' && (!measures.has(settings.slopeMeasureField) || !categories.has(settings.slopeGroupField)))
+      return { status:'unavailable', chart:null, problems:['Choose a usable measure and category.'] };
+    if (!Number.isFinite(Number(settings.slopeFirstPeriod)) || !Number.isFinite(Number(settings.slopeSecondPeriod))
+        || String(settings.slopeFirstPeriod) === String(settings.slopeSecondPeriod))
+      return { status:'unavailable', chart:null, problems:['Choose two different comparison periods.'] };
+    const derived = deriveChartsIISlope(args.rows, {
+      mode, fields, categoryField:settings.slopeGroupField, measureField:settings.slopeMeasureField,
+      aggregation: settings.slopeAggregation, interval:settings.slopeInterval,
+      firstPeriod:settings.slopeFirstPeriod, secondPeriod:settings.slopeSecondPeriod, maxGroups:args.topN,
+    });
+    return { status:'ready', chart:{ chartType:'slope', title:'Slope Chart',
+      subtitle:`${derived.reporting.aggregation} comparing ${settings.slopeFirstLabel || derived.reporting.firstLabel || 'period A'} and ${settings.slopeSecondLabel || derived.reporting.secondLabel || 'period B'}.`,
+      firstLabel:settings.slopeFirstLabel || derived.reporting.firstLabel,
+      secondLabel:settings.slopeSecondLabel || derived.reporting.secondLabel,
+      series:derived.series }, reporting:derived.reporting };
   }
   if (contract.chartKey === 'dot') {
     const mode = settings.dotMode === 'columns' ? 'columns' : 'category';

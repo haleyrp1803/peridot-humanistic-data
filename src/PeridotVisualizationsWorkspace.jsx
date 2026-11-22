@@ -1420,8 +1420,11 @@ export function PeridotVisualizationsWorkspace({
                 setChartsIIChronologyDragging(true);
               }
             }}
-            onPointerUp={() => setChartsIIChronologyDragging(false)}
-            onPointerCancel={() => setChartsIIChronologyDragging(false)}
+            // The chronology ruler stops pointer-event bubbling. Capture-phase
+            // release handlers run before its stopPropagation, so the frozen
+            // Builder adopts the final time window reliably on pointer release.
+            onPointerUpCapture={() => setChartsIIChronologyDragging(false)}
+            onPointerCancelCapture={() => setChartsIIChronologyDragging(false)}
             onLostPointerCapture={() => setChartsIIChronologyDragging(false)}
           >
             <PeridotSharedChronologyAdapter {...timelineControlsProps} />

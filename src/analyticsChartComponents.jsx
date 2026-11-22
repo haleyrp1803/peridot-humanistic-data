@@ -622,6 +622,55 @@ export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle
 
 // Charts II B3.9: Cleveland-style dot plot. Every dot is an aggregated
 // category/column value, and all dots share one linear numeric scale.
+// Charts II B3.10. Two endpoints share one numerical scale. A missing
+// category/measure in either period is drawn as a single dot, not a zero slope.
+export function AnalyticsSlopeChart({ series = [], title = 'Slope Chart', subtitle = '', firstLabel = 'First period', secondLabel = 'Second period', svgRef }) {
+  const [tooltip, setTooltip] = useState(null);
+  const visible = series.filter(item => Number.isFinite(item?.before) || Number.isFinite(item?.after));
+  if (!visible.length) return <EmptyChartState message="No comparable measurements exist in the selected periods." />;
+  const height = 470;
+  const layout = getChartCardLayout({ height, left: 90, top: 85, bottom: 50 });
+  const { width, top, plotHeight } = layout;
+  const xFirst = layout.left + 135;
+  const xSecond = layout.chartRight - 75;
+  const values = visible.flatMap(item => [item.before, item.after].filter(value => Number.isFinite(value)));
+  const rawMin = Math.min(...values), rawMax = Math.max(...values);
+  const padding = Math.max((rawMax - rawMin) * .085, Math.abs(rawMax) * .025, 1);
+  const min = rawMin >= 0 ? Math.max(0, rawMin - padding) : rawMin - padding;
+  const max = rawMax + padding;
+  const yAt = value => top + plotHeight - ((value - min) / (max - min || 1)) * plotHeight;
+  const format = value => value === null || value === undefined ? 'Not observed' : Number(value).toLocaleString(undefined,{maximumFractionDigits:3});
+  const yTicks = Array.from({length:5},(_,i)=>min+(max-min)*i/4);
+  return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
+    {{ tooltip:<ChartTooltip tooltip={tooltip}/>, chart:<>
+      {yTicks.map((value,i)=><g key={i}>
+        <line x1={xFirst-35} x2={xSecond+35} y1={yAt(value)} y2={yAt(value)} stroke={CHART_COLORS.grid} opacity=".55"/>
+        <text x={xFirst-42} y={yAt(value)+4} textAnchor="end" fontSize="10" fill={CHART_COLORS.mutedText}>{format(value)}</text>
+      </g>)}
+      {[xFirst,xSecond].map((x,i)=><g key={i}>
+        <line x1={x} x2={x} y1={top-12} y2={top+plotHeight+8} stroke={AXIS_COLORS.majorLine} opacity=".55"/>
+        <text x={x} y={top-24} textAnchor="middle" fontSize="11.5" fontWeight="750" fill={CHART_COLORS.text}>{truncateLabel(i?secondLabel:firstLabel,31)}</text>
+      </g>)}
+      {visible.map((item,index)=>{
+        const color=getSeriesColor(index);
+        const a=Number.isFinite(item.before), b=Number.isFinite(item.after);
+        const onMove=event=>setTooltip(buildTooltip(event,{label:item.label,secondary:`${firstLabel}: ${format(item.before)} (n=${item.nBefore}); ${secondLabel}: ${format(item.after)} (n=${item.nAfter})`,count:item.delta===null?null:item.delta,unit:'change'}));
+        return <g key={`${item.label}-${index}`} onMouseMove={onMove} onMouseLeave={()=>setTooltip(null)}>
+          <title>{`${item.label} — ${firstLabel}: ${format(item.before)} (n=${item.nBefore}); ${secondLabel}: ${format(item.after)} (n=${item.nAfter}); change: ${format(item.delta)}`}</title>
+          {a&&b&&<path d={`M${xFirst} ${yAt(item.before)}L${xSecond} ${yAt(item.after)}`} stroke={color} strokeWidth="2.2" strokeOpacity=".88" fill="none"/>}
+          {a&&<circle cx={xFirst} cy={yAt(item.before)} r="5" fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1"/>}
+          {b&&<circle cx={xSecond} cy={yAt(item.after)} r="5" fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1"/>}
+        </g>;
+      })}
+      <text x={(xFirst+xSecond)/2} y={height-13} textAnchor="middle" fontSize="10.5" fontWeight="650" fill={CHART_COLORS.mutedText}>A single endpoint indicates no observation in the other period</text>
+      <SummaryPanel {...layout.legend} title="Change by category" rows={visible.map((item,index)=>({
+        label:item.label, color:getSeriesColor(index), value:item.delta===null?'—':`${item.delta>0?'+':''}${format(item.delta)}`,
+        meta:`${format(item.before)} → ${format(item.after)}`,
+      }))} note="— means missing, not zero; hover marks for values" />
+    </> }}
+  </ChartFrame>;
+}
+
 export function AnalyticsDotPlotChart({ points = [], title = 'Dot Plot', subtitle = '', valueLabel = 'Value', svgRef }) {
   const [tooltip, setTooltip] = useState(null);
   const finite = points.filter(point => Number.isFinite(point?.value));
