@@ -60,13 +60,24 @@ export function deriveChartsIIDotPlot(rows = [], { mode = 'category', fields = [
       reporting.includedMeasurements++;
     }
   }
-  let entries = [...byGroup.entries()].filter(([, info]) => info.records);
-  if (!columnMode) entries.sort((a,b) => b[1].records - a[1].records || a[0].localeCompare(b[0]));
+  // Aggregate before applying the category limit. Otherwise a rare group
+  // with the largest average or sum can disappear because another group has
+  // more observations, even when the researcher selects "Highest value first".
+  // For record counts, value and observation frequency are identical.
+  let points = [...byGroup.entries()].filter(([, info]) => info.records).map(([label, info]) => ({
+    label,
+    value: actualAggregate === 'count' ? info.records : aggregate(info.values, actualAggregate),
+    n: info.records,
+  }));
+  points.sort((a,b) => b.value - a.value || a.label.localeCompare(b.label));
   const limit = Number.isFinite(Number(maxGroups)) && Number(maxGroups) > 0 ? Math.floor(Number(maxGroups)) : 10;
-  if (!columnMode) { reporting.groupsOmitted = Math.max(0, entries.length - limit); entries = entries.slice(0, limit); }
-  const points = entries.map(([label, info]) => ({ label, value: actualAggregate === 'count' ? info.records : aggregate(info.values, actualAggregate), n: info.records }));
+  if (!columnMode) {
+    reporting.groupsOmitted = Math.max(0, points.length - limit);
+    points = points.slice(0, limit);
+  }
+  // Alphabetical order changes presentation, not which largest values qualify
+  // for a category-limited chart.
   if (order === 'label') points.sort((a,b) => a.label.localeCompare(b.label));
-  else points.sort((a,b) => b.value - a.value || a.label.localeCompare(b.label));
   reporting.plottedGroups = points.length;
   return { points, reporting };
 }

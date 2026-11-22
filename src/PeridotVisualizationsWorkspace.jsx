@@ -1416,7 +1416,11 @@ export function PeridotVisualizationsWorkspace({
           <div className="peridot-visualization-timeline-sequence shrink-0"
             onPointerDownCapture={event => {
               if (selectedTool !== VISUALIZATION_TOOLS.CHARTS_II || chartsIIPage !== 'builder') return;
-              if (event.target.closest?.('[aria-label^="Timeline chronology navigator"]')) {
+              // The interactive ruler is an inner group; detect pointer
+              // gestures against that exact surface, not the transport buttons.
+              // Capture-phase dispatch runs before the ruler stops bubbling.
+              const ruler = event.currentTarget.querySelector('[aria-label^="Timeline chronology navigator"]');
+              if (ruler?.contains(event.target)) {
                 setChartsIIChronologyDragging(true);
               }
             }}

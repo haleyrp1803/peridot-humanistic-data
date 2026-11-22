@@ -417,14 +417,22 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   // the settled chronology scope. This is presentation-only; source dates and
   // independently chosen comparison periods are not modified.
   const settledSlopeResult = useRef(null);
+  // Scatter must freeze the complete derived result as well as the numeric
+  // record scope / date-axis viewport. An upstream scope refresh can otherwise
+  // invalidate derivation while the chronology handle is still moving.
+  const settledScatterResult = useRef(null);
   const chartResult = useMemo(() => {
     if (chart?.key === 'slope' && chronologyDragging && settledSlopeResult.current !== null) {
       return settledSlopeResult.current;
+    }
+    if (chart?.key === 'scatter' && chronologyDragging && settledScatterResult.current !== null) {
+      return settledScatterResult.current;
     }
     const next = isLiveFamily
       ? deriveChartsIIBuilderData(contract, scatterRows, { ...settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, slopeFirstPeriod:effectiveSlopeFirst, slopeSecondPeriod:effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel })
       : null;
     if (chart?.key === 'slope' && !chronologyDragging) settledSlopeResult.current = next;
+    if (chart?.key === 'scatter' && !chronologyDragging) settledScatterResult.current = next;
     return next;
   }, [chart?.key, chronologyDragging, isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, effectiveSlopeFirst, effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel]);
   const isResultPopulated = chartResult?.status === 'ready' && (() => {
