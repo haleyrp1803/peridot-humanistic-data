@@ -547,6 +547,79 @@ export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yL
   );
 }
 
+// Charts II B3.8: Tukey box plots. The model supplies exact quartiles,
+// whiskers, and every outlier; this component only renders those values.
+export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle = '', svgRef, scaleMode = 'full' }) {
+  const [tooltip, setTooltip] = useState(null);
+  if (!boxes.length) return <EmptyChartState message="No valid numerical observations for the selected distributions." />;
+  const layout = getChartCardLayout({ height: 438, left: 68, top: 74, bottom: 67 });
+  const { width, height, left, top, plotWidth, plotHeight } = layout;
+  const focused = scaleMode === 'focus';
+  const minValue = Math.min(...boxes.map(box => focused ? box.lowerWhisker : box.min));
+  const maxValue = Math.max(...boxes.map(box => focused ? box.upperWhisker : box.max));
+  const span = maxValue - minValue || Math.max(1, Math.abs(maxValue) * .2);
+  const floor = minValue - span * .06, ceiling = maxValue + span * .06;
+  const yAt = value => top + plotHeight - (value - floor) / (ceiling - floor) * plotHeight;
+  const step = plotWidth / boxes.length;
+  const boxWidth = Math.min(54, step * .55);
+  const tickValues = Array.from({ length: 5 }, (_, index) => floor + index / 4 * (ceiling - floor));
+  const labelValue = value => Number(value).toLocaleString(undefined, { maximumFractionDigits: 3 });
+  const outlierMeta = box => Array.isArray(box.outlierDetails) && box.outlierDetails.length === box.outliers.length
+    ? box.outlierDetails : box.outliers.map(value => ({ value }));
+  const detailTooltip = (event, box, observation, offScale = false) => setTooltip(buildTooltip(event, {
+    label: `${box.label} · ${offScale ? 'outlier outside visible scale' : 'outlier'}`,
+    secondary: [observation.recordIndex ? `Chart-scope record ${observation.recordIndex}` : '',
+      observation.date ? `Date field: ${observation.date}` : '',
+      offScale ? 'Underlying measurement remains included in statistics.' : 'Outside 1.5 × IQR fences.'].filter(Boolean).join(' · '),
+    count: observation.value, unit: '(measurement)',
+  }));
+  return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
+    {{ tooltip: <ChartTooltip tooltip={tooltip} />, chart: <>
+      {tickValues.map((value, index) => <g key={index}>
+        <line x1={left} x2={left + plotWidth} y1={yAt(value)} y2={yAt(value)} stroke={CHART_COLORS.grid} opacity="0.45" />
+        <text x={left - 10} y={yAt(value) + 4} fontSize="10" textAnchor="end" fill={CHART_COLORS.text}>{labelValue(value)}</text>
+      </g>)}
+      <line x1={left} x2={left} y1={top} y2={top + plotHeight} stroke={AXIS_COLORS.majorLine} strokeWidth="1.3" />
+      <line x1={left} x2={left + plotWidth} y1={top + plotHeight} y2={top + plotHeight} stroke={AXIS_COLORS.majorLine} strokeWidth="1.3" />
+      {boxes.map((box, index) => {
+        const x = left + step * (index + .5);
+        const color = getSeriesColor(index);
+        const detail = outlierMeta(box);
+        const above = detail.filter(item => item.value > ceiling);
+        const below = detail.filter(item => item.value < floor);
+        const within = detail.filter(item => item.value >= floor && item.value <= ceiling);
+        const showDetail = event => setTooltip(buildTooltip(event, { label: box.label,
+          secondary: `n=${box.count}; Q1 ${labelValue(box.q1)}; median ${labelValue(box.median)}; Q3 ${labelValue(box.q3)}; whiskers ${labelValue(box.lowerWhisker)}–${labelValue(box.upperWhisker)}; ${box.outliers.length} outliers`,
+          count: box.median, unit: '(median)' }));
+        return <g key={box.label}>
+          <line x1={x} x2={x} y1={yAt(box.upperWhisker)} y2={yAt(box.lowerWhisker)} stroke={color} strokeWidth="2" />
+          {[box.upperWhisker, box.lowerWhisker].map((v, i) => <line key={i} x1={x - boxWidth * .22} x2={x + boxWidth * .22} y1={yAt(v)} y2={yAt(v)} stroke={color} strokeWidth="2" />)}
+          <rect x={x - boxWidth / 2} y={yAt(box.q3)} width={boxWidth} height={Math.max(1, yAt(box.q1) - yAt(box.q3))}
+            fill={color} fillOpacity=".4" stroke={color} strokeWidth="1.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)} />
+          <line x1={x - boxWidth / 2} x2={x + boxWidth / 2} y1={yAt(box.median)} y2={yAt(box.median)} stroke={CHART_COLORS.accentDark} strokeWidth="2.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)} />
+          {within.map((item, outlierIndex) => <circle key={`out-${outlierIndex}`} cx={x + ((outlierIndex % 5) - 2) * 1.6} cy={yAt(item.value)} r="3.5"
+            fill={CHART_COLORS.accentDark} fillOpacity=".76" onMouseMove={event => detailTooltip(event, box, item)} onMouseLeave={() => setTooltip(null)} />)}
+          {focused && above.length > 0 && <g onMouseMove={event => detailTooltip(event, box, above[above.length - 1], true)} onMouseLeave={() => setTooltip(null)}>
+            <path d={`M ${x - 6} ${top + 10} L ${x} ${top + 2} L ${x + 6} ${top + 10} Z`} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth=".6" />
+            <text x={x + 9} y={top + 10} fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>+{above.length}</text>
+            <title>{above.length} outliers above the visible scale; largest {labelValue(above[above.length - 1].value)}</title>
+          </g>}
+          {focused && below.length > 0 && <g onMouseMove={event => detailTooltip(event, box, below[0], true)} onMouseLeave={() => setTooltip(null)}>
+            <path d={`M ${x - 6} ${top + plotHeight - 10} L ${x} ${top + plotHeight - 2} L ${x + 6} ${top + plotHeight - 10} Z`} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth=".6" />
+            <text x={x + 9} y={top + plotHeight - 4} fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>−{below.length}</text>
+            <title>{below.length} outliers below the visible scale; smallest {labelValue(below[0].value)}</title>
+          </g>}
+          <text x={x} y={top + plotHeight + 20} textAnchor="middle" fontSize="10" fill={CHART_COLORS.text}>{truncateLabel(box.label, Math.max(8, Math.floor(step / 6)))}</text>
+          <text x={x} y={top + plotHeight + 34} textAnchor="middle" fontSize="9" fill={CHART_COLORS.mutedText}>n={box.count}</text>
+        </g>;
+      })}
+      <SummaryPanel {...layout.legend} title="Median by distribution" rows={boxes.map((box, index) => ({ label: box.label,
+        value: labelValue(box.median), meta: `Q1 ${labelValue(box.q1)} · Q3 ${labelValue(box.q3)} · ${box.outliers.length} outliers`, color: getSeriesColor(index) }))}
+        note={focused ? '▲ / ▼ + count = outliers beyond the visible axis; values preserved.' : 'Whiskers: most extreme values within 1.5 × IQR; outliers plotted.'} />
+    </> }}
+  </ChartFrame>;
+}
+
 export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientation = 'vertical' }) {
   const [tooltip, setTooltip] = useState(null);
 
