@@ -13,6 +13,8 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { createPortal } from 'react-dom';
 import { buildChartsIIPngDescriptor, downloadChartsIIPng } from './chartsIIExport.js';
 import { CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
+import { applyChartsIILocalFilters, countChartsIIActiveFilters, restrictChartsIILocalFiltersToSingleCategory } from './chartsIILocalFilters.js';
+import { PeridotChartsIILocalFilters } from './PeridotChartsIILocalFilters.jsx';
 import { chartsIISlopePeriods } from './chartsIISlopeData.js';
 import { buildChartsIIDataProfile, assessChartsIISuitability } from './chartsIIDataProfile.js';
 import { createChartsIIBuilderConfiguration, updateChartsIIBuilderConfiguration, validateChartsIIBuilderConfiguration, getChartsIIBuilderFieldInventory, deriveChartsIIBuilderData } from './chartsIIBuilderContract.js';
@@ -57,6 +59,7 @@ const TEAL = '#28747b';
 const BLUE = '#5f7e9e';
 const PURPLE = '#80517b';
 const chartColors = [OXBLOOD, GOLD, SAGE, TEAL, BLUE, PURPLE];
+const EMPTY_CHART_LOCAL_FILTERS = Object.freeze([]);
 
 // Static, illustrative SVGs: these are NOT plots derived from the current dataset.
 // They make chart types visually identifiable without expensive per-card derivation.
@@ -301,7 +304,7 @@ function InfoPopover({ label, compact = false, align = 'end', children }) {
   </span>;
 }
 
-function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null }) {
+function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null, localFiltersByChart, setLocalFiltersByChart }) {
   const chartSvgContainerRef = useRef(null);
   const [pngExportBusy, setPngExportBusy] = useState(false);
   const [pngExportStatus, setPngExportStatus] = useState('');
@@ -356,6 +359,14 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const [gapDisplay, setGapDisplay] = useState('connect'); // Presentation only; never changes derived records.
   const [contract, setContract] = useState(() => createChartsIIBuilderConfiguration(chart?.key, profileRows));
   const [settings, setSettings] = useState({ aggregation: 'count', topN: 10, interval: 'year' });
+  // Filter configurations are local to a chart family and kept separately when
+  // switching between chart families. The source and Explore scopes never mutate.
+  const singleCategoryFilter = chart?.key === 'area' || (chart?.key === 'line' && lineMode === 'single');
+  const storedLocalFilterRules = localFiltersByChart[chart?.key] || EMPTY_CHART_LOCAL_FILTERS;
+  const localFilterRules = useMemo(() => singleCategoryFilter ? restrictChartsIILocalFiltersToSingleCategory(storedLocalFilterRules) : storedLocalFilterRules, [storedLocalFilterRules, singleCategoryFilter]);
+  const setLocalFilterRules = next => setLocalFiltersByChart(previous => ({ ...previous, [chart?.key]: next }));
+  const localFilterInventory = useMemo(() => getChartsIIBuilderFieldInventory(profileRows), [profileRows]);
+  const filteredExploreRows = useMemo(() => applyChartsIILocalFilters(profileRows, localFilterRules), [profileRows, localFilterRules]);
   // Freeze only the expensive Builder preview during a chronology pointer drag.
   // The shared dock continues moving; its final playback scope is adopted
   // immediately upon pointer release. Playback, filter and field changes
@@ -363,6 +374,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const settledPreviewRows = useRef(previewRows);
   if (!chronologyDragging) settledPreviewRows.current = previewRows;
   const renderedPreviewRows = chronologyDragging ? settledPreviewRows.current : previewRows;
+  const filteredPreviewRows = useMemo(() => applyChartsIILocalFilters(renderedPreviewRows, localFilterRules), [renderedPreviewRows, localFilterRules]);
   // The dock moves immediately; a date-based chart adopts its new viewport
   // when the gesture finishes, alongside its settled row scope.
   const settledScatterDateRange = useRef(scatterDateRange);
@@ -424,7 +436,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const isLiveFamily = ['scatter', 'box', 'dot', 'slope', 'treemap', 'bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst', 'area', 'stacked-area'].includes(chart?.key);
   // The dock is the sole chronology filter. Undated datasets have no active
   // chronology and retain the complete Explore-scope record set.
-  const scatterRows = chart?.key === 'scatter' && (scatterXAxisMode === 'date' || !scatterChronologyAvailable) ? profileRows : renderedPreviewRows;
+  const scatterRows = chart?.key === 'scatter' && (scatterXAxisMode === 'date' || !scatterChronologyAvailable) ? filteredExploreRows : filteredPreviewRows;
   const slopePeriods = useMemo(() => chart?.key === 'slope' ? chartsIISlopePeriods(profileRows, slopeInterval) : [], [chart?.key, profileRows, slopeInterval]);
   const slopeKeys = new Set(slopePeriods.map(period => String(period.start)));
   const effectiveSlopeFirst = slopeKeys.has(slopeFirstPeriod) ? slopeFirstPeriod : String(slopePeriods[0]?.start ?? '');
@@ -450,12 +462,12 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
       return settledScatterResult.current;
     }
     const next = isLiveFamily
-      ? deriveChartsIIBuilderData(contract, scatterRows, { ...settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, slopeFirstPeriod:effectiveSlopeFirst, slopeSecondPeriod:effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel })
+      ? deriveChartsIIBuilderData(contract, scatterRows, { ...settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows: filteredExploreRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, slopeFirstPeriod:effectiveSlopeFirst, slopeSecondPeriod:effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel })
       : null;
     if (chart?.key === 'slope' && !chronologyDragging) settledSlopeResult.current = next;
     if (chart?.key === 'scatter' && !chronologyDragging) settledScatterResult.current = next;
     return next;
-  }, [chart?.key, chronologyDragging, isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, effectiveSlopeFirst, effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel]);
+  }, [chart?.key, chronologyDragging, isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, filteredExploreRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, effectiveSlopeFirst, effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel]);
   const isResultPopulated = chartResult?.status === 'ready' && (() => {
     const result = chartResult.chart;
     if (!result) return false;
@@ -482,11 +494,13 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     const descriptor = buildChartsIIPngDescriptor({
       family: chart?.name,
       chartTitle: chartResult.chart?.title,
-      scopeCount: (chart?.key === 'scatter' ? scatterRows : renderedPreviewRows).length,
+      scopeCount: (chart?.key === 'scatter' ? scatterRows : filteredPreviewRows).length,
       exploreCount: profileRows.length,
       chronologyRange: scatterDateRange,
       chronologyEnabled: scatterChronologyAvailable,
       dateAxis: chart?.key === 'scatter' && scatterXAxisMode === 'date',
+      localFilterCount: countChartsIIActiveFilters(localFilterRules),
+      excludedByLocalFilters: Math.max(0, (chart?.key === 'scatter' && (scatterXAxisMode === 'date' || !scatterChronologyAvailable) ? profileRows.length : renderedPreviewRows.length) - (chart?.key === 'scatter' ? scatterRows.length : filteredPreviewRows.length)),
       includeProvenance: exportOptions.includeProvenance,
       includeFootnotes: exportOptions.includeFootnotes,
       footnotes: exportOptions.footnotes,
@@ -549,6 +563,9 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                     onChange={(event) => {
                       const mode = event.target.value;
                       setLineMode(mode);
+                      if (mode === 'single') {
+                        setLocalFilterRules(restrictChartsIILocalFiltersToSingleCategory(localFilterRules));
+                      }
                       setContract(createChartsIIBuilderConfiguration(mode === 'multi' ? 'line-multi' : mode === 'wide' ? 'line-wide' : 'line', profileRows));
                       if (mode === 'wide') {
                         setWideSeriesFields(scatterNumericFields.slice(0, Math.min(2, scatterNumericFields.length)).map(field => field.key));
@@ -844,7 +861,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
               </label>}
               <p className="text-[11px] leading-relaxed text-[#52675a]">{contract.ready
                 ? isLiveFamily
-                  ? `${profileRows.length} records in Explore scope · ${isScatter ? scatterRows.length : previewRows.length} in chart scope.`
+                  ? `${profileRows.length} records in Explore scope · ${isScatter ? scatterRows.length : filteredPreviewRows.length} in chart scope${countChartsIIActiveFilters(localFilterRules) ? ` · ${countChartsIIActiveFilters(localFilterRules)} chart-local filters` : ''}.`
                   : `Field contract ready · ${profileRows.length} records in Explore scope. Live preview pending for this chart family.`
                 : contract.problems.join(' ')}</p>
             </div>
@@ -852,7 +869,16 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
           <div className="my-4 border-t border-[var(--peridot-color-hex-d5c7a8)]" />
           <details className="group" aria-label="Chart filters">
             <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-8b2e23)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b58b42]">Filters</summary>
-            <p className="mt-2 text-sm text-[var(--peridot-color-hex-52675a)]">Chart-local scope controls are pending.</p>
+            <PeridotChartsIILocalFilters
+              rules={localFilterRules}
+              singleCategory={singleCategoryFilter}
+              rows={profileRows}
+              inventory={localFilterInventory}
+              onChange={setLocalFilterRules}
+              beforeCount={chart?.key === 'scatter' && (scatterXAxisMode === 'date' || !scatterChronologyAvailable) ? profileRows.length : renderedPreviewRows.length}
+              afterCount={chart?.key === 'scatter' ? scatterRows.length : filteredPreviewRows.length}
+              exploreCount={profileRows.length}
+            />
           </details>
           <div className="my-4 border-t border-[var(--peridot-color-hex-d5c7a8)]" />
           <details className="group" aria-label="Chart appearance">
@@ -963,7 +989,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">{contract.problems.join(' ') || 'Choose valid fields to render this chart.'}</div>
                 ) : chartResult?.status === 'unavailable' ? (
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">{chartResult.problems?.join(' ')}</div>
-                ) : !(isScatter ? scatterRows : previewRows).length ? (
+                ) : !(isScatter ? scatterRows : filteredPreviewRows).length ? (
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">No records are available in the current playback scope.</div>
                 ) : isResultPopulated ? (
                   <div ref={chartSvgContainerRef} className="h-full min-h-[320px] min-w-0">
@@ -1010,6 +1036,9 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
 }
 
 export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSelectChart, onNavigatePage, profileRows = [], previewRows = [], chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null }) {
+  // Keep separate chart-local rules when the researcher browses the Catalogue
+  // and returns to another Builder chart during this mounted workspace session.
+  const [localFiltersByChart, setLocalFiltersByChart] = useState({});
   // Profile is derived from the stable applied Explore scope. Playback changes
   // should not reorder recommendations while a researcher uses the scrubber.
   const profile = useMemo(() => buildChartsIIDataProfile(profileRows), [profileRows]);
@@ -1019,7 +1048,7 @@ export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSel
   return (
     <div className={`min-h-0 flex-1 rounded-xl px-4 pb-4 text-[var(--peridot-color-hex-24382d)] sm:px-5 sm:pb-5 ${showingBuilder ? "overflow-hidden bg-[var(--peridot-color-hex-f8f4e6)] pt-1" : "overflow-auto bg-[#f9f4e9] pt-9"}`}>
       {showingBuilder
-        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} scatterChronologyAvailable={scatterChronologyAvailable} scatterDateRange={scatterDateRange} onBackToCatalogue={() => onNavigatePage('catalogue')} />
+        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} scatterChronologyAvailable={scatterChronologyAvailable} scatterDateRange={scatterDateRange} localFiltersByChart={localFiltersByChart} setLocalFiltersByChart={setLocalFiltersByChart} onBackToCatalogue={() => onNavigatePage('catalogue')} />
         : <FoundationCatalogue onSelectChart={onSelectChart} charts={charts} profile={profile} />}
     </div>
   );

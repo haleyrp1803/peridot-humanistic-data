@@ -49,3 +49,14 @@ test('rotated tick labels and custom axes reserve independent space', () => {
   assert.ok(detailed.width > basic.width);
   assert.ok(detailed.bottom >= 154);
 });
+
+test('chart-local filter provenance reports only current-chart exclusions', () => {
+  const descriptor = buildChartsIIPngDescriptor({
+    family: 'Bar / Column', chartTitle: 'Filtered correspondence',
+    scopeCount: 20, exploreCount: 100,
+    includeProvenance: true, localFilterCount: 2, excludedByLocalFilters: 15,
+  });
+  assert.equal(descriptor.footerLines.some(line => line.includes('Chart-local filters: 2 active | 15 records excluded')), true);
+  const clean = buildChartsIIPngDescriptor({ family: 'Bar', scopeCount: 20, exploreCount: 100, includeProvenance: false, localFilterCount: 2, excludedByLocalFilters: 15 });
+  assert.equal(clean.footerLines.length, 0);
+});

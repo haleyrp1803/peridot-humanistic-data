@@ -10,7 +10,7 @@ export function formatChartsIIChronologyDay(day) {
   return `${yearText}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
 }
 
-export function buildChartsIIPngDescriptor({ family, chartTitle, scopeCount, exploreCount, chronologyRange, chronologyEnabled = false, dateAxis = false, includeProvenance = true, includeFootnotes = false, footnotes = '' } = {}) {
+export function buildChartsIIPngDescriptor({ family, chartTitle, scopeCount, exploreCount, chronologyRange, chronologyEnabled = false, dateAxis = false, includeProvenance = true, includeFootnotes = false, footnotes = '', localFilterCount = 0, excludedByLocalFilters = 0 } = {}) {
   const familyName = String(family || 'Chart').trim();
   const first = formatChartsIIChronologyDay(chronologyRange?.start);
   const last = formatChartsIIChronologyDay(chronologyRange?.end);
@@ -18,6 +18,7 @@ export function buildChartsIIPngDescriptor({ family, chartTitle, scopeCount, exp
   if (includeProvenance) {
     footerLines.push(`Peridot Charts II | ${familyName}`);
     footerLines.push(`Chart input: ${Number.isFinite(scopeCount) ? scopeCount.toLocaleString('en-US') : 'unknown'} records | Explore scope: ${Number.isFinite(exploreCount) ? exploreCount.toLocaleString('en-US') : 'unknown'} records`);
+    if (localFilterCount > 0) footerLines.push(`Chart-local filters: ${localFilterCount} active | ${Math.max(0, excludedByLocalFilters)} records excluded from current chart scope`);
     if (chronologyEnabled && first && last) {
       footerLines.push(`${dateAxis ? 'Visible date-axis range' : 'Selected chronology window'}: ${first} to ${last} (Gregorian)`);
     } else {
