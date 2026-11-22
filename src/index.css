@@ -397,7 +397,7 @@ textarea {
 
 /* Chart-visualization entrance choreography.
  * The Visualizations shell, header, timeline, and green stage transition animate
- * outside AnalyticsPanel. Start this local chart-builder reveal just after the
+ * outside the Charts II Builder. Start this local chart-builder reveal just after the
  * solid green stage veil has cleared, then keep the top-to-bottom sequence tight
  * enough to orient the user without making them wait on the animation itself.
  * Keep the final chart animation opacity-only so SVG export refs and chart layout

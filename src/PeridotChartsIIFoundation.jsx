@@ -1,9 +1,8 @@
 /*
- * Charts II — parallel development foundation (structural pass 1).
+ * Charts II — active chart Catalogue and Builder.
  *
- * B3.3 reuses the existing Charts I renderers for Bar, Line, Multi-Line, Grouped Bar, Stacked Bar, Pie, Histogram, Heatmap, and Sunburst via the B1 derivation adapter.
- * It supplies two distinct navigation surfaces without modifying Charts I UI/state. The persistent parent owns the
- * selected chart key; this component receives it as a controlled input.
+ * Shared analytics renderers and derivation helpers are retained after Charts I retirement.
+ * The Visualize workspace owns the selected chart key and passes it as a controlled input.
  *
  * Suitability is advisory and derived from applied Explore scope, separate from
  * playback-visible rendering. Only the currently rendered chart may be exported;
@@ -144,7 +143,7 @@ function ChartChoiceCard({ chart, onSelectChart }) {
 
 // Browser controls persist while the application remains open, including when
 // the parent temporarily unmounts Charts II during navigation to Map/Network.
-// They do not modify canonical data or share state with the Charts I builder.
+// They do not modify canonical data or the state of other visualization workspaces.
 let catalogueBrowseSession = { query: '', order: 'question', purpose: 'all', fitOnly: false };
 
 function FoundationCatalogue({ onSelectChart, charts, profile }) {
@@ -324,7 +323,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     setExportPanelOpen(previous => !previous);
   };
   // Stable Explore rows define the available fields; playback rows define
-  // the plotted data. Charts I state and the recommendations remain independent.
+  // the plotted data. The stable Explore-scope recommendations remain independent.
   const [lineMode, setLineMode] = useState('single');
   const [pieMode, setPieMode] = useState('pie');
   const [stackedBarMode, setStackedBarMode] = useState('absolute');

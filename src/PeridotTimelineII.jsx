@@ -965,8 +965,7 @@ export function PeridotTimelineII({
   if(!domainAll.length)return <div className="flex min-h-0 flex-1 items-center justify-center rounded-xl bg-[#eee0c7] text-[#4b4236]">No positionable events available to Timeline II.</div>;
   return <div className="relative flex min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-hidden rounded-xl border border-[#b4a087] bg-[#eee0c7] text-[#302b24]">
     {/* Timeline-owned subnavigation mirrors the Charts II two-tab pattern.
-        The shared Visualize workspace is deliberately untouched while its
-        parallel Charts II branch contains uncommitted source changes. */}
+        Both are accessible through the shared Visualize workspace. */}
     <nav className="z-20 flex h-12 shrink-0 items-center justify-center gap-1 border-b border-[#d5c1a5] bg-[#fbf7ed]" aria-label="Timeline workspace">
       <button type="button" aria-current={!categoryEditorOpen?'page':undefined} onClick={()=>setCategoryEditorOpen(false)} className={`rounded-md border px-4 py-1.5 text-xs font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${!categoryEditorOpen?'border-[#b4a087] bg-[#e7d7b9] text-[#253C32]':'border-transparent text-[#302b24] hover:bg-[#eee0c7]'}`}>Timeline</button>
       <button type="button" aria-current={categoryEditorOpen?'page':undefined} onClick={()=>{setPlaying(false);setCategoryEditorOpen(true);}} className={`rounded-md border px-4 py-1.5 text-xs font-bold uppercase tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#7C211E] ${categoryEditorOpen?'border-[#b4a087] bg-[#e7d7b9] text-[#253C32]':'border-transparent text-[#302b24] hover:bg-[#eee0c7]'}`}>Categories</button>

@@ -225,7 +225,7 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
       periods: derived.periods, series: derived.series, temporalAxis: derived.temporalAxis }, reporting: derived.reporting };
   }
   // Charts II's chronological families share the same precision-aware calendar bins.
-  // Other chart families retain their existing accepted Charts I derivations.
+  // Other chart families retain their accepted shared analytics derivations.
   if (['line', 'line-multi', 'area', 'stacked-area'].includes(contract.chartKey)) {
     const interval = settings.interval || 'year';
     const grouped = contract.chartKey === 'line-multi' || contract.chartKey === 'stacked-area';

@@ -1,5 +1,5 @@
 /* Charts II PNG export. Captures the currently rendered, configured SVG,
- * never the inactive Charts I chart or the Builder's controls. */
+ * never the Builder's controls or another visualization. */
 import { civilFromDay } from './peridotChronologyWindow.js';
 import { renderSvgElementToPngBlob, slugifyFilenamePart, makeDownloadUrl, revokeObjectUrl } from './exportHelpers.js';
 

@@ -17,7 +17,7 @@
  *   `playbackIndex`, `isPlaying`, and `playbackSpeed`.
  * - The bottom scrubber changes the global visualization scope. It is not an
  *   Analytics-only chart range and should not be wired directly to chart-local
- *   state in `AnalyticsPanel.jsx`.
+ *   state in the Charts II Builder.
  * - `onResetTimeline` should restore both the selected range and playback
  *   progress because downstream graph/export rows depend on the resulting
  *   visible row scope.

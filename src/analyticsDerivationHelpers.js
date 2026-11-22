@@ -4,7 +4,7 @@
  * This module converts the current filtered rows into chart-ready structures. It detects available categorical/numeric fields, applies Analytics-local date scopes, builds grouped/stacked/multi-series data, computes record-count and numeric aggregations, and formats time periods.
  * 
  * Important relationships:
- * - `AnalyticsPanel.jsx` calls this file to build data for the selected chart configuration.
+ * - `chartsIIBuilderContract.js` uses these functions to prepare chart data and field inventories.
  * - `analyticsConfig.js` supplies curated semantic field definitions and chart defaults.
  * - `analyticsChartComponents.jsx` expects this file to return already-shaped data rather than raw application rows.
  * 
@@ -1194,7 +1194,7 @@ export function buildSunburstChartData(rows = [], parentBy = 'sourceLoc', childB
  * - Every chartType returned here must have a corresponding renderer branch in
  *   `analyticsChartComponents.jsx`.
  * - Every chartType that needs user choices should have matching controls in
- *   `AnalyticsPanel.jsx`.
+ *   `PeridotChartsIIFoundation.jsx` via the Charts II derivation contract.
  * - Keep this function focused on shaping already-filtered rows into chart data;
  *   global Search/Filter scope, timeline playback scope, and export behavior are
  *   owned by higher-level workspaces.

@@ -1,7 +1,7 @@
 /*
  * SVG chart-rendering primitives for Analytics.
  * 
- * This module contains the presentational chart components used by `AnalyticsPanel.jsx`. It expects chart-ready data objects from `analyticsDerivationHelpers.js` and focuses on drawing axes, marks, labels, legends, tooltips, and empty states for the supported chart families.
+ * This module contains the presentational chart components used by the Charts II Builder. It expects chart-ready data objects from `analyticsDerivationHelpers.js` and focuses on drawing axes, marks, labels, legends, tooltips, and empty states for the supported chart families.
  * 
  * Important relationships:
  * - Do not derive filtered datasets here; this file should remain a rendering layer.
@@ -909,7 +909,7 @@ export function AnalyticsLineChart({ data = [], title, subtitle, temporalAxis, g
 }
 
 
-// Charts II Area rendering. Existing Charts I Line renderers remain untouched.
+// Charts II Area rendering. Shared Line renderers remain available for Charts II.
 // Missing numeric observations break the filled region; no line is drawn across
 // a gap. Counts and positive sums use the zero baseline.
 function areaFinite(value) {

@@ -7,7 +7,7 @@
  * 
  * Important relationships:
  * - `App.jsx` owns the current data, selected visualization, map stage, export handlers, and timeline state passed here.
- * - `AnalyticsPanel.jsx` owns chart controls/rendering but registers chart export with the shared contextual export action.
+ * - `PeridotChartsIIFoundation.jsx` owns the chart Catalogue, Builder, and chart-specific PNG exports.
  * - `timelinePlaybackComponents.jsx` renders the bottom scrubber used here.
  * 
  * Maintenance cautions:
@@ -22,14 +22,13 @@
  * - Contextual Export should export the same scoped visualization state that is
  *   currently rendered. Do not point export actions at raw uploaded rows unless
  *   adding a separate, explicitly labeled full-dataset export.
- * - Chart export is registered by `AnalyticsPanel.jsx`; map/network export is
- *   passed from App. The header menu switches between those contexts.
+ * - Charts exports are handled inside Charts II; the header export menu
+ *   continues to serve Map/Network through handlers passed from App.
  */
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 import { PeridotChartsIIFoundation } from './PeridotChartsIIFoundation.jsx';
 import { PeridotTimelineII } from './PeridotTimelineII.jsx';
 import { PeridotSharedChronologyAdapter } from './PeridotSharedChronologyAdapter.jsx';
@@ -39,15 +38,10 @@ import { indexedCalendarDomain } from './peridotChronologyNavigationBridge.js';
 const VISUALIZATION_TOOLS = Object.freeze({
   GEOGRAPHIC_MAP: 'geographic-map',
   FORCE_NETWORK: 'force-network',
-  CHART_WORKSPACE: 'chart-workspace',
   CHARTS_II: 'charts-ii',
   TIMELINE_II: 'timeline-ii',
   CAPABILITY_SUMMARY: 'capability-summary',
 });
-
-function chartTypeFromToolKey(toolKey) {
-  return String(toolKey || '').startsWith('chart:') ? String(toolKey).slice(6) : null;
-}
 
 function numberLabel(value) {
   return Number.isFinite(value) ? String(value) : '0';
@@ -1003,7 +997,6 @@ export function PeridotVisualizationsWorkspace({
   onSelectTimeline,
   timelineWorkspaceProps,
   onOpenAnalytics,
-  onOpenChartVisualization,
   onOpenSearch,
   timelineControlsProps,
   exportControls,
@@ -1030,7 +1023,7 @@ export function PeridotVisualizationsWorkspace({
   };
 
   const initialTool = visualizationsWorkspacePanel === 'analytics'
-    ? VISUALIZATION_TOOLS.CHART_WORKSPACE
+    ? VISUALIZATION_TOOLS.CHARTS_II
     : visualizationsWorkspacePanel === 'timeline'
       ? VISUALIZATION_TOOLS.TIMELINE_II
       : personLayoutMode === 'force' && viewMode === 'person'
@@ -1038,7 +1031,6 @@ export function PeridotVisualizationsWorkspace({
       : VISUALIZATION_TOOLS.GEOGRAPHIC_MAP;
 
   const [selectedTool, setSelectedTool] = useState(initialTool);
-  const [chartExportControls, setChartExportControls] = useState(null);
   // Charts II navigation belongs to the persistent Visualize shell, not a
   // temporarily mounted catalogue/builder. It survives tab and route changes.
   const [chartsIIChartKey, setChartsIIChartKey] = useState(null);
@@ -1081,10 +1073,9 @@ export function PeridotVisualizationsWorkspace({
 
   useEffect(() => {
     if (visualizationsWorkspacePanel === 'analytics') {
-      // Choosing Charts II also activates the existing analytics data scope.
-      // Do not let the resulting App panel update bounce it back to Charts I.
-      setSelectedTool((current) => current === VISUALIZATION_TOOLS.CHARTS_II
-        ? current : VISUALIZATION_TOOLS.CHART_WORKSPACE);
+      // The single Charts tab is routed to Charts II. Keep the same Catalogue
+      // and Builder session when analytics context is reactivated from App.
+      setSelectedTool(VISUALIZATION_TOOLS.CHARTS_II);
     } else if (visualizationsWorkspacePanel === 'timeline') {
       setSelectedTool(VISUALIZATION_TOOLS.TIMELINE_II);
     } else if (visualizationsWorkspacePanel === 'force-directed') {
@@ -1139,25 +1130,14 @@ export function PeridotVisualizationsWorkspace({
       availableInstead: [availability.hasCharts ? 'Chart Visualizations' : null, availability.hasExploreData ? 'Explore Your Data' : null].filter(Boolean),
     },
     [VISUALIZATION_TOOLS.CHARTS_II]: {
-      label: 'Charts II',
-      // Unlike Charts I, the catalogue is available even when heuristic field
+      label: 'Charts',
+      // The catalogue is available even when heuristic field
       // discovery finds no chartable fields in an otherwise active dataset.
       available: availability.hasExploreData || availability.hasCharts,
       action: onOpenAnalytics,
-      unavailableTitle: 'Charts II needs usable chart data.',
-      why: 'An active dataset is required to open the Charts II catalogue.',
+      unavailableTitle: 'Charts needs an active dataset.',
+      why: 'An active dataset is required to open the chart catalogue.',
       availableInstead: [availability.hasExploreData ? 'Explore Your Data' : null].filter(Boolean),
-    },
-    [VISUALIZATION_TOOLS.CHART_WORKSPACE]: {
-      label: 'Chart Visualizations',
-      available: availability.hasCharts,
-      action: onOpenAnalytics,
-      unavailableTitle: 'Chart Visualizations are not available for this dataset.',
-      why: 'No active records or chartable fields are available for charting in the current scope.',
-      availableInstead: [
-        availability.hasPointMap || availability.hasRouteMap || availability.hasEntityNetwork ? 'Geographic Map' : null,
-        availability.hasExploreData ? 'Explore Your Data' : null,
-      ].filter(Boolean),
     },
   }), [
     availability.hasCharts,
@@ -1180,9 +1160,8 @@ export function PeridotVisualizationsWorkspace({
     { label: 'Map', tool: VISUALIZATION_TOOLS.GEOGRAPHIC_MAP },
     { label: 'Network', tool: VISUALIZATION_TOOLS.FORCE_NETWORK },
     { label: 'Timeline', tool: VISUALIZATION_TOOLS.TIMELINE_II },
-    { label: 'Charts', tool: VISUALIZATION_TOOLS.CHART_WORKSPACE },
-    // Temporary parallel development entry; legacy Charts stays available.
-    { label: 'Charts II', tool: VISUALIZATION_TOOLS.CHARTS_II },
+    // The sole public Charts tab opens Charts II; the Charts I renderer is retired.
+    { label: 'Charts', tool: VISUALIZATION_TOOLS.CHARTS_II },
   ];
 
   const selectTool = (toolKey) => {
@@ -1222,12 +1201,7 @@ export function PeridotVisualizationsWorkspace({
     }, 120);
   };
 
-  const isCategorySelected = (category) => {
-    if (category.tool === VISUALIZATION_TOOLS.CHART_WORKSPACE) {
-      return selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || Boolean(chartTypeFromToolKey(selectedTool));
-    }
-    return selectedTool === category.tool;
-  };
+  const isCategorySelected = (category) => selectedTool === category.tool;
 
   const tabClass = (selected) => [
     'peridot-visualize-tab relative inline-flex h-9 items-center justify-center border-b-2 px-3 text-[11px] font-extrabold uppercase tracking-[0.14em] transition duration-150',
@@ -1245,11 +1219,9 @@ export function PeridotVisualizationsWorkspace({
     { label: 'Rows', value: numberLabel(availability.rowCount) },
   ];
 
-  const isChartWorkspaceActive = selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || Boolean(chartTypeFromToolKey(selectedTool));
-  // Charts II has no renderer or export yet: never expose Charts I's stale
-  // chart export (or a Map/Network export) on its development surface.
+  // Charts II exports from its Builder; Map/Network retain the header action.
   const activeExportControls = selectedTool === VISUALIZATION_TOOLS.CHARTS_II
-    ? null : (isChartWorkspaceActive ? chartExportControls : exportControls);
+    ? null : exportControls;
 
   const renderWorkspaceBody = () => {
     if (!selectedDefinition.available) {
@@ -1273,7 +1245,7 @@ export function PeridotVisualizationsWorkspace({
           selectedChartKey={chartsIIChartKey}
           currentPage={chartsIIPage}
           profileRows={analyticsWorkspaceProps?.chartsIIProfileRows || []}
-          previewRows={analyticsWorkspaceProps?.analyticsState?.rows || []}
+          previewRows={analyticsWorkspaceProps?.chartsIIPreviewRows || []}
           chronologyDragging={chartsIIChronologyDragging}
           scatterChronologyAvailable={scatterChronologyAvailable}
           scatterDateRange={scatterDateRange}
@@ -1283,17 +1255,6 @@ export function PeridotVisualizationsWorkspace({
           }}
           onNavigatePage={setChartsIIPage}
         />
-      );
-    }
-
-    if (selectedTool === VISUALIZATION_TOOLS.CHART_WORKSPACE || chartTypeFromToolKey(selectedTool)) {
-      return (
-        <div className="peridot-analytics-workspace min-h-0 flex-1 overflow-hidden">
-          <AnalyticsPanelContent
-            analyticsState={analyticsWorkspaceProps.analyticsState}
-            onChartExportControlsChange={setChartExportControls}
-          />
-        </div>
       );
     }
 

@@ -95,8 +95,7 @@ import {
   PERIDOT_WORKSPACE_MODES,
   resolvePeridotWorkspaceMode,
 } from './peridotWorkspaceConfig';
-import { DEFAULT_ANALYTICS_STATE } from './analyticsConfig';
-import { buildAnalyticsChartData, getAvailableAnalyticsFields } from './analyticsDerivationHelpers';
+import { getAvailableAnalyticsFields } from './analyticsDerivationHelpers';
 import { InspectorEmptyState as InspectorEmptyStateView } from './InspectorEmptyState';
 import { InspectorClusterView as InspectorClusterViewView } from './InspectorClusterView';
 import { InspectorEdgeView as InspectorEdgeViewView } from './InspectorEdgeView';
@@ -2330,7 +2329,7 @@ function buildLeftControlPanelProps(args) {
       applyThemePreset: args.applyThemePreset,
       resetTheme: args.resetTheme,
     },
-    exportState: { handleExportSvg: args.handleExportSvg, handleExportPng: args.handleExportPng, handleExportEdgesCsv: args.handleExportEdgesCsv, handleExportNodesCsv: args.handleExportNodesCsv, graph: args.graph, exportStatus: args.exportStatus, }, analyticsState: { chartType: args.analyticsChartType, setChartType: args.setAnalyticsChartType, barGroupBy: args.analyticsBarGroupBy, setBarGroupBy: args.setAnalyticsBarGroupBy, topN: args.analyticsTopN, setTopN: args.setAnalyticsTopN, availableFields: args.analyticsFields, chartData: args.analyticsChartData, rows: args.analyticsRows, },
+    exportState: { handleExportSvg: args.handleExportSvg, handleExportPng: args.handleExportPng, handleExportEdgesCsv: args.handleExportEdgesCsv, handleExportNodesCsv: args.handleExportNodesCsv, graph: args.graph, exportStatus: args.exportStatus },
   };
 }
 
@@ -4309,7 +4308,6 @@ export default function EuropeNetworkMapApp() {
     showEntities: false,
   });
   const [geographicCartoStyle, setGeographicCartoStyle] = useState('rastertiles/voyager');
-  const [analyticsChartType, setAnalyticsChartType] = useState(DEFAULT_ANALYTICS_STATE.chartType); const [analyticsBarGroupBy, setAnalyticsBarGroupBy] = useState(DEFAULT_ANALYTICS_STATE.barGroupBy); const [analyticsTopN, setAnalyticsTopN] = useState(DEFAULT_ANALYTICS_STATE.topN);
 
   
   // CONTROL PANEL OPEN/CLOSED STATE FOR INDIVIDUAL SECTIONS
@@ -5045,24 +5043,6 @@ export default function EuropeNetworkMapApp() {
     [analyticsAvailabilityRows]
   );
 
-  const analyticsFields = useMemo(() => getAvailableAnalyticsFields(analyticsRows), [analyticsRows]);
-  useEffect(() => {
-    if (analyticsChartType !== 'bar') return;
-    const available = analyticsFields.barGroupOptions || [];
-    if (!available.length) return;
-    if (!available.some((field) => field.key === analyticsBarGroupBy)) {
-      setAnalyticsBarGroupBy(available[0].key);
-    }
-  }, [analyticsBarGroupBy, analyticsChartType, analyticsFields]);
-  const analyticsChartData = useMemo(
-    () => buildAnalyticsChartData({
-      rows: analyticsRows,
-      chartType: analyticsChartType,
-      barGroupBy: analyticsBarGroupBy,
-      topN: analyticsTopN,
-    }),
-    [analyticsRows, analyticsChartType, analyticsBarGroupBy, analyticsTopN]
-  );
 
   // Timeline II has its own calendar-day clamps and playback. Its input must
   // therefore be the Search-applied dataset, not the active indexed session's
@@ -6559,7 +6539,7 @@ export default function EuropeNetworkMapApp() {
     handleExportPng,
     handleExportEdgesCsv,
     handleExportNodesCsv,
-    graph, exportStatus, analyticsChartType, setAnalyticsChartType, analyticsBarGroupBy, setAnalyticsBarGroupBy, analyticsTopN, setAnalyticsTopN, analyticsFields, analyticsChartData, analyticsRows, }); const inspectorPanelProps = buildInspectorPanelProps({
+    graph, exportStatus, }); const inspectorPanelProps = buildInspectorPanelProps({
     showRightSidebar,
     setShowRightSidebar,
     setShowLeftSidebar,
@@ -6827,12 +6807,6 @@ export default function EuropeNetworkMapApp() {
     }, { minimumDuration: 650 });
   };
 
-  const openChartVisualization = (chartType) => {
-    if (chartType) {
-      setAnalyticsChartType(chartType);
-    }
-    openAnalyticsWorkspace();
-  };
 
   const routeTutorialStepToWorkspace = (step) => {
     if (!step) return;
@@ -6956,17 +6930,9 @@ export default function EuropeNetworkMapApp() {
     // Charts II recommendations use the Explore-filtered availability scope,
     // independent of the currently visible playback position.
     chartsIIProfileRows: analyticsAvailabilityRows,
-    analyticsState: {
-      chartType: analyticsChartType,
-      setChartType: setAnalyticsChartType,
-      barGroupBy: analyticsBarGroupBy,
-      setBarGroupBy: setAnalyticsBarGroupBy,
-      topN: analyticsTopN,
-      setTopN: setAnalyticsTopN,
-      availableFields: analyticsFields,
-      chartData: analyticsChartData,
-      rows: analyticsRows,
-    },
+    // Charts II consumes the chronology-scoped rows directly. Its field
+    // inventory and configurations live in the Charts II Builder.
+    chartsIIPreviewRows: analyticsRows,
   };
 
   const timelineControlsProps = {
@@ -7029,7 +6995,6 @@ export default function EuropeNetworkMapApp() {
       onEventClick: handleTimelineEventClick,
     },
     onOpenAnalytics: openAnalyticsWorkspace,
-    onOpenChartVisualization: openChartVisualization,
     onOpenSearch: () => {
       if (workspaceMode === PERIDOT_WORKSPACE_MODES.SEARCH) return;
       runPeridotTransition('Opening Explore…', () => {
@@ -7263,10 +7228,6 @@ export default function EuropeNetworkMapApp() {
           }
           .peridot-redesign-root main > .flex.h-full.flex-col > .shrink-0 {
             background: var(--title-bar-bg) !important;
-          }
-          .peridot-analytics-workspace select,
-          .peridot-analytics-workspace input {
-            min-height: 2.35rem !important;
           }
         `}</style>
       <div className="flex h-full min-h-0 flex-col">

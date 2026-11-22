@@ -4,7 +4,7 @@
  * This file defines the supported chart vocabulary, user-facing chart labels, aggregation options, default Analytics state, and curated field definitions used by chart controls and chart data derivation.
  * 
  * Important relationships:
- * - `AnalyticsPanel.jsx` uses these definitions to render controls.
+ * - `chartsIIBuilderContract.js` and the shared analytics helpers reuse relevant field definitions.
  * - `analyticsDerivationHelpers.js` uses the field definitions and aliases to resolve current-row data into chartable dimensions.
  * - User-facing wording here should remain general enough for non-correspondence humanistic datasets.
  * 
@@ -28,7 +28,7 @@ export const ANALYTICS_CHART_EXTENSION_CHECKLIST = Object.freeze([
   'analyticsConfig.js: add the chart definition, label, examples, and default copy.',
   'analyticsDerivationHelpers.js: return the chart-ready data shape for the new chartType.',
   'analyticsChartComponents.jsx: render that data shape and preserve SVG/PNG export compatibility.',
-  'AnalyticsPanel.jsx: expose only the controls that the chart needs.',
+  '`PeridotChartsIIFoundation.jsx: expose only the controls that the chart needs.`',
   'PeridotVisualizationsWorkspace.jsx: confirm the chart appears in the Chart Visualizations menu.',
 ]);
 
