@@ -17,6 +17,7 @@ import React, { useState } from 'react';
 import { PERIDOT_THEME } from './peridotTheme.js';
 import { chartsIITemporalPositions } from './chartsIITemporalAxis.js';
 import { civilFromDay } from './peridotChronologyWindow.js';
+import { normalizeChartsIIStackedBars } from './chartsIIStackedBarPercent.js';
 
 const CHART_COLORS = {
   cardBg: PERIDOT_THEME.analytics.chartBg,
@@ -1198,16 +1199,21 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
 }
 
 
-export function AnalyticsStackedBarChart({ data = [], series = [], title, subtitle, svgRef }) {
+export function AnalyticsStackedBarChart({ data = [], series = [], title, subtitle, svgRef, mode = 'absolute' }) {
   const [tooltip, setTooltip] = useState(null);
   if (!data.length || !series.length) return <EmptyChartState message="No period and category data is available for the current selection." />;
 
+  const normalized = normalizeChartsIIStackedBars(data);
+  const percentMode = mode === 'percent';
+  if (percentMode && normalized.invalid) return <EmptyChartState message="100% Stacked requires nonnegative, finite additive segment values. Change the measure or use the absolute stacked view." />;
   const layout = getChartCardLayout({ height: 438, left: 56, top: 72, bottom: 42 });
   const { width, height, left, top, bottom, plotWidth, plotHeight } = layout;
-  const yTicks = getNiceTicks(Math.max(...data.map((row) => row.total), 1));
-  const scaleMax = yTicks[yTicks.length - 1] || 1;
+  const yTicks = percentMode ? [0, 25, 50, 75, 100] : getNiceTicks(Math.max(...data.map((row) => row.total), 1));
+  const scaleMax = percentMode ? 100 : (yTicks[yTicks.length - 1] || 1);
   const maxTotal = scaleMax;
   const grandTotal = data.reduce((sum, row) => sum + Number(row.total || 0), 0);
+  const normalizedByIndex = normalized.rows;
+  const zeroGroups = normalizedByIndex.filter(row => row.total === 0).length;
   const barWidth = Math.max(18, Math.min(52, plotWidth / Math.max(data.length, 1) - 10));
   const xLabelIndexes = getEvenlySpacedIndexes(data.length, 7);
   const panelLayout = layout.legend;
@@ -1229,7 +1235,15 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
           <>
             <line x1={left} x2={layout.chartRight} y1={top + plotHeight} y2={top + plotHeight} stroke={CHART_COLORS.grid} />
             <line x1={left} x2={left} y1={top} y2={top + plotHeight} stroke={CHART_COLORS.grid} />
-            {renderYAxisTicks({ ticks: yTicks, left, top, plotHeight, plotWidth, scaleMax: maxTotal })}
+            {percentMode ? <g aria-label="Percentage of each category total">
+              {yTicks.map(tick => {
+                const y = top + plotHeight - (tick / 100) * plotHeight;
+                return <g key={`percent-${tick}`}>
+                  <line x1={left - 6} x2={layout.chartRight} y1={y} y2={y} stroke={AXIS_COLORS.majorLine} opacity={tick === 0 ? 0.7 : 0.3} />
+                  <text x={left - 10} y={y + 4} textAnchor="end" fontSize="10.5" fill={AXIS_COLORS.tickLabel}>{tick}%</text>
+                </g>;
+              })}
+            </g> : renderYAxisTicks({ ticks: yTicks, left, top, plotHeight, plotWidth, scaleMax: maxTotal })}
             {renderXAxisMinorTicks({ positions: data.map((row, index) => {
               const x = data.length === 1 ? left + plotWidth / 2 - barWidth / 2 : left + (index / Math.max(1, data.length - 1)) * (plotWidth - barWidth);
               return x + barWidth / 2;
@@ -1237,20 +1251,24 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
             {data.map((row, index) => {
               const x = data.length === 1 ? left + plotWidth / 2 - barWidth / 2 : left + (index / Math.max(1, data.length - 1)) * (plotWidth - barWidth);
               let yCursor = top + plotHeight;
+              const distribution = normalizedByIndex[index];
               return (
                 <g key={row.label}>
                   {row.segments.map((segment, segmentIndex) => {
-                    const segmentHeight = (segment.count / maxTotal) * plotHeight;
+                    const share = distribution.segments[segmentIndex]?.percent || 0;
+                    const segmentHeight = ((percentMode ? share : segment.count) / maxTotal) * plotHeight;
                     yCursor -= segmentHeight;
-                    if (!segment.count) return null;
-                    return <rect key={segment.label} x={x} y={yCursor} width={barWidth} height={Math.max(1, segmentHeight)} fill={PALETTE[segmentIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="0.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: segment.label, secondary: row.label, count: segment.count, unit: segment.unit }))} onMouseLeave={() => setTooltip(null)} />;
+                    if (!segment.count || !segmentHeight) return null;
+                    return <rect key={segment.label} x={x} y={yCursor} width={barWidth} height={Math.max(1, segmentHeight)} fill={PALETTE[segmentIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="0.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: segment.label, secondary: percentMode ? `${row.label} · ${share.toFixed(1)}% of category (${formatNumber(row.total)} total)` : row.label, count: segment.count, unit: segment.unit }))} onMouseLeave={() => setTooltip(null)} />;
                   })}
-                  <text x={x + barWidth / 2} y={top + plotHeight - (row.total / maxTotal) * plotHeight - 7} textAnchor="middle" fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.total)}</text>
+                  {(!percentMode || distribution.total === 0) ? (
+                    <text x={x + barWidth / 2} y={percentMode ? top + plotHeight - 7 : top + plotHeight - (row.total / maxTotal) * plotHeight - 7} textAnchor="middle" fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{percentMode ? 'No total' : formatNumber(row.total)}</text>
+                  ) : null}
                   {xLabelIndexes.has(index) ? renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: row.label }) : null}
                 </g>
               );
             })}
-            <SummaryPanel {...panelLayout} title="Segment totals" rows={summaryRows} note={`Stacked total: ${formatNumber(grandTotal)}`} />
+            <SummaryPanel {...panelLayout} title={percentMode ? "Absolute segment totals" : "Segment totals"} rows={summaryRows} note={percentMode ? `Each nonempty category is normalized independently to 100%; ${zeroGroups} zero-total categories remain empty. Absolute grand total: ${formatNumber(grandTotal)}.` : `Stacked total: ${formatNumber(grandTotal)}`} />
           </>
         ),
       }}

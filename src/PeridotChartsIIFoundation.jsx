@@ -305,6 +305,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   // the plotted data. Charts I state and the recommendations remain independent.
   const [lineMode, setLineMode] = useState('single');
   const [pieMode, setPieMode] = useState('pie');
+  const [stackedBarMode, setStackedBarMode] = useState('absolute');
   const [scatterMode, setScatterMode] = useState('scatter');
   const [scatterXAxisMode, setScatterXAxisMode] = useState('numeric');
   const numericScatterXAxisRef = useRef('');
@@ -354,6 +355,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   useEffect(() => {
     setLineMode('single');
     setPieMode('pie');
+    setStackedBarMode('absolute');
     setScatterMode('scatter');
     setScatterXAxisMode('numeric');
     numericScatterXAxisRef.current = '';
@@ -739,6 +741,13 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   </select>
                 </label>
               )}
+              {chart?.key === 'stacked-bar' && <label className="block text-[12px] font-semibold text-[#344b39]">Stacked display
+                <select aria-label="Stacked display" className={inputClass} value={stackedBarMode} onChange={event => setStackedBarMode(event.target.value)}>
+                  <option value="absolute">Stacked — absolute totals</option>
+                  <option value="percent">100% Stacked — within-category percentages</option>
+                </select>
+                <span className="mt-1 block text-[10px] font-normal text-[#52675a]">100% Stacked divides each category's additive segments by that category's total. Original counts or sums remain available on hover.</span>
+              </label>}
               {temporalFamily && <div className="relative text-[12px] font-semibold text-[#344b39]">
                 <div className="flex items-center gap-1.5">Ordered x-axis
                   <InfoPopover label="About chronological intervals" compact>
@@ -875,7 +884,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                     {chartResult.chart.chartType === 'line' && <AnalyticsLineChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
                     {chartResult.chart.chartType === 'multiLine' && <AnalyticsMultiLineChart series={chartResult.chart.series} periods={chartResult.chart.periods} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
                     {chartResult.chart.chartType === 'groupedBar' && <AnalyticsGroupedBarChart data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
-                    {chartResult.chart.chartType === 'stackedBar' && <AnalyticsStackedBarChart data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
+                    {chartResult.chart.chartType === 'stackedBar' && <AnalyticsStackedBarChart data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} mode={stackedBarMode} />}
                     {chartResult.chart.chartType === 'pie' && <AnalyticsPieChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} donut={pieMode === 'donut'} />}
                     {chartResult.chart.chartType === 'histogram' && <AnalyticsHistogram data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
                     {chartResult.chart.chartType === 'heatmap' && <AnalyticsHeatmap rows={chartResult.chart.rows} columns={chartResult.chart.columns} cells={chartResult.chart.cells} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
