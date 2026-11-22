@@ -15,6 +15,7 @@
 
 import React, { useState } from 'react';
 import { PERIDOT_THEME } from './peridotTheme.js';
+import { chartsIITemporalPositions } from './chartsIITemporalAxis.js';
 
 const CHART_COLORS = {
   cardBg: PERIDOT_THEME.analytics.chartBg,
@@ -214,6 +215,29 @@ function getEvenlySpacedIndexes(length, preferredCount = 7) {
     indexes.add(Math.round((stepIndex / slots) * maxIndex));
   }
   return indexes;
+}
+
+// Charts II temporal labels are positioned by elapsed calendar time, so
+// selecting by array index can cluster labels when observations are uneven.
+// This helper is presentation-only: it never changes plotted data or x positions.
+function getTemporalLabelIndexes(labels, xForLabel, maxLabels = 6) {
+  const result = new Set();
+  if (!labels.length) return result;
+  const x = labels.map((label, i) => xForLabel(label, i));
+  const first = x.findIndex(Number.isFinite);
+  if (first === -1) return result;
+  result.add(first);
+  let previousX = x[first];
+  const totalSpan = Math.max(0, x[x.length - 1] - x[first]);
+  const labelLength = Math.max(...labels.map(label => String(label).length));
+  const required = labelLength > 17 ? 150 : labelLength > 10 ? 118 : 88;
+  const spacing = Math.max(required, totalSpan / Math.max(1, maxLabels - 1));
+  for (let i = first + 1; i < labels.length && result.size < maxLabels; i++) {
+    if (!Number.isFinite(x[i]) || x[i] - previousX < spacing) continue;
+    result.add(i);
+    previousX = x[i];
+  }
+  return result;
 }
 
 function getNiceTicks(maxValue, preferredCount = 5) {
@@ -532,7 +556,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
 }
 
 
-export function AnalyticsLineChart({ data = [], title, subtitle, svgRef }) {
+export function AnalyticsLineChart({ data = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState message="No time data is available for the current selection." />;
 
@@ -548,12 +572,15 @@ export function AnalyticsLineChart({ data = [], title, subtitle, svgRef }) {
   const first = data.find((row) => isFiniteChartValue(row.count));
   const last = [...data].reverse().find((row) => isFiniteChartValue(row.count));
   const netChange = first && last ? Number(last.count) - Number(first.count) : 0;
+  const temporalBins = chartsIITemporalPositions(temporalAxis, left, plotWidth);
+  const binByLabel = new Map(temporalBins.map(bin => [bin.label, bin]));
   const points = data.map((row, index) => {
-    const x = data.length === 1 ? left + plotWidth / 2 : left + (index / (data.length - 1)) * plotWidth;
+    const bin = binByLabel.get(row.label);
+    const x = bin ? (bin.x0 + bin.x1) / 2 : data.length === 1 ? left + plotWidth / 2 : left + (index / (data.length - 1)) * plotWidth;
     const y = isFiniteChartValue(row.count) ? top + plotHeight - (Number(row.count) / maxValue) * plotHeight : null;
-    return { ...row, x, y };
+    return { ...row, x, y, bin: binByLabel.get(row.label) };
   });
-  const xLabelIndexes = getEvenlySpacedIndexes(points.length, 7);
+  const xLabelIndexes = temporalBins.length ? getTemporalLabelIndexes(points.map(p => p.label), (label, i) => points[i].x) : getEvenlySpacedIndexes(points.length, 7);
   const panelLayout = layout.legend;
 
   return (
@@ -566,7 +593,16 @@ export function AnalyticsLineChart({ data = [], title, subtitle, svgRef }) {
             <line x1={left} x2={left} y1={top} y2={top + plotHeight} stroke={CHART_COLORS.grid} />
             {renderYAxisTicks({ ticks: yTicks, left, top, plotHeight, plotWidth, scaleMax: maxValue })}
             {renderXAxisMinorTicks({ positions: points.filter((_, index) => xLabelIndexes.has(index)).map((point) => point.x), y: top + plotHeight, top, showGuides: true })}
-            <path d={points.filter((point) => point.y !== null).map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')} fill="none" stroke={CHART_COLORS.accentDark} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+            {temporalBins.length ? points.map((point, index) => point.y === null ? null : <g key={`segment-${point.label}`}>
+              {(() => {
+                if (index === 0) return null;
+                // Non-finite measurements are always a hard break, even with Connect observations.
+                const previous = points[index - 1];
+                if (previous.y === null) return null;
+                if (gapDisplay === 'gaps' && previous.bin?.end !== point.bin?.start) return null;
+                return <line x1={previous.x} x2={point.x} y1={previous.y} y2={point.y} stroke={CHART_COLORS.accentDark} strokeWidth="2.5" />;
+              })()}
+            </g>) : <path d={points.filter((point) => point.y !== null).map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')} fill="none" stroke={CHART_COLORS.accentDark} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}
             {points.map((point, index) => (
               <g key={point.label}>
                 {point.y !== null ? <circle cx={point.x} cy={point.y} r="5" fill={CHART_COLORS.accent} stroke={CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, point))} onMouseLeave={() => setTooltip(null)} /> : null}
@@ -592,6 +628,178 @@ export function AnalyticsLineChart({ data = [], title, subtitle, svgRef }) {
   );
 }
 
+
+// Charts II Area rendering. Existing Charts I Line renderers remain untouched.
+// Missing numeric observations break the filled region; no line is drawn across
+// a gap. Counts and positive sums use the zero baseline.
+function areaFinite(value) {
+  return value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value));
+}
+
+function areaSegments(points) {
+  const result = [];
+  let segment = [];
+  for (const point of points) {
+    if (!areaFinite(point?.count)) {
+      if (segment.length) result.push(segment);
+      segment = [];
+    } else {
+      segment.push(point);
+    }
+  }
+  if (segment.length) result.push(segment);
+  return result;
+}
+
+export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+  const [tooltip, setTooltip] = useState(null);
+  if (!data.length) return <EmptyChartState message="No ordered data is available for this area chart." />;
+  const layout = getChartCardLayout({ height: 438, left: 58, top: 72, bottom: 42 });
+  const { width, height, left, top, plotWidth, plotHeight } = layout;
+  const values = data.map(point => point.count).filter(areaFinite).map(Number);
+  if (!values.length) return <EmptyChartState message="No usable numeric values are available." />;
+  // An area filled to zero is not meaningful for negative values in this
+  // positive-only first implementation. Show a clear state instead.
+  if (values.some(value => value < 0)) return <EmptyChartState message="Area currently requires nonnegative values." />;
+  const yTicks = getNiceTicks(Math.max(1, ...values));
+  const maxValue = yTicks[yTicks.length - 1] || 1;
+  const baseline = top + plotHeight;
+  const temporalBins = chartsIITemporalPositions(temporalAxis, left, plotWidth);
+  const binByLabel = new Map(temporalBins.map(bin => [bin.label, bin]));
+  const points = data.map((point, index) => ({
+    ...point,
+    ...(binByLabel.get(point.label) || {}),
+    x: binByLabel.has(point.label) ? (binByLabel.get(point.label).x0 + binByLabel.get(point.label).x1) / 2 : data.length === 1 ? left + plotWidth / 2 : left + index / (data.length - 1) * plotWidth,
+    y: areaFinite(point.count) ? baseline - Number(point.count) / maxValue * plotHeight : null,
+  }));
+  const segments = areaSegments(points);
+  const tickIndexes = temporalBins.length ? getTemporalLabelIndexes(points.map(p => p.label), (label,i) => points[i].x) : getEvenlySpacedIndexes(data.length, 7);
+  return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
+    {{
+      tooltip: <ChartTooltip tooltip={tooltip} />,
+      chart: <>
+        {renderYAxisTicks({ ticks: yTicks, left, top, plotHeight, plotWidth, scaleMax: maxValue })}
+        <line x1={left} y1={baseline} x2={layout.chartRight} y2={baseline} stroke={AXIS_COLORS.majorLine}/>
+        {temporalBins.length ? <>
+          {(() => {
+            const runs = [];
+            let active = [];
+            points.forEach(point => {
+              if (point.y === null || (gapDisplay === 'gaps' && active.length && active[active.length - 1].end !== point.start)) {
+                if (active.length) runs.push(active);
+                active = [];
+              }
+              if (point.y !== null) active.push(point);
+            });
+            if (active.length) runs.push(active);
+            return runs.map((run,index) => {
+              if (gapDisplay === 'connect' && run.length > 1) {
+                // Real x coordinates are unchanged. Sloped portions between populated bins
+                // are display interpolation only; no values are inserted in derivation.
+                const upper = run.map(point => `L ${point.x} ${point.y}`).join(' ');
+                const path = `M ${run[0].x} ${baseline} ${upper} L ${run[run.length-1].x} ${baseline} Z`;
+                return <g key={`area-run-${index}`}>
+                  <path d={path} fill={CHART_COLORS.accent} fillOpacity="0.32" stroke="none" />
+                  <path d={`M ${run.map(point => `${point.x} ${point.y}`).join(' L ')}`} fill="none" stroke={CHART_COLORS.accentDark} strokeWidth="2.4" />
+                </g>;
+              }
+              const upper = run.flatMap(point => [`L ${point.x0} ${point.y}`, `L ${point.x1} ${point.y}`]).join(' ');
+              const path = `M ${run[0].x0} ${baseline} ${upper} L ${run[run.length-1].x1} ${baseline} Z`;
+              return <path key={`area-run-${index}`} d={path} fill={CHART_COLORS.accent} fillOpacity="0.38" stroke={CHART_COLORS.accentDark} strokeWidth="0.7" />;
+            });
+          })()}
+          {points.map((point, index) => point.y === null ? null : <rect key={`${point.label}-${index}`} x={point.x0} y={point.y} width={Math.max(0, point.x1-point.x0)} height={baseline-point.y} fill="transparent" onMouseMove={event => setTooltip(buildTooltip(event,{label:point.label,count:point.count,unit:point.unit}))} onMouseLeave={() => setTooltip(null)} />)}
+        </> : segments.map((segment, index) => {
+          const path = segment.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' ');
+          const fillPath = `M ${segment[0].x} ${baseline} L ${segment.map(p => `${p.x} ${p.y}`).join(' L ')} L ${segment[segment.length - 1].x} ${baseline} Z`;
+          return <g key={index}>
+            <path d={fillPath} fill={CHART_COLORS.accent} fillOpacity="0.35" stroke="none" />
+            <path d={path} fill="none" stroke={CHART_COLORS.accentDark} strokeWidth="3" strokeLinejoin="round" />
+          </g>;
+        })}
+        {!temporalBins.length && points.map((point, i) => point.y === null ? null : <circle key={`${point.label}-${i}`} cx={point.x} cy={point.y} r="3.6" fill={CHART_COLORS.accentDark}
+          onMouseMove={event => setTooltip(buildTooltip(event, {label: point.label, count: point.count, unit: point.unit}))} onMouseLeave={() => setTooltip(null)} />)}
+        {points.map((point, i) => tickIndexes.has(i) ? <g key={`${point.label}-${i}`}>{renderXAxisTick({x: point.x, y: baseline, label: point.label})}</g> : null)}
+        <SummaryPanel {...layout.legend} title="Area summary" rows={[
+          { label: 'Plotted periods', value: String(values.length) },
+          { label: 'Peak value', value: formatNumber(Math.max(...values)) },
+          { label: 'Latest value', value: formatNumber(values[values.length - 1]) },
+        ]} note={gapDisplay === 'connect' ? 'Connected segments visually interpolate across unobserved intervals.' : 'Calendar-width bins; unobserved intervals remain blank.'} />
+      </>,
+    }}
+  </ChartFrame>;
+}
+
+export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+  const [tooltip, setTooltip] = useState(null);
+  if (!periods.length || !series.length) return <EmptyChartState message="No aligned series are available for Stacked Area." />;
+  const layout = getChartCardLayout({ height: 438, left: 58, top: 72, bottom: 42 });
+  const { width, height, left, top, plotWidth, plotHeight } = layout;
+  const yTicks = getNiceTicks(Math.max(1, ...totals));
+  const maxValue = yTicks[yTicks.length - 1] || 1;
+  const baseline = top + plotHeight;
+  const temporalBins = chartsIITemporalPositions(temporalAxis, left, plotWidth);
+  const binByLabel = new Map(temporalBins.map(bin => [bin.label, bin]));
+  const xAt = index => binByLabel.has(periods[index]) ? (binByLabel.get(periods[index]).x0 + binByLabel.get(periods[index]).x1) / 2 : periods.length === 1 ? left + plotWidth / 2 : left + index / (periods.length - 1) * plotWidth;
+  const yAt = value => baseline - (value / maxValue) * plotHeight;
+  const tickIndexes = temporalBins.length ? getTemporalLabelIndexes(periods, (label,i) => xAt(i)) : getEvenlySpacedIndexes(periods.length, 7);
+  const summary = series.map((layer, index) => ({
+    label: layer.label,
+    value: formatNumber(layer.points.reduce((sum, point) => sum + point.count, 0)),
+    color: getSeriesColor(index),
+  }));
+  return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
+    {{
+      tooltip: <ChartTooltip tooltip={tooltip} />,
+      chart: <>
+        {renderYAxisTicks({ticks: yTicks, left, top, plotHeight, plotWidth, scaleMax: maxValue})}
+        <line x1={left} x2={layout.chartRight} y1={baseline} y2={baseline} stroke={AXIS_COLORS.majorLine}/>
+        {temporalBins.length ? <>
+          {series.map((layer, layerIndex) => {
+            const runs = []; let active = [];
+            layer.points.forEach(point => {
+              const bin = binByLabel.get(point.label);
+              if (!bin || (gapDisplay === 'gaps' && active.length && active[active.length - 1].bin.end !== bin.start)) {
+                if (active.length) runs.push(active);
+                active = [];
+              }
+              if (bin) active.push({point,bin});
+            });
+            if (active.length) runs.push(active);
+            return runs.map((run,index) => {
+              if (gapDisplay === 'connect' && run.length > 1) {
+                // Every layer shares the same proportional bin centers, so connected
+                // cumulative boundaries remain aligned across all stacked series.
+                const upper = run.map(({point,bin}) => `${(bin.x0+bin.x1)/2} ${yAt(point.top)}`).join(' L ');
+                const lower = [...run].reverse().map(({point,bin}) => `${(bin.x0+bin.x1)/2} ${yAt(point.bottom)}`).join(' L ');
+                return <path key={`stack-${layer.label}-${index}`} d={`M ${upper} L ${lower} Z`} fill={getSeriesColor(layerIndex)} fillOpacity="0.75" stroke={CHART_COLORS.chartBg} strokeWidth="0.8" />;
+              }
+              const upper = run.flatMap(({point,bin}) => [`L ${bin.x0} ${yAt(point.top)}`, `L ${bin.x1} ${yAt(point.top)}`]).join(' ');
+              const lower = [...run].reverse().flatMap(({point,bin}) => [`L ${bin.x1} ${yAt(point.bottom)}`, `L ${bin.x0} ${yAt(point.bottom)}`]).join(' ');
+              return <path key={`stack-${layer.label}-${index}`} d={`M ${run[0].bin.x0} ${yAt(run[0].point.bottom)} ${upper} ${lower} Z`} fill={getSeriesColor(layerIndex)} fillOpacity="0.75" stroke={CHART_COLORS.chartBg} strokeWidth="0.45" />;
+            });
+          })}
+          {series.flatMap((layer, layerIndex) => layer.points.map((point,i) => {
+            const bin = binByLabel.get(point.label);
+            if (!bin || !point.count) return null;
+            return <rect key={`hover-${layer.label}-${point.label}-${i}`} x={bin.x0} y={yAt(point.top)} width={Math.max(0, bin.x1-bin.x0)} height={Math.max(0,yAt(point.bottom)-yAt(point.top))} fill="transparent" onMouseMove={event => setTooltip(buildTooltip(event,{label:layer.label,secondary:point.label,count:point.count,unit:point.unit}))} onMouseLeave={() => setTooltip(null)}/>;
+          }))}
+        </> : series.map((layer, index) => {
+          const upper = layer.points.map((point, i) => `${xAt(i)},${yAt(point.top)}`).join(' L ');
+          const lower = [...layer.points].reverse().map((point, reverseIndex) => `${xAt(layer.points.length - reverseIndex - 1)},${yAt(point.bottom)}`).join(' L ');
+          return <path key={layer.label} d={`M ${upper} L ${lower} Z`} fill={getSeriesColor(index)} fillOpacity="0.75" stroke={CHART_COLORS.chartBg} strokeWidth="1.1" />;
+        })}
+        {!temporalBins.length && series.flatMap((layer, index) => layer.points.map((point, i) => (
+          <rect key={`${layer.label}-${i}`} x={xAt(i) - 4} y={yAt(point.top) - 5} width="9" height="10" fill="transparent"
+            onMouseMove={event => setTooltip(buildTooltip(event, {label: layer.label, secondary: point.label, count: point.count, unit: point.unit}))}
+            onMouseLeave={() => setTooltip(null)} />
+        )))}
+        {periods.map((period, index) => tickIndexes.has(index) ? <g key={`${period}-${index}`}>{renderXAxisTick({x: xAt(index), y: baseline, label: period})}</g> : null)}
+        <SummaryPanel {...layout.legend} title="Stacked contributions" rows={summary} note={gapDisplay === 'connect' ? 'Boundaries connect observations; absent categories in populated bins contribute zero.' : 'Calendar-width bins; absent combinations contribute zero.'} />
+      </>,
+    }}
+  </ChartFrame>;
+}
 
 export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = false }) {
   const [tooltip, setTooltip] = useState(null);
@@ -772,7 +980,7 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
 }
 
 
-export function AnalyticsMultiLineChart({ series = [], periods = [], years = [], title, subtitle, svgRef }) {
+export function AnalyticsMultiLineChart({ series = [], periods = [], years = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
   const [tooltip, setTooltip] = useState(null);
   const xLabels = periods?.length ? periods : years;
   if (!series.length || !xLabels.length) return <EmptyChartState message="No period and category data is available for the current selection." />;
@@ -783,7 +991,10 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
   const yTicks = getNiceTicks(Math.max(...finiteValues, 1));
   const scaleMax = yTicks[yTicks.length - 1] || 1;
   const maxValue = scaleMax;
-  const xLabelIndexes = getEvenlySpacedIndexes(xLabels.length, 7);
+  const temporalBins = chartsIITemporalPositions(temporalAxis, left, plotWidth);
+  const binByLabel = new Map(temporalBins.map(bin => [bin.label, bin]));
+  const xAt = (label, index) => { const bin = binByLabel.get(label); return bin ? (bin.x0 + bin.x1) / 2 : xLabels.length === 1 ? left + plotWidth / 2 : left + (index / (xLabels.length - 1)) * plotWidth; };
+  const xLabelIndexes = temporalBins.length ? getTemporalLabelIndexes(xLabels, xAt) : getEvenlySpacedIndexes(xLabels.length, 7);
   const panelLayout = layout.legend;
   const summaryRows = series.map((item, index) => {
     const total = getLineTotal(item.points);
@@ -807,11 +1018,11 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
             <line x1={left} x2={left} y1={top} y2={top + plotHeight} stroke={CHART_COLORS.grid} />
             {renderYAxisTicks({ ticks: yTicks, left, top, plotHeight, plotWidth, scaleMax: maxValue })}
             {renderXAxisMinorTicks({ positions: xLabels.map((label, index) => (
-              xLabels.length === 1 ? left + plotWidth / 2 : left + (index / (xLabels.length - 1)) * plotWidth
+              xAt(label, index)
             )).filter((_, index) => xLabelIndexes.has(index)), y: top + plotHeight, top, showGuides: true })}
             {series.map((item, seriesIndex) => {
               const points = item.points.map((point, index) => {
-                const x = xLabels.length === 1 ? left + plotWidth / 2 : left + (index / (xLabels.length - 1)) * plotWidth;
+                const x = xAt(point.label, index);
                 const y = isFiniteChartValue(point.count) ? top + plotHeight - (Number(point.count) / maxValue) * plotHeight : null;
                 return { ...point, x, y };
               });
@@ -819,10 +1030,17 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
               let currentSegment = [];
               points.forEach((point) => {
                 if (point.y === null) {
+                  // The temporal count adapter represents a category with no records
+                  // in this populated interval as null. In Connect observations mode,
+                  // skip those absent-category bins so the line can bridge them.
+                  // Never bridge a missing numerical measurement: such nulls remain
+                  // hard breaks regardless of the presentation setting.
+                  if (gapDisplay === 'connect' && point.unit === 'records') return;
                   if (currentSegment.length) pathSegments.push(currentSegment);
                   currentSegment = [];
                   return;
                 }
+                if (gapDisplay === 'gaps' && temporalBins.length && currentSegment.length && binByLabel.get(currentSegment[currentSegment.length-1].label)?.end !== binByLabel.get(point.label)?.start) { pathSegments.push(currentSegment); currentSegment = []; }
                 currentSegment.push(point);
               });
               if (currentSegment.length) pathSegments.push(currentSegment);
@@ -846,9 +1064,9 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
               );
             })}
             {xLabels.map((label, index) => (
-              xLabelIndexes.has(index) ? <g key={label}>{renderXAxisTick({ x: xLabels.length === 1 ? left + plotWidth / 2 : left + (index / (xLabels.length - 1)) * plotWidth, y: top + plotHeight, label })}</g> : null
+              xLabelIndexes.has(index) ? <g key={label}>{renderXAxisTick({ x: xAt(label, index), y: top + plotHeight, label })}</g> : null
             ))}
-            <SummaryPanel {...panelLayout} title="Line totals" rows={summaryRows} note="Gaps mean no numeric value was present." />
+            <SummaryPanel {...panelLayout} title="Line totals" rows={summaryRows} note={gapDisplay === 'connect' ? 'Connections interpolate visually; no missing values are created.' : 'Gaps indicate unobserved or missing numeric values.'} />
           </>
         ),
       }}
@@ -1036,6 +1254,12 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
 
 
 export function AnalyticsChartPreview({ chartData, svgRef }) {
+  if (chartData?.chartType === 'area') {
+    return <AnalyticsAreaChart data={chartData.data} title={chartData.title} subtitle={chartData.subtitle} svgRef={svgRef} />;
+  }
+  if (chartData?.chartType === 'stackedArea') {
+    return <AnalyticsStackedAreaChart series={chartData.series} periods={chartData.periods} totals={chartData.totals} title={chartData.title} subtitle={chartData.subtitle} svgRef={svgRef} />;
+  }
   if (chartData?.chartType === 'line') {
     return <AnalyticsLineChart data={chartData.data} title={chartData.title} subtitle={chartData.subtitle} svgRef={svgRef} />;
   }

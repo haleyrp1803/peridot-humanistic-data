@@ -1043,6 +1043,7 @@ export function PeridotVisualizationsWorkspace({
   // Page navigation is independent of chart selection: Catalogue must not
   // discard a configured chart just because the researcher browses again.
   const [chartsIIPage, setChartsIIPage] = useState('catalogue');
+  const [chartsIIChronologyDragging, setChartsIIChronologyDragging] = useState(false);
   const chartsIIDatasetSessionKey = timelineWorkspaceProps?.datasetSessionKey;
   // Do not carry a previous dataset's pending chart choice into a newly
   // mapped dataset. Normal navigation does not change this revision key.
@@ -1249,6 +1250,7 @@ export function PeridotVisualizationsWorkspace({
           currentPage={chartsIIPage}
           profileRows={analyticsWorkspaceProps?.chartsIIProfileRows || []}
           previewRows={analyticsWorkspaceProps?.analyticsState?.rows || []}
+          chronologyDragging={chartsIIChronologyDragging}
           onSelectChart={(key) => {
             setChartsIIChartKey(key);
             setChartsIIPage('builder');
@@ -1375,7 +1377,17 @@ export function PeridotVisualizationsWorkspace({
         {timelineControlsProps
           && selectedTool !== VISUALIZATION_TOOLS.TIMELINE_II
           && (selectedTool !== VISUALIZATION_TOOLS.CHARTS_II || chartsIIPage === 'builder') ? (
-          <div className="peridot-visualization-timeline-sequence shrink-0">
+          <div className="peridot-visualization-timeline-sequence shrink-0"
+            onPointerDownCapture={event => {
+              if (selectedTool !== VISUALIZATION_TOOLS.CHARTS_II || chartsIIPage !== 'builder') return;
+              if (event.target.closest?.('[aria-label^="Timeline chronology navigator"]')) {
+                setChartsIIChronologyDragging(true);
+              }
+            }}
+            onPointerUp={() => setChartsIIChronologyDragging(false)}
+            onPointerCancel={() => setChartsIIChronologyDragging(false)}
+            onLostPointerCapture={() => setChartsIIChronologyDragging(false)}
+          >
             <PeridotSharedChronologyAdapter {...timelineControlsProps} />
           </div>
         ) : null}

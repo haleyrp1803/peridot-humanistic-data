@@ -9,10 +9,12 @@
  * playback-visible rendering. Export remains pending;
  * do not represent placeholder content as research results.
  */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 import { buildChartsIIDataProfile, assessChartsIISuitability } from './chartsIIDataProfile.js';
-import { createChartsIIBuilderConfiguration, updateChartsIIBuilderConfiguration, deriveChartsIIBuilderData } from './chartsIIBuilderContract.js';
-import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst } from './analyticsChartComponents.jsx';
+import { createChartsIIBuilderConfiguration, updateChartsIIBuilderConfiguration, validateChartsIIBuilderConfiguration, getChartsIIBuilderFieldInventory, deriveChartsIIBuilderData } from './chartsIIBuilderContract.js';
+import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart } from './analyticsChartComponents.jsx';
 
 // The provisional 15-family inventory is shared by search, purpose browsing,
 // suitability ranking, and thumbnails. Variations are not separate renderers yet.
@@ -246,45 +248,124 @@ function FoundationCatalogue({ onSelectChart, charts, profile }) {
   );
 }
 
-function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows }) {
+function InfoPopover({ label, compact = false, align = 'end', children }) {
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState(null);
+  const triggerRef = useRef(null);
+  const popoverRef = useRef(null);
+  const dismissTimer = useRef(null);
+  const keepOpen = () => {
+    if (dismissTimer.current !== null) clearTimeout(dismissTimer.current);
+    dismissTimer.current = null;
+    setOpen(true);
+  };
+  const dismissIfOutside = event => {
+    if (triggerRef.current?.contains(event.relatedTarget) || popoverRef.current?.contains(event.relatedTarget)) return;
+    // Give the pointer time to cross the small gap between trigger and portal.
+    if (dismissTimer.current !== null) clearTimeout(dismissTimer.current);
+    dismissTimer.current = setTimeout(() => setOpen(false), 160);
+  };
+  useEffect(() => () => {
+    if (dismissTimer.current !== null) clearTimeout(dismissTimer.current);
+  }, []);
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current || !popoverRef.current) return;
+    const anchor = triggerRef.current.getBoundingClientRect();
+    const content = popoverRef.current.getBoundingClientRect();
+    const margin = 8;
+    // Use viewport-fixed portal coordinates. The configuration aside has
+    // overflow-y:auto; an absolute tooltip inside it is clipped regardless
+    // of whether it opens leftward or rightward.
+    const wantedX = align === 'right' ? anchor.right + margin : anchor.right - content.width;
+    const wantedY = align === 'right' ? anchor.top : anchor.bottom + 4;
+    setPosition({
+      left: Math.max(margin, Math.min(wantedX, window.innerWidth - content.width - margin)),
+      top: Math.max(margin, Math.min(wantedY, window.innerHeight - content.height - margin)),
+    });
+  }, [open, align]);
+  return <span ref={triggerRef} className="relative inline-flex shrink-0"
+    onMouseEnter={keepOpen} onMouseLeave={dismissIfOutside}
+    onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget) && !popoverRef.current?.contains(event.relatedTarget)) setOpen(false); }}
+    onKeyDown={event => { if (event.key === 'Escape') { setOpen(false); event.stopPropagation(); } }}>
+    <button type="button" aria-label={label} aria-expanded={open} aria-haspopup="dialog"
+      onFocus={keepOpen} onClick={keepOpen}
+      className={`flex items-center justify-center rounded-full border border-[#cdb48b] bg-[#fff9eb] text-[#8b3026] hover:bg-[#f5ecd2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b58b42] ${compact ? 'h-5 w-5 text-[11px]' : 'h-8 w-8 text-sm'}`}>i</button>
+    {open && createPortal(<div ref={popoverRef} role="dialog" aria-label={label}
+      onMouseEnter={keepOpen} onMouseLeave={dismissIfOutside}
+      className="fixed z-[9999] w-[min(22rem,calc(100vw-1rem))] rounded-lg border border-[#d9c8a9] bg-[#fffaf0] p-3 text-left text-[12px] font-normal leading-relaxed text-[#52675a] shadow-[0_8px_24px_rgba(52,42,27,0.18)]"
+      style={{ left: position?.left ?? -9999, top: position?.top ?? -9999 }}>
+      {children}
+    </div>, document.body)}
+  </span>;
+}
+
+function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false }) {
   // Stable Explore rows define the available fields; playback rows define
   // the plotted data. Charts I state and the recommendations remain independent.
   const [lineMode, setLineMode] = useState('single');
   const [pieMode, setPieMode] = useState('pie');
+  const [gapDisplay, setGapDisplay] = useState('connect'); // Presentation only; never changes derived records.
   const [contract, setContract] = useState(() => createChartsIIBuilderConfiguration(chart?.key, profileRows));
-  const [settings, setSettings] = useState({ aggregation: 'count', topN: 10 });
+  const [settings, setSettings] = useState({ aggregation: 'count', topN: 10, interval: 'year' });
+  // Freeze only the expensive Builder preview during a chronology pointer drag.
+  // The shared dock continues moving; its final playback scope is adopted
+  // immediately upon pointer release. Playback, filter and field changes
+  // outside drag remain live.
+  const settledPreviewRows = useRef(previewRows);
+  if (!chronologyDragging) settledPreviewRows.current = previewRows;
+  const renderedPreviewRows = chronologyDragging ? settledPreviewRows.current : previewRows;
+
   // Presentation modes belong to the selected chart, not to the changing
   // row arrays. Chronology updates may refresh data without resetting Donut.
   useEffect(() => {
     setLineMode('single');
     setPieMode('pie');
+    setGapDisplay('connect');
   }, [chart?.key]);
+  // Changing chart families resets the field contract and aggregation defaults.
+  // A changing playback/Explore scope must not discard an existing field choice.
   useEffect(() => {
     setContract(createChartsIIBuilderConfiguration(chart?.key, profileRows));
-    setSettings({ aggregation: 'count', topN: 10 });
-  }, [chart?.key, profileRows]);
-  const isLiveFamily = ['bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst'].includes(chart?.key);
+    setSettings({ aggregation: 'count', topN: 10, interval: 'year' });
+  }, [chart?.key]);
+  useEffect(() => {
+    setContract(previous => {
+      if (!previous?.supported) return createChartsIIBuilderConfiguration(previous?.chartKey || chart?.key, profileRows);
+      const defaults = createChartsIIBuilderConfiguration(previous.chartKey, profileRows);
+      if (!defaults.supported) return defaults;
+      const values = { ...defaults.values };
+      for (const slot of defaults.slots) {
+        if (slot.options.some(option => option.key === previous.values[slot.key])) {
+          values[slot.key] = previous.values[slot.key];
+        }
+      }
+      return validateChartsIIBuilderConfiguration(previous.chartKey, values, getChartsIIBuilderFieldInventory(profileRows));
+    });
+  }, [profileRows]);
+  const temporalFamily = ['line','area','stacked-area'].includes(chart?.key);
+  const isLiveFamily = ['bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst', 'area', 'stacked-area'].includes(chart?.key);
   const chartResult = useMemo(() => isLiveFamily
-    ? deriveChartsIIBuilderData(contract, previewRows, settings)
-    : null, [isLiveFamily, contract, previewRows, settings]);
+    ? deriveChartsIIBuilderData(contract, renderedPreviewRows, settings)
+    : null, [isLiveFamily, contract, renderedPreviewRows, settings]);
   const isResultPopulated = chartResult?.status === 'ready' && (() => {
     const result = chartResult.chart;
     if (!result) return false;
     if (result.chartType === 'sunburst') return Number(result.total) > 0 && Array.isArray(result.parents) && result.parents.some(parent => Number(parent.count) > 0 && Array.isArray(parent.children) && parent.children.some(child => Number(child.count) > 0));
     if (result.chartType === 'heatmap') return Array.isArray(result.rows) && result.rows.length > 0 && Array.isArray(result.columns) && result.columns.length > 0 && Array.isArray(result.cells) && result.cells.some(cell => Number(cell.count) > 0);
     if (result.chartType === 'pie') return Array.isArray(result.data) && result.data.some(slice => Number(slice.count) > 0);
+    if (result.chartType === 'stackedArea') return Array.isArray(result.periods) && result.periods.length > 0 && Array.isArray(result.series) && result.series.some(series => series.points.some(point => point.count > 0));
     if (result.chartType === 'multiLine') return Array.isArray(result.periods) && result.periods.length > 0 && Array.isArray(result.series) && result.series.length > 0;
     if (result.chartType === 'groupedBar' || result.chartType === 'stackedBar') return Array.isArray(result.data) && result.data.length > 0 && Array.isArray(result.series) && result.series.length > 0;
     return Array.isArray(result.data) && result.data.length > 0;
   })();
   const recordCountMeasure = contract.values?.yField === 'recordCount';
-  const fixedAdditive = chart?.key === 'stacked-bar';
+  const fixedAdditive = chart?.key === 'stacked-bar' || chart?.key === 'stacked-area';
   const isHistogram = chart?.key === 'histogram';
   const effectiveAggregation = recordCountMeasure ? 'count' : fixedAdditive ? 'sum' : settings.aggregation === 'count' ? 'sum' : settings.aggregation;
   const inputClass = 'mt-1 w-full min-w-0 rounded-md border border-[#cdb48b] bg-[#fffdf7] px-2 py-2 text-[12px] text-[#24382d]';
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-hidden">
-      <p className="sr-only">Charts II Builder · Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, and Sunburst live previews; export pending</p>
+      <p className="sr-only">Charts II Builder · Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; export pending</p>
       <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-[minmax(220px,20%)_minmax(0,1fr)]">
         <aside className={`${panel} min-h-0 overflow-y-auto overscroll-contain p-4`} aria-label="Chart configuration foundation">
           <h3 className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-8b2e23)]">Data &amp; Interpretation</h3>
@@ -313,7 +394,19 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows 
                   </select>
                 </label>
               )}
-              {contract.slots.map((slot) => slot.optional ? null : (
+              {temporalFamily && <div className="relative text-[12px] font-semibold text-[#344b39]">
+                <div className="flex items-center gap-1.5">Ordered x-axis
+                  <InfoPopover label="About chronological intervals" compact>
+                    <p>Records are grouped into fixed calendar intervals. Peridot uses mapped canonical dates, not raw uploaded date strings.</p>
+                    <p className="mt-2">A record is included only when its source date can be assigned unambiguously to one interval. A month-only date cannot be assigned to a particular week. Exclusions are reported separately in Peridot's Interpretation.</p>
+                  </InfoPopover>
+                </div>
+                <select className={inputClass} aria-label="Ordered x-axis interval" value={settings.interval}
+                  onChange={event => setSettings(old => ({ ...old, interval: event.target.value }))}>
+                  {CHARTS_II_TIME_INTERVALS.map(item => <option value={item.value} key={item.value}>{item.label}</option>)}
+                </select>
+              </div>}
+              {contract.slots.map((slot) => slot.optional || (temporalFamily && slot.key === 'xField') ? null : (
                 <label key={slot.key} className="block text-[12px] font-semibold text-[#344b39]">
                   {slot.label}
                   <select aria-label={slot.label} className={inputClass} value={contract.values[slot.key] || ''}
@@ -352,40 +445,51 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows 
           <div className="my-4 border-t border-[var(--peridot-color-hex-d5c7a8)]" />
           <details className="group" aria-label="Chart appearance">
             <summary className="cursor-pointer text-xs font-bold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-8b2e23)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#b58b42]">Appearance</summary>
-            <p className="mt-2 text-sm text-[var(--peridot-color-hex-52675a)]">Palette and presentation controls are pending.</p>
+            {temporalFamily && <fieldset className="mt-3 space-y-2 text-[12px] text-[#344b39]">
+              <legend className="flex items-center gap-2 font-semibold">Data gap display
+                <InfoPopover label="About connecting observations" compact align="right">
+                  <p><strong>Connect observations</strong> joins recorded values across intervals without observations. These connections are visual interpolation, not additional records or measured values.</p>
+                  <p className="mt-2"><strong>Show data gaps</strong> leaves unobserved intervals visibly disconnected.</p>
+                  <p className="mt-2">Neither option changes the underlying dataset, aggregation, record inclusion, or precision-based exclusions. Missing numerical values are never fabricated.</p>
+                </InfoPopover>
+              </legend>
+              <label className="flex items-center gap-2"><input type="radio" name="chartsII-gap-display" value="connect" checked={gapDisplay === 'connect'} onChange={() => setGapDisplay('connect')} />Connect observations (default)</label>
+              <label className="flex items-center gap-2"><input type="radio" name="chartsII-gap-display" value="gaps" checked={gapDisplay === 'gaps'} onChange={() => setGapDisplay('gaps')} />Show data gaps</label>
+            </fieldset>}
+            <p className="mt-2 text-sm text-[var(--peridot-color-hex-52675a)]">Palette and other presentation controls are pending.</p>
           </details>
         </aside>
         <section className="flex min-h-0 min-w-0 flex-col gap-3" aria-label="Chart preview foundation">
           <div className={`${panel} flex min-h-0 flex-1 flex-col overflow-hidden p-5`}>
             <div className="flex min-w-0 shrink-0 items-start justify-between gap-3">
               <h3 className={`${heading} min-w-0 text-2xl font-semibold text-[var(--peridot-color-hex-173120)]`}>{chart?.name || 'Choose a chart type'}</h3>
-              {/* Native details/summary is clickable and keyboard-operable. The
-                  interpretation floats over the preview rather than taking
-                  height away from the chart. */}
-              <details className="group relative z-20 shrink-0">
-                <summary aria-label="Peridot's Interpretation" title="Peridot's Interpretation"
-                  className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-full border border-[#cdb48b] bg-[#fff9eb] text-[#8b3026] transition hover:border-[#b58b42] hover:bg-[#f5ecd2] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b58b42] [&::-webkit-details-marker]:hidden">
-                  <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-[18px] w-[18px]">
-                    <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>
-                  </svg>
-                </summary>
-                <div className="absolute right-0 top-full z-30 mt-2 w-[min(21rem,70vw)] rounded-lg border border-[#d9c8a9] bg-[#fffaf0] p-4 text-left shadow-[0_8px_24px_rgba(52,42,27,0.18)]">
-                  <h4 className={`${heading} text-[17px] font-semibold text-[#8b3026]`}>Peridot's Interpretation</h4>
-                  <p className="mt-2 text-[13px] leading-relaxed text-[#52675a]">Computational scope, field choices, aggregation, and missing-value handling will be described here when a real chart is available.</p>
-                </div>
-              </details>
+              <InfoPopover label="Peridot's Interpretation">
+                <h4 className={`${heading} mb-2 text-[16px] font-semibold text-[#8b3026]`}>Peridot's Interpretation</h4>
+                {temporalFamily && chartResult?.reporting ? <>
+                  <p>Interval: <strong>{CHARTS_II_TIME_INTERVALS.find(item => item.value === chartResult.reporting.interval)?.label}</strong>. Measure: {chartResult.reporting.measure}. Aggregation: {chartResult.reporting.aggregation}.</p>
+                  <p className="mt-2">Included: <strong>{chartResult.reporting.included}</strong> of {chartResult.reporting.scope} playback-scope records. Plotted intervals: {chartResult.reporting.assignedPeriods}.</p>
+                  <p className="mt-2">Excluded for insufficient date precision: <strong>{chartResult.reporting.excluded.insufficientPrecision}</strong>.</p>
+                  <p>Missing date: {chartResult.reporting.excluded.missingDate}; invalid or unusable date: {chartResult.reporting.excluded.invalidDate}; unavailable numeric measure: {chartResult.reporting.excluded.missingMeasure}; unavailable grouping: {chartResult.reporting.excluded.missingGrouping}.</p>
+                  <p className="mt-2">Source dates must fit wholly within the selected interval. A missing numeric observation is never assigned zero.</p>
+                  <p className="mt-2"><strong>Gap display:</strong> {gapDisplay === 'connect' ? 'Connect observations — lines or areas visually interpolate across unobserved intervals. No records or measurements are created.' : 'Show data gaps — unobserved intervals remain disconnected.'} Exclusions for date precision and missing values are unchanged.</p>
+                </> : <p>Chart-specific computational interpretation will be added during the Builder's interpretation pass.</p>}
+              </InfoPopover>
             </div>
             {isLiveFamily ? (
               <div className="min-h-0 min-w-0 flex-1 overflow-auto pt-3" aria-label={`Live ${chart.name} chart preview`} aria-live="polite">
                 {!contract.ready ? (
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">{contract.problems.join(' ') || 'Choose valid fields to render this chart.'}</div>
+                ) : chartResult?.status === 'unavailable' ? (
+                  <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">{chartResult.problems?.join(' ')}</div>
                 ) : !previewRows.length ? (
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">No records are available in the current playback scope.</div>
                 ) : isResultPopulated ? (
                   <div className="h-full min-h-[320px] min-w-0">
                     {chartResult.chart.chartType === 'bar' && <AnalyticsBarChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} orientation={chartResult.chart.orientation} />}
-                    {chartResult.chart.chartType === 'line' && <AnalyticsLineChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
-                    {chartResult.chart.chartType === 'multiLine' && <AnalyticsMultiLineChart series={chartResult.chart.series} periods={chartResult.chart.periods} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
+                    {chartResult.chart.chartType === 'area' && <AnalyticsAreaChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
+                    {chartResult.chart.chartType === 'stackedArea' && <AnalyticsStackedAreaChart series={chartResult.chart.series} periods={chartResult.chart.periods} totals={chartResult.chart.totals} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
+                    {chartResult.chart.chartType === 'line' && <AnalyticsLineChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
+                    {chartResult.chart.chartType === 'multiLine' && <AnalyticsMultiLineChart series={chartResult.chart.series} periods={chartResult.chart.periods} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
                     {chartResult.chart.chartType === 'groupedBar' && <AnalyticsGroupedBarChart data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
                     {chartResult.chart.chartType === 'stackedBar' && <AnalyticsStackedBarChart data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
                     {chartResult.chart.chartType === 'pie' && <AnalyticsPieChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} donut={pieMode === 'donut'} />}
@@ -399,7 +503,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows 
               </div>
             ) : chart ? (
               <div className="flex flex-1 items-center justify-center p-4 text-center text-sm text-[var(--peridot-color-hex-52675a)]">
-                Live preview for this chart family is not yet implemented. Bar / Column, Line / Multi-Line, Grouped Bar, Stacked Bar, Pie / Donut, Histogram, Heatmap, and Sunburst are available now.
+                Live preview for this chart family is not yet implemented. Bar / Column, Line / Multi-Line, Grouped Bar, Stacked Bar, Pie / Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area are available now.
               </div>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center">
@@ -418,7 +522,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows 
   );
 }
 
-export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSelectChart, onNavigatePage, profileRows = [], previewRows = [] }) {
+export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSelectChart, onNavigatePage, profileRows = [], previewRows = [], chronologyDragging = false }) {
   // Profile is derived from the stable applied Explore scope. Playback changes
   // should not reorder recommendations while a researcher uses the scrubber.
   const profile = useMemo(() => buildChartsIIDataProfile(profileRows), [profileRows]);
@@ -428,7 +532,7 @@ export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSel
   return (
     <div className={`min-h-0 flex-1 rounded-xl px-4 pb-4 text-[var(--peridot-color-hex-24382d)] sm:px-5 sm:pb-5 ${showingBuilder ? "overflow-hidden bg-[var(--peridot-color-hex-f8f4e6)] pt-1" : "overflow-auto bg-[#f9f4e9] pt-9"}`}>
       {showingBuilder
-        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} onBackToCatalogue={() => onNavigatePage('catalogue')} />
+        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} onBackToCatalogue={() => onNavigatePage('catalogue')} />
         : <FoundationCatalogue onSelectChart={onSelectChart} charts={charts} profile={profile} />}
     </div>
   );

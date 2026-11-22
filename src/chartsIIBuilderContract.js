@@ -9,6 +9,8 @@
  * before rendering. Do not present B1-derived results as a live chart.
  */
 import { getAvailableAnalyticsFields, buildAnalyticsChartData } from './analyticsDerivationHelpers.js';
+import { deriveChartsIITemporalSeries, CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
+const CHARTS_II_TIME_INTERVAL_LABELS = Object.fromEntries(CHARTS_II_TIME_INTERVALS.map(({value,label}) => [value,label]));
 
 const family = (engineType, slots, options = {}) => Object.freeze({ engineType, slots, ...options });
 export const CHARTS_II_BUILDER_FAMILIES = Object.freeze({
@@ -19,8 +21,10 @@ export const CHARTS_II_BUILDER_FAMILIES = Object.freeze({
   histogram: family('histogram', [{ key: 'histogramValueField', label: 'Numeric values', pool: 'histogramMeasureOptions' }, { key: 'histogramGroupBy', label: 'Group counts by', pool: 'barGroupOptions', optionalWhen: 'histogramValueField', optionalUnlessValue: 'recordCount' }]),
   heatmap: family('heatmap', [{ key: 'heatmapRowBy', label: 'Rows', pool: 'heatmapRowOptions' }, { key: 'heatmapColumnBy', label: 'Columns', pool: 'heatmapColumnOptions', distinctFrom: 'heatmapRowBy' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   sunburst: family('sunburst', [{ key: 'sunburstParentBy', label: 'Parent categories', pool: 'barGroupOptions' }, { key: 'sunburstChildBy', label: 'Child categories', pool: 'segmentGroupOptions', distinctFrom: 'sunburstParentBy' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { additive: true }),
-  line: family('line', [{ key: 'xField', label: 'Ordered x-axis', pool: 'orderedXAxisOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { variant: 'single-line' }),
-  'line-multi': family('multiLine', [{ key: 'xField', label: 'Ordered x-axis', pool: 'orderedXAxisOptions' }, { key: 'multiLineGroupBy', label: 'Separate lines by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { variant: 'grouped-series' }),
+  area: family('line', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
+  'stacked-area': family('multiLine', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }, { key: 'multiLineGroupBy', label: 'Stack by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { additive: true }),
+  line: family('line', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { variant: 'single-line' }),
+  'line-multi': family('multiLine', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }, { key: 'multiLineGroupBy', label: 'Separate lines by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { variant: 'grouped-series' }),
 });
 
 const optionList = (items) => Array.isArray(items) ? items : [];
@@ -32,6 +36,9 @@ export function getChartsIIBuilderFieldInventory(rows = []) {
   return {
     ...discovered,
     histogramMeasureOptions: discovered.yMetricOptions,
+    // Raw uploaded date columns may include unknown-date sentinels. The
+    // chronological Area axis exclusively uses canonical date projections.
+    temporalXAxisOptions: discovered.dateFieldOptions.filter(field => field.key === 'year' || field.key === 'fullDate'),
   };
 }
 
@@ -70,13 +77,68 @@ export function updateChartsIIBuilderConfiguration(contract, fieldKey, value, ro
   return validateChartsIIBuilderConfiguration(contract.chartKey, { ...contract.values, [fieldKey]: value }, fields);
 }
 
+// Chart families share Peridot canonical field inventory, but chronological
+// families use their own precision-aware calendar aggregation contract.
+// Stacked Area requires aligned, nonnegative, additive layers.
+export function stackChartsIIAreaSeries(chart) {
+  const periods = Array.isArray(chart?.periods) ? chart.periods : [];
+  const inputSeries = Array.isArray(chart?.series) ? chart.series : [];
+  const layers = inputSeries.map(series => ({ label: series.label, points: [] }));
+  const totals = periods.map(() => 0);
+  for (let index = 0; index < periods.length; index += 1) {
+    for (let layerIndex = 0; layerIndex < inputSeries.length; layerIndex += 1) {
+      const point = inputSeries[layerIndex]?.points?.[index];
+      if (point && point.label !== periods[index]) {
+        return { ready: false, problem: 'Series periods are not aligned.' };
+      }
+      const raw = point?.count;
+      const numeric = raw === null || raw === undefined ? 0 : Number(raw);
+      if (!Number.isFinite(numeric) || numeric < 0) {
+        return { ready: false, problem: 'Stacked Area requires nonnegative, finite additive values.' };
+      }
+      const bottom = totals[index];
+      const top = bottom + numeric;
+      layers[layerIndex].points.push({ label: periods[index], count: numeric, bottom, top, unit: point?.unit || 'records' });
+      totals[index] = top;
+    }
+  }
+  return { ready: true, periods, series: layers, totals, maxTotal: Math.max(0, ...totals) };
+}
+
 export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
   if (!contract?.supported || !contract.ready) return { status: 'unavailable', problems: contract?.problems || ['Choose a supported chart and valid fields.'], chart: null };
   // Explicitly whitelist allowed engine arguments rather than leaking UI state.
-  const args = { rows: Array.isArray(rows) ? rows : [], chartType: contract.engineType, ...(contract.chartKey === 'line-multi' ? { multiLineMode: 'long' } : {}), ...contract.values,
+  const args = { rows: Array.isArray(rows) ? rows : [], chartType: contract.engineType, ...(['line-multi', 'stacked-area'].includes(contract.chartKey) ? { multiLineMode: 'long' } : {}), ...contract.values,
     topN: Number.isInteger(settings.topN) && settings.topN >= 1 ? settings.topN : 10,
     aggregation: ['count', 'sum', 'average', 'min', 'max'].includes(settings.aggregation) ? settings.aggregation : 'count',
   };
+  // Keep chart-specific aggregation semantics explicit. Numeric stacked areas
+  // require Sum, while record counts use Count. The shared analytics helper
+  // applies the same additive rule used by Stacked Bar.
+  if (contract.chartKey === 'stacked-area') {
+    args.aggregation = args.yField === 'recordCount' ? 'count' : 'sum';
+  }
+  // Charts II's chronological families share the same precision-aware calendar bins.
+  // Other chart families retain their existing accepted Charts I derivations.
+  if (['line', 'line-multi', 'area', 'stacked-area'].includes(contract.chartKey)) {
+    const interval = settings.interval || 'year';
+    const grouped = contract.chartKey === 'line-multi' || contract.chartKey === 'stacked-area';
+    const additive = contract.chartKey === 'stacked-area';
+    const aggregate = args.yField === 'recordCount' ? 'count' : additive ? 'sum' : args.aggregation === 'count' ? 'sum' : args.aggregation;
+    const derived = deriveChartsIITemporalSeries({ rows: args.rows, interval, measure: args.yField,
+      aggregation: aggregate, groupBy: grouped ? args.multiLineGroupBy : '', topN: args.topN });
+    const name = grouped ? 'Trends' : args.yField === 'recordCount' ? 'Record count' : args.yField;
+    const base = { title: `${name} by ${CHARTS_II_TIME_INTERVAL_LABELS[interval] || interval}`,
+      subtitle: `${aggregate} by ${CHARTS_II_TIME_INTERVAL_LABELS[interval] || interval}; source dates must fit wholly within an interval.`,
+      temporalAxis: derived.temporalAxis, reporting: derived.reporting };
+    if (contract.chartKey === 'stacked-area') {
+      const stacked = stackChartsIIAreaSeries({ periods: derived.periods, series: derived.series });
+      if (!stacked.ready) return { status: 'unavailable', problems: [stacked.problem], chart: null, reporting: derived.reporting };
+      return { status: 'ready', chart: { ...base, ...stacked, chartType: 'stackedArea' }, reporting: derived.reporting };
+    }
+    if (contract.chartKey === 'line-multi') return { status: 'ready', chart: { ...base, chartType: 'multiLine', periods: derived.periods, series: derived.series }, reporting: derived.reporting };
+    return { status: 'ready', chart: { ...base, chartType: contract.chartKey === 'area' ? 'area' : 'line', data: derived.data }, reporting: derived.reporting };
+  }
   const chart = buildAnalyticsChartData(args);
   return { status: 'ready', chart, recordsInScope: args.rows.length };
 }

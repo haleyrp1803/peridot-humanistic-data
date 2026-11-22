@@ -17,7 +17,7 @@ import {
   ANALYTICS_BAR_FIELD_DEFINITIONS,
   ANALYTICS_HEATMAP_FIELD_DEFINITIONS,
   ANALYTICS_SEGMENT_FIELD_DEFINITIONS,
-} from './analyticsConfig';
+} from './analyticsConfig.js';
 import { getRowTemporalDateParts } from './timelinePlaybackHelpers.js';
 
 function normalizeText(value) {
@@ -1303,3 +1303,6 @@ export function buildAnalyticsChartData({
     data,
   };
 }
+
+// Charts II temporal aggregation reuses these established field/value semantics.
+export { fieldValue as getAnalyticsFieldValue, parseNumber as parseAnalyticsNumber };
