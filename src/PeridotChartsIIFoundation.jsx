@@ -6,11 +6,12 @@
  * selected chart key; this component receives it as a controlled input.
  *
  * Suitability is advisory and derived from applied Explore scope, separate from
- * playback-visible rendering. Export remains pending;
+ * playback-visible rendering. Only the currently rendered chart may be exported;
  * do not represent placeholder content as research results.
  */
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { buildChartsIIPngDescriptor, downloadChartsIIPng } from './chartsIIExport.js';
 import { CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 import { chartsIISlopePeriods } from './chartsIISlopeData.js';
 import { buildChartsIIDataProfile, assessChartsIISuitability } from './chartsIIDataProfile.js';
@@ -301,6 +302,24 @@ function InfoPopover({ label, compact = false, align = 'end', children }) {
 }
 
 function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null }) {
+  const chartSvgContainerRef = useRef(null);
+  const [pngExportBusy, setPngExportBusy] = useState(false);
+  const [pngExportStatus, setPngExportStatus] = useState('');
+  const [exportPanelOpen, setExportPanelOpen] = useState(false);
+  const [exportOptions, setExportOptions] = useState({
+    includeTitle: true, title: '', includeXAxis: false, xAxisLabel: '',
+    includeYAxis: false, yAxisLabel: '', includeProvenance: true,
+    includeFootnotes: false, footnotes: '',
+  });
+  const updateExportOption = (key, value) => setExportOptions(previous => ({ ...previous, [key]: value }));
+  const openExportPanel = () => {
+    if (!exportPanelOpen) {
+      setExportOptions(previous => ({ ...previous,
+        title: previous.title || chartResult?.chart?.title || '',
+      }));
+    }
+    setExportPanelOpen(previous => !previous);
+  };
   // Stable Explore rows define the available fields; playback rows define
   // the plotted data. Charts I state and the recommendations remain independent.
   const [lineMode, setLineMode] = useState('single');
@@ -453,6 +472,44 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     if (result.chartType === 'groupedBar' || result.chartType === 'stackedBar') return Array.isArray(result.data) && result.data.length > 0 && Array.isArray(result.series) && result.series.length > 0;
     return Array.isArray(result.data) && result.data.length > 0;
   })();
+  const handleChartsIIPngExport = async () => {
+    if (pngExportBusy || chronologyDragging || !isLiveFamily || chartResult?.status !== 'ready') return;
+    const svg = chartSvgContainerRef.current?.querySelector('svg[role="img"]');
+    if (!svg || !isResultPopulated) {
+      setPngExportStatus('No rendered chart is available to export.');
+      return;
+    }
+    const descriptor = buildChartsIIPngDescriptor({
+      family: chart?.name,
+      chartTitle: chartResult.chart?.title,
+      scopeCount: (chart?.key === 'scatter' ? scatterRows : renderedPreviewRows).length,
+      exploreCount: profileRows.length,
+      chronologyRange: scatterDateRange,
+      chronologyEnabled: scatterChronologyAvailable,
+      dateAxis: chart?.key === 'scatter' && scatterXAxisMode === 'date',
+      includeProvenance: exportOptions.includeProvenance,
+      includeFootnotes: exportOptions.includeFootnotes,
+      footnotes: exportOptions.footnotes,
+    });
+    setPngExportBusy(true);
+    setPngExportStatus('');
+    try {
+      await downloadChartsIIPng(svg, descriptor, {
+        includeTitle: exportOptions.includeTitle,
+        title: exportOptions.title.trim() || chartResult.chart?.title || '',
+        sourceTitle: chartResult.chart?.title || '',
+        includeXAxis: exportOptions.includeXAxis,
+        xAxisLabel: exportOptions.xAxisLabel.trim(),
+        includeYAxis: exportOptions.includeYAxis,
+        yAxisLabel: exportOptions.yAxisLabel.trim(),
+      });
+      setPngExportStatus(`Downloaded ${descriptor.filename}`);
+    } catch (error) {
+      setPngExportStatus(`PNG export failed: ${error?.message || 'Unable to render the chart.'}`);
+    } finally {
+      setPngExportBusy(false);
+    }
+  };
   const visibleScatterCount = chartResult?.chart?.chartType === 'scatter' && scatterXAxisMode === 'date'
     && Number.isFinite(renderedScatterDateRange?.start) && Number.isFinite(renderedScatterDateRange?.end)
       ? chartResult.chart.points.filter(point => point.x >= renderedScatterDateRange.start
@@ -478,7 +535,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const inputClass = 'mt-1 w-full min-w-0 rounded-md border border-[#cdb48b] bg-[#fffdf7] px-2 py-2 text-[12px] text-[#24382d]';
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-hidden">
-      <p className="sr-only">Charts II Builder · Treemap, Slope Chart, Dot Plot, Box Plot, Scatter/Bubble, Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; export pending</p>
+      <p className="sr-only">Charts II Builder · Treemap, Slope Chart, Dot Plot, Box Plot, Scatter/Bubble, Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; current-chart PNG export available</p>
       <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-[minmax(220px,20%)_minmax(0,1fr)]">
         <aside className={`${panel} min-h-0 overflow-y-auto overscroll-contain p-4`} aria-label="Chart configuration foundation">
           <h3 className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-8b2e23)]">Data &amp; Interpretation</h3>
@@ -818,7 +875,15 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
           <div className={`${panel} flex min-h-0 flex-1 flex-col overflow-hidden p-5`}>
             <div className="flex min-w-0 shrink-0 items-start justify-between gap-3">
               <h3 className={`${heading} min-w-0 text-2xl font-semibold text-[var(--peridot-color-hex-173120)]`}>{chart?.name || 'Choose a chart type'}</h3>
-              <InfoPopover label="Peridot's Interpretation">
+              <div className="flex shrink-0 items-center gap-2">
+                <button type="button" onClick={openExportPanel}
+                  disabled={!isLiveFamily || !contract.ready || !isResultPopulated || chronologyDragging || pngExportBusy}
+                  aria-expanded={exportPanelOpen} aria-controls="charts-ii-export-settings"
+                  className="rounded-md border border-[#b58b42] bg-[#fffaf0] px-3 py-1.5 text-[12px] font-semibold text-[#344b39] hover:bg-[#f3e7cd] disabled:cursor-not-allowed disabled:opacity-45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#8b3026]"
+                  title="Customize and download the current chart as a PNG">
+                  Export PNG
+                </button>
+                <InfoPopover label="Peridot's Interpretation">
                 <h4 className={`${heading} mb-2 text-[16px] font-semibold text-[#8b3026]`}>Peridot's Interpretation</h4>
                 {isTreemap && chartResult?.reporting ? <>
                   <p>Treemap area represents <strong>{chartResult.reporting.aggregation}</strong> of {chartResult.reporting.measureField}. Total: {chartResult.reporting.total.toLocaleString()} across {chartResult.reporting.displayedParents} displayed parent groups.</p>
@@ -861,8 +926,37 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   <p className="mt-2">Source dates must fit wholly within the selected interval. A missing numeric observation is never assigned zero.</p>
                   <p className="mt-2"><strong>Gap display:</strong> {gapDisplay === 'connect' ? 'Connect observations — lines or areas visually interpolate across unobserved intervals. No records or measurements are created.' : 'Show data gaps — unobserved intervals remain disconnected.'} Exclusions for date precision and missing values are unchanged.</p>
                 </> : <p>Chart-specific computational interpretation will be added during the Builder's interpretation pass.</p>}
-              </InfoPopover>
+                </InfoPopover>
+              </div>
             </div>
+            {exportPanelOpen && <section id="charts-ii-export-settings" aria-label="Customize PNG export"
+              className="absolute right-5 top-16 z-40 max-h-[calc(100%-5rem)] w-[min(42rem,calc(100%-2.5rem))] overflow-y-auto rounded-lg border border-[#d9c8a9] bg-[#fff9ed] p-3 text-[12px] text-[#344b39] shadow-xl">
+              <div className="flex items-center justify-between gap-3">
+                <h4 className="font-semibold">Customize PNG export</h4>
+                <button type="button" className="underline" onClick={() => setExportPanelOpen(false)}>Close</button>
+              </div>
+              <p className="mt-1 text-[11px] text-[#52675a]">Changes apply to the downloaded image only, not the chart or its data. Leave everything unchecked for an unannotated chart.</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={exportOptions.includeTitle} onChange={e => updateExportOption('includeTitle', e.target.checked)} />Include chart title</label>
+                  {exportOptions.includeTitle && <input aria-label="Export chart title" className="w-full rounded border border-[#d5be98] bg-white p-1.5" value={exportOptions.title} onChange={e => updateExportOption('title', e.target.value)} placeholder="Chart title" />}
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={exportOptions.includeXAxis} onChange={e => updateExportOption('includeXAxis', e.target.checked)} />Add X-axis label</label>
+                  {exportOptions.includeXAxis && <input aria-label="Export X-axis label" className="w-full rounded border border-[#d5be98] bg-white p-1.5" value={exportOptions.xAxisLabel} onChange={e => updateExportOption('xAxisLabel', e.target.value)} placeholder="X-axis label" />}
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={exportOptions.includeYAxis} onChange={e => updateExportOption('includeYAxis', e.target.checked)} />Add Y-axis label</label>
+                  {exportOptions.includeYAxis && <input aria-label="Export Y-axis label" className="w-full rounded border border-[#d5be98] bg-white p-1.5" value={exportOptions.yAxisLabel} onChange={e => updateExportOption('yAxisLabel', e.target.value)} placeholder="Y-axis label" />}
+                </div>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={exportOptions.includeProvenance} onChange={e => updateExportOption('includeProvenance', e.target.checked)} />Include Peridot provenance / chronology</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" checked={exportOptions.includeFootnotes} onChange={e => updateExportOption('includeFootnotes', e.target.checked)} />Include custom footnotes</label>
+                  {exportOptions.includeFootnotes && <textarea aria-label="Export footnotes" rows={3} className="w-full resize-y rounded border border-[#d5be98] bg-white p-1.5" value={exportOptions.footnotes} onChange={e => updateExportOption('footnotes', e.target.value)} placeholder="Sources, methodological notes, qualifications…" />}
+                </div>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <button type="button" onClick={handleChartsIIPngExport} disabled={pngExportBusy || chronologyDragging || !isResultPopulated}
+                  className="rounded-md border border-[#b58b42] bg-[#f3e7cd] px-3 py-1.5 font-semibold disabled:opacity-50">{pngExportBusy ? 'Exporting…' : 'Download PNG'}</button>
+              </div>
+            </section>}
+            {pngExportStatus && <p role="status" aria-live="polite" className="mt-1 shrink-0 text-[11px] text-[#52675a]">{pngExportStatus}</p>}
             {isLiveFamily ? (
               <div className="min-h-0 min-w-0 flex-1 overflow-auto pt-3" aria-label={`Live ${chart.name} chart preview`} aria-live="polite">
                 {!contract.ready ? (
@@ -872,7 +966,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                 ) : !(isScatter ? scatterRows : previewRows).length ? (
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">No records are available in the current playback scope.</div>
                 ) : isResultPopulated ? (
-                  <div className="h-full min-h-[320px] min-w-0">
+                  <div ref={chartSvgContainerRef} className="h-full min-h-[320px] min-w-0">
                     {chartResult.chart.chartType === 'treemap' && <AnalyticsTreemapChart key={`${treemapHierarchy ? "h" : "s"}:${treemapParentField}:${treemapChildField}:${treemapMeasureField}`} parents={chartResult.chart.parents} total={chartResult.chart.total} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} measureLabel={chartResult.chart.measureLabel} />}
                     {chartResult.chart.chartType === 'slope' && <AnalyticsSlopeChart series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} firstLabel={chartResult.chart.firstLabel} secondLabel={chartResult.chart.secondLabel} />}
                     {chartResult.chart.chartType === 'dot' && <AnalyticsDotPlotChart points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} valueLabel={chartResult.chart.valueLabel} />}

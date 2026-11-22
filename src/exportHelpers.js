@@ -188,7 +188,7 @@ export function serializeSvgForExport(svgElement, options = {}) {
   background.setAttribute('y', '0');
   background.setAttribute('width', String(width));
   background.setAttribute('height', String(height));
-  background.setAttribute('fill', PERIDOT_COLORS.HEX_F8FAFC);
+  background.setAttribute('fill', options.backgroundColor || PERIDOT_COLORS.HEX_F8FAFC);
   clone.insertBefore(background, clone.firstChild);
 
   if (hasHeaderContent) {
@@ -362,7 +362,7 @@ export async function renderSvgElementToPngBlob(svgElement, options = {}) {
   canvas.height = serialized.height;
   const context = canvas.getContext('2d');
   if (!context) throw new Error('Canvas context unavailable');
-  context.fillStyle = PERIDOT_COLORS.HEX_F8FAFC;
+  context.fillStyle = options.backgroundColor || PERIDOT_COLORS.HEX_F8FAFC;
   context.fillRect(0, 0, serialized.width, serialized.height);
   context.drawImage(image, 0, 0, serialized.width, serialized.height);
   const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
