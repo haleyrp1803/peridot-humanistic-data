@@ -620,6 +620,76 @@ export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle
   </ChartFrame>;
 }
 
+// Charts II B3.9: Cleveland-style dot plot. Every dot is an aggregated
+// category/column value, and all dots share one linear numeric scale.
+export function AnalyticsDotPlotChart({ points = [], title = 'Dot Plot', subtitle = '', valueLabel = 'Value', svgRef }) {
+  const [tooltip, setTooltip] = useState(null);
+  const finite = points.filter(point => Number.isFinite(point?.value));
+  if (!finite.length) return <EmptyChartState message="No valid aggregated values for the selected Dot Plot fields." />;
+  const rowHeight = 29;
+  const height = Math.max(438, 110 + finite.length * rowHeight);
+  const layout = getChartCardLayout({ height, left: 255, top: 76, bottom: 46 });
+  const { width, left, top, plotWidth } = layout;
+  const values = finite.map(point => point.value);
+  // Counts are nonnegative integers; numerical measures can legitimately be signed.
+  // Use rounded, predictable ticks instead of arbitrary fractional labels from padding.
+  const isCount = valueLabel === 'Records';
+  const smallest = Math.min(...values);
+  const largest = Math.max(...values);
+  const minValue = isCount ? 0 : Math.min(0, smallest);
+  const maxValue = Math.max(0, largest);
+  const span = maxValue - minValue;
+  const targetStep = Math.max(span / 4, Number.EPSILON);
+  const magnitude = 10 ** Math.floor(Math.log10(targetStep));
+  const multiples = [1, 2, 2.5, 5, 10];
+  let step = multiples.reduce((best, candidate) =>
+    Math.abs(candidate * magnitude - targetStep) < Math.abs(best * magnitude - targetStep)
+      ? candidate : best, multiples[0]) * magnitude;
+  if (isCount) step = Math.max(1, Math.ceil(step));
+  let lower = Math.floor(minValue / step) * step;
+  let upper = Math.ceil(maxValue / step) * step;
+  if (lower === upper) upper = lower + step;
+  // Avoid emitting excessive labels on extremely narrow or very skewed domains.
+  while (Math.round((upper - lower) / step) > 7) {
+    step *= 2;
+    lower = Math.floor(minValue / step) * step;
+    upper = Math.ceil(maxValue / step) * step;
+  }
+  const axisEnd = Math.min(layout.chartRight, left + plotWidth);
+  const xAt = value => left + ((value - lower) / (upper - lower)) * plotWidth;
+  const tickCount = Math.round((upper - lower) / step);
+  const ticks = Array.from({length: tickCount + 1}, (_, index) => lower + step * index);
+  const formatValue = value => (Math.abs(value) < step * 1e-9 ? 0 : value).toLocaleString(undefined, {
+    maximumFractionDigits: isCount ? 0 : 4,
+  });
+  const baseline = xAt(0);
+  return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
+    {{ tooltip: <ChartTooltip tooltip={tooltip}/>, chart: <>
+      {ticks.map((value, index) => <g key={index}>
+        <line x1={xAt(value)} x2={xAt(value)} y1={top - 7} y2={top + (finite.length - 1) * rowHeight + 14} stroke={CHART_COLORS.grid} strokeWidth="1" opacity=".48"/>
+        <text x={xAt(value)} y={top + finite.length * rowHeight + 12} textAnchor="middle" fontSize="10" fill={CHART_COLORS.mutedText}>{formatValue(value)}</text>
+      </g>)}
+      {baseline >= left && baseline <= axisEnd && <line x1={baseline} x2={baseline} y1={top - 7} y2={top + (finite.length - 1) * rowHeight + 14} stroke={AXIS_COLORS.majorLine} strokeWidth="1.5" opacity=".7" />}
+      {finite.map((point, index) => {
+        const y = top + index * rowHeight;
+        const color = getSeriesColor(index);
+        return <g key={`${point.label}-${index}`}>
+          <line x1={left} x2={axisEnd} y1={y} y2={y} stroke={CHART_COLORS.grid} strokeWidth="1" opacity=".28"/>
+          <WrappedAxisLabel x={left - 12} y={y + 4} label={point.label} maxLineLength={29}/>
+          <circle cx={xAt(point.value)} cy={y} r="6.2" stroke={CHART_COLORS.accentDark} strokeWidth="1.1" fill={color}
+            onMouseMove={event=>setTooltip(buildTooltip(event, {label: point.label, secondary: `${point.n} contributing observations`, count: point.value, unit: '(aggregated value)'}))}
+            onMouseLeave={()=>setTooltip(null)} style={{cursor:'default'}}>
+            <title>{`${point.label}: ${formatValue(point.value)} (${point.n} contributing observations)`}</title>
+          </circle>
+        </g>;
+      })}
+      <text x={left + plotWidth / 2} y={height - 10} textAnchor="middle" fontSize="11" fontWeight="650" fill={CHART_COLORS.text}>{valueLabel}</text>
+      <SummaryPanel {...layout.legend} title="Values by category" rows={finite.map((point,index)=>({label:point.label,value:formatValue(point.value),color:getSeriesColor(index),meta:`n=${point.n}`}))}
+        note="Each dot is one aggregated value; n counts observations."/>
+    </> }}
+  </ChartFrame>;
+}
+
 export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientation = 'vertical' }) {
   const [tooltip, setTooltip] = useState(null);
 

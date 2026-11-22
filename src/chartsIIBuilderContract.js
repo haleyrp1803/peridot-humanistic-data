@@ -13,6 +13,7 @@ import { getChartsIIFieldInventory } from './chartsIIFieldInventory.js';
 import { deriveChartsIIWideTemporalSeries } from './chartsIIWideTemporalSeries.js';
 import { deriveChartsIIScatter } from './chartsIIScatterData.js';
 import { deriveChartsIIBoxPlot } from './chartsIIBoxPlotData.js';
+import { deriveChartsIIDotPlot } from './chartsIIDotPlotData.js';
 import { deriveChartsIITemporalSeries, CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 const CHARTS_II_TIME_INTERVAL_LABELS = Object.fromEntries(CHARTS_II_TIME_INTERVALS.map(({value,label}) => [value,label]));
 
@@ -21,6 +22,7 @@ export const CHARTS_II_BUILDER_FAMILIES = Object.freeze({
   'scatter-date': family('scatter', [{ key: 'scatterYField', label: 'Y-axis (numeric)', pool: 'numericMeasureOptions' }]),
   scatter: family('scatter', [{ key: 'scatterXField', label: 'X-axis (numeric)', pool: 'numericMeasureOptions' }, { key: 'scatterYField', label: 'Y-axis (numeric)', pool: 'numericMeasureOptions', distinctFrom: 'scatterXField' }]),
   box: family('box', []),
+  dot: family('dot', []),
   bar: family('bar', [{ key: 'barGroupBy', label: 'Category', pool: 'barGroupOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'grouped-bar': family('groupedBar', [{ key: 'xField', label: 'Category / x-axis', pool: 'xAxisOptions' }, { key: 'groupedBarGroupBy', label: 'Compare by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'stacked-bar': family('stackedBar', [{ key: 'xField', label: 'Category / x-axis', pool: 'xAxisOptions' }, { key: 'stackSegmentBy', label: 'Segments', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
@@ -120,6 +122,26 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
   // applies the same additive rule used by Stacked Bar.
   if (contract.chartKey === 'stacked-area') {
     args.aggregation = args.yField === 'recordCount' ? 'count' : 'sum';
+  }
+  if (contract.chartKey === 'dot') {
+    const mode = settings.dotMode === 'columns' ? 'columns' : 'category';
+    const inventory = getChartsIIBuilderFieldInventory(settings.profileRows || args.rows);
+    const numeric = new Set((inventory.numericMeasureOptions || []).map(option => option.key));
+    const measures = new Set((inventory.yMetricOptions || []).map(option => option.key));
+    const categories = new Set((inventory.barGroupOptions || []).map(option => option.key));
+    const fields = [...new Set((settings.dotFields || []).filter(field => numeric.has(field)))];
+    if (mode === 'columns' && !fields.length) return { status: 'unavailable', chart: null, problems: ['Select at least one numerical column.'] };
+    if (mode === 'category' && (!measures.has(settings.dotMeasureField) || !categories.has(settings.dotGroupField)))
+      return { status: 'unavailable', chart: null, problems: ['Choose a measure and a categorical grouping field.'] };
+    const aggregation = mode === 'category' && settings.dotMeasureField === 'recordCount' ? 'count'
+      : ['sum','average','median','min','max'].includes(settings.dotAggregation) ? settings.dotAggregation : 'average';
+    const derived = deriveChartsIIDotPlot(args.rows, { mode, fields, measureField: settings.dotMeasureField,
+      categoryField: settings.dotGroupField, aggregation, maxGroups: args.topN, order: settings.dotOrder });
+    return { status: 'ready', chart: { chartType: 'dot', title: 'Dot Plot',
+      subtitle: mode === 'columns' ? `${aggregation} of observed values for each numerical column.` :
+        `${aggregation} of ${settings.dotMeasureField} by ${settings.dotGroupField}.`,
+      points: derived.points, valueLabel: mode === 'category' && settings.dotMeasureField === 'recordCount'
+        ? 'Records' : mode === 'columns' ? 'Aggregated value' : settings.dotMeasureField || 'Value' }, reporting: derived.reporting };
   }
   if (contract.chartKey === 'box') {
     const mode = settings.boxMode === 'category' ? 'category' : 'columns';

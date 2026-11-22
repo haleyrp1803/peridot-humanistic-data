@@ -67,7 +67,7 @@ const RULES = Object.freeze({
   'stacked-area': (p) => ({ score: (p.hasTime ? 49 : 0) + (p.hasMultipleSeries ? 30 : 0) + (p.categoricalFields.length ? 7 : 0), need: 'time and multiple groupable series', reason: 'Time and multiple series appear available for a stacked view.' }),
   bar: (p) => ({ score: p.categoricalFields.length ? 88 : 0, need: 'a usable category field', reason: 'Mapped categories can be compared by record count or a measure.' }),
   'grouped-bar': (p) => ({ score: p.categoricalFields.length >= 2 ? 87 : p.categoricalFields.length === 1 ? 37 : 0, need: 'two groupable fields', reason: 'Multiple categorical dimensions appear available.' }),
-  dot: (p) => ({ score: p.categoricalFields.length ? 75 : 0, need: 'a categorical field and a comparable value', reason: 'Mapped categories appear available for a compact comparison.' }),
+  dot: (p) => ({ score: p.categoricalFields.length ? 79 : p.numericFields.length >= 2 ? 78 : p.numericFields.length ? 40 : 0, need: 'categories or multiple numerical columns', reason: 'The dataset provides category groups or numerical columns suited to compact comparisons.' }),
   slope: (p) => ({ score: (p.hasTime ? 45 : 0) + (p.hasMultipleSeries ? 25 : 0), need: 'two ordered comparison points and one or more series', reason: 'An ordered dimension and comparison series may be available.' }),
   'stacked-bar': (p) => ({ score: p.categoricalFields.length >= 2 ? 85 : p.categoricalFields.length === 1 ? 32 : 0, need: 'two groupable dimensions', reason: 'Categories can be subdivided into additive contributions.' }),
   pie: (p) => ({ score: p.categoricalFields.length ? 75 : 0, need: 'a category field and meaningful nonnegative totals', reason: 'Mapped categories can be counted as shares of a whole.' }),

@@ -14,7 +14,7 @@ import { createPortal } from 'react-dom';
 import { CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 import { buildChartsIIDataProfile, assessChartsIISuitability } from './chartsIIDataProfile.js';
 import { createChartsIIBuilderConfiguration, updateChartsIIBuilderConfiguration, validateChartsIIBuilderConfiguration, getChartsIIBuilderFieldInventory, deriveChartsIIBuilderData } from './chartsIIBuilderContract.js';
-import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart, AnalyticsScatterChart, AnalyticsBoxPlotChart } from './analyticsChartComponents.jsx';
+import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart, AnalyticsScatterChart, AnalyticsBoxPlotChart, AnalyticsDotPlotChart } from './analyticsChartComponents.jsx';
 
 // The provisional 15-family inventory is shared by search, purpose browsing,
 // suitability ranking, and thumbnails. Variations are not separate renderers yet.
@@ -309,6 +309,12 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const numericScatterXAxisRef = useRef('');
   const [bubbleSizeField, setBubbleSizeField] = useState('');
   const [wideSeriesFields, setWideSeriesFields] = useState([]);
+  const [dotMode, setDotMode] = useState('category');
+  const [dotFields, setDotFields] = useState(() => (getChartsIIBuilderFieldInventory(profileRows).numericMeasureOptions || []).slice(0,5).map(item => item.key));
+  const [dotMeasureField, setDotMeasureField] = useState('recordCount');
+  const [dotGroupField, setDotGroupField] = useState(() => getChartsIIBuilderFieldInventory(profileRows).barGroupOptions?.[0]?.key || '');
+  const [dotAggregation, setDotAggregation] = useState('average');
+  const [dotOrder, setDotOrder] = useState('value');
   const [boxMode, setBoxMode] = useState('columns');
   const [boxScale, setBoxScale] = useState('full');
   const [boxFields, setBoxFields] = useState(() => (getChartsIIBuilderFieldInventory(profileRows).numericMeasureOptions || []).slice(0, 5).map(field => field.key));
@@ -340,6 +346,12 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     numericScatterXAxisRef.current = '';
     setBubbleSizeField('');
     setWideSeriesFields([]);
+    setDotMode('category');
+    setDotFields((getChartsIIBuilderFieldInventory(profileRows).numericMeasureOptions || []).slice(0,5).map(item=>item.key));
+    setDotMeasureField('recordCount');
+    setDotGroupField(getChartsIIBuilderFieldInventory(profileRows).barGroupOptions?.[0]?.key || '');
+    setDotAggregation('average');
+    setDotOrder('value');
     setBoxMode('columns');
     setBoxScale('full');
     setBoxFields((getChartsIIBuilderFieldInventory(profileRows).numericMeasureOptions || []).slice(0, 5).map(field => field.key));
@@ -363,16 +375,17 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     });
   }, [profileRows]);
   const temporalFamily = ['line','area','stacked-area'].includes(chart?.key);
-  const isLiveFamily = ['scatter', 'box', 'bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst', 'area', 'stacked-area'].includes(chart?.key);
+  const isLiveFamily = ['scatter', 'box', 'dot', 'bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst', 'area', 'stacked-area'].includes(chart?.key);
   // The dock is the sole chronology filter. Undated datasets have no active
   // chronology and retain the complete Explore-scope record set.
   const scatterRows = chart?.key === 'scatter' && (scatterXAxisMode === 'date' || !scatterChronologyAvailable) ? profileRows : renderedPreviewRows;
   const chartResult = useMemo(() => isLiveFamily
-    ? deriveChartsIIBuilderData(contract, scatterRows, { ...settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField })
-    : null, [isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField]);
+    ? deriveChartsIIBuilderData(contract, scatterRows, { ...settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder })
+    : null, [isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder]);
   const isResultPopulated = chartResult?.status === 'ready' && (() => {
     const result = chartResult.chart;
     if (!result) return false;
+    if (result.chartType === 'dot') return Array.isArray(result.points) && result.points.length > 0;
     if (result.chartType === 'box') return Array.isArray(result.boxes) && result.boxes.length > 0;
     if (result.chartType === 'scatter') return Array.isArray(result.points) && result.points.length > 0;
     if (result.chartType === 'sunburst') return Number(result.total) > 0 && Array.isArray(result.parents) && result.parents.some(parent => Number(parent.count) > 0 && Array.isArray(parent.children) && parent.children.some(child => Number(child.count) > 0));
@@ -393,6 +406,9 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const isHistogram = chart?.key === 'histogram';
   const isScatter = chart?.key === 'scatter';
   const isBox = chart?.key === 'box';
+  const isDot = chart?.key === 'dot';
+  const dotGroupOptions = getChartsIIBuilderFieldInventory(profileRows).barGroupOptions || [];
+  const dotMeasureOptions = getChartsIIBuilderFieldInventory(profileRows).yMetricOptions || [];
   const boxGroupOptions = getChartsIIBuilderFieldInventory(profileRows).barGroupOptions || [];
   const scatterNumericFields = getChartsIIBuilderFieldInventory(profileRows).numericMeasureOptions || [];
   const wideLine = chart?.key === 'line' && lineMode === 'wide';
@@ -403,7 +419,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const inputClass = 'mt-1 w-full min-w-0 rounded-md border border-[#cdb48b] bg-[#fffdf7] px-2 py-2 text-[12px] text-[#24382d]';
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-hidden">
-      <p className="sr-only">Charts II Builder · Box Plot, Scatter/Bubble, Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; export pending</p>
+      <p className="sr-only">Charts II Builder · Dot Plot, Box Plot, Scatter/Bubble, Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; export pending</p>
       <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-[minmax(220px,20%)_minmax(0,1fr)]">
         <aside className={`${panel} min-h-0 overflow-y-auto overscroll-contain p-4`} aria-label="Chart configuration foundation">
           <h3 className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-8b2e23)]">Data &amp; Interpretation</h3>
@@ -429,6 +445,49 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   </select>
                 </label>
               )}
+              {isDot && <div className="space-y-3 text-[12px] text-[#344b39]">
+                <label className="block font-semibold">Compare values
+                  <select className={inputClass} value={dotMode} aria-label="Dot Plot data mode" onChange={event => setDotMode(event.target.value)}>
+                    <option value="category">One measure by category</option>
+                    <option value="columns">Selected numerical columns</option>
+                  </select>
+                </label>
+                {dotMode === 'columns' ? <fieldset className="space-y-2 rounded-md border border-[#dccbab] p-2">
+                  <legend className="px-1 font-semibold">Numerical columns</legend>
+                  <div className="flex gap-3 text-[11px]"><button type="button" className="underline" onClick={()=>setDotFields(scatterNumericFields.map(item=>item.key))}>Select all</button><button type="button" className="underline" onClick={()=>setDotFields([])}>Clear</button></div>
+                  <div className="max-h-44 space-y-1 overflow-y-auto">{scatterNumericFields.map(field => <label key={field.key} className="flex items-start gap-2 font-normal">
+                    <input type="checkbox" className="mt-0.5" checked={dotFields.includes(field.key)} onChange={event=>setDotFields(previous=>event.target.checked?[...previous,field.key]:previous.filter(key=>key!==field.key))}/><span>{field.label}</span>
+                  </label>)}</div>
+                  <p className="text-[10px] text-[#52675a]">One dot per selected column; blank cells are excluded, never zero.</p>
+                </fieldset> : <>
+                  <label className="block font-semibold">Measure
+                    <select className={inputClass} value={dotMeasureField} onChange={event=>setDotMeasureField(event.target.value)}>
+                      <option value="">Choose a measure</option>{dotMeasureOptions.map(field=><option key={field.key} value={field.key}>{field.label}</option>)}
+                    </select>
+                  </label>
+                  <label className="block font-semibold">Group by
+                    <select className={inputClass} value={dotGroupField} onChange={event=>setDotGroupField(event.target.value)}>
+                      <option value="">Choose a category</option>{dotGroupOptions.map(field=><option key={field.key} value={field.key}>{field.label}</option>)}
+                    </select>
+                  </label>
+                  <label className="block font-semibold">Maximum categories
+                    <select className={inputClass} value={settings.topN} onChange={event=>setSettings(previous=>({...previous,topN:Number(event.target.value)}))}>
+                      {[5,10,15,20].map(value=><option key={value} value={value}>{value}</option>)}
+                    </select>
+                  </label>
+                </>}
+                {(dotMode === 'columns' || dotMeasureField !== 'recordCount') && <label className="block font-semibold">Aggregate observations
+                  <select className={inputClass} value={dotAggregation} onChange={event=>setDotAggregation(event.target.value)}>
+                    <option value="average">Average</option><option value="median">Median</option><option value="sum">Sum</option><option value="min">Minimum</option><option value="max">Maximum</option>
+                  </select>
+                </label>}
+                <label className="block font-semibold">Order categories
+                  <select className={inputClass} value={dotOrder} onChange={event=>setDotOrder(event.target.value)}>
+                    <option value="value">Highest value first</option><option value="label">Alphabetical</option>
+                  </select>
+                </label>
+                <p className="text-[10px] leading-relaxed text-[#52675a]">Each dot is one aggregated value, not an individual observation. The chronology dock filters contributing records.</p>
+              </div>}
               {isBox && <div className="space-y-3 text-[12px] text-[#344b39]">
                 <label className="block font-semibold">Compare distributions
                   <select className={inputClass} aria-label="Box Plot data mode" value={boxMode} onChange={event => setBoxMode(event.target.value)}>
@@ -563,7 +622,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   </select>
                 </label>
               ))}
-              {!contract.additive && !isHistogram && !isScatter && !isBox && <label className="block text-[12px] font-semibold text-[#344b39]">Aggregation
+              {!contract.additive && !isHistogram && !isScatter && !isBox && !isDot && <label className="block text-[12px] font-semibold text-[#344b39]">Aggregation
                 <select className={inputClass} value={wideLine ? (settings.aggregation === 'count' ? 'average' : settings.aggregation) : effectiveAggregation}
                   disabled={recordCountMeasure || fixedAdditive}
                   onChange={(event) => setSettings(old => ({ ...old, aggregation: event.target.value }))}>
@@ -573,7 +632,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                 {recordCountMeasure && <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Record count uses Count; choose a numeric measure for other aggregations.</span>}
                 {fixedAdditive && !recordCountMeasure && <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Stacked values use Sum to preserve additive segment totals.</span>}
               </label>}
-              {!isHistogram && !isScatter && !isBox && !wideLine && <label className="block text-[12px] font-semibold text-[#344b39]">Maximum categories
+              {!isHistogram && !isScatter && !isBox && !isDot && !wideLine && <label className="block text-[12px] font-semibold text-[#344b39]">Maximum categories
                 <select className={inputClass} value={settings.topN} onChange={(event) => setSettings(old => ({ ...old, topN: Number(event.target.value) }))}>
                   {[5,10,15,20].map(value => <option key={value} value={value}>{value}</option>)}
                 </select>
@@ -613,7 +672,11 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
               <h3 className={`${heading} min-w-0 text-2xl font-semibold text-[var(--peridot-color-hex-173120)]`}>{chart?.name || 'Choose a chart type'}</h3>
               <InfoPopover label="Peridot's Interpretation">
                 <h4 className={`${heading} mb-2 text-[16px] font-semibold text-[#8b3026]`}>Peridot's Interpretation</h4>
-                {isBox && chartResult?.reporting ? <>
+                {isDot && chartResult?.reporting ? <>
+                  <p>Dot Plot shows <strong>{chartResult.reporting.plottedGroups}</strong> values, each summarizing a {chartResult.reporting.mode === 'columns' ? 'numerical column' : 'category'} using {chartResult.reporting.aggregation}.</p>
+                  <p className="mt-2">Included measurements: {chartResult.reporting.includedMeasurements}; missing: {chartResult.reporting.excluded.missingMeasure}; invalid: {chartResult.reporting.excluded.invalidMeasure}; missing category: {chartResult.reporting.excluded.missingCategory}.</p>
+                  <p className="mt-2">Omitted categories due to display limit: {chartResult.reporting.groupsOmitted}. A dot represents a summary, not a source record. Chronology changes which records contribute to each summary.</p>
+                </> : isBox && chartResult?.reporting ? <>
                   <p>Box Plot compares {chartResult.reporting.mode === 'columns' ? 'selected numerical columns' : 'one numerical measure across categories'}. {chartResult.reporting.plottedGroups} distributions displayed; {chartResult.reporting.groupsOmitted} categories omitted by the limit.</p>
                   <p className="mt-2">Valid numerical measurements: <strong>{chartResult.reporting.includedMeasurements}</strong>. Missing: {chartResult.reporting.excluded.missingMeasure}; invalid: {chartResult.reporting.excluded.invalidMeasure}; missing category: {chartResult.reporting.excluded.missingCategory}.</p>
                   <p className="mt-2">Outlying observations displayed: {chartResult.reporting.outliers}. Quartiles use linear interpolation (type 7); whiskers extend to the most extreme values within 1.5 × IQR. Outliers are not deleted or excluded from quartile calculations.</p>
@@ -652,6 +715,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">No records are available in the current playback scope.</div>
                 ) : isResultPopulated ? (
                   <div className="h-full min-h-[320px] min-w-0">
+                    {chartResult.chart.chartType === 'dot' && <AnalyticsDotPlotChart points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} valueLabel={chartResult.chart.valueLabel} />}
                     {chartResult.chart.chartType === 'box' && <AnalyticsBoxPlotChart boxes={chartResult.chart.boxes} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} scaleMode={boxScale} />}
                     {chartResult.chart.chartType === 'scatter' && <AnalyticsScatterChart dateRange={chartResult.chart.xAxisDate ? renderedScatterDateRange : null} points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} xLabel={chartResult.chart.xLabel} xAxisDate={chartResult.chart.xAxisDate} yLabel={chartResult.chart.yLabel} sizeLabel={chartResult.chart.sizeLabel} />}
                     {chartResult.chart.chartType === 'bar' && <AnalyticsBarChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} orientation={chartResult.chart.orientation} />}
@@ -672,7 +736,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
               </div>
             ) : chart ? (
               <div className="flex flex-1 items-center justify-center p-4 text-center text-sm text-[var(--peridot-color-hex-52675a)]">
-                Live preview for this chart family is not yet implemented. Bar / Column, Line / Multi-Line, Grouped Bar, Stacked Bar, Pie / Donut, Histogram, Heatmap, Sunburst, Area, Stacked Area, Scatter / Bubble, and Box Plot are available now.
+                Live preview for this chart family is not yet implemented. Bar / Column, Line / Multi-Line, Grouped Bar, Stacked Bar, Pie / Donut, Histogram, Heatmap, Sunburst, Area, Stacked Area, Scatter / Bubble, Box Plot, and Dot Plot are available now.
               </div>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center">
