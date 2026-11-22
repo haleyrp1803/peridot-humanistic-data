@@ -80,7 +80,7 @@ function hasTemporalEvidence(row) {
     || ['Date','date','displayDate','dateStart','dateEnd','dateDisplay','dateLabel','year'].some(key => String(row?.[key] ?? '').trim());
 }
 
-function eligibleBin(row, interval) {
+export function chartsIIEligibleBin(row, interval) {
   const range = temporalSourceRange(row);
   if (!range) return { excluded: hasTemporalEvidence(row) ? 'invalidDate' : 'missingDate' };
   if (range.unresolved) return { excluded: 'insufficientPrecision' };
@@ -99,7 +99,7 @@ export function deriveChartsIITemporalSeries({ rows = [], interval = 'year', mea
   const grouped = new Map();
   let included = 0;
   for (const row of rows) {
-    const eligibility = eligibleBin(row, interval);
+    const eligibility = chartsIIEligibleBin(row, interval);
     if (eligibility.excluded) { excluded[eligibility.excluded]++; continue; }
     const value = isCount ? 1 : parseAnalyticsNumber(row?.[measure]);
     if (value === null || !Number.isFinite(value)) { excluded.missingMeasure++; continue; }

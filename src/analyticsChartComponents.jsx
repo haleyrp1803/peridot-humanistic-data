@@ -16,6 +16,7 @@
 import React, { useState } from 'react';
 import { PERIDOT_THEME } from './peridotTheme.js';
 import { chartsIITemporalPositions } from './chartsIITemporalAxis.js';
+import { civilFromDay } from './peridotChronologyWindow.js';
 
 const CHART_COLORS = {
   cardBg: PERIDOT_THEME.analytics.chartBg,
@@ -457,6 +458,92 @@ function ChartFrame({ children, title, subtitle, svgRef, width, height }) {
         {children.chart}
       </svg>
     </div>
+  );
+}
+
+// Charts II B3.5: continuous numeric axes and record-level scatter/bubble marks.
+// Identical coordinates receive display-only offsets; actual values remain in tooltips.
+export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yLabel, xAxisDate = false, dateRange = null, sizeLabel = '', svgRef }) {
+  const [tooltip, setTooltip] = useState(null);
+  if (!points.length) return <EmptyChartState message="No records have usable values for the selected numerical axes." />;
+  const layout = getChartCardLayout({ height: 438, left: 76, top: 74, bottom: 60 });
+  const { width, height, left, top, plotWidth, plotHeight } = layout;
+  // Date mode is a viewport navigator: derive all eligible points once from
+  // Explore scope, and show only observations inside the selected calendar
+  // window. Neither recorded coordinates nor the underlying dataset change.
+  const hasDateWindow = xAxisDate && Number.isFinite(dateRange?.start)
+    && Number.isFinite(dateRange?.end) && dateRange.end > dateRange.start;
+  const visiblePoints = hasDateWindow
+    ? points.filter(point => point.x >= dateRange.start && point.x <= dateRange.end)
+    : points;
+  const xValues = visiblePoints.length ? visiblePoints.map(point => point.x) : points.map(point => point.x);
+  const yValues = visiblePoints.length ? visiblePoints.map(point => point.y) : points.map(point => point.y);
+  const loHi = (values) => {
+    let min = Math.min(...values), max = Math.max(...values);
+    if (min === max) { const pad = Math.abs(min) * 0.1 || 1; min -= pad; max += pad; }
+    else { const pad = (max - min) * 0.05; min -= pad; max += pad; }
+    return [min, max];
+  };
+  const [xMin, xMax] = hasDateWindow ? [dateRange.start, dateRange.end] : loHi(xValues);
+  const [yMin, yMax] = loHi(yValues);
+  const xPosition = value => left + (value - xMin) / (xMax - xMin) * plotWidth;
+  const yPosition = value => top + plotHeight - (value - yMin) / (yMax - yMin) * plotHeight;
+  const sized = Boolean(sizeLabel);
+  const allSizes = sized ? points.map(point => point.size) : [];
+  const maxSize = sized ? Math.max(0, ...allSizes) : 0;
+  const sizeRadius = value => sized ? Math.sqrt(16 + 273 * (maxSize > 0 ? Math.max(0, value) / maxSize : 0)) : 5;
+  const tickPositions = [0, 1, 2, 3, 4];
+  const labelNumber = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 4 });
+  const dateLabel = value => { const date = civilFromDay(Math.round(value)); return `${date.year}-${String(date.month).padStart(2,'0')}-${String(date.day).padStart(2,'0')}`; };
+  const labelX = value => xAxisDate ? dateLabel(value) : labelNumber(value);
+  const duplicates = visiblePoints.filter(point => point.overlapIndex > 0).length;
+  return (
+    <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
+      {{
+        tooltip: <ChartTooltip tooltip={tooltip} />,
+        chart: <>
+          <line x1={left} x2={left} y1={top} y2={top + plotHeight} stroke={AXIS_COLORS.majorLine} strokeWidth="1.4" />
+          <line x1={left} x2={left + plotWidth} y1={top + plotHeight} y2={top + plotHeight} stroke={AXIS_COLORS.majorLine} strokeWidth="1.4" />
+          {tickPositions.map(index => {
+            const t = index / 4;
+            const x = left + t * plotWidth;
+            const y = top + plotHeight - t * plotHeight;
+            return <g key={index}>
+              <line x1={x} x2={x} y1={top} y2={top + plotHeight} stroke={CHART_COLORS.grid} opacity="0.25" />
+              <line x1={left} x2={left + plotWidth} y1={y} y2={y} stroke={CHART_COLORS.grid} opacity="0.35" />
+              <text x={x} y={top + plotHeight + 19} textAnchor="middle" fontSize="10" fill={CHART_COLORS.text}>{labelX(xMin + t * (xMax - xMin))}</text>
+              <text x={left - 12} y={y + 4} textAnchor="end" fontSize="10" fill={CHART_COLORS.text}>{labelNumber(yMin + t * (yMax - yMin))}</text>
+            </g>;
+          })}
+          <text x={left + plotWidth / 2} y={height - 13} textAnchor="middle" fontSize="12" fontWeight="700" fill={CHART_COLORS.text}>{truncateLabel(xLabel, 55)}</text>
+          <text x="17" y={top + plotHeight / 2} textAnchor="middle" transform={`rotate(-90 17 ${top + plotHeight / 2})`} fontSize="12" fontWeight="700" fill={CHART_COLORS.text}>{truncateLabel(yLabel, 38)}</text>
+          {visiblePoints.map((point) => {
+            // Tiny deterministic offsets reveal overlapping records; measured coordinates are unchanged.
+            const overlap = point.overlapIndex;
+            const angle = overlap * 2.399963229728653;
+            const displacement = overlap === 0 ? 0 : 3.5 * Math.sqrt(overlap);
+            const px = Math.max(left + 1, Math.min(left + plotWidth - 1, xPosition(point.x) + Math.cos(angle) * displacement));
+            const py = Math.max(top + 1, Math.min(top + plotHeight - 1, yPosition(point.y) + Math.sin(angle) * displacement));
+            const radius = sizeRadius(point.size);
+            return <circle key={point.index} cx={px} cy={py} r={radius}
+              fill={CHART_COLORS.accentDark} fillOpacity={sized ? 0.38 : 0.55}
+              stroke={CHART_COLORS.accentDark} strokeWidth="1" strokeOpacity="0.8"
+              onMouseMove={event => setTooltip(buildTooltip(event, {
+                label: `Record ${point.index + 1}`,
+                secondary: `${xLabel}: ${labelX(point.x)} · ${yLabel}: ${labelNumber(point.y)}${sized ? ` · ${sizeLabel}: ${labelNumber(point.size)}` : ''}${point.overlapIndex ? ` · coincident point ${point.overlapIndex + 1}` : ''}`,
+                count: 1,
+                unit: 'observation',
+              }))}
+              onMouseLeave={() => setTooltip(null)} />;
+          })}
+          <SummaryPanel {...layout.legend} title={sized ? 'Bubble encoding' : 'Numerical relationship'}
+            rows={[{ label: hasDateWindow ? 'Visible records' : 'Plotted records', value: formatNumber(visiblePoints.length) },
+              { label: 'Overlapping records', value: formatNumber(duplicates) },
+              ...(sized ? [{ label: 'Maximum size value', value: labelNumber(maxSize) }] : [])]}
+            note={hasDateWindow ? `Date navigator: ${formatNumber(visiblePoints.length)} of ${formatNumber(points.length)} eligible observations visible.` : sized ? 'Bubble area scales with size; 4px minimum radius.' : 'Each dot represents one record.'} />
+        </>,
+      }}
+    </ChartFrame>
   );
 }
 

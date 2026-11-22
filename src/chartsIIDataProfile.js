@@ -10,7 +10,7 @@
  * may be omitted by that inventory's conservative heuristics. No negative
  * recommendation is a prohibition: all chart families remain selectable.
  */
-import { getAvailableAnalyticsFields } from './analyticsDerivationHelpers.js';
+import { getChartsIIFieldInventory } from './chartsIIFieldInventory.js';
 import { getRowTemporalDateParts } from './timelinePlaybackHelpers.js';
 
 const nonempty = (value) => value !== null && value !== undefined && String(value).trim() !== '';
@@ -18,7 +18,7 @@ const names = (items) => (Array.isArray(items) ? items : []).map((item) => item.
 
 export function buildChartsIIDataProfile(rows = []) {
   const records = Array.isArray(rows) ? rows : [];
-  const fields = getAvailableAnalyticsFields(records);
+  const fields = getChartsIIFieldInventory(records);
   const categorical = fields.barGroupOptions || [];
   const numeric = fields.numericMeasureOptions || [];
   const temporal = fields.dateFieldOptions || [];

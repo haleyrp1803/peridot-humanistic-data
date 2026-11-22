@@ -33,6 +33,8 @@ import { AnalyticsPanelContent } from './AnalyticsPanel.jsx';
 import { PeridotChartsIIFoundation } from './PeridotChartsIIFoundation.jsx';
 import { PeridotTimelineII } from './PeridotTimelineII.jsx';
 import { PeridotSharedChronologyAdapter } from './PeridotSharedChronologyAdapter.jsx';
+import { createChronologyDomain, clampChronologyWindow } from './peridotChronologyWindow.js';
+import { indexedCalendarDomain } from './peridotChronologyNavigationBridge.js';
 
 const VISUALIZATION_TOOLS = Object.freeze({
   GEOGRAPHIC_MAP: 'geographic-map',
@@ -1044,6 +1046,28 @@ export function PeridotVisualizationsWorkspace({
   // discard a configured chart just because the researcher browses again.
   const [chartsIIPage, setChartsIIPage] = useState('catalogue');
   const [chartsIIChronologyDragging, setChartsIIChronologyDragging] = useState(false);
+  // Read the same canonical domain and selected window as the shared dock.
+  // No independent Scatter date window or competing filter state is created.
+  const scatterChronologyDomain = useMemo(() => {
+    const bounds = timelineControlsProps?.chronologySourceBounds;
+    if (Number.isFinite(bounds?.min) && Number.isFinite(bounds?.max) && bounds.max >= bounds.min) {
+      return createChronologyDomain(bounds.min, bounds.max);
+    }
+    return indexedCalendarDomain(timelineControlsProps?.timelineMonths || []);
+  }, [timelineControlsProps?.chronologySourceBounds, timelineControlsProps?.timelineMonths]);
+  const scatterChronologyAvailable = Boolean(
+    timelineControlsProps?.timelineMonths?.length && scatterChronologyDomain
+      && Number.isFinite(scatterChronologyDomain.min) && Number.isFinite(scatterChronologyDomain.max));
+  const scatterDateRange = useMemo(() => {
+    if (!scatterChronologyAvailable) return null;
+    const start = timelineControlsProps?.calendarWindowStart;
+    const end = timelineControlsProps?.calendarWindowEnd;
+    const window = Number.isFinite(start) && Number.isFinite(end)
+      ? clampChronologyWindow(start, end, scatterChronologyDomain, { minimumSpanDays: 7 })
+      : { start: scatterChronologyDomain.min, end: scatterChronologyDomain.max };
+    return { start: window.start, end: window.end };
+  }, [scatterChronologyAvailable, scatterChronologyDomain,
+    timelineControlsProps?.calendarWindowStart, timelineControlsProps?.calendarWindowEnd]);
   const chartsIIDatasetSessionKey = timelineWorkspaceProps?.datasetSessionKey;
   // Do not carry a previous dataset's pending chart choice into a newly
   // mapped dataset. Normal navigation does not change this revision key.
@@ -1251,6 +1275,8 @@ export function PeridotVisualizationsWorkspace({
           profileRows={analyticsWorkspaceProps?.chartsIIProfileRows || []}
           previewRows={analyticsWorkspaceProps?.analyticsState?.rows || []}
           chronologyDragging={chartsIIChronologyDragging}
+          scatterChronologyAvailable={scatterChronologyAvailable}
+          scatterDateRange={scatterDateRange}
           onSelectChart={(key) => {
             setChartsIIChartKey(key);
             setChartsIIPage('builder');
@@ -1374,7 +1400,17 @@ export function PeridotVisualizationsWorkspace({
             {renderWorkspaceBody()}
           </div>
         </div>
-        {timelineControlsProps
+        {selectedTool === VISUALIZATION_TOOLS.CHARTS_II && chartsIIPage === 'builder'
+          && chartsIIChartKey === 'scatter' && !scatterChronologyAvailable ? (
+          <div className="peridot-visualization-timeline-sequence shrink-0 rounded-xl border border-[#c6c3bd] bg-[#eeeae3] px-4 py-3 opacity-70"
+            aria-label="Chronology inactive — no usable mapped dates">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#77736c]">
+              <span aria-hidden="true">🔒</span> Chronology inactive
+            </div>
+            <div className="mt-2 h-7 rounded-md border border-[#bbb7ad] bg-[#d4d0c7]" aria-hidden="true" />
+            <p className="mt-2 text-xs text-[#69655e]">No usable mapped dates. Chronology navigation and playback are unavailable for this dataset.</p>
+          </div>
+        ) : timelineControlsProps
           && selectedTool !== VISUALIZATION_TOOLS.TIMELINE_II
           && (selectedTool !== VISUALIZATION_TOOLS.CHARTS_II || chartsIIPage === 'builder') ? (
           <div className="peridot-visualization-timeline-sequence shrink-0"

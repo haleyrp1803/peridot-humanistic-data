@@ -644,9 +644,41 @@ export function getAvailableAnalyticsFields(rows = []) {
   const allSegmentDefinitions = mergeFieldDefinitions(ANALYTICS_SEGMENT_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoutes: false });
   const allHeatmapDefinitions = mergeFieldDefinitions(ANALYTICS_HEATMAP_FIELD_DEFINITIONS, dynamicDefinitions, { allowRoutes: false });
 
-  const barGroupOptions = allBarDefinitions.filter((definition) => hasRequiredField(rows, definition));
-  const segmentGroupOptions = allSegmentDefinitions.filter((definition) => hasRequiredField(rows, definition));
-  const heatmapOptions = allHeatmapDefinitions.filter((definition) => hasRequiredField(rows, definition));
+  // Inventory-only fast path: resolve field availability from one pass over
+  // the row keys rather than repeatedly resolving every alias against every
+  // row for each candidate field. Route fields retain the original per-row
+  // test because both endpoints must occur in the SAME record.
+  const populatedKeys = new Set();
+  for (const row of rows) {
+    if (!row || typeof row !== 'object') continue;
+    for (const [key, value] of Object.entries(row)) {
+      if (normalizeText(value)) populatedKeys.add(normalizeKey(key));
+    }
+  }
+  const isAvailable = (definition) => {
+    if (definition.key === 'routePlace' || definition.key === 'routePerson' || definition.key === 'route') {
+      // Cheap negative check avoids thousands of alias searches for rows
+      // that have no route endpoints at all. Positive candidates retain
+      // the original same-row validation semantics.
+      const sourceKey = definition.key === 'routePerson' ? 'sourcePerson' : 'sourceLoc';
+      const targetKey = definition.key === 'routePerson' ? 'targetPerson' : 'targetLoc';
+      const findDefinition = key => ANALYTICS_BAR_FIELD_DEFINITIONS.find(item => item.key === key);
+      const possible = key => {
+        const item = findDefinition(key);
+        return [key, ...(item?.aliases || [])].some(name => populatedKeys.has(normalizeKey(name)));
+      };
+      if (!possible(sourceKey) || !possible(targetKey)) return false;
+      return hasRequiredField(rows, definition);
+    }
+    if (isDerivedDateAxisField(definition.key) || definition.key === 'recordCount') {
+      return hasRequiredField(rows, definition);
+    }
+    return [definition.key, ...(definition.aliases || [])]
+      .some((name) => populatedKeys.has(normalizeKey(name)));
+  };
+  const barGroupOptions = allBarDefinitions.filter(isAvailable);
+  const segmentGroupOptions = allSegmentDefinitions.filter(isAvailable);
+  const heatmapOptions = allHeatmapDefinitions.filter(isAvailable);
 
   const genericXAxisOptions = [
     ...dateFieldOptions,

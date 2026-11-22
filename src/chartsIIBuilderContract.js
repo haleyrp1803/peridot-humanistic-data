@@ -8,12 +8,17 @@
  * stable availability rows for choices ONLY; B2 will wire playback-visible rows
  * before rendering. Do not present B1-derived results as a live chart.
  */
-import { getAvailableAnalyticsFields, buildAnalyticsChartData } from './analyticsDerivationHelpers.js';
+import { buildAnalyticsChartData } from './analyticsDerivationHelpers.js';
+import { getChartsIIFieldInventory } from './chartsIIFieldInventory.js';
+import { deriveChartsIIWideTemporalSeries } from './chartsIIWideTemporalSeries.js';
+import { deriveChartsIIScatter } from './chartsIIScatterData.js';
 import { deriveChartsIITemporalSeries, CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 const CHARTS_II_TIME_INTERVAL_LABELS = Object.fromEntries(CHARTS_II_TIME_INTERVALS.map(({value,label}) => [value,label]));
 
 const family = (engineType, slots, options = {}) => Object.freeze({ engineType, slots, ...options });
 export const CHARTS_II_BUILDER_FAMILIES = Object.freeze({
+  'scatter-date': family('scatter', [{ key: 'scatterYField', label: 'Y-axis (numeric)', pool: 'numericMeasureOptions' }]),
+  scatter: family('scatter', [{ key: 'scatterXField', label: 'X-axis (numeric)', pool: 'numericMeasureOptions' }, { key: 'scatterYField', label: 'Y-axis (numeric)', pool: 'numericMeasureOptions', distinctFrom: 'scatterXField' }]),
   bar: family('bar', [{ key: 'barGroupBy', label: 'Category', pool: 'barGroupOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'grouped-bar': family('groupedBar', [{ key: 'xField', label: 'Category / x-axis', pool: 'xAxisOptions' }, { key: 'groupedBarGroupBy', label: 'Compare by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'stacked-bar': family('stackedBar', [{ key: 'xField', label: 'Category / x-axis', pool: 'xAxisOptions' }, { key: 'stackSegmentBy', label: 'Segments', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
@@ -24,6 +29,7 @@ export const CHARTS_II_BUILDER_FAMILIES = Object.freeze({
   area: family('line', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'stacked-area': family('multiLine', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }, { key: 'multiLineGroupBy', label: 'Stack by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { additive: true }),
   line: family('line', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { variant: 'single-line' }),
+  'line-wide': family('wideLine', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }]),
   'line-multi': family('multiLine', [{ key: 'xField', label: 'Ordered x-axis', pool: 'temporalXAxisOptions' }, { key: 'multiLineGroupBy', label: 'Separate lines by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }], { variant: 'grouped-series' }),
 });
 
@@ -31,15 +37,10 @@ const optionList = (items) => Array.isArray(items) ? items : [];
 const has = (options, key) => options.some((item) => item.key === key);
 const first = (options, excluded = '') => options.find((item) => item.key !== excluded)?.key || '';
 
+// Backward-compatible Builder entry point; the cached result is shared with
+// the Catalogue's suitability profile for this exact Explore-scope array.
 export function getChartsIIBuilderFieldInventory(rows = []) {
-  const discovered = getAvailableAnalyticsFields(Array.isArray(rows) ? rows : []);
-  return {
-    ...discovered,
-    histogramMeasureOptions: discovered.yMetricOptions,
-    // Raw uploaded date columns may include unknown-date sentinels. The
-    // chronological Area axis exclusively uses canonical date projections.
-    temporalXAxisOptions: discovered.dateFieldOptions.filter(field => field.key === 'year' || field.key === 'fullDate'),
-  };
+  return getChartsIIFieldInventory(rows);
 }
 
 export function createChartsIIBuilderConfiguration(chartKey, rows = []) {
@@ -117,6 +118,27 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
   // applies the same additive rule used by Stacked Bar.
   if (contract.chartKey === 'stacked-area') {
     args.aggregation = args.yField === 'recordCount' ? 'count' : 'sum';
+  }
+  if (contract.chartKey === 'scatter' || contract.chartKey === 'scatter-date') {
+    const sizeField = settings.scatterMode === 'bubble' ? settings.bubbleSizeField || '' : '';
+    if (settings.scatterMode === 'bubble' && !sizeField) return { status: 'unavailable', problems: ['Select a numerical Bubble size field.'], chart: null };
+    const xField = contract.chartKey === 'scatter-date' ? '__canonicalDate__' : contract.values.scatterXField;
+    const derived = deriveChartsIIScatter(args.rows, { xField, yField: contract.values.scatterYField, sizeField });
+    return { status: 'ready', chart: { chartType: 'scatter', title: settings.scatterMode === 'bubble' ? 'Bubble' : 'Scatter',
+      subtitle: `${contract.values.scatterYField} against ${xField === '__canonicalDate__' ? 'canonical date' : xField}${sizeField ? `; size: ${sizeField}` : ''}. Each point represents one eligible record.`,
+      xLabel: xField === '__canonicalDate__' ? 'Date' : xField, xAxisDate: xField === '__canonicalDate__', yLabel: contract.values.scatterYField, sizeLabel: sizeField, points: derived.points },
+      reporting: derived.reporting };
+  }
+  if (contract.chartKey === 'line-wide') {
+    const fields = (settings.wideSeriesFields || []).filter(field =>
+      (getChartsIIBuilderFieldInventory(settings.profileRows || args.rows).numericMeasureOptions || []).some(option => option.key === field));
+    if (!fields.length) return { status: 'unavailable', chart: null, problems: ['Select one or more numerical columns to plot.'] };
+    const interval = settings.interval || 'year';
+    const aggregate = ['average','min','max','sum'].includes(settings.aggregation) ? settings.aggregation : 'average';
+    const derived = deriveChartsIIWideTemporalSeries({ rows: args.rows, interval, fields, aggregation: aggregate });
+    return { status: 'ready', chart: { chartType: 'multiLine', title: `Numerical measures by ${CHARTS_II_TIME_INTERVAL_LABELS[interval] || interval}`,
+      subtitle: `${aggregate} of observed values by calendar interval; missing prices remain missing.`,
+      periods: derived.periods, series: derived.series, temporalAxis: derived.temporalAxis }, reporting: derived.reporting };
   }
   // Charts II's chronological families share the same precision-aware calendar bins.
   // Other chart families retain their existing accepted Charts I derivations.

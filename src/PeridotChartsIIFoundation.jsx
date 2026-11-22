@@ -14,7 +14,7 @@ import { createPortal } from 'react-dom';
 import { CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 import { buildChartsIIDataProfile, assessChartsIISuitability } from './chartsIIDataProfile.js';
 import { createChartsIIBuilderConfiguration, updateChartsIIBuilderConfiguration, validateChartsIIBuilderConfiguration, getChartsIIBuilderFieldInventory, deriveChartsIIBuilderData } from './chartsIIBuilderContract.js';
-import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart } from './analyticsChartComponents.jsx';
+import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart, AnalyticsScatterChart } from './analyticsChartComponents.jsx';
 
 // The provisional 15-family inventory is shared by search, purpose browsing,
 // suitability ranking, and thumbnails. Variations are not separate renderers yet.
@@ -299,11 +299,16 @@ function InfoPopover({ label, compact = false, align = 'end', children }) {
   </span>;
 }
 
-function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false }) {
+function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null }) {
   // Stable Explore rows define the available fields; playback rows define
   // the plotted data. Charts I state and the recommendations remain independent.
   const [lineMode, setLineMode] = useState('single');
   const [pieMode, setPieMode] = useState('pie');
+  const [scatterMode, setScatterMode] = useState('scatter');
+  const [scatterXAxisMode, setScatterXAxisMode] = useState('numeric');
+  const numericScatterXAxisRef = useRef('');
+  const [bubbleSizeField, setBubbleSizeField] = useState('');
+  const [wideSeriesFields, setWideSeriesFields] = useState([]);
   const [gapDisplay, setGapDisplay] = useState('connect'); // Presentation only; never changes derived records.
   const [contract, setContract] = useState(() => createChartsIIBuilderConfiguration(chart?.key, profileRows));
   const [settings, setSettings] = useState({ aggregation: 'count', topN: 10, interval: 'year' });
@@ -314,12 +319,22 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const settledPreviewRows = useRef(previewRows);
   if (!chronologyDragging) settledPreviewRows.current = previewRows;
   const renderedPreviewRows = chronologyDragging ? settledPreviewRows.current : previewRows;
+  // The dock moves immediately; a date-based chart adopts its new viewport
+  // when the gesture finishes, alongside its settled row scope.
+  const settledScatterDateRange = useRef(scatterDateRange);
+  if (!chronologyDragging) settledScatterDateRange.current = scatterDateRange;
+  const renderedScatterDateRange = chronologyDragging ? settledScatterDateRange.current : scatterDateRange;
 
   // Presentation modes belong to the selected chart, not to the changing
   // row arrays. Chronology updates may refresh data without resetting Donut.
   useEffect(() => {
     setLineMode('single');
     setPieMode('pie');
+    setScatterMode('scatter');
+    setScatterXAxisMode('numeric');
+    numericScatterXAxisRef.current = '';
+    setBubbleSizeField('');
+    setWideSeriesFields([]);
     setGapDisplay('connect');
   }, [chart?.key]);
   // Changing chart families resets the field contract and aggregation defaults.
@@ -331,25 +346,24 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   useEffect(() => {
     setContract(previous => {
       if (!previous?.supported) return createChartsIIBuilderConfiguration(previous?.chartKey || chart?.key, profileRows);
-      const defaults = createChartsIIBuilderConfiguration(previous.chartKey, profileRows);
-      if (!defaults.supported) return defaults;
-      const values = { ...defaults.values };
-      for (const slot of defaults.slots) {
-        if (slot.options.some(option => option.key === previous.values[slot.key])) {
-          values[slot.key] = previous.values[slot.key];
-        }
-      }
-      return validateChartsIIBuilderConfiguration(previous.chartKey, values, getChartsIIBuilderFieldInventory(profileRows));
+      // A temporary inventory change must never silently replace researcher's
+      // axis/size choices with defaults. An unavailable choice is displayed as
+      // such until it becomes available again or is explicitly changed.
+      return validateChartsIIBuilderConfiguration(previous.chartKey, previous.values, getChartsIIBuilderFieldInventory(profileRows));
     });
   }, [profileRows]);
   const temporalFamily = ['line','area','stacked-area'].includes(chart?.key);
-  const isLiveFamily = ['bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst', 'area', 'stacked-area'].includes(chart?.key);
+  const isLiveFamily = ['scatter', 'bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst', 'area', 'stacked-area'].includes(chart?.key);
+  // The dock is the sole chronology filter. Undated datasets have no active
+  // chronology and retain the complete Explore-scope record set.
+  const scatterRows = chart?.key === 'scatter' && (scatterXAxisMode === 'date' || !scatterChronologyAvailable) ? profileRows : renderedPreviewRows;
   const chartResult = useMemo(() => isLiveFamily
-    ? deriveChartsIIBuilderData(contract, renderedPreviewRows, settings)
-    : null, [isLiveFamily, contract, renderedPreviewRows, settings]);
+    ? deriveChartsIIBuilderData(contract, scatterRows, { ...settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows })
+    : null, [isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows]);
   const isResultPopulated = chartResult?.status === 'ready' && (() => {
     const result = chartResult.chart;
     if (!result) return false;
+    if (result.chartType === 'scatter') return Array.isArray(result.points) && result.points.length > 0;
     if (result.chartType === 'sunburst') return Number(result.total) > 0 && Array.isArray(result.parents) && result.parents.some(parent => Number(parent.count) > 0 && Array.isArray(parent.children) && parent.children.some(child => Number(child.count) > 0));
     if (result.chartType === 'heatmap') return Array.isArray(result.rows) && result.rows.length > 0 && Array.isArray(result.columns) && result.columns.length > 0 && Array.isArray(result.cells) && result.cells.some(cell => Number(cell.count) > 0);
     if (result.chartType === 'pie') return Array.isArray(result.data) && result.data.some(slice => Number(slice.count) > 0);
@@ -358,14 +372,25 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     if (result.chartType === 'groupedBar' || result.chartType === 'stackedBar') return Array.isArray(result.data) && result.data.length > 0 && Array.isArray(result.series) && result.series.length > 0;
     return Array.isArray(result.data) && result.data.length > 0;
   })();
+  const visibleScatterCount = chartResult?.chart?.chartType === 'scatter' && scatterXAxisMode === 'date'
+    && Number.isFinite(renderedScatterDateRange?.start) && Number.isFinite(renderedScatterDateRange?.end)
+      ? chartResult.chart.points.filter(point => point.x >= renderedScatterDateRange.start
+        && point.x <= renderedScatterDateRange.end).length
+      : null;
   const recordCountMeasure = contract.values?.yField === 'recordCount';
   const fixedAdditive = chart?.key === 'stacked-bar' || chart?.key === 'stacked-area';
   const isHistogram = chart?.key === 'histogram';
+  const isScatter = chart?.key === 'scatter';
+  const scatterNumericFields = getChartsIIBuilderFieldInventory(profileRows).numericMeasureOptions || [];
+  const wideLine = chart?.key === 'line' && lineMode === 'wide';
+  // A variable may legitimately encode both an axis and Bubble size; do not
+  // silently clear a previously chosen size when another axis changes.
+  const scatterSizeOptions = scatterNumericFields;
   const effectiveAggregation = recordCountMeasure ? 'count' : fixedAdditive ? 'sum' : settings.aggregation === 'count' ? 'sum' : settings.aggregation;
   const inputClass = 'mt-1 w-full min-w-0 rounded-md border border-[#cdb48b] bg-[#fffdf7] px-2 py-2 text-[12px] text-[#24382d]';
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-hidden">
-      <p className="sr-only">Charts II Builder · Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; export pending</p>
+      <p className="sr-only">Charts II Builder · Scatter/Bubble, Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; export pending</p>
       <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-[minmax(220px,20%)_minmax(0,1fr)]">
         <aside className={`${panel} min-h-0 overflow-y-auto overscroll-contain p-4`} aria-label="Chart configuration foundation">
           <h3 className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-8b2e23)]">Data &amp; Interpretation</h3>
@@ -379,13 +404,73 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                     onChange={(event) => {
                       const mode = event.target.value;
                       setLineMode(mode);
-                      setContract(createChartsIIBuilderConfiguration(mode === 'multi' ? 'line-multi' : 'line', profileRows));
+                      setContract(createChartsIIBuilderConfiguration(mode === 'multi' ? 'line-multi' : mode === 'wide' ? 'line-wide' : 'line', profileRows));
+                      if (mode === 'wide') {
+                        setWideSeriesFields(scatterNumericFields.slice(0, Math.min(2, scatterNumericFields.length)).map(field => field.key));
+                        setSettings(previous => ({ ...previous, aggregation: 'average' }));
+                      }
                     }}>
                     <option value="single">Single line</option>
                     <option value="multi">Multiple lines by category</option>
+                    <option value="wide">Selected numerical columns</option>
                   </select>
                 </label>
               )}
+              {wideLine && <fieldset className="space-y-2 rounded-md border border-[#dccbab] p-2 text-[12px] text-[#344b39]">
+                <legend className="px-1 font-semibold">Numerical columns to compare</legend>
+                <div className="flex items-center gap-3 text-[11px]">
+                  <button type="button" className="underline" onClick={() => setWideSeriesFields(scatterNumericFields.map(field => field.key))}>Select all</button>
+                  <button type="button" className="underline" onClick={() => setWideSeriesFields([])}>Clear</button>
+                </div>
+                <div className="max-h-36 space-y-1 overflow-y-auto">
+                  {scatterNumericFields.map(field => <label key={field.key} className="flex items-start gap-2 font-normal">
+                    <input type="checkbox" className="mt-0.5" checked={wideSeriesFields.includes(field.key)}
+                      onChange={event => setWideSeriesFields(previous => event.target.checked ? [...previous, field.key] : previous.filter(key => key !== field.key))}/>
+                    <span>{field.label}</span>
+                  </label>)}
+                </div>
+                <p className="text-[10px] font-normal text-[#52675a]">Each chosen column becomes a line. Blank prices remain missing; aggregation uses observed values only.</p>
+              </fieldset>}
+              {isScatter && <div className="space-y-3">
+                <p className="text-[11px] leading-relaxed text-[#52675a]">{scatterChronologyAvailable
+                  ? scatterXAxisMode === 'date'
+                    ? 'The chronology dock navigates the visible date axis. Its full extent shows the whole mapped period.'
+                    : 'The chronology dock filters plotted records. Reset restores the full mapped period.'
+                  : 'Chronology inactive: no usable mapped dates. Numerical comparisons still include eligible Explore-scope records.'}</p>
+                <label className="block text-[12px] font-semibold text-[#344b39]">X-axis
+                  <select className={inputClass} aria-label="Scatter X-axis" value={scatterXAxisMode === 'date' ? '__canonicalDate__' : (contract.values.scatterXField || '')}
+                    onChange={event => {
+                      const selection = event.target.value;
+                      const dateMode = selection === '__canonicalDate__';
+                      const newKey = dateMode ? 'scatter-date' : 'scatter';
+                      const base = createChartsIIBuilderConfiguration(newKey, profileRows);
+                      if (!dateMode) numericScatterXAxisRef.current = selection;
+                      else if (contract.chartKey === 'scatter' && contract.values.scatterXField) numericScatterXAxisRef.current = contract.values.scatterXField;
+                      const values = { ...base.values };
+                      if (base.slots.some(slot => slot.key === 'scatterYField' && slot.options.some(opt => opt.key === contract.values.scatterYField))) values.scatterYField = contract.values.scatterYField;
+                      if (!dateMode) values.scatterXField = selection;
+                      setContract(validateChartsIIBuilderConfiguration(newKey, values, getChartsIIBuilderFieldInventory(profileRows)));
+                      setScatterXAxisMode(dateMode ? 'date' : 'numeric');
+                    }}>
+                    <option value="__canonicalDate__" disabled={!scatterChronologyAvailable}>Date</option>
+                    {scatterNumericFields.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}
+                  </select>
+                  {scatterXAxisMode === 'date' && <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Uses mapped canonical dates. Only precisely assignable days are plotted; the chronology dock navigates the visible date range.</span>}
+                </label>
+                <label className="block text-[12px] font-semibold text-[#344b39]">Display
+                  <select className={inputClass} aria-label="Scatter or bubble display" value={scatterMode} onChange={event => setScatterMode(event.target.value)}>
+                    <option value="scatter">Scatter</option><option value="bubble">Bubble</option>
+                  </select>
+                </label>
+                {scatterMode === 'bubble' && <label className="block text-[12px] font-semibold text-[#344b39]">Bubble size (numeric)
+                  <select className={inputClass} value={scatterSizeOptions.some(option => option.key === bubbleSizeField) ? bubbleSizeField : ''}
+                    onChange={event => setBubbleSizeField(event.target.value)} aria-label="Bubble size field">
+                    <option value="">Choose a numerical field</option>
+                    {scatterSizeOptions.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}
+                  </select>
+                  <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Bubble sizes use nonnegative values. Records lacking a usable size are excluded.</span>
+                </label>}
+              </div>}
               {chart?.key === 'pie' && (
                 <label className="block text-[12px] font-semibold text-[#344b39]">Display
                   <select className={inputClass} aria-label="Pie or donut display" value={pieMode} onChange={(event) => setPieMode(event.target.value)}>
@@ -406,7 +491,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   {CHARTS_II_TIME_INTERVALS.map(item => <option value={item.value} key={item.value}>{item.label}</option>)}
                 </select>
               </div>}
-              {contract.slots.map((slot) => slot.optional || (temporalFamily && slot.key === 'xField') ? null : (
+              {contract.slots.map((slot) => slot.optional || (temporalFamily && slot.key === 'xField') || (isScatter && slot.key === 'scatterXField') ? null : (
                 <label key={slot.key} className="block text-[12px] font-semibold text-[#344b39]">
                   {slot.label}
                   <select aria-label={slot.label} className={inputClass} value={contract.values[slot.key] || ''}
@@ -416,23 +501,24 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   </select>
                 </label>
               ))}
-              {!contract.additive && !isHistogram && <label className="block text-[12px] font-semibold text-[#344b39]">Aggregation
-                <select className={inputClass} value={effectiveAggregation}
+              {!contract.additive && !isHistogram && !isScatter && <label className="block text-[12px] font-semibold text-[#344b39]">Aggregation
+                <select className={inputClass} value={wideLine ? (settings.aggregation === 'count' ? 'average' : settings.aggregation) : effectiveAggregation}
                   disabled={recordCountMeasure || fixedAdditive}
                   onChange={(event) => setSettings(old => ({ ...old, aggregation: event.target.value }))}>
-                  <option value="count">Count</option><option value="sum">Sum</option><option value="average">Average</option><option value="min">Minimum</option><option value="max">Maximum</option>
+                  {!wideLine && <option value="count">Count</option>}<option value="sum">Sum</option><option value="average">Average</option><option value="min">Minimum</option><option value="max">Maximum</option>
                 </select>
+                {wideLine && <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Average is recommended for prices; Sum adds price observations and is generally not meaningful for stock values.</span>}
                 {recordCountMeasure && <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Record count uses Count; choose a numeric measure for other aggregations.</span>}
                 {fixedAdditive && !recordCountMeasure && <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Stacked values use Sum to preserve additive segment totals.</span>}
               </label>}
-              {!isHistogram && <label className="block text-[12px] font-semibold text-[#344b39]">Maximum categories
+              {!isHistogram && !isScatter && !wideLine && <label className="block text-[12px] font-semibold text-[#344b39]">Maximum categories
                 <select className={inputClass} value={settings.topN} onChange={(event) => setSettings(old => ({ ...old, topN: Number(event.target.value) }))}>
                   {[5,10,15,20].map(value => <option key={value} value={value}>{value}</option>)}
                 </select>
               </label>}
               <p className="text-[11px] leading-relaxed text-[#52675a]">{contract.ready
                 ? isLiveFamily
-                  ? `${profileRows.length} records in Explore scope · ${previewRows.length} in current playback scope.`
+                  ? `${profileRows.length} records in Explore scope · ${isScatter ? scatterRows.length : previewRows.length} in chart scope.`
                   : `Field contract ready · ${profileRows.length} records in Explore scope. Live preview pending for this chart family.`
                 : contract.problems.join(' ')}</p>
             </div>
@@ -465,7 +551,20 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
               <h3 className={`${heading} min-w-0 text-2xl font-semibold text-[var(--peridot-color-hex-173120)]`}>{chart?.name || 'Choose a chart type'}</h3>
               <InfoPopover label="Peridot's Interpretation">
                 <h4 className={`${heading} mb-2 text-[16px] font-semibold text-[#8b3026]`}>Peridot's Interpretation</h4>
-                {temporalFamily && chartResult?.reporting ? <>
+                {wideLine && chartResult?.reporting ? <>
+                  <p>Selected numerical columns: {chartResult.reporting.selectedFields.join(', ')}. Interval: {chartResult.reporting.interval}; aggregation: {chartResult.reporting.aggregation}.</p>
+                  <p className="mt-2">Records in scope: {chartResult.reporting.scope}; date-eligible: {chartResult.reporting.eligibleRecords}; periods shown: {chartResult.reporting.assignedPeriods}.</p>
+                  <p className="mt-2">Excluded dates: missing {chartResult.reporting.excluded.missingDate}, invalid {chartResult.reporting.excluded.invalidDate}, insufficient precision {chartResult.reporting.excluded.insufficientPrecision}.</p>
+                  <p className="mt-2">Measurements by column: {Object.entries(chartResult.reporting.fields).map(([name,item]) => `${name} ${item.included} valid / ${item.missingOrInvalid} unavailable`).join('; ')}.</p>
+                  <p className="mt-2">An empty price cell is never zero. The gap display controls visual interpolation only.</p>
+                </> : isScatter && chartResult?.reporting ? <>
+                  <p>Eligible: <strong>{chartResult.reporting.plotted}</strong> of {chartResult.reporting.scope} {scatterXAxisMode === 'date' || !scatterChronologyAvailable ? 'Explore-scope' : 'chronology-window'} records. {visibleScatterCount !== null ? `${visibleScatterCount} visible in the selected date window. ` : ''}Each point represents one record; values are not aggregated.</p>
+                  <p className="mt-2">{scatterChronologyAvailable ? scatterXAxisMode === 'date' ? 'Chronology navigates the horizontal date axis; changing its window does not modify the full Explore dataset.' : 'Chronology filters the plotted numerical observations; Reset restores the full time extent.' : 'Chronology inactive because mapped temporal observations are unavailable.'}</p>
+                  <p className="mt-2">Excluded: missing X {chartResult.reporting.excluded.missingX}, invalid X {chartResult.reporting.excluded.invalidX}; missing Y {chartResult.reporting.excluded.missingY}, invalid Y {chartResult.reporting.excluded.invalidY}.</p>
+                  {scatterMode === 'bubble' && <p className="mt-2">Bubble size exclusions: missing {chartResult.reporting.excluded.missingSize}, invalid {chartResult.reporting.excluded.invalidSize}, negative {chartResult.reporting.excluded.negativeSize}.</p>}
+                  {scatterXAxisMode === 'date' && <p className="mt-2">Date exclusions due to insufficient precision: {chartResult.reporting.excluded.insufficientDatePrecision}. Only exact canonical days receive x-axis coordinates.</p>}
+                  <p className="mt-2">Overlapping coordinates: {chartResult.reporting.overlappingCoordinates} locations, {chartResult.reporting.overlappingRecords} additional records. Small display-only offsets distinguish coincident observations; their underlying values are unchanged.</p>
+                </> : temporalFamily && chartResult?.reporting ? <>
                   <p>Interval: <strong>{CHARTS_II_TIME_INTERVALS.find(item => item.value === chartResult.reporting.interval)?.label}</strong>. Measure: {chartResult.reporting.measure}. Aggregation: {chartResult.reporting.aggregation}.</p>
                   <p className="mt-2">Included: <strong>{chartResult.reporting.included}</strong> of {chartResult.reporting.scope} playback-scope records. Plotted intervals: {chartResult.reporting.assignedPeriods}.</p>
                   <p className="mt-2">Excluded for insufficient date precision: <strong>{chartResult.reporting.excluded.insufficientPrecision}</strong>.</p>
@@ -481,10 +580,11 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">{contract.problems.join(' ') || 'Choose valid fields to render this chart.'}</div>
                 ) : chartResult?.status === 'unavailable' ? (
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">{chartResult.problems?.join(' ')}</div>
-                ) : !previewRows.length ? (
+                ) : !(isScatter ? scatterRows : previewRows).length ? (
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">No records are available in the current playback scope.</div>
                 ) : isResultPopulated ? (
                   <div className="h-full min-h-[320px] min-w-0">
+                    {chartResult.chart.chartType === 'scatter' && <AnalyticsScatterChart dateRange={chartResult.chart.xAxisDate ? renderedScatterDateRange : null} points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} xLabel={chartResult.chart.xLabel} xAxisDate={chartResult.chart.xAxisDate} yLabel={chartResult.chart.yLabel} sizeLabel={chartResult.chart.sizeLabel} />}
                     {chartResult.chart.chartType === 'bar' && <AnalyticsBarChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} orientation={chartResult.chart.orientation} />}
                     {chartResult.chart.chartType === 'area' && <AnalyticsAreaChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
                     {chartResult.chart.chartType === 'stackedArea' && <AnalyticsStackedAreaChart series={chartResult.chart.series} periods={chartResult.chart.periods} totals={chartResult.chart.totals} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
@@ -503,7 +603,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
               </div>
             ) : chart ? (
               <div className="flex flex-1 items-center justify-center p-4 text-center text-sm text-[var(--peridot-color-hex-52675a)]">
-                Live preview for this chart family is not yet implemented. Bar / Column, Line / Multi-Line, Grouped Bar, Stacked Bar, Pie / Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area are available now.
+                Live preview for this chart family is not yet implemented. Bar / Column, Line / Multi-Line, Grouped Bar, Stacked Bar, Pie / Donut, Histogram, Heatmap, Sunburst, Area, Stacked Area, and Scatter / Bubble are available now.
               </div>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center">
@@ -522,7 +622,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   );
 }
 
-export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSelectChart, onNavigatePage, profileRows = [], previewRows = [], chronologyDragging = false }) {
+export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSelectChart, onNavigatePage, profileRows = [], previewRows = [], chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null }) {
   // Profile is derived from the stable applied Explore scope. Playback changes
   // should not reorder recommendations while a researcher uses the scrubber.
   const profile = useMemo(() => buildChartsIIDataProfile(profileRows), [profileRows]);
@@ -532,7 +632,7 @@ export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSel
   return (
     <div className={`min-h-0 flex-1 rounded-xl px-4 pb-4 text-[var(--peridot-color-hex-24382d)] sm:px-5 sm:pb-5 ${showingBuilder ? "overflow-hidden bg-[var(--peridot-color-hex-f8f4e6)] pt-1" : "overflow-auto bg-[#f9f4e9] pt-9"}`}>
       {showingBuilder
-        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} onBackToCatalogue={() => onNavigatePage('catalogue')} />
+        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} scatterChronologyAvailable={scatterChronologyAvailable} scatterDateRange={scatterDateRange} onBackToCatalogue={() => onNavigatePage('catalogue')} />
         : <FoundationCatalogue onSelectChart={onSelectChart} charts={charts} profile={profile} />}
     </div>
   );
