@@ -1573,3 +1573,125 @@ export function AnalyticsChartPreview({ chartData, svgRef }) {
 
   return <AnalyticsBarChart data={chartData?.data || []} title={chartData?.title || 'Analytics chart'} subtitle={chartData?.subtitle || 'Current filtered data.'} svgRef={svgRef} orientation={chartData?.orientation || 'vertical'} />;
 }
+
+// Charts II B3.11 — additive treemap. Binary partitioning keeps rectangles
+// proportional to the exact group totals; only inset gaps are decorative.
+function layoutTreemapTiles(items, x, y, width, height) {
+  const active = (items || []).filter(item => Number.isFinite(item?.value) && item.value > 0);
+  if (!active.length || width <= 0 || height <= 0) return [];
+  const partition = (values, px, py, w, h) => {
+    if (values.length === 1) return [{ ...values[0], x: px, y: py, width: w, height: h }];
+    const total = values.reduce((sum, value) => sum + value.value, 0);
+    let half = 0, cut = 0;
+    while (cut < values.length - 1 && (half < total / 2 || cut === 0)) half += values[cut++].value;
+    const portion = Math.max(0, Math.min(1, half / total));
+    if (w >= h) {
+      const a = w * portion;
+      return [...partition(values.slice(0, cut), px, py, a, h), ...partition(values.slice(cut), px + a, py, w - a, h)];
+    }
+    const a = h * portion;
+    return [...partition(values.slice(0, cut), px, py, w, a), ...partition(values.slice(cut), px, py + a, w, h - a)];
+  };
+  return partition(active, x, y, width, height);
+}
+
+export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treemap', subtitle = '', measureLabel = 'records', svgRef }) {
+  const [tooltip, setTooltip] = useState(null);
+  const [path, setPath] = useState([]);
+  if (!(total > 0) || !parents.length) return <EmptyChartState message="No positive additive values are available for this Treemap." />;
+
+  // Navigate by category identity, not by position or display label. In
+  // particular, "Other (N categories)" changes its N whenever the chronology
+  // window changes. Treat all aggregate Other tiles as one stable path key.
+  // Missing branches fall back to their nearest available ancestor.
+  let visible = parents;
+  let focused = null;
+  const validPath = [];
+  for (const segment of path) {
+    const match = visible.find(item => segment.other ? item.other === true : !item.other && item.label === segment.label);
+    if (!match) break;
+    const next = match.other ? match.members : match.children;
+    if (!Array.isArray(next) || !next.length) break;
+    focused = match;
+    validPath.push({ label: match.label, other: Boolean(match.other) });
+    visible = next;
+  }
+  const focusTotal = focused ? focused.value : total;
+  const levelTitle = validPath.length ? validPath[validPath.length - 1].label : 'All categories';
+  const canDrill = item => (item.other && item.members?.length) || (item.children?.length);
+  const drill = item => {
+    if (!canDrill(item)) return;
+    setTooltip(null);
+    setPath([...validPath, { label: item.label, other: Boolean(item.other) }]);
+  };
+  const goTo = length => { setTooltip(null); setPath(validPath.slice(0, length)); };
+  const rootPct = value => `${(value / total * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+  const localPct = value => `${(value / focusTotal * 100).toLocaleString(undefined, { maximumFractionDigits: 1 })}%`;
+  const unit = measureLabel;
+  const layout = getChartCardLayout({ height: 490, left: 22, top: 94, bottom: 24 });
+  const { width, height, left, top, plotWidth, plotHeight } = layout;
+  const rectangles = layoutTreemapTiles(visible, left, top, plotWidth, plotHeight);
+  const legendRows = visible.slice(0, 13).map((item, index) => ({ label: item.label, color: getSeriesColor(index), value: formatNumber(item.value) }));
+  const detail = (event, item, lineage = '') => setTooltip(buildTooltip(event, {
+    label: lineage ? `${lineage} → ${item.label}` : item.label,
+    secondary: `${localPct(item.value)} of current view · ${rootPct(item.value)} of overall total · ${item.count} contributing records${canDrill(item) ? ' · Click to explore' : ''}`,
+    count: item.value, unit,
+  }));
+  // At overview every part of a parent, including its smallest child tile,
+  // navigates exactly one level to that parent. Once viewing the parent,
+  // the visitor can click its expandable Other tile to navigate deeper.
+  const activate = (event, item) => { event.stopPropagation(); drill(item); };
+  const keyboard = (event, item) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); drill(item); } };
+  const tiles = rectangles.flatMap((parent, index) => {
+    const parentColor = getSeriesColor(index);
+    const nested = !validPath.length && Array.isArray(parent.children) && parent.children.length > 0;
+    const topSpace = nested ? Math.min(19, Math.max(0, parent.height * 0.3)) : 0;
+    const childTiles = nested ? layoutTreemapTiles(parent.children, parent.x, parent.y + topSpace, parent.width, Math.max(0, parent.height - topSpace)) : [];
+    const clickable = canDrill(parent);
+    const base = <g key={`parent-${index}`}>
+      <rect x={parent.x + 1} y={parent.y + 1} width={Math.max(0, parent.width - 2)} height={Math.max(0, parent.height - 2)} rx="3" fill={parentColor} fillOpacity="0.64" stroke={CHART_COLORS.chartBg} strokeWidth="2" />
+      {parent.width > 65 && parent.height > 28 && <text pointerEvents="none" x={parent.x + 8} y={parent.y + 18} fontSize="12" fontWeight="750" fill={CHART_COLORS.text}>{truncateLabel(parent.label, Math.max(7, Math.floor(parent.width / 7.5)))}</text>}
+      {(!nested || !topSpace) && parent.width > 73 && parent.height > 54 && <text pointerEvents="none" x={parent.x + 8} y={parent.y + 36} fontSize="11" fill={CHART_COLORS.text}>{formatNumber(parent.value)} · {localPct(parent.value)}</text>}
+      <rect x={parent.x} y={parent.y} width={parent.width} height={nested ? Math.max(0, topSpace) : parent.height} fill="transparent"
+        style={{ cursor: clickable ? 'pointer' : 'default' }} role={clickable ? 'button' : undefined}
+        tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Explore ${parent.label}` : parent.label}
+        onClick={event => activate(event, parent)} onKeyDown={event => keyboard(event, parent)}
+        onMouseMove={event => detail(event, parent)} onMouseLeave={() => setTooltip(null)} />
+      {!nested && clickable && parent.width > 100 && parent.height > 75 && <text pointerEvents="none" x={parent.x + 8} y={parent.y + 53} fontSize="10" fill={CHART_COLORS.mutedText}>Explore category ›</text>}
+    </g>;
+    return [base, ...childTiles.map((child, childIndex) => {
+      const childColor = getSeriesColor(index + childIndex + 1);
+      // Do not jump directly to a child's sublevel from the overview.
+      // Every visible part of the parent tile is a target for parent drill-in.
+      return <g key={`child-${index}-${childIndex}`}>
+        <rect x={child.x + 2.3} y={child.y + 2.3} width={Math.max(0, child.width - 4.6)} height={Math.max(0, child.height - 4.6)} rx="2.5" fill={childColor} fillOpacity="0.76" stroke={CHART_COLORS.chartBg} strokeWidth="1.5" />
+        {child.width > 65 && child.height > 30 && <text pointerEvents="none" x={child.x + 7} y={child.y + 17} fontSize="10.5" fontWeight="700" fill={CHART_COLORS.text}>{truncateLabel(child.label, Math.max(6, Math.floor(child.width / 7)))}</text>}
+        {child.width > 75 && child.height > 52 && <text pointerEvents="none" x={child.x + 7} y={child.y + 33} fontSize="10" fill={CHART_COLORS.text}>{formatNumber(child.value)}</text>}
+        <rect x={child.x} y={child.y} width={child.width} height={child.height} fill="transparent"
+          style={{ cursor: clickable ? 'pointer' : 'default' }} role={clickable ? 'button' : undefined}
+          tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Explore ${parent.label} (from ${child.label})` : `${parent.label} → ${child.label}`}
+          onClick={event => activate(event, parent)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(event, parent); } }}
+          onMouseMove={event => detail(event, child, parent.label)} onMouseLeave={() => setTooltip(null)} />
+      </g>;
+    })];
+  });
+  const breadcrumb = [{ label: 'All categories', depth: 0 }, ...validPath.map((segment, index) => ({ label: segment.label, depth: index + 1 }))];
+  let breadcrumbX = left;
+  const crumbs = breadcrumb.map((item, index) => {
+    const x = breadcrumbX;
+    const label = truncateLabel(item.label, index === breadcrumb.length - 1 ? 28 : 18);
+    breadcrumbX += Math.min(185, label.length * 6.4 + 20);
+    return <g key={`${item.depth}-${item.label}`} onClick={() => goTo(item.depth)} style={{cursor: item.depth === validPath.length ? 'default' : 'pointer'}} role="button" tabIndex={0}
+      onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); goTo(item.depth); } }}>
+      <text x={x} y="70" fill={item.depth === validPath.length ? CHART_COLORS.text : CHART_COLORS.accentDark} fontSize="11.5" fontWeight={item.depth === validPath.length ? '700' : '500'}>{index > 0 ? '› ' : ''}{label}</text>
+    </g>;
+  });
+  return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
+    {{tooltip: <ChartTooltip tooltip={tooltip}/>, chart: <>
+      {crumbs}
+      {tiles}
+      <SummaryPanel {...layout.legend} title={validPath.length ? `Within ${truncateLabel(levelTitle, 22)}` : 'Share by category'} rows={legendRows}
+        note={`${formatNumber(focusTotal)} ${unit} in view · ${rootPct(focusTotal)} overall`} />
+    </>}}
+  </ChartFrame>;
+}

@@ -15,6 +15,7 @@ import { deriveChartsIIScatter } from './chartsIIScatterData.js';
 import { deriveChartsIIBoxPlot } from './chartsIIBoxPlotData.js';
 import { deriveChartsIIDotPlot } from './chartsIIDotPlotData.js';
 import { deriveChartsIISlope } from './chartsIISlopeData.js';
+import { deriveChartsIITreemap } from './chartsIITreemapData.js';
 import { deriveChartsIITemporalSeries, CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 const CHARTS_II_TIME_INTERVAL_LABELS = Object.fromEntries(CHARTS_II_TIME_INTERVALS.map(({value,label}) => [value,label]));
 
@@ -25,6 +26,7 @@ export const CHARTS_II_BUILDER_FAMILIES = Object.freeze({
   box: family('box', []),
   dot: family('dot', []),
   slope: family('slope', []),
+  treemap: family('treemap', []),
   bar: family('bar', [{ key: 'barGroupBy', label: 'Category', pool: 'barGroupOptions' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'grouped-bar': family('groupedBar', [{ key: 'xField', label: 'Category / x-axis', pool: 'xAxisOptions' }, { key: 'groupedBarGroupBy', label: 'Compare by', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
   'stacked-bar': family('stackedBar', [{ key: 'xField', label: 'Category / x-axis', pool: 'xAxisOptions' }, { key: 'stackSegmentBy', label: 'Segments', pool: 'segmentGroupOptions', distinctFrom: 'xField' }, { key: 'yField', label: 'Measure', pool: 'yMetricOptions' }]),
@@ -124,6 +126,22 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
   // applies the same additive rule used by Stacked Bar.
   if (contract.chartKey === 'stacked-area') {
     args.aggregation = args.yField === 'recordCount' ? 'count' : 'sum';
+  }
+  if (contract.chartKey === 'treemap') {
+    const fields = getChartsIIBuilderFieldInventory(settings.profileRows || args.rows);
+    const categories = new Set((fields.barGroupOptions || []).map(item => item.key));
+    const measures = new Set((fields.yMetricOptions || []).map(item => item.key));
+    const parentField = settings.treemapParentField;
+    const childField = settings.treemapHierarchy ? settings.treemapChildField : '';
+    const measureField = settings.treemapMeasureField;
+    if (!categories.has(parentField) || (childField && (!categories.has(childField) || childField === parentField)) || !measures.has(measureField)) {
+      return { status: 'unavailable', chart: null, problems: ['Choose valid category fields and a count or numerical measure. Hierarchy fields must differ.'] };
+    }
+    const derived = deriveChartsIITreemap(args.rows, { parentField, childField, measureField, maxGroups: args.topN });
+    return { status: 'ready', chart: { chartType: 'treemap', title: 'Treemap',
+      subtitle: `${measureField === 'recordCount' ? 'Record count' : `Sum of ${measureField}`} by ${parentField}${childField ? ` → ${childField}` : ''}.`,
+      parents: derived.parents, total: derived.total, measureLabel: measureField === 'recordCount' ? 'records' : measureField },
+      reporting: derived.reporting };
   }
   if (contract.chartKey === 'slope') {
     const mode = settings.slopeMode === 'columns' ? 'columns' : 'category';

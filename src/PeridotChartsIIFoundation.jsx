@@ -15,7 +15,7 @@ import { CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 import { chartsIISlopePeriods } from './chartsIISlopeData.js';
 import { buildChartsIIDataProfile, assessChartsIISuitability } from './chartsIIDataProfile.js';
 import { createChartsIIBuilderConfiguration, updateChartsIIBuilderConfiguration, validateChartsIIBuilderConfiguration, getChartsIIBuilderFieldInventory, deriveChartsIIBuilderData } from './chartsIIBuilderContract.js';
-import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart, AnalyticsScatterChart, AnalyticsBoxPlotChart, AnalyticsDotPlotChart, AnalyticsSlopeChart } from './analyticsChartComponents.jsx';
+import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart, AnalyticsScatterChart, AnalyticsBoxPlotChart, AnalyticsDotPlotChart, AnalyticsSlopeChart, AnalyticsTreemapChart } from './analyticsChartComponents.jsx';
 
 // The provisional 15-family inventory is shared by search, purpose browsing,
 // suitability ranking, and thumbnails. Variations are not separate renderers yet.
@@ -316,6 +316,10 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const [dotGroupField, setDotGroupField] = useState(() => getChartsIIBuilderFieldInventory(profileRows).barGroupOptions?.[0]?.key || '');
   const [dotAggregation, setDotAggregation] = useState('average');
   const [dotOrder, setDotOrder] = useState('value');
+  const [treemapHierarchy, setTreemapHierarchy] = useState(false);
+  const [treemapParentField, setTreemapParentField] = useState(() => getChartsIIBuilderFieldInventory(profileRows).barGroupOptions?.[0]?.key || '');
+  const [treemapChildField, setTreemapChildField] = useState(() => getChartsIIBuilderFieldInventory(profileRows).barGroupOptions?.[1]?.key || '');
+  const [treemapMeasureField, setTreemapMeasureField] = useState('recordCount');
   const [slopeMode, setSlopeMode] = useState('category');
   const [slopeInterval, setSlopeInterval] = useState('year');
   const [slopeFirstPeriod, setSlopeFirstPeriod] = useState('');
@@ -361,6 +365,10 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     setDotGroupField(getChartsIIBuilderFieldInventory(profileRows).barGroupOptions?.[0]?.key || '');
     setDotAggregation('average');
     setDotOrder('value');
+    setTreemapHierarchy(false);
+    setTreemapParentField(getChartsIIBuilderFieldInventory(profileRows).barGroupOptions?.[0]?.key || '');
+    setTreemapChildField(getChartsIIBuilderFieldInventory(profileRows).barGroupOptions?.[1]?.key || '');
+    setTreemapMeasureField('recordCount');
     setSlopeMode('category');
     setSlopeInterval('year');
     setSlopeFirstPeriod('');
@@ -392,7 +400,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     });
   }, [profileRows]);
   const temporalFamily = ['line','area','stacked-area'].includes(chart?.key);
-  const isLiveFamily = ['scatter', 'box', 'dot', 'slope', 'bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst', 'area', 'stacked-area'].includes(chart?.key);
+  const isLiveFamily = ['scatter', 'box', 'dot', 'slope', 'treemap', 'bar', 'line', 'grouped-bar', 'stacked-bar', 'pie', 'histogram', 'heatmap', 'sunburst', 'area', 'stacked-area'].includes(chart?.key);
   // The dock is the sole chronology filter. Undated datasets have no active
   // chronology and retain the complete Explore-scope record set.
   const scatterRows = chart?.key === 'scatter' && (scatterXAxisMode === 'date' || !scatterChronologyAvailable) ? profileRows : renderedPreviewRows;
@@ -414,14 +422,15 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
       return settledSlopeResult.current;
     }
     const next = isLiveFamily
-      ? deriveChartsIIBuilderData(contract, scatterRows, { ...settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, slopeFirstPeriod:effectiveSlopeFirst, slopeSecondPeriod:effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel })
+      ? deriveChartsIIBuilderData(contract, scatterRows, { ...settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, slopeFirstPeriod:effectiveSlopeFirst, slopeSecondPeriod:effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel })
       : null;
     if (chart?.key === 'slope' && !chronologyDragging) settledSlopeResult.current = next;
     return next;
-  }, [chart?.key, chronologyDragging, isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, effectiveSlopeFirst, effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel]);
+  }, [chart?.key, chronologyDragging, isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, profileRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, effectiveSlopeFirst, effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel]);
   const isResultPopulated = chartResult?.status === 'ready' && (() => {
     const result = chartResult.chart;
     if (!result) return false;
+    if (result.chartType === 'treemap') return Number(result.total) > 0 && Array.isArray(result.parents) && result.parents.length > 0;
     if (result.chartType === 'slope') return Array.isArray(result.series) && result.series.length > 0;
     if (result.chartType === 'dot') return Array.isArray(result.points) && result.points.length > 0;
     if (result.chartType === 'box') return Array.isArray(result.boxes) && result.boxes.length > 0;
@@ -446,6 +455,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const isBox = chart?.key === 'box';
   const isDot = chart?.key === 'dot';
   const isSlope = chart?.key === 'slope';
+  const isTreemap = chart?.key === 'treemap';
   const dotGroupOptions = getChartsIIBuilderFieldInventory(profileRows).barGroupOptions || [];
   const dotMeasureOptions = getChartsIIBuilderFieldInventory(profileRows).yMetricOptions || [];
   const boxGroupOptions = getChartsIIBuilderFieldInventory(profileRows).barGroupOptions || [];
@@ -458,7 +468,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const inputClass = 'mt-1 w-full min-w-0 rounded-md border border-[#cdb48b] bg-[#fffdf7] px-2 py-2 text-[12px] text-[#24382d]';
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-hidden">
-      <p className="sr-only">Charts II Builder · Slope Chart, Dot Plot, Box Plot, Scatter/Bubble, Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; export pending</p>
+      <p className="sr-only">Charts II Builder · Treemap, Slope Chart, Dot Plot, Box Plot, Scatter/Bubble, Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; export pending</p>
       <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-[minmax(220px,20%)_minmax(0,1fr)]">
         <aside className={`${panel} min-h-0 overflow-y-auto overscroll-contain p-4`} aria-label="Chart configuration foundation">
           <h3 className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-8b2e23)]">Data &amp; Interpretation</h3>
@@ -484,6 +494,36 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   </select>
                 </label>
               )}
+              {isTreemap && <div className="space-y-3 text-[12px] text-[#344b39]">
+                <label className="block font-semibold">Structure
+                  <select className={inputClass} value={treemapHierarchy ? 'hierarchy' : 'single'} onChange={event => setTreemapHierarchy(event.target.value === 'hierarchy')}>
+                    <option value="single">Single-level categories</option><option value="hierarchy">Hierarchical categories</option>
+                  </select>
+                </label>
+                <label className="block font-semibold">{treemapHierarchy ? 'Parent category' : 'Group by'}
+                  <select className={inputClass} value={treemapParentField} onChange={event => setTreemapParentField(event.target.value)}>
+                    <option value="">Choose a category</option>{dotGroupOptions.map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
+                  </select>
+                </label>
+                {treemapHierarchy && <label className="block font-semibold">Child category
+                  <select className={inputClass} value={treemapChildField} onChange={event => setTreemapChildField(event.target.value)}>
+                    <option value="">Choose a different category</option>{dotGroupOptions.filter(item => item.key !== treemapParentField).map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
+                  </select>
+                </label>}
+                <label className="block font-semibold">Size rectangles by
+                  <select className={inputClass} value={treemapMeasureField} onChange={event => setTreemapMeasureField(event.target.value)}>
+                    <option value="recordCount">Record count</option>{scatterNumericFields.map(item => <option key={item.key} value={item.key}>{item.label} (sum)</option>)}
+                  </select>
+                  <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Only counts and nonnegative sums are additive. Negative values are excluded; missing values are never zero.</span>
+                </label>
+                <label className="block font-semibold">Maximum categories per level
+                  <select className={inputClass} value={settings.topN} onChange={event => setSettings(old => ({ ...old, topN: Number(event.target.value) }))}>
+                    {[5,10,15,20].map(value => <option key={value} value={value}>{value}</option>)}
+                  </select>
+                  <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Remaining categories are combined in labeled Other tiles, preserving their totals.</span>
+                </label>
+                <p className="text-[10px] leading-relaxed text-[#52675a]">Each rectangle's area represents its share of the selected additive total. Chronology filters contributing records.</p>
+              </div>}
               {isSlope && <div className="space-y-3 text-[12px] text-[#344b39]">
                 <label className="block font-semibold">Compare values
                   <select className={inputClass} value={slopeMode} onChange={event=>setSlopeMode(event.target.value)}>
@@ -713,7 +753,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   </select>
                 </label>
               ))}
-              {!contract.additive && !isHistogram && !isScatter && !isBox && !isDot && !isSlope && <label className="block text-[12px] font-semibold text-[#344b39]">Aggregation
+              {!contract.additive && !isHistogram && !isScatter && !isBox && !isDot && !isSlope && !isTreemap && <label className="block text-[12px] font-semibold text-[#344b39]">Aggregation
                 <select className={inputClass} value={wideLine ? (settings.aggregation === 'count' ? 'average' : settings.aggregation) : effectiveAggregation}
                   disabled={recordCountMeasure || fixedAdditive}
                   onChange={(event) => setSettings(old => ({ ...old, aggregation: event.target.value }))}>
@@ -723,7 +763,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                 {recordCountMeasure && <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Record count uses Count; choose a numeric measure for other aggregations.</span>}
                 {fixedAdditive && !recordCountMeasure && <span className="mt-1 block text-[10px] font-normal text-[#52675a]">Stacked values use Sum to preserve additive segment totals.</span>}
               </label>}
-              {!isHistogram && !isScatter && !isBox && !isDot && !isSlope && !wideLine && <label className="block text-[12px] font-semibold text-[#344b39]">Maximum categories
+              {!isHistogram && !isScatter && !isBox && !isDot && !isSlope && !isTreemap && !wideLine && <label className="block text-[12px] font-semibold text-[#344b39]">Maximum categories
                 <select className={inputClass} value={settings.topN} onChange={(event) => setSettings(old => ({ ...old, topN: Number(event.target.value) }))}>
                   {[5,10,15,20].map(value => <option key={value} value={value}>{value}</option>)}
                 </select>
@@ -763,7 +803,12 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
               <h3 className={`${heading} min-w-0 text-2xl font-semibold text-[var(--peridot-color-hex-173120)]`}>{chart?.name || 'Choose a chart type'}</h3>
               <InfoPopover label="Peridot's Interpretation">
                 <h4 className={`${heading} mb-2 text-[16px] font-semibold text-[#8b3026]`}>Peridot's Interpretation</h4>
-                {isSlope && chartResult?.reporting ? <>
+                {isTreemap && chartResult?.reporting ? <>
+                  <p>Treemap area represents <strong>{chartResult.reporting.aggregation}</strong> of {chartResult.reporting.measureField}. Total: {chartResult.reporting.total.toLocaleString()} across {chartResult.reporting.displayedParents} displayed parent groups.</p>
+                  <p className="mt-2">Included records: {chartResult.reporting.includedRecords} of {chartResult.reporting.scope}. Missing category: {chartResult.reporting.excluded.missingCategory}; missing numerical measure: {chartResult.reporting.excluded.missingMeasure}; invalid: {chartResult.reporting.excluded.invalidMeasure}; negative: {chartResult.reporting.excluded.negativeMeasure}; zero: {chartResult.reporting.excluded.zeroMeasure}.</p>
+                  <p className="mt-2">Records outside the displayed hierarchy: {chartResult.reporting.scope - chartResult.reporting.includedRecords}. These are accounted for by the detailed missing/invalid/negative/zero exclusions above, not as zero-size tiles.</p>
+                  <p className="mt-2">Consolidated categories: {chartResult.reporting.omittedParents} parents, {chartResult.reporting.omittedChildren} children. Values are not changed when combined under Other. The shared chronology dock controls the contributing scope.</p>
+                </> : isSlope && chartResult?.reporting ? <>
                   <p>Comparison: <strong>{slopeFirstLabel}</strong> versus <strong>{slopeSecondLabel}</strong>; aggregation: {chartResult.reporting.aggregation}.</p>
                   <p className="mt-2">{chartResult.reporting.pairedGroups} paired groups of {chartResult.reporting.plottedGroups} shown. Missing first: {chartResult.reporting.missingFirst}; missing second: {chartResult.reporting.missingSecond}. These endpoints are missing, never zero.</p>
                   <p className="mt-2">Contributing records: {chartResult.reporting.includedRecords.join(' / ')} in the two periods. Unassigned temporal precision: {chartResult.reporting.excluded.insufficientPrecision}; missing date: {chartResult.reporting.excluded.missingDate}; invalid date: {chartResult.reporting.excluded.invalidDate}.</p>
@@ -811,6 +856,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">No records are available in the current playback scope.</div>
                 ) : isResultPopulated ? (
                   <div className="h-full min-h-[320px] min-w-0">
+                    {chartResult.chart.chartType === 'treemap' && <AnalyticsTreemapChart key={`${treemapHierarchy ? "h" : "s"}:${treemapParentField}:${treemapChildField}:${treemapMeasureField}`} parents={chartResult.chart.parents} total={chartResult.chart.total} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} measureLabel={chartResult.chart.measureLabel} />}
                     {chartResult.chart.chartType === 'slope' && <AnalyticsSlopeChart series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} firstLabel={chartResult.chart.firstLabel} secondLabel={chartResult.chart.secondLabel} />}
                     {chartResult.chart.chartType === 'dot' && <AnalyticsDotPlotChart points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} valueLabel={chartResult.chart.valueLabel} />}
                     {chartResult.chart.chartType === 'box' && <AnalyticsBoxPlotChart boxes={chartResult.chart.boxes} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} scaleMode={boxScale} />}
@@ -833,7 +879,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
               </div>
             ) : chart ? (
               <div className="flex flex-1 items-center justify-center p-4 text-center text-sm text-[var(--peridot-color-hex-52675a)]">
-                Live preview for this chart family is not yet implemented. Bar / Column, Line / Multi-Line, Grouped Bar, Stacked Bar, Pie / Donut, Histogram, Heatmap, Sunburst, Area, Stacked Area, Scatter / Bubble, Box Plot, Dot Plot, and Slope Chart are available now.
+                Live preview for this chart family is not yet implemented. Bar / Column, Line / Multi-Line, Grouped Bar, Stacked Bar, Pie / Donut, Histogram, Heatmap, Sunburst, Area, Stacked Area, Scatter / Bubble, Box Plot, Dot Plot, Slope Chart, and Treemap are available now.
               </div>
             ) : (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 p-4 text-center">
