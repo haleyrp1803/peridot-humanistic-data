@@ -2,61 +2,723 @@
 
 ## Executive Summary
 
-This Changelog is Peridot’s authoritative historical record. Use it to confirm the current synchronized checkpoint, understand what changed recently, distinguish active work from deferred or rolled-back experiments, and trace the complete reverse-chronological commit history when investigating regressions or preparing a handoff.
+This Changelog is Peridot’s authoritative historical record. Use the area and period indexes to reach the full reverse-chronological development table, then consult linked, expandable milestone accounts for decisions, regressions, and verification context. The current synchronized checkpoint appears first; earlier checkpoint evidence is archived separately.
 
 The Changelog owns chronology and milestone interpretation, not the complete current architecture or workflow rules. For current contracts, use the Maintainer’s Guide; for process, use the Project Workflow Charter.
 
+## How to Use This Changelog
+
+**This is Peridot’s development history.** It records what changed as the project grew, including significant decisions, revisions, failed approaches, and what was actually verified. You do not need to read it from beginning to end. Most readers can use the development-history table to find a change and only open the longer accounts when they need to understand its background.
+
+| Part of the document | What you will find | When to use it |
+|---|---|---|
+| **[Current checkpoint](#1-current-synchronized-checkpoint)** | The latest confirmed Git state at the time this document was updated. | **Start here** to orient yourself in the recorded repository history. Check Git again before making changes. |
+| **[Find by area and period](#2-find-by-area-and-period)** | Shortcuts to development topics and calendar periods. | Use when you know the feature or approximate time, but not the commit. |
+| **[Full development history](#3-full-development-history)** | The main reverse-chronological table of recorded commits, with brief explanations and links to relevant details. | **Use this most of the time** to answer what changed and when. |
+| **[Detailed milestone archive](#4-detailed-milestone-archive)** | Expandable accounts of consequential implementations, decisions, corrections, and testing. | Open only when you need to understand *how or why* something happened. |
+| **[Historical checkpoint evidence](#5-historical-checkpoint-evidence)** | Earlier repository-state confirmations and contextual snapshots. | Consult when reconstructing the exact state of work at an earlier point. |
+| **[Deferred, archived, and rolled-back work](#6-deferred-archived-and-rolled-back-work)** | Records of postponed, superseded, archived, or reversed work. | Consult to distinguish previous approaches from accepted development; use the Maintainer’s Guide for the **current** technical backlog. |
+
+**How to follow the history:** Choose an area, month, or commit in the table. Where a **Details** link appears, it takes you to the relevant expandable milestone account. The table is the quickest orientation; the narratives are retained for deeper investigation, not required reading. Recorded historical status describes its own moment in time and should not override newer commits or the current architecture.
+
+For what Peridot does and how to use it, see the [README](README.md). For current modules, technical contracts, known risks, and outstanding work, see the [Maintainer’s Guide](MAINTAINERS_GUIDE.md). Before modifying the project, follow the [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md).
+
 ## Quick Navigation
 
+- [How to use this Changelog](#how-to-use-this-changelog)
 - [Current checkpoint](#1-current-synchronized-checkpoint)
-- [Recent milestones](#2-recent-milestones-newest-first)
-- [Deferred, archived, and rolled-back work](#3-deferred-archived-and-rolled-back-work)
-- [Full development history](#4-full-development-history)
+- [Find by area and period](#2-find-by-area-and-period)
+- [Full development history](#3-full-development-history)
+- [Detailed milestone archive](#4-detailed-milestone-archive)
+- [Historical checkpoint evidence](#5-historical-checkpoint-evidence)
+- [Deferred, archived, and rolled-back work](#6-deferred-archived-and-rolled-back-work)
 
 ## Document Role and Boundaries
 
-This document owns the detailed checkpoint, milestone chronology, deferred/archived/rolled-back record, and full commit history. It does not own broad module specifications, public workflows, or process law.
+This document owns the verified current checkpoint, reverse-chronological development register, detailed milestone archive, deferred/archived/rolled-back record, and historical checkpoint evidence. It does not own broad module specifications, public workflows, or process law.
 
 ## 1. Current Synchronized Checkpoint
 
 ```text
-e96c375 — Implement Charts appearance customization and adaptive presentation
+2be3ea0 — Synchronize documentation through Charts II completion and appearance customization
 Branch: main
-Status: local and origin/main aligned after the latest sync ritual (user-confirmed 2026-11-22); working tree clean
+Status: HEAD, origin/main, and origin/HEAD aligned; working tree clean (user-confirmed Git status/log, 2026-11-22)
 ```
 
-**Checkpoint verification (2026-11-22):** The researcher supplied `git push origin main`, `git status`, and `git log --oneline -3` confirming that `e96c375` is aligned at `HEAD`, `origin/main`, and `origin/HEAD`, with **nothing to commit and a clean working tree**. The latest three verified commits are `e96c375` (Charts appearance customization and adaptive presentation), `8baa733` (retire legacy Charts I and consolidate Charts II workspace), and `5c75472` (Charts II chart-local filters and single-series selection). Charts II is now the sole public Charts workspace and has 15 implemented families, Catalogue and Builder, filter and chronology integration, shared Timeline color selection, mark styling, adaptive presentation, a resizable controls panel, and customizable PNG exports. The user tested and accepted the integrated behavior locally. Source-level Charts regression tests were reported passing; one known, independently reproduced Timeline grouped-lanes expected-label mismatch remains outside the Charts work. The present core-documentation handoff has **not** been committed as part of this checkpoint.
+**Source of verification:** The researcher supplied `git status` and `git log --oneline -3` showing `2be3ea0` at `HEAD`, `origin/main`, and `origin/HEAD`, with nothing to commit. The preceding source commits are `e96c375` (Charts appearance customization and adaptive presentation) and `8baa733` (retire legacy Charts I and consolidate Charts II). This establishes a newer clean documentation checkpoint; it does **not** independently rerun source tests or deployed-site verification.
 
-**Historical checkpoint verification (2026-11-11; superseded by `e96c375`):** The researcher supplied `git status` followed by `git log --oneline -5` confirming `ea7cda8` at `HEAD`, `origin/main`, and `origin/HEAD`. The source milestone is `f5791f1` — `Implement Timeline II adaptive grouped swimlanes and category workspace`; the immediately following `ea7cda8` — `Remove obsolete src.zip archive` intentionally deletes the obsolete tracked source ZIP. The working tree is **not clean**: `src/PeridotVisualizationsWorkspace.jsx` remains modified for concurrent Charts II work, and `src/PeridotChartsIIFoundation.jsx` / `src/chartsIIDataProfile.js` remain untracked. Do not confuse those changes with the already committed Timeline-only width fix. The researcher confirmed in Chrome that the native Categories horizontal scrollbar works after the conditional stage-wrapper constraint. The documentation replacements prepared after this checkpoint are **not yet committed**. The source commits are Git-confirmed; automated cross-browser/deployed-site verification is not claimed.
+The older repository-state snapshots are preserved in the [historical checkpoint evidence archive](#5-historical-checkpoint-evidence), rather than in this current-state introduction.
 
-**Historical checkpoint verification (2026-11-10):** The researcher supplied `git status` and `git log --oneline -5` confirming `9c2bb0e` at `HEAD`, `origin/main`, and `origin/HEAD`, with no staged changes. The working tree is intentionally not clean: `src.zip` is deleted locally, `src/PeridotVisualizationsWorkspace.jsx` is modified for independent Charts II work, and untracked Charts II and planning files remain outside the Timeline Categories commits. `9c2bb0e` and `27c5b52` are the newly verified category development commits; `4702f3b` is the preceding documentation checkpoint. Proposed document updates and icon-resource moves in this handoff are **not yet committed** and must not be represented as part of `9c2bb0e`.
+## 2. Find by Area and Period
 
-**Checkpoint verification (2026-11-09):** The researcher supplied `git status` and `git log --oneline -5` confirming `4fca872` as `HEAD`, `origin/main`, and `origin/HEAD`, with no staged changes and a non-clean working tree. Commit subject: `Unify shared chronology navigation, filtering, and dataset extent presentation`. Earlier commits `9c15045` (About animation documentation), `71833b3` (About animation implementation), `d119550` (chart-builder planning), and `c74aa55` (persistent independent chronology sessions) are also confirmed in that log. The remaining uncommitted work is the `src.zip` deletion, `src/PeridotVisualizationsWorkspace.jsx` changes for Charts II, untracked `src/PeridotChartsIIFoundation.jsx`, `src/chartsIIDataProfile.js`, and `planning_documents/Peridot Load Animation.html`. **These changes are not part of `4fca872`; do not stage, replace, or mislabel them as committed chronology work.** The documentation replacement package prepared on 2026-11-09 does not itself establish a subsequent commit.
 
-**Historical checkpoint verification (2026-11-05; superseded by `4fca872`):** The researcher supplied `git status` and `git log --oneline -5` showing `71833b3` at `HEAD`, `origin/main`, and `origin/HEAD`. The commit subject is verified: `Add staggered manuscript entrance animations to About pages`. The working tree is **not clean** because independent Timeline/Charts/source-development work continues in parallel (modified `src/App.jsx`, `src/PeridotSharedChronologyAdapter.jsx`, `src/PeridotTimelineII.jsx`, and `src/PeridotVisualizationsWorkspace.jsx`; untracked Charts II and chronology files; and a deleted `src.zip`). Those local changes were not part of the About animation commit and must not be staged, overwritten, or described as committed by this documentation pass. The five confirmed recent commits are `71833b3`, `d119550`, `c74aa55`, `50c1be5`, and `81c3719`; only the About change is documented technically here. The earlier `81c3719` checkpoint narrative remains retained below as history, not the current HEAD.
+### Find milestones by development area
 
-**Historical checkpoint verification (2026-11-03):** The researcher committed and pushed `81c3719` to `origin/main`. The supplied push confirms publication (`688bc17..81c3719`), but does not establish a post-push clean working tree. The immediately preceding pushed commit shown by Git is `688bc17`; its subject and intermediate history have not been supplied in this conversation, so this documentation pass does not reconstruct them. The following detailed account of `ddee7e2` remains preserved as a **historical previous clean checkpoint**, not the current HEAD. At that earlier checkpoint, the latest user-confirmed clean synchronization was **`ddee7e2`** on `main` (2026-11-01), with `HEAD`, `origin/main`, and `origin/HEAD` aligned and no local changes. The five most recent commit subjects confirmed in the latest user Git log are `ddee7e2`, `8cb1cbc`, `2664fbf`, `8899b8d`, and `3f0ae7c`. The preceding documentation checkpoint is `481acd9`; the following historical checkpoint narrative is retained for continuity. At the previous documentation pass, the user-confirmed clean synchronization was `481acd9` on `main` (2026-11-01), with `HEAD`, `origin/main`, and `origin/HEAD` aligned and no local changes. Following the previous documented `973d40d` checkpoint, the confirmed commits are `be5fea5` (documentation synchronization), `54dfa2c` (GitHub Pages CARTO key build configuration), `64dfbae` (Review confirmation guard), `8dd208a` (new-upload progressive disclosure), and `481acd9` (canonical capability-scan optimization). Earlier intervening commits `1a58e44`, `3da30ec`, and `74ca40e` remain documented in the milestone section and full history. The earlier `ae3574c` map/workbook-review checkpoint remains an important historical baseline. This checkpoint incorporates the Web Mercator/CARTO Geographic Map, high-zoom and interaction performance repairs, self-contained attributed geographic exports, finalized Map-settings basemap selection, and provisional background workbook-review processing. Its immediately preceding confirmed checkpoints are `2684b3c` (export repair), `3c0a43e` (map performance), `bc99e31` (world wrapping/high-zoom interaction), and `0794002` (CARTO prototype). The historical `fc42306` Vite asset-import milestone remains below. The exact subject of `fc42306` was not furnished at its historical synchronization, so its descriptive label is not a verified Git subject. The earlier `5e785ed` checkpoint is historical and is followed by the verified gateway-design, animation, and asset-loading work below. The older `c71e265` asset-name repair and `7df38d0` documentation pass remain distinct preceding milestones. The previous checkpoint narrative is retained here for historical context: The `c71e265` asset-reference repair is a prior accepted milestone; commits `7df38d0` and `5e785ed` supersede it as the latest documentation and interface checkpoints. The previous `87d6955` milestone is historical. The prior `27e3cf7` state remains an earlier historical checkpoint, following `f3cf4fb` (shared mapping workspace layout/contextual guidance), `89aaa50` (mapping palette and contrast), `60b8643` (direct Home file chooser), and the intervening Home onboarding/asset-retirement commits. `27e3cf7` updates tracked design mockups and the genealogy retirement audit; **it does not retire genealogy code**. Earlier statements about uncommitted Adobe filigree deletions, a sole Home “Get started” button, and a wholly deferred mapping-content redesign describe earlier stages, not the current implementation. Browser observations and source changes are distinguished from verified Git synchronization; asset licensing is a separate unresolved review.
+This index points to **detailed milestone narratives**, not a second history or a replacement for the chronological record. A milestone can span several areas; links below highlight useful entry points. For exact commit subjects and the continuous recorded sequence, use [the development-history table](#3-full-development-history).
 
-**Historical checkpoint narrative (`cd625a2`):** This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
+| Development area | Start with these milestone narratives |
+|---|---|
+| Charts / Analytics | [Charts II completion](#milestone-charts-ii); [earlier Charts foundations](#milestone-charts-foundations) |
+| Timeline / chronology | [Grouped swimlanes](#milestone-timeline-grouped); [source-backed categories](#milestone-timeline-categories); [shared calendar navigation](#milestone-chronology); [Timeline II foundation](#milestone-timeline-foundation) |
+| Map / Network | [CARTO map and exports](#milestone-carto-map); [generalized Network](#milestone-generalized-network); [Map and Timeline interaction](#milestone-timeline-map) |
+| Data import / canonical model | [Workbook and normalization](#milestone-workbook); [generalized mapping foundations](#milestone-mapping-foundation); [canonical normalization](#milestone-canonical) |
+| Search / Inspector | [Generalized Search](#milestone-search); [Inspector / Identity](#milestone-inspector) |
+| Interface / design / About | [About animations](#milestone-about-animations); [public gateways](#milestone-gateways); [Cartographic Editorial foundation](#milestone-editorial) |
+| Infrastructure / documentation / testing | [Loader and first Map mount](#milestone-loader); [deployment and dependency maintenance](#milestone-dependencies); [documentation governance](#milestone-governance) |
 
-Current architectural significance:
+The area labels in the commit-history table are **editorial finding aids**, not original Git metadata or assertions of implementation scope. The recorded subjects and historical notes remain unchanged.
 
-- **`a1f4d56`** established persistent global navigation plus workspace-state continuity. The Peridot logo is a Home control; Data, Visualize, Explore, Tutorials, and About are persistent public destinations. Lightweight page changes do not receive an added loading overlay.
-- **`1810bf9`** and **`f59402f`** compacted and flattened Visualize. Map / Network / Timeline / Charts are centered on a local second bar, Export remains distinct at the right, and the prior oversized workspace framing no longer consumes the visualization stage.
-- **`e9ddf1f`** reorganized Explore around **Browse / Advanced Query / Refine**. Results live with Advanced Query; capability review and Inspector handoff context live with Refine. Search draft/apply and scope semantics remain unchanged.
-- **`4a6cd2e`** accepts ISO 8601 timestamp strings as day-precision temporal values while preserving full source text and using the lexical source calendar date rather than timezone-shifting historical evidence.
-- **`f139f53`** moved Data mapping out of a modal/scrim and into the Data page beneath the persistent global header. Mapping sections are directly navigable; the final section is **Review and Upload**; Cancel is separated from Back/Next; entry uses the established heavier transition to avoid flash.
-- **`cd625a2`** normalizes About into **About Peridot / Creator / AI Disclosure / Open Source / Feedback**, removes the old Project Information Hub/return-to-visualizations framing, renders Feedback inline as a normal About page, reduces title scale, and restores page scrolling when content exceeds the viewport.
-- The accepted generalized mapping, Search scope, Timeline, Network, Inspector, and export semantics remain authoritative underneath the navigation redesign. This sequence changes how researchers move among those systems, not what the mapped evidence means.
-- The first shared Relations/Time/Places mapping-content redesign and Home onboarding refinement are now committed; remaining mapping sections, integrated Identity styling, Explore-content overhaul, and Tutorials remain pending.
-- Timeline relationship-line routing/presentation remains unfinished; the `a32ef05` subject-strict relationship semantics and continuous secondary-axis layout remain the foundation.
-- The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
+### Jump to period
 
-## 2. Recent Milestones, Newest First
+[Date unverified](#history-undated) · [2026-11](#history-2026-11) · [2026-10](#history-2026-10) · [2026-09](#history-2026-09) · [2026-08](#history-2026-08) · [2026-07](#history-2026-07) · [2026-06](#history-2026-06) · [2026-05](#history-2026-05) · [2026-04](#history-2026-04)
+
+## 3. Full Development History
+
+**Start here for the complete commit record.** Newest entries appear first. Select **Details** to reach a related expandable milestone account. Use the [period index](#jump-to-period) to move directly to a month.
+
+<details>
+<summary><strong>How to read this history — source and verification notes</strong></summary>
+
+**Start here.** The register below contains every entry from the v01 Changelog (619 rows), newest first. Exact recorded date strings, commit hashes, messages, area labels, historical notes, and independently recorded verification qualifiers have been retained. The first four columns facilitate scanning; the last provides the original historical note, any documented verification, and a **Details** link where the commit is discussed in the milestone archive. The **Area** labels are editorial, not original Git metadata.
+
+A dash in the historical note means none was originally recorded; absence of a verification qualifier does **not** imply that a commit was untested. Historical branch annotations are not present-day Git status. Some dates remain explicitly unverified. This register has not been checked against a fresh full-repository `git log`.
+
+</details>
+
+| Date | Commit | Exact recorded message | Area (editorial) | Significance / detail |
+|---|---|---|---|---|
+| <a id="history-undated"></a>Date not independently established | `2be3ea0` | Synchronize documentation through Charts II completion and appearance customization | Documentation / planning | Latest clean synchronized checkpoint per researcher-provided Git log and status (2026-11-22) <em>Verification:</em> Git status/log confirmed; no new source test implied [Details](#milestone-charts-ii) |
+| <a id="history-2026-11"></a>2026-11-22 | `e96c375` | Implement Charts appearance customization and adaptive presentation | Charts / Analytics | current synchronized HEAD; Charts II Appearance colors, styles, adaptive labels, resizable panel, and PNG continuity <em>Verification:</em> User browser-accepted; source-level Charts tests reported passing [Details](#milestone-charts-ii) |
+| 2026-11-22 | `8baa733` | Retire legacy Charts I and consolidate Charts II workspace | Charts / Analytics | single public Charts tab; removed `AnalyticsPanel.jsx`; shared helpers/CSS retained <em>Verification:</em> User browser regression accepted; retirement test recorded [Details](#milestone-charts-ii) |
+| 2026-11-22 | `5c75472` | Implement Charts II chart-local filters and single-series selection | Charts / Analytics | filter scope isolation and compatible single/multi-series value selection <em>Verification:</em> See Charts II milestone; local filter behavior reported accepted [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `1dba2eb` | Refine Charts II recommendations using analytical data suitability | Charts / Analytics | genuine paired/numeric/temporal evidence; coordinates excluded from recommendation evidence [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `60c626a` | Implement customizable Charts II PNG exports | Charts / Analytics | optional title, axes, notes, provenance; white, unclipped figure output [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `afbddee` | Implement Charts II 100 percent stacked bar visualization | Charts / Analytics | normalized additive segment totals, optional absolute values, revised bar labeling [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `7aebea9` | Add Charts II regression coverage and stabilize chronology interactions | Charts / Analytics | Dot Plot selection correction; Scatter/Bubble drag-release regression [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `d3186ed` | Implement Charts II interactive treemaps with hierarchical drill-down | Charts / Analytics | semantic drill-down and stable Other identity [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `bdd7366` | Implement Charts II slope charts with chronological comparisons | Charts / Analytics | canonical two-period comparison [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `ee8e0cc` | Implement Charts II dot plots with readable numerical axes | Charts / Analytics | Dot Plot family [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `b6e0db5` | Implement Charts II box plots with outlier-aware scaling | Charts / Analytics | Box Plot family [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `19fe63b` | Implement Charts II scatter, bubble, and wide-format numerical series | Charts / Analytics | numerical/date comparisons and multi-column measures [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `0cf09fd` | Implement Charts II area charts and precision-aware temporal aggregation | Charts / Analytics | Area/Stacked Area; temporal intervals [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `6f341f3` | Implement Charts II catalogue and eight functional chart families | Charts / Analytics | initial Catalogue + Builder implementation [Details](#milestone-charts-ii) |
+| 2026-11 (day unverified) | `5487cc3` | Synchronize documentation through Timeline II grouped swimlanes | Documentation / planning | earlier core documentation checkpoint |
+| 2026-11-11 | `ea7cda8` | Remove obsolete src.zip archive | Other / general | historical checkpoint; intentional deletion of obsolete tracked source ZIP; Charts II work then uncommitted [Details](#milestone-timeline-grouped) |
+| 2026-11-11 | `f5791f1` | Implement Timeline II adaptive grouped swimlanes and category workspace | Timeline / chronology | grouped researcher-starred category lanes, five-column editor, browser-accepted Timeline-scoped width constraint <em>Verification:</em> User browser-accepted; focused source tests reported [Details](#milestone-timeline-grouped) |
+| 2026-11-10 | `f56e75f` | Synchronize Timeline documentation and organize supporting project resources | Documentation / planning | preceding core documentation/resource checkpoint |
+| 2026-11-10 | `9c2bb0e` | Generalize Timeline categories across mapped dataset attributes | Timeline / chronology | preceding source-backed category association milestone; three sample datasets <em>Verification:</em> Researcher-tested on three samples; focused tests reported [Details](#milestone-timeline-categories) |
+| 2026-11-10 | `27c5b52` | Implement Timeline category configuration and curated symbol library | Timeline / chronology | researcher-customized categories, optional colors/symbols, 100 curated Tabler icons <em>Verification:</em> Researcher-tested; category tests reported [Details](#milestone-timeline-categories) |
+| 2026-11-09 | `4702f3b` | Synchronize documentation through shared chronology completion | Documentation / planning | previous synchronized documentation checkpoint |
+| 2026-11-09 | `4fca872` | Unify shared chronology navigation, filtering, and dataset extent presentation | Timeline / chronology | historical chronology checkpoint; visually accepted; concurrent Charts II work uncommitted <em>Verification:</em> Researcher browser-accepted; four focused Node tests reported [Details](#milestone-chronology) |
+| Date not independently established | `9c15045` | Document About manuscript entrance animations | Documentation / planning | user-confirmed preceding Git history |
+| 2026-11-05 | `71833b3` | Add staggered manuscript entrance animations to About pages | Interface / design | accepted v04 About animation, synchronized last-arriving decorative corners on Feedback; HEAD/origin aligned, working tree contains unrelated changes <em>Verification:</em> User browser-accepted; broader suite not claimed [Details](#milestone-about-animations) |
+| Date not independently established | `688bc17` | Retire legacy Timeline I and promote Timeline II | Timeline / chronology | confirmed in prior development context; only active Timeline tab uses the Timeline II implementation [Details](#milestone-chronology) |
+| Date not independently established | `d119550` | Added planning docs for a chart builder redesign | Documentation / planning | confirmed preceding Git-log entry; other-workstream details not audited in this pass [Details](#milestone-about-animations) |
+| Date not independently established | `c74aa55` | Persist independent chronology sessions across visualizations | Timeline / chronology | confirmed preceding Git-log entry; other-workstream details not audited in this pass [Details](#milestone-chronology) |
+| Date not independently established | `50c1be5` | Document persistent loading architecture and first-load Map repair | Documentation / planning | confirmed preceding Git-log entry; other-workstream details not audited in this pass [Details](#milestone-about-animations) |
+| 2026-11-03 | `81c3719` | Implement persistent loading animation and repair initial Map mounting | Map / geography | this-conversation loader and Map first-mount repair; pushed; post-push clean status not supplied <em>Verification:</em> User browser-accepted; deployment not independently verified [Details](#milestone-loader) |
+| 2026-11-01 | `ddee7e2` | Extend Timeline II vertical chronology to full plotting height | Timeline / chronology | user-approved vertical-axis improvement; clean push and working tree [Details](#milestone-timeline-map) |
+| 2026-11-01 | `8cb1cbc` | Unify chronology controls and stabilize Map playback and initialization | Timeline / chronology | shared chronology component/adapter; Map scrubbing and initialization repairs [Details](#milestone-timeline-map) |
+| 2026-11-01 | `2664fbf` | Unify Timeline II chronology navigation and playback controls | Timeline / chronology | Timeline II chronology navigation and playback checkpoint [Details](#milestone-timeline-map) |
+| 2026-11-01 | `8899b8d` | put old planning docs into planning docs folder | Documentation / planning | intervening planning-doc organization [Details](#milestone-timeline-map) |
+| 2026-11-01 | `3f0ae7c` | Introduce Timeline II and stabilize chronological event packing | Timeline / chronology | initial Timeline II and packing checkpoint [Details](#milestone-timeline-map) |
+| 2026-11-01 | `0f60f5d` | Add Timeline category system design reference | Timeline / chronology | verified in earlier user log; earlier design reference |
+| 2026-11-01 | `481acd9` | Optimize canonical capability readiness calculations | Data / mapping | precomputed per-record capability indexes; functional tests accepted; clean sync [Details](#milestone-workbook) |
+| 2026-11-01 | `8dd208a` | Restore progressive disclosure for new data uploads | Data / mapping | distinguish suggested fresh-upload fields from existing accepted mappings [Details](#milestone-workbook) |
+| 2026-11-01 | `64dfbae` | Guard workbook confirmation against stale review results | Data / mapping | defense inside confirmation handler [Details](#milestone-workbook) |
+| 2026-11-01 | `54dfa2c` | Provide CARTO basemap key to GitHub Pages build | Map / geography | GitHub Actions secret forwarded to Vite build; live-site fix confirmed [Details](#milestone-workbook) |
+| 2026-11-01 | `be5fea5` | Synchronize documentation through dependency maintenance and mapping refinements | Documentation / planning | preceding documentation synchronization [Details](#milestone-workbook) |
+| 2026-11-01 | `973d40d` | Refine mapping disclosure and subject selection and repair Review | Map / geography | one-at-a-time Places Add, visible existing mappings, Review fix [Details](#milestone-dependencies) |
+| <a id="history-2026-10"></a>2026-10-31 | `74ca40e` | Upgrade SheetJS and refresh Browserslist compatibility data | Search / Explore | official SheetJS 0.20.3; caniuse-lite refresh [Details](#milestone-dependencies) |
+| 2026-10-31 | `3da30ec` | Remove obsolete MapLibre dependencies from lockfile | Map / geography | orphaned MapLibre lockfile tree removed [Details](#milestone-dependencies) |
+| 2026-10-31 | `1a58e44` | Synchronize documentation through CARTO map and workbook processing improvements | Documentation / planning | prior documentation sync [Details](#milestone-dependencies) |
+| 2026-10-31 | `ae3574c` | Finalize geographic map interface and improve workbook review processing | Map / geography | latest user-confirmed clean, pushed checkpoint; map settings and provisional importer worker [Details](#milestone-carto-map) |
+| 2026-10-31 | `2684b3c` | Repair geographic map exports and preserve CARTO attribution | Map / geography | embedded raster exports, attribution, corrected zoom-after-drag behavior [Details](#milestone-carto-map) |
+| 2026-10-31 | `3c0a43e` | Optimize geographic map rendering and interaction performance | Map / geography | optimized tile loading, clipped/culling edges, rapid-interaction recovery [Details](#milestone-carto-map) |
+| 2026-10-31 | `bc99e31` | Stabilize CARTO world wrapping, high-zoom rendering, and map interactions | Map / geography | continuous horizontal wrapping and zoom-20 rendering [Details](#milestone-carto-map) |
+| 2026-10-31 | `0794002` | Establish Web Mercator and CARTO multiscale map prototype | Map / geography | initial tiled geographic implementation [Details](#milestone-carto-map) |
+| 2026-10-31 | `005db62` | Synchronize documentation through editorial gateways and production asset repair | Documentation / planning | historical documentation checkpoint |
+| 2026-10-31 | `87bc8f0` | Include editorial gateway artwork in production build | Interface / design | published Git message from later user Git log [Details](#milestone-gateways) |
+| 2026-10-31 | `2214d8e` | Add editorial entrance animations to onboarding pages | Interface / design | published Git message from later user Git log [Details](#milestone-gateways) |
+| 2026-10-31 | `fc42306` | Subject not supplied in sync ritual | Other / general | historical clean aligned checkpoint at the time; Vite import correction was the accepted functional change [Details](#milestone-gateways) |
+| 2026-10-31 | `5d5f528` | Fix editorial gateway asset paths for GitHub Pages | Interface / design | earlier base-path-only fix, superseded by Vite imports [Details](#milestone-gateways) |
+| 2026-10-31 | `c150444` | Modify some decorative assets | Interface / design | subsequent artwork adjustments [Details](#milestone-gateways) |
+| 2026-10-31 | `dd11827` | Redesign Visualize and Explore no-data onboarding | Search / Explore | illustrated no-dataset screens, Data CTA [Details](#milestone-gateways) |
+| 2026-10-31 | `1a6554d` | Synchronize documentation through About manuscript and Data responsive refinements | Documentation / planning | preceding core-documentation synchronization [Details](#milestone-gateways) |
+| 2026-10-30 | `5e785ed` | Refine About manuscript design and Data workspace responsiveness | Interface / design | historical clean aligned checkpoint; About corner/wrapping/portrait and laptop Data density [Details](#milestone-gateways) |
+| 2026-10-30 | `7df38d0` | Synchronize documentation through Data onboarding and asset organization | Documentation / planning | preceding documentation synchronization [Details](#milestone-detail-12) |
+| 2026-10-30 | `c71e265` | Repair asset references after decorative asset renaming | Interface / design | historical accepted checkpoint; user-tested image paths [Details](#milestone-detail-13) |
+| 2026-10-30 | `52cf1f8` | add and rename decorative assets | Interface / design | role-based naming and asset catalog; 44 experimental labels/frames excluded [Details](#milestone-detail-13) |
+| 2026-10-30 | `761d72d` | Refine Data workspace controls and sample selection icon | Data / mapping | oxblood Edit Mapping and four-tiles icon [Details](#milestone-detail-13) |
+| 2026-10-30 | `ee4c3ff` | Redesign Data onboarding and refine workspace animations | Interface / design | four Data tabs, status panel, sample actions, Home Get Started [Details](#milestone-detail-13) |
+| 2026-10-30 | `86cb3d0` | Synchronize documentation through mapping and interface refinements | Documentation / planning | preceding documentation checkpoint [Details](#milestone-detail-13) |
+| 2026-10-28 | `87d6955` | Refine informational workspace presentation and restore Creator layout | Interface / design | historical clean synchronized checkpoint [Details](#milestone-detail-14) |
+| 2026-10-28 | `c0e1fb3` | Add progressive disclosure to relationship time and place mapping | Map / geography | user-activated Add controls; original editor layouts [Details](#milestone-detail-14) |
+| 2026-10-28 | `55453a8` | Support XLSM workbooks and improve file import errors | Data / mapping | workbook acceptance and actionable errors [Details](#milestone-detail-14) |
+| 2026-10-27 | `3bb71be` | Replace unfinished tutorial entry with coming soon page | Interface / design | public Tutorials placeholder [Details](#milestone-detail-14) |
+| 2026-10-27 | `fb18799` | Organize historical design assets and retain portrait reference | Interface / design | reference-asset relocation [Details](#milestone-detail-14) |
+| 2026-10-27 | `263cad0` | Refine homepage styling and add sample dataset artwork | Data / mapping | Florence and sample artwork [Details](#milestone-detail-14) |
+| 2026-10-27 | `2217373` | Unify About workspace editorial styling and refine feedback layout | Interface / design | About/Feedback presentation [Details](#milestone-detail-14) |
+| 2026-10-26 | `83dd4fa` | Refine sample selection layout for laptop viewports | Data / mapping | compact card sizing [Details](#milestone-detail-14) |
+| 2026-10-26 | `d75fa1e` | Add staggered Sample Selection entrance animations | Data / mapping | sample-page animation [Details](#milestone-detail-14) |
+| 2026-10-26 | `5f4a7f2` | Refine Cartographic Editorial homepage entrance animations | Map / geography | homepage animation [Details](#milestone-detail-14) |
+| 2026-10-26 | `d443585` | Redesign sample selection and Data entry workspace | Data / mapping | sample chooser and Data entry [Details](#milestone-detail-14) |
+| 2026-10-26 | `4133bb7` | Synchronize documentation through shared mapping redesign | Documentation / planning | preceding documentation checkpoint |
+| 2026-10-26 | `27e3cf7` | Update interface mockups and genealogy retirement audit | Data / mapping | historical clean checkpoint; planning artifacts only [Details](#milestone-detail-15) |
+| 2026-10-26 | `f3cf4fb` | Refine shared mapping workspace layout and contextual guidance | Map / geography | accepted first-stage Relations/Time/Places UI redesign [Details](#milestone-detail-15) |
+| 2026-10-26 | `89aaa50` | Align mapping workspace palette and improve contrast | Map / geography | mapping visual palette pass [Details](#milestone-detail-15) |
+| 2026-10-26 | `60b8643` | Open file chooser directly from homepage | Interface / design | direct upload action [Details](#milestone-detail-15) |
+| 2026-10-26 | `2117659` | Connect homepage sample button to sample chooser | Data / mapping | explicit sample selection [Details](#milestone-detail-15) |
+| 2026-10-26 | `7280e30` | Refine homepage typography and onboarding layout | Interface / design | two primary actions and editorial banner guidance [Details](#milestone-detail-15) |
+| 2026-10-26 | `57f6ef3` | Document Adobe filigree asset retirement | Documentation / planning | documentation checkpoint [Details](#milestone-detail-15) |
+| 2026-10-26 | `07ec80d` | Retire Adobe filigree assets and decorations | Interface / design | removed five filigree assets and active references [Details](#milestone-detail-15) |
+| 2026-10-26 | `6667505` | Synchronize documentation through Cartographic Editorial overhaul | Documentation / planning | preceding documentation checkpoint |
+| 2026-10-31 | `973d40d` | Refine mapping disclosure and subject selection and repair Review | Map / geography | latest user-confirmed clean/pushed checkpoint; mapping UI and Review repairs [Details](#milestone-dependencies) |
+| 2026-10-31 | `74ca40e` | Upgrade SheetJS and refresh Browserslist compatibility data | Search / Explore | pinned SheetJS 0.20.3 and refreshed caniuse-lite; user import QA passed [Details](#milestone-dependencies) |
+| 2026-10-31 | `3da30ec` | Remove obsolete MapLibre dependencies from lockfile | Map / geography | orphaned dependency retirement; archived branch retained [Details](#milestone-dependencies) |
+| 2026-10-31 | `1a58e44` | Synchronize documentation through CARTO map and workbook processing improvements | Documentation / planning | preceding core-documentation checkpoint [Details](#milestone-dependencies) |
+| 2026-10-25 | `4e6fb11` | Refine Cartographic Editorial homepage composition | Map / geography | historical; amended from `c88056d` [Details](#milestone-detail-17) |
+| 2026-10-25 | `2472c57` | Consolidate primary and secondary button styling | Interface / design | accepted button consolidation [Details](#milestone-detail-17) |
+| 2026-10-17 | `9e12305` | Document Visualize component ownership and styling architecture | Documentation / planning | accepted ownership notes [Details](#milestone-detail-17) |
+| 2026-10-17 | `ad14727` | Refine Visualize workspace styling and viewport | Interface / design | accepted Visualize pass [Details](#milestone-detail-17) |
+| 2026-10-17 | `aaef93b` | Integrate Cartographic Editorial homepage assets | Map / geography | historical predecessor |
+| 2026-10-15 | `fd02d84` | Build Cartographic Editorial Home composition | Map / geography | historical local-only checkpoint; later superseded [Details](#milestone-detail-17) |
+| 2026-10-15 | `fe9634b` | Redesign global header with editorial typography | Interface / design | historical prior remote checkpoint [Details](#milestone-editorial) |
+| 2026-10-15 | `243ea6c` | Establish Cartographic Editorial typography foundations | Map / geography | prior accepted commit [Details](#milestone-editorial) |
+| 2026-10-15 | `889ebae` | Document legacy CSS and cascade verification | Documentation / planning | prior accepted commit [Details](#milestone-editorial) |
+| 2026-10-15 | `2e20bba` | Integrate Cartographic Editorial palette and restore UI contrast | Map / geography | prior accepted commit [Details](#milestone-editorial) |
+| 2026-10-15 | `f667329` | Establish Home and Data workspace styling ownership | Interface / design | prior accepted commit [Details](#milestone-editorial) |
+| 2026-10-15 | `bc4761e` | Consolidate shared panel and workspace framing styles | Interface / design | prior accepted commit [Details](#milestone-editorial) |
+| 2026-10-15 | `98bcbcb` | Consolidate shared button form and card styles | Interface / design | prior accepted commit [Details](#milestone-editorial) |
+| 2026-10-15 | `d108bb2` | Migrate shared styles to centralized design tokens | Interface / design | prior accepted commit [Details](#milestone-editorial) |
+| 2026-10-15 | `ec5152c` | Establish centralized styling foundations and editorial design plan | Interface / design | prior accepted commit [Details](#milestone-editorial) |
+| 2026-10-14 | `2024897` | Synchronize documentation through navigation redesign | Documentation / planning | preceding documentation checkpoint [Details](#milestone-editorial) |
+| 2026-10-14 | `cd625a2` | Normalize About workspace and feedback | Data / mapping | historical checkpoint at time [Details](#milestone-detail-19) |
+| 2026-10-01 | `f139f53` | Move data mapping into full-page workspace | Map / geography | — [Details](#milestone-detail-19) |
+| 2026-10-01 | `4a6cd2e` | Support ISO 8601 temporal values | Timeline / chronology | — [Details](#milestone-detail-19) |
+| <a id="history-2026-09"></a>2026-09-30 | `e9ddf1f` | Restructure Explore workspace navigation | Search / Explore | — [Details](#milestone-detail-19) |
+| 2026-09-30 | `f59402f` | Flatten visualization workspace framing | Interface / design | — [Details](#milestone-detail-19) |
+| 2026-09-30 | `1810bf9` | Simplify visualization workspace navigation | Interface / design | — [Details](#milestone-detail-19) |
+| 2026-09-30 | `a1f4d56` | Add persistent navigation and workspace state | Interface / design | — [Details](#milestone-detail-19) |
+| 2026-09-28 | `360682f` | Synchronize documentation through timeline workspace | Documentation / planning | — [Details](#milestone-detail-19) |
+| 2026-09-27 | `a32ef05` | Add timeline relationship layout and sample switching fixes | Timeline / chronology | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `90f93d2` | Refine timeline navigation and temporal axis | Timeline / chronology | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `d1fd010` | Optimize timeline rendering performance | Timeline / chronology | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `98f3841` | Refine timeline readability and zoom | Timeline / chronology | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `0d0380a` | Add evidence-driven timeline categories | Timeline / chronology | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `d410c3d` | Add vertical timeline orientation | Timeline / chronology | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `8188ac0` | Add horizontal timeline workspace | Timeline / chronology | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `d82406e` | Add canonical timeline workspace projection | Timeline / chronology | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `7eddfb0` | Synchronize documentation through playback performance | Documentation / planning | — [Details](#milestone-timeline-foundation) |
+| 2026-09-27 | `c8a7c46` | Optimize network playback and viewport interaction | Timeline / chronology | — [Details](#milestone-detail-21) |
+| 2026-09-27 | `da87f6d` | Isolate wheel zoom from clustering updates | Network | — [Details](#milestone-detail-21) |
+| 2026-09-27 | `f34207d` | Isolate viewport panning from graph rendering | Other / general | — [Details](#milestone-detail-21) |
+| 2026-09-27 | `a92ec9a` | Restore smooth timeline playback scrubbing | Timeline / chronology | — [Details](#milestone-detail-21) |
+| 2026-09-27 | `04d8244` | Add direct sample data actions | Data / mapping | — [Details](#milestone-detail-21) |
+| 2026-09-27 | `239f11f` | Refine sample data chooser interaction | Data / mapping | — [Details](#milestone-detail-21) |
+| 2026-09-25 | `852fd72` | Synchronize documentation through Network playback generalization | Documentation / planning | — [Details](#milestone-detail-21) |
+| 2026-09-25 | `ddc0aca` | Generalize network playback highlighting | Timeline / chronology | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-detail-21) |
+| 2026-09-14 | `cab2ffc` | Stabilize geographic map settings and hover semantics | Map / geography | — [Details](#milestone-generalized-network) |
+| 2026-09-14 | `0afd2dd` | Unify geographic map projection | Map / geography | — [Details](#milestone-generalized-network) |
+| 2026-09-14 | `19345df` | Add map settings and compact visualization controls | Map / geography | — [Details](#milestone-generalized-network) |
+| 2026-09-14 | `e0fd1c0` | Add generalized geographic anchor model | Map / geography | — [Details](#milestone-generalized-network) |
+| 2026-09-14 | `9ecb4f8` | Align geographic network relationship scope | Map / geography | — [Details](#milestone-generalized-network) |
+| 2026-09-07 | `9166e3e` | Synchronize documentation through Search generalization | Documentation / planning | — [Details](#milestone-generalized-network) |
+| 2026-09-07 | `1810a40` | Replace minimum weight with count conditions | Other / general | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-search) |
+| 2026-09-07 | `656010d` | Align Search scope across Inspector and Analytics | Charts / Analytics | — [Details](#milestone-search) |
+| 2026-09-07 | `f1a6942` | Generalize Search evidence semantics | Search / Explore | — [Details](#milestone-search) |
+| 2026-09-07 | `2fd0084` | Generalize Search results presentation | Search / Explore | — [Details](#milestone-search) |
+| 2026-09-07 | `aabc8bb` | Generalize Search place semantics | Search / Explore | — [Details](#milestone-search) |
+| <a id="history-2026-08"></a>2026-08-31 | `e697bd2` | Refine timeline slider interaction | Timeline / chronology | — [Details](#milestone-search) |
+| 2026-08-31 | `5e3289c` | Synchronize documentation through subject-aware evidence | Documentation / planning | — [Details](#milestone-search) |
+| 2026-08-31 | `b7482cb` | Add homepage tutorial placeholder | Interface / design | — [Details](#milestone-detail-24) |
+| 2026-08-31 | `ef1c95f` | Project subject-aware Evidence into Inspector | Inspector | — [Details](#milestone-detail-24) |
+| 2026-08-31 | `c7069da` | Add canonical subject-aware Evidence assertions | Data / mapping | — [Details](#milestone-detail-24) |
+| 2026-08-31 | `8e69bb6` | Add subject-aware Evidence mapping | Map / geography | — [Details](#milestone-detail-24) |
+| 2026-08-31 | `3f921d0` | Generalize place and time subject attribution | Other / general | — [Details](#milestone-detail-24) |
+| 2026-08-31 | `4405f40` | Guard multi-value place coordinate mapping | Map / geography | — [Details](#milestone-detail-24) |
+| 2026-08-31 | `d82e669` | Canonicalize entity display labels | Data / mapping | — [Details](#milestone-detail-24) |
+| 2026-08-24 | `1d34b89` | Generalize cardinality and integrated identity mapping | Map / geography | — [Details](#milestone-detail-24) |
+| 2026-08-21 | `951c21e` | Synchronize documentation for generalized sample datasets | Documentation / planning | — [Details](#milestone-detail-24) |
+| 2026-08-21 | `8290696` | Add first-class generalized sample datasets | Data / mapping | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-inspector) |
+| 2026-08-21 | `e944e60` | Stabilize generalized correspondence mapping | Map / geography | — [Details](#milestone-inspector) |
+| 2026-08-21 | `bc37b08` | Make mapped identity and place subjects authoritative | Map / geography | — [Details](#milestone-inspector) |
+| 2026-08-21 | `287ca50` | Generalize Inspector semantics and participant attribution | Inspector | — [Details](#milestone-inspector) |
+| 2026-08-19 | `959d874` | Synchronize documentation for identity and inspector groundwork | Documentation / planning | — [Details](#milestone-inspector) |
+| 2026-08-19 | `4076e5b` | Checkpoint generalized identity mapping groundwork | Map / geography | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-inspector) |
+| 2026-08-19 | `a24034f` | Checkpoint generalized geographic network groundwork | Map / geography | — [Details](#milestone-detail-26) |
+| 2026-08-19 | `ccc2482` | Complete generalized relationship search helpers | Search / Explore | — [Details](#milestone-detail-26) |
+| 2026-08-19 | `3b3c537` | Use generalized relationships in search and network capabilities | Network | — [Details](#milestone-detail-26) |
+| 2026-08-19 | `9cc9d93` | Retire legacy temporal interpretation paths | Timeline / chronology | — [Details](#milestone-detail-26) |
+| 2026-08-19 | `df9511b` | Migrate temporal consumers and checkpoint network foundations | Timeline / chronology | — [Details](#milestone-detail-26) |
+| 2026-08-19 | `9fe62a3` | Synchronize documentation for temporal and timeline updates | Documentation / planning | — [Details](#milestone-detail-26) |
+| 2026-08-17 | `2d5e668` | Generalize temporal mapping and timeline playback | Timeline / chronology | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-detail-26) |
+| 2026-08-17 | `ce46f08` | Derive timeline from canonical temporal assertions | Timeline / chronology | — [Details](#milestone-detail-27) |
+| 2026-08-17 | `ac95c13` | Bridge canonical temporal assertions to runtime rows | Timeline / chronology | — [Details](#milestone-detail-27) |
+| 2026-08-17 | `ba07895` | Add temporal assertions foundation | Timeline / chronology | — [Details](#milestone-detail-27) |
+| 2026-08-09 | `6fd19e0` | Refine network availability for generalized relationships | Network | — [Details](#milestone-detail-27) |
+| 2026-08-09 | `358202c` | Generalize workbook join validation | Data / mapping | — [Details](#milestone-detail-27) |
+| 2026-08-08 | `c600295` | Make generalized mappings authoritative for workbook import | Map / geography | — [Details](#milestone-detail-27) |
+| 2026-08-08 | `0fa8925` | Make generalized mappings authoritative for single-table import | Map / geography | — [Details](#milestone-detail-27) |
+| 2026-08-08 | `858ac26` | Synchronize documentation for Phase 2 mapping redesign | Documentation / planning | — [Details](#milestone-detail-27) |
+| 2026-08-08 | `134c67c` | Refine upload review checkpoint | Data / mapping | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `0ae7e03` | Refine evidence mapping workflow | Map / geography | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `967b293` | Generalize relationship mapping workflow | Map / geography | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `90a3a3b` | Generalize place mapping workflow | Map / geography | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `fb400db` | Fix time examples for row-oriented tables | Infrastructure / maintenance | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `14f48cb` | Add upload table orientation guidance | Data / mapping | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `0aa0c21` | Improve temporal data mapping workflow | Timeline / chronology | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `cc43c9e` | Improve upload data preview | Data / mapping | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `050e3ed` | Mount universal mapper for interactive testing | Map / geography | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `3b30367` | Add reversible universal mapping edits | Map / geography | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `2d96b1a` | Add operational related sheet connections | Data / mapping | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `8b52af6` | Add repeated data orientation mapping | Map / geography | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `3153861` | Make universal sheet purposes operational | Data / mapping | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `157574e` | Add editable universal mapping suggestions | Map / geography | — [Details](#milestone-detail-28) |
+| 2026-08-08 | `7588269` | Add universal upload workflow prototype | Data / mapping | — [Details](#milestone-detail-28) |
+| 2026-08-07 | `e10c062` | Synchronize documentation for universal data phase 1 | Documentation / planning | — [Details](#milestone-detail-28) |
+| 2026-08-07 | `301a1e1` | Add universal runtime compatibility boundary | Other / general | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-mapping-foundation) |
+| 2026-08-07 | `ebcd7d0` | Add universal transformation helpers | Other / general | — [Details](#milestone-mapping-foundation) |
+| 2026-08-07 | `eda0b88` | Add generalized source sheet model | Data / mapping | — [Details](#milestone-mapping-foundation) |
+| 2026-08-07 | `a05130f` | Add universal mapping schema foundation | Map / geography | — [Details](#milestone-mapping-foundation) |
+| <a id="history-2026-07"></a>2026-07-24 | `8f19997` | Activate canonical genealogy imports | Data / mapping | — [Details](#milestone-canonical) |
+| 2026-07-24 | `2ef36a6` | Add genealogy mapping workflow | Map / geography | — [Details](#milestone-canonical) |
+| 2026-07-24 | `1e661da` | Add genealogy mapping schema and validation | Map / geography | — [Details](#milestone-canonical) |
+| 2026-07-24 | `94b9d46` | Add dataset profile selection and routing | Other / general | — [Details](#milestone-canonical) |
+| 2026-07-24 | `402336f` | Add genealogy normalization profile | Data / mapping | — [Details](#milestone-canonical) |
+| 2026-07-24 | `ba844cc` | Switch imports to canonical normalization source | Data / mapping | — [Details](#milestone-canonical) |
+| 2026-07-24 | `53c1116` | Add normalization shadow comparison | Data / mapping | — [Details](#milestone-canonical) |
+| 2026-07-24 | `6c04e84` | Add normalized model compatibility adapter | Data / mapping | — [Details](#milestone-canonical) |
+| 2026-07-24 | `1e17596` | Add correspondence normalization profile | Data / mapping | — [Details](#milestone-canonical) |
+| 2026-07-24 | `d612c3e` | Add normalized data model foundations | Data / mapping | — [Details](#milestone-canonical) |
+| 2026-07-24 | `3aaee49` | Add normalized data model foundations | Data / mapping | — [Details](#milestone-canonical) |
+| 2026-07-24 | `805163d` | update changlog | Other / general | — |
+| 2026-07-24 | `a09716c` | Synchronize documentation for first-time tutorial | Documentation / planning | — |
+| 2026-07-14 | `619bab0` | Restore stable tutorial attention behavior | Interface / design | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-canonical) |
+| 2026-07-14 | `d3c3c24` | Refine tutorial presentation and dialogue layout | Interface / design | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `297430f` | Improve tutorial accessibility and focus handling | Interface / design | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `8241f3a` | Harden tutorial recovery and anchor resolution | Interface / design | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `16cf7cc` | Complete tutorial export and finish flow | Interface / design | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `a52b9ca` | Add working set tutorial explanation | Interface / design | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `783acc1` | Add Browse and applied search tutorial guidance | Search / Explore | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `67fc073` | Guide tutorial navigation into Explore | Search / Explore | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `48f680a` | Add Inspector tutorial guidance and placement | Inspector | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `ed6466f` | Add interactive timeline tutorial guidance | Timeline / chronology | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `da0a472` | Anchor tutorial to visualization and timeline controls | Timeline / chronology | — [Details](#milestone-detail-31) |
+| 2026-07-14 | `84fe3cc` | Add tutorial foundation and step state machine | Interface / design | — [Details](#milestone-detail-31) |
+| <a id="history-2026-06"></a>2026-06-22 | `42149ab` | Add metadata refinement and connected entity search | Search / Explore | — |
+| 2026-06-22 | `14aa380` | Separate Search scope from playback visibility | Timeline / chronology | — |
+| 2026-06-22 | `f01ed59` | Build unified Search metadata records | Search / Explore | — |
+| 2026-06-22 | `b1a32b6` | Expand Browse and Refine index coverage | Search / Explore | — |
+| 2026-06-22 | `e7dfb3d` | Update PROJECT_WORKFLOW_CHARTER.md | Charts / Analytics | — |
+| 2026-06-22 | `8a5c6f3` | Update README.md with AI disclosure | Documentation / planning | — |
+| 2026-06-22 | `07cb6be` | Update README.md | Documentation / planning | — |
+| 2026-06-22 | `03e3e82` | Create README.md redirect for GitHub users | Documentation / planning | — |
+| 2026-06-22 | `3fc7331` | Restructure and audit core documentation | Documentation / planning | — |
+| 2026-06-22 | `a9b9c81` | Add core documentation restructuring plan | Documentation / planning | — |
+| 2026-06-22 | `70d8b31` | Move documentation governance protocol to core documentation | Documentation / planning | — |
+| 2026-06-22 | `6d05409` | Add core documentation governance protocol | Documentation / planning | — |
+| 2026-06-22 | `dc5f20b` | Add core documentation governance protocol | Documentation / planning | — |
+| 2026-06-22 | `58fdd08` | Refresh README screenshots and preserve interface history | Documentation / planning | — |
+| 2026-06-21 | `7df46a8` | Restore extracted workspace stylesheet imports | Data / mapping | — |
+| 2026-06-21 | `8f2d1ca` | Refine feedback form and visualization control layering | Interface / design | — |
+| 2026-06-21 | `639e30f` | Extract Inspector stylesheet | Inspector | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-detail-33) |
+| 2026-06-21 | `f7e885c` | Extract Analytics stylesheet | Charts / Analytics | — [Details](#milestone-detail-33) |
+| 2026-06-21 | `19acc89` | Extract Search workspace stylesheet | Search / Explore | — [Details](#milestone-detail-33) |
+| 2026-06-21 | `407becc` | Remove obsolete column mapping stylesheet rules | Map / geography | — [Details](#milestone-detail-33) |
+| 2026-06-21 | `5c0532d` | Remove residual Learn More global stylesheet rules | Data / mapping | — [Details](#milestone-detail-33) |
+| 2026-06-21 | `7b9ddf3` | Extract column mapping modal stylesheet | Map / geography | — [Details](#milestone-detail-33) |
+| 2026-06-21 | `264e8d9` | Remove obsolete Data workspace stylesheet rules | Data / mapping | — [Details](#milestone-detail-33) |
+| 2026-06-19 | `0c5a219` | Add Learn More section dividers | Other / general | (HEAD -> main, origin/main, origin/HEAD) [Details](#milestone-detail-33) |
+| 2026-06-19 | `795f0f7` | Restore Explore folio corner containment | Search / Explore | — [Details](#historical-milestone-01) |
+| 2026-06-19 | `98cccf5` | Warm Learn More parchment surfaces | Interface / design | — [Details](#historical-milestone-01) |
+| 2026-06-19 | `59f7d69` | Refine Learn More expanded biography layout | Interface / design | — [Details](#historical-milestone-01) |
+| 2026-06-19 | `39983e3` | Refine Learn More project information layout | Interface / design | — [Details](#historical-milestone-01) |
+| 2026-06-19 | `2307d5a` | Stabilize visualization header entrance and Explore folio frame | Search / Explore | — [Details](#historical-milestone-01) |
+| 2026-06-19 | `7a115f7` | Fix Explore folio frame clipping | Search / Explore | — [Details](#historical-milestone-01) |
+| 2026-06-19 | `81f6311` | Add Learn More author assets | Interface / design | — [Details](#historical-milestone-01) |
+| 2026-06-19 | `9fbd200` | Expand Learn More author and GitHub sections | Other / general | — [Details](#historical-milestone-01) |
+| 2026-06-19 | `e5f832c` | Animate Explore workspace transitions | Search / Explore | (HEAD -> main, origin/main, origin/HEAD) [Details](#historical-milestone-02) |
+| 2026-06-19 | `d3e4625` | Open Inspector over Explore workspace | Inspector | — |
+| 2026-06-19 | `7942fda` | Convert Explore Browse to compact ledgers | Network | — |
+| 2026-06-19 | `efd6d95` | Compact Explore Build and Capabilities layouts | Search / Explore | — |
+| 2026-06-19 | `a793c06` | Make Explore Refine facets route-aware | Map / geography | — |
+| 2026-06-19 | `3e96f59` | Refine Explore facet panel behavior | Search / Explore | — |
+| 2026-06-19 | `7e5df91` | Polish Explore Results ledger density | Network | — |
+| 2026-06-19 | `dd09003` | Match Explore Results pagination to Inspector | Inspector | — |
+| 2026-06-19 | `1542c04` | Refine Explore Results ledger | Network | — |
+| 2026-06-18 | `d04eaf6` | Hide theme menu entry and animate learn more cards | Interface / design | — [Details](#historical-milestone-03) |
+| 2026-06-18 | `342e606` | Simplify upload step transitions | Data / mapping | — |
+| 2026-06-18 | `35946d4` | Animate upload mapping transitions | Map / geography | — |
+| 2026-06-18 | `18419a5` | Refine workbook sheet assembly layout | Data / mapping | — |
+| 2026-06-18 | `3d2704e` | Refine workbook mapping controls | Map / geography | — |
+| 2026-06-18 | `e12862c` | Refine review warning display | Other / general | — |
+| 2026-06-18 | `4330312` | Refine preview and places mapping details | Map / geography | — |
+| 2026-06-18 | `b9c113c` | Refine relationship mapping layout | Map / geography | — |
+| 2026-06-18 | `d3bda6f` | Refine places mapping layout | Map / geography | — |
+| 2026-06-17 | `74db963` | Refine Inspector reference layout and record tables | Inspector | (HEAD -> main, origin/main, origin/HEAD) [Details](#historical-milestone-04) |
+| 2026-06-17 | `d6baedf` | Refine Inspector reference layout and record tables | Inspector | — |
+| 2026-06-17 | `05fe40f` | Keep visualizations mounted behind Inspector overlay | Inspector | — |
+| 2026-06-17 | `306650f` | Fix Inspector person navigation from geographic context | Map / geography | — |
+| 2026-06-16 | `dd8e9c5` | Refresh documentation for animation and inspector milestones | Documentation / planning | — |
+| 2026-06-16 | `bd9b807` | Refine inspector workspace styling | Inspector | (HEAD -> main, origin/main, origin/HEAD) [Details](#historical-milestone-05) |
+| 2026-06-16 | `2bd6b3a` | Center force network on dense cluster | Network | — |
+| 2026-06-16 | `7c1f9fd` | Polish chart builder controls | Charts / Analytics | — |
+| 2026-06-16 | `6dfd4c6` | Animate chart workspace reveal | Charts / Analytics | — |
+| 2026-06-16 | `7af288f` | Refine visualization workspace transitions | Interface / design | — |
+| 2026-06-16 | `ef8e188` | Add workspace entrance animations | Interface / design | — |
+| 2026-06-16 | `3777fbc` | Correct filigree asset spelling | Interface / design | — |
+| 2026-06-16 | `f8ea541` | add a filegree asset | Interface / design | — |
+| 2026-06-16 | `6f008ce` | Redesign data workspace landing page | Interface / design | — |
+| 2026-06-16 | `68f99da` | add some homepage assets | Interface / design | — [Details](#historical-milestone-06) |
+| 2026-06-16 | `bb971a5` | Redesign Peridot homepage | Interface / design | — |
+| 2026-06-16 | `e0d2399` | Finalize map export options and ignore design source files | Map / geography | — |
+| 2026-06-16 | `499acc7` | Improve map export annotation readability | Map / geography | — |
+| 2026-06-16 | `d835953` | Clarify capability and availability wording | Other / general | — |
+| 2026-06-16 | `97843c7` | Refine capability wording for point datasets | Other / general | — |
+| 2026-06-16 | `7d2b888` | Fix route capability wording for point datasets | Map / geography | — |
+| 2026-06-16 | `212fb4a` | Track Peridot branding and palette assets | Interface / design | — |
+| 2026-06-16 | `72bcae7` | Add Peridot logo branding assets | Interface / design | — |
+| 2026-06-13 | `954f553` | Refresh documentation for analytics layout and theme milestone | Documentation / planning | — |
+| 2026-06-13 | `e50ebf6` | Scope chart palette imports to chart series | Charts / Analytics | (HEAD -> main, origin/main, origin/HEAD) [Details](#historical-milestone-08) |
+| 2026-06-13 | `6334840` | Route remaining analytics chart marks through theme series | Charts / Analytics | — |
+| 2026-06-13 | `db2bea6` | Anchor analytics chart titles and restore vertical bar default | Charts / Analytics | — |
+| 2026-06-13 | `a1ce00a` | Tighten analytics chart canvas spacing | Charts / Analytics | — |
+| 2026-06-13 | `69ea23a` | Simplify analytics legend rows | Charts / Analytics | — |
+| 2026-06-13 | `b868bb3` | Add analytics chart method labels | Charts / Analytics | — |
+| 2026-06-13 | `b0a4b65` | Improve analytics bar labels and metric options | Charts / Analytics | — |
+| 2026-06-12 | `8b3ead9` | Resize analytics builder for quarter-panel layout | Charts / Analytics | — |
+| 2026-06-12 | `f9a74fd` | Refine tabbed analytics builder proportions | Charts / Analytics | — |
+| 2026-06-12 | `d7f10c9` | Add tabbed analytics chart builder | Charts / Analytics | — |
+| 2026-06-12 | `e712102` | Refresh documentation for chart and theme milestones | Documentation / planning | — |
+| 2026-06-12 | `f143de6` | Refresh documentation for chart and theme milestones | Documentation / planning | — |
+| 2026-06-12 | `10f6e19` | Polish analytics chart axes and summary panels | Charts / Analytics | — |
+| 2026-06-12 | `880cfff` | Add manual analytics series selection | Charts / Analytics | — |
+| 2026-06-12 | `cd7dfff` | Fix grouped chart count buckets | Charts / Analytics | — |
+| 2026-06-12 | `699e33a` | Default chart date axis to year | Charts / Analytics | — |
+| 2026-06-12 | `805f770` | Harden analytics chart logic | Charts / Analytics | — |
+| 2026-06-12 | `8f55a47` | Add finite chart color library | Charts / Analytics | — |
+| 2026-06-12 | `5e895ad` | Refine chart dropdown and series contrast | Charts / Analytics | — |
+| 2026-06-12 | `ab6dc8b` | Refine chart workspace controls and colors | Charts / Analytics | — |
+| 2026-06-12 | `2e57f42` | Compact chart controls sidebar | Charts / Analytics | — |
+| 2026-06-12 | `c5ff6c6` | Polish chart controls sidebar | Charts / Analytics | — |
+| 2026-06-11 | `7396864` | Add light navy sea map treatment | Map / geography | — |
+| 2026-06-11 | `aba420e` | Rebalance map palette and label density | Map / geography | — |
+| 2026-06-11 | `cc21008` | Polish visualization header tabs | Interface / design | — |
+| 2026-06-11 | `15985bf` | Improve visualization edge handles and map utility buttons | Map / geography | — |
+| 2026-06-11 | `cb26bdf` | Refine visualization bar toggle ornament | Other / general | — |
+| 2026-06-11 | `e643a16` | Route Inspector colors through theme roles | Map / geography | — |
+| 2026-06-11 | `790ec66` | Clean up theming design audit files | Other / general | — |
+| 2026-06-11 | `81dd7af` | Apply upload guide color direction and dropdown layering | Data / mapping | — |
+| 2026-06-11 | `aa00efb` | Apply upload guide design direction | Data / mapping | — |
+| 2026-06-11 | `0a686fe` | Add built-in Peridot palette presets | Interface / design | — |
+| 2026-06-11 | `4747639` | Anchor imported palettes to darkest and lightest roles | Data / mapping | — |
+| 2026-06-11 | `ee4f75e` | Route whole-app palette imports through foundation tones | Map / geography | — |
+| 2026-06-11 | `1ba1682` | Improve palette image swatch detection | Interface / design | — |
+| 2026-06-11 | `e35ab68` | Add image palette import by theme area | Data / mapping | — |
+| 2026-06-11 | `6e8dfa6` | Add palette role dashboard | Interface / design | — |
+| 2026-06-11 | `fed7d2e` | Add semantic palette system and theme toggle | Interface / design | — |
+| 2026-06-11 | `034ec67` | Centralize explicit color palette values | Interface / design | — |
+| 2026-06-10 | `d52392a` | Add capabilities tab to advanced search | Search / Explore | (HEAD -> main, origin/main, origin/HEAD) [Details](#historical-milestone-09) |
+| 2026-06-10 | `3d296cb` | Route Explore directly to advanced search | Map / geography | — |
+| 2026-06-10 | `37f2755` | Clarify structured search Boolean labels | Search / Explore | — |
+| 2026-06-10 | `13fd533` | Add Boolean structured search criteria | Search / Explore | — |
+| 2026-06-10 | `86952c8` | Improve advanced search moss contrast | Search / Explore | — |
+| 2026-06-10 | `d7b0e2f` | Add dataset-wide advanced search browse indexes | Search / Explore | — |
+| 2026-06-10 | `8104739` | Wire structured criteria filtering | Search / Explore | — |
+| 2026-06-10 | `c8cbd5e` | Add structured search suggestions | Search / Explore | — |
+| 2026-06-10 | `e3c36e1` | Condense advanced search results layout | Search / Explore | — |
+| 2026-06-10 | `a21bbd9` | Refine advanced search layout and palette | Search / Explore | — |
+| 2026-06-10 | `e12ed84` | Add search facets and capability filters | Search / Explore | — |
+| 2026-06-10 | `4dc1bdf` | Add search result Inspector handoff | Inspector | — |
+| 2026-06-10 | `2135c1b` | Refresh documentation for structural cleanup milestone | Documentation / planning | — |
+| 2026-06-06 | `fcd2e1f` | Document timeline scope and clamp chart date range | Documentation / planning | — [Details](#historical-milestone-10) |
+| 2026-06-06 | `84e6a4f` | Add code structure audit planning document | Documentation / planning | — |
+| 2026-06-06 | `55a368c` | Remove dormant MapLibre preview code | Map / geography | — |
+| 2026-06-06 | `876eb1d` | Document Analytics chart extension contract | Documentation / planning | — |
+| 2026-06-06 | `0f712b5` | Add extracted evidence field controls | Data / mapping | — |
+| 2026-06-06 | `338f204` | Restore evidence action normalization helper | Data / mapping | — |
+| 2026-06-06 | `1fe9f82` | Extract column mapping field controls | Map / geography | — |
+| 2026-06-06 | `ce7c092` | Extract column mapping modal UI config | Map / geography | — |
+| 2026-06-06 | `5e8e022` | Reduce left control panel to compact Inspector shell | Inspector | — |
+| 2026-06-06 | `e8ec660` | Extract embedded sample data from App | Data / mapping | — |
+| 2026-06-06 | `133fd91` | Add developer orientation comments across source | Other / general | — |
+| 2026-06-06 | `cfe8207` | Refresh documentation for visualization workspace consolidation | Documentation / planning | — |
+| 2026-06-06 | `43fa09d` | Remove obsolete export workspace route | Map / geography | (HEAD -> main, origin/main, origin/HEAD) |
+| 2026-06-06 | `aca8f1f` | Update visualization export wiring | Other / general | — |
+| 2026-06-06 | `b6eb7c0` | Move chart export into visualization header | Charts / Analytics | — |
+| 2026-06-06 | `0b0cacd` | Simplify hamburger menu and add Explore workspace | Search / Explore | — |
+| 2026-06-06 | `47aaa03` | Remove redundant chart workspace header | Charts / Analytics | — |
+| 2026-06-06 | `675a655` | Fit charts to workspace and minimize map overlays | Charts / Analytics | — |
+| 2026-06-06 | `b10a68b` | Compact visualization header and timeline controls | Timeline / chronology | — |
+| 2026-06-06 | `b0d83fb` | Simplify chart workspace and add bottom timeline scrubber | Charts / Analytics | — |
+| 2026-06-06 | `7fcb348` | Document flexible data and chart capability milestone | Documentation / planning | — |
+| 2026-06-06 | `08b628b` | Use include and ignore checkboxes for evidence fields | Data / mapping | (HEAD -> main, origin/main, origin/HEAD) [Details](#historical-milestone-13) |
+| 2026-06-06 | `231ccde` | Accept generic chart records | Charts / Analytics | — |
+| 2026-06-06 | `b19019e` | Generalize user-facing language beyond correspondence | Other / general | — |
+| 2026-06-06 | `ab7affa` | Clean up flexible Analytics chart controls | Charts / Analytics | — [Details](#historical-milestone-12) |
+| 2026-06-06 | `ec6a70e` | Support record-count sunburst charts | Charts / Analytics | — |
+| 2026-06-06 | `596b958` | Support record-count histograms | Charts / Analytics | — |
+| 2026-06-06 | `b2dcde5` | Add flexible Analytics chart variables | Charts / Analytics | — |
+| 2026-06-06 | `6d0b37c` | Wire visualization availability state | Other / general | — |
+| 2026-06-06 | `b273a27` | Make visualization menu hover more forgiving | Other / general | — |
+| 2026-06-06 | `aae209a` | Document data capability mapping milestone | Documentation / planning | — |
+| 2026-06-06 | `e7c3b57` | Add point-location role mapping | Map / geography | — [Details](#historical-milestone-14) |
+| 2026-06-06 | `85f3d46` | Move data capability audit to mapping review | Map / geography | — |
+| 2026-06-06 | `eef9cfe` | Show read-only data capability summaries | Other / general | — |
+| 2026-06-06 | `1889b95` | Add data capability audit helper | Other / general | — |
+| 2026-06-06 | `bfc8872` | Add Peridot data capability model plan | Other / general | — |
+| 2026-06-05 | `4f280a0` | Use gold accent for workspace button hover states | Interface / design | — |
+| 2026-06-05 | `737a970` | Apply Home-style visual system to full workspaces | Interface / design | — |
+| 2026-06-05 | `c0ea2ab` | Refine Home workspace layout and menu access | Interface / design | — |
+| 2026-06-05 | `a9a25f1` | Remove Home navigation from active workspaces | Interface / design | — |
+| 2026-06-05 | `88ab302` | Refine Home workspace card styling | Interface / design | — |
+| 2026-06-04 | `b24e19a` | Link Inspector directed route rows | Map / geography | — [Details](#historical-milestone-16) |
+| 2026-06-04 | `ed0f2c7` | Make compact Inspector summary tiles open workspace | Map / geography | — |
+| 2026-06-04 | `ace7f52` | Fix linked letter person and place navigation | Interface / design | — |
+| 2026-06-04 | `0a1b57a` | Link letter detail people and places | Other / general | — |
+| 2026-06-04 | `6f67ac7` | Move linked letters into Inspector history | Inspector | — |
+| 2026-06-04 | `6c38fac` | Open Inspector person and place links in workspace | Inspector | — |
+| 2026-06-04 | `6994b35` | Reduce compact Inspector content | Inspector | — |
+| 2026-06-04 | `f2336f8` | Apply Inspector shell palette refinements | Inspector | — |
+| 2026-06-04 | `45d1c8b` | Adjust Inspector clickable object palette | Inspector | — |
+| 2026-06-04 | `e02a4a3` | Refine dual-mode Inspector visual treatment | Inspector | — |
+| 2026-06-04 | `224bf5d` | Refine dual-mode Inspector close and expand behavior | Inspector | — |
+| 2026-06-04 | `7a9e310` | Route menu Inspector away from compact panel | Map / geography | — |
+| 2026-06-04 | `99c0b99` | Track compact Inspector presentation mode | Inspector | — |
+| 2026-06-04 | `c2808ce` | Add inert Inspector presentation mode state | Inspector | — |
+| 2026-06-04 | `aa90665` | Organize project documentation | Documentation / planning | — |
+| 2026-06-04 | `3377274` | Prepare shared Inspector content boundary | Inspector | — |
+| 2026-06-04 | `b7e3edd` | Add Inspector workspace design contract | Inspector | — |
+| 2026-06-04 | `b47fda2` | Refresh documentation for workspace routing milestone | Documentation / planning | — |
+| 2026-06-02 | `55fae50` | Update routing contract after workspace promotions | Interface / design | — |
+| 2026-06-02 | `82178c5` | Promote Search to full workspace | Search / Explore | — |
+| 2026-06-02 | `2c53796` | Promote Export to full workspace | Interface / design | — |
+| 2026-06-02 | `8fc96b3` | Extract Peridot workspace config | Interface / design | — |
+| 2026-06-02 | `9cd3f3f` | Clean workspace routing comments | Interface / design | — |
+| 2026-06-02 | `9240745` | Fix Visualizations workspace export | Interface / design | — |
+| 2026-06-02 | `25fc046` | Extract Peridot visualizations workspace | Interface / design | — |
+| 2026-06-02 | `fcf6bb6` | Extract Peridot data workspace | Interface / design | — |
+| 2026-06-02 | `9428766` | Extract Peridot theme workspace | Interface / design | — |
+| 2026-06-02 | `18c2912` | Extract Peridot home workspace | Interface / design | — |
+| 2026-06-02 | `6c16403` | Extract Peridot hamburger menu | Other / general | — |
+| 2026-06-02 | `30b114b` | Add Peridot routing contract audit | Other / general | — |
+| 2026-06-02 | `8384dee` | Fit Analytics workspace preview | Charts / Analytics | — |
+| 2026-06-02 | `7a8ed7d` | Compact Visualizations workspace controls | Interface / design | — |
+| 2026-06-02 | `9b67d28` | Move Theme to full workspace | Interface / design | — |
+| 2026-06-02 | `bb0c0ed` | Refine hamburger menu visual layout | Interface / design | — |
+| 2026-06-02 | `2336915` | Route mapped imports to visualization workspace | Map / geography | — |
+| 2026-06-02 | `576bb72` | Fix visualization workspace viewport initialization | Interface / design | — |
+| 2026-06-02 | `56f2a49` | Add internal workspace state model | Interface / design | — |
+| 2026-06-02 | `b42f6fd` | Add Peridot interface redesign plan | Other / general | — |
+| 2026-06-02 | `10017ec` | Document workbook import and Inspector profile milestone | Documentation / planning | — |
+| 2026-06-02 | `0f72182` | Remove redundant Inspector correspondents summary row | Inspector | — |
+| 2026-06-02 | `8564e33` | Fix place profiles and split directed route summaries | Map / geography | — |
+| 2026-06-02 | `b1ef30a` | Refine Inspector profile relationship sections | Inspector | — |
+| 2026-06-02 | `d9f0090` | Improve Inspector person place profiles and linked letter navigation | Inspector | — |
+| 2026-06-02 | `9c8971b` | Display custom Inspector fields in linked letters | Inspector | — |
+| 2026-06-02 | `5f25322` | Select custom Inspector fields from joined workbook sheets | Inspector | — |
+| 2026-06-02 | `964ce57` | Import multi-sheet workbooks by unique ID joins | Data / mapping | — |
+| 2026-06-02 | `ac31c38` | Configure workbook sheet joins by unique ID | Data / mapping | — |
+| 2026-06-02 | `77b1575` | Preview multi-sheet workbook mapping | Map / geography | — |
+| 2026-06-02 | `2a800b3` | Add Peridot workbook mapping model helper | Map / geography | — |
+| 2026-06-02 | `dd22abc` | Stabilize multi-sheet workbook staging | Data / mapping | — |
+| 2026-06-02 | `f503df6` | Refresh documentation with full commit history | Documentation / planning | — |
+| 2026-06-02 | `4d11cb3` | Add Peridot workbook parsing helper | Data / mapping | — |
+| 2026-06-02 | `212d689` | Clarify column mapping cancel and import actions | Map / geography | — |
+| 2026-06-02 | `d270c9d` | Import mapped arbitrary CSV and TSV data | Map / geography | — |
+| 2026-06-02 | `a058730` | Add Peridot column mapping workspace | Map / geography | — |
+| 2026-06-02 | `a4062ba` | Stage arbitrary CSV and TSV column mapping uploads | Map / geography | — |
+| 2026-06-02 | `bba50e1` | Add Peridot column mapping helper | Map / geography | — |
+| 2026-06-02 | `f432ccc` | Remove legacy three-file upload workflow | Data / mapping | — |
+| 2026-06-02 | `44d2042` | Document single Peridot CSV upload workflow | Documentation / planning | — |
+| 2026-06-02 | `930c807` | Persist Peridot upload summary in Data Inputs | Data / mapping | — |
+| 2026-06-02 | `cbc35d0` | Add single Peridot CSV upload workflow | Data / mapping | — |
+| 2026-06-01 | `61f3c4b` | Add Peridot CSV validation summary helper | Other / general | — |
+| 2026-06-01 | `3d5fb79` | Add Peridot CSV template normalizer | Data / mapping | — |
+| 2026-06-01 | `8e7a8a4` | Add Peridot CSV schema contract | Other / general | — |
+| <a id="history-2026-05"></a>2026-05-23 | `9453232` | Document Search and Filter layout and Analytics polish | Documentation / planning | — |
+| 2026-05-23 | `bdd0843` | Refine expanded analytics backdrop contrast | Charts / Analytics | — |
+| 2026-05-23 | `64d44f2` | Improve analytics tooltip contrast | Charts / Analytics | — |
+| 2026-05-23 | `e02c1de` | Move filter status above action buttons | Search / Explore | — |
+| 2026-05-23 | `8bfd422` | Refine compact Search and Filter layout | Search / Explore | — |
+| 2026-05-23 | `b2147bb` | Consolidate Search and Filter layout | Search / Explore | — |
+| 2026-05-23 | `1ae3f03` | Document Search and Filter milestone | Documentation / planning | — |
+| 2026-05-23 | `01de3d8` | Show filter update status before applying changes | Search / Explore | — |
+| 2026-05-23 | `c98c242` | Split route filters by place and people | Map / geography | — |
+| 2026-05-23 | `1578d10` | Add route filter | Map / geography | — |
+| 2026-05-23 | `ea19fc8` | Improve predictive suggestion menu scrolling | Other / general | — |
+| 2026-05-23 | `9c179f7` | Add predictive suggestions for person and place filters | Search / Explore | — |
+| 2026-05-23 | `cc26530` | Add person and place filters | Search / Explore | — |
+| 2026-05-23 | `019acef` | Add clear filters and reset playback on apply | Timeline / chronology | — |
+| 2026-05-23 | `d5e7667` | Apply Search and Filter changes on request | Search / Explore | — |
+| 2026-05-23 | `8912b8f` | Strengthen full-file review workflow rule | Other / general | — |
+| 2026-05-23 | `b348f12` | Move date range controls into Search and Filter | Timeline / chronology | — |
+| 2026-05-23 | `a890b13` | Move minimum weight filter into Search and Filter | Search / Explore | — |
+| 2026-05-23 | `e6b477d` | Add Search and Filter panel shell | Search / Explore | — |
+| 2026-05-23 | `2eb3461` | Document Search and Filter panel contract | Documentation / planning | — |
+| 2026-05-23 | `9d24fbf` | Document Analytics feature milestone | Documentation / planning | — |
+| 2026-05-23 | `3352403` | Fix Analytics expanded overlay and variable options | Charts / Analytics | — |
+| 2026-05-23 | `4b631be` | Refine Analytics variables and expanded chart overlay | Charts / Analytics | — |
+| 2026-05-23 | `416dced` | Refine Analytics chart icons and expanded view | Charts / Analytics | — |
+| 2026-05-23 | `2320bfe` | Expand Analytics chart controls | Charts / Analytics | — |
+| 2026-05-23 | `961bf45` | Clarify Analytics chart variable controls | Charts / Analytics | — |
+| 2026-05-23 | `4b90e4e` | Add additional Analytics chart types | Charts / Analytics | — |
+| 2026-05-23 | `caddd3c` | Refine Analytics chart panel interactions | Charts / Analytics | — |
+| 2026-05-23 | `04d95a7` | Add Analytics side panel charts | Charts / Analytics | — |
+| 2026-05-14 | `b5dc2b5` | Document legacy continuation after pausing MapLibre work | Documentation / planning | — |
+| 2026-05-14 | `2d76839` | Fix linked letter encoding display | Infrastructure / maintenance | (tag: checkpoint-maplibre-migrated-overlay-paused, origin/maplibre-native-geographic-view, maplibre-native-geographic-view) |
+| 2026-05-14 | `2c0be03` | Make MapLibre people view and force-directed fallback work | Map / geography | — |
+| 2026-05-14 | `5762d0e` | Refresh documentation for MapLibre migrated overlay milestone | Documentation / planning | — |
+| 2026-05-14 | `268b18c` | Add MapLibre hover feedback | Map / geography | — |
+| 2026-05-14 | `8137db7` | Curve MapLibre aggregated routes | Map / geography | — |
+| 2026-05-13 | `c0a4b8a` | Restore MapLibre migrated overlay after extraction regression | Map / geography | — |
+| 2026-05-13 | `dd148e1` | Extract MapLibre cluster and aggregate IDs | Map / geography | — |
+| 2026-05-13 | `57d3cc1` | Add MapLibre cluster count labels | Map / geography | — |
+| 2026-05-13 | `c7da28c` | Add MapLibre cluster selection feedback | Map / geography | — |
+| 2026-05-13 | `2ccaaeb` | Show MapLibre aggregated route details in inspector | Map / geography | — |
+| 2026-05-13 | `084ce9d` | Enrich MapLibre aggregated route inspector payload | Map / geography | — |
+| 2026-05-13 | `526534a` | Aggregate MapLibre routes between visible endpoints | Map / geography | — |
+| 2026-05-13 | `8a563cc` | Hide MapLibre cluster member nodes | Map / geography | — |
+| 2026-05-13 | `be7d9ae` | Route MapLibre cluster clicks to inspector | Map / geography | — |
+| 2026-05-13 | `1e8456f` | Add dynamic MapLibre cluster diagnostic | Map / geography | — |
+| 2026-05-13 | `bb11f6a` | Add static MapLibre cluster lifecycle diagnostic | Map / geography | — |
+| 2026-05-13 | `3f26cc2` | Broaden MapLibre lifecycle diagnostics | Map / geography | — |
+| 2026-05-13 | `3646cc6` | Refresh documentation for MapLibre native branch handoff | Documentation / planning | — |
+| 2026-05-13 | `4c9ed6f` | Extract MapLibre layer configuration | Map / geography | — |
+| 2026-05-13 | `c420a5d` | Extract MapLibre feature builders | Map / geography | — |
+| 2026-05-13 | `b7fb244` | Add MapLibre native geographic view plan | Map / geography | — |
+| 2026-05-13 | `10051c0` | Add MapLibre selected filter layers | Map / geography | (tag: checkpoint-maplibre-preview-prototype) |
+| 2026-05-13 | `b7c61a2` | Add MapLibre route hit layer | Map / geography | — |
+| 2026-05-13 | `f2fdcf9` | Add cursor-only MapLibre hover detection | Map / geography | — |
+| 2026-05-13 | `5f3f053` | Route MapLibre feature clicks to inspector | Map / geography | — |
+| 2026-05-13 | `2597462` | Remove MapLibre SVG node probe overlay | Map / geography | — |
+| 2026-05-13 | `7eebdee` | Add simple MapLibre node layer probe | Map / geography | — |
+| 2026-05-13 | `1f0d322` | Render MapLibre route probes as GeoJSON layer | Map / geography | — |
+| 2026-05-13 | `443d7ac` | Add MapLibre route projection probe | Map / geography | — |
+| 2026-05-12 | `6096069` | Add MapLibre projection probe | Map / geography | — |
+| 2026-05-12 | `33afaae` | Add MapLibre preview diagnostics | Map / geography | — |
+| 2026-05-12 | `da1463f` | Add MapLibre workspace preview path | Map / geography | — |
+| 2026-05-12 | `93f0961` | Add isolated MapLibre map stage | Map / geography | — |
+| 2026-05-12 | `1d816a5` | Add MapLibre hybrid map-system audit | Map / geography | — |
+| 2026-05-12 | `4e08720` | Direct workflow charter baseline reference to changelog | Documentation / planning | — |
+| 2026-05-12 | `d893050` | Refresh documentation for side panel rail tabs | Documentation / planning | — |
+| 2026-05-12 | `8539c68` | Clarify timeline rail icon | Timeline / chronology | — |
+| 2026-05-12 | `def4265` | Add timeline side panel tab | Timeline / chronology | — |
+| 2026-05-12 | `6a672d9` | Add export side panel tab | Interface / design | — |
+| 2026-05-12 | `f1394c6` | Add data inputs side panel tab | Data / mapping | — |
+| 2026-05-12 | `5b38c4e` | Update shared panel rail icons | Interface / design | — |
+| 2026-05-04 | `dcce703` | Style shared panel icon rail | Interface / design | — |
+| 2026-05-04 | `2acdb91` | Remove obsolete side panel top tabs | Interface / design | — |
+| 2026-05-04 | `6142817` | Anchor shared panel icon rail to panel shell | Interface / design | — |
+| 2026-05-04 | `4653f20` | Remove obsolete audit documentation listings | Documentation / planning | — |
+| 2026-05-04 | `8882b69` | Remove obsolete audit documentation references | Documentation / planning | — |
+| 2026-05-04 | `06c1843` | Clean shared side panel source comments | Interface / design | — |
+| 2026-05-04 | `f7407eb` | Refresh documentation for shared panel baseline | Documentation / planning | — |
+| 2026-05-04 | `4a17d1c` | Make inspector panel content-only | Inspector | — |
+| 2026-05-04 | `b62c74b` | Use shared side panel shell | Interface / design | — |
+| 2026-05-04 | `e41d8bc` | Split side panel open state from active tab | Interface / design | — |
+| 2026-05-04 | `88b0c19` | Rename inspector panel shell for left dock | Inspector | — |
+| 2026-05-04 | `2126c9b` | Open inspector in left panel dock | Inspector | — |
+| 2026-05-04 | `f98b3e5` | Add panel mode switcher tabs | Interface / design | — |
+| 2026-05-04 | `df4075a` | Move side panel toggles to left rail | Interface / design | — |
+| 2026-05-04 | `17cf020` | Enforce single active side panel | Interface / design | — |
+| 2026-05-04 | `0063145` | Use menu icon for inspector toggle | Inspector | — |
+| 2026-05-02 | `63003c1` | Group cluster inspector members by place | Network | — |
+| 2026-05-02 | `fed4b5b` | Use volume-based zoom-responsive cluster sizing | Network | — |
+| 2026-05-02 | `3187d05` | Increase dynamic node radius contrast | Network | — |
+| 2026-05-02 | `ed39e55` | Make cluster nodes open actionable inspector views | Network | — |
+| 2026-05-02 | `04eb8b5` | Refresh documentation for safe year-based baseline | Documentation / planning | — |
+| 2026-05-02 | `57b946e` | Make timeline year-based | Timeline / chronology | — |
+| <a id="history-2026-04"></a>2026-04-30 | `79d5ae1` | Remove show all dates shortcut | Other / general | — |
+| 2026-04-30 | `3fedd97` | Tighten minimum weight helper text | Other / general | — |
+| 2026-04-30 | `96064e2` | Set people as default view and simplify view buttons | Interface / design | — |
+| 2026-04-30 | `fa486b8` | Remove orphaned panel helper functions | Interface / design | — |
+| 2026-04-30 | `2d627e2` | Remove legacy inspector bodies from App | Inspector | — |
+| 2026-04-30 | `149315a` | Extract inspector node view | Network | — |
+| 2026-04-30 | `003fae1` | Split empty cluster and edge inspector views | Network | — |
+| 2026-04-30 | `c0a15fd` | Extract inspector shell and router | Map / geography | — |
+| 2026-04-30 | `6a32004` | Harden inspector contract in place | Inspector | — |
+| 2026-04-30 | `86ad35f` | Extract left control panel component | Interface / design | — |
+| 2026-04-30 | `113fb84` | Harden control panel contract in place | Interface / design | — |
+| 2026-04-22 | `4236952` | Append full development history to changelog | Documentation / planning | — |
+| 2026-04-22 | `391174a` | Refresh Peridot documentation for publication baseline | Documentation / planning | — |
+| 2026-04-22 | `951b450` | Replace embedded sample data with current publication dataset | Data / mapping | — |
+| 2026-04-22 | `f859595` | Add itch.io HTML5 build packaging support | Infrastructure / maintenance | — |
+| 2026-04-22 | `f959fac` | Use countries50m as the fixed basemap | Map / geography | — |
+| 2026-04-21 | `b1fdbd5` | Update maintainer handoff documentation | Documentation / planning | — |
+| 2026-04-21 | `dd12281` | Normalize summary panel spacing | Data / mapping | — |
+| 2026-04-21 | `4fdaf73` | Rename timeline panel heading | Timeline / chronology | — |
+| 2026-04-21 | `db5bb1f` | Tighten left panel organization | Interface / design | — |
+| 2026-04-21 | `ba746b1` | Simplify theme panel text | Interface / design | — |
+| 2026-04-21 | `c0fc600` | Retune active country fills for peridot and modern maps | Map / geography | (tag: checkpoint-map-theme-c0fc600) |
+| 2026-04-21 | `56f0080` | Highlight countries containing visible nodes | Network | — |
+| 2026-04-21 | `5cbe9c3` | Refine early modern node hover and selected colors | Network | — |
+| 2026-04-21 | `850176f` | Refine hovered and selected node states | Network | — |
+| 2026-04-21 | `3e43dc9` | Add hovered node color feedback | Network | — |
+| 2026-04-21 | `919ea5f` | Increase green layering in peridot map theme | Map / geography | — |
+| 2026-04-21 | `c666d29` | Add peridot default app theme | Interface / design | — |
+| 2026-04-20 | `9be5f4a` | Tighten maintainer docs audit fixes | Documentation / planning | — |
+| 2026-04-20 | `43403c3` | Restore detail to maintainer documentation | Documentation / planning | — |
+| 2026-04-20 | `02ecb11` | Document inspector navigation feature set | Documentation / planning | — |
+| 2026-04-20 | `5af819b` | Add inspector back navigation | Inspector | — |
+| 2026-04-20 | `b3e6fe8` | Add place navigation sections to person inspector | Inspector | — |
+| 2026-04-20 | `6772c1d` | Clarify connected correspondents count label | Other / general | — |
+| 2026-04-20 | `ab0e1fe` | Show relationship counts in connected correspondents buttons | Interface / design | — |
+| 2026-04-20 | `06e0b3b` | Sort connected correspondents by relationship weight | Other / general | — |
+| 2026-04-20 | `17be829` | Add connected correspondents inspector navigation section | Inspector | — |
+| 2026-04-20 | `cfa6d63` | Add inspector selection plumbing for person and place detail targets | Inspector | — |
+| 2026-04-20 | `2b3c265` | Document person force layout and force-view background behavior | Documentation / planning | — |
+| 2026-04-20 | `ffb5a30` | Hide map backdrop in force-directed person view | Map / geography | — |
+| 2026-04-20 | `225c7e4` | Wire person force layout into App graph builder | Charts / Analytics | — |
+| 2026-04-20 | `3480858` | Add pre-settled d3-force person network layout | Network | — |
+| 2026-04-20 | `81a75d0` | Add d3-force dependency for person-network layout work | Network | — |
+| 2026-04-20 | `5a17721` | Replace README with current repository overview | Documentation / planning | — |
+| 2026-04-20 | `8241ae1` | Add screenshots and standardize image paths | Other / general | — |
+| 2026-04-20 | `99584a9` | Document completed export behavior fixes | Documentation / planning | — |
+| 2026-04-20 | `5575007` | Reflect visible date range in export metadata | Timeline / chronology | — |
+| 2026-04-20 | `c9f010e` | Fix PNG export color rendering | Infrastructure / maintenance | — |
+| 2026-04-20 | `248833a` | Document completed timeline behavior fixes | Documentation / planning | — |
+| 2026-04-20 | `1b2655e` | Preserve viewport during timeline playback interactions | Timeline / chronology | — |
+| 2026-04-20 | `fd0d77a` | Add viewport timeline reset audit | Timeline / chronology | — |
+| 2026-04-20 | `6c41fce` | Constrain timeline end date to selected start date | Timeline / chronology | — |
+| 2026-04-20 | `099882a` | Add control panel dependency map | Map / geography | — |
+| 2026-04-20 | `a53ccbf` | Add maintainer comments for control panel architecture | Interface / design | — |
+| 2026-04-20 | `c526e6c` | Document deferred export panel extraction | Documentation / planning | — |
+| 2026-04-20 | `4ddf444` | Document deferred PNG export issue | Documentation / planning | — |
+| 2026-04-20 | `5bbdad8` | Extract export helpers from App | Other / general | — |
+| 2026-04-20 | `897e06a` | Document step 2 timeline work and deferred follow-ups | Documentation / planning | — |
+| 2026-04-20 | `383ecc0` | Extract timeline playback panel from App | Timeline / chronology | (tag: checkpoint-pre-step-2c) |
+| 2026-04-20 | `b2dbe35` | Extract timeline playback helpers from App | Timeline / chronology | — |
+| 2026-04-17 | `dad15a4` | Update maintainer guide and add changelog | Documentation / planning | (tag: checkpoint-between-step-1-and-step-2) |
+| 2026-04-17 | `145cfc2` | Extract map interaction handlers from App | Map / geography | — |
+| 2026-04-17 | `30e5b1b` | Extract interaction resolution helpers from App | Other / general | — |
+| 2026-04-17 | `181a63e` | Extract map stage components from App | Map / geography | (tag: checkpoint-pre-step-1c) |
+| 2026-04-17 | `02dcfc4` | Extract pure map layout helpers from App | Map / geography | — |
+| 2026-04-17 | `7742149` | Update README to reflect current app and workflow | Documentation / planning | — |
+| 2026-04-17 | `c3f856f` | Add maintainer guide and project workflow charter | Documentation / planning | — |
+| 2026-04-17 | `8e07339` | Use dark navy modern node labels with white outline | Network | — |
+| 2026-04-17 | `0791ffd` | Strengthen modern node label typography | Network | — |
+| 2026-04-17 | `100d3fb` | Refine modern theme colors and label contrast | Interface / design | — |
+| 2026-04-17 | `b7e4749` | Use clean themed canvas for force-directed person view | Network | — |
+| 2026-04-17 | `f207a37` | Implement true force-directed person layout | Network | — |
+| 2026-04-17 | `e4f64c6` | Remove stray project folders from repo root | Other / general | — |
+| 2026-04-17 | `80bbb97` | Adjust shared edge multiplier to 5 | Network | — |
+| 2026-04-17 | `db38072` | Checkpoint before applying person scaling update | Other / general | — |
+| 2026-04-17 | `eb3ba4b` | Initial rebuilt app baseline | Other / general | — |
+
+## 4. Detailed Milestone Archive
+
+These original milestone narratives preserve the implementation history, decisions, rejected approaches, diagnoses, tests, and stated limitations. They are historical accounts, not a competing present-day source of architectural or backlog instructions. **Expand a milestone only when you need its context.** Links in the development register lead to the associated milestone heading.
+
+<details>
+<summary><a id="milestone-charts-ii"></a><strong>Charts II completion, Charts I retirement, and adaptive Appearance — through 2026-11-22 (committed, browser-accepted)</strong></summary>
 
 ### Charts II completion, Charts I retirement, and adaptive Appearance — through 2026-11-22 (committed, browser-accepted)
 
-- **`e96c375` — `Implement Charts appearance customization and adaptive presentation`** is the latest synchronized checkpoint. The Charts Builder's Appearance section now reuses Timeline II's 42-color swatch library, supports stable semantic series/category overrides, family-specific mark styling, adaptive controls for titles, axes, values, hierarchical/proportional labels and summary panels, and a draggable configuration-panel width applied on release. Charts PNG exports inherit presentation changes. B4.6–B4.9 were developed in bounded packages and visually tested with multiple chart families. Further label-collision and chart-specific usability refinement remains possible; the accepted defaults and scholarly calculations were preserved.
+- **`2be3ea0` — `Synchronize documentation through Charts II completion and appearance customization`** is the newer user-confirmed synchronized documentation commit, following `e96c375` and `8baa733`. This updates the historical checkpoint; it is not an additional Charts source implementation or a fresh verification of browser/deployed behavior.
+
+- **`e96c375` — `Implement Charts appearance customization and adaptive presentation`** was the latest synchronized checkpoint for the source-development pass, before the later documentation commit `2be3ea0`. The Charts Builder's Appearance section now reuses Timeline II's 42-color swatch library, supports stable semantic series/category overrides, family-specific mark styling, adaptive controls for titles, axes, values, hierarchical/proportional labels and summary panels, and a draggable configuration-panel width applied on release. Charts PNG exports inherit presentation changes. B4.6–B4.9 were developed in bounded packages and visually tested with multiple chart families. Further label-collision and chart-specific usability refinement remains possible; the accepted defaults and scholarly calculations were preserved.
 - **`8baa733` — `Retire legacy Charts I and consolidate Charts II workspace`** removed the obsolete `src/AnalyticsPanel.jsx` UI and Charts I-specific state/export registration. Visualize now exposes a single **Charts** tab leading to the Charts II Catalogue/Builder. `AnalyticsPanel.css`, `analyticsConfig.js`, `analyticsDerivationHelpers.js`, `analyticsChartComponents.jsx`, `exportHelpers.js`, the shared chronology dock, and Explore data-scope infrastructure remain because active consumers depend on them. R1/R2/R3 passed the researcher's browser regression and added `chartsRetirement.test.mjs`.
 - **`5c75472` — `Implement Charts II chart-local filters and single-series selection`** provides categorical OR-within-rule and AND-between-rule filters, inclusive numerical ranges, reset and provenance accounting, without changing Explore or other visualization scopes. Single-series Line/Area categorical filters permit one selected value; multi-series modes can retain plural values.
 - **`1dba2eb` — `Refine Charts II recommendations using analytical data suitability`** replaces simple field-presence suitability with populated/paired measurements and meaningful date/category overlap. Latitude and longitude remain deliberate numeric chart-field choices but do not promote charts in the recommendations-first Catalogue. Only **Likely fit** and **May not work well** flags are used; all charts remain selectable.
@@ -65,8 +727,15 @@ Current architectural significance:
 - **`7aebea9` — `Add Charts II regression coverage and stabilize chronology interactions`** adds cross-family derivation tests, fixes Dot Plot's top-category ranking to apply the requested metric before truncation, and safeguards Scatter/Bubble chronology drag-release. The researcher accepted the no-redraw-during-drag behavior.
 - **`d3186ed` — `Implement Charts II interactive treemaps with hierarchical drill-down`** introduces parent/child navigation, expandable Other categories with stable identity across chronology changes, breadcrumbs, and retained totals. The user verified one-level-per-click navigation and chronology persistence.
 - **`bdd7366` — `Implement Charts II slope charts with chronological comparisons`** adds a two-period comparison chart; `ee8e0cc` implements readable Dot Plot axes; `b6e0db5` adds outlier-aware Box Plots; `19fe63b` adds Scatter/Bubble and wide-format numerical series; `0cf09fd` adds Area and precision-aware temporal aggregation; and `6f341f3` establishes the initial Charts II Catalogue and eight family implementations. These were separate accepted milestones, not one unverified feature drop.
-- **Core-documentation synchronization (prepared after `e96c375`, not yet committed):** Updates the README user workflow, Maintainer's Guide Charts II architecture/module ownership/fragile-zone contracts, Charter checkpoint and historical Analytics decision label, and the Changelog checkpoint and verified Charts milestone sequence. The five uploaded governance/core documents were used as the source; the governance protocol itself is unchanged. Do not count this handoff as an additional Git commit.
+- **Core-documentation synchronization (historical preparation status after `e96c375`; subsequently committed at `2be3ea0`):** Updates the README user workflow, Maintainer's Guide Charts II architecture/module ownership/fragile-zone contracts, Charter checkpoint and historical Analytics decision label, and the Changelog checkpoint and verified Charts milestone sequence. The five uploaded governance/core documents were used as the source; the governance protocol itself is unchanged. Do not count this handoff as an additional Git commit.
 - **Acceptance and limitation:** Charts II has 15 implemented chart families and is the current charting interface; browser evaluation accepted filtering, colors, mark styling, adaptive labels, drag-release, responsive sidebar sizing, and exported PNGs. The available source-level suite was reported passing; a separate Timeline grouped-lanes test still expects “Uncategorized” where current implementation uses “No priority category.” Dense labels, accessibility, unusual data shapes, and deployed-site behavior may warrant later focused work. No claim is made that every chart is suitable for every source or that further appearance refinement is complete forever.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-timeline-grouped"></a><strong>Adaptive Grouped Timeline swimlanes and category workspace — 2026-11-10 to 2026-11-11 (committed; scrollbar browser-accepted)</strong></summary>
 
 ### Adaptive Grouped Timeline swimlanes and category workspace — 2026-11-10 to 2026-11-11 (committed; scrollbar browser-accepted)
 
@@ -76,12 +745,26 @@ Current architectural significance:
 - **`ea7cda8` — `Remove obsolete src.zip archive`** is the separate repository cleanup commit following the Timeline implementation. It intentionally removes the obsolete tracked ZIP. Uncommitted Charts II files and edits were preserved, not silently added to these commits.
 - **Validation boundary:** Focused category/grouped-lane tests and JSX syntax checks passed during the staged handoffs; user screenshots accepted grouped lane appearance and the browser confirmed the final scrollbar fix. A comprehensive performance, accessibility, production/deployed-site, or orientation-by-orientation regression suite has not been demonstrated. Next: event-density/simultaneity research, broader data and responsive regression; event-to-event relationship arcs remain deferred pending explicit source-supported authoring semantics.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-timeline-categories"></a><strong>Dataset-derived Timeline categories and curated symbols — 2026-11-09 to 2026-11-10 (committed, researcher-tested)</strong></summary>
+
 ### Dataset-derived Timeline categories and curated symbols — 2026-11-09 to 2026-11-10 (committed, researcher-tested)
 
 - **`27c5b52` — `Implement Timeline category configuration and curated symbol library`** introduces the active **Timeline / Categories** tabs, three-column researcher-controlled category configuration, plural category memberships, editable labels, 42 preset rainbow-organized colors plus a custom-color control, category preview, the three display modes **Colors only / Colors and symbols / Expanded labels**, and a curated **100-icon** selection from `@tabler/icons-react@3.50.0`. The symbols are independent of color and optional; charcoal is the default for uncategorized marks. Point marks use color divisions (with an overflow count when necessary); duration bands use color striping. The active source and mark components include `PeridotTimelineCategoryEditor.jsx`, `PeridotTimelineCategoryMarks.jsx`, `PeridotTimelineCategorySymbols.jsx` and `peridotTimelineCategoryConfiguration.js`. Tabler icons are MIT-licensed; the notice and curated CSV inventory are independent supporting resources, not core process documents.
 - **`9c2bb0e` — `Generalize Timeline categories across mapped dataset attributes`** expands researcher-selected categories beyond mapped Evidence to other source-backed mapped attributes and eligible original columns. `peridotTimelineCategorySourceInventory.js`, `peridotTimelineCategoryAssociationResolver.js`, and `peridotTimelineGeneralizedCategories.js` supply testable discovery, provenance and researcher-selected event association. The editor presents original uploaded column names (rather than internal mapping identifiers), allows selection of field values and record/subject/assertion-level association as applicable, and retains user-chosen appearance when returning to the Timeline. No automatic joins between unrelated workbook records or new historical claims are authorized. Categories alter visual encoding, not the canonical underlying source data or global Search filters.
 - **Verification boundary:** Synthetic category-related tests passed in development and the researcher reported successful local command-line checks/build. The researcher visually tested source-location categories for correspondence (including the Maria Magdalena sending-location use case), person-level Family Tree categories, and Cardinals creation-related categories, approving the displayed results and requesting the commit. This is representative multi-sample acceptance, **not** a universal joined-workbook or accessibility/performance guarantee. During Pass C, a source hash guard failed and the user subsequently applied files manually; the resulting tree was tested and committed. Preserve that history and use exact current-file guards for future changes.
 - **Next Timeline work:** Grouped category swimlanes with researcher-ordered primary category and Uncategorized lane; event-density overview and narrowly justified simultaneous-event expansion; cross-orientation, keyboard/accessibility, Inspector, uncertainty and large-data regressions. Automatic event-to-event relationship arcs remain **deliberately deferred** pending a provenance-faithful, researcher-authored connection approach and future project-persistence decisions. Charts II continues separately.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-chronology"></a><strong>Shared chronology calendar correctness, 10% padding, and dataset-extent display — 2026-11-09 (committed, browser-accepted)</strong></summary>
 
 ### Shared chronology calendar correctness, 10% padding, and dataset-extent display — 2026-11-09 (committed, browser-accepted)
 
@@ -92,12 +775,26 @@ Current architectural significance:
 - **Test and validation boundary:** four focused Node tests were added and committed: `peridotChronologyWindow.test.mjs`, `peridotChronologyNavigationBridge.test.mjs`, `peridotChronologyRulerParity.test.mjs`, and `peridotChronologyCalendarFiltering.test.mjs`. During development the tests passed; the researcher confirmed the padding/filtering behavior in the browser and explicitly approved the final extent-marker visual. This does not claim a complete automated React/browser, production/deployed-site, or large-dataset regression suite.
 - **Future work:** the next substantive Timeline phase is a read-only audit and prototype of event-to-event relationship arcs, preserving mapped relationship identity and avoiding synthetic event edges. Category encoding completeness, grouped category swimlanes, responsive clustering/density, and uncertainty/Inspector interaction refinement remain planned or require source-level verification before implementation. These were not implemented by the chronology checkpoint. Concurrent Charts II development remains separate.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-about-animations"></a><strong>About manuscript entrance animations — 2026-11-05 (committed, user-accepted)</strong></summary>
+
 ### About manuscript entrance animations — 2026-11-05 (committed, user-accepted)
 
 - **`71833b3` — `Add staggered manuscript entrance animations to About pages`** is the confirmed pushed commit. Across **About Peridot**, **Creator**, **AI Disclosure**, **Open Source**, and **Feedback**, the reading surfaces use a restrained, CSS-only manuscript reveal consistent with Home and the no-dataset editorial gateways. The stationary parchment and local About navigation remain visible while headings and content fade and rise in overlapping stages; the decorative torn-paper corners float in **last**, once per tab entrance, and then remain stationary. Switching About subpages replays the sequence without introducing a route-loading overlay or an outgoing cross-page transition.
 - **Accepted pacing and variation:** following v01's overly rapid entrance, v02 extended heading/content beats to approximately **1,050 ms** and corner fades to approximately **1,200 ms**, with broader overlapping stagger delays. The Creator portrait and red ornamental frame animate together as one figure, AI Disclosure reading panels enter in order, Open Source links enter sequentially, and Feedback content enters in coherent chunks (feedback type, relevant app area, writing fields, contact/privacy/submission), not field-by-field. Feedback's upper-left and lower-right decorative corners now animate **simultaneously as the final framing gesture**. v04 is the accepted handoff revision.
 - **Ownership and preservation:** `src/PeridotLearnMoreWorkspace.css` owns the About entrance keyframes, element selectors, delays, and reduced-motion override. No new JavaScript animation lifecycle, React component rewrite, routing change, or changes to the Feedback form's input/validation/submission behavior were part of this pass. Preserve existing corner anchors, irregular text wrapping, Creator portrait layout, local navigation, scroll containment, and `prefers-reduced-motion` behavior. The user reviewed the successive browser appearances and explicitly approved v04 before committing; full automated/cross-browser/deployed verification is not claimed.
 - **Concurrent-work boundary:** `d119550`, `c74aa55`, and `50c1be5` are separately confirmed historical commits from the recent Git log, but this About-only documentation pass does not infer or audit their complete implementation details. Current uncommitted Timeline/Charts II changes are excluded.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-loader"></a><strong>Persistent OffscreenCanvas loading, seamless preboot, and first-mount Map recovery — 2026-11-02 to 2026-11-03 (committed and user-tested)</strong></summary>
 
 ### Persistent OffscreenCanvas loading, seamless preboot, and first-mount Map recovery — 2026-11-02 to 2026-11-03 (committed and user-tested)
 
@@ -109,6 +806,13 @@ Current architectural significance:
 - **Rejected/rolled-back implementations and diagnostic evidence:** an earlier worker attempt replaced React-owned Canvas elements imperatively and produced a white-screen regression during upload; it was rolled back before the accepted implementation. A diagnostic main-thread Canvas pass recorded significant frame gaps, including a roughly 7.2-second gap during mapped-data processing, establishing the animation's vulnerability to main-thread starvation while not isolating every costly React/map operation. Shorter timers, repeated `requestAnimationFrame` calls, and a return to unfaithful SVG/CSS prototypes were not selected as the solution. Do not reinstate the discarded worker implementation or its DOM-replacement workaround.
 - **Verification boundary:** the user validated loader visuals, sustained animation, initial still handoff, large-dataset switching, first-load Map recovery, and fast local production preview. Syntax/ZIP reviews were conducted on delivered files. These observations do not represent a complete automated cross-browser, accessibility, reduced-motion, fallback, or production-deployment regression suite. The separate Timeline II workstream is intentionally excluded from this milestone.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-timeline-map"></a><strong>Timeline II, one shared chronology dock, and Map performance/initialization — 2026-11-01 (committed; browser-reviewed)</strong></summary>
+
 ### Timeline II, one shared chronology dock, and Map performance/initialization — 2026-11-01 (committed; browser-reviewed)
 
 - **`3f0ae7c` — `Introduce Timeline II and stabilize chronological event packing`** introduces a parallel **Timeline II** visualization alongside the original Timeline, using assertion-level events and periods, calendar-faithful placement, secondary-axis lane packing, and dedicated horizontal/vertical presentation. The detailed implementation was iterated locally before later checkpoints; do not conflate Timeline II with the older card-based Timeline workspace.
@@ -118,6 +822,12 @@ Current architectural significance:
 - **`ddee7e2` — `Extend Timeline II vertical chronology to full plotting height`** was the latest clean, pushed checkpoint at this historical 2026-11-01 milestone. The vertical event and ruler coordinate mapping no longer subtracts the full playback-control stack from the available plotting length; a narrow left-rail navigator coexists with compact playback controls. The user reported this full-height geometry materially improved vertical plotting; horizontal Timeline II and other shared chronology renderers remain separate regression obligations. The preceding v44 control-compaction-only attempt was insufficient and was superseded.
 - **Source/verification boundary:** The final user-provided Vite production build passed before the Timeline II vertical update, and a clean synced Git ritual was supplied for `ddee7e2`. The v45 replacement passed JSX parsing but no separate post-`ddee7e2` production build log was supplied. Browser screenshots/feedback validate the described visual outcomes, not an exhaustive automated regression suite.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-workbook"></a><strong>Live CARTO deployment, workbook correctness, normalization speed, and legacy audit — 2026-11-01 (committed milestones; audit read-only)</strong></summary>
 
 ### Live CARTO deployment, workbook correctness, normalization speed, and legacy audit — 2026-11-01 (committed milestones; audit read-only)
 
@@ -130,6 +840,13 @@ Current architectural significance:
 - **Read-only legacy-importer retirement audit:** a November 1 `src` archive and available repository entry points were audited. Universal-upload prototype/UI/harness modules appear outside the active application import graph, but some have fixture/test-only dependencies. `peridotUniversalRuntimeCompatibility.js` and `peridotNormalizationShadowAudit.js` retain development/fixture roles. `peridotLegacyCompatibilityAdapter.js`, the correspondence profile, and genealogy-related modules remain production-reachable. No deletions were authorized or made; retained test/archival code must not be labeled safe for deletion without renewed current-source and fixture assessment. The source snapshot predated the final `481acd9` commit; this limits exact-checkpoint conclusions.
 - **Scope decisions:** the separately proposed comprehensive worker-race follow-up and dependency-security follow-up are excluded from this cleanup cycle at the researcher's direction; a deeper regression-fixture review is **deferred**. The workbook performance measurement/optimization cycle and read-only legacy retirement classification are closed. Timeline relationship-line visual legibility remains an active next feature/design issue.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-dependencies"></a><strong>MapLibre retirement, dependency maintenance, and mapping UX/Review repairs — 2026-10-31 (committed)</strong></summary>
+
 ### MapLibre retirement, dependency maintenance, and mapping UX/Review repairs — 2026-10-31 (committed)
 
 - **`1a58e44` — `Synchronize documentation through CARTO map and workbook processing improvements`** closed the preceding documentation pass at the CARTO/worker milestone.
@@ -138,6 +855,12 @@ Current architectural significance:
 - **`973d40d` — `Refine mapping disclosure and subject selection and repair Review`** corrects optional mapping presentation: **Add a Location** reveals one new place mapping rather than exposing several prebuilt entries; existing Places, Time, and Relations assignments display immediately when sample or uploaded mappings are revisited; Review no longer crashes on the undefined `mappedRowsCapabilityAudit` reference; and the shared record/participant subject selector more clearly communicates multi-select, retains its required-at-least-one-subject guard, and does not visually disable the last selected option. The user confirmed the interaction fix and reported the final browser/build tests passing before committing and pushing. These are mapping UX and Review correctness repairs, not changes to accepted canonical subject attribution.
 - **Maintenance policy accepted:** review **both** SheetJS and Browserslist/caniuse-lite every six calendar months. Record the last installed and verified update **date and exact version** independently from the last review date, the review result, and the next review due date. Initial successful-update date for both is **2026-10-31** (user-local date of the completed upgrade sequence); next review due **2027-04-30**. A review without an upgrade updates *last reviewed*, not *last updated*. The Maintainer's Guide owns the operating register and regression expectations; the Project Workflow Charter owns the recurring-process rule.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-carto-map"></a><strong>Web Mercator/CARTO map, performance, exports, and workbook review — 2026-10-31 (committed)</strong></summary>
 
 ### Web Mercator/CARTO map, performance, exports, and workbook review — 2026-10-31 (committed)
 
@@ -147,6 +870,13 @@ Current architectural significance:
 - **`2684b3c` — `Repair geographic map exports and preserve CARTO attribution`** repairs PNG/SVG geographic exports by embedding CARTO raster imagery rather than relying on exported external tile URLs, and ensures readable Peridot / OpenStreetMap contributors / CARTO credit in the image. Export should fail visibly if necessary tiles cannot be embedded; previous externally linked SVGs could expose a tile-key query parameter. The final wheel-after-drag regression fix restores immediate zoom responsiveness.
 - **`ae3574c` — `Finalize geographic map interface and improve workbook review processing`** removes temporary tile/performance/isolation diagnostics, places Voyager/Positron/Dark Matter in transactional Map settings, and adds `peridotWorkbookReview.worker.js` to move workbook assembly/review auditing off the UI thread. The current review worker can begin a debounced (~500 ms), provisional full-review preparation while mapping is underway, reuse a current result, and reject superseded mapping revisions. **Independent cached processing of Time, Places, Relations, and Evidence is not implemented**; final confirmation and some mapping validation remain separate work. The user reported less waiting at Review, with no disruptive workflow change.
 - **User acceptance boundary:** the Geographic Map was user-tested with a dataset of approximately 3,000 nodes and worked well; this is not a universal performance guarantee. Map PNG and SVG exports, attribution legibility, and the drag/zoom fix were reported working. Full production deployment, every map-style/export combination, and deliberately racing old/new importer mapping revisions are not independently verified. That map milestone was synchronized at `ae3574c`; the current repository checkpoint has since advanced to `481acd9`.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-gateways"></a><strong>Illustrated gateway pages, entrance motion, and GitHub Pages asset repair — 2026-10-31 (committed)</strong></summary>
 
 ### Illustrated gateway pages, entrance motion, and GitHub Pages asset repair — 2026-10-31 (committed)
 
@@ -158,6 +888,13 @@ Current architectural significance:
 - **`5d5f528` — `Fix editorial gateway asset paths for GitHub Pages`** attempted to prefix root-relative `/assets/` strings with Vite's base path. That was insufficient because string-built asset paths were not necessarily emitted into the Vite production bundle. The corrective pass imports PNGs from the established repository `assets/` directory into React so Vite can process, fingerprint, and reference them correctly, rather than duplicating art under `public/assets/`. The user confirmed a later clean push at **`fc42306`**. The intermediate deployment/repair commits include hashes `2214d8e` and `87bc8f0` reported as push endpoints, but their exact commit messages were not furnished here and must not be invented.
 - **Verification boundary:** local appearance and the user-reported Git push/clean tree are established; a post-`fc42306` published-site visual verification was not provided in this conversation. Successful Git synchronization is not itself evidence that GitHub Pages deployed and rendered all imagery. No semantics, source data, visualization calculation, Search behavior, or tutorial-guidance functionality changed in this milestone.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-12"></a><strong>About manuscript presentation and responsive Data refinements — 2026-10-30 (committed)</strong></summary>
+
 ### About manuscript presentation and responsive Data refinements — 2026-10-30 (committed)
 
 - **`5e785ed` — `Refine About manuscript design and Data workspace responsiveness`** was the user-confirmed clean, pushed checkpoint for that historical milestone. The About section now uses an illustrated-manuscript treatment: page-specific torn-corner graphics remain anchored to the outermost About content bounds, with parchment coordinated to the artwork. About Peridot, Creator, AI Disclosure, Open Source, and Feedback retain their existing navigation and content semantics. Rather than rigidly reserving a large rectangular blank area for an irregular illustration, text and supported content flow around the corner art with a small readable buffer. Dividers and controls should not visually cross the illustrations.
@@ -166,6 +903,12 @@ Current architectural significance:
 - **`7df38d0` — `Synchronize documentation through Data onboarding and asset organization`** committed the prior core-documentation synchronization. It precedes the new About/Data refinement checkpoint.
 - Corner tests involving alternate homepage assets and other experimental ornament placements were subject to explicit rollback during the design cycle; do not describe those trials as accepted homepage state. Asset licensing/provenance review remains a separate obligation.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-13"></a><strong>Data onboarding, decorative asset organization, and reference repair — 2026-10-30 (committed)</strong></summary>
 
 ### Data onboarding, decorative asset organization, and reference repair — 2026-10-30 (committed)
 
@@ -176,6 +919,13 @@ Current architectural significance:
 - **`86cb3d0` — `Synchronize documentation through mapping and interface refinements`** is the last committed documentation synchronization preceding this pass.
 
 **Documentation synchronization prepared 2026-10-30 (uncommitted handoff):** the four core documents were updated against user-confirmed clean checkpoint `c71e265`. The Core Documentation Governance Protocol was read and intentionally left unchanged. No new Git commit is asserted by this handoff.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-14"></a><strong>Cartographic Editorial public pages, import compatibility, and mapping disclosure — 2026-10-26 to 2026-10-28 (committed)</strong></summary>
 
 ### Cartographic Editorial public pages, import compatibility, and mapping disclosure — 2026-10-26 to 2026-10-28 (committed)
 
@@ -192,7 +942,12 @@ Current architectural significance:
 
 **Deferred after this milestone:** multiple independent relationship mappings per record; unfinished Timeline relationship-line presentation; broader Sample Selection color experimentation; Creator profile-card redesign; remaining mapping-page presentation/Explore-content redesign and substantive guided Tutorials. The responsive sample-card proportions and the earlier Creator layout are the accepted configurations.
 
+[Back to development history](#3-full-development-history)
 
+</details>
+
+<details>
+<summary><a id="milestone-detail-15"></a><strong>Shared mapping UI, Home onboarding, and planning references — 2026-10-26 (committed)</strong></summary>
 
 ### Shared mapping UI, Home onboarding, and planning references — 2026-10-26 (committed)
 
@@ -204,6 +959,13 @@ Current architectural significance:
 - **`7280e30` — `Refine homepage typography and onboarding layout`** establishes the final hero wording/subtitle, two primary Home actions (**Upload your data** and **Explore sample data**), shortened editorial typography spacing, and a compact **New to Peridot?** explanation grouped toward the right of the parchment informational banner. The previous numbered 01/02/03 labels and Home compass rose were removed; the three workspace columns remain informational rather than a mandatory linear sequence.
 - **`57f6ef3` — `Document Adobe filigree asset retirement`** and **`07ec80d` — `Retire Adobe filigree assets and decorations`** commit the removal of five Adobe Stock filigree PNGs and their active decorative uses in Data/Manage, tutorial, Inspector, and Explore. Historical records of the original design remain in the Changelog. This retirement is specific to those filigree images, **not** a blanket assertion that all stock-derived paper art or provenance concerns have been resolved.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-16"></a><strong>Adobe filigree retirement — 2026-10-25 (historical local stage; committed 2026-10-26)</strong></summary>
+
 ### Adobe filigree retirement — 2026-10-25 (historical local stage; committed 2026-10-26)
 
 - The user intentionally deleted `assets/Adobe Stock Filigree 1.png`, `2.png`, `3.png`, `Divider Set.png`, and `Full Set.png`. Git reports these five files as tracked deletions; those deletions were subsequently committed in `07ec80d`.
@@ -211,6 +973,12 @@ Current architectural significance:
 - This paragraph describes the historical pre-commit handoff; the deletion and associated documentation are now committed (`07ec80d`, `57f6ef3`). Browser/build validation was conducted as part of user-side iterations, but no independent production deployment is asserted.
 - Historical entries about earlier filigree design choices remain valid historical records; asset filenames in those entries no longer denote files that should exist in the active working tree.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-17"></a><strong>Cartographic Editorial Visualize, homepage, and buttons — 2026-10-15 to 2026-10-25 (historical preceding design)</strong></summary>
 
 ### Cartographic Editorial Visualize, homepage, and buttons — 2026-10-15 to 2026-10-25 (historical preceding design)
 
@@ -220,6 +988,13 @@ Current architectural significance:
 - **`4e6fb11` — `Refine Cartographic Editorial homepage composition`** was the **historical synchronized checkpoint for this milestone**. It contains the accepted current homepage component and stylesheet refinements, two newly added layered corner-collage images in `assets/`, and `planning_documents/Peridot_Sitewide_Button_Inventory_20261017_v1.md`. The original message for this commit was `Consolidate primary and secondary button styling 2` (`c88056d`), subsequently amended by the user to the accurate homepage message; **only `4e6fb11` belongs in the current ancestry**.
 - At that historical milestone, Home retained the editorial paper-and-Florence hero, primary Get started action, and a full-width parchment-textured lower banner with three *informational* columns for Manage data, Visualize, and Explore evidence. The large transparent collages at the lower-left and upper-right frame the banner. The final bounded polish adjusted the collage crop, filled the homepage's actual available parent height rather than calculating `100dvh - 72px`, and optically shifted the three-column content right/down without moving its corner artwork. These were CSS/layout changes; no new data semantics were introduced.
 - **Current-state correction:** the earlier H2e/H2f mask experiments and the `fd02d84` local-only status remain historical. No assertion of public-repository asset-distribution permission follows from a completed Git push; the existing provenance/licensing notes remain relevant. Subsequent Home/Visualize work should avoid unverified global sizing fixes or broad cascade rewrites.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-editorial"></a><strong>Cartographic Editorial foundation, header, and layered Home — 2026-10-14 to 2026-10-15</strong></summary>
 
 ### Cartographic Editorial foundation, header, and layered Home — 2026-10-14 to 2026-10-15
 
@@ -236,6 +1011,12 @@ Current architectural significance:
 - **Untracked, deliberately excluded:** `planning_documents/Peridot_ Florence Atlas Homepage.png` plus `home-cartography-placeholder.svg`, `home-route-decal.svg`, `home-torn-paper-mask.svg`, and `paper-grain.webp` under `src/assets/editorial/`. Preserve until separately triaged; do not run `git add .` or `git clean` by default.
 - **Next visual work:** after the publication gate, polish the banner's paper layering and its eventual useful content, then art-direct the remaining public entry/workspace surfaces separately. Preserve the currently accepted hero and the compact header unless a new bounded visual pass explicitly changes them.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-19"></a><strong>Persistent navigation, workspace normalization, full-page mapping, ISO dates, and About — 2026-09-28 to 2026-10-14</strong></summary>
 
 ### Persistent navigation, workspace normalization, full-page mapping, ISO dates, and About — 2026-09-28 to 2026-10-14
 
@@ -250,6 +1031,13 @@ Current architectural significance:
 - **`cd625a2` — `Normalize About workspace and feedback`** makes About a scholarly project section with **About Peridot / Creator / AI Disclosure / Open Source / Feedback**, flattens decorative container nesting, scales page titles down to ordinary page-heading proportions, allows page scrolling as needed, and embeds Feedback as a normal About subpage while preserving compatibility modal rendering.
 - Deferred after this sequence: a larger mapping-content redesign; a larger Explore-content redesign; substantive Tutorials; Home refinement; header hover/active/logo polish; broader cross-site palette/typography/animation work.
 - This documentation pass synchronizes the core documents through clean checkpoint `cd625a2` and strengthens the file-continuity/handoff protocol so already-available current files are reused and replacement-bundle commands must match the delivered ZIP's actual internal structure.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-timeline-foundation"></a><strong>Dedicated Timeline visualization workspace, adaptive navigation, categories, and relationship-layout foundation — 2026-09-27 to 2026-09-28</strong></summary>
 
 ### Dedicated Timeline visualization workspace, adaptive navigation, categories, and relationship-layout foundation — 2026-09-27 to 2026-09-28
 
@@ -267,6 +1055,13 @@ Current architectural significance:
 - Relationship-line **routing and visual legibility are explicitly unfinished** at this checkpoint. The next Timeline pass should improve curved card-to-card connection rendering without loosening the accepted endpoint semantics or reverting the continuous secondary-axis layout.
 - This documentation pass synchronizes the core documents to `a32ef05`. The Governance Protocol ownership model remains unchanged; only its stale pre-audit scope caveat is corrected. The restructuring plan is marked implemented and retained as a historical planning record.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-21"></a><strong>Sample chooser, Timeline scrubber, and Network interaction/playback performance — 2026-09-27</strong></summary>
+
 ### Sample chooser, Timeline scrubber, and Network interaction/playback performance — 2026-09-27
 
 - **`852fd72` — `Synchronize documentation through Network playback generalization`** recorded the clean generalized Network/playback baseline after `ddc0aca`.
@@ -282,6 +1077,13 @@ Current architectural significance:
 - Playback animation/tweening remains unfinished. The rejected pre-`ddc0aca` screen-space geometry experiments remain rolled back; future presentation work should start from the stable post-optimization architecture.
 - Post-checkpoint Geographic QA remains **uncommitted**. Investigation established that the large cluster initially suspected as a duplicate Roma node was Siena, while a smaller Roma cluster was separate. A temporary atomic co-location clustering fix was therefore not committed. A later local Inspector-semantics experiment correctly distinguished entity-anchor count from distinct represented places and removed sentinel `0` directed endpoints, but wording cleanup remained before any commit.
 - This documentation pass synchronizes the four core documents to `c8a7c46`. The Governance Protocol and restructuring plan remain unchanged because documentation ownership/process architecture did not change.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-generalized-network"></a><strong>Generalized Network scope, unified Geographic Map, Map settings, and playback highlighting — 2026-09-14 to 2026-09-25</strong></summary>
 
 ### Generalized Network scope, unified Geographic Map, Map settings, and playback highlighting — 2026-09-14 to 2026-09-25
 
@@ -300,6 +1102,13 @@ Current architectural significance:
 - Remaining Network plan: **Pass 4 consumer/vocabulary cleanup**, **Pass 5 geometry/presentation correctness**, then **Pass 6 visual tuning / Appearance controls**.
 - Prepared the bounded core-documentation synchronization against clean checkpoint `ddc0aca`; the Governance Protocol remains unchanged because documentation ownership/process rules did not change.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-search"></a><strong>Generalized Search, scope alignment, and count-condition redesign — 2026-09-07</strong></summary>
+
 ### Generalized Search, scope alignment, and count-condition redesign — 2026-09-07
 
 - **`5e3289c` — `Synchronize documentation through subject-aware evidence`** preserved the documentation baseline after canonical subject-aware Evidence reached Inspector.
@@ -315,6 +1124,13 @@ Current architectural significance:
 - One bounded Search follow-up remains: **Any record text** does not yet guarantee inclusion of every generalized mapped semantic value; explicit fielded criteria such as Place work correctly.
 - The next large project is the generalized Network audit. A later bounded Network presentation pass should tune node/cluster sizing and evaluate a small user-facing scaling controller rather than hard-coding one visual scale.
 - Prepared this bounded core-documentation synchronization against clean checkpoint `1810a40`. The Charter now states the exact-raw-source implementation rule explicitly; the Governance Protocol itself remains unchanged.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-24"></a><strong>Cardinality, integrated Identity, subject-aware assertions, and Home tutorial placeholder — 2026-08-31</strong></summary>
 
 ### Cardinality, integrated Identity, subject-aware assertions, and Home tutorial placeholder — 2026-08-31
 
@@ -333,6 +1149,13 @@ Current architectural significance:
 - **`b7482cb` — `Add homepage tutorial placeholder`** removed the floating Home tutorial invitation and added a centered secondary **Tutorial** button beneath the two primary data-entry actions. The button is intentionally shorter/less prominent, disabled for now, and shows **“Tutorial coming soon.”** on hover/focus.
 - Live QA across Cardinals, Family Tree, and correspondence samples confirmed multi-value Evidence/place behavior, ID/name resolution, place-of-childbirth attribution, both geographic map modes, and subject-aware Inspector presentation through this sequence.
 - Prepared this bounded core-documentation synchronization against `b7482cb` before a fresh-chat handoff. The Governance Protocol remains unchanged because its ownership and preservation rules did not change.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-inspector"></a><strong>Generalized Inspector/Identity authority, editable mappings, and first-class sample datasets — 2026-08-21</strong></summary>
 
 ### Generalized Inspector/Identity authority, editable mappings, and first-class sample datasets — 2026-08-21
 
@@ -358,6 +1181,12 @@ Current architectural significance:
 - Prepared this bounded core-documentation synchronization against `8290696` after rereading the Governance Protocol, current README, Maintainer’s Guide, Project Workflow Charter, Changelog, and retained restructuring plan; the Governance Protocol itself remains unchanged because its ownership/process model did not change.
 - Deferred from this milestone: per-field multi-value/cardinality declarations and delimiter handling; richer record-versus-participant attribution; generalized Network place/event scoping and anchor rules; Search place/facet generalization; Phase 3 Chart Builder; the Search and Timeline × Analytics scope audits; and a later homepage/tutorial redesign that merges the current Home/Data entry strengths and replaces the current tutorial pop-up/launch treatment with a static tutorial button.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-26"></a><strong>Temporal retirement, generalized relationship semantics, identity groundwork, and Inspector legibility checkpoint — 2026-08-19</strong></summary>
 
 ### Temporal retirement, generalized relationship semantics, identity groundwork, and Inspector legibility checkpoint — 2026-08-19
 
@@ -376,6 +1205,12 @@ Current architectural significance:
 - Next implementation: move Identity immediately after Relations, then overhaul compact and expanded Inspector profiles from generalized semantics while preserving linked-data navigation and multi-step Back history.
 - Prepared a bounded core-documentation synchronization against `4076e5b` for fresh-chat handoff; the Governance Protocol remains unchanged.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-27"></a><strong>Generalized runtime authority, Temporal Assertions, and canonical Timeline playback — 2026-08-17</strong></summary>
 
 ### Generalized runtime authority, Temporal Assertions, and canonical Timeline playback — 2026-08-17
 
@@ -392,6 +1227,13 @@ Current architectural significance:
 - Historical note: this milestone still deferred retirement of `parseHistoricalDate()` / `parsedDate`; that cleanup was completed later at `9cc9d93`. Optional Approximate/Partial/etc. Timeline structure filters remain deferred if they can stay human-readable.
 - Deferred Network follow-up remains separate: consume all generalized relationships where needed, fit the Force-Directed Network to the viewport, and terminate arrowheads at node boundaries.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-28"></a><strong>Progressive universal upload redesign and Review checkpoint — 2026-08-08</strong></summary>
+
 ### Progressive universal upload redesign and Review checkpoint — 2026-08-08
 
 - **`e10c062` — `Synchronize documentation for universal data phase 1`** closed the Phase 1 documentation cycle before Phase 2 implementation began.
@@ -407,6 +1249,12 @@ Current architectural significance:
 - The remaining warning system still contains legacy correspondence/workbook assumptions. That audit is intentionally deferred until generalized mappings are authoritative in the runtime.
 - Prepared this bounded core-documentation synchronization against `134c67c` before moving the authoritative-runtime work to a fresh conversation.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-mapping-foundation"></a><strong>Universal mapping/source foundation and runtime compatibility boundary — 2026-08-07</strong></summary>
 
 ### Universal mapping/source foundation and runtime compatibility boundary — 2026-08-07
 
@@ -420,6 +1268,13 @@ Current architectural significance:
 - Prepared this bounded Phase 1 core-documentation synchronization against `301a1e1`; no source behavior, upload UI, chart behavior, CSS, or runtime wiring is changed by the documentation pass.
 - Recorded the Peridot delivery convention requested during Phase 1: coding and documentation replacements should default to one uniquely versioned ZIP bundle with transparent PowerShell extract/copy commands.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-canonical"></a><strong>Canonical normalization, correspondence parity, and active genealogy imports — 2026-07-24</strong></summary>
+
 ### Canonical normalization, correspondence parity, and active genealogy imports — 2026-07-24
 
 - Implemented the canonical normalized research model planned after `619bab0`, including serializable entities, places, records, events, relationships, participations, evidence sources, assertions, temporal assertions, provenance, validation, and deterministic canonical IDs.
@@ -428,6 +1283,13 @@ Current architectural significance:
 - **`402336f` — `Add genealogy normalization profile`** added person-centered canonical normalization for people, life events, parent/partner relationships, places, attributes, evidence, and provenance without converting life-event locations into false movement routes.
 - **`94b9d46` — `Add dataset profile selection and routing`**, **`1e661da` — `Add genealogy mapping schema and validation`**, **`2ef36a6` — `Add genealogy mapping workflow`**, and **`8f19997` — `Activate canonical genealogy imports`** moved genealogy from schema/profile groundwork to an active import path.
 - Correspondence and Genealogy are now active profiles over the canonical architecture. They remain valuable specialized presets/normalizers and should not be removed merely because broader universal mapping is under development.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-31"></a><strong>First-time tutorial framework, flow redesign, and stable attention baseline — 2026-07-14</strong></summary>
 
 ### First-time tutorial framework, flow redesign, and stable attention baseline — 2026-07-14
 
@@ -440,6 +1302,13 @@ Current architectural significance:
 - Preserved the exact implementation sequence in the full history: `84fe3cc`, `da0a472`, `ed6466f`, `48f680a`, `67fc073`, `783acc1`, `a52b9ca`, `16cf7cc`, `8241f3a`, `297430f`, `d3c3c24`, and `619bab0`.
 - Prepared this bounded core-documentation synchronization against `619bab0`; no source-code, tutorial redesign, or animation experimentation is included in the documentation pass.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-governance"></a><strong>Documentation governance, screenshot history, feedback, and stylesheet-import restoration — 2026-06-21</strong></summary>
+
 ### Documentation governance, screenshot history, feedback, and stylesheet-import restoration — 2026-06-21
 
 - Added a standing Core Documentation Governance Protocol and then moved it to `core_documentation/` so it is reviewed with the four core documents before every documentation pass.
@@ -448,6 +1317,13 @@ Current architectural significance:
 - Added the persistent feedback form, including optional-email handling, compact modal behavior, Formspree submission, and a layering repair so feedback covers Visualizations controls.
 - Restored missing extracted CSS imports in `main.jsx`, including the feedback-form stylesheet, preserving the established shared → Inspector → Analytics → Search → Mapping → Learn More → Feedback cascade.
 - Removed obsolete local `index.css` backup snapshots as a housekeeping cleanup; Git remains the authoritative recovery history.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="milestone-detail-33"></a><strong>Component stylesheet extraction sequence — historical structural milestone</strong></summary>
 
 ### Component stylesheet extraction sequence — historical structural milestone
 
@@ -484,9 +1360,18 @@ The next substantive behavior work is intentionally deferred into two separate a
 
 The detailed records below preserve the earlier `0c5a219` and related checkpoint narratives as historical milestones; they are not active baseline statements.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<a id="milestone-charts-foundations"></a>
+
 ### Detailed historical milestone narratives
 
 The following milestone narratives are retained as historical records. They remain useful for regression diagnosis, decision reconstruction, and project-development history. They are not competing current-baseline statements.
+
+<details>
+<summary><a id="historical-milestone-01"></a><strong>Learn More project-information hub, divider choreography, and Explore folio-containment milestone</strong></summary>
 
 #### Learn More project-information hub, divider choreography, and Explore folio-containment milestone
 
@@ -504,6 +1389,13 @@ The following milestone narratives are retained as historical records. They rema
 - Restored the rounded Explore folio clipping boundary after a late scroll-restoration rule allowed dark inner layers to project through square corners; Explore scrolling remains on the workspace rather than the rounded folio shell.
 - Historical code sequence: **`9fbd200`**, **`81f6311`**, **`7a115f7`**, **`2307d5a`**, **`39983e3`**, **`59f7d69`**, **`98cccf5`**, **`795f0f7`**, and **`0c5a219`**.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-02"></a><strong>Search/Explore compact-ledger, Inspector overlay, and animation milestone</strong></summary>
+
 #### Search/Explore compact-ledger, Inspector overlay, and animation milestone
 
 - Recorded the then-current checkpoint as **`e5f832c` — `Animate Explore workspace transitions`**.
@@ -517,6 +1409,13 @@ The following milestone narratives are retained as historical records. They rema
 - Changed Explore Inspector handoff so clicking **Inspect** from Explore opens the full Inspector as an overlay above the current Explore page instead of navigating away from the researcher’s active search context.
 - Added gentle Explore entrance and tab-transition choreography: folio/header reveal, left-to-right step-button sequencing, slower content dissolve/rise, animated Refine panels, Results row “page-turn” filing, Browse index-row filing, and reduced-motion fallbacks.
 - Restored Explore scrolling after animation-layer testing so expanded Refine panels, Results pages, Browse lists, and criteria-heavy Build views can scroll normally.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-03"></a><strong>Data mapping redesign, workbook controls, upload animation, menu, and Learn More polish milestone</strong></summary>
 
 #### Data mapping redesign, workbook controls, upload animation, menu, and Learn More polish milestone
 
@@ -533,6 +1432,13 @@ The following milestone narratives are retained as historical records. They rema
 - Removed **Themes and Accessibility** from the visible hamburger menu while retaining the internal Theme workspace mode, component, and routing path for future restoration.
 - Added matching entrance animation to the two **Learn More about Peridot** placeholder cards by reusing the existing Data workspace float-in classes.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-04"></a><strong>Inspector reference-entry layout, mounted overlay, Unknown-as-place, and record-table capability milestone</strong></summary>
+
 #### Inspector reference-entry layout, mounted overlay, Unknown-as-place, and record-table capability milestone
 
 - Recorded the then-current checkpoint as **`74db963` — `Refine Inspector reference layout and record tables`**.
@@ -548,6 +1454,13 @@ The following milestone narratives are retained as historical records. They rema
 - Shifted Inspector wording from correspondence-only language toward generic humanistic-data language: related records / connected records, person/entity, connected places, connected people, and directed connections.
 - Updated Inspector filigree assets and divider styling so the full and compact Inspector can use thin unobtrusive gold ornaments without relying on heavy glow/diamond fallback effects.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-05"></a><strong>Workspace animation, chart-builder polish, force-network focus, and Inspector styling milestone</strong></summary>
+
 #### Workspace animation, chart-builder polish, force-network focus, and Inspector styling milestone
 
 - Recorded the then-current checkpoint as **`bd9b807` — `Refine inspector workspace styling`**.
@@ -560,6 +1473,13 @@ The following milestone narratives are retained as historical records. They rema
 - Updated the Inspector full workspace and compact side panel to share the chart-builder visual language: muted dark-green shell, cream information cards, gold primary commands, muted-green related-object navigation, and more restrained passive metadata treatment.
 - Suppressed visualization header/timeline hide-show toggles when the full Inspector workspace is open, while preserving those controls in ordinary Visualizations mode.
 - Recorded an open Inspector behavior issue for a fresh diagnostic pass: related-person navigation from some Inspector contexts opens the blank state; related-place navigation is working. The failed attempted fix touched `interactionHelpers.js` and `InspectorClusterView.jsx` and was rolled back with a clean tree.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-06"></a><strong>Home title-card, map export options, branding assets, and capability wording milestone</strong></summary>
 
 #### Home title-card, map export options, branding assets, and capability wording milestone
 
@@ -582,11 +1502,25 @@ The following milestone narratives are retained as historical records. They rema
 - Clarified Data/Advanced Search/Visualizations capability wording: internal capability diagnostics were removed from user-facing review; point and route map readiness language was combined/clarified where appropriate; unavailable visualization language now says the visualization is **not available** for the dataset rather than **limited**.
 - Confirmed point/site datasets such as Alaskan Airfields do not incorrectly advertise relational route/network readiness when no source-target relationships are mapped.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-07"></a><strong>Peridot logo and home-workspace branding milestone</strong></summary>
+
 #### Peridot logo and home-workspace branding milestone
 
 - Added the user-designed Peridot logo assets to `assets/` as `Peridot Logo.png` and `Peridot Logo Transparent.png`.
 - Integrated the transparent-background logo into the Home workspace hero while preserving an accessible hidden `h1` for the app name.
 - Documented the logo asset locations in README, Maintainer Guide, and Workflow Charter so future branding passes keep the app and documentation synchronized.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-08"></a><strong>Theme, visualization chrome, map palette, and Analytics chart layout/theme milestone</strong></summary>
 
 #### Theme, visualization chrome, map palette, and Analytics chart layout/theme milestone
 
@@ -616,6 +1550,13 @@ The following milestone narratives are retained as historical records. They rema
 - Routed remaining bar, histogram, and heatmap marks through the active chart series palette so every chart type responds to explicit chart-palette imports.
 - Then-current Analytics/theme baseline: **`e50ebf6` — `Scope chart palette imports to chart series`**.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-09"></a><strong>Advanced Search / Explore consolidation milestone</strong></summary>
+
 #### Advanced Search / Explore consolidation milestone
 
 - Routed **Explore Your Data** directly to Advanced Search from both the hamburger menu and the Visualizations header.
@@ -630,6 +1571,13 @@ The following milestone narratives are retained as historical records. They rema
 - Preserved the core draft/apply model: typing, suggestions, Browse selections, facet selections, and structured criteria edits change draft state only until **Apply Filters** is pressed.
 - Then-current Advanced Search baseline: **`d52392a` — `Add capabilities tab to advanced search`**.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-10"></a><strong>Structural cleanup, commenting, and scope-contract milestone</strong></summary>
+
 #### Structural cleanup, commenting, and scope-contract milestone
 
 - Added developer-orientation comments across the source tree so a new human developer can understand major sections, cross-file responsibilities, fragile compatibility paths, and non-obvious state coupling.
@@ -643,6 +1591,13 @@ The following milestone narratives are retained as historical records. They rema
 - Removed dormant MapLibre preview files and dependency from active `main`.
 - Documented the loaded/filter/timeline/playback/export scope pipeline and clamped chart-local date ranges so chart animation does not get stuck on stale time selections.
 - Then-current structural-cleanup baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-11"></a><strong>Visualization workspace compression, menu simplification, timeline, and export consolidation milestone</strong></summary>
 
 #### Visualization workspace compression, menu simplification, timeline, and export consolidation milestone
 
@@ -660,6 +1615,13 @@ The following milestone narratives are retained as historical records. They rema
 - Removed the obsolete standalone Export workspace route and deleted `src/PeridotExportWorkspace.jsx` from the active source tree.
 - Then-current visualization-workspace/export baseline: **`fcd2e1f` — `Document timeline scope and clamp chart date range`**.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-12"></a><strong>Visualization capability and flexible Analytics milestone</strong></summary>
+
 #### Visualization capability and flexible Analytics milestone
 
 - Added capability-aware Visualizations workspace menus for Mapping Visualizations, Network Visualizations, Chart Visualizations, and Explore Your Data.
@@ -670,6 +1632,13 @@ The following milestone narratives are retained as historical records. They rema
 - Cleaned chart language so generic record/metric charts no longer imply that all values are letters.
 - Then-current flexible-Analytics baseline: **`ab7affa` — `Clean up flexible Analytics chart controls`**.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-13"></a><strong>Generic chart/evidence record and mapping-field inclusion milestone</strong></summary>
+
 #### Generic chart/evidence record and mapping-field inclusion milestone
 
 - Generalized user-facing app language beyond correspondence-only wording while preserving compatibility terms and legacy internal names where still required.
@@ -677,6 +1646,13 @@ The following milestone narratives are retained as historical records. They rema
 - Kept map and network availability capability-based: generic chart records can be chart-ready and export-ready while remaining unmappable and non-network-ready.
 - Replaced the Evidence and analysis include/ignore dropdown control with explicit **Include** and **Ignore** checkboxes per field, defaulting to Include.
 - Then-current generic-record and evidence-field UI baseline: **`08b628b` — `Use include and ignore checkboxes for evidence fields`**.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-14"></a><strong>Data capability and role-based mapping milestone</strong></summary>
 
 #### Data capability and role-based mapping milestone
 
@@ -691,12 +1667,26 @@ The following milestone narratives are retained as historical records. They rema
 - Confirmed that point/site datasets without source-target relationships correctly do not populate People Network or Force-Directed views.
 - Then-current data-capability baseline: **`e7c3b57` — `Add point-location role mapping`**.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-15"></a><strong>Home/workspace visual-system milestone</strong></summary>
+
 #### Home/workspace visual-system milestone
 
 - Refined the Home workspace layout and menu access.
 - Removed Home navigation from active workspaces.
 - Applied the Home-style visual system to full workspaces.
 - Standardized most workspace button hover/highlight states around the existing gold-brown accent.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-16"></a><strong>Dual-mode Inspector workspace milestone</strong></summary>
 
 #### Dual-mode Inspector workspace milestone
 
@@ -715,6 +1705,13 @@ The following milestone narratives are retained as historical records. They rema
 - Made directed route rows open route/edge Inspector dossiers with linked letters.
 - Then-current Inspector baseline: **`b24e19a` — `Link Inspector directed route rows`**.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-17"></a><strong>Interface redesign and workspace-routing milestone</strong></summary>
+
 #### Interface redesign and workspace-routing milestone
 
 - Added `PERIDOT_INTERFACE_REDESIGN_PLAN.md` to define the shift from a map-first side-panel app toward a multimodal correspondence data exploration workspace.
@@ -731,6 +1728,13 @@ The following milestone narratives are retained as historical records. They rema
 - Deferred Timeline promotion; the preferred future design is now a bottom timeline/scrubber integrated with Visualizations.
 - Deferred Inspector promotion pending a careful full evidence-dossier design contract.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-18"></a><strong>Workbook / Excel import and Inspector profile milestone</strong></summary>
+
 #### Workbook / Excel import and Inspector profile milestone
 
 - Added workbook-aware staging and parsing for CSV, TSV, XLSX, and XLS files.
@@ -745,6 +1749,13 @@ The following milestone narratives are retained as historical records. They rema
 - Fixed place-profile fallback behavior so places clicked from profile lists can resolve from linked-record metadata.
 - Removed redundant top-level Inspector fields once the richer profile sections covered the same information.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-19"></a><strong>Arbitrary column mapping and workbook-parsing milestone</strong></summary>
+
 #### Arbitrary column mapping and workbook-parsing milestone
 
 - Added `src/peridotColumnMapping.js` to define column-mapping helpers for mapping user-uploaded tables into Peridot’s internal field model.
@@ -755,6 +1766,13 @@ The following milestone narratives are retained as historical records. They rema
 - Added `src/peridotWorkbookParsing.js` as the workbook parsing helper for the planned Excel path.
 - Removed the ordinary legacy three-file upload workflow after the one-file/mapped-import direction became the active public data-ingestion model.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-20"></a><strong>Standardized single-CSV Data Inputs milestone</strong></summary>
+
 #### Standardized single-CSV Data Inputs milestone
 
 - Added `src/peridotCsvSchema.js` to define the public template columns, field groupings, minimum record rule, capability labels, and upload tips.
@@ -763,6 +1781,13 @@ The following milestone narratives are retained as historical records. They rema
 - Simplified the ordinary Data Inputs panel to foreground **Download CSV template**, **Upload completed CSV**, latest upload summary, and concise data tips.
 - Added an upload validation popup and kept the same information accessible after close through a persistent side-panel summary.
 - Established the database-first upload policy: accepted rows may be incomplete; coordinates and parseable dates are capability-enabling fields rather than upload-admission requirements; Peridot does not clean, standardize, merge, or enforce controlled vocabularies for uploaded user data.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-21"></a><strong>Search &amp; Filter implementation and layout milestone</strong></summary>
 
 #### Search & Filter implementation and layout milestone
 
@@ -774,12 +1799,26 @@ The following milestone narratives are retained as historical records. They rema
 - Pre-update status feedback appears before expensive full-dataset recomputation begins.
 - Later visual refinements converted Search & Filter from stacked explanatory cards into a compact advanced-search form.
 
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-22"></a><strong>Analytics feature and visual-polish milestone</strong></summary>
+
 #### Analytics feature and visual-polish milestone
 
 - Added the Analytics side-panel tab with chart previews, chart controls, chart descriptions, and PNG export.
 - Added multiple chart types, expanded chart controls, dynamic variable detection, route-place/route-person variables, and an expanded chart overlay.
 - Improved Analytics chart hover-tooltip contrast.
 - Refined the expanded Analytics view: dark green translucent backdrop, cool off-white text/borders, preserved blurred-map effect, and white/cream chart card.
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+<details>
+<summary><a id="historical-milestone-23"></a><strong>Side-panel and cluster milestones</strong></summary>
 
 #### Side-panel and cluster milestones
 
@@ -789,7 +1828,92 @@ The following milestone narratives are retained as historical records. They rema
 - Made clusters actionable in the inspector, grouped cluster members by place, and made cluster sizing reflect represented letter volume.
 
 ---
-## 3. Deferred, Archived, and Rolled-Back Work
+
+[Back to development history](#3-full-development-history)
+
+</details>
+
+## 5. Historical Checkpoint Evidence
+
+The paragraphs below are preserved as historical records of repository states and documentation handoffs at the time recorded. Their former references to “latest” commits or pending changes **do not describe today's repository**. They are separated from the current checkpoint because routine use of the Changelog should not require reading successive historical `git status` accounts.
+
+
+The records below describe the Git and working-tree states **at the dates stated**, not the present state. Their original wording is retained as historical evidence.
+
+<details>
+<summary><strong>Historical checkpoint verification (2026-11-22; superseded by `2be3ea0`)</strong></summary>
+
+**Historical checkpoint verification (2026-11-22; superseded by `2be3ea0`):** The researcher supplied `git push origin main`, `git status`, and `git log --oneline -3` confirming that `e96c375` is aligned at `HEAD`, `origin/main`, and `origin/HEAD`, with **nothing to commit and a clean working tree**. The latest three verified commits are `e96c375` (Charts appearance customization and adaptive presentation), `8baa733` (retire legacy Charts I and consolidate Charts II workspace), and `5c75472` (Charts II chart-local filters and single-series selection). Charts II is now the sole public Charts workspace and has 15 implemented families, Catalogue and Builder, filter and chronology integration, shared Timeline color selection, mark styling, adaptive presentation, a resizable controls panel, and customizable PNG exports. The user tested and accepted the integrated behavior locally. Source-level Charts regression tests were reported passing; one known, independently reproduced Timeline grouped-lanes expected-label mismatch remains outside the Charts work. The present core-documentation handoff has **not** been committed as part of this checkpoint.
+
+</details>
+
+<details>
+<summary><strong>Historical checkpoint verification (2026-11-11; superseded by `e96c375`)</strong></summary>
+
+**Historical checkpoint verification (2026-11-11; superseded by `e96c375`):** The researcher supplied `git status` followed by `git log --oneline -5` confirming `ea7cda8` at `HEAD`, `origin/main`, and `origin/HEAD`. The source milestone is `f5791f1` — `Implement Timeline II adaptive grouped swimlanes and category workspace`; the immediately following `ea7cda8` — `Remove obsolete src.zip archive` intentionally deletes the obsolete tracked source ZIP. The working tree is **not clean**: `src/PeridotVisualizationsWorkspace.jsx` remains modified for concurrent Charts II work, and `src/PeridotChartsIIFoundation.jsx` / `src/chartsIIDataProfile.js` remain untracked. Do not confuse those changes with the already committed Timeline-only width fix. The researcher confirmed in Chrome that the native Categories horizontal scrollbar works after the conditional stage-wrapper constraint. The documentation replacements prepared after this checkpoint are **not yet committed**. The source commits are Git-confirmed; automated cross-browser/deployed-site verification is not claimed.
+
+</details>
+
+<details>
+<summary><strong>Historical checkpoint verification (2026-11-10)</strong></summary>
+
+**Historical checkpoint verification (2026-11-10):** The researcher supplied `git status` and `git log --oneline -5` confirming `9c2bb0e` at `HEAD`, `origin/main`, and `origin/HEAD`, with no staged changes. The working tree is intentionally not clean: `src.zip` is deleted locally, `src/PeridotVisualizationsWorkspace.jsx` is modified for independent Charts II work, and untracked Charts II and planning files remain outside the Timeline Categories commits. `9c2bb0e` and `27c5b52` are the newly verified category development commits; `4702f3b` is the preceding documentation checkpoint. Proposed document updates and icon-resource moves in this handoff are **not yet committed** and must not be represented as part of `9c2bb0e`.
+
+</details>
+
+<details>
+<summary><strong>Checkpoint verification (2026-11-09)</strong></summary>
+
+**Checkpoint verification (2026-11-09):** The researcher supplied `git status` and `git log --oneline -5` confirming `4fca872` as `HEAD`, `origin/main`, and `origin/HEAD`, with no staged changes and a non-clean working tree. Commit subject: `Unify shared chronology navigation, filtering, and dataset extent presentation`. Earlier commits `9c15045` (About animation documentation), `71833b3` (About animation implementation), `d119550` (chart-builder planning), and `c74aa55` (persistent independent chronology sessions) are also confirmed in that log. The remaining uncommitted work is the `src.zip` deletion, `src/PeridotVisualizationsWorkspace.jsx` changes for Charts II, untracked `src/PeridotChartsIIFoundation.jsx`, `src/chartsIIDataProfile.js`, and `planning_documents/Peridot Load Animation.html`. **These changes are not part of `4fca872`; do not stage, replace, or mislabel them as committed chronology work.** The documentation replacement package prepared on 2026-11-09 does not itself establish a subsequent commit.
+
+</details>
+
+<details>
+<summary><strong>Historical checkpoint verification (2026-11-05; superseded by `4fca872`)</strong></summary>
+
+**Historical checkpoint verification (2026-11-05; superseded by `4fca872`):** The researcher supplied `git status` and `git log --oneline -5` showing `71833b3` at `HEAD`, `origin/main`, and `origin/HEAD`. The commit subject is verified: `Add staggered manuscript entrance animations to About pages`. The working tree is **not clean** because independent Timeline/Charts/source-development work continues in parallel (modified `src/App.jsx`, `src/PeridotSharedChronologyAdapter.jsx`, `src/PeridotTimelineII.jsx`, and `src/PeridotVisualizationsWorkspace.jsx`; untracked Charts II and chronology files; and a deleted `src.zip`). Those local changes were not part of the About animation commit and must not be staged, overwritten, or described as committed by this documentation pass. The five confirmed recent commits are `71833b3`, `d119550`, `c74aa55`, `50c1be5`, and `81c3719`; only the About change is documented technically here. The earlier `81c3719` checkpoint narrative remains retained below as history, not the current HEAD.
+
+</details>
+
+<details>
+<summary><strong>Historical checkpoint verification (2026-11-03)</strong></summary>
+
+**Historical checkpoint verification (2026-11-03):** The researcher committed and pushed `81c3719` to `origin/main`. The supplied push confirms publication (`688bc17..81c3719`), but does not establish a post-push clean working tree. The immediately preceding pushed commit shown by Git is `688bc17`; its subject and intermediate history have not been supplied in this conversation, so this documentation pass does not reconstruct them. The following detailed account of `ddee7e2` remains preserved as a **historical previous clean checkpoint**, not the current HEAD. At that earlier checkpoint, the latest user-confirmed clean synchronization was **`ddee7e2`** on `main` (2026-11-01), with `HEAD`, `origin/main`, and `origin/HEAD` aligned and no local changes. The five most recent commit subjects confirmed in the latest user Git log are `ddee7e2`, `8cb1cbc`, `2664fbf`, `8899b8d`, and `3f0ae7c`. The preceding documentation checkpoint is `481acd9`; the following historical checkpoint narrative is retained for continuity. At the previous documentation pass, the user-confirmed clean synchronization was `481acd9` on `main` (2026-11-01), with `HEAD`, `origin/main`, and `origin/HEAD` aligned and no local changes. Following the previous documented `973d40d` checkpoint, the confirmed commits are `be5fea5` (documentation synchronization), `54dfa2c` (GitHub Pages CARTO key build configuration), `64dfbae` (Review confirmation guard), `8dd208a` (new-upload progressive disclosure), and `481acd9` (canonical capability-scan optimization). Earlier intervening commits `1a58e44`, `3da30ec`, and `74ca40e` remain documented in the milestone section and full history. The earlier `ae3574c` map/workbook-review checkpoint remains an important historical baseline. This checkpoint incorporates the Web Mercator/CARTO Geographic Map, high-zoom and interaction performance repairs, self-contained attributed geographic exports, finalized Map-settings basemap selection, and provisional background workbook-review processing. Its immediately preceding confirmed checkpoints are `2684b3c` (export repair), `3c0a43e` (map performance), `bc99e31` (world wrapping/high-zoom interaction), and `0794002` (CARTO prototype). The historical `fc42306` Vite asset-import milestone remains below. The exact subject of `fc42306` was not furnished at its historical synchronization, so its descriptive label is not a verified Git subject. The earlier `5e785ed` checkpoint is historical and is followed by the verified gateway-design, animation, and asset-loading work below. The older `c71e265` asset-name repair and `7df38d0` documentation pass remain distinct preceding milestones. The previous checkpoint narrative is retained here for historical context: The `c71e265` asset-reference repair is a prior accepted milestone; commits `7df38d0` and `5e785ed` supersede it as the latest documentation and interface checkpoints. The previous `87d6955` milestone is historical. The prior `27e3cf7` state remains an earlier historical checkpoint, following `f3cf4fb` (shared mapping workspace layout/contextual guidance), `89aaa50` (mapping palette and contrast), `60b8643` (direct Home file chooser), and the intervening Home onboarding/asset-retirement commits. `27e3cf7` updates tracked design mockups and the genealogy retirement audit; **it does not retire genealogy code**. Earlier statements about uncommitted Adobe filigree deletions, a sole Home “Get started” button, and a wholly deferred mapping-content redesign describe earlier stages, not the current implementation. Browser observations and source changes are distinguished from verified Git synchronization; asset licensing is a separate unresolved review.
+
+</details>
+
+<details>
+<summary><strong>Historical checkpoint narrative (`cd625a2`)</strong></summary>
+
+**Historical checkpoint narrative (`cd625a2`):** This checkpoint closes the first major navigation-normalization sequence. Peridot now uses a persistent site-wide header and conventional page hierarchy while preserving the research session underneath it: the active dataset and accepted workspace state survive navigation, Visualize/Explore/Data/About use compact local navigation, mapping is a full-page Data workspace rather than a modal, and About is a first-class scholarly project section. The same sequence also adds native ISO 8601 timestamp support to canonical temporal parsing.
+
+Current architectural significance:
+
+- **`a1f4d56`** established persistent global navigation plus workspace-state continuity. The Peridot logo is a Home control; Data, Visualize, Explore, Tutorials, and About are persistent public destinations. Lightweight page changes do not receive an added loading overlay.
+- **`1810bf9`** and **`f59402f`** compacted and flattened Visualize. Map / Network / Timeline / Charts are centered on a local second bar, Export remains distinct at the right, and the prior oversized workspace framing no longer consumes the visualization stage.
+- **`e9ddf1f`** reorganized Explore around **Browse / Advanced Query / Refine**. Results live with Advanced Query; capability review and Inspector handoff context live with Refine. Search draft/apply and scope semantics remain unchanged.
+- **`4a6cd2e`** accepts ISO 8601 timestamp strings as day-precision temporal values while preserving full source text and using the lexical source calendar date rather than timezone-shifting historical evidence.
+- **`f139f53`** moved Data mapping out of a modal/scrim and into the Data page beneath the persistent global header. Mapping sections are directly navigable; the final section is **Review and Upload**; Cancel is separated from Back/Next; entry uses the established heavier transition to avoid flash.
+- **`cd625a2`** normalizes About into **About Peridot / Creator / AI Disclosure / Open Source / Feedback**, removes the old Project Information Hub/return-to-visualizations framing, renders Feedback inline as a normal About page, reduces title scale, and restores page scrolling when content exceeds the viewport.
+- The accepted generalized mapping, Search scope, Timeline, Network, Inspector, and export semantics remain authoritative underneath the navigation redesign. This sequence changes how researchers move among those systems, not what the mapped evidence means.
+- The first shared Relations/Time/Places mapping-content redesign and Home onboarding refinement are now committed; remaining mapping sections, integrated Identity styling, Explore-content overhaul, and Tutorials remain pending.
+- Timeline relationship-line routing/presentation remains unfinished; the `a32ef05` subject-strict relationship semantics and continuous secondary-axis layout remain the foundation.
+- The accepted Network performance architecture from `c8a7c46` remains in place; discarded playback tween/geometry-animation prototypes remain absent.
+
+</details>
+
+<details>
+<summary><strong>Original table-boundary note (historical)</strong></summary>
+
+### Original table-boundary note (historical)
+
+This was the original transition note between the two historical tables: “This is the single authoritative place in the documentation for the cumulative commit trajectory. The table is retained exhaustively, newest first. New rows are appended during synchronized documentation passes.” The two tables are now combined above.
+
+</details>
+
+## 6. Deferred, Archived, and Rolled-Back Work
+
+**Reading note:** This section retains decisions and deferrals as they were recorded at different milestones. Older “future work” language is **historical to its stated checkpoint**, not an automatically current task list. The Maintainer’s Guide owns the active technical backlog; newer milestone entries supersede older expectations where implementation has since changed. In particular, the original “Phase 3 Chart Builder” planning entry below predates the completed Charts II workspace.
 
 ### Loading animation alternatives rolled back or superseded (2026-11-02 to 2026-11-03)
 
@@ -867,638 +1991,3 @@ Future work should treat this path as fragile. If the old names are renamed late
 A responsive panel-sizing experiment attempted to make the shared side panel absolutely positioned at all viewport sizes. It was rolled back because it disrupted the full-size landscape layout and forced scrolling before the map. Future responsive-panel work should be designed as a narrow-window override rather than a universal positioning replacement.
 
 ---
-
-## 4. Full Development History
-
-The entries below retain verified checkpoint commits and an intentionally non-exhaustive account of some intervening development. Older rows and original historical references remain intact. The latest user-confirmed synchronized HEAD is `e96c375`; the present documentation replacements are not yet committed. Older local-only status annotations below are historical at their respective commits. Older local-only status annotations below are historical at their respective commits.
-
-| Date | Commit | Message | Checkpoint note |
-| 2026-11-22 | `e96c375` | Implement Charts appearance customization and adaptive presentation | current synchronized HEAD; Charts II Appearance colors, styles, adaptive labels, resizable panel, and PNG continuity |
-| 2026-11-22 | `8baa733` | Retire legacy Charts I and consolidate Charts II workspace | single public Charts tab; removed `AnalyticsPanel.jsx`; shared helpers/CSS retained |
-| 2026-11-22 | `5c75472` | Implement Charts II chart-local filters and single-series selection | filter scope isolation and compatible single/multi-series value selection |
-| 2026-11 (day unverified) | `1dba2eb` | Refine Charts II recommendations using analytical data suitability | genuine paired/numeric/temporal evidence; coordinates excluded from recommendation evidence |
-| 2026-11 (day unverified) | `60c626a` | Implement customizable Charts II PNG exports | optional title, axes, notes, provenance; white, unclipped figure output |
-| 2026-11 (day unverified) | `afbddee` | Implement Charts II 100 percent stacked bar visualization | normalized additive segment totals, optional absolute values, revised bar labeling |
-| 2026-11 (day unverified) | `7aebea9` | Add Charts II regression coverage and stabilize chronology interactions | Dot Plot selection correction; Scatter/Bubble drag-release regression |
-| 2026-11 (day unverified) | `d3186ed` | Implement Charts II interactive treemaps with hierarchical drill-down | semantic drill-down and stable Other identity |
-| 2026-11 (day unverified) | `bdd7366` | Implement Charts II slope charts with chronological comparisons | canonical two-period comparison |
-| 2026-11 (day unverified) | `ee8e0cc` | Implement Charts II dot plots with readable numerical axes | Dot Plot family |
-| 2026-11 (day unverified) | `b6e0db5` | Implement Charts II box plots with outlier-aware scaling | Box Plot family |
-| 2026-11 (day unverified) | `19fe63b` | Implement Charts II scatter, bubble, and wide-format numerical series | numerical/date comparisons and multi-column measures |
-| 2026-11 (day unverified) | `0cf09fd` | Implement Charts II area charts and precision-aware temporal aggregation | Area/Stacked Area; temporal intervals |
-| 2026-11 (day unverified) | `6f341f3` | Implement Charts II catalogue and eight functional chart families | initial Catalogue + Builder implementation |
-| 2026-11 (day unverified) | `5487cc3` | Synchronize documentation through Timeline II grouped swimlanes | earlier core documentation checkpoint |
-| 2026-11-11 | `ea7cda8` | Remove obsolete src.zip archive | historical checkpoint; intentional deletion of obsolete tracked source ZIP; Charts II work then uncommitted |
-| 2026-11-11 | `f5791f1` | Implement Timeline II adaptive grouped swimlanes and category workspace | grouped researcher-starred category lanes, five-column editor, browser-accepted Timeline-scoped width constraint |
-| 2026-11-10 | `f56e75f` | Synchronize Timeline documentation and organize supporting project resources | preceding core documentation/resource checkpoint |
-| 2026-11-10 | `9c2bb0e` | Generalize Timeline categories across mapped dataset attributes | preceding source-backed category association milestone; three sample datasets |
-| 2026-11-10 | `27c5b52` | Implement Timeline category configuration and curated symbol library | researcher-customized categories, optional colors/symbols, 100 curated Tabler icons |
-| 2026-11-09 | `4702f3b` | Synchronize documentation through shared chronology completion | previous synchronized documentation checkpoint |
-| 2026-11-09 | `4fca872` | Unify shared chronology navigation, filtering, and dataset extent presentation | historical chronology checkpoint; visually accepted; concurrent Charts II work uncommitted |
-| Date not independently established | `9c15045` | Document About manuscript entrance animations | user-confirmed preceding Git history |
-| 2026-11-05 | `71833b3` | Add staggered manuscript entrance animations to About pages | accepted v04 About animation, synchronized last-arriving decorative corners on Feedback; HEAD/origin aligned, working tree contains unrelated changes |
-| Date not independently established | `688bc17` | Retire legacy Timeline I and promote Timeline II | confirmed in prior development context; only active Timeline tab uses the Timeline II implementation |
-| Date not independently established | `d119550` | Added planning docs for a chart builder redesign | confirmed preceding Git-log entry; other-workstream details not audited in this pass |
-| Date not independently established | `c74aa55` | Persist independent chronology sessions across visualizations | confirmed preceding Git-log entry; other-workstream details not audited in this pass |
-| Date not independently established | `50c1be5` | Document persistent loading architecture and first-load Map repair | confirmed preceding Git-log entry; other-workstream details not audited in this pass |
-| 2026-11-03 | `81c3719` | Implement persistent loading animation and repair initial Map mounting | this-conversation loader and Map first-mount repair; pushed; post-push clean status not supplied |
-| 2026-11-01 | `ddee7e2` | Extend Timeline II vertical chronology to full plotting height | user-approved vertical-axis improvement; clean push and working tree |
-| 2026-11-01 | `8cb1cbc` | Unify chronology controls and stabilize Map playback and initialization | shared chronology component/adapter; Map scrubbing and initialization repairs |
-| 2026-11-01 | `2664fbf` | Unify Timeline II chronology navigation and playback controls | Timeline II chronology navigation and playback checkpoint |
-| 2026-11-01 | `8899b8d` | put old planning docs into planning docs folder | intervening planning-doc organization |
-| 2026-11-01 | `3f0ae7c` | Introduce Timeline II and stabilize chronological event packing | initial Timeline II and packing checkpoint |
-| 2026-11-01 | `0f60f5d` | Add Timeline category system design reference | verified in earlier user log; earlier design reference |
-| 2026-11-01 | `481acd9` | Optimize canonical capability readiness calculations | precomputed per-record capability indexes; functional tests accepted; clean sync |
-| 2026-11-01 | `8dd208a` | Restore progressive disclosure for new data uploads | distinguish suggested fresh-upload fields from existing accepted mappings |
-| 2026-11-01 | `64dfbae` | Guard workbook confirmation against stale review results | defense inside confirmation handler |
-| 2026-11-01 | `54dfa2c` | Provide CARTO basemap key to GitHub Pages build | GitHub Actions secret forwarded to Vite build; live-site fix confirmed |
-| 2026-11-01 | `be5fea5` | Synchronize documentation through dependency maintenance and mapping refinements | preceding documentation synchronization |
-| 2026-11-01 | `973d40d` | Refine mapping disclosure and subject selection and repair Review | one-at-a-time Places Add, visible existing mappings, Review fix |
-| 2026-10-31 | `74ca40e` | Upgrade SheetJS and refresh Browserslist compatibility data | official SheetJS 0.20.3; caniuse-lite refresh |
-| 2026-10-31 | `3da30ec` | Remove obsolete MapLibre dependencies from lockfile | orphaned MapLibre lockfile tree removed |
-| 2026-10-31 | `1a58e44` | Synchronize documentation through CARTO map and workbook processing improvements | prior documentation sync |
-| 2026-10-31 | `ae3574c` | Finalize geographic map interface and improve workbook review processing | latest user-confirmed clean, pushed checkpoint; map settings and provisional importer worker |
-| 2026-10-31 | `2684b3c` | Repair geographic map exports and preserve CARTO attribution | embedded raster exports, attribution, corrected zoom-after-drag behavior |
-| 2026-10-31 | `3c0a43e` | Optimize geographic map rendering and interaction performance | optimized tile loading, clipped/culling edges, rapid-interaction recovery |
-| 2026-10-31 | `bc99e31` | Stabilize CARTO world wrapping, high-zoom rendering, and map interactions | continuous horizontal wrapping and zoom-20 rendering |
-| 2026-10-31 | `0794002` | Establish Web Mercator and CARTO multiscale map prototype | initial tiled geographic implementation |
-| 2026-10-31 | `005db62` | Synchronize documentation through editorial gateways and production asset repair | historical documentation checkpoint |
-| 2026-10-31 | `87bc8f0` | Include editorial gateway artwork in production build | published Git message from later user Git log |
-| 2026-10-31 | `2214d8e` | Add editorial entrance animations to onboarding pages | published Git message from later user Git log |
-| 2026-10-31 | `fc42306` | Subject not supplied in sync ritual | historical clean aligned checkpoint at the time; Vite import correction was the accepted functional change |
-| 2026-10-31 | `5d5f528` | Fix editorial gateway asset paths for GitHub Pages | earlier base-path-only fix, superseded by Vite imports |
-| 2026-10-31 | `c150444` | Modify some decorative assets | subsequent artwork adjustments |
-| 2026-10-31 | `dd11827` | Redesign Visualize and Explore no-data onboarding | illustrated no-dataset screens, Data CTA |
-| 2026-10-31 | `1a6554d` | Synchronize documentation through About manuscript and Data responsive refinements | preceding core-documentation synchronization |
-| 2026-10-30 | `5e785ed` | Refine About manuscript design and Data workspace responsiveness | historical clean aligned checkpoint; About corner/wrapping/portrait and laptop Data density |
-| 2026-10-30 | `7df38d0` | Synchronize documentation through Data onboarding and asset organization | preceding documentation synchronization |
-| 2026-10-30 | `c71e265` | Repair asset references after decorative asset renaming | historical accepted checkpoint; user-tested image paths |
-| 2026-10-30 | `52cf1f8` | add and rename decorative assets | role-based naming and asset catalog; 44 experimental labels/frames excluded |
-| 2026-10-30 | `761d72d` | Refine Data workspace controls and sample selection icon | oxblood Edit Mapping and four-tiles icon |
-| 2026-10-30 | `ee4c3ff` | Redesign Data onboarding and refine workspace animations | four Data tabs, status panel, sample actions, Home Get Started |
-| 2026-10-30 | `86cb3d0` | Synchronize documentation through mapping and interface refinements | preceding documentation checkpoint |
-| 2026-10-28 | `87d6955` | Refine informational workspace presentation and restore Creator layout | historical clean synchronized checkpoint |
-| 2026-10-28 | `c0e1fb3` | Add progressive disclosure to relationship time and place mapping | user-activated Add controls; original editor layouts |
-| 2026-10-28 | `55453a8` | Support XLSM workbooks and improve file import errors | workbook acceptance and actionable errors |
-| 2026-10-27 | `3bb71be` | Replace unfinished tutorial entry with coming soon page | public Tutorials placeholder |
-| 2026-10-27 | `fb18799` | Organize historical design assets and retain portrait reference | reference-asset relocation |
-| 2026-10-27 | `263cad0` | Refine homepage styling and add sample dataset artwork | Florence and sample artwork |
-| 2026-10-27 | `2217373` | Unify About workspace editorial styling and refine feedback layout | About/Feedback presentation |
-| 2026-10-26 | `83dd4fa` | Refine sample selection layout for laptop viewports | compact card sizing |
-| 2026-10-26 | `d75fa1e` | Add staggered Sample Selection entrance animations | sample-page animation |
-| 2026-10-26 | `5f4a7f2` | Refine Cartographic Editorial homepage entrance animations | homepage animation |
-| 2026-10-26 | `d443585` | Redesign sample selection and Data entry workspace | sample chooser and Data entry |
-| 2026-10-26 | `4133bb7` | Synchronize documentation through shared mapping redesign | preceding documentation checkpoint |
-| 2026-10-26 | `27e3cf7` | Update interface mockups and genealogy retirement audit | historical clean checkpoint; planning artifacts only |
-| 2026-10-26 | `f3cf4fb` | Refine shared mapping workspace layout and contextual guidance | accepted first-stage Relations/Time/Places UI redesign |
-| 2026-10-26 | `89aaa50` | Align mapping workspace palette and improve contrast | mapping visual palette pass |
-| 2026-10-26 | `60b8643` | Open file chooser directly from homepage | direct upload action |
-| 2026-10-26 | `2117659` | Connect homepage sample button to sample chooser | explicit sample selection |
-| 2026-10-26 | `7280e30` | Refine homepage typography and onboarding layout | two primary actions and editorial banner guidance |
-| 2026-10-26 | `57f6ef3` | Document Adobe filigree asset retirement | documentation checkpoint |
-| 2026-10-26 | `07ec80d` | Retire Adobe filigree assets and decorations | removed five filigree assets and active references |
-| 2026-10-26 | `6667505` | Synchronize documentation through Cartographic Editorial overhaul | preceding documentation checkpoint |
-|---|---|---|---|
-| 2026-10-31 | `973d40d` | Refine mapping disclosure and subject selection and repair Review | latest user-confirmed clean/pushed checkpoint; mapping UI and Review repairs |
-| 2026-10-31 | `74ca40e` | Upgrade SheetJS and refresh Browserslist compatibility data | pinned SheetJS 0.20.3 and refreshed caniuse-lite; user import QA passed |
-| 2026-10-31 | `3da30ec` | Remove obsolete MapLibre dependencies from lockfile | orphaned dependency retirement; archived branch retained |
-| 2026-10-31 | `1a58e44` | Synchronize documentation through CARTO map and workbook processing improvements | preceding core-documentation checkpoint |
-| 2026-10-25 | `4e6fb11` | Refine Cartographic Editorial homepage composition | historical; amended from `c88056d` |
-| 2026-10-25 | `2472c57` | Consolidate primary and secondary button styling | accepted button consolidation |
-| 2026-10-17 | `9e12305` | Document Visualize component ownership and styling architecture | accepted ownership notes |
-| 2026-10-17 | `ad14727` | Refine Visualize workspace styling and viewport | accepted Visualize pass |
-| 2026-10-17 | `aaef93b` | Integrate Cartographic Editorial homepage assets | historical predecessor |
-| 2026-10-15 | `fd02d84` | Build Cartographic Editorial Home composition | historical local-only checkpoint; later superseded |
-| 2026-10-15 | `fe9634b` | Redesign global header with editorial typography | historical prior remote checkpoint |
-| 2026-10-15 | `243ea6c` | Establish Cartographic Editorial typography foundations | prior accepted commit |
-| 2026-10-15 | `889ebae` | Document legacy CSS and cascade verification | prior accepted commit |
-| 2026-10-15 | `2e20bba` | Integrate Cartographic Editorial palette and restore UI contrast | prior accepted commit |
-| 2026-10-15 | `f667329` | Establish Home and Data workspace styling ownership | prior accepted commit |
-| 2026-10-15 | `bc4761e` | Consolidate shared panel and workspace framing styles | prior accepted commit |
-| 2026-10-15 | `98bcbcb` | Consolidate shared button form and card styles | prior accepted commit |
-| 2026-10-15 | `d108bb2` | Migrate shared styles to centralized design tokens | prior accepted commit |
-| 2026-10-15 | `ec5152c` | Establish centralized styling foundations and editorial design plan | prior accepted commit |
-| 2026-10-14 | `2024897` | Synchronize documentation through navigation redesign | preceding documentation checkpoint |
-
-
-
-
-This is the single authoritative place in the documentation for the cumulative commit trajectory. The table is retained exhaustively, newest first. New rows are appended during synchronized documentation passes.
-
-
-
-| Date | Commit | Message | Branch/tag decoration |
-|---|---|---|---|
-| 2026-10-14 | `cd625a2` | Normalize About workspace and feedback | historical checkpoint at time |
-| 2026-10-01 | `f139f53` | Move data mapping into full-page workspace |  |
-| 2026-10-01 | `4a6cd2e` | Support ISO 8601 temporal values |  |
-| 2026-09-30 | `e9ddf1f` | Restructure Explore workspace navigation |  |
-| 2026-09-30 | `f59402f` | Flatten visualization workspace framing |  |
-| 2026-09-30 | `1810bf9` | Simplify visualization workspace navigation |  |
-| 2026-09-30 | `a1f4d56` | Add persistent navigation and workspace state |  |
-| 2026-09-28 | `360682f` | Synchronize documentation through timeline workspace |  |
-| 2026-09-27 | `a32ef05` | Add timeline relationship layout and sample switching fixes |  |
-| 2026-09-27 | `90f93d2` | Refine timeline navigation and temporal axis |  |
-| 2026-09-27 | `d1fd010` | Optimize timeline rendering performance |  |
-| 2026-09-27 | `98f3841` | Refine timeline readability and zoom |  |
-| 2026-09-27 | `0d0380a` | Add evidence-driven timeline categories |  |
-| 2026-09-27 | `d410c3d` | Add vertical timeline orientation |  |
-| 2026-09-27 | `8188ac0` | Add horizontal timeline workspace |  |
-| 2026-09-27 | `d82406e` | Add canonical timeline workspace projection |  |
-| 2026-09-27 | `7eddfb0` | Synchronize documentation through playback performance |  |
-| 2026-09-27 | `c8a7c46` | Optimize network playback and viewport interaction |  |
-| 2026-09-27 | `da87f6d` | Isolate wheel zoom from clustering updates |  |
-| 2026-09-27 | `f34207d` | Isolate viewport panning from graph rendering |  |
-| 2026-09-27 | `a92ec9a` | Restore smooth timeline playback scrubbing |  |
-| 2026-09-27 | `04d8244` | Add direct sample data actions |  |
-| 2026-09-27 | `239f11f` | Refine sample data chooser interaction |  |
-| 2026-09-25 | `852fd72` | Synchronize documentation through Network playback generalization |  |
-| 2026-09-25 | `ddc0aca` | Generalize network playback highlighting | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-09-14 | `cab2ffc` | Stabilize geographic map settings and hover semantics |  |
-| 2026-09-14 | `0afd2dd` | Unify geographic map projection |  |
-| 2026-09-14 | `19345df` | Add map settings and compact visualization controls |  |
-| 2026-09-14 | `e0fd1c0` | Add generalized geographic anchor model |  |
-| 2026-09-14 | `9ecb4f8` | Align geographic network relationship scope |  |
-| 2026-09-07 | `9166e3e` | Synchronize documentation through Search generalization |  |
-| 2026-09-07 | `1810a40` | Replace minimum weight with count conditions | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-09-07 | `656010d` | Align Search scope across Inspector and Analytics |  |
-| 2026-09-07 | `f1a6942` | Generalize Search evidence semantics |  |
-| 2026-09-07 | `2fd0084` | Generalize Search results presentation |  |
-| 2026-09-07 | `aabc8bb` | Generalize Search place semantics |  |
-| 2026-08-31 | `e697bd2` | Refine timeline slider interaction |  |
-| 2026-08-31 | `5e3289c` | Synchronize documentation through subject-aware evidence |  |
-| 2026-08-31 | `b7482cb` | Add homepage tutorial placeholder |  |
-| 2026-08-31 | `ef1c95f` | Project subject-aware Evidence into Inspector |  |
-| 2026-08-31 | `c7069da` | Add canonical subject-aware Evidence assertions |  |
-| 2026-08-31 | `8e69bb6` | Add subject-aware Evidence mapping |  |
-| 2026-08-31 | `3f921d0` | Generalize place and time subject attribution |  |
-| 2026-08-31 | `4405f40` | Guard multi-value place coordinate mapping |  |
-| 2026-08-31 | `d82e669` | Canonicalize entity display labels |  |
-| 2026-08-24 | `1d34b89` | Generalize cardinality and integrated identity mapping |  |
-| 2026-08-21 | `951c21e` | Synchronize documentation for generalized sample datasets |  |
-| 2026-08-21 | `8290696` | Add first-class generalized sample datasets | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-08-21 | `e944e60` | Stabilize generalized correspondence mapping |  |
-| 2026-08-21 | `bc37b08` | Make mapped identity and place subjects authoritative |  |
-| 2026-08-21 | `287ca50` | Generalize Inspector semantics and participant attribution |  |
-| 2026-08-19 | `959d874` | Synchronize documentation for identity and inspector groundwork |  |
-| 2026-08-19 | `4076e5b` | Checkpoint generalized identity mapping groundwork | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-08-19 | `a24034f` | Checkpoint generalized geographic network groundwork |  |
-| 2026-08-19 | `ccc2482` | Complete generalized relationship search helpers |  |
-| 2026-08-19 | `3b3c537` | Use generalized relationships in search and network capabilities |  |
-| 2026-08-19 | `9cc9d93` | Retire legacy temporal interpretation paths |  |
-| 2026-08-19 | `df9511b` | Migrate temporal consumers and checkpoint network foundations |  |
-| 2026-08-19 | `9fe62a3` | Synchronize documentation for temporal and timeline updates |  |
-| 2026-08-17 | `2d5e668` | Generalize temporal mapping and timeline playback | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-08-17 | `ce46f08` | Derive timeline from canonical temporal assertions |  |
-| 2026-08-17 | `ac95c13` | Bridge canonical temporal assertions to runtime rows |  |
-| 2026-08-17 | `ba07895` | Add temporal assertions foundation |  |
-| 2026-08-09 | `6fd19e0` | Refine network availability for generalized relationships |  |
-| 2026-08-09 | `358202c` | Generalize workbook join validation |  |
-| 2026-08-08 | `c600295` | Make generalized mappings authoritative for workbook import |  |
-| 2026-08-08 | `0fa8925` | Make generalized mappings authoritative for single-table import |  |
-| 2026-08-08 | `858ac26` | Synchronize documentation for Phase 2 mapping redesign |  |
-| 2026-08-08 | `134c67c` | Refine upload review checkpoint |  |
-| 2026-08-08 | `0ae7e03` | Refine evidence mapping workflow |  |
-| 2026-08-08 | `967b293` | Generalize relationship mapping workflow |  |
-| 2026-08-08 | `90a3a3b` | Generalize place mapping workflow |  |
-| 2026-08-08 | `fb400db` | Fix time examples for row-oriented tables |  |
-| 2026-08-08 | `14f48cb` | Add upload table orientation guidance |  |
-| 2026-08-08 | `0aa0c21` | Improve temporal data mapping workflow |  |
-| 2026-08-08 | `cc43c9e` | Improve upload data preview |  |
-| 2026-08-08 | `050e3ed` | Mount universal mapper for interactive testing |  |
-| 2026-08-08 | `3b30367` | Add reversible universal mapping edits |  |
-| 2026-08-08 | `2d96b1a` | Add operational related sheet connections |  |
-| 2026-08-08 | `8b52af6` | Add repeated data orientation mapping |  |
-| 2026-08-08 | `3153861` | Make universal sheet purposes operational |  |
-| 2026-08-08 | `157574e` | Add editable universal mapping suggestions |  |
-| 2026-08-08 | `7588269` | Add universal upload workflow prototype |  |
-| 2026-08-07 | `e10c062` | Synchronize documentation for universal data phase 1 |  |
-| 2026-08-07 | `301a1e1` | Add universal runtime compatibility boundary | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-08-07 | `ebcd7d0` | Add universal transformation helpers |  |
-| 2026-08-07 | `eda0b88` | Add generalized source sheet model |  |
-| 2026-08-07 | `a05130f` | Add universal mapping schema foundation |  |
-| 2026-07-24 | `8f19997` | Activate canonical genealogy imports |  |
-| 2026-07-24 | `2ef36a6` | Add genealogy mapping workflow |  |
-| 2026-07-24 | `1e661da` | Add genealogy mapping schema and validation |  |
-| 2026-07-24 | `94b9d46` | Add dataset profile selection and routing |  |
-| 2026-07-24 | `402336f` | Add genealogy normalization profile |  |
-| 2026-07-24 | `ba844cc` | Switch imports to canonical normalization source |  |
-| 2026-07-24 | `53c1116` | Add normalization shadow comparison |  |
-| 2026-07-24 | `6c04e84` | Add normalized model compatibility adapter |  |
-| 2026-07-24 | `1e17596` | Add correspondence normalization profile |  |
-| 2026-07-24 | `d612c3e` | Add normalized data model foundations |  |
-| 2026-07-24 | `3aaee49` | Add normalized data model foundations |  |
-| 2026-07-24 | `805163d` | update changlog |  |
-| 2026-07-24 | `a09716c` | Synchronize documentation for first-time tutorial |  |
-| 2026-07-14 | `619bab0` | Restore stable tutorial attention behavior | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-07-14 | `d3c3c24` | Refine tutorial presentation and dialogue layout |  |
-| 2026-07-14 | `297430f` | Improve tutorial accessibility and focus handling |  |
-| 2026-07-14 | `8241f3a` | Harden tutorial recovery and anchor resolution |  |
-| 2026-07-14 | `16cf7cc` | Complete tutorial export and finish flow |  |
-| 2026-07-14 | `a52b9ca` | Add working set tutorial explanation |  |
-| 2026-07-14 | `783acc1` | Add Browse and applied search tutorial guidance |  |
-| 2026-07-14 | `67fc073` | Guide tutorial navigation into Explore |  |
-| 2026-07-14 | `48f680a` | Add Inspector tutorial guidance and placement |  |
-| 2026-07-14 | `ed6466f` | Add interactive timeline tutorial guidance |  |
-| 2026-07-14 | `da0a472` | Anchor tutorial to visualization and timeline controls |  |
-| 2026-07-14 | `84fe3cc` | Add tutorial foundation and step state machine |  |
-| 2026-06-22 | `42149ab` | Add metadata refinement and connected entity search |  |
-| 2026-06-22 | `14aa380` | Separate Search scope from playback visibility |  |
-| 2026-06-22 | `f01ed59` | Build unified Search metadata records |  |
-| 2026-06-22 | `b1a32b6` | Expand Browse and Refine index coverage |  |
-| 2026-06-22 | `e7dfb3d` | Update PROJECT_WORKFLOW_CHARTER.md |  |
-| 2026-06-22 | `8a5c6f3` | Update README.md with AI disclosure |  |
-| 2026-06-22 | `07cb6be` | Update README.md |  |
-| 2026-06-22 | `03e3e82` | Create README.md redirect for GitHub users |  |
-| 2026-06-22 | `3fc7331` | Restructure and audit core documentation |  |
-| 2026-06-22 | `a9b9c81` | Add core documentation restructuring plan |  |
-| 2026-06-22 | `70d8b31` | Move documentation governance protocol to core documentation |  |
-| 2026-06-22 | `6d05409` | Add core documentation governance protocol |  |
-| 2026-06-22 | `dc5f20b` | Add core documentation governance protocol |  |
-| 2026-06-22 | `58fdd08` | Refresh README screenshots and preserve interface history |  |
-| 2026-06-21 | `7df46a8` | Restore extracted workspace stylesheet imports |  |
-| 2026-06-21 | `8f2d1ca` | Refine feedback form and visualization control layering |  |
-| 2026-06-21 | `639e30f` | Extract Inspector stylesheet | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-21 | `f7e885c` | Extract Analytics stylesheet |  |
-| 2026-06-21 | `19acc89` | Extract Search workspace stylesheet |  |
-| 2026-06-21 | `407becc` | Remove obsolete column mapping stylesheet rules |  |
-| 2026-06-21 | `5c0532d` | Remove residual Learn More global stylesheet rules |  |
-| 2026-06-21 | `7b9ddf3` | Extract column mapping modal stylesheet |  |
-| 2026-06-21 | `264e8d9` | Remove obsolete Data workspace stylesheet rules |  |
-| 2026-06-19 | `0c5a219` | Add Learn More section dividers | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-19 | `795f0f7` | Restore Explore folio corner containment |  |
-| 2026-06-19 | `98cccf5` | Warm Learn More parchment surfaces |  |
-| 2026-06-19 | `59f7d69` | Refine Learn More expanded biography layout |  |
-| 2026-06-19 | `39983e3` | Refine Learn More project information layout |  |
-| 2026-06-19 | `2307d5a` | Stabilize visualization header entrance and Explore folio frame |  |
-| 2026-06-19 | `7a115f7` | Fix Explore folio frame clipping |  |
-| 2026-06-19 | `81f6311` | Add Learn More author assets |  |
-| 2026-06-19 | `9fbd200` | Expand Learn More author and GitHub sections |  |
-| 2026-06-19 | `e5f832c` | Animate Explore workspace transitions | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-19 | `d3e4625` | Open Inspector over Explore workspace |  |
-| 2026-06-19 | `7942fda` | Convert Explore Browse to compact ledgers |  |
-| 2026-06-19 | `efd6d95` | Compact Explore Build and Capabilities layouts |  |
-| 2026-06-19 | `a793c06` | Make Explore Refine facets route-aware |  |
-| 2026-06-19 | `3e96f59` | Refine Explore facet panel behavior |  |
-| 2026-06-19 | `7e5df91` | Polish Explore Results ledger density |  |
-| 2026-06-19 | `dd09003` | Match Explore Results pagination to Inspector |  |
-| 2026-06-19 | `1542c04` | Refine Explore Results ledger |  |
-| 2026-06-18 | `d04eaf6` | Hide theme menu entry and animate learn more cards |  |
-| 2026-06-18 | `342e606` | Simplify upload step transitions |  |
-| 2026-06-18 | `35946d4` | Animate upload mapping transitions |  |
-| 2026-06-18 | `18419a5` | Refine workbook sheet assembly layout |  |
-| 2026-06-18 | `3d2704e` | Refine workbook mapping controls |  |
-| 2026-06-18 | `e12862c` | Refine review warning display |  |
-| 2026-06-18 | `4330312` | Refine preview and places mapping details |  |
-| 2026-06-18 | `b9c113c` | Refine relationship mapping layout |  |
-| 2026-06-18 | `d3bda6f` | Refine places mapping layout |  |
-| 2026-06-17 | `74db963` | Refine Inspector reference layout and record tables | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-17 | `d6baedf` | Refine Inspector reference layout and record tables |  |
-| 2026-06-17 | `05fe40f` | Keep visualizations mounted behind Inspector overlay |  |
-| 2026-06-17 | `306650f` | Fix Inspector person navigation from geographic context |  |
-| 2026-06-16 | `dd8e9c5` | Refresh documentation for animation and inspector milestones |  |
-| 2026-06-16 | `bd9b807` | Refine inspector workspace styling | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-16 | `2bd6b3a` | Center force network on dense cluster |  |
-| 2026-06-16 | `7c1f9fd` | Polish chart builder controls |  |
-| 2026-06-16 | `6dfd4c6` | Animate chart workspace reveal |  |
-| 2026-06-16 | `7af288f` | Refine visualization workspace transitions |  |
-| 2026-06-16 | `ef8e188` | Add workspace entrance animations |  |
-| 2026-06-16 | `3777fbc` | Correct filigree asset spelling |  |
-| 2026-06-16 | `f8ea541` | add a filegree asset |  |
-| 2026-06-16 | `6f008ce` | Redesign data workspace landing page |  |
-| 2026-06-16 | `68f99da` | add some homepage assets |  |
-| 2026-06-16 | `bb971a5` | Redesign Peridot homepage |  |
-| 2026-06-16 | `e0d2399` | Finalize map export options and ignore design source files |  |
-| 2026-06-16 | `499acc7` | Improve map export annotation readability |  |
-| 2026-06-16 | `d835953` | Clarify capability and availability wording |  |
-| 2026-06-16 | `97843c7` | Refine capability wording for point datasets |  |
-| 2026-06-16 | `7d2b888` | Fix route capability wording for point datasets |  |
-| 2026-06-16 | `212fb4a` | Track Peridot branding and palette assets |  |
-| 2026-06-16 | `72bcae7` | Add Peridot logo branding assets |  |
-| 2026-06-13 | `954f553` | Refresh documentation for analytics layout and theme milestone |  |
-| 2026-06-13 | `e50ebf6` | Scope chart palette imports to chart series | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-13 | `6334840` | Route remaining analytics chart marks through theme series |  |
-| 2026-06-13 | `db2bea6` | Anchor analytics chart titles and restore vertical bar default |  |
-| 2026-06-13 | `a1ce00a` | Tighten analytics chart canvas spacing |  |
-| 2026-06-13 | `69ea23a` | Simplify analytics legend rows |  |
-| 2026-06-13 | `b868bb3` | Add analytics chart method labels |  |
-| 2026-06-13 | `b0a4b65` | Improve analytics bar labels and metric options |  |
-| 2026-06-12 | `8b3ead9` | Resize analytics builder for quarter-panel layout |  |
-| 2026-06-12 | `f9a74fd` | Refine tabbed analytics builder proportions |  |
-| 2026-06-12 | `d7f10c9` | Add tabbed analytics chart builder |  |
-| 2026-06-12 | `e712102` | Refresh documentation for chart and theme milestones |  |
-| 2026-06-12 | `f143de6` | Refresh documentation for chart and theme milestones |  |
-| 2026-06-12 | `10f6e19` | Polish analytics chart axes and summary panels |  |
-| 2026-06-12 | `880cfff` | Add manual analytics series selection |  |
-| 2026-06-12 | `cd7dfff` | Fix grouped chart count buckets |  |
-| 2026-06-12 | `699e33a` | Default chart date axis to year |  |
-| 2026-06-12 | `805f770` | Harden analytics chart logic |  |
-| 2026-06-12 | `8f55a47` | Add finite chart color library |  |
-| 2026-06-12 | `5e895ad` | Refine chart dropdown and series contrast |  |
-| 2026-06-12 | `ab6dc8b` | Refine chart workspace controls and colors |  |
-| 2026-06-12 | `2e57f42` | Compact chart controls sidebar |  |
-| 2026-06-12 | `c5ff6c6` | Polish chart controls sidebar |  |
-| 2026-06-11 | `7396864` | Add light navy sea map treatment |  |
-| 2026-06-11 | `aba420e` | Rebalance map palette and label density |  |
-| 2026-06-11 | `cc21008` | Polish visualization header tabs |  |
-| 2026-06-11 | `15985bf` | Improve visualization edge handles and map utility buttons |  |
-| 2026-06-11 | `cb26bdf` | Refine visualization bar toggle ornament |  |
-| 2026-06-11 | `e643a16` | Route Inspector colors through theme roles |  |
-| 2026-06-11 | `790ec66` | Clean up theming design audit files |  |
-| 2026-06-11 | `81dd7af` | Apply upload guide color direction and dropdown layering |  |
-| 2026-06-11 | `aa00efb` | Apply upload guide design direction |  |
-| 2026-06-11 | `0a686fe` | Add built-in Peridot palette presets |  |
-| 2026-06-11 | `4747639` | Anchor imported palettes to darkest and lightest roles |  |
-| 2026-06-11 | `ee4f75e` | Route whole-app palette imports through foundation tones |  |
-| 2026-06-11 | `1ba1682` | Improve palette image swatch detection |  |
-| 2026-06-11 | `e35ab68` | Add image palette import by theme area |  |
-| 2026-06-11 | `6e8dfa6` | Add palette role dashboard |  |
-| 2026-06-11 | `fed7d2e` | Add semantic palette system and theme toggle |  |
-| 2026-06-11 | `034ec67` | Centralize explicit color palette values |  |
-| 2026-06-10 | `d52392a` | Add capabilities tab to advanced search | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-10 | `3d296cb` | Route Explore directly to advanced search |  |
-| 2026-06-10 | `37f2755` | Clarify structured search Boolean labels |  |
-| 2026-06-10 | `13fd533` | Add Boolean structured search criteria |  |
-| 2026-06-10 | `86952c8` | Improve advanced search moss contrast |  |
-| 2026-06-10 | `d7b0e2f` | Add dataset-wide advanced search browse indexes |  |
-| 2026-06-10 | `8104739` | Wire structured criteria filtering |  |
-| 2026-06-10 | `c8cbd5e` | Add structured search suggestions |  |
-| 2026-06-10 | `e3c36e1` | Condense advanced search results layout |  |
-| 2026-06-10 | `a21bbd9` | Refine advanced search layout and palette |  |
-| 2026-06-10 | `e12ed84` | Add search facets and capability filters |  |
-| 2026-06-10 | `4dc1bdf` | Add search result Inspector handoff |  |
-| 2026-06-10 | `2135c1b` | Refresh documentation for structural cleanup milestone |  |
-| 2026-06-06 | `fcd2e1f` | Document timeline scope and clamp chart date range |  |
-| 2026-06-06 | `84e6a4f` | Add code structure audit planning document |  |
-| 2026-06-06 | `55a368c` | Remove dormant MapLibre preview code |  |
-| 2026-06-06 | `876eb1d` | Document Analytics chart extension contract |  |
-| 2026-06-06 | `0f712b5` | Add extracted evidence field controls |  |
-| 2026-06-06 | `338f204` | Restore evidence action normalization helper |  |
-| 2026-06-06 | `1fe9f82` | Extract column mapping field controls |  |
-| 2026-06-06 | `ce7c092` | Extract column mapping modal UI config |  |
-| 2026-06-06 | `5e8e022` | Reduce left control panel to compact Inspector shell |  |
-| 2026-06-06 | `e8ec660` | Extract embedded sample data from App |  |
-| 2026-06-06 | `133fd91` | Add developer orientation comments across source |  |
-| 2026-06-06 | `cfe8207` | Refresh documentation for visualization workspace consolidation |  |
-| 2026-06-06 | `43fa09d` | Remove obsolete export workspace route | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-06 | `aca8f1f` | Update visualization export wiring |  |
-| 2026-06-06 | `b6eb7c0` | Move chart export into visualization header |  |
-| 2026-06-06 | `0b0cacd` | Simplify hamburger menu and add Explore workspace |  |
-| 2026-06-06 | `47aaa03` | Remove redundant chart workspace header |  |
-| 2026-06-06 | `675a655` | Fit charts to workspace and minimize map overlays |  |
-| 2026-06-06 | `b10a68b` | Compact visualization header and timeline controls |  |
-| 2026-06-06 | `b0d83fb` | Simplify chart workspace and add bottom timeline scrubber |  |
-| 2026-06-06 | `7fcb348` | Document flexible data and chart capability milestone |  |
-| 2026-06-06 | `08b628b` | Use include and ignore checkboxes for evidence fields | (HEAD -> main, origin/main, origin/HEAD) |
-| 2026-06-06 | `231ccde` | Accept generic chart records |  |
-| 2026-06-06 | `b19019e` | Generalize user-facing language beyond correspondence |  |
-| 2026-06-06 | `ab7affa` | Clean up flexible Analytics chart controls |  |
-| 2026-06-06 | `ec6a70e` | Support record-count sunburst charts |  |
-| 2026-06-06 | `596b958` | Support record-count histograms |  |
-| 2026-06-06 | `b2dcde5` | Add flexible Analytics chart variables |  |
-| 2026-06-06 | `6d0b37c` | Wire visualization availability state |  |
-| 2026-06-06 | `b273a27` | Make visualization menu hover more forgiving |  |
-| 2026-06-06 | `aae209a` | Document data capability mapping milestone |  |
-| 2026-06-06 | `e7c3b57` | Add point-location role mapping |  |
-| 2026-06-06 | `85f3d46` | Move data capability audit to mapping review |  |
-| 2026-06-06 | `eef9cfe` | Show read-only data capability summaries |  |
-| 2026-06-06 | `1889b95` | Add data capability audit helper |  |
-| 2026-06-06 | `bfc8872` | Add Peridot data capability model plan |  |
-| 2026-06-05 | `4f280a0` | Use gold accent for workspace button hover states |  |
-| 2026-06-05 | `737a970` | Apply Home-style visual system to full workspaces |  |
-| 2026-06-05 | `c0ea2ab` | Refine Home workspace layout and menu access |  |
-| 2026-06-05 | `a9a25f1` | Remove Home navigation from active workspaces |  |
-| 2026-06-05 | `88ab302` | Refine Home workspace card styling |  |
-| 2026-06-04 | `b24e19a` | Link Inspector directed route rows |  |
-| 2026-06-04 | `ed0f2c7` | Make compact Inspector summary tiles open workspace |  |
-| 2026-06-04 | `ace7f52` | Fix linked letter person and place navigation |  |
-| 2026-06-04 | `0a1b57a` | Link letter detail people and places |  |
-| 2026-06-04 | `6f67ac7` | Move linked letters into Inspector history |  |
-| 2026-06-04 | `6c38fac` | Open Inspector person and place links in workspace |  |
-| 2026-06-04 | `6994b35` | Reduce compact Inspector content |  |
-| 2026-06-04 | `f2336f8` | Apply Inspector shell palette refinements |  |
-| 2026-06-04 | `45d1c8b` | Adjust Inspector clickable object palette |  |
-| 2026-06-04 | `e02a4a3` | Refine dual-mode Inspector visual treatment |  |
-| 2026-06-04 | `224bf5d` | Refine dual-mode Inspector close and expand behavior |  |
-| 2026-06-04 | `7a9e310` | Route menu Inspector away from compact panel |  |
-| 2026-06-04 | `99c0b99` | Track compact Inspector presentation mode |  |
-| 2026-06-04 | `c2808ce` | Add inert Inspector presentation mode state |  |
-| 2026-06-04 | `aa90665` | Organize project documentation |  |
-| 2026-06-04 | `3377274` | Prepare shared Inspector content boundary |  |
-| 2026-06-04 | `b7e3edd` | Add Inspector workspace design contract |  |
-| 2026-06-04 | `b47fda2` | Refresh documentation for workspace routing milestone |  |
-| 2026-06-02 | `55fae50` | Update routing contract after workspace promotions |  |
-| 2026-06-02 | `82178c5` | Promote Search to full workspace |  |
-| 2026-06-02 | `2c53796` | Promote Export to full workspace |  |
-| 2026-06-02 | `8fc96b3` | Extract Peridot workspace config |  |
-| 2026-06-02 | `9cd3f3f` | Clean workspace routing comments |  |
-| 2026-06-02 | `9240745` | Fix Visualizations workspace export |  |
-| 2026-06-02 | `25fc046` | Extract Peridot visualizations workspace |  |
-| 2026-06-02 | `fcf6bb6` | Extract Peridot data workspace |  |
-| 2026-06-02 | `9428766` | Extract Peridot theme workspace |  |
-| 2026-06-02 | `18c2912` | Extract Peridot home workspace |  |
-| 2026-06-02 | `6c16403` | Extract Peridot hamburger menu |  |
-| 2026-06-02 | `30b114b` | Add Peridot routing contract audit |  |
-| 2026-06-02 | `8384dee` | Fit Analytics workspace preview |  |
-| 2026-06-02 | `7a8ed7d` | Compact Visualizations workspace controls |  |
-| 2026-06-02 | `9b67d28` | Move Theme to full workspace |  |
-| 2026-06-02 | `bb0c0ed` | Refine hamburger menu visual layout |  |
-| 2026-06-02 | `2336915` | Route mapped imports to visualization workspace |  |
-| 2026-06-02 | `576bb72` | Fix visualization workspace viewport initialization |  |
-| 2026-06-02 | `56f2a49` | Add internal workspace state model |  |
-| 2026-06-02 | `b42f6fd` | Add Peridot interface redesign plan |  |
-| 2026-06-02 | `10017ec` | Document workbook import and Inspector profile milestone |  |
-| 2026-06-02 | `0f72182` | Remove redundant Inspector correspondents summary row |  |
-| 2026-06-02 | `8564e33` | Fix place profiles and split directed route summaries |  |
-| 2026-06-02 | `b1ef30a` | Refine Inspector profile relationship sections |  |
-| 2026-06-02 | `d9f0090` | Improve Inspector person place profiles and linked letter navigation |  |
-| 2026-06-02 | `9c8971b` | Display custom Inspector fields in linked letters |  |
-| 2026-06-02 | `5f25322` | Select custom Inspector fields from joined workbook sheets |  |
-| 2026-06-02 | `964ce57` | Import multi-sheet workbooks by unique ID joins |  |
-| 2026-06-02 | `ac31c38` | Configure workbook sheet joins by unique ID |  |
-| 2026-06-02 | `77b1575` | Preview multi-sheet workbook mapping |  |
-| 2026-06-02 | `2a800b3` | Add Peridot workbook mapping model helper |  |
-| 2026-06-02 | `dd22abc` | Stabilize multi-sheet workbook staging |  |
-| 2026-06-02 | `f503df6` | Refresh documentation with full commit history |  |
-| 2026-06-02 | `4d11cb3` | Add Peridot workbook parsing helper |  |
-| 2026-06-02 | `212d689` | Clarify column mapping cancel and import actions |  |
-| 2026-06-02 | `d270c9d` | Import mapped arbitrary CSV and TSV data |  |
-| 2026-06-02 | `a058730` | Add Peridot column mapping workspace |  |
-| 2026-06-02 | `a4062ba` | Stage arbitrary CSV and TSV column mapping uploads |  |
-| 2026-06-02 | `bba50e1` | Add Peridot column mapping helper |  |
-| 2026-06-02 | `f432ccc` | Remove legacy three-file upload workflow |  |
-| 2026-06-02 | `44d2042` | Document single Peridot CSV upload workflow |  |
-| 2026-06-02 | `930c807` | Persist Peridot upload summary in Data Inputs |  |
-| 2026-06-02 | `cbc35d0` | Add single Peridot CSV upload workflow |  |
-| 2026-06-01 | `61f3c4b` | Add Peridot CSV validation summary helper |  |
-| 2026-06-01 | `3d5fb79` | Add Peridot CSV template normalizer |  |
-| 2026-06-01 | `8e7a8a4` | Add Peridot CSV schema contract |  |
-| 2026-05-23 | `9453232` | Document Search and Filter layout and Analytics polish |  |
-| 2026-05-23 | `bdd0843` | Refine expanded analytics backdrop contrast |  |
-| 2026-05-23 | `64d44f2` | Improve analytics tooltip contrast |  |
-| 2026-05-23 | `e02c1de` | Move filter status above action buttons |  |
-| 2026-05-23 | `8bfd422` | Refine compact Search and Filter layout |  |
-| 2026-05-23 | `b2147bb` | Consolidate Search and Filter layout |  |
-| 2026-05-23 | `1ae3f03` | Document Search and Filter milestone |  |
-| 2026-05-23 | `01de3d8` | Show filter update status before applying changes |  |
-| 2026-05-23 | `c98c242` | Split route filters by place and people |  |
-| 2026-05-23 | `1578d10` | Add route filter |  |
-| 2026-05-23 | `ea19fc8` | Improve predictive suggestion menu scrolling |  |
-| 2026-05-23 | `9c179f7` | Add predictive suggestions for person and place filters |  |
-| 2026-05-23 | `cc26530` | Add person and place filters |  |
-| 2026-05-23 | `019acef` | Add clear filters and reset playback on apply |  |
-| 2026-05-23 | `d5e7667` | Apply Search and Filter changes on request |  |
-| 2026-05-23 | `8912b8f` | Strengthen full-file review workflow rule |  |
-| 2026-05-23 | `b348f12` | Move date range controls into Search and Filter |  |
-| 2026-05-23 | `a890b13` | Move minimum weight filter into Search and Filter |  |
-| 2026-05-23 | `e6b477d` | Add Search and Filter panel shell |  |
-| 2026-05-23 | `2eb3461` | Document Search and Filter panel contract |  |
-| 2026-05-23 | `9d24fbf` | Document Analytics feature milestone |  |
-| 2026-05-23 | `3352403` | Fix Analytics expanded overlay and variable options |  |
-| 2026-05-23 | `4b631be` | Refine Analytics variables and expanded chart overlay |  |
-| 2026-05-23 | `416dced` | Refine Analytics chart icons and expanded view |  |
-| 2026-05-23 | `2320bfe` | Expand Analytics chart controls |  |
-| 2026-05-23 | `961bf45` | Clarify Analytics chart variable controls |  |
-| 2026-05-23 | `4b90e4e` | Add additional Analytics chart types |  |
-| 2026-05-23 | `caddd3c` | Refine Analytics chart panel interactions |  |
-| 2026-05-23 | `04d95a7` | Add Analytics side panel charts |  |
-| 2026-05-14 | `b5dc2b5` | Document legacy continuation after pausing MapLibre work |  |
-| 2026-05-14 | `2d76839` | Fix linked letter encoding display | (tag: checkpoint-maplibre-migrated-overlay-paused, origin/maplibre-native-geographic-view, maplibre-native-geographic-view) |
-| 2026-05-14 | `2c0be03` | Make MapLibre people view and force-directed fallback work |  |
-| 2026-05-14 | `5762d0e` | Refresh documentation for MapLibre migrated overlay milestone |  |
-| 2026-05-14 | `268b18c` | Add MapLibre hover feedback |  |
-| 2026-05-14 | `8137db7` | Curve MapLibre aggregated routes |  |
-| 2026-05-13 | `c0a4b8a` | Restore MapLibre migrated overlay after extraction regression |  |
-| 2026-05-13 | `dd148e1` | Extract MapLibre cluster and aggregate IDs |  |
-| 2026-05-13 | `57d3cc1` | Add MapLibre cluster count labels |  |
-| 2026-05-13 | `c7da28c` | Add MapLibre cluster selection feedback |  |
-| 2026-05-13 | `2ccaaeb` | Show MapLibre aggregated route details in inspector |  |
-| 2026-05-13 | `084ce9d` | Enrich MapLibre aggregated route inspector payload |  |
-| 2026-05-13 | `526534a` | Aggregate MapLibre routes between visible endpoints |  |
-| 2026-05-13 | `8a563cc` | Hide MapLibre cluster member nodes |  |
-| 2026-05-13 | `be7d9ae` | Route MapLibre cluster clicks to inspector |  |
-| 2026-05-13 | `1e8456f` | Add dynamic MapLibre cluster diagnostic |  |
-| 2026-05-13 | `bb11f6a` | Add static MapLibre cluster lifecycle diagnostic |  |
-| 2026-05-13 | `3f26cc2` | Broaden MapLibre lifecycle diagnostics |  |
-| 2026-05-13 | `3646cc6` | Refresh documentation for MapLibre native branch handoff |  |
-| 2026-05-13 | `4c9ed6f` | Extract MapLibre layer configuration |  |
-| 2026-05-13 | `c420a5d` | Extract MapLibre feature builders |  |
-| 2026-05-13 | `b7fb244` | Add MapLibre native geographic view plan |  |
-| 2026-05-13 | `10051c0` | Add MapLibre selected filter layers | (tag: checkpoint-maplibre-preview-prototype) |
-| 2026-05-13 | `b7c61a2` | Add MapLibre route hit layer |  |
-| 2026-05-13 | `f2fdcf9` | Add cursor-only MapLibre hover detection |  |
-| 2026-05-13 | `5f3f053` | Route MapLibre feature clicks to inspector |  |
-| 2026-05-13 | `2597462` | Remove MapLibre SVG node probe overlay |  |
-| 2026-05-13 | `7eebdee` | Add simple MapLibre node layer probe |  |
-| 2026-05-13 | `1f0d322` | Render MapLibre route probes as GeoJSON layer |  |
-| 2026-05-13 | `443d7ac` | Add MapLibre route projection probe |  |
-| 2026-05-12 | `6096069` | Add MapLibre projection probe |  |
-| 2026-05-12 | `33afaae` | Add MapLibre preview diagnostics |  |
-| 2026-05-12 | `da1463f` | Add MapLibre workspace preview path |  |
-| 2026-05-12 | `93f0961` | Add isolated MapLibre map stage |  |
-| 2026-05-12 | `1d816a5` | Add MapLibre hybrid map-system audit |  |
-| 2026-05-12 | `4e08720` | Direct workflow charter baseline reference to changelog |  |
-| 2026-05-12 | `d893050` | Refresh documentation for side panel rail tabs |  |
-| 2026-05-12 | `8539c68` | Clarify timeline rail icon |  |
-| 2026-05-12 | `def4265` | Add timeline side panel tab |  |
-| 2026-05-12 | `6a672d9` | Add export side panel tab |  |
-| 2026-05-12 | `f1394c6` | Add data inputs side panel tab |  |
-| 2026-05-12 | `5b38c4e` | Update shared panel rail icons |  |
-| 2026-05-04 | `dcce703` | Style shared panel icon rail |  |
-| 2026-05-04 | `2acdb91` | Remove obsolete side panel top tabs |  |
-| 2026-05-04 | `6142817` | Anchor shared panel icon rail to panel shell |  |
-| 2026-05-04 | `4653f20` | Remove obsolete audit documentation listings |  |
-| 2026-05-04 | `8882b69` | Remove obsolete audit documentation references |  |
-| 2026-05-04 | `06c1843` | Clean shared side panel source comments |  |
-| 2026-05-04 | `f7407eb` | Refresh documentation for shared panel baseline |  |
-| 2026-05-04 | `4a17d1c` | Make inspector panel content-only |  |
-| 2026-05-04 | `b62c74b` | Use shared side panel shell |  |
-| 2026-05-04 | `e41d8bc` | Split side panel open state from active tab |  |
-| 2026-05-04 | `88b0c19` | Rename inspector panel shell for left dock |  |
-| 2026-05-04 | `2126c9b` | Open inspector in left panel dock |  |
-| 2026-05-04 | `f98b3e5` | Add panel mode switcher tabs |  |
-| 2026-05-04 | `df4075a` | Move side panel toggles to left rail |  |
-| 2026-05-04 | `17cf020` | Enforce single active side panel |  |
-| 2026-05-04 | `0063145` | Use menu icon for inspector toggle |  |
-| 2026-05-02 | `63003c1` | Group cluster inspector members by place |  |
-| 2026-05-02 | `fed4b5b` | Use volume-based zoom-responsive cluster sizing |  |
-| 2026-05-02 | `3187d05` | Increase dynamic node radius contrast |  |
-| 2026-05-02 | `ed39e55` | Make cluster nodes open actionable inspector views |  |
-| 2026-05-02 | `04eb8b5` | Refresh documentation for safe year-based baseline |  |
-| 2026-05-02 | `57b946e` | Make timeline year-based |  |
-| 2026-04-30 | `79d5ae1` | Remove show all dates shortcut |  |
-| 2026-04-30 | `3fedd97` | Tighten minimum weight helper text |  |
-| 2026-04-30 | `96064e2` | Set people as default view and simplify view buttons |  |
-| 2026-04-30 | `fa486b8` | Remove orphaned panel helper functions |  |
-| 2026-04-30 | `2d627e2` | Remove legacy inspector bodies from App |  |
-| 2026-04-30 | `149315a` | Extract inspector node view |  |
-| 2026-04-30 | `003fae1` | Split empty cluster and edge inspector views |  |
-| 2026-04-30 | `c0a15fd` | Extract inspector shell and router |  |
-| 2026-04-30 | `6a32004` | Harden inspector contract in place |  |
-| 2026-04-30 | `86ad35f` | Extract left control panel component |  |
-| 2026-04-30 | `113fb84` | Harden control panel contract in place |  |
-| 2026-04-22 | `4236952` | Append full development history to changelog |  |
-| 2026-04-22 | `391174a` | Refresh Peridot documentation for publication baseline |  |
-| 2026-04-22 | `951b450` | Replace embedded sample data with current publication dataset |  |
-| 2026-04-22 | `f859595` | Add itch.io HTML5 build packaging support |  |
-| 2026-04-22 | `f959fac` | Use countries50m as the fixed basemap |  |
-| 2026-04-21 | `b1fdbd5` | Update maintainer handoff documentation |  |
-| 2026-04-21 | `dd12281` | Normalize summary panel spacing |  |
-| 2026-04-21 | `4fdaf73` | Rename timeline panel heading |  |
-| 2026-04-21 | `db5bb1f` | Tighten left panel organization |  |
-| 2026-04-21 | `ba746b1` | Simplify theme panel text |  |
-| 2026-04-21 | `c0fc600` | Retune active country fills for peridot and modern maps | (tag: checkpoint-map-theme-c0fc600) |
-| 2026-04-21 | `56f0080` | Highlight countries containing visible nodes |  |
-| 2026-04-21 | `5cbe9c3` | Refine early modern node hover and selected colors |  |
-| 2026-04-21 | `850176f` | Refine hovered and selected node states |  |
-| 2026-04-21 | `3e43dc9` | Add hovered node color feedback |  |
-| 2026-04-21 | `919ea5f` | Increase green layering in peridot map theme |  |
-| 2026-04-21 | `c666d29` | Add peridot default app theme |  |
-| 2026-04-20 | `9be5f4a` | Tighten maintainer docs audit fixes |  |
-| 2026-04-20 | `43403c3` | Restore detail to maintainer documentation |  |
-| 2026-04-20 | `02ecb11` | Document inspector navigation feature set |  |
-| 2026-04-20 | `5af819b` | Add inspector back navigation |  |
-| 2026-04-20 | `b3e6fe8` | Add place navigation sections to person inspector |  |
-| 2026-04-20 | `6772c1d` | Clarify connected correspondents count label |  |
-| 2026-04-20 | `ab0e1fe` | Show relationship counts in connected correspondents buttons |  |
-| 2026-04-20 | `06e0b3b` | Sort connected correspondents by relationship weight |  |
-| 2026-04-20 | `17be829` | Add connected correspondents inspector navigation section |  |
-| 2026-04-20 | `cfa6d63` | Add inspector selection plumbing for person and place detail targets |  |
-| 2026-04-20 | `2b3c265` | Document person force layout and force-view background behavior |  |
-| 2026-04-20 | `ffb5a30` | Hide map backdrop in force-directed person view |  |
-| 2026-04-20 | `225c7e4` | Wire person force layout into App graph builder |  |
-| 2026-04-20 | `3480858` | Add pre-settled d3-force person network layout |  |
-| 2026-04-20 | `81a75d0` | Add d3-force dependency for person-network layout work |  |
-| 2026-04-20 | `5a17721` | Replace README with current repository overview |  |
-| 2026-04-20 | `8241ae1` | Add screenshots and standardize image paths |  |
-| 2026-04-20 | `99584a9` | Document completed export behavior fixes |  |
-| 2026-04-20 | `5575007` | Reflect visible date range in export metadata |  |
-| 2026-04-20 | `c9f010e` | Fix PNG export color rendering |  |
-| 2026-04-20 | `248833a` | Document completed timeline behavior fixes |  |
-| 2026-04-20 | `1b2655e` | Preserve viewport during timeline playback interactions |  |
-| 2026-04-20 | `fd0d77a` | Add viewport timeline reset audit |  |
-| 2026-04-20 | `6c41fce` | Constrain timeline end date to selected start date |  |
-| 2026-04-20 | `099882a` | Add control panel dependency map |  |
-| 2026-04-20 | `a53ccbf` | Add maintainer comments for control panel architecture |  |
-| 2026-04-20 | `c526e6c` | Document deferred export panel extraction |  |
-| 2026-04-20 | `4ddf444` | Document deferred PNG export issue |  |
-| 2026-04-20 | `5bbdad8` | Extract export helpers from App |  |
-| 2026-04-20 | `897e06a` | Document step 2 timeline work and deferred follow-ups |  |
-| 2026-04-20 | `383ecc0` | Extract timeline playback panel from App | (tag: checkpoint-pre-step-2c) |
-| 2026-04-20 | `b2dbe35` | Extract timeline playback helpers from App |  |
-| 2026-04-17 | `dad15a4` | Update maintainer guide and add changelog | (tag: checkpoint-between-step-1-and-step-2) |
-| 2026-04-17 | `145cfc2` | Extract map interaction handlers from App |  |
-| 2026-04-17 | `30e5b1b` | Extract interaction resolution helpers from App |  |
-| 2026-04-17 | `181a63e` | Extract map stage components from App | (tag: checkpoint-pre-step-1c) |
-| 2026-04-17 | `02dcfc4` | Extract pure map layout helpers from App |  |
-| 2026-04-17 | `7742149` | Update README to reflect current app and workflow |  |
-| 2026-04-17 | `c3f856f` | Add maintainer guide and project workflow charter |  |
-| 2026-04-17 | `8e07339` | Use dark navy modern node labels with white outline |  |
-| 2026-04-17 | `0791ffd` | Strengthen modern node label typography |  |
-| 2026-04-17 | `100d3fb` | Refine modern theme colors and label contrast |  |
-| 2026-04-17 | `b7e4749` | Use clean themed canvas for force-directed person view |  |
-| 2026-04-17 | `f207a37` | Implement true force-directed person layout |  |
-| 2026-04-17 | `e4f64c6` | Remove stray project folders from repo root |  |
-| 2026-04-17 | `80bbb97` | Adjust shared edge multiplier to 5 |  |
-| 2026-04-17 | `db38072` | Checkpoint before applying person scaling update |  |
-| 2026-04-17 | `eb3ba4b` | Initial rebuilt app baseline |  |

@@ -3,52 +3,99 @@
 <p align="center">
   <img src="../assets/Peridot%20Logo%20Gilded.png" alt="Historical gilded Peridot logo" width="360" />
 </p>
-
 ## Executive Summary
 
-Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system uses one generalized mapping model for ordinary CSV, TSV, XLSX, XLSM, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The current interface uses a persistent site-wide editorial header—Peridot wordmark/Home, Data, Visualize, Explore, Tutorials, and About—while workspace-local navigation handles visualization, query, mapping, and About subsections without unloading the active dataset. The sole active Timeline tab uses the former Timeline II implementation; Map, Network, Timeline and Charts share one date-faithful chronology dock, with independently persistent windows, a 10%-padded source domain, and clearly marked dataset endpoints.
+Peridot is an open research tool for exploring historical and other humanities data. You can upload a spreadsheet or choose a sample, tell Peridot what its columns mean, and examine the resulting evidence through maps, networks, timelines, charts, search, and detailed records. You do not need to know how to code to begin. Peridot does not silently standardize your source material or pretend that every dataset can support every visualization.
 
-Peridot was created by Haley Price in direct and continuous collaboration with ChatGPT. There is a robust AI disclosure and discussion of AI ethics (and ethical concerns) in the tool's **About → AI Disclosure** section where credit is documented. Please go there for more details. For the purposes of README, it bears mentioning that the reason the documentation is so meticulous (and so robotic) is because Price made ChatGPT record every single decision, commit, redirection, success, and failure throughout Peridot's development so that the full record of labor would be documented and disclosed. This paragraph was written by Price (hi!) but the remainder of the documentation was written by ChatGPT under exacting human direction and quality assurance supervision.
+This README is written primarily for **researchers and first-time visitors**. It explains what Peridot can do, how to begin, what information to prepare, and where to find more specialized documentation. Developers can also find local setup instructions below. You can read only the sections you need; the dated screenshots and development notes are kept separately for reference.
 
-This README is the public orientation and workflow guide. It explains what Peridot is, what kinds of work and data it supports, how to run it locally, and how to use the active interface. For current architecture, module ownership, regression contracts, and project-maintenance guidance, use the [Maintainer’s Guide](MAINTAINERS_GUIDE.md), [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md), and [Changelog](CHANGELOG.md).
+## How to Use This README
+
+**New to Peridot?** Start with [what Peridot is](#1-welcome-to-peridot) and [what you can do with it](#2-what-you-can-do-and-what-data-you-can-use), then follow [Getting Started](#3-getting-started). You can explore a sample before preparing any of your own data.
+
+**Already working with a dataset?** Go to [Preparing and Mapping Data](#5-preparing-and-mapping-data) for formats, joins, historical dates, multi-valued fields, and other mapping decisions.
+
+**Looking for a particular feature?** Use [Using Peridot](#4-using-peridot) or the [Glossary](#9-glossary-of-terms). Specialized terms are explained when first relevant; the glossary is there when you need a quick reminder.
+
+**Developing the application?** See [Installing and Running Locally](#6-installing-and-running-locally), then the [Maintainer's Guide](MAINTAINERS_GUIDE.md) for architecture, tests, and technical constraints. The [Changelog](CHANGELOG.md) preserves how Peridot developed; it is not necessary reading for ordinary use.
+
+The dated notes and screenshots are retained because Peridot is an evolving research project. **Historical examples are evidence of earlier designs, not instructions for using the current interface.**
 
 ## Quick Navigation
 
-- [What Peridot is](#1-what-peridot-is)
-- [Audience, research uses, and supported data](#2-audience-research-uses-and-supported-data)
-- [Current public workflow](#3-current-public-workflow)
-- [Interface examples and current-state note](#4-interface-examples-and-current-state-note)
-- [Historical interface archive](#5-historical-interface-archive)
-- [Install and run locally](#6-install-and-run-locally)
-- [Data-input guide](#7-data-input-guide)
-- [Known user-facing limitations](#8-known-user-facing-limitations)
-- [Documentation and project references](#9-documentation-and-project-references)
-- [Author, license, and attribution](#10-author-license-and-attribution)
+- [How to use this README](#how-to-use-this-readme)
+- [Welcome to Peridot](#1-welcome-to-peridot)
+- [What you can do and what data you can use](#2-what-you-can-do-and-what-data-you-can-use)
+- [Getting started](#3-getting-started)
+  - [Start with Home and Data](#start-with-home-and-data)
+- [Using Peridot](#4-using-peridot)
+  - [Visualize](#visualize) · [Explore and inspect](#explore-and-inspect) · [Export](#export) · [About and tutorials](#about-tutorials-and-feedback)
+- [Preparing and mapping data](#5-preparing-and-mapping-data)
+  - [Mapping workspace](#walk-through-the-data-mapping-workspace) · [Simple template](#simple-correspondence-oriented-template) · [Generalized mapping](#understanding-generalized-mapping)
+  - [Historical dates](#time-and-partial-historical-dates) · [Workbooks](#workbook--excel-import) · [Multiple values](#multiple-values-and-delimiters) · [Mapping checklist](#mapping-checklist)
+- [Installing and running locally](#6-installing-and-running-locally)
+  - [Prerequisites](#prerequisites) · [Install dependencies](#install-dependencies) · [Development server](#start-the-development-server-windows-command-shown) · [Build](#build-for-production)
+- [Interface examples and historical gallery](#7-interface-examples-and-historical-gallery)
+- [Known limitations](#8-known-limitations)
+- [Glossary of terms](#9-glossary-of-terms)
+  - [A–D](#glossary-a-d) · [E–H](#glossary-e-h) · [I–M](#glossary-i-m) · [N–R](#glossary-n-r) · [S–Z](#glossary-s-z)
+- [Documentation, attribution, and licensing](#10-documentation-attribution-and-licensing)
 
 ## Document Role and Boundaries
 
-This document owns public orientation, user-facing workflows, installation, data-input guidance, screenshots, concise limitations, and attribution. It does not own exhaustive module descriptions, detailed regression matrices, workflow governance, or complete historical chronology.
+This is Peridot's public-facing orientation and usage guide. It documents the researcher workflow, accepted input formats, basic local installation, limitations, screenshots, and attribution. It does not replace the [Maintainer's Guide](MAINTAINERS_GUIDE.md) (technical contracts), [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) (development process), or [Changelog](CHANGELOG.md) (project history).
 
-Current synchronized checkpoint:
+**Last user-confirmed synchronized source checkpoint:** `2be3ea0` on `main` (November 22, 2026). This records a confirmed historical Git state, **not** a fresh check of the current working tree or deployed site. The [Changelog's checkpoint section](CHANGELOG.md#1-current-synchronized-checkpoint) is the authoritative detailed record.
 
-```text
-e96c375 — Implement Charts appearance customization and adaptive presentation
-Branch: main
-Status: local and origin/main aligned after the latest sync ritual (user-confirmed 2026-11-22); working tree clean
-```
+## 1. Welcome to Peridot
 
-For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
+Peridot helps researchers move between individual records and larger patterns without losing sight of the evidence behind what they see. A spreadsheet can become a map of recorded places, a network of explicitly mapped relationships, a chronology of events, or a chart of selected values. Search and the Inspector let you return from a visual pattern to the records supporting it.
 
-
-## 1. What Peridot Is
+Peridot began in correspondence research, but its mapping system now supports many kinds of humanities data. Not every source needs dates, coordinates, or relationships: records without those fields may still be useful for other kinds of exploration.
 
 Peridot is the current app identity for the **Correspondence Visualizer** repository. It derives only the structures that mapped data can safely support, then gives researchers an interactive workspace for visualizing, searching, inspecting, and exporting that evidence.
 
 The active interface is workspace-first rather than rail-first. A persistent global header remains available across public pages: the Peridot wordmark returns to Home; **Data**, **Visualize**, and **Explore** occupy the primary work area; **Tutorials** and **About** provide project/help destinations. Moving between pages preserves the active dataset and accepted workspace state rather than treating navigation as a reload. The Inspector remains dual-mode: compact side-panel summaries for visual clicks and a full dossier workspace for deeper evidence navigation. Within Visualize, the sole Timeline tab provides the dedicated event chronology alongside Map, Network, and Charts; all four use the same shared chronological range/playback dock.
 
-## 2. Audience, Research Uses, and Supported Data
+<details>
+<summary><strong>Read the original detailed project overview</strong></summary>
+
+Peridot is an open, research-oriented web application for exploring humanistic data through maps, networks, a dedicated interactive Timeline visualization, charts, advanced search, exports, and evidence dossiers. Its mature first use case is correspondence data based on the creator's dissertation research, but the public import system uses one generalized mapping model for ordinary CSV, TSV, XLSX, XLSM, and XLS data rather than asking users to choose a correspondence-versus-genealogy ontology. Underneath those workflows, Peridot uses a canonical normalized research model with researcher-controlled Relations, Identity, Time, Places, Evidence, cardinality, and subject-attribution semantics. Mapped data can be reopened and edited after import, and first-class correspondence, family-tree, and cardinals samples are ordinary downloadable source files processed through the same generalized mapping path. The current interface uses a persistent site-wide editorial header—Peridot wordmark/Home, Data, Visualize, Explore, Tutorials, and About—while workspace-local navigation handles visualization, query, mapping, and About subsections without unloading the active dataset. The sole active Timeline tab uses the former Timeline II implementation; Map, Network, Timeline and Charts share one date-faithful chronology dock, with independently persistent windows, a 10%-padded source domain, and clearly marked dataset endpoints.
+
+</details>
+
+### Where to go in the application
+
+| Destination | What it is for |
+|---|---|
+| **Home** | Learn what Peridot offers; select **Get Started** to go to Data. |
+| **Data** | Choose a sample, download a template, upload data, and edit the mapping. |
+| **Visualize** | Investigate mapped data with Map, Network, Timeline, and Charts. |
+| **Explore** | Browse, search, refine results, and inspect records. |
+| **Tutorials** | A separate destination currently marked **Coming Soon**. |
+| **About** | Read about the research project, its development, and the AI disclosure; send feedback. |
+
+**A useful distinction:** The global header changes where you work; the active dataset remains available as you navigate. Visualization and inspection depend on which fields were actually mapped.
+
+### About the collaboration and its documentation
+
+Peridot was created by Haley Price in direct and continuous collaboration with ChatGPT. There is a robust AI disclosure and discussion of AI ethics (and ethical concerns) in the tool's **About → AI Disclosure** section where credit is documented. Please go there for more details. For the purposes of README, it bears mentioning that the reason the documentation is so meticulous (and so robotic) is because Price made ChatGPT record every single decision, commit, redirection, success, and failure throughout Peridot's development so that the full record of labor would be documented and disclosed. This paragraph was written by Price (hi!) but the remainder of the documentation was written by ChatGPT under exacting human direction and quality assurance supervision.
+
+## 2. What You Can Do and What Data You Can Use
 
 Peridot is designed for researchers working with humanistic records that may be incomplete, heterogeneous, or only partly mappable. It is intended to help users explore patterns without silently standardizing their data or treating visualization readiness as the sole measure of research value.
+
+### At a glance: what information makes each view useful?
+
+| What you want to investigate | Relevant Peridot view | Useful source information |
+|---|---|---|
+| Recorded locations and possible routes | **Map** | Mapped places or coordinates; routes/edges require suitable source-backed relationships |
+| Relationships among people or other subjects | **Network** | Mapped entities and explicitly declared relationships |
+| When events occurred or how periods overlap | **Timeline** | Mapped dates or periods |
+| Counts, values, comparisons, and distributions | **Charts** | Appropriate categorical, numerical, or temporal fields |
+| Individual records and their supporting evidence | **Explore and Inspector** | Source records and whatever evidence fields the dataset contains |
+
+You do **not** need every kind of field to use Peridot. A dataset can support some destinations and not others.
 
 ### Supported research uses
 
@@ -74,9 +121,19 @@ Peridot is designed for researchers working with humanistic records that may be 
 
 Peridot follows a **database-first** model: a record or normalized research item may remain useful for search, inspection, evidence preservation, or charts even if it lacks coordinates, a parseable date, or relationship fields. The canonical model preserves entities, places, records, events, relationships, participations, evidence sources, assertions, and their provenance without requiring every dataset to impersonate correspondence.
 
-## 3. Current Public Workflow
+## 3. Getting Started
 
-### 3.1 Start
+**You can start without preparing a file.** On Home, select **Get Started** to open Data. Choose an example dataset, download the template, or upload your own file. Peridot begins with no dataset loaded, so you always know which source you have chosen.
+
+### Your first three steps
+
+1. **Open Data.** Select **Get Started** on Home, or choose **Data** in the header.
+2. **Choose your source.** Use a sample, download a template, or upload a CSV/TSV/Excel file.
+3. **Review and explore.** Confirm what the fields mean, then open the views supported by the dataset.
+
+You can return to Data later to change the active mapping. Sample files are editable for exploration, and their shipped mappings can be restored.
+
+### Start with Home and Data
 
 Peridot opens with **no active dataset**. Nothing is silently preloaded underneath the interface. The persistent header is still available in this no-data state; destinations that require data must route the researcher toward choosing/uploading data rather than inventing hidden sample state.
 
@@ -92,7 +149,97 @@ Each sample can be explored, downloaded as its actual source file, and opened in
 
 **Historical Home note:** the former small disabled Tutorial button is not part of the accepted Cartographic Editorial Home composition. Tutorials remains a separate persistent header destination, with substantive tutorial work still deferred. The earlier floating tutorial invitation remains retired.
 
-### 3.2 Load and map data
+## 4. Using Peridot
+
+Once data is active, the global navigation lets you move among Data, Visualize, Explore, Tutorials, and About without unloading the dataset. What appears in each visualization depends on the information you mapped.
+### Choose a destination
+
+| Destination | Use it to… | A detail worth knowing |
+|---|---|---|
+| **Geographic Map** | Locate mapped places and relevant connections | Basemap choices and visible overlays are controlled in Map settings. |
+| **Network** | Examine mapped relationships between subjects | Connections must come from actual mapped relationships. |
+| **Timeline** | Compare events and periods over time | Categories, symbols, and Grouped lanes do not alter source dates. |
+| **Charts** | Compare distributions, measures, and categories | Chart-local filters apply to the selected chart only. |
+| **Explore / Inspector** | Trace patterns back to records | The Inspector provides underlying details and linked evidence. |
+
+The detailed guidance below describes the active controls and their interpretation. These views are not automatically interchangeable: each depends on the fields in your dataset.
+
+
+### Visualize
+
+**Visualize** provides capability-aware access to four destinations: one unified **Geographic Map**, a separate **Force-Directed Network**, a dedicated **Timeline** visualization workspace, and **Charts**. The former Charts I / Charts II parallel tabs were consolidated at `8baa733`; **Charts** now opens the Charts II Catalogue and Builder. The legacy Charts I interface has been retired. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
+
+The Geographic Map uses a tiled Web Mercator basemap from CARTO. **Voyager** is the default; researchers can select **Positron** or **Dark Matter** in compact **Map settings**, alongside visible node identities, researcher-selected geographic anchor roles, relationship-line location rules, and fallback behavior. Settings are transactional: changes are drafted, **Apply** commits them, and **Reset** affects the draft rather than silently recomputing the graph. Geographic edges render only when both exact endpoint node instances are visible under the applied settings.
+
+The dedicated Timeline workspace projects canonical mapped temporal assertions into event cards without replacing the existing playback control. Its default orientation is horizontal, earliest to latest from left to right; researchers can switch to a vertical orientation, earliest to latest from bottom to top. Timeline navigation supports scrollbars, click-and-drag panning, smooth mouse-wheel zoom, and +/- controls. The temporal axis changes granularity with zoom and suppresses colliding labels rather than keeping one fixed year scale.
+
+The active Timeline has **Timeline** and **Categories** tabs. In Categories, researchers select source columns drawn from their uploaded dataset's mapped Evidence, people/participants, places, relationships and eligible original fields; choose all or individual values; and assign editable category names, colors and optional symbols. The primary category-source labels reflect the original uploaded column headers rather than internal mapping identifiers. For generalized sources, association can be applied to the record, the mapped subject, or the specific temporal assertion where supported. Peridot uses existing mapping provenance and does not invent links across unrelated rows. Categories are visual annotations of historical events, not a rewrite of the original data or an automatic Search filter. Events can have several category memberships; point symbols and striped period bars remain legible in **Colors only**, **Colors and symbols**, or **Expanded labels** modes. The category selection and appearance settings are retained within the active dataset session but are not saved between browser sessions.
+
+**Grouped Timeline and category customization (2026-11-11):** Use the Timeline view's **Chronological / Grouped** choice to compare events by chronology alone or place each event in one category swimlane without changing its date. In the Categories tab, five columns—**Source columns**, **Values to track**, **Priority**, **Color**, and **Icons**—form a horizontally scrollable workspace. Drag the ordinary horizontal scrollbar beneath the columns to reach Color and Icons at narrow window widths; each column scrolls vertically as needed. **Star** a category (filled star) to make it eligible for a swimlane; an outline star means the category remains a secondary color/symbol encoding. Multiple starred matches resolve to one lane per event, and events with no eligible starred category remain in a **No priority category** lane. Swimlanes persist even when the visible interval contains no matching events, but then become narrow. Their muted category-colored backgrounds and adaptive heights help preserve the prominence of event marks as the viewing window changes. **Colors and symbols** is the default for new category configurations; **Colors only** and **Expanded labels** remain available. These choices support alternative scholarly comparisons (for example, Pope who created a cardinal versus conclave attendance) without inventing event associations or changing the original mapped evidence. For the assignment and performance contracts, see the Maintainer's Guide.
+
+Event-to-event relationship connections remain deferred. Peridot does not infer event relationships merely from shared participants, categories, or chronological proximity; future connections require researcher-defensible explicit evidence. The historical original Timeline relationship layout must not be mistaken for a completed feature in the active Timeline.
+
+**Charts — current researcher workflow (Charts II, accepted through `e96c375`):** Choose a chart in the recommendations-first **Catalogue**, where **Likely fit** and **May not work well** are advisory assessments rather than restrictions. All 15 chart families are selectable: Bar / Column, Grouped Bar, Stacked Bar (including 100% mode), Line / Multi-Line, Area, Stacked Area, Pie / Donut, Sunburst, Histogram, Heatmap, Scatter / Bubble, Box Plot, Dot Plot, Slope Chart, and Treemap. The **Builder** provides Data & Interpretation, chart-local Filters, and Appearance; it supports categorical and numerical fields (including multiple numerical source columns without requiring spreadsheet reshaping), chart-specific chronological handling, hierarchical drill-down in Treemap, and user-controlled category colors. Geographic coordinate fields may be chosen deliberately as numerical variables, but their existence alone does not promote numerical charts in Catalogue recommendations.
+
+Chart-local Filters refine only the selected chart, not the original dataset, Explore results, or other visualizations. The chart's Appearance controls reuse Timeline's color library, permit category/series overrides, chart-specific mark styling and adaptive labels, and include a resizable configuration panel. The chronology dock remains visible and its effect depends on the chart: it filters contributing dated records where applicable or navigates the visible Date x-axis; charts without meaningful chronological controls may show an inactive dock. During chronology-handle dragging, expensive chart updates wait for release. The **Export PNG** action belongs to the Charts Builder itself and offers optional publication title, axis labels, footnotes, and Peridot provenance; it captures the chosen visual configuration without including Builder controls.
+
+The existing bottom Timeline/playback control remains shared across Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
+
+The playback range control includes a draggable playhead/scrubber in addition to its left/right range clamps. Dragging the playhead updates a local preview continuously and commits the canonical playback position on release, avoiding expensive full-state churn on every pointer movement. Export remains a shared header menu rather than a separate workspace. Geographic map PNG/SVG exports include the basemap, research overlays, and legible **Peridot / OpenStreetMap contributors / CARTO** attribution even when optional title and metadata annotations are omitted.
+
+<details>
+<summary><strong>Detailed chronology, geographic performance, and playback notes</strong></summary>
+
+**Geographic navigation and performance (2026-10-31):** The CARTO map supports continuous east–west panning across the date line, bounded north–south movement, and geographic zoom through level 20. Tile buffering and retained imagery reduce white flashes, while clipped/culling relationship lines improve responsiveness during movement. These features were user-tested with the 500 Letters sample and an additional dataset containing approximately 3,000 nodes; performance for all larger datasets is not guaranteed.
+
+**Timeline and shared chronology (updated through 2026-11-09):** The former Timeline II, now the sole active Timeline visualization, presents historical dates and periods as calendar-positioned marks and duration bands in horizontal or vertical orientation, with independent zoom-window navigation and category markings. Both use the same approved Peridot chronology ruler, range clamps, play/pause/step, speed, Cumulative/Concurrent selection, and explanatory tooltip presentation also used across Map, Network, and Charts. The visual controls and navigable domain use consistent calendar-day positioning; retained indexed playback state is internal compatibility machinery, not a separate historical ruler. The vertical Timeline now uses the full plotting height, with its compact controls retained in the left rail. Map chronology scrubbing and first-load sizing were also improved. The researcher verified the shared calendar ruler, canonical filtering, source-derived 10% padding and gold-diamond Data extent indicators. Chronology windows remain independent across visualization tabs. Focused Node tests exist, but a complete automated/browser regression suite is not claimed.
+
+**Understanding the chronological range (2026-11-09):** Peridot determines the earliest and latest positionable dates from the complete mapped dataset, including period endpoints, and allows an additional 10% of that recorded span before and after the data. The shared ruler labels the actual **Data extent** using gold diamond endpoints and a dashed guide; the teal selection is the independently adjustable viewing window. Moving the window into an empty historical interval does not create data or bring nearby records into scope. Each visualization remembers its window independently; Reset returns to the full padded range.
+
+</details>
+
+### Explore and inspect
+
+**Explore** is organized around three persistent local destinations: **Browse**, **Advanced Query**, and **Refine**. Advanced Query contains query construction and the current result set; Refine contains applied-result facets, Inspector handoff, and dataset capability review. Search retains the explicit draft/apply model: entering text or selecting a suggestion changes draft criteria until **Apply Filters** is pressed.
+
+Search now works directly with generalized mapped Places and canonical subject-aware Evidence. Results use neutral **Date / People or entities / Places** presentation rather than treating every record as a Source→Target route. Structured Required / Any-of / Excluded criteria can also carry an optional plain-language count condition attached to that specific criterion—for example, **This place has at least 20 connected places** or **People in these records have at least 40 connected entities**. The older global minimum correspondence/connection-weight control has been retired.
+
+The Inspector opens compactly after visualization node, edge, or cluster clicks. **Expand**, linked data, and deeper record navigation open the full evidence-dossier workspace while preserving the underlying visualization or Explore state.
+
+### Export
+
+The Visualizations header provides SVG and PNG export for map/network views and CSV export for nodes and edges/routes. **Charts** has its own **Export PNG** action in the Builder, with optional figure annotations and chart-scope provenance. Export descriptions should make clear whether they represent loaded, filtered, visible, selected, or charted data.
+
+### About, tutorials, and feedback
+
+**About** is a first-class scholarly project section with local pages for **About Peridot**, **Creator**, **AI Disclosure**, **Open Source**, and **Feedback**. The public Feedback page supports questions, bug reports, issue reports, feature suggestions, and other feedback, with optional context and email fields; submission continues through the project’s Formspree integration. The feedback component retains its modal-capable implementation path for compatibility, but the normal public destination is the inline About subpage.
+
+**Tutorials:** The Tutorials destination now states that tutorials are coming soon; it does not present an operational guided-tutorial launch button. The previous experimental tutorial implementation is retained in source, not a currently offered user walkthrough.
+
+## 5. Preparing and Mapping Data
+
+The [Getting Started](#3-getting-started) section explains how to choose a source. This section explains how Peridot interprets that source and what decisions belong to the researcher.
+
+### Mapping at a glance
+
+Mapping is the process of telling Peridot what your columns mean. You make three related decisions:
+
+1. **Identify the information.** Which fields contain people, relationships, dates, places, or additional evidence?
+2. **Identify the subject.** Does a value describe the record, a named participant, or more than one subject?
+3. **Specify the interpretation.** Where necessary, configure identity rules, date precision, multiple values, or connections between workbook sheets.
+
+| Mapping area | Main question |
+|---|---|
+| **Relations** | Who or what is connected, and in what roles? |
+| **Identity** | How should repeated mentions of the same subject be recognized? |
+| **Time** | What dates or periods are recorded, and whom do they describe? |
+| **Places** | What locations are recorded, and whom or what do they describe? |
+| **Evidence** | What additional source fields should remain available for interpretation and inspection? |
+| **Review & Upload** | Does the resulting interpretation accurately reflect the source? |
+
+**Researcher authority:** Peridot offers mapping suggestions but does not silently standardize source values or invent missing relationships.
+
+### Walk through the Data mapping workspace
 
 The **Data** page presents four tabs: **Get Started**, **Sample Datasets**, **Templates**, and **Upload Data**. Get Started offers three standalone entry cards; Templates contains the existing correspondence-oriented CSV starter; Sample Datasets supplies source files and mapping examples; Upload Data opens the file chooser. A persistent bottom panel always identifies **No Dataset Loaded** or **Your Active Dataset**, with an oxblood **Edit Mapping** action when data is active. The unified uploader accepts CSV, TSV, XLSX, XLSM, and XLS files. Once a file or editable mapping is opened, mapping occupies the Data page itself beneath the persistent global header rather than appearing in a modal overlay.
 
@@ -107,6 +254,9 @@ The public mapper is now one generalized workflow rather than a Correspondence /
 7. **Review and Upload** — inspect the accepted interpretation and capability/warning summary before accepting a new upload or applying mapping changes.
 
 The pill-and-icon section rail is navigation among relevant mapping categories, not a requirement to map every category or a locked wizard: users can revisit available mapping sections directly. **Cancel** is visually separated from the grouped **Back / Next** progression controls, and opening the mapping workspace uses the established heavier transition so the full-page surface does not flash into place.
+
+<details>
+<summary><strong>Detailed mapping behavior, refinements, and implementation history</strong></summary>
 
 **Mapping interface milestone (2026-10-26; subsequently refined):** Relations, Time, and Places have received a substantial Cartographic Editorial readability pass. Their shared design uses compact stage headings, prominent primary questions, indented subordinate questions, content-sized selection cards, `(i)` explanatory popovers, and a contextual column for examples, current interpretation, and Additional Context / Good to know. This is a presentation improvement, not a change to mapping rules or a completed redesign of Preview, Sheets, Evidence, Review, or recurring-entity Identity. The categories in the mapping bar are options determined by the source data rather than compulsory steps.
 
@@ -143,77 +293,245 @@ For suitable mapped fields, researchers can declare whether one cell contains on
 
 **Loading and first visualization display (2026-11-03):** Peridot now uses a forest-green peridot-and-compass loading animation during substantial data processing and visualization transitions. The initial still is matched to the first animation frame for a smoother handoff; a browser-supported rendering worker helps the animation continue during lengthy main-thread work, with a fallback and reduced-motion treatment. The initial Geographic Map viewport also now registers when its stage first mounts, avoiding the previously observed blank-first-load state for a large workbook. Local production preview startup was user-tested and appeared nearly instantaneous; this is not a promise of identical loading times across devices or deployed connections. For implementation and regression details, see the Maintainer's Guide.
 
-### 3.3 Visualize
+</details>
 
-**Visualize** provides capability-aware access to four destinations: one unified **Geographic Map**, a separate **Force-Directed Network**, a dedicated **Timeline** visualization workspace, and **Charts**. The former Charts I / Charts II parallel tabs were consolidated at `8baa733`; **Charts** now opens the Charts II Catalogue and Builder. The legacy Charts I interface has been retired. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
+Peridot accepts ordinary CSV, TSV, XLSX, XLSM, and XLS files through one generalized mapping workflow. It also provides a simple downloadable template and three downloadable sample datasets. The active public workflow no longer asks the user to choose Correspondence versus Genealogy before mapping.
 
-The Geographic Map uses a tiled Web Mercator basemap from CARTO. **Voyager** is the default; researchers can select **Positron** or **Dark Matter** in compact **Map settings**, alongside visible node identities, researcher-selected geographic anchor roles, relationship-line location rules, and fallback behavior. Settings are transactional: changes are drafted, **Apply** commits them, and **Reset** affects the draft rather than silently recomputing the graph. Geographic edges render only when both exact endpoint node instances are visible under the applied settings.
+The Data workspace provides:
 
-The dedicated Timeline workspace projects canonical mapped temporal assertions into event cards without replacing the existing playback control. Its default orientation is horizontal, earliest to latest from left to right; researchers can switch to a vertical orientation, earliest to latest from bottom to top. Timeline navigation supports scrollbars, click-and-drag panning, smooth mouse-wheel zoom, and +/- controls. The temporal axis changes granularity with zoom and suppresses colliding labels rather than keeping one fixed year scale.
+- **Get Started**
+- **Sample Datasets**
+- **Templates**
+- **Upload Data**
+- active-source identification after a dataset has been selected
+- **Edit mapped data** for researcher uploads
+- **Edit sample mapping** for an active sample
 
-The active Timeline has **Timeline** and **Categories** tabs. In Categories, researchers select source columns drawn from their uploaded dataset's mapped Evidence, people/participants, places, relationships and eligible original fields; choose all or individual values; and assign editable category names, colors and optional symbols. The primary category-source labels reflect the original uploaded column headers rather than internal mapping identifiers. For generalized sources, association can be applied to the record, the mapped subject, or the specific temporal assertion where supported. Peridot uses existing mapping provenance and does not invent links across unrelated rows. Categories are visual annotations of historical events, not a rewrite of the original data or an automatic Search filter. Events can have several category memberships; point symbols and striped period bars remain legible in **Colors only**, **Colors and symbols**, or **Expanded labels** modes. The category selection and appearance settings are retained within the active dataset session but are not saved between browser sessions.
+No sample is loaded by default. First launch is a genuine no-data state until the user explicitly chooses or uploads a dataset.
 
-**Grouped Timeline and category customization (2026-11-11):** Use the Timeline view's **Chronological / Grouped** choice to compare events by chronology alone or place each event in one category swimlane without changing its date. In the Categories tab, five columns—**Source columns**, **Values to track**, **Priority**, **Color**, and **Icons**—form a horizontally scrollable workspace. Drag the ordinary horizontal scrollbar beneath the columns to reach Color and Icons at narrow window widths; each column scrolls vertically as needed. **Star** a category (filled star) to make it eligible for a swimlane; an outline star means the category remains a secondary color/symbol encoding. Multiple starred matches resolve to one lane per event, and events with no eligible starred category remain in a **No priority category** lane. Swimlanes persist even when the visible interval contains no matching events, but then become narrow. Their muted category-colored backgrounds and adaptive heights help preserve the prominence of event marks as the viewing window changes. **Colors and symbols** is the default for new category configurations; **Colors only** and **Expanded labels** remain available. These choices support alternative scholarly comparisons (for example, Pope who created a cardinal versus conclave attendance) without inventing event associations or changing the original mapped evidence. For the assignment and performance contracts, see the Maintainer's Guide.
+### Simple correspondence-oriented template
 
-Event-to-event relationship connections remain deferred. Peridot does not infer event relationships merely from shared participants, categories, or chronological proximity; future connections require researcher-defensible explicit evidence. The historical original Timeline relationship layout must not be mistaken for a completed feature in the active Timeline.
+The simple template remains useful for researchers whose data already resembles a directed correspondence record. Its public columns are:
 
-**Charts — current researcher workflow (Charts II, accepted through `e96c375`):** Choose a chart in the recommendations-first **Catalogue**, where **Likely fit** and **May not work well** are advisory assessments rather than restrictions. All 15 chart families are selectable: Bar / Column, Grouped Bar, Stacked Bar (including 100% mode), Line / Multi-Line, Area, Stacked Area, Pie / Donut, Sunburst, Histogram, Heatmap, Scatter / Bubble, Box Plot, Dot Plot, Slope Chart, and Treemap. The **Builder** provides Data & Interpretation, chart-local Filters, and Appearance; it supports categorical and numerical fields (including multiple numerical source columns without requiring spreadsheet reshaping), chart-specific chronological handling, hierarchical drill-down in Treemap, and user-controlled category colors. Geographic coordinate fields may be chosen deliberately as numerical variables, but their existence alone does not promote numerical charts in Catalogue recommendations.
+```text
+Archive
+Collection
+Page(s)
+Date
+Source_Name
+Source_Title
+Source_Location
+Source_Latitude
+Source_Longitude
+Target_Name
+Target_Title
+Target_Location
+Target_Latitude
+Target_Longitude
+Relationship
+Topic
+Language
+Transcription
+Notes
+Link(s)
+```
 
-Chart-local Filters refine only the selected chart, not the original dataset, Explore results, or other visualizations. The chart's Appearance controls reuse Timeline's color library, permit category/series overrides, chart-specific mark styling and adaptive labels, and include a resizable configuration panel. The chronology dock remains visible and its effect depends on the chart: it filters contributing dated records where applicable or navigates the visible Date x-axis; charts without meaningful chronological controls may show an inactive dock. During chronology-handle dragging, expensive chart updates wait for release. The **Export PNG** action belongs to the Charts Builder itself and offers optional publication title, axis labels, footnotes, and Peridot provenance; it captures the chosen visual configuration without including Builder controls.
+Using this template is optional. Arbitrary tables and workbooks can instead be mapped directly.
 
-The existing bottom Timeline/playback control remains shared across Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
+### Understanding generalized mapping
 
-The playback range control includes a draggable playhead/scrubber in addition to its left/right range clamps. Dragging the playhead updates a local preview continuously and commits the canonical playback position on release, avoiding expensive full-state churn on every pointer movement. Export remains a shared header menu rather than a separate workspace. Geographic map PNG/SVG exports include the basemap, research overlays, and legible **Peridot / OpenStreetMap contributors / CARTO** attribution even when optional title and metadata annotations are omitted.
+Peridot treats the uploaded table as source evidence and asks the researcher to describe its structure. Depending on the file, mappings may include:
 
-**Geographic navigation and performance (2026-10-31):** The CARTO map supports continuous east–west panning across the date line, bounded north–south movement, and geographic zoom through level 20. Tile buffering and retained imagery reduce white flashes, while clipped/culling relationship lines improve responsiveness during movement. These features were user-tested with the 500 Letters sample and an additional dataset containing approximately 3,000 nodes; performance for all larger datasets is not guaranteed.
+- one or more relationship participants, with integrated recurring-entity Identity controls when needed;
+- record identity and recurring entity identity, including stable IDs and alternate compound recognition recipes;
+- one or more dates and periods, each attributed to the record and/or selected participants;
+- one or more places, including participant/record meanings, optional Identity, and coordinates for single-valued place cells;
+- additional Evidence fields with optional cardinality and record/participant attribution;
+- workbook sheet relationships joined by explicit unique IDs.
 
-**Timeline and shared chronology (updated through 2026-11-09):** The former Timeline II, now the sole active Timeline visualization, presents historical dates and periods as calendar-positioned marks and duration bands in horizontal or vertical orientation, with independent zoom-window navigation and category markings. Both use the same approved Peridot chronology ruler, range clamps, play/pause/step, speed, Cumulative/Concurrent selection, and explanatory tooltip presentation also used across Map, Network, and Charts. The visual controls and navigable domain use consistent calendar-day positioning; retained indexed playback state is internal compatibility machinery, not a separate historical ruler. The vertical Timeline now uses the full plotting height, with its compact controls retained in the left rail. Map chronology scrubbing and first-load sizing were also improved. The researcher verified the shared calendar ruler, canonical filtering, source-derived 10% padding and gold-diamond Data extent indicators. Chronology windows remain independent across visualization tabs. Focused Node tests exist, but a complete automated/browser regression suite is not claimed.
+The same source field may participate in more than one mapping when that accurately represents the source. For example, one location column in a person-centered family table can be a child’s birthplace and, in the mother’s dossier, the place where she gave birth. Those are separate mapped assertions even when the literal place value is identical.
 
-**Understanding the chronological range (2026-11-09):** Peridot determines the earliest and latest positionable dates from the complete mapped dataset, including period endpoints, and allows an additional 10% of that recorded span before and after the data. The shared ruler labels the actual **Data extent** using gold diamond endpoints and a dashed guide; the teal selection is the independently adjustable viewing window. Moving the window into an empty historical interval does not create data or bring nearby records into scope. Each visualization remembers its window independently; Reset returns to the full padded range.
+Identity rules are separate from display labels. A repeated entity can be recognized by one stable ID or by several equivalent identity components. This is particularly useful when one person appears in different roles: `Source + Source Title` and `Target + Target Title` may both map to the same conceptual Name + Title identity. Conversely, same-name people remain distinct when their stronger mapped identity differs.
 
-### 3.4 Explore and inspect
+Peridot uses a permissive **database-first** model. Useful records are not rejected merely because they lack coordinates, a parseable date, or a relationship. Mapping and validation determine which tools the available structure can safely support.
 
-**Explore** is organized around three persistent local destinations: **Browse**, **Advanced Query**, and **Refine**. Advanced Query contains query construction and the current result set; Refine contains applied-result facets, Inspector handoff, and dataset capability review. Search retains the explicit draft/apply model: entering text or selecting a suggestion changes draft criteria until **Apply Filters** is pressed.
+Peridot does **not** clean or standardize person names, place names, dates, topics, relationships, languages, titles, or other user-entered values. Charts, filters, labels, and entity grouping use the uploaded/mapped values and declared identity rules. Researchers who want standardized vocabularies should prepare them intentionally rather than relying on silent application cleanup.
 
-Search now works directly with generalized mapped Places and canonical subject-aware Evidence. Results use neutral **Date / People or entities / Places** presentation rather than treating every record as a Source→Target route. Structured Required / Any-of / Excluded criteria can also carry an optional plain-language count condition attached to that specific criterion—for example, **This place has at least 20 connected places** or **People in these records have at least 40 connected entities**. The older global minimum correspondence/connection-weight control has been retired.
+### Important mapping principles
 
-The Inspector opens compactly after visualization node, edge, or cluster clicks. **Expand**, linked data, and deeper record navigation open the full evidence-dossier workspace while preserving the underlying visualization or Explore state.
+- **Original values are retained.** Peridot does not silently clean names, places, dates, or source terminology.
+- **The record is not always the subject.** A date or place can describe one or several mapped participants instead.
+- **Identification and labeling are different tasks.** A stable identifier can recognize a recurring person even when the displayed name varies.
+- **Incomplete evidence remains useful.** Missing geographic or chronological data does not invalidate a record for all uses.
+- **You can revise a mapping.** Existing research uploads and sample interpretations can be reopened; original shipped sample mappings remain restorable.
 
-### 3.5 Export
+### Time and partial historical dates
 
-The Visualizations header provides SVG and PNG export for map/network views and CSV export for nodes and edges/routes. **Charts** has its own **Export PNG** action in the Builder, with optional figure annotations and chart-scope provenance. Export descriptions should make clear whether they represent loaded, filtered, visible, selected, or charted data.
+Temporal parsing is conservative and humanities-aware. Peridot preserves original temporal text while deriving machine-usable structure for ordinary dates, ISO 8601 timestamps such as `1397-02-21T00:00:00Z`, year/month/day precision, approximate forms, mixed-precision ranges, open-ended periods, and partial dates such as `1607/00/02`, where zero represents an unknown component rather than a literal zero. ISO timestamps are interpreted from their lexical calendar date for historical chronology rather than timezone-shifting the source into a different day. Structurally inconsistent ranges are preserved and flagged rather than silently reversed. Competing date possibilities remain preserved for review rather than being collapsed into false certainty.
 
-### 3.6 About, documentation, and feedback
+Mapped Time is repeatable. Users can name each Date or Period/range in ordinary language; use one source field or separate year/month/day fields; reuse fields across assertions; and preserve related researcher-note columns without treating those notes as visualization rules.
 
-**About** is a first-class scholarly project section with local pages for **About Peridot**, **Creator**, **AI Disclosure**, **Open Source**, and **Feedback**. The public Feedback page supports questions, bug reports, issue reports, feature suggestions, and other feedback, with optional context and email fields; submission continues through the project’s Formspree integration. The feedback component retains its modal-capable implementation path for compatibility, but the normal public destination is the inline About subpage.
+### CARTO basemap and geographic export attribution
 
-**Tutorials:** The Tutorials destination now states that tutorials are coming soon; it does not present an operational guided-tutorial launch button. The previous experimental tutorial implementation is retained in source, not a currently offered user walkthrough.
+The Geographic Map offers CARTO Voyager, Positron, and Dark Matter through Map settings and retains source-backed research overlays. Geographic PNG and SVG exports embed the displayed map imagery and include readable Peridot, © OpenStreetMap contributors, and © CARTO attribution. If the required tiles cannot be embedded, Peridot should report the export problem rather than silently omit the geography. The CARTO credential is supplied through a local environment variable (`VITE_CARTO_BASEMAP_KEY`); do not publish `.env.local` or share an old SVG containing keyed external tile URLs. Deployment and external provider availability are separate from local map/export verification.
 
-### Present-day Data entry and asset organization (2026-10-30)
+**Spreadsheet dependency maintenance (2026-10-31):** Peridot now uses SheetJS (`xlsx`) 0.20.3 from the version-pinned publisher distribution, replacing the older npm 0.18.5 release. Browser-compatibility data (`caniuse-lite`) was also refreshed. Import behavior was user-regression-tested; the dependency upgrades do not change the researcher's mapping responsibilities. Both dependencies are reviewed every six months; the Maintainer's Guide maintains the exact version/update/review register.
 
-The current Data entry screen uses four tabs—**Get Started / Sample Datasets / Templates / Upload Data**—and retains a bottom active-dataset panel on each tab. After a sample or upload becomes active, researchers may return to Data and select **Edit Mapping** without restarting the session. Sample dataset illustrations remain the correspondence letter, Medici genealogy chart, and Cardinal Carlo portrait. The one-screen desktop layout uses gentle, ordered entrance animations when entering Data or switching tabs. These changes were committed in `ee4c3ff` and refined in `761d72d`; image paths were repaired in `c71e265` after the asset renaming in `52cf1f8`.
+**Live CARTO deployment (verified 2026-11-01):** The published map now receives its CARTO API key during the GitHub Actions/Vite production build (`54dfa2c`), correcting the former `API KEY REQUIRED` basemap images. This value is configured as a GitHub Actions repository secret, but is ultimately browser-visible because Vite embeds `VITE_` environment variables in client assets. Project maintainers should apply CARTO-side restrictions/monitoring where available; researchers do not need to configure a key to use the deployed site.
 
-The repository contains a larger catalog of cartographic, parchment, manuscript, botanical, alchemical, and gemstone ornaments. These are optional visual resources, not active decorations on every page. The experimental later 44-label/frame collection was not accepted into the committed assets. Current image paths follow descriptive role-based filenames with directional corner suffixes and numbers, where needed, at the end of the filename. Asset provenance and redistribution review remain separate from Git synchronization.
+### Workbook rules at a glance
 
-### About manuscript pages and laptop Data presentation (2026-10-30)
+| Question | Peridot's approach |
+|---|---|
+| **Which sheet contains records?** | You select a primary sheet. |
+| **Can supporting sheets contribute fields?** | Yes, with explicit user-configured joins. |
+| **How are sheets matched?** | By the chosen unique-ID columns—not row position. |
+| **Must join-column names match?** | No. You specify the fields on each side. |
+| **What if a join is ambiguous?** | Unsafe duplicate identifiers are blocked or surfaced. |
+| **Are Excel macros run?** | No; supported worksheet data is read without executing VBA macros. |
 
-The five **About** pages now resemble individual leaves of an illustrated manuscript. Decorative torn-paper corners reveal manuscript, alchemical, botanical, and celestial motifs; they are attached to the page edges rather than floating inside content blocks. The surrounding writing and appropriate form fields follow the irregular art with comfortable separation, and dividing rules avoid the illustrated areas. **About Peridot** uses an illuminated initial at upper left; **Creator** has upper-right alchemical imagery and a red four-corner frame surrounding the profile photograph; **AI Disclosure** uses a lower-left celestial corner; **Open Source** uses a lower-right botanical/pomegranate corner; **Feedback** uses alchemical corners at upper left and lower right. These illustrations are visual framing, not interactive features.
+For a sheet with records and a second sheet with place details, choose the record sheet as **primary** and join the supporting place information by a reliable identifier.
 
-The **Feedback** page retains its two-column reporting form and emphasizes a large, left-aligned **Send feedback** button. The message and contextual fields remain usable at narrower laptop widths and clear the decorative lower-right corner. Data's Sample Datasets layout has also been compressed vertically for laptop screens while preserving legible text and the persistent active-dataset/no-data status panel near the bottom, with a small bottom margin. This treatment was accepted and committed as `5e785ed`; the preceding documentation checkpoint is `7df38d0`.
+### Workbook / Excel import
 
-### About manuscript entrance animations (accepted 2026-11-05)
+For `.xlsx`, `.xlsm`, and `.xls` files, Peridot supports workbook-aware mapping:
 
-All five About pages now reveal their titles and reading content in gentle, overlapping stages that match Peridot's editorial animation language. Page-specific illuminated-manuscript corners arrive last, and Feedback's two corners appear together after the form's sections have entered in readable groups. The parchment and About navigation remain steady; the animation is decorative, does not interrupt navigation or form submission, and respects reduced-motion preferences. The user accepted the final sequence, committed as `71833b3`.
+- review workbook sheets;
+- choose a primary record sheet;
+- choose a primary unique-ID column;
+- add related-sheet joins;
+- choose the primary and joined ID field for each join;
+- map Relations, Identity, Time, Places, and Evidence from sheet-qualified fields;
+- review the final interpretation before import.
 
-### Illustrated no-dataset and Tutorials gateways (2026-10-31)
+Header names for joined IDs do not have to match. The user-selected join is authoritative. Row order is not used as the primary join strategy. Duplicate IDs that would make the join unsafe are blocked or surfaced rather than silently creating repeated assembled records.
 
-Until a researcher selects a sample or uploads data, **Visualize** and **Explore** display **No Dataset Active** in a parchment-backed editorial layout. Both explain that a dataset is required and provide one prominent **Go to Data** button rather than duplicating upload/sample actions on those pages. A full-width illustrated tear visually separates that guidance from the unavailable research workspace: illuminated botanical imagery for Visualize, celestial imagery for Explore.
+**Primary versus supporting workbook sheets:** The selected primary sheet determines which source rows become records. A supporting geographic sheet can contain placeholder-bearing rows that count as records if it is chosen as primary. Researchers should choose the sheet representing their intended record unit and use explicit joins for supporting attributes. Peridot does not silently discard placeholders or decide what counts as substantive historical evidence.
 
-**Tutorials** uses the same visual presentation, with the heading **Tutorials Coming Soon**, a short explanation, a **Go to Data** action, and an alchemical/mineral tear. This is an informational placeholder, not a launched guided tutorial. All three pages use restrained staged entrance animations, including replay on relevant navigation, with a reduced-motion alternative. They share `base_parchment_2` as a visual background and retain their distinct illustrations. Loaded-data Visualize and Explore workflows remain separate and available when supported by mapped data.
+**Import performance (2026-11-01):** A capability-calculation optimization committed at `481acd9` reduced canonical construction time in the tested large-workbook cases. The measured before/after cases were not strictly identical, so the timings are not a performance guarantee. Import semantics, review validation, and subject attribution were preserved in the reported browser tests.
 
-The illustrations are imported as build-managed assets from Peridot's existing `assets/` directory so their paths remain valid on GitHub Pages; copying files into a second public asset catalog is not part of the accepted approach. The corrective code was pushed through `fc42306`, but a successful push does not by itself verify the published site's final image rendering. Asset provenance/distribution obligations remain applicable.
+### First-class sample datasets
 
-## 4. Interface Examples and Current-State Note
+Peridot currently ships:
+
+```text
+correspondence_network_sample.xlsx
+family_tree_sample.csv
+cardinals_1600_1640_sample.xlsx
+```
+
+These are ordinary project files, not hidden application fixtures. Users can download them, inspect their mappings, change the active interpretation, and reuse the downloaded files as starting points for their own work.
+
+The canonical sample mapping remains preserved even while the active sample is edited. **Reset to sample mapping** returns the editor to the shipped interpretation.
+
+### Multiple values and delimiters
+
+Peridot supports researcher-declared multiple values on suitable mapped fields. Cardinality is configured per mapped item rather than once for the entire file: choose one value versus several values, then supply the delimiter when needed. Peridot preserves the original source cell and does not infer delimiters automatically. Structured component dates and separate period endpoints remain structured units rather than parallel arrays, and multi-valued place cells cannot reuse one row-level coordinate pair.
+
+### Multiple values: a quick example
+
+If one cell records several languages, mapping it as a **multi-valued field** requires you to specify the separator. Peridot does not guess how punctuation should be interpreted. For geographic values, one pair of row-level coordinates must not be reused for multiple distinct places.
+
+### Mapping checklist
+
+1. Open Peridot; no dataset is active yet.
+2. Choose a sample, download the template, or upload your own CSV/TSV/XLSX/XLSM/XLS file.
+3. Review **Preview** and workbook **Sheets** if applicable.
+4. Move among **Relations**, **Time**, **Places**, and **Evidence** as needed; configure stronger participant Identity only where the default displayed-name rule is insufficient.
+5. Use **Review and Upload** to inspect the full interpretation and warnings.
+6. Confirm the upload (or apply changes when editing an existing mapping).
+7. Reopen **Edit mapped data** later if the interpretation needs revision.
+8. Move among **Visualize**, **Explore**, Inspector, and Export as the data supports them; the active dataset remains loaded while navigating.
+
+### Advanced Search workflow
+
+Advanced Search defines the active filtered dataset:
+
+```text
+loaded data
+→ applied/filtered data
+→ visualization / inspection / analytics / export
+```
+
+Under that model:
+
+- **Data** defines what is loaded.
+- **Advanced Search** defines the applied/filtered research scope; Browse intentionally indexes the full loaded dataset.
+- **Visualizations** defines how that scope is displayed.
+- **Timeline** controls chronological range and playback visibility within Visualizations.
+- **Inspector** is selection-driven, but entity/place dossiers use the stable applied/filtered linked-record scope rather than shrinking as playback advances.
+- **Analytics** uses the Search/Timeline/playback scope for dated records while keeping genuinely undated records available by default; its local **Exclude undated records?** control can remove them explicitly.
+- **Export** identifies the relevant visible or charted output and records committed structured/capability Search filters in provenance where applicable.
+
+These scope distinctions were audited and synchronized through `656010d`; do not treat applied/filtered, playback-visible, selected, charted, and exported data as interchangeable.
+
+## 6. Installing and Running Locally
+
+These instructions are intended for readers who want to run the source code themselves. You do not need to install Node.js to use the publicly deployed application. For changes to the codebase, read the [Maintainer's Guide](MAINTAINERS_GUIDE.md) and [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) first.
+
+### Local setup at a glance
+
+| Task | Command or guidance |
+|---|---|
+| Use Peridot as a researcher | Open the publicly deployed application; local installation is not necessary. |
+| Install source dependencies | `npm install` |
+| Start the development server | `npm.cmd run dev` on Windows; `npm run dev` on macOS/Linux |
+| Produce a build | `npm run build` |
+| Preview that build | `npm run preview` |
+
+For a code contribution, consult the [Maintainer's Guide](MAINTAINERS_GUIDE.md) and [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) first. The commands below remain available individually for copying.
+
+### Prerequisites
+
+You should have a recent version of:
+
+- **Node.js**
+- **npm**
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Start the development server (Windows command shown)
+
+```bash
+npm.cmd run dev
+```
+
+### Build for production
+
+```bash
+npm run build
+```
+
+### Preview the production build
+
+```bash
+npm run preview
+```
+
+### Repository location
+
+```text
+https://github.com/haleyrp1803/peridot-humanistic-data
+```
+
+---
+
+### Technology overview
+
+Peridot currently uses React 18, Vite, Tailwind CSS, D3 (`d3-geo` and `d3-force`), `topojson-client`, `world-atlas`, and SheetJS / `xlsx`. Active `main` uses an SVG-based map stage. MapLibre is not an active dependency of `main`; its later migrated-overlay work is archived rather than part of the current application direction.
+
+On macOS/Linux, the usual equivalent of `npm.cmd run dev` is `npm run dev`. Prerequisite versions have not been independently verified against the current repository package files in this documentation pass; consult the project package configuration when preparing an exact development environment.
+
+## 7. Interface Examples and Historical Gallery
+
+The images that follow document earlier Peridot interfaces. **They are historical records, not up-to-date screenshots of the current application.** The written workflows above should be used for current navigation. Updated interface screenshots can replace the gallery's introductory role once captured and verified, without erasing the historical archive.
+
+<details>
+<summary><strong>Open dated interface examples and the 2026-06-21 screenshot gallery</strong></summary>
 
 **Current Charts note (2026-11-22):** The Charts I screenshots dated 2026-06-21 below are retained as **historical interface examples**, not as instructions or images of the present Charts II Catalogue, Builder, local filters, Appearance controls, and customizable export workflow. New screenshots of the current Charts interface have not yet been added. Map/Network screenshots retain their individually stated historical dates.
 
@@ -345,7 +663,10 @@ The screenshots in this section document Peridot as it appeared on **2026-06-21*
 
 ---
 
-## 5. Historical Interface Archive
+</details>
+
+<details>
+<summary><strong>Open earlier interface designs and archived screenshots</strong></summary>
 
 The screenshots below document earlier Peridot interface states. They are retained as development records, including the earlier rail/side-panel-first workflow. They are **not** instructions for the active workspace-first navigation model.
 
@@ -406,202 +727,59 @@ The screenshots below document earlier Peridot interface states. They are retain
 
 </details>
 
+</details>
 
-## 6. Install and Run Locally
+<details>
+<summary><strong>Open dated editorial design and animation notes</strong></summary>
 
+### Present-day Data entry and asset organization (2026-10-30)
 
+The current Data entry screen uses four tabs—**Get Started / Sample Datasets / Templates / Upload Data**—and retains a bottom active-dataset panel on each tab. After a sample or upload becomes active, researchers may return to Data and select **Edit Mapping** without restarting the session. Sample dataset illustrations remain the correspondence letter, Medici genealogy chart, and Cardinal Carlo portrait. The one-screen desktop layout uses gentle, ordered entrance animations when entering Data or switching tabs. These changes were committed in `ee4c3ff` and refined in `761d72d`; image paths were repaired in `c71e265` after the asset renaming in `52cf1f8`.
 
-### Prerequisites
+The repository contains a larger catalog of cartographic, parchment, manuscript, botanical, alchemical, and gemstone ornaments. These are optional visual resources, not active decorations on every page. The experimental later 44-label/frame collection was not accepted into the committed assets. Current image paths follow descriptive role-based filenames with directional corner suffixes and numbers, where needed, at the end of the filename. Asset provenance and redistribution review remain separate from Git synchronization.
 
-You should have a recent version of:
+### About manuscript pages and laptop Data presentation (2026-10-30)
 
-- **Node.js**
-- **npm**
+The five **About** pages now resemble individual leaves of an illustrated manuscript. Decorative torn-paper corners reveal manuscript, alchemical, botanical, and celestial motifs; they are attached to the page edges rather than floating inside content blocks. The surrounding writing and appropriate form fields follow the irregular art with comfortable separation, and dividing rules avoid the illustrated areas. **About Peridot** uses an illuminated initial at upper left; **Creator** has upper-right alchemical imagery and a red four-corner frame surrounding the profile photograph; **AI Disclosure** uses a lower-left celestial corner; **Open Source** uses a lower-right botanical/pomegranate corner; **Feedback** uses alchemical corners at upper left and lower right. These illustrations are visual framing, not interactive features.
 
-### Install dependencies
+The **Feedback** page retains its two-column reporting form and emphasizes a large, left-aligned **Send feedback** button. The message and contextual fields remain usable at narrower laptop widths and clear the decorative lower-right corner. Data's Sample Datasets layout has also been compressed vertically for laptop screens while preserving legible text and the persistent active-dataset/no-data status panel near the bottom, with a small bottom margin. This treatment was accepted and committed as `5e785ed`; the preceding documentation checkpoint is `7df38d0`.
 
-```bash
-npm install
-```
+### About manuscript entrance animations (accepted 2026-11-05)
 
-### Start the development server
+All five About pages now reveal their titles and reading content in gentle, overlapping stages that match Peridot's editorial animation language. Page-specific illuminated-manuscript corners arrive last, and Feedback's two corners appear together after the form's sections have entered in readable groups. The parchment and About navigation remain steady; the animation is decorative, does not interrupt navigation or form submission, and respects reduced-motion preferences. The user accepted the final sequence, committed as `71833b3`.
 
-```bash
-npm.cmd run dev
-```
+### Illustrated no-dataset and Tutorials gateways (2026-10-31)
 
-### Build for production
+Until a researcher selects a sample or uploads data, **Visualize** and **Explore** display **No Dataset Active** in a parchment-backed editorial layout. Both explain that a dataset is required and provide one prominent **Go to Data** button rather than duplicating upload/sample actions on those pages. A full-width illustrated tear visually separates that guidance from the unavailable research workspace: illuminated botanical imagery for Visualize, celestial imagery for Explore.
 
-```bash
-npm run build
-```
+**Tutorials** uses the same visual presentation, with the heading **Tutorials Coming Soon**, a short explanation, a **Go to Data** action, and an alchemical/mineral tear. This is an informational placeholder, not a launched guided tutorial. All three pages use restrained staged entrance animations, including replay on relevant navigation, with a reduced-motion alternative. They share `base_parchment_2` as a visual background and retain their distinct illustrations. Loaded-data Visualize and Explore workflows remain separate and available when supported by mapped data.
 
-### Preview the production build
+The illustrations are imported as build-managed assets from Peridot's existing `assets/` directory so their paths remain valid on GitHub Pages; copying files into a second public asset catalog is not part of the accepted approach. The corrective code was pushed through `fc42306`, but a successful push does not by itself verify the published site's final image rendering. Asset provenance/distribution obligations remain applicable.
 
-```bash
-npm run preview
-```
+</details>
 
-### Repository location
+## 8. Known Limitations
 
-```text
-https://github.com/haleyrp1803/peridot-humanistic-data
-```
+A dataset can be useful in Peridot even when it cannot support every view. Maps need suitable place information; networks need mapped relationships; timelines need usable time assertions; chart options depend on the available fields. The interface should explain unsupported views rather than inventing missing evidence.
 
----
+Two especially relevant current restrictions are that the public Tutorials page is a **Coming Soon** destination and that a mapping currently supports one relationship group with multiple participants, not several independent groups per source record. Search's **Any record text** condition does not yet cover every generalized mapped semantic value.
 
-### Technology overview
+### Current limitations at a glance
 
-Peridot currently uses React 18, Vite, Tailwind CSS, D3 (`d3-geo` and `d3-force`), `topojson-client`, `world-atlas`, and SheetJS / `xlsx`. Active `main` uses an SVG-based map stage. MapLibre is not an active dependency of `main`; its later migrated-overlay work is archived rather than part of the current application direction.
+| Limitation or prerequisite | What it means for researchers |
+|---|---|
+| **Tutorials** | The public Tutorials destination currently says **Coming Soon**. |
+| **Independent relationship groups** | One mapped relationship group can contain several participants, but multiple independent groups per source record are not yet supported. |
+| **Generalized text search** | **Any record text** does not necessarily index every generalized semantic value; more specific search criteria may be necessary. |
+| **Map / Network / Timeline availability** | These depend on mapped places, relationships, and time assertions respectively. |
+| **Event-to-event Timeline connections** | They are deferred; Peridot does not manufacture links from shared categories or proximity. |
 
-## 7. Data-Input Guide
+For engineering implications and tests, see the [Maintainer's Guide](MAINTAINERS_GUIDE.md).
 
-Peridot accepts ordinary CSV, TSV, XLSX, XLSM, and XLS files through one generalized mapping workflow. It also provides a simple downloadable template and three downloadable sample datasets. The active public workflow no longer asks the user to choose Correspondence versus Genealogy before mapping.
+The longer technical notes below document additional known constraints and completed-versus-deferred distinctions. They are preserved for transparency but are not a prerequisite for using Peridot.
 
-The Data workspace provides:
-
-- **Get Started**
-- **Sample Datasets**
-- **Templates**
-- **Upload Data**
-- active-source identification after a dataset has been selected
-- **Edit mapped data** for researcher uploads
-- **Edit sample mapping** for an active sample
-
-No sample is loaded by default. First launch is a genuine no-data state until the user explicitly chooses or uploads a dataset.
-
-### Simple correspondence-oriented template
-
-The simple template remains useful for researchers whose data already resembles a directed correspondence record. Its public columns are:
-
-```text
-Archive
-Collection
-Page(s)
-Date
-Source_Name
-Source_Title
-Source_Location
-Source_Latitude
-Source_Longitude
-Target_Name
-Target_Title
-Target_Location
-Target_Latitude
-Target_Longitude
-Relationship
-Topic
-Language
-Transcription
-Notes
-Link(s)
-```
-
-Using this template is optional. Arbitrary tables and workbooks can instead be mapped directly.
-
-### Generalized mapping
-
-Peridot treats the uploaded table as source evidence and asks the researcher to describe its structure. Depending on the file, mappings may include:
-
-- one or more relationship participants, with integrated recurring-entity Identity controls when needed;
-- record identity and recurring entity identity, including stable IDs and alternate compound recognition recipes;
-- one or more dates and periods, each attributed to the record and/or selected participants;
-- one or more places, including participant/record meanings, optional Identity, and coordinates for single-valued place cells;
-- additional Evidence fields with optional cardinality and record/participant attribution;
-- workbook sheet relationships joined by explicit unique IDs.
-
-The same source field may participate in more than one mapping when that accurately represents the source. For example, one location column in a person-centered family table can be a child’s birthplace and, in the mother’s dossier, the place where she gave birth. Those are separate mapped assertions even when the literal place value is identical.
-
-Identity rules are separate from display labels. A repeated entity can be recognized by one stable ID or by several equivalent identity components. This is particularly useful when one person appears in different roles: `Source + Source Title` and `Target + Target Title` may both map to the same conceptual Name + Title identity. Conversely, same-name people remain distinct when their stronger mapped identity differs.
-
-Peridot uses a permissive **database-first** model. Useful records are not rejected merely because they lack coordinates, a parseable date, or a relationship. Mapping and validation determine which tools the available structure can safely support.
-
-Peridot does **not** clean or standardize person names, place names, dates, topics, relationships, languages, titles, or other user-entered values. Charts, filters, labels, and entity grouping use the uploaded/mapped values and declared identity rules. Researchers who want standardized vocabularies should prepare them intentionally rather than relying on silent application cleanup.
-
-### Time and partial historical dates
-
-Temporal parsing is conservative and humanities-aware. Peridot preserves original temporal text while deriving machine-usable structure for ordinary dates, ISO 8601 timestamps such as `1397-02-21T00:00:00Z`, year/month/day precision, approximate forms, mixed-precision ranges, open-ended periods, and partial dates such as `1607/00/02`, where zero represents an unknown component rather than a literal zero. ISO timestamps are interpreted from their lexical calendar date for historical chronology rather than timezone-shifting the source into a different day. Structurally inconsistent ranges are preserved and flagged rather than silently reversed. Competing date possibilities remain preserved for review rather than being collapsed into false certainty.
-
-Mapped Time is repeatable. Users can name each Date or Period/range in ordinary language; use one source field or separate year/month/day fields; reuse fields across assertions; and preserve related researcher-note columns without treating those notes as visualization rules.
-
-### CARTO basemap and geographic export attribution
-
-The Geographic Map offers CARTO Voyager, Positron, and Dark Matter through Map settings and retains source-backed research overlays. Geographic PNG and SVG exports embed the displayed map imagery and include readable Peridot, © OpenStreetMap contributors, and © CARTO attribution. If the required tiles cannot be embedded, Peridot should report the export problem rather than silently omit the geography. The CARTO credential is supplied through a local environment variable (`VITE_CARTO_BASEMAP_KEY`); do not publish `.env.local` or share an old SVG containing keyed external tile URLs. Deployment and external provider availability are separate from local map/export verification.
-
-**Spreadsheet dependency maintenance (2026-10-31):** Peridot now uses SheetJS (`xlsx`) 0.20.3 from the version-pinned publisher distribution, replacing the older npm 0.18.5 release. Browser-compatibility data (`caniuse-lite`) was also refreshed. Import behavior was user-regression-tested; the dependency upgrades do not change the researcher's mapping responsibilities. Both dependencies are reviewed every six months; the Maintainer's Guide maintains the exact version/update/review register.
-
-**Live CARTO deployment (verified 2026-11-01):** The published map now receives its CARTO API key during the GitHub Actions/Vite production build (`54dfa2c`), correcting the former `API KEY REQUIRED` basemap images. This value is configured as a GitHub Actions repository secret, but is ultimately browser-visible because Vite embeds `VITE_` environment variables in client assets. Project maintainers should apply CARTO-side restrictions/monitoring where available; researchers do not need to configure a key to use the deployed site.
-
-### Workbook / Excel import
-
-For `.xlsx`, `.xlsm`, and `.xls` files, Peridot supports workbook-aware mapping:
-
-- review workbook sheets;
-- choose a primary record sheet;
-- choose a primary unique-ID column;
-- add related-sheet joins;
-- choose the primary and joined ID field for each join;
-- map Relations, Identity, Time, Places, and Evidence from sheet-qualified fields;
-- review the final interpretation before import.
-
-Header names for joined IDs do not have to match. The user-selected join is authoritative. Row order is not used as the primary join strategy. Duplicate IDs that would make the join unsafe are blocked or surfaced rather than silently creating repeated assembled records.
-
-**Primary versus supporting workbook sheets:** The selected primary sheet determines which source rows become records. A supporting geographic sheet can contain placeholder-bearing rows that count as records if it is chosen as primary. Researchers should choose the sheet representing their intended record unit and use explicit joins for supporting attributes. Peridot does not silently discard placeholders or decide what counts as substantive historical evidence.
-
-**Import performance (2026-11-01):** A capability-calculation optimization committed at `481acd9` reduced canonical construction time in the tested large-workbook cases. The measured before/after cases were not strictly identical, so the timings are not a performance guarantee. Import semantics, review validation, and subject attribution were preserved in the reported browser tests.
-
-### First-class sample datasets
-
-Peridot currently ships:
-
-```text
-correspondence_network_sample.xlsx
-family_tree_sample.csv
-cardinals_1600_1640_sample.xlsx
-```
-
-These are ordinary project files, not hidden application fixtures. Users can download them, inspect their mappings, change the active interpretation, and reuse the downloaded files as starting points for their own work.
-
-The canonical sample mapping remains preserved even while the active sample is edited. **Reset to sample mapping** returns the editor to the shipped interpretation.
-
-### Multiple values and delimiters
-
-Peridot supports researcher-declared multiple values on suitable mapped fields. Cardinality is configured per mapped item rather than once for the entire file: choose one value versus several values, then supply the delimiter when needed. Peridot preserves the original source cell and does not infer delimiters automatically. Structured component dates and separate period endpoints remain structured units rather than parallel arrays, and multi-valued place cells cannot reuse one row-level coordinate pair.
-
-### Typical workflow
-
-1. Open Peridot; no dataset is active yet.
-2. Choose a sample, download the template, or upload your own CSV/TSV/XLSX/XLSM/XLS file.
-3. Review **Preview** and workbook **Sheets** if applicable.
-4. Move among **Relations**, **Time**, **Places**, and **Evidence** as needed; configure stronger participant Identity only where the default displayed-name rule is insufficient.
-5. Use **Review and Upload** to inspect the full interpretation and warnings.
-6. Confirm the upload (or apply changes when editing an existing mapping).
-7. Reopen **Edit mapped data** later if the interpretation needs revision.
-8. Move among **Visualize**, **Explore**, Inspector, and Export as the data supports them; the active dataset remains loaded while navigating.
-
-### Advanced Search workflow
-
-Advanced Search defines the active filtered dataset:
-
-```text
-loaded data
-→ applied/filtered data
-→ visualization / inspection / analytics / export
-```
-
-Under that model:
-
-- **Data** defines what is loaded.
-- **Advanced Search** defines the applied/filtered research scope; Browse intentionally indexes the full loaded dataset.
-- **Visualizations** defines how that scope is displayed.
-- **Timeline** controls chronological range and playback visibility within Visualizations.
-- **Inspector** is selection-driven, but entity/place dossiers use the stable applied/filtered linked-record scope rather than shrinking as playback advances.
-- **Analytics** uses the Search/Timeline/playback scope for dated records while keeping genuinely undated records available by default; its local **Exclude undated records?** control can remove them explicitly.
-- **Export** identifies the relevant visible or charted output and records committed structured/capability Search filters in provenance where applicable.
-
-These scope distinctions were audited and synchronized through `656010d`; do not treat applied/filtered, playback-visible, selected, charted, and exported data as interchangeable.
-
-## 8. Known User-Facing Limitations
+<details>
+<summary><strong>Read detailed limitations, implementation status, and deferred work</strong></summary>
 
 Peridot is an active research prototype. It can preserve and expose useful incomplete records, but not every dataset supports every visualization. Network views require usable mapped entity relationships; map views require usable location information; Timeline and chart behavior depend on available temporal and analytic fields.
 
@@ -623,7 +801,175 @@ MapLibre work is archived and should not be treated as part of current `main`. F
 
 **Multiple independent relationships remain a limitation:** a single mapping may contain Part A/B/C/etc. participants, but adding several distinct relationship groups per record is deferred. This would require coordinated mapping-schema and runtime/Network changes, not simply duplicating the form.
 
-## 9. Documentation and Project References
+</details>
+
+## 9. Glossary of Terms
+
+This reference explains terminology used in Peridot and common concepts that help make sense of its workflows. **You do not need to memorize these terms before starting.** Follow the instructions normally and return here whenever a word is unfamiliar. Definitions describe what terms mean for a researcher using Peridot; technical implementation details belong in the [Maintainer's Guide](MAINTAINERS_GUIDE.md).
+
+**Jump to:** [A–D](#glossary-a-d) · [E–H](#glossary-e-h) · [I–M](#glossary-i-m) · [N–R](#glossary-n-r) · [S–Z](#glossary-s-z)
+
+<a id="glossary-a-d"></a>
+
+### A–D
+
+**Aggregation.** Combining individual values into a summary, such as a count or total used by a chart. The available calculation depends on the selected fields and chart.
+
+**Applied filters.** Search conditions that have been confirmed with **Apply Filters**. Changing draft search criteria alone does not change the applied research scope.
+
+**Assertion.** A particular statement represented in mapped research data, such as an event’s date or a person’s place of birth. Its subject and source matter.
+
+**Attribute.** A characteristic recorded about a person, place, record, or other research subject, such as a title or language.
+
+**Axis.** A reference line on a chart or timeline that marks values, dates, or categories.
+
+**Basemap.** The geographic background beneath research data on a map. Peridot offers CARTO Voyager, Positron, and Dark Matter.
+
+**Browser session.** The period of work in a browser during which Peridot can retain active dataset and visualization settings. Some configurations are not saved across sessions.
+
+**Canonical data model.** Peridot’s internal organization of records, people or other entities, places, events, relationships, and evidence. Researchers normally interact with it through mapping and inspection rather than editing it directly.
+
+**Cardinality.** Whether a mapped field represents one value or several. When a cell contains multiple values, the researcher chooses an appropriate separator.
+
+**Category.** A researcher-chosen grouping or visual label, for example an event classification represented by a color or symbol in Timeline.
+
+**Chart family.** A general kind of chart—for example a histogram, scatter plot, or treemap—suited to particular research questions and data types.
+
+**Chart-local filter.** A condition that changes only the selected chart, leaving the source dataset and other views unchanged.
+
+**Chronology.** The date-based arrangement of events and periods. Peridot’s shared chronology controls define a viewing range and, where relevant, playback.
+
+**Column / field.** A named type of information in a table, such as a sender, date, or location; each row may contain a value for that field.
+
+**Coordinates.** Numerical values identifying a geographic position, commonly latitude and longitude.
+
+**CSV / TSV.** Plain-text table formats whose columns are separated by commas (CSV) or tabs (TSV).
+
+**Data mapping.** Telling Peridot what uploaded columns mean—for example, which column identifies a person, a date, or a location.
+
+**Data normalization.** Organizing mapped records into consistent internal structures while retaining the research source values. In Peridot this does not mean automatically standardizing historical names or terminology.
+
+**Data transformation.** A step that changes how source information is represented for analysis or display. In Peridot the mapping and original source remain important for interpreting that representation.
+
+**Data visualization.** A graphical way to explore information, such as a map, network, timeline, or chart.
+
+**Dataset.** The collection of source records that a researcher has chosen or uploaded and mapped for use in Peridot.
+
+**Date range.** A beginning and ending interval used to describe a period or select part of a chronology; partial endpoints may be meaningful.
+
+**Delimiter.** A character or sequence separating several values inside one cell, declared by the researcher when mapping that field.
+
+**Digital humanities.** Research that uses digital methods to investigate questions in history, literature, culture, and other humanities fields.
+
+**Directed relationship.** A connection with meaningful roles or direction, such as one person sending a letter to another.
+
+<a id="glossary-e-h"></a>
+
+### E–H
+
+**Edge.** A line in a network representing a mapped relationship between connected nodes. It should not be taken as evidence of an unrecorded relationship.
+
+**Entity.** A person or other identifiable subject represented in the research data.
+
+**Evidence.** Source material or mapped information supporting a statement, relationship, or recorded observation. Peridot preserves the distinction between supplied values and inferred presentation.
+
+**Export.** A saved representation of a visualization or selected data, such as PNG, SVG, or CSV. The relevant research scope should be made clear.
+
+**Facet.** A category of search results—such as people, places, or dates—that can help refine or inspect a result set.
+
+**Filter.** A condition for including or excluding data from a particular view or research scope. Chart-local filters do not change the whole dataset.
+
+**Geocoding.** Finding or assigning geographic coordinates for a place name. Researchers should check whether an identification is supported by their source.
+
+**Grouped swimlane.** A row or lane in Grouped Timeline that places each event under one eligible priority category while retaining its original date.
+
+**Humanities data.** Records, descriptions, and evidence used to investigate people, events, places, texts, culture, and historical change.
+
+<a id="glossary-i-m"></a>
+
+### I–M
+
+**Identity.** The researcher-defined criteria Peridot uses to recognize repeated mentions of the same person, place, or other subject; this can differ from its displayed label.
+
+**Inspector.** Peridot’s interface for examining the underlying records and linked evidence behind a selected visual item.
+
+**Interactive visualization.** A visual representation that a researcher can explore through actions such as selecting, filtering, panning, or zooming.
+
+**Join.** A workbook mapping that connects rows in different sheets using chosen identifiers, rather than assuming that corresponding rows share a position.
+
+**Join key.** A field whose identifier is used to match rows between workbook sheets; Peridot asks the researcher to select the relevant fields.
+
+**Latitude / longitude.** Coordinate values that specify north–south and east–west position on Earth.
+
+**Metadata.** Information describing a record or source, such as its archive, collection, date, or provenance.
+
+<a id="glossary-n-r"></a>
+
+### N–R
+
+**Network.** A visualization of connected subjects and their mapped relationships.
+
+**Node.** A point representing an entity, place, or another item in a visualization; in a network, edges can connect nodes.
+
+**Participant.** A person or other subject assigned a role in a mapped relationship; one record may involve several participants.
+
+**Period.** An interval with a beginning, an end, or both; Peridot preserves partial or uncertain historical date information where supported.
+
+**Playback.** Moving a chronology through time to change which dated records are active or highlighted in a view.
+
+**Primary sheet.** The worksheet selected to supply the main set of records when mapping a multi-sheet Excel workbook.
+
+**Priority category.** A category starred in Timeline Categories to make it eligible for a Grouped swimlane; other categories can still appear as secondary encodings.
+
+**Provenance.** Information about where a recorded value or visualization input came from, including its source and mapping.
+
+**Record.** One unit of source information in a dataset, often represented by a row in a spreadsheet.
+
+**Relational data.** Information that describes connections between people, places, events, or other subjects, often through identifiers or mapped relationships.
+
+**Relationship.** A source-backed association that the researcher maps between two or more participants; it is not inferred merely because items share a record.
+
+**Research scope.** The subset of data being considered at a particular step, such as the loaded dataset, applied Search results, or one chart’s filtered records.
+
+**Researcher-controlled interpretation.** A mapping or display choice made explicitly by the researcher rather than inferred silently by the application.
+
+**Row.** A horizontal entry in a spreadsheet or table, typically supplying one record or an item connected to a record.
+
+<a id="glossary-s-z"></a>
+
+### S–Z
+
+**Source / target.** Roles describing the direction of a mapped relationship, such as the sender and recipient of a letter.
+
+**Source data.** The original information supplied through a sample or upload, distinguished from Peridot’s mapped representation and visual presentation.
+
+**Source-backed.** Supported by the user-provided source or the researcher’s explicit mapping, rather than invented from coincidental proximity or similar labels.
+
+**Structured data.** Information arranged in identifiable fields and records, such as the columns and rows of a spreadsheet.
+
+**Subject attribution.** The mapping choice that specifies whether a date, place, or other evidence describes the whole record, one or more participants, or both.
+
+**Temporal precision.** How specifically a historical date is known or represented—for example, year-only, month-and-year, or an exact day.
+
+**Timeline.** A visualization placing recorded historical events and periods at their supported dates; Peridot also offers categories and Grouped view.
+
+**Tooltip.** A small explanation or preview that appears when interacting with a mark or control.
+
+**Uncertainty.** A limit or ambiguity in what the evidence establishes, such as an approximate date or unresolved identity. Peridot should not silently turn such uncertainty into certainty.
+
+**Unique identifier (ID).** A stable value used to distinguish one record or subject from others; such identifiers also support safe joins between worksheets.
+
+**Value.** The information in a particular field for a record, such as a name, place, number, or date.
+
+**Visualization mark.** A visible object representing data, such as a point, line, bar, or period band.
+
+**Workbook.** An Excel-style file containing one or more worksheets; Peridot can map data from selected sheets and join related ones.
+
+**Workbook / XLSX / XLSM / XLS.** Excel-style files that may contain several sheets. Peridot reads supported worksheet data and does not execute workbook macros.
+
+## 10. Documentation, Attribution, and Licensing
+
+### Further documentation and source repository
 
 - [Maintainer’s Guide](MAINTAINERS_GUIDE.md) — current architecture, module ownership, contracts, fragile zones, and regression matrices.
 - [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) — mandatory source-of-truth, bounded-pass, delivery, recovery, and commit process.
@@ -632,7 +978,7 @@ MapLibre work is archived and should not be treated as part of current `main`. F
 - [Core Documentation Restructuring Plan](../planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md) — section-mapping plan for this documentation architecture.
 - [Repository](https://github.com/haleyrp1803/peridot-humanistic-data) — current public source repository.
 
-## 10. Author, License, and Attribution
+### Author, license, and asset credits
 
 ### Tabler Timeline icon attribution
 
@@ -647,8 +993,32 @@ The Home includes image assets derived from historical-map sources credited in `
 
 ### Author / Maintainer
 
-Repository owner: **Haley R. P.**
+Repository owner: **Haley Price**
 
 ### License
 
 Add the project’s chosen license here if and when one is finalized.
+
+<details>
+<summary><strong>Original README document-role and checkpoint wording (historical snapshot)</strong></summary>
+
+This document owns public orientation, user-facing workflows, installation, data-input guidance, screenshots, concise limitations, and attribution. It does not own exhaustive module descriptions, detailed regression matrices, workflow governance, or complete historical chronology.
+
+Current synchronized checkpoint:
+
+```text
+e96c375 — Implement Charts appearance customization and adaptive presentation
+Branch: main
+Status: local and origin/main aligned after the latest sync ritual (user-confirmed 2026-11-22); working tree clean
+```
+
+For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
+
+</details>
+
+<details>
+<summary><strong>Original README orientation sentence (preserved)</strong></summary>
+
+This README is the public orientation and workflow guide. It explains what Peridot is, what kinds of work and data it supports, how to run it locally, and how to use the active interface. For current architecture, module ownership, regression contracts, and project-maintenance guidance, use the [Maintainer’s Guide](MAINTAINERS_GUIDE.md), [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md), and [Changelog](CHANGELOG.md).
+
+</details>
