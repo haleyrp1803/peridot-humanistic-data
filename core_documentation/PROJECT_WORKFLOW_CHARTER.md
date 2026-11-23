@@ -6,8 +6,30 @@ This Charter is Peridot’s controlling process document for safely changing the
 
 Use it before every implementation or documentation pass. It governs **how** work is done; the Maintainer’s Guide governs the current architecture, the Changelog governs history, and the Core Documentation Governance Protocol governs preservation and ownership during core-documentation maintenance.
 
+## The Golden Rule — When in Doubt, Ask Haley
+
+**Intention:** Prevent avoidable mistakes caused by misunderstood instructions, uncertain source authority, or unwarranted confidence. Genuine questions are part of responsible human–AI collaboration, not evidence of failure.
+
+**Origin / context:** Peridot's safeguards arose from real development problems. More effective communication can prevent an error before it requires a rollback, source recovery, or corrective documentation pass. Haley welcomes genuine questions and is generally happy to offer clarification or a deeper explanation when needed.
+
+**Requirement:** If a consequential requirement, source file, scope boundary, technical decision, or instruction remains genuinely uncertain, **ask Haley rather than guessing**. State what is known, what is uncertain, why it matters, and the narrow question that would resolve it.
+
+**Trigger:** Unresolved uncertainty that could materially affect correctness, safety, scope, preservation, or the truthfulness of a claim.
+
+**Prohibited actions:** Do not manufacture confidence, conceal uncertainty, silently choose between materially different interpretations, or treat a plausible inference as verified fact. Do not repeatedly request confirmation of decisions already established in current authoritative materials.
+
+**If clarification is unavailable:** Do not make an irreversible or potentially destructive change based on a guess. Finish only safely bounded, verifiable work; identify what remains unresolved.
+
+**Verification:** A material ambiguity is either resolved with identified evidence, clarified by Haley, or explicitly marked as unresolved. Do not represent an unresolved assumption as accepted.
+
+**Interpretation principle:** Follow each rule's explicit requirements **and** protect its stated intention. The intention explains how to recognize a dangerous shortcut; it is **not** permission to waive a mandatory requirement. If literal wording and the underlying safeguard appear to conflict, surface the conflict and apply the Golden Rule. Ordinary low-risk decisions governed by existing instructions should proceed without unnecessary questions.
+
+
 ## Quick Navigation
 
+- [The Golden Rule — When in Doubt, Ask Haley](#the-golden-rule--when-in-doubt-ask-haley)
+- [Operational index — When you need to…](#operational-index--when-you-need-to)
+- [Required preflight and source-authority decision tree](#required-preflight-and-source-authority-decision-tree)
 - [Non-negotiable operating rules](#1-non-negotiable-operating-rules)
 - [Delivery, testing, and commit protocol](#2-delivery-testing-and-commit-protocol)
 - [Recovery protocol](#3-recovery-protocol)
@@ -17,6 +39,26 @@ Use it before every implementation or documentation pass. It governs **how** wor
 - [Decision records by domain](#7-decision-records-by-domain)
 - [Standard handoff and completion template](#8-standard-handoff-and-completion-template)
 
+## Operational Index — When You Need To…
+
+*Purpose: Find the controlling procedure for the task in front of you. These links point to binding instructions; this index does not replace them.*
+
+| When you need to… | Go to |
+|---|---|
+| Begin a development or documentation pass | [Preflight checklist and outcome](#required-preflight-before-each-pass) and [bounded-pass rule](#12-bounded-pass-rule) |
+| Resolve a genuine ambiguity with Haley | [Golden Rule](#the-golden-rule--when-in-doubt-ask-haley) |
+| Identify the authoritative source file | [Source-of-truth decision tree](#source-of-truth-decision-tree) and [applied-file continuity](#applied-file-continuity-rule) |
+| Read and safely modify source code | [Full-file review and safe replacement](#13-full-file-review-and-safe-replacement) |
+| Discover necessary changes outside approved scope | [Unexpected scope-expansion procedure](#unexpected-scope-expansion-procedure) |
+| Work in a fragile subsystem | [Fragile-zone preflight](#14-fragile-zone-preflight-requirement) |
+| Package and deliver replacements | [Delivery format](#delivery-format) |
+| Decide which build/test is useful | [Risk-based build checks](#risk-based-build-checks-during-consecutive-passes) |
+| Diagnose a regression or recover a working state | [Recovery protocol](#3-recovery-protocol) |
+| Alter dependencies or tooling | [Dependency and tooling freeze](#5-dependency-and-tooling-freeze) |
+| Interpret an old design decision | [Decision-status key](#decision-domain-index-and-status-reading-key) |
+| Update core documents | [Documentation policy](#4-documentation-maintenance-policy) and [Governance Protocol](PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md) |
+| Hand off to another conversation | [Fresh-chat handoff](#fresh-chat-handoff) |
+
 ## Document Role and Boundaries
 
 This Charter owns mandatory process rules, source-of-truth continuity, delivery/recovery protocol, commit discipline, tooling constraints, and non-obvious decision governance. It does not own the exhaustive module map, regression matrix, screenshot archive, public product manual, or full commit history.
@@ -24,18 +66,76 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-e96c375 — Implement Charts appearance customization and adaptive presentation
+d5d7a1b — Reorganize core information documentation and add glossaries
 Branch: main
-Status: local and origin/main aligned after the latest sync ritual (user-confirmed 2026-11-22); working tree clean
+Status: local and origin/main aligned after the latest user-confirmed sync ritual; working tree clean (2026-11-22, America/New_York)
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
 
 
+## Required Preflight and Source-Authority Decision Tree
+
+*Purpose: Turn the Charter's already-binding safeguards into an ordered check that a new AI session can follow before changing anything. This guide clarifies the rules; it does not create exceptions to them.*
+
+### Required preflight before each pass
+
+| Check | Required determination | If unresolved |
+|---|---|---|
+| **Authority** | Which exact current local file, uploaded file, or verified commit governs each affected file? | Apply the Golden Rule; do not edit an uncertain source |
+| **Permission** | What change has Haley authorized, and what remains a proposal or discussion? | Ask before implementing a materially different choice |
+| **Pass type** | Exactly one: behavior, visual, structural, or documentation | Clarify scope before mixing types |
+| **Boundaries** | In-scope files/regions and deliberately out-of-scope regions | Do not silently enlarge scope |
+| **Fragility** | What downstream behavior or researcher data semantics could regress? | Consult the Maintainer's Guide and affected source |
+| **Acceptance** | What plain-language result and checks establish success? | Specify a test before editing |
+| **Delivery** | What ordinary files/ZIP and verified application steps are needed? | Do not improvise an unverified handoff |
+
+**Preflight outcome — choose one before editing:**
+
+- **Proceed:** The mandatory conditions are satisfied and the authorized bounded change can begin.
+- **Clarification required:** A consequential instruction, choice, or source-authority question remains ambiguous. Explain it briefly and ask Haley the focused question that resolves it. Do not execute the ambiguous change.
+- **Blocked:** A required technical condition is absent—for example, complete exact raw source is inaccessible or a required safeguard cannot be met. Do not edit; identify what source or prerequisite is missing. If the blockage also requires a human decision, ask Haley rather than inventing an exception.
+
+**Completion criterion:** Record the outcome in the pass preflight at an appropriate level of detail. A recommendation to proceed is not permission to enlarge the already agreed scope.
+
+### Source-of-truth decision tree
+
+**Why this exists:** Local changes may be accepted and tested before a Git commit. A clean historical commit or an easily retrieved older copy must not overwrite newer approved work. The authoritative *revision* and availability of its *exact contents* are separate questions.
+
+1. **Has Haley explicitly identified the source for this pass?** If yes, identify its exact version and check that no later applied changes supersede it. If no, use the most recent user-confirmed sync ritual and any confirmed subsequent local changes to determine the candidate authority.
+2. **Was an affected file subsequently edited, replaced, or tested locally without a commit?** If yes, that latest applied local file is authoritative for the file. If no, the confirmed synchronized revision may establish authority.
+3. **Is the candidate file demonstrably the most recent version?** If multiple uploads or artifacts exist, identify the latest *applicable* file, not simply a matching filename or an arbitrary `/mnt/data` copy. If provenance conflicts, ask Haley.
+4. **Can the entire exact current affected file be inspected from available raw contents?** If yes, complete full-file review and the remaining preflight. If only excerpts, memory, reconstructed content, or inaccessible references are available, **stop the edit** and obtain the exact source; a confirmed commit alone does not waive full-file review.
+5. **Do the proposed changes preserve unrelated material and the approved pass boundary?** If no or uncertain, narrow the edit, verify the source, or ask before proceeding.
+
+**Interpretation safeguard:** When two branches seem to apply, prefer the branch that preserves the newest verified accepted work; never *guess* that one is newer. Identifying a candidate authority is not evidence that its raw bytes have been read.
+
+### Authorization and verification distinctions
+
+- **Discussion is not automatically implementation authorization.** Distinguish design exploration, an accepted direction, permission to audit, and approval to change specific files. Respect existing explicit approval; do not demand it repeatedly.
+- **A build is not browser acceptance.** Distinguish static checks, automated tests, local browser verification, deployed-site behavior, and Haley's acceptance.
+- **A ZIP being created is not proof it is correct.** Verify its entries, relative paths, intended contents, and copy commands.
+- **A clean Git tree confirms repository state, not application correctness.** Do not make broader verification claims than the tests support.
+
+
+### How to read the governing rules
+
+For each rule, **Intention** describes the safeguard; **Origin / context** explains what prompted it; **Trigger** identifies when it applies; **Prohibited shortcut** identifies a likely failure; **If blocked or uncertain** specifies what to do instead of guessing; and **Verification** describes evidence of compliance. **The original binding procedure immediately following each interpretation remains mandatory.** These explanations clarify its meaning but never relax its requirements. When an explanation and a binding step disagree, apply the Golden Rule and reconcile the operative wording; do not select the less protective interpretation merely because it is easier.
+
+**Proportionate reporting:** Complete the preflight reasoning on every pass, but communicate it at a level suited to the risk. Small authorized changes can have concise preflight and handoff statements; fragile or architectural changes warrant explicit detail. The protective checks are never optional merely because the written report is brief.
+
 ## 1. Non-Negotiable Operating Rules
 
 ### 1.1 Source of Truth and Applied-File Continuity
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Prevent newer accepted work from being overwritten by older, easier-to-find files.
+- **Origin / context:** Development frequently involves locally applied replacements before commits, and older ZIPs/uploads may still be present.
+- **Trigger:** At the beginning of a pass and whenever a file changes after a confirmed checkpoint.
+- **Prohibited shortcut:** Do not treat a remembered snapshot or Git marker as equivalent to the latest file contents.
+- **If blocked or uncertain:** Stop editing, identify divergence, and ask Haley if version authority remains ambiguous.
+- **Verification:** Record the authoritative revision for each affected file and the exact contents inspected.
 
 
 At the start of any pass, establish one authoritative source of truth.
@@ -57,6 +157,16 @@ C:\Users\haley\OneDrive\Desktop\Peridot\
 Current synchronized checkpoint is recorded in the standardized block above. The Changelog is the authoritative source for detailed checkpoint interpretation and complete chronology.
 
 ### Applied-file continuity rule
+
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Keep local tested changes authoritative until deliberately superseded.
+- **Origin / context:** A stale replacement of shared files can silently undo unrelated working repairs.
+- **Trigger:** After an applied, tested but uncommitted replacement or manual edit.
+- **Prohibited shortcut:** Do not reconstruct from a superseded version or request an already available exact file reflexively.
+- **If blocked or uncertain:** Obtain the newest actual local file when it is unavailable; do not assume the latest assistant output was applied.
+- **Verification:** Confirm the user-applied revision and its raw contents.
+
 
 After the user applies and tests an uncommitted replacement, script, or manual edit, the resulting **local file** becomes the new source of truth for that file. Before a later change to the same file, either:
 
@@ -80,6 +190,14 @@ Asset-origin and licensing information must remain preserved in the README and M
 
 ### 1.2 Bounded-Pass Rule
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Make cause, effect, approval, and rollback understandable by constraining change scope.
+- **Origin / context:** Mixed repairs and redesigns made regressions harder to isolate and evaluate.
+- **Trigger:** Before each implementation or documentation pass.
+- **Prohibited shortcut:** Do not bundle unrelated behavior, appearance, and restructuring without explicit scope agreement.
+- **If blocked or uncertain:** Clarify the change boundary before editing.
+- **Verification:** State pass type, goal, exact scope, excluded work, acceptance test, and artifact.
 
 
 Before each coding pass, state:
@@ -93,10 +211,34 @@ Before each coding pass, state:
 
 Do not mix functional changes, visual redesign, broad refactors, and documentation updates in a single implementation pass unless the user explicitly chooses that scope.
 
+#### Unexpected scope-expansion procedure
+
+**Intention:** Prevent the assistant from expanding an apparently small approved change into a broader implementation without Haley's knowledge. Unexpected dependencies are a reason to reassess the pass, not implicit authorization to change more files.
+
+**Origin / context:** Shared state, stylesheets, workspace wrappers, and Inspector/visualization interactions have caused regressions when changes crossed subsystem boundaries unexpectedly.
+
+| Discovery | Required response |
+|---|---|
+| The fix stays within the authorized scope | Continue with the agreed checks |
+| More investigation is needed, without changing additional files | Investigate only within the agreed review boundaries; do not treat inspection as authorization to edit |
+| An additional file, behavior, or pass type must change | Stop the affected edit; state the dependency, risk, and proposed expansion, then obtain Haley's approval before changing the new area |
+| An unrelated defect is discovered | Record it separately, with its evidence; do not silently repair it in this pass |
+| The solution would violate an established invariant | Stop and reassess the design or seek clarification; do not implement the shortcut |
+
+**Verification:** Compare the final changed-file list and behavioral effects against the authorized in-scope/out-of-scope boundaries. Note separately any deferred discoveries. Do not mistake Haley's approval of an objective for blanket approval of unforeseen changes.
+
 ---
 
 ### 1.3 Full-File Review and Safe Replacement
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Prevent damage caused by working from incomplete or incorrectly reconstructed code.
+- **Origin / context:** Snippet-based edits and repetitive patch attempts failed in dense shared components.
+- **Trigger:** Before every code edit, including an apparently small targeted change.
+- **Prohibited shortcut:** Do not confuse mandatory full-file *inspection* with a mandatory full-file *delivery*.
+- **If blocked or uncertain:** If exact complete raw source is inaccessible, stop; request the needed file rather than pretending retrieval excerpts suffice.
+- **Verification:** Identify files read in full and the source-derived edit strategy.
 
 
 Before writing any code edit or patch script, read and review the complete current affected file or files from the real source of truth.
@@ -127,6 +269,16 @@ Small targeted replacement blocks are allowed only when all of the following are
 
 ### Shared-stylesheet and script safeguards
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Preserve unrelated presentation behavior while editing high-coupling stylesheets.
+- **Origin / context:** Earlier layout repairs regressed other pages because shared CSS was overwritten or brittle scripts were retried.
+- **Trigger:** Edits to shared CSS, fragile selectors, or generated patch procedures.
+- **Prohibited shortcut:** Do not equate a small visual request with low regression risk or use repeated permissive patch scripts.
+- **If blocked or uncertain:** Stop after a failed patch, establish whether files changed, restore source certainty, and choose one bounded repair.
+- **Verification:** Check target appearance and preservation of unrelated layouts, selectors, and style import order.
+
+
 `src/index.css` is a high-risk shared dependency even when a requested visual change is small. For a narrowly scoped color, spacing, or animation adjustment:
 
 - do not send a full stylesheet replacement merely for convenience;
@@ -145,6 +297,16 @@ This project is grounded in real code and real data. Do not reconstruct likely c
 
 ### Human-readable code comment rule
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Leave future human maintainers intelligible architectural and compatibility rationale.
+- **Origin / context:** Large, long-lived components and legacy bridges otherwise require prior chat context to interpret.
+- **Trigger:** Whenever editing relevant code or removing existing explanatory comments.
+- **Prohibited shortcut:** Do not replace reasoning with descriptions of obvious syntax or delete unique rationale casually.
+- **If blocked or uncertain:** Mark uncertain comments for verification instead of inventing a reason.
+- **Verification:** Check comments near edited logic against actual behavior and preserve important rationale.
+
+
 Code should be commented thoroughly enough for a new human developer to understand what each major section does and how it relates to other app sections and files. Comments should explain architecture, data flow, fragile compatibility paths, non-obvious state coupling, and why a decision was made. They should not merely restate obvious syntax.
 
 When editing a file, review nearby comments for accuracy. Update comments that describe obsolete UI paths, removed routes, or superseded data workflows. Add short architectural comments before complex state blocks, exported helper groups, compatibility bridges, and cross-file wiring. Avoid large noisy comment blocks, but leave enough context that a future maintainer can safely continue work without relying on prior chat history.
@@ -152,6 +314,16 @@ When editing a file, review nearby comments for accuracy. Update comments that d
 Before deleting comments, verify that the information is either obsolete, duplicated by clearer documentation, or obvious from the code. If a path is retained only for compatibility, comment that explicitly.
 
 ### Most-recent-upload rule
+
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Protect the current source from accidental substitution by an older same-name file.
+- **Origin / context:** Multiple timestamped exports and generated replacements often coexist.
+- **Trigger:** When Haley provides new source files during a pass.
+- **Prohibited shortcut:** Do not rely on filename equality, directory listing order, or an older generated artifact.
+- **If blocked or uncertain:** Resolve recency or scope ambiguity with Haley before editing.
+- **Verification:** Identify exact uploaded file/revision inspected.
+
 
 When the user uploads files after being asked for current source files, treat those most recent uploads as the authoritative source for that pass unless the user explicitly says otherwise.
 
@@ -163,11 +335,31 @@ Before making claims that a user-uploaded source file is stale, verify that the 
 
 ### 1.4 Fragile-Zone Preflight Requirement
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Prevent seemingly localized changes from breaking coupled subsystems or changing evidence semantics.
+- **Origin / context:** Shared Inspector, map, mapping, Search, and styling logic has regressed under unrelated-looking changes.
+- **Trigger:** Before touching any fragile area identified in the Maintainer’s Guide.
+- **Prohibited shortcut:** Do not treat the examples in this Charter as the exhaustive regression inventory.
+- **If blocked or uncertain:** Consult the current technical contract or ask for clarification before proceeding.
+- **Verification:** Name risk, out-of-scope behavior, and focused regression checks before edit.
+
+
 Before touching a fragile zone, state the affected zone, what could break, what is deliberately out of scope, and how the result will be verified. The authoritative detailed fragile-zone regression matrix is in the Maintainer’s Guide; this Charter requires the preflight, not a duplicate technical inventory.
 
 High-risk examples include `App.jsx` orchestration, workspace routing, compact/full Inspector behavior, Search applied-data state, Timeline/Analytics coupling, upload/mapping behavior, export rendering, shared stylesheets, stylesheet import order, semantic theme roles, and map/chart portal layering.
 
 ## 2. Delivery, Testing, and Commit Protocol
+
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Make every handoff reproducible, inspectable, and limited to authorized files.
+- **Origin / context:** Unverified archive layouts, broad staging, and ambiguous replacements can lead to wrong files being copied or committed.
+- **Trigger:** Whenever delivering changed source, assets, or documents; and at checkpoint/commit boundaries.
+- **Prohibited shortcut:** Do not assume archive paths, use blanket Git staging, or claim browser verification from a build alone.
+- **If blocked or uncertain:** Verify actual artifact and paths; if verification fails, repair before delivery.
+- **Verification:** Show tested ZIP members, exact copy destinations, and distinct test/acceptance status.
+
 
 A **checkpoint** is a tested intermediate state that may still be revised soon. A **commit** is a coherent completed pass with one clear outcome. Use commits for coherent completed passes; use checkpoints when the user wants recoverability before additional risk.
 
@@ -176,7 +368,7 @@ A **checkpoint** is a tested intermediate state that may still be revised soon. 
 - **Default Peridot coding and documentation delivery:** provide one uniquely versioned ZIP bundle per pass containing all new/replacement files for that pass.
 - Always provide exact PowerShell commands to extract the bundle into a uniquely named temporary folder and copy each contained file to its intended path under `C:\Users\haley\OneDrive\Desktop\Peridot\`.
 - **Before delivery, inspect the completed ZIP's actual internal path structure and write the PowerShell copy commands against those exact paths.** Do not assume the archive contains `src\...`, a versioned top-level directory, or any other layout without checking it.
-- The handoff commands must be complete enough to execute the pass from the project root: extraction, every required `Copy-Item`, and the relevant verification command(s) such as `git status` and `npm.cmd run dev` for source changes.
+- The handoff commands must be complete enough to execute the pass from the project root: extraction, every required `Copy-Item`, and the **verification commands warranted by the pass**. Include `git status` when appropriate; do not automatically repeat `npm.cmd run build` or `npm.cmd run dev` after every small source pass. Apply the risk-based build-check rule below.
 - Bundle-internal replacement filenames should also be unique/versioned when practical so downloads from different passes cannot be confused. Repository destination filenames remain the canonical project filenames.
 - Avoid separate individual-file downloads unless there is a specific reason to provide one, such as isolated recovery of one file.
 - Do not use executable apply/patch scripts unless explicitly requested. The bundle should contain ordinary source/document/asset files and the chat should provide transparent copy commands.
@@ -187,9 +379,51 @@ A **checkpoint** is a tested intermediate state that may still be revised soon. 
 
 ### Diagnostic-output requests and source-workflow clarification (2026-11-03)
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Request diagnostic evidence only when it answers a concrete question.
+- **Origin / context:** Routine successful logs create unnecessary work; source-guessing delays actual runtime diagnosis.
+- **Trigger:** When investigating build, browser, or source failures.
+- **Prohibited shortcut:** Do not ask for repetitive generic build logs or ignore an available relevant browser exception.
+- **If blocked or uncertain:** Describe the missing diagnostic and why it matters.
+- **Verification:** Distinguish build, browser, deployment, and user acceptance.
+
+
 Do not routinely ask the researcher to paste successful build output or repeat routine build logs when no particular diagnostic question requires them. State any concrete reason for requesting build/console output, and distinguish a local syntax/build check from browser acceptance and deployed-site verification. Use targeted console measurements or an actual browser exception early when a runtime regression warrants it. Keep source handoffs as complete, versioned ordinary replacement files with checked ZIP paths and transparent `Copy-Item` commands; do not deliver executable patch scripts by default. This clarification reinforces, rather than supersedes, the full-file review, applied-file continuity, and recovery rules above.
 
+### Risk-based build checks during consecutive passes
+
+**Intention:** Verify changes when a build can reveal a meaningful problem, without repeatedly assigning Haley the same low-value command during closely related, back-to-back development passes. Preserve efficient collaboration without sacrificing necessary regression checks.
+
+**Origin / context:** Repeated instructions to run the Peridot build after each minor iteration create friction when the recent build baseline is known and the current changes are unlikely to affect compilation, packaging, or production assets. This rule extends the existing policy against requesting repetitive successful build logs; it does **not** abolish build verification.
+
+**Trigger:** Each time the assistant chooses or recommends verification for a bounded pass, especially during a sequence of small changes to the same feature.
+
+**Requirement:** Choose verification according to what changed and what failure is plausible. Distinguish a build, automated tests, browser interaction checks, and deployed-site verification; one does not substitute for the others.
+
+- **Run or request a production build when it has a concrete purpose**, including changes to dependencies, configuration, build-time imports, assets or their paths, packaging, exports, code with meaningful compilation risk, or before a significant release/checkpoint when required by the acceptance plan. A recent build does not waive checks when a new change creates fresh build risk.
+- **For small consecutive visual or interaction passes**, when the last known build baseline remains relevant and the edited change has little build-specific risk, prefer a focused browser acceptance/regression check or relevant automated test. Do not automatically add `npm.cmd run build` to every handoff.
+- **Do not repeatedly ask Haley to paste routine successful build output.** Ask for a failure, warning, or specific diagnostic only when it bears on a concrete question.
+- **State why a build is needed when requesting one**, or briefly identify that the build is intentionally deferred because the pass is low-risk and already covered by more relevant checks. Do not claim a build was run when it was not.
+- **When several small passes accumulate**, reassess whether an integrated build and wider regression pass is warranted; do not defer indefinitely solely because each individual edit seemed small.
+
+**Prohibited shortcut:** Do not treat skipping a low-value build as permission to skip all verification. Do not substitute an old build for a newly required check, or claim that browser behavior is correct solely because the project builds.
+
+**If blocked or uncertain:** Identify the specific build or runtime risk and ask Haley whether an additional check is warranted when the existing acceptance plan does not resolve the question. Follow the Golden Rule for consequential uncertainty.
+
+**Verification:** In the handoff, name the checks actually completed or delegated, distinguish any deferred build from a passed build, and identify remaining risk. No successful-build output is required unless a specific diagnostic need arises.
+
 ### Sync ritual
+
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Keep future work anchored to a verified repository revision without losing newer local edits.
+- **Origin / context:** Repeatedly asking for sources after confirmed syncs wasted effort; stale checkpoints also caused drift.
+- **Trigger:** After commits/major checkpoints and before relying on Git as authority.
+- **Prohibited shortcut:** Do not treat an old ritual as proof no newer uncommitted changes exist.
+- **If blocked or uncertain:** Ask for updated sync or exact local file only when there is concrete uncertainty.
+- **Verification:** Record `HEAD`, branch alignment, working-tree status, and any subsequent applied edits.
+
 
 Run after actual commits or major checkpoints:
 
@@ -206,6 +440,14 @@ After a clean aligned sync ritual, do not repeatedly request uploaded source fil
 
 ## 3. Recovery Protocol
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Restore a known-good working state without layering speculative fixes or destroying unrelated work.
+- **Origin / context:** Repeated Search patch attempts, Inspector behavior regressions, and responsive-panel rollbacks demonstrated the value of stopping early.
+- **Trigger:** When a patch, build, or browser test fails or produces unexpected behavior.
+- **Prohibited shortcut:** Do not assume “restore checkpoint” authorizes discarding unrelated or uncommitted user work.
+- **If blocked or uncertain:** Identify failed files and preserve unaffected changes; request approval before destructive reset/restore.
+- **Verification:** Confirm recovery target, scope, retained unrelated changes, and rerun acceptance checks.
 
 
 When something goes wrong:
@@ -213,7 +455,7 @@ When something goes wrong:
 1. Stop further edits.
 2. Identify the current source of truth.
 3. When a runtime issue appears after user interaction, inspect the F12 browser console early before attempting source edits or speculative fixes.
-4. Restore the last good checkpoint/commit.
+4. **Plan and carry out only a bounded, non-destructive restoration to the last known-good state.** Identify the exact files and changes affected, protect unrelated or uncommitted work, and obtain Haley’s authorization before any restoration that would overwrite or discard it. Never assume a clean checkpoint permits a broad working-tree reset.
 5. Restate the goal in one sentence.
 6. Make one bounded fix only, or switch delivery mode to full-file replacement after full-file review.
 7. Rerun the acceptance test.
@@ -232,6 +474,14 @@ Recent examples reinforced this rule:
 
 ## 4. Documentation Maintenance Policy
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Keep documentation accurate without interrupting every small development change or losing history.
+- **Origin / context:** The core docs carry cumulative knowledge needed by new maintainers and scholarly reviewers.
+- **Trigger:** At milestones, meaningful batches, handoffs, and authorized documentation passes.
+- **Prohibited shortcut:** Do not mistake additive-by-default preservation for a ban on verified restructuring, or a license to discard history.
+- **If blocked or uncertain:** Use the Governance Protocol to map retained, moved, archived, and corrected content.
+- **Verification:** Check primary ownership, history preservation, cross-links, and current claims.
 
 
 Do not update documentation after every small code commit. That slows development.
@@ -245,19 +495,39 @@ Instead, defer README / Maintainer Guide / Changelog updates until:
 
 When documentation is updated, preserve the full development history in `CHANGELOG.md`.
 
-Documentation passes should default to adding new milestone/current-state information where reasonable. Subtract or rewrite existing documentation only when the text is clearly obsolete, duplicated by a more accurate retained entry, or actively misleading.
+Documentation passes should default to adding new milestone/current-state information where reasonable. Subtract or rewrite existing documentation only when the text is clearly obsolete, duplicated by a more accurate retained entry, or actively misleading. **A specifically authorized, preservation-verified structural reorganization is also permitted under the Governance Protocol:** map each moved, consolidated, corrected, or archived item to its retained location; preserve unique technical knowledge and historical evidence; and disclose any truly removed text. Structural permission is not permission to silently delete substance.
 
 ---
 
 ### Executive-summary maintenance rule
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Keep accessible orientation stable without casually rewriting technical or historical detail.
+- **Origin / context:** Repeated incremental updates can turn front matter into a mini-changelog and duplicate current-state claims.
+- **Trigger:** Whenever editing one of the four core documents.
+- **Prohibited shortcut:** Do not treat the executive-summary exception as permission to rewrite the remainder without preservation review.
+- **If blocked or uncertain:** Document why an authorized structural pass needs relocation or correction under Governance Protocol safeguards.
+- **Verification:** Confirm the opening accurately states audience and purpose; check information-preservation mapping.
+
+
 Each core document—`README.md`, `MAINTAINERS_GUIDE.md`, `PROJECT_WORKFLOW_CHARTER.md`, and `CHANGELOG.md`—must begin with a one- or two-paragraph **Executive Summary** for human readers.
 
-The Executive Summary is the sole documentation region that may be revised non-additively during a documentation pass. It is a stable orientation layer, not a miniature changelog: update it only when the document’s purpose, audience, or high-level scope has materially changed. All remaining documentation should remain additive, meticulous, and exhaustive by default, subject only to the existing rule allowing clearly obsolete, duplicated, or misleading text to be corrected.
+The Executive Summary is the **only region routinely eligible for non-additive prose revision without a separately authorized structural pass**. It is a stable orientation layer, not a miniature changelog: update it only when the document's purpose, audience, or high-level scope has materially changed. All remaining documentation remains additive, meticulous, and exhaustive by default. Exceptions are explicitly corrected obsolete/duplicated/misleading text **or** a Haley-authorized reorganization with a documented preservation audit under the Governance Protocol. Neither exception permits loss of unique historical rationale, technical contracts, or failure evidence.
 
-For every core-documentation pass, also follow `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md` and the current `planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md`. Read the protocol and all four core documents in full before editing them.
+For every core-documentation pass, follow `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md` and read the current complete versions of all four core documents before editing. The historical Core Documentation Restructuring Plan remains available in `planning_documents/` as a record of the original restructuring, but is not a standing procedural authority. Consult historical planning documents when relevant to understanding an earlier decision or preserving its rationale.
 
 ### Six-month dependency maintenance review — SheetJS and Browserslist
+
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Prevent silent dependency obsolescence without risky or unverified upgrade cascades.
+- **Origin / context:** SheetJS distribution/security practices and Browserslist data require different verification than ordinary package updates.
+- **Trigger:** At six-month review dates and explicitly approved tooling passes.
+- **Prohibited shortcut:** Do not equate an audit report with official security coverage, or an update attempt with a verified upgrade.
+- **If blocked or uncertain:** Log review findings and deferral; do not force incompatible upgrades.
+- **Verification:** Record versions, update/review dates, advisories, build and importer regressions.
+
 
 **Decision (2026-10-31):** check SheetJS (`xlsx`) and the Browserslist compatibility database (`caniuse-lite`) every six calendar months. A review is required even if no package update is made. Maintain in the Maintainer's Guide a ledger with each dependency's exact installed version, the date it was last successfully installed and verified, the separate last-review date, the review findings and test evidence, and the next due date. As the initial updates were completed on **2026-10-31**, the first due date is **2027-04-30**. After a review, schedule the next check six calendar months after that review; record a new *last updated* date only after actual upgrade verification.
 
@@ -267,6 +537,14 @@ Keep this as a bounded tooling/maintenance pass: inspect official security advis
 
 ## 5. Dependency and Tooling Freeze
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Prevent unrelated infrastructure changes from obscuring the results of a bounded feature pass.
+- **Origin / context:** Package and configuration changes can introduce unrelated failures and deployment drift.
+- **Trigger:** Every ordinary development pass outside explicitly approved tooling/architecture work.
+- **Prohibited shortcut:** Do not casually modify lockfiles, configuration, dependencies, or folder topology.
+- **If blocked or uncertain:** Ask Haley before enlarging scope to a tooling change.
+- **Verification:** Inspect changed-file list for unauthorized infrastructure edits.
 
 
 Do not change dependencies, package manager files, Vite config, Tailwind config, lint/format rules, filenames, or folder structure unless the pass is explicitly about tooling or architecture.
@@ -277,10 +555,19 @@ Generated artifacts such as `itch_upload/` should not be committed during ordina
 
 ## 6. Project-Specific Operating Cautions
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Expose known high-coupling areas before a developer acts on an apparently local task.
+- **Origin / context:** Prior architectural transitions left compatibility bridges, performance sensitivities, and known failure modes.
+- **Trigger:** When a proposed pass touches one of the named areas.
+- **Prohibited shortcut:** Do not treat a caution as a standalone current architecture specification if the Maintainer’s Guide supersedes its detail.
+- **If blocked or uncertain:** Consult current Level 2/3 contracts and ask before removing a compatibility path.
+- **Verification:** Use domain-specific regressions from the Maintainer’s Guide.
+
+
 ### Modularization roadmap
 
 Maintain a modularization roadmap for eventual `App.jsx` decomposition, but do not execute it casually. Preferred order: pure data helpers; export helpers; theme/constants; small reusable UI pieces; map interaction helpers; panel and Inspector content components; then app orchestration last. Stop structural cleanup once the file is stable unless there is a concrete bug, a planned architectural pass, or a specific maintenance pain point.
-
 
 
 ### Shared side-panel compatibility path
@@ -336,32 +623,64 @@ Workbooks continue to use user-configured unique-ID joins rather than row order.
 
 Do not create a new profile or parser for each unusual spreadsheet shape. Multiple-partner/multiple-value support now belongs to the shared per-mapped-item cardinality model rather than genealogy-specific parsing. Do not extend that model into positional zipping of parallel list-valued columns. Conversely, do not delete compatibility modules without the no-loss retirement audit.
 
-For the current import/sample/Identity contract and detailed regression checks, see the [Maintainer’s Guide — Data Import and Workbook Contract](MAINTAINERS_GUIDE.md#7-data-import-and-workbook-contract).
+For the current import/sample/Identity contract and detailed regression checks, see the [Maintainer’s Guide — Data Import and Workbook Contract](MAINTAINERS_GUIDE.md#contract-data-import-and-generalized-mapping).
 
 ### Advanced Search and applied-scope caution
 
 Advanced Search is the primary owner of global applied filtering and the Explore surface. Preserve its draft/apply model, explicit route filters, structured criteria, Browse, Results, Refine / Inspect, Capabilities, and Inspector-overlay return behavior. Do not turn draft edits into uncontrolled full-dataset recomputation or combine Search work with unrelated `App.jsx`, Timeline, Analytics, Inspector, or MapLibre changes.
 
-For the current Search contract and detailed regression checks, see the [Maintainer’s Guide — Advanced Search / Explore Contract](MAINTAINERS_GUIDE.md#5-advanced-search--explore-contract).
+For the current Search contract and detailed regression checks, see the [Maintainer’s Guide — Advanced Search / Explore Contract](MAINTAINERS_GUIDE.md#contract-explore-and-search).
 
 ## 7. Decision Records by Domain
 
-The concise domain summaries below are the active decision index. When recording a new or materially revised non-obvious decision, add it beneath the relevant domain using:
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Preserve why decisions were made without allowing old proposals to become current instructions.
+- **Origin / context:** Peridot has undergone many deliberate revisions of its workspace, import, chart, and timeline designs.
+- **Trigger:** When interpreting or updating a non-obvious technical/product decision.
+- **Prohibited shortcut:** Do not adopt archived prose merely because it uses imperative “should” language.
+- **If blocked or uncertain:** Use current contract and later decision status; if the replacement cannot be established, ask Haley.
+- **Verification:** Record status, rationale, rejected alternative, consequence, and replacement reference.
+
+
+The domain summaries below index decisions and preservation constraints from different development periods. **Current authority comes from the latest accepted decision and the corresponding Maintainer’s Guide contract**, not automatically from every historical sentence here. Treat an earlier imperative as historical when superseded; if its status is unclear, use the Golden Rule. When recording a new or materially revised non-obvious decision, add it beneath the relevant domain using:
 
 ```text
+Status: Current / Superseded / Historical / Deferred / Rolled back / Compatibility (verify)
 Decision:
 Context:
 Chosen approach:
 Rejected alternative:
 Reason:
 Maintenance consequence:
+Superseded by / related contract: (where applicable)
 ```
 
 Detailed historical decision rationale remains preserved in the archived inventory below.
 
+### Decision-domain index and status reading key
+
+| Domain | Current technical authority | Historical handling |
+|---|---|---|
+| [Data policy and imports](#71-data-policy-and-imports) | Maintainer’s Guide — Data import and generalized mapping | Earlier profile modes and proposed chart controls are not current instructions |
+| [Routing and workspace model](#72-routing-and-workspace-model) | Maintainer’s Guide — Application shell and navigation | Preserve prior Home and navigation experiments as historical |
+| [Inspector](#73-inspector) | Maintainer’s Guide — Inspector | Preserve former panel modes and compatibility rationale |
+| [Search and data scope](#74-search-and-data-scope) | Maintainer’s Guide — Explore / Search and shared scope | Preserve prior Search models where relevant |
+| [Analytics](#75-analytics) | Maintainer’s Guide — Charts II | Legacy Charts I controls explicitly superseded |
+| [Themes and visual language](#76-themes-and-visual-language) | Maintainer’s Guide — Themes, editorial presentation and loading | Older decorative/asset designs remain historical |
+| [Export](#77-export) | Maintainer’s Guide — Exports | Retain retired Export workspace decisions as history |
+| [Archived or superseded decisions](#78-archived-or-superseded-decisions) | Changelog and relevant current contracts | Never use this archive as an active implementation directive |
+
+**Status vocabulary:** Current = binding unless superseded by a newer accepted decision; Superseded = replaced; Historical = descriptive of an earlier state; Deferred = not presently authorized work; Rolled back = intentionally not active; Compatibility = retained for an identified present dependency. **Qualified status** (such as "Current in principle; interface details historical") means preserve the enduring decision but check the current Maintainer’s Guide and source before using its old implementation details. A missing or uncertain status is **not evidence of current authority**. Refer to the source-of-truth rule and ask Haley if competing records cannot be reconciled.
+
+**Status application:** Each detailed decision record below now carries a status and related-authority note. The six-field original decision narrative is retained unchanged. Domain-level bullets and the expandable archived inventory describe mixed periods; where they lack an individual status, do not treat them as new implementation authorization.
+
+
 ### 7.1 Data policy and imports
 
 #### Performance optimization without semantic reclassification (2026-11-01)
+
+**Status:** Current — preservation principle; historical optimization event. **Related authority:** Data mapping and generalized runtime contracts; Changelog 481acd9. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -394,10 +713,14 @@ Retest capability availability, multipart relations, mapped route geography, and
 - Peridot starts with no active dataset. Sample data is explicitly selected and uses ordinary source files plus ordinary generalized mappings.
 - Sample mappings are editable for learning/QA while the shipped mapping and source remain preserved and resettable.
 - Generalized mappings are authoritative through canonical/runtime consumption. Legacy fields may remain only as explicit compatibility projections while the repository-wide retirement audit determines which paths are still required.
+**Historical proposal — not a current Charts II implementation instruction:** The following earlier Phase 3 idea is preserved as decision history. The accepted Charts II contract and later Changelog milestones govern present development.
+
 - Phase 3 should build chart controls from saved/generalized variables, including a structured autocomplete sentence builder that mirrors scholarly questions without implementing unrestricted natural-language prompting.
 
 
 #### Provisional background review and researcher edit authority decision (2026-10-31)
+
+**Status:** Current — worker invalidation and researcher-edit authority; historical implementation context. **Related authority:** Data import/mapping; background processing. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -421,6 +744,8 @@ Test rapid corrections, worker failure, changed workbook joins, navigation betwe
 
 #### Generalized-mapper authority decision
 
+**Status:** Current. **Related authority:** Data import and generalized mapping contract. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Treat accepted generalized mapping assignments as the authoritative semantic inputs for ordinary uploads and samples.
@@ -442,6 +767,8 @@ New consumer work should read generalized/canonical structures first. Compatibil
 ```
 
 #### Temporal assertions and Timeline semantics decision
+
+**Status:** Current in canonical temporal semantics; historical references to former component names require verification. **Related authority:** Shared chronology and Timeline II contracts. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -465,6 +792,8 @@ Temporal consumers use canonical `temporalAssertions[]`; the former `parsedDate`
 
 #### Dedicated Timeline visualization-workspace decision
 
+**Status:** Superseded in implementation specifics; enduring separation of shared chronology and dedicated Timeline remains applicable. **Related authority:** Timeline II and shared chronology contracts; later generalized-category decisions. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Add a dedicated Timeline visualization workspace while preserving the existing bottom Timeline/playback control as a separate shared chronological control.
@@ -486,6 +815,8 @@ Do not conflate `timelinePlaybackComponents.jsx` with `PeridotTimelineWorkspace.
 ```
 
 #### Researcher-declared record and entity identity decision
+
+**Status:** Current. **Related authority:** Data import and generalized mapping contract. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -509,6 +840,8 @@ Display labels are presentation, not universal identity. Accepted Identity rules
 
 #### First-class sample-data decision
 
+**Status:** Current. **Related authority:** Data workflow and sample-data contract. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Treat bundled samples as ordinary downloadable source files with ordinary generalized mappings, and never preload one implicitly.
@@ -530,6 +863,8 @@ No-data is a valid first-launch state. Sample-specific behavior belongs in metad
 ```
 
 #### Cardinality / delimiter decision
+
+**Status:** Current. **Related authority:** Data mapping, relationships and parsing contracts. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -554,6 +889,8 @@ This behavior is implemented through shared per-mapped-item value handling acros
 
 #### Record/participant subject-attribution decision
 
+**Status:** Current. **Related authority:** Canonical assertions and mapping contract. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Let one mapped Time, Place, or Evidence item describe the record, one or more mapped participants, or both while keeping canonical assertions atomic.
@@ -575,6 +912,8 @@ Do not infer participant ownership from co-occurrence in a row. Preserve record-
 ```
 
 #### User-activated optional mapping decision (2026-10-28)
+
+**Status:** Current in principle; controls and names must be checked against current UI. **Related authority:** Data mapping contract. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -599,6 +938,8 @@ Retain the accepted single-group multipart `relationshipParts` model. Multiple i
 
 #### One authoritative chronology component and evidence-first geometry repair (2026-11-01)
 
+**Status:** Current in chronology-authority principle; implementation path must be checked against current architecture. **Related authority:** Shared chronology and geographic Map contracts. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Reuse the exact approved Timeline II chronology presentation across Visualize rather than duplicating its appearance, and diagnose geometry/initialization failures through complete state and coordinate tracing before modifying layout.
@@ -620,6 +961,8 @@ Read all exact affected sources, compare initial vs remounted state and actual c
 ```
 
 #### Unified calendar chronology, independent sessions, and source-extent presentation (2026-11-09)
+
+**Status:** Current. **Related authority:** Shared chronology and Timeline II contracts. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -643,6 +986,8 @@ Preserve exact date/tick alignment, source-derived padding, period and partial-d
 
 #### Generalized, researcher-owned Timeline category decision (2026-11-10)
 
+**Status:** Current. **Related authority:** Timeline II category editor contract. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Make Timeline categories a researcher-controlled visual interpretation of source-backed event attributes, not a fixed Evidence-only list or an automatically assigned taxonomy.
@@ -665,6 +1010,8 @@ Maintain field/source provenance, exact historical event associations, category 
 
 #### Grouped swimlane interpretive priority and scoped scroll ownership (2026-11-11)
 
+**Status:** Current. **Related authority:** Timeline II grouped lanes and horizontal scroll layout-risk plan. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Treat researcher-selected category swimlanes as an explicit interpretive organization and constrain their horizontal editor viewport at the Timeline II stage boundary, without changing unrelated visualization stage sizing.
@@ -686,6 +1033,8 @@ Preserve source-backed category membership and one-lane-per-event semantics, use
 ```
 
 #### Persistent OffscreenCanvas loader and first-mount Map decision (2026-11-03)
+
+**Status:** Current where present; exact runtime ownership must be checked. **Related authority:** Loading and geographic Map contracts. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -722,6 +1071,8 @@ Preserve worker/fallback/reduced-motion behavior, the exact Forest Study design,
 
 #### Data entry and decorative-asset maintenance decision (2026-10-30)
 
+**Status:** Current in accepted Data workflow; older animation/asset details require current verification. **Related authority:** Application shell, Data entry, and assets. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Keep public onboarding choices inside a four-tab Data workspace and preserve descriptive, role-based asset naming.
@@ -743,6 +1094,8 @@ Preserve Data tab continuity, dataset state, sample actions, safe viewport fit, 
 ```
 
 #### No-data editorial gateway, transition rollback, and production asset decision (2026-10-31)
+
+**Status:** Current in no-data and asset-safety principles; historical transition experiment. **Related authority:** Application shell, no-data gateways, and loading. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -805,6 +1158,8 @@ Preserve the Visualize/Explore/Tutorials gateway distinction from active-data wo
 
 #### Cartographic Editorial homepage geometry and shared-button decision (2026-10-25)
 
+**Status:** Historical in exact Home geometry; current shared-style and preservation principles remain relevant. **Related authority:** Application shell and editorial presentation; later Home redesign. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Preserve the accepted full-screen desktop editorial composition and use shared button role styling instead of independent one-off button variants.
@@ -827,6 +1182,8 @@ Preserve the one-screen desktop composition and its decorative crop, prevent bot
 
 #### About manuscript-style layout and responsive Data presentation decision (2026-10-30)
 
+**Status:** Current in editorial/readability principles; exact geometry should be verified. **Related authority:** About and Data presentation contracts. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Use outer-edge torn-illustration corners as part of the About page's manuscript composition, and favor close shape-aware content wrapping rather than oversized fixed rectangular image exclusions.
@@ -848,6 +1205,8 @@ Regression-test About pages, Feedback submission, the Creator portrait, and Data
 ```
 
 #### CARTO geographic basemap and self-contained export decision (2026-10-31)
+
+**Status:** Current. **Related authority:** Geographic Map and Export contracts. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -876,6 +1235,8 @@ Keep the CARTO key untracked and excluded from export URLs; regression-test zoom
 
 ### Navigation-state persistence and public header decision
 
+**Status:** Current. **Related authority:** Application shell and shared state contracts. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
+
 ```text
 Decision:
 Use one persistent global header across Peridot's public pages and preserve the active research state while users navigate.
@@ -897,6 +1258,8 @@ Navigation changes must be tested for active-dataset continuity, filters, playba
 ```
 
 ### Full-page Data mapping decision
+
+**Status:** Current in full-workspace model; earlier UI details may have evolved. **Related authority:** Data import and generalized mapping contract. This label classifies the record; current behavior must be verified against the latest accepted contract before implementation.
 
 ```text
 Decision:
@@ -938,7 +1301,6 @@ Rejected alternative:
 Reason:
 Maintenance consequence:
 ```
-
 
 
 For non-obvious implementation choices, record:
@@ -1067,6 +1429,16 @@ Current notable decisions:
 
 ## 8. Standard Handoff and Completion Template
 
+**Rule interpretation (read together with the full binding instructions below):**
+
+- **Intention:** Make work repeatable across conversations without reconstructing previous context.
+- **Origin / context:** Earlier fresh-chat records contained frozen checkpoints and tasks that later became obsolete.
+- **Trigger:** At every pass completion and new-session continuation.
+- **Prohibited shortcut:** Do not copy an older handoff snapshot as current state.
+- **If blocked or uncertain:** Verify checkpoint or mark it unconfirmed; ask only for genuinely unavailable current source.
+- **Verification:** Provide exact change list, tests, residual risks, artifact paths, and current authority.
+
+
 Each implementation pass should end with:
 
 - what changed;
@@ -1081,7 +1453,11 @@ Each implementation pass should end with:
 
 ### Fresh-chat handoff
 
-A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual. At the `ea7cda8` checkpoint, local development on the user's Windows machine is started with `npm.cmd run dev`; local Charts II changes remain intentionally uncommitted. It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents. Each new conversation should begin by rereading the four core documents before any development work is done.
+**Apply the Golden Rule:** When the prior session leaves genuinely material uncertainty about source authority or accepted scope, identify the exact missing fact and ask Haley; do not silently fill the gap with an old handoff note.
+
+A new chat should begin with the confirmed source-of-truth folder, active branch, and current synchronized checkpoint from the most recent clean sync ritual (see the single standardized checkpoint block near this document’s beginning). It should also receive the narrow current task, relevant current source files, and the applicable planning/contract documents. Each new conversation should begin by rereading the four core documents before any development work is done.
+
+**Historical handoff snapshot (superseded, retained for provenance):** At the `ea7cda8` checkpoint, local development on the user's Windows machine was started with `npm.cmd run dev`; local Charts II changes then remained intentionally uncommitted. This does not describe the current `d5d7a1b` checkpoint.
 
 For core documentation work, provide all four core documents and `PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md` before edits begin.
 

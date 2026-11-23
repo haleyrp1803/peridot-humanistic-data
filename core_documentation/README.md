@@ -975,7 +975,7 @@ This reference explains terminology used in Peridot and common concepts that hel
 - [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) — mandatory source-of-truth, bounded-pass, delivery, recovery, and commit process.
 - [Changelog](CHANGELOG.md) — current checkpoint, milestone history, deferred work, and complete commit chronology.
 - [Core Documentation Governance Protocol](PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md) — rules for preserving and maintaining the core documents.
-- [Core Documentation Restructuring Plan](../planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md) — section-mapping plan for this documentation architecture.
+- [Core Documentation Restructuring Plan](../planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md) — implemented historical planning record documenting the original section-mapping and restructuring decisions. Retained for provenance; not a current maintenance instruction.
 - [Repository](https://github.com/haleyrp1803/peridot-humanistic-data) — current public source repository.
 
 ### Author, license, and asset credits
