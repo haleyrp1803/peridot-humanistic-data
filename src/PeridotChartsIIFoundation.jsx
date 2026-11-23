@@ -10,6 +10,11 @@
  */
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import {getChartsIIAppearanceLabels} from './chartsIIAppearance.js';
+import {PeridotChartsIIAppearance} from './PeridotChartsIIAppearance.jsx';
+import {PeridotChartsIIStyle} from './PeridotChartsIIStyle.jsx';
+import {PeridotChartsIIPresentation} from './PeridotChartsIIPresentation.jsx';
+import {PERIDOT_CHART_SERIES_COLORS} from './peridotTheme.js';
 import { buildChartsIIPngDescriptor, downloadChartsIIPng } from './chartsIIExport.js';
 import { CHARTS_II_TIME_INTERVALS } from './chartsIITemporalAggregation.js';
 import { applyChartsIILocalFilters, countChartsIIActiveFilters, restrictChartsIILocalFiltersToSingleCategory } from './chartsIILocalFilters.js';
@@ -17,7 +22,7 @@ import { PeridotChartsIILocalFilters } from './PeridotChartsIILocalFilters.jsx';
 import { chartsIISlopePeriods } from './chartsIISlopeData.js';
 import { buildChartsIIDataProfile, assessChartsIISuitability } from './chartsIIDataProfile.js';
 import { createChartsIIBuilderConfiguration, updateChartsIIBuilderConfiguration, validateChartsIIBuilderConfiguration, getChartsIIBuilderFieldInventory, deriveChartsIIBuilderData } from './chartsIIBuilderContract.js';
-import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart, AnalyticsScatterChart, AnalyticsBoxPlotChart, AnalyticsDotPlotChart, AnalyticsSlopeChart, AnalyticsTreemapChart } from './analyticsChartComponents.jsx';
+import { AnalyticsBarChart, AnalyticsLineChart, AnalyticsMultiLineChart, AnalyticsGroupedBarChart, AnalyticsStackedBarChart, AnalyticsPieChart, AnalyticsHistogram, AnalyticsHeatmap, AnalyticsSunburst, AnalyticsAreaChart, AnalyticsStackedAreaChart, AnalyticsScatterChart, AnalyticsBoxPlotChart, AnalyticsDotPlotChart, AnalyticsSlopeChart, AnalyticsTreemapChart, ChartsIIAppearanceProvider } from './analyticsChartComponents.jsx';
 
 // The provisional 15-family inventory is shared by search, purpose browsing,
 // suitability ranking, and thumbnails. Variations are not separate renderers yet.
@@ -303,8 +308,57 @@ function InfoPopover({ label, compact = false, align = 'end', children }) {
   </span>;
 }
 
-function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null, localFiltersByChart, setLocalFiltersByChart }) {
+function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null, localFiltersByChart, setLocalFiltersByChart, appearanceByChart, setAppearanceByChart, stylesByChart, setStylesByChart, presentationByChart, setPresentationByChart, sidebarWidth, setSidebarWidth, colorRegistryRef }) {
   const chartSvgContainerRef = useRef(null);
+  const resizeGridRef = useRef(null);
+  const resizeGuideRef = useRef(null);
+  const resizeGesture = useRef(null);
+  const [isResizing, setIsResizing] = useState(false);
+  const clampSidebar = width => {
+    const available = resizeGridRef.current?.getBoundingClientRect().width || 1100;
+    return Math.max(240, Math.min(650, available - 520, Math.round(width)));
+  };
+  const startSidebarResize = event => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const node=resizeGridRef.current;
+    if (!node) return;
+    resizeGesture.current={startX:event.clientX, startWidth:sidebarWidth, nextWidth:sidebarWidth};
+    setIsResizing(true);
+    const move=pointer => {
+      if (!resizeGesture.current) return;
+      const target=clampSidebar(resizeGesture.current.startWidth + pointer.clientX-resizeGesture.current.startX);
+      resizeGesture.current.nextWidth=target;
+      if (resizeGuideRef.current) resizeGuideRef.current.style.left=`${target}px`;
+    };
+    const stop=pointer => {
+      move(pointer);
+      const finalWidth=resizeGesture.current?.nextWidth;
+      resizeGesture.current=null;
+      window.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',stop);
+      window.removeEventListener('pointercancel',cancel);
+      setIsResizing(false);
+      if(Number.isFinite(finalWidth))setSidebarWidth(finalWidth);
+    };
+    const cancel=()=>{
+      resizeGesture.current=null;
+      window.removeEventListener('pointermove',move);
+      window.removeEventListener('pointerup',stop);
+      window.removeEventListener('pointercancel',cancel);
+      setIsResizing(false);
+    };
+    window.addEventListener('pointermove',move);
+    window.addEventListener('pointerup',stop);
+    window.addEventListener('pointercancel',cancel);
+  };
+  const resizeSidebarByKey=event=>{
+    const step=event.shiftKey?40:16;
+    if(event.key==='ArrowRight'||event.key==='ArrowLeft'){
+      event.preventDefault();setSidebarWidth(clampSidebar(sidebarWidth+(event.key==='ArrowRight'?step:-step)));
+    } else if(event.key==='Home') {event.preventDefault();setSidebarWidth(320);}
+  };
+
   const [pngExportBusy, setPngExportBusy] = useState(false);
   const [pngExportStatus, setPngExportStatus] = useState('');
   const [exportPanelOpen, setExportPanelOpen] = useState(false);
@@ -317,7 +371,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   const openExportPanel = () => {
     if (!exportPanelOpen) {
       setExportOptions(previous => ({ ...previous,
-        title: previous.title || chartResult?.chart?.title || '',
+        title: previous.title || (chartPresentation?.showTitle === false ? '' : (chartPresentation?.title?.trim() || chartResult?.chart?.title || '')),
       }));
     }
     setExportPanelOpen(previous => !previous);
@@ -467,6 +521,21 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     if (chart?.key === 'scatter' && !chronologyDragging) settledScatterResult.current = next;
     return next;
   }, [chart?.key, chronologyDragging, isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, filteredExploreRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, effectiveSlopeFirst, effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel]);
+  // Appearance is visual-only and intentionally outside chart derivation deps.
+  const appearanceLabels = getChartsIIAppearanceLabels(chartResult?.chart);
+  const registry = colorRegistryRef.current[chart?.key] ||= {};
+  appearanceLabels.forEach((label,index)=>{
+    if(!registry[label]) registry[label] = PERIDOT_CHART_SERIES_COLORS[index % PERIDOT_CHART_SERIES_COLORS.length];
+  });
+  const chartColorOverrides = appearanceByChart?.[chart?.key] || {};
+  const chartStyle=stylesByChart?.[chart?.key] || {};
+  const chartPresentation=presentationByChart?.[chart?.key] || {};
+  const setChartPresentation=presentation=>setPresentationByChart(previous=>({...previous,[chart?.key]:presentation}));
+  const setChartStyle=style=>setStylesByChart(previous=>({...previous,[chart?.key]:style}));
+  const appearanceContext = {
+    labels:appearanceLabels, defaults:registry, overrides:chartColorOverrides, style:chartStyle, presentation:chartPresentation,
+  };
+  const setChartColors = overrides => setAppearanceByChart(previous=>({...previous,[chart?.key]:overrides}));
   const isResultPopulated = chartResult?.status === 'ready' && (() => {
     const result = chartResult.chart;
     if (!result) return false;
@@ -492,7 +561,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     }
     const descriptor = buildChartsIIPngDescriptor({
       family: chart?.name,
-      chartTitle: chartResult.chart?.title,
+      chartTitle: chartPresentation?.title?.trim() || chartResult.chart?.title,
       scopeCount: (chart?.key === 'scatter' ? scatterRows : filteredPreviewRows).length,
       exploreCount: profileRows.length,
       chronologyRange: scatterDateRange,
@@ -509,7 +578,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     try {
       await downloadChartsIIPng(svg, descriptor, {
         includeTitle: exportOptions.includeTitle,
-        title: exportOptions.title.trim() || chartResult.chart?.title || '',
+        title: exportOptions.title.trim() || chartPresentation?.title?.trim() || chartResult.chart?.title || '',
         sourceTitle: chartResult.chart?.title || '',
         includeXAxis: exportOptions.includeXAxis,
         xAxisLabel: exportOptions.xAxisLabel.trim(),
@@ -549,7 +618,8 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   return (
     <div className="flex h-full min-h-0 flex-col overflow-y-auto lg:overflow-hidden">
       <p className="sr-only">Charts II Builder · Treemap, Slope Chart, Dot Plot, Box Plot, Scatter/Bubble, Bar, Line, Grouped Bar, Stacked Bar, Pie/Donut, Histogram, Heatmap, Sunburst, Area, and Stacked Area live previews; current-chart PNG export available</p>
-      <div className="grid min-h-0 flex-1 gap-4 lg:overflow-hidden lg:grid-cols-[minmax(220px,20%)_minmax(0,1fr)]">
+      <div ref={resizeGridRef} className="chartsii-resize-grid relative grid min-h-0 flex-1 gap-2 lg:overflow-hidden" style={{'--charts-sidebar-width':`${sidebarWidth}px`}}>
+        <style>{`@media(min-width:1024px){.chartsii-resize-grid{grid-template-columns:minmax(220px,var(--charts-sidebar-width)) 12px minmax(0,1fr)}}`}</style>
         <aside className={`${panel} min-h-0 overflow-y-auto overscroll-contain p-4`} aria-label="Chart configuration foundation">
           <h3 className="text-xs font-bold uppercase tracking-[0.13em] text-[var(--peridot-color-hex-8b2e23)]">Data &amp; Interpretation</h3>
           {!contract.supported ? (
@@ -893,9 +963,19 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
               <label className="flex items-center gap-2"><input type="radio" name="chartsII-gap-display" value="connect" checked={gapDisplay === 'connect'} onChange={() => setGapDisplay('connect')} />Connect observations (default)</label>
               <label className="flex items-center gap-2"><input type="radio" name="chartsII-gap-display" value="gaps" checked={gapDisplay === 'gaps'} onChange={() => setGapDisplay('gaps')} />Show data gaps</label>
             </fieldset>}
-            <p className="mt-2 text-sm text-[var(--peridot-color-hex-52675a)]">Palette and other presentation controls are pending.</p>
+            <PeridotChartsIIAppearance labels={appearanceLabels} defaults={registry} overrides={chartColorOverrides} onChange={setChartColors} />
+            <PeridotChartsIIStyle chartType={chartResult?.chart?.chartType} style={chartStyle} onChange={setChartStyle} />
+            <PeridotChartsIIPresentation chartType={chartResult?.chart?.chartType} presentation={chartPresentation} onChange={setChartPresentation} pointLabelOptions={(localFilterInventory.barGroupOptions || []).filter(item=>profileRows.slice(0,80).some(row=>['string','number'].includes(typeof row?.[item.key]) && String(row[item.key]).trim()))} orientation={chartResult?.chart?.orientation} />
           </details>
         </aside>
+        <div className="relative hidden cursor-col-resize items-center justify-center lg:flex" role="separator"
+          aria-label="Resize chart configuration panel" aria-orientation="vertical" aria-valuemin={240}
+          aria-valuemax={650} aria-valuenow={sidebarWidth} tabIndex={0}
+          onPointerDown={startSidebarResize} onDoubleClick={()=>setSidebarWidth(320)} onKeyDown={resizeSidebarByKey}
+          title="Drag to resize chart controls; double-click to reset">
+          <div className="h-20 w-[4px] rounded-full bg-[#cbb99d] hover:bg-[#8b3026]" />
+        </div>
+        {isResizing && <div ref={resizeGuideRef} className="pointer-events-none absolute inset-y-0 z-30 hidden w-0.5 bg-[#7C211E] lg:block" style={{left:sidebarWidth}} aria-hidden="true" />}
         <section className="flex min-h-0 min-w-0 flex-col gap-3" aria-label="Chart preview foundation">
           <div className={`${panel} flex min-h-0 flex-1 flex-col overflow-hidden p-5`}>
             <div className="flex min-w-0 shrink-0 items-start justify-between gap-3">
@@ -992,11 +1072,12 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">No records are available in the current playback scope.</div>
                 ) : isResultPopulated ? (
                   <div ref={chartSvgContainerRef} className="h-full min-h-[320px] min-w-0">
+                    <ChartsIIAppearanceProvider value={appearanceContext}>
                     {chartResult.chart.chartType === 'treemap' && <AnalyticsTreemapChart key={`${treemapHierarchy ? "h" : "s"}:${treemapParentField}:${treemapChildField}:${treemapMeasureField}`} parents={chartResult.chart.parents} total={chartResult.chart.total} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} measureLabel={chartResult.chart.measureLabel} />}
                     {chartResult.chart.chartType === 'slope' && <AnalyticsSlopeChart series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} firstLabel={chartResult.chart.firstLabel} secondLabel={chartResult.chart.secondLabel} />}
                     {chartResult.chart.chartType === 'dot' && <AnalyticsDotPlotChart points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} valueLabel={chartResult.chart.valueLabel} />}
                     {chartResult.chart.chartType === 'box' && <AnalyticsBoxPlotChart boxes={chartResult.chart.boxes} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} scaleMode={boxScale} />}
-                    {chartResult.chart.chartType === 'scatter' && <AnalyticsScatterChart dateRange={chartResult.chart.xAxisDate ? renderedScatterDateRange : null} points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} xLabel={chartResult.chart.xLabel} xAxisDate={chartResult.chart.xAxisDate} yLabel={chartResult.chart.yLabel} sizeLabel={chartResult.chart.sizeLabel} />}
+                    {chartResult.chart.chartType === 'scatter' && <AnalyticsScatterChart pointLabels={chartPresentation.showPointLabels && chartPresentation.pointLabelField ? scatterRows.map(row=>{ const raw=row?.[chartPresentation.pointLabelField]; return ['string','number'].includes(typeof raw)?String(raw):''; }) : []} dateRange={chartResult.chart.xAxisDate ? renderedScatterDateRange : null} points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} xLabel={chartResult.chart.xLabel} xAxisDate={chartResult.chart.xAxisDate} yLabel={chartResult.chart.yLabel} sizeLabel={chartResult.chart.sizeLabel} />}
                     {chartResult.chart.chartType === 'bar' && <AnalyticsBarChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} orientation={chartResult.chart.orientation} />}
                     {chartResult.chart.chartType === 'area' && <AnalyticsAreaChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
                     {chartResult.chart.chartType === 'stackedArea' && <AnalyticsStackedAreaChart series={chartResult.chart.series} periods={chartResult.chart.periods} totals={chartResult.chart.totals} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
@@ -1008,6 +1089,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                     {chartResult.chart.chartType === 'histogram' && <AnalyticsHistogram data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
                     {chartResult.chart.chartType === 'heatmap' && <AnalyticsHeatmap rows={chartResult.chart.rows} columns={chartResult.chart.columns} cells={chartResult.chart.cells} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
                     {chartResult.chart.chartType === 'sunburst' && <AnalyticsSunburst parents={chartResult.chart.parents} total={chartResult.chart.total} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
+                    </ChartsIIAppearanceProvider>
                   </div>
                 ) : (
                   <div className="flex h-full items-center justify-center p-4 text-center text-sm text-[#52675a]">No chartable values were found for these selections in the current playback scope.</div>
@@ -1038,6 +1120,12 @@ export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSel
   // Keep separate chart-local rules when the researcher browses the Catalogue
   // and returns to another Builder chart during this mounted workspace session.
   const [localFiltersByChart, setLocalFiltersByChart] = useState({});
+  const [appearanceByChart,setAppearanceByChart] = useState({});
+  const [stylesByChart,setStylesByChart] = useState({});
+  const [presentationByChart,setPresentationByChart] = useState({});
+  const [sidebarWidth,setSidebarWidth] = useState(320);
+  const colorRegistryRef = useRef({});
+
   // Profile is derived from the stable applied Explore scope. Playback changes
   // should not reorder recommendations while a researcher uses the scrubber.
   const profile = useMemo(() => buildChartsIIDataProfile(profileRows), [profileRows]);
@@ -1047,7 +1135,7 @@ export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSel
   return (
     <div className={`min-h-0 flex-1 rounded-xl px-4 pb-4 text-[var(--peridot-color-hex-24382d)] sm:px-5 sm:pb-5 ${showingBuilder ? "overflow-hidden bg-[var(--peridot-color-hex-f8f4e6)] pt-1" : "overflow-auto bg-[#f9f4e9] pt-9"}`}>
       {showingBuilder
-        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} scatterChronologyAvailable={scatterChronologyAvailable} scatterDateRange={scatterDateRange} localFiltersByChart={localFiltersByChart} setLocalFiltersByChart={setLocalFiltersByChart} onBackToCatalogue={() => onNavigatePage('catalogue')} />
+        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} scatterChronologyAvailable={scatterChronologyAvailable} scatterDateRange={scatterDateRange} localFiltersByChart={localFiltersByChart} setLocalFiltersByChart={setLocalFiltersByChart} appearanceByChart={appearanceByChart} setAppearanceByChart={setAppearanceByChart} stylesByChart={stylesByChart} setStylesByChart={setStylesByChart} presentationByChart={presentationByChart} setPresentationByChart={setPresentationByChart} sidebarWidth={sidebarWidth} setSidebarWidth={setSidebarWidth} colorRegistryRef={colorRegistryRef} onBackToCatalogue={() => onNavigatePage('catalogue')} />
         : <FoundationCatalogue onSelectChart={onSelectChart} charts={charts} profile={profile} />}
     </div>
   );

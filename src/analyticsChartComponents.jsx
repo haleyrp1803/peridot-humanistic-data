@@ -13,7 +13,10 @@
  * - When changing SVG structure, retest chart PNG export.
  */
 
-import React, { useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
+import {chartsIIStableColor} from './chartsIIAppearance.js';
+import {chartStyleValue} from './chartsIIStyle.js';
+import {normalizeChartsIIPresentation,chartsIIPresentationTickCount,chartsIIPresentationTitle,chartsIIPresentationFontCSS,chartsIISegmentLabel} from './chartsIIPresentation.js';
 import { PERIDOT_THEME } from './peridotTheme.js';
 import { chartsIITemporalPositions } from './chartsIITemporalAxis.js';
 import { civilFromDay } from './peridotChronologyWindow.js';
@@ -43,6 +46,32 @@ function getSeriesColor(index = 0) {
   return PALETTE[Math.abs(index) % PALETTE.length] || CHART_COLORS.accent;
 }
 
+
+const ChartsIIAppearanceContext = createContext(null);
+export function ChartsIIAppearanceProvider({value,children}) {
+  return <ChartsIIAppearanceContext.Provider value={value}>{children}</ChartsIIAppearanceContext.Provider>;
+}
+function useChartSeriesColor() {
+  const appearance=useContext(ChartsIIAppearanceContext);
+  return (index=0, explicitLabel=null)=>{
+    if(!appearance) return getSeriesColor(index);
+    const label=explicitLabel || appearance.labels?.[index] || '';
+    return chartsIIStableColor(label,index,appearance.defaults,appearance.overrides,PALETTE);
+  };
+}
+function useChartPresentation() {
+  const appearance=useContext(ChartsIIAppearanceContext);
+  return normalizeChartsIIPresentation(appearance?.presentation);
+}
+function useChartMarkStyle() {
+  const appearance=useContext(ChartsIIAppearanceContext);
+  return (key,defaultValue)=>chartStyleValue(appearance?.style,key,defaultValue);
+}
+function useChartSingleSeriesColors() {
+  const appearance=useContext(ChartsIIAppearanceContext);
+  const chosen=appearance?.overrides?.Series;
+  return { main:chosen || CHART_COLORS.accentDark, fill:chosen || CHART_COLORS.accent };
+}
 function getHeatmapCellColor(value = 0, maxValue = 1) {
   if (!Array.isArray(PALETTE) || !PALETTE.length) return CHART_COLORS.accent;
   const numericValue = Number(value || 0);
@@ -160,6 +189,8 @@ function getLinePeak(points = []) {
 }
 
 function SummaryPanel({ x, y, width = 280, height = 300, title = 'Details', rows = [], note }) {
+  const presentation=useChartPresentation();
+  if (!presentation.showSummary) return null;
   const panelX = Number(x);
   const panelY = Number(y);
   const panelWidth = Number(width);
@@ -175,7 +206,8 @@ function SummaryPanel({ x, y, width = 280, height = 300, title = 'Details', rows
     : 22;
   const denseRows = rowHeight < 14;
   const compactRows = rowHeight < 18;
-  const labelMaxLength = denseRows ? 26 : compactRows ? 32 : 42;
+  const baseLabelMaxLength = denseRows ? 26 : compactRows ? 32 : 42;
+  const labelMaxLength = presentation.labelDensity === 'compact' ? Math.max(14,Math.round(baseLabelMaxLength*0.72)) : presentation.labelDensity === 'detailed' ? baseLabelMaxLength+10 : baseLabelMaxLength;
 
   return (
     <g>
@@ -292,19 +324,21 @@ function renderYAxisTicks({ ticks = [], left, top, plotHeight, plotWidth, scaleM
   );
 }
 
-function renderXAxisTick({ x, y, label, rotate = false }) {
+function renderXAxisTick({ x, y, label, rotate = false, angle = null }) {
+  const degrees = angle === null ? (rotate ? 35 : 0) : Number(angle);
+  const turn = degrees !== 0;
   return (
     <g>
       <line x1={x} x2={x} y1={y} y2={y + 7} stroke={AXIS_COLORS.majorLine} strokeWidth="1.3" opacity="0.88" />
       <text
         x={x}
         y={y + 21}
-        textAnchor={rotate ? 'end' : 'middle'}
+        textAnchor={turn ? 'end' : 'middle'}
         fontSize="10.5"
         fontWeight="600"
         fill={AXIS_COLORS.tickLabel}
         opacity="0.76"
-        transform={rotate ? `rotate(-35 ${x} ${y + 21})` : undefined}
+        transform={turn ? `rotate(-${degrees} ${x} ${y + 21})` : undefined}
       >
         {label}
       </text>
@@ -441,22 +475,34 @@ function buildTooltip(event, item) {
 }
 
 function ChartFrame({ children, title, subtitle, svgRef, width, height }) {
+  const presentation=useChartPresentation();
+  const leftExtra=presentation.showYAxisLabel && presentation.yAxisLabel.trim()?52:0;
+  const bottomExtra=presentation.showXAxisLabel && presentation.xAxisLabel.trim()?48:0;
+  const fullWidth=width+leftExtra;
+  const fullHeight=height+bottomExtra;
+  const shownTitle=chartsIIPresentationTitle(presentation,title);
+  const fontCSS=chartsIIPresentationFontCSS(presentation.textScale);
   return (
     <div className="relative flex h-full min-h-[320px] w-full min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--panel-card-border)] bg-[var(--panel-card-bg)] p-1.5">
       {children.tooltip}
       <svg
         ref={svgRef}
-        viewBox={`0 0 ${width} ${height}`}
+        viewBox={`0 0 ${fullWidth} ${fullHeight}`}
         role="img"
-        aria-label={title}
+        aria-label={shownTitle || title}
         preserveAspectRatio="xMidYMid meet"
         className="block h-full max-h-full w-full max-w-full"
         xmlns="http://www.w3.org/2000/svg"
       >
-        <rect width={width} height={height} rx="24" fill={CHART_COLORS.chartBg} />
-        <text x="24" y="24" fontSize="20.5" fontWeight="760" fill={CHART_COLORS.text}>{title}</text>
-        <text x="24" y="43" fontSize="12.5" fill={CHART_COLORS.mutedText}>{subtitle}</text>
-        {children.chart}
+        {fontCSS && <style>{fontCSS}</style>}
+        <rect width={fullWidth} height={fullHeight} rx="24" fill={CHART_COLORS.chartBg} />
+        <g transform={leftExtra?`translate(${leftExtra} 0)`:undefined}>
+          <text data-charts-ii-title="true" x="24" y="24" fontSize="20.5" fontWeight="760" fill={CHART_COLORS.text} style={!shownTitle?{display:'none'}:undefined}>{shownTitle || title}</text>
+          {presentation.showSubtitle && subtitle && <text data-charts-ii-subtitle="true" x="24" y="43" fontSize="12.5" fill={CHART_COLORS.mutedText}>{subtitle}</text>}
+          {children.chart}
+        </g>
+        {leftExtra>0 && <text x="23" y={height/2} textAnchor="middle" transform={`rotate(-90 23 ${height/2})`} fontSize="14" fontWeight="700" fill={CHART_COLORS.text}>{presentation.yAxisLabel}</text>}
+        {bottomExtra>0 && <text x={leftExtra+width/2} y={height+bottomExtra-15} textAnchor="middle" fontSize="14" fontWeight="700" fill={CHART_COLORS.text}>{presentation.xAxisLabel}</text>}
       </svg>
     </div>
   );
@@ -464,7 +510,10 @@ function ChartFrame({ children, title, subtitle, svgRef, width, height }) {
 
 // Charts II B3.5: continuous numeric axes and record-level scatter/bubble marks.
 // Identical coordinates receive display-only offsets; actual values remain in tooltips.
-export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yLabel, xAxisDate = false, dateRange = null, sizeLabel = '', svgRef }) {
+export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yLabel, xAxisDate = false, dateRange = null, sizeLabel = '', pointLabels = [], svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   if (!points.length) return <EmptyChartState message="No records have usable values for the selected numerical axes." />;
   const layout = getChartCardLayout({ height: 438, left: 76, top: 74, bottom: 60 });
@@ -525,10 +574,10 @@ export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yL
             const displacement = overlap === 0 ? 0 : 3.5 * Math.sqrt(overlap);
             const px = Math.max(left + 1, Math.min(left + plotWidth - 1, xPosition(point.x) + Math.cos(angle) * displacement));
             const py = Math.max(top + 1, Math.min(top + plotHeight - 1, yPosition(point.y) + Math.sin(angle) * displacement));
-            const radius = sizeRadius(point.size);
+            const radius = sizeRadius(point.size) * markStyle('pointScale',1);
             return <circle key={point.index} cx={px} cy={py} r={radius}
-              fill={CHART_COLORS.accentDark} fillOpacity={sized ? 0.38 : 0.55}
-              stroke={CHART_COLORS.accentDark} strokeWidth="1" strokeOpacity="0.8"
+              fill={chartSeriesColor(0,'All points')} fillOpacity={markStyle('markOpacity',sized ? 0.38 : 0.55)}
+              stroke={CHART_COLORS.accentDark} strokeWidth={markStyle('outlineWidth',1)} strokeOpacity="0.8"
               onMouseMove={event => setTooltip(buildTooltip(event, {
                 label: `Record ${point.index + 1}`,
                 secondary: `${xLabel}: ${labelX(point.x)} · ${yLabel}: ${labelNumber(point.y)}${sized ? ` · ${sizeLabel}: ${labelNumber(point.size)}` : ''}${point.overlapIndex ? ` · coincident point ${point.overlapIndex + 1}` : ''}`,
@@ -536,6 +585,14 @@ export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yL
                 unit: 'observation',
               }))}
               onMouseLeave={() => setTooltip(null)} />;
+          })}
+          {presentation.showPointLabels && visiblePoints.length <= 35 && visiblePoints.map(point => {
+            const overlap = point.overlapIndex;
+            const angle = overlap * 2.399963229728653;
+            const displacement = overlap === 0 ? 0 : 3.5 * Math.sqrt(overlap);
+            const px = Math.max(left + 1, Math.min(left + plotWidth - 1, xPosition(point.x) + Math.cos(angle) * displacement));
+            const py = Math.max(top + 1, Math.min(top + plotHeight - 1, yPosition(point.y) + Math.sin(angle) * displacement));
+            return <text key={`point-label-${point.index}`} x={px+7} y={py-7} fontSize="9" fill={CHART_COLORS.text} pointerEvents="none">{truncateLabel(pointLabels[point.index] || `#${point.index+1}`,22)}</text>;
           })}
           <SummaryPanel {...layout.legend} title={sized ? 'Bubble encoding' : 'Numerical relationship'}
             rows={[{ label: hasDateWindow ? 'Visible records' : 'Plotted records', value: formatNumber(visiblePoints.length) },
@@ -551,6 +608,9 @@ export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yL
 // Charts II B3.8: Tukey box plots. The model supplies exact quartiles,
 // whiskers, and every outlier; this component only renders those values.
 export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle = '', svgRef, scaleMode = 'full' }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   if (!boxes.length) return <EmptyChartState message="No valid numerical observations for the selected distributions." />;
   const layout = getChartCardLayout({ height: 438, left: 68, top: 74, bottom: 67 });
@@ -584,7 +644,7 @@ export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle
       <line x1={left} x2={left + plotWidth} y1={top + plotHeight} y2={top + plotHeight} stroke={AXIS_COLORS.majorLine} strokeWidth="1.3" />
       {boxes.map((box, index) => {
         const x = left + step * (index + .5);
-        const color = getSeriesColor(index);
+        const color = chartSeriesColor(index);
         const detail = outlierMeta(box);
         const above = detail.filter(item => item.value > ceiling);
         const below = detail.filter(item => item.value < floor);
@@ -595,27 +655,29 @@ export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle
         return <g key={box.label}>
           <line x1={x} x2={x} y1={yAt(box.upperWhisker)} y2={yAt(box.lowerWhisker)} stroke={color} strokeWidth="2" />
           {[box.upperWhisker, box.lowerWhisker].map((v, i) => <line key={i} x1={x - boxWidth * .22} x2={x + boxWidth * .22} y1={yAt(v)} y2={yAt(v)} stroke={color} strokeWidth="2" />)}
-          <rect x={x - boxWidth / 2} y={yAt(box.q3)} width={boxWidth} height={Math.max(1, yAt(box.q1) - yAt(box.q3))}
+          <rect x={x - boxWidth * markStyle('boxWidth',1) / 2} y={yAt(box.q3)} width={boxWidth * markStyle('boxWidth',1)} height={Math.max(1, yAt(box.q1) - yAt(box.q3))}
             fill={color} fillOpacity=".4" stroke={color} strokeWidth="1.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)} />
-          <line x1={x - boxWidth / 2} x2={x + boxWidth / 2} y1={yAt(box.median)} y2={yAt(box.median)} stroke={CHART_COLORS.accentDark} strokeWidth="2.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)} />
-          {within.map((item, outlierIndex) => <circle key={`out-${outlierIndex}`} cx={x + ((outlierIndex % 5) - 2) * 1.6} cy={yAt(item.value)} r="3.5"
+          <line x1={x - boxWidth * markStyle('boxWidth',1) / 2} x2={x + boxWidth * markStyle('boxWidth',1) / 2} y1={yAt(box.median)} y2={yAt(box.median)} stroke={CHART_COLORS.accentDark} strokeWidth="2.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)} />
+          {presentation.showMedianLabels && <text x={x} y={yAt(box.median)-8} textAnchor="middle" fontSize="10.5" fontWeight="750" fill={CHART_COLORS.text} pointerEvents="none">{labelValue(box.median)}</text>}
+          {presentation.showQuartileLabels && <g pointerEvents="none" fill={CHART_COLORS.text} fontSize="9"><text x={x+boxWidth*.65} y={yAt(box.q3)+3}>{labelValue(box.q3)}</text><text x={x+boxWidth*.65} y={yAt(box.q1)+3}>{labelValue(box.q1)}</text></g>}
+          {within.map((item, outlierIndex) => <circle key={`out-${outlierIndex}`} cx={x + ((outlierIndex % 5) - 2) * 1.6} cy={yAt(item.value)} r={markStyle('pointSize',3.5)}
             fill={CHART_COLORS.accentDark} fillOpacity=".76" onMouseMove={event => detailTooltip(event, box, item)} onMouseLeave={() => setTooltip(null)} />)}
-          {focused && above.length > 0 && <g onMouseMove={event => detailTooltip(event, box, above[above.length - 1], true)} onMouseLeave={() => setTooltip(null)}>
+          {presentation.showOutlierCounts && focused && above.length > 0 && <g onMouseMove={event => detailTooltip(event, box, above[above.length - 1], true)} onMouseLeave={() => setTooltip(null)}>
             <path d={`M ${x - 6} ${top + 10} L ${x} ${top + 2} L ${x + 6} ${top + 10} Z`} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth=".6" />
             <text x={x + 9} y={top + 10} fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>+{above.length}</text>
             <title>{above.length} outliers above the visible scale; largest {labelValue(above[above.length - 1].value)}</title>
           </g>}
-          {focused && below.length > 0 && <g onMouseMove={event => detailTooltip(event, box, below[0], true)} onMouseLeave={() => setTooltip(null)}>
+          {presentation.showOutlierCounts && focused && below.length > 0 && <g onMouseMove={event => detailTooltip(event, box, below[0], true)} onMouseLeave={() => setTooltip(null)}>
             <path d={`M ${x - 6} ${top + plotHeight - 10} L ${x} ${top + plotHeight - 2} L ${x + 6} ${top + plotHeight - 10} Z`} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth=".6" />
             <text x={x + 9} y={top + plotHeight - 4} fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>−{below.length}</text>
             <title>{below.length} outliers below the visible scale; smallest {labelValue(below[0].value)}</title>
           </g>}
-          <text x={x} y={top + plotHeight + 20} textAnchor="middle" fontSize="10" fill={CHART_COLORS.text}>{truncateLabel(box.label, Math.max(8, Math.floor(step / 6)))}</text>
+          <text x={x} y={top + plotHeight + 20} textAnchor={presentation.categoryAngle === 'default' || presentation.categoryAngle === '0' ? 'middle' : 'end'} transform={presentation.categoryAngle === 'default' || presentation.categoryAngle === '0' ? undefined : `rotate(-${presentation.categoryAngle} ${x} ${top+plotHeight+20})`} fontSize="10" fill={CHART_COLORS.text}>{presentation.showCategoryNames ? truncateLabel(box.label, Math.max(8, Math.floor(step / 6))) : ''}</text>
           <text x={x} y={top + plotHeight + 34} textAnchor="middle" fontSize="9" fill={CHART_COLORS.mutedText}>n={box.count}</text>
         </g>;
       })}
       <SummaryPanel {...layout.legend} title="Median by distribution" rows={boxes.map((box, index) => ({ label: box.label,
-        value: labelValue(box.median), meta: `Q1 ${labelValue(box.q1)} · Q3 ${labelValue(box.q3)} · ${box.outliers.length} outliers`, color: getSeriesColor(index) }))}
+        value: labelValue(box.median), meta: `Q1 ${labelValue(box.q1)} · Q3 ${labelValue(box.q3)} · ${box.outliers.length} outliers`, color: chartSeriesColor(index) }))}
         note={focused ? '▲ / ▼ + count = outliers beyond the visible axis; values preserved.' : 'Whiskers: most extreme values within 1.5 × IQR; outliers plotted.'} />
     </> }}
   </ChartFrame>;
@@ -626,6 +688,9 @@ export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle
 // Charts II B3.10. Two endpoints share one numerical scale. A missing
 // category/measure in either period is drawn as a single dot, not a zero slope.
 export function AnalyticsSlopeChart({ series = [], title = 'Slope Chart', subtitle = '', firstLabel = 'First period', secondLabel = 'Second period', svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   const visible = series.filter(item => Number.isFinite(item?.before) || Number.isFinite(item?.after));
   if (!visible.length) return <EmptyChartState message="No comparable measurements exist in the selected periods." />;
@@ -650,22 +715,25 @@ export function AnalyticsSlopeChart({ series = [], title = 'Slope Chart', subtit
       </g>)}
       {[xFirst,xSecond].map((x,i)=><g key={i}>
         <line x1={x} x2={x} y1={top-12} y2={top+plotHeight+8} stroke={AXIS_COLORS.majorLine} opacity=".55"/>
-        <text x={x} y={top-24} textAnchor="middle" fontSize="11.5" fontWeight="750" fill={CHART_COLORS.text}>{truncateLabel(i?secondLabel:firstLabel,31)}</text>
+        {presentation.showPeriodLabels && <text x={x} y={top-24} textAnchor="middle" fontSize="11.5" fontWeight="750" fill={CHART_COLORS.text}>{truncateLabel(i?secondLabel:firstLabel,31)}</text>}
       </g>)}
       {visible.map((item,index)=>{
-        const color=getSeriesColor(index);
+        const color=chartSeriesColor(index);
         const a=Number.isFinite(item.before), b=Number.isFinite(item.after);
         const onMove=event=>setTooltip(buildTooltip(event,{label:item.label,secondary:`${firstLabel}: ${format(item.before)} (n=${item.nBefore}); ${secondLabel}: ${format(item.after)} (n=${item.nAfter})`,count:item.delta===null?null:item.delta,unit:'change'}));
         return <g key={`${item.label}-${index}`} onMouseMove={onMove} onMouseLeave={()=>setTooltip(null)}>
           <title>{`${item.label} — ${firstLabel}: ${format(item.before)} (n=${item.nBefore}); ${secondLabel}: ${format(item.after)} (n=${item.nAfter}); change: ${format(item.delta)}`}</title>
-          {a&&b&&<path d={`M${xFirst} ${yAt(item.before)}L${xSecond} ${yAt(item.after)}`} stroke={color} strokeWidth="2.2" strokeOpacity=".88" fill="none"/>}
-          {a&&<circle cx={xFirst} cy={yAt(item.before)} r="5" fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1"/>}
-          {b&&<circle cx={xSecond} cy={yAt(item.after)} r="5" fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1"/>}
+          {a&&b&&<path d={`M${xFirst} ${yAt(item.before)}L${xSecond} ${yAt(item.after)}`} stroke={color} strokeWidth={markStyle('lineWidth',2.2)} strokeOpacity=".88" fill="none"/>}
+          {a&&<circle cx={xFirst} cy={yAt(item.before)} r={markStyle('pointSize',5)} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1"/>}
+          {b&&<circle cx={xSecond} cy={yAt(item.after)} r={markStyle('pointSize',5)} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1"/>}
+          {presentation.showEndpointValues && visible.length <= 12 && a && <text x={xFirst-10} y={yAt(item.before)-7} textAnchor="end" fontSize="10" fill={CHART_COLORS.text}>{format(item.before)}</text>}
+          {presentation.showEndpointValues && visible.length <= 12 && b && <text x={xSecond+10} y={yAt(item.after)-7} fontSize="10" fill={CHART_COLORS.text}>{format(item.after)}</text>}
+          {presentation.showDirectSeriesLabels && visible.length <= 8 && <text x={b?xSecond+10:xFirst+10} y={yAt(b?item.after:item.before)+13} fontSize="9.5" fill={color}>{truncateLabel(item.label,22)}</text>}
         </g>;
       })}
       <text x={(xFirst+xSecond)/2} y={height-13} textAnchor="middle" fontSize="10.5" fontWeight="650" fill={CHART_COLORS.mutedText}>A single endpoint indicates no observation in the other period</text>
       <SummaryPanel {...layout.legend} title="Change by category" rows={visible.map((item,index)=>({
-        label:item.label, color:getSeriesColor(index), value:item.delta===null?'—':`${item.delta>0?'+':''}${format(item.delta)}`,
+        label:item.label, color:chartSeriesColor(index), value:item.delta===null?'—':`${item.delta>0?'+':''}${format(item.delta)}`,
         meta:`${format(item.before)} → ${format(item.after)}`,
       }))} note="— means missing, not zero; hover marks for values" />
     </> }}
@@ -673,6 +741,9 @@ export function AnalyticsSlopeChart({ series = [], title = 'Slope Chart', subtit
 }
 
 export function AnalyticsDotPlotChart({ points = [], title = 'Dot Plot', subtitle = '', valueLabel = 'Value', svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   const finite = points.filter(point => Number.isFinite(point?.value));
   if (!finite.length) return <EmptyChartState message="No valid aggregated values for the selected Dot Plot fields." />;
@@ -722,25 +793,29 @@ export function AnalyticsDotPlotChart({ points = [], title = 'Dot Plot', subtitl
       {baseline >= left && baseline <= axisEnd && <line x1={baseline} x2={baseline} y1={top - 7} y2={top + (finite.length - 1) * rowHeight + 14} stroke={AXIS_COLORS.majorLine} strokeWidth="1.5" opacity=".7" />}
       {finite.map((point, index) => {
         const y = top + index * rowHeight;
-        const color = getSeriesColor(index);
+        const color = chartSeriesColor(index);
         return <g key={`${point.label}-${index}`}>
           <line x1={left} x2={axisEnd} y1={y} y2={y} stroke={CHART_COLORS.grid} strokeWidth="1" opacity=".28"/>
-          <WrappedAxisLabel x={left - 12} y={y + 4} label={point.label} maxLineLength={29}/>
-          <circle cx={xAt(point.value)} cy={y} r="6.2" stroke={CHART_COLORS.accentDark} strokeWidth="1.1" fill={color}
+          <WrappedAxisLabel x={left - 12} y={y + 4} label={presentation.showCategoryNames ? point.label : ''} maxLineLength={29}/>
+          <circle cx={xAt(point.value)} cy={y} r={markStyle('pointSize',6.2)} stroke={CHART_COLORS.accentDark} strokeWidth={markStyle('outlineWidth',1.1)} fill={color}
             onMouseMove={event=>setTooltip(buildTooltip(event, {label: point.label, secondary: `${point.n} contributing observations`, count: point.value, unit: '(aggregated value)'}))}
             onMouseLeave={()=>setTooltip(null)} style={{cursor:'default'}}>
             <title>{`${point.label}: ${formatValue(point.value)} (${point.n} contributing observations)`}</title>
           </circle>
         </g>;
       })}
+      {presentation.showDotValues && finite.length <= 16 && finite.map((point,index)=><text key={`dot-value-${index}`} x={Math.min(axisEnd-5,xAt(point.value)+9)} y={top+index*rowHeight-8} textAnchor="middle" fontSize="10" fontWeight="650" fill={CHART_COLORS.text}>{formatValue(point.value)}</text>)}
       <text x={left + plotWidth / 2} y={height - 10} textAnchor="middle" fontSize="11" fontWeight="650" fill={CHART_COLORS.text}>{valueLabel}</text>
-      <SummaryPanel {...layout.legend} title="Values by category" rows={finite.map((point,index)=>({label:point.label,value:formatValue(point.value),color:getSeriesColor(index),meta:`n=${point.n}`}))}
+      <SummaryPanel {...layout.legend} title="Values by category" rows={finite.map((point,index)=>({label:point.label,value:formatValue(point.value),color:chartSeriesColor(index),meta:`n=${point.n}`}))}
         note="Each dot is one aggregated value; n counts observations."/>
     </> }}
   </ChartFrame>;
 }
 
 export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientation = 'vertical' }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
 
   if (!data.length) return <EmptyChartState />;
@@ -768,9 +843,9 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
                 const barWidth = Math.max(2, (row.count / maxValue) * plotWidth);
                 return (
                   <g key={row.label}>
-                    <WrappedAxisLabel x={left - 12} y={y + 13} label={row.label} />
-                    <rect x={left} y={y} width={barWidth} height="22" rx="8" fill={getSeriesColor(index)} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} style={{ cursor: 'default' }} />
-                    <text x={Math.min(left + barWidth + 8, layout.chartRight - 10)} y={y + 16} fontSize="12" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>
+                    <WrappedAxisLabel x={left - 12} y={y + 13} label={presentation.showCategoryNames ? row.label : ''} />
+                    <rect x={left} y={y} width={barWidth} height="22" rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} style={{ cursor: 'default' }} />
+                    {presentation.showValueLabels && <text x={Math.min(left + barWidth + 8, layout.chartRight - 10)} y={y + 16} fontSize="12" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>}
                   </g>
                 );
               })}
@@ -778,7 +853,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
               <SummaryPanel
                 {...panelLayout}
                 title="Ranked values"
-                rows={rankedRows.map((row, index) => ({ label: row.label, color: getSeriesColor(index), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of shown total` }))}
+                rows={rankedRows.map((row, index) => ({ label: row.label, color: chartSeriesColor(index,row.label), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of shown total` }))}
                 note={`Shown total: ${formatNumber(total)} ${data[0]?.unit || 'records'}`}
               />
             </>
@@ -794,7 +869,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
   const scaleMax = yTicks[yTicks.length - 1] || 1;
   const maxValue = scaleMax;
   const barWidth = Math.max(16, Math.min(44, plotWidth / Math.max(data.length, 1) - 10));
-  const xLabelIndexes = getEvenlySpacedIndexes(data.length, 8);
+  const xLabelIndexes = getEvenlySpacedIndexes(data.length, chartsIIPresentationTickCount(presentation,8));
   const panelLayout = layout.legend;
 
   return (
@@ -816,16 +891,16 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
               const y = top + plotHeight - barHeight;
               return (
                 <g key={row.label}>
-                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx="8" fill={getSeriesColor(index)} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} />
-                  <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>
-                  {xLabelIndexes.has(index) ? renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: truncateLabel(row.label, 16), rotate: true }) : null}
+                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} />
+                  {presentation.showValueLabels && <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>}
+                  {xLabelIndexes.has(index) ? renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: presentation.showCategoryNames ? truncateLabel(row.label, 16) : '', rotate: true, angle: presentation.categoryAngle === 'default' ? null : presentation.categoryAngle }) : null}
                 </g>
               );
             })}
             <SummaryPanel
               {...panelLayout}
               title="Ranked values"
-              rows={rankedRows.map((row, index) => ({ label: row.label, color: getSeriesColor(index), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of shown total` }))}
+              rows={rankedRows.map((row, index) => ({ label: row.label, color: chartSeriesColor(index,row.label), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of shown total` }))}
               note={`Shown total: ${formatNumber(total)} ${data[0]?.unit || 'records'}`}
             />
           </>
@@ -837,6 +912,10 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
 
 
 export function AnalyticsLineChart({ data = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
+  const singleColor = useChartSingleSeriesColors();
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState message="No time data is available for the current selection." />;
 
@@ -860,7 +939,7 @@ export function AnalyticsLineChart({ data = [], title, subtitle, temporalAxis, g
     const y = isFiniteChartValue(row.count) ? top + plotHeight - (Number(row.count) / maxValue) * plotHeight : null;
     return { ...row, x, y, bin: binByLabel.get(row.label) };
   });
-  const xLabelIndexes = temporalBins.length ? getTemporalLabelIndexes(points.map(p => p.label), (label, i) => points[i].x) : getEvenlySpacedIndexes(points.length, 7);
+  const xLabelIndexes = temporalBins.length ? getTemporalLabelIndexes(points.map(p => p.label), (label, i) => points[i].x, chartsIIPresentationTickCount(presentation,6)) : getEvenlySpacedIndexes(points.length, chartsIIPresentationTickCount(presentation,7));
   const panelLayout = layout.legend;
 
   return (
@@ -880,15 +959,16 @@ export function AnalyticsLineChart({ data = [], title, subtitle, temporalAxis, g
                 const previous = points[index - 1];
                 if (previous.y === null) return null;
                 if (gapDisplay === 'gaps' && previous.bin?.end !== point.bin?.start) return null;
-                return <line x1={previous.x} x2={point.x} y1={previous.y} y2={point.y} stroke={CHART_COLORS.accentDark} strokeWidth="2.5" />;
+                return <line x1={previous.x} x2={point.x} y1={previous.y} y2={point.y} stroke={singleColor.main} strokeWidth={markStyle('lineWidth',2.5)} />;
               })()}
-            </g>) : <path d={points.filter((point) => point.y !== null).map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')} fill="none" stroke={CHART_COLORS.accentDark} strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />}
+            </g>) : <path d={points.filter((point) => point.y !== null).map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')} fill="none" stroke={singleColor.main} strokeWidth={markStyle('lineWidth',4)} strokeLinecap="round" strokeLinejoin="round" />}
             {points.map((point, index) => (
               <g key={point.label}>
-                {point.y !== null ? <circle cx={point.x} cy={point.y} r="5" fill={CHART_COLORS.accent} stroke={CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, point))} onMouseLeave={() => setTooltip(null)} /> : null}
-                {xLabelIndexes.has(index) ? renderXAxisTick({ x: point.x, y: top + plotHeight, label: point.label }) : null}
+                {point.y !== null ? <circle cx={point.x} cy={point.y} r={markStyle('showMarkers',true) ? markStyle('pointSize',5) : 5} fill={markStyle('showMarkers',true) ? singleColor.fill : "transparent"} stroke={markStyle('showMarkers',true) ? CHART_COLORS.chartBg : "transparent"} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, point))} onMouseLeave={() => setTooltip(null)} /> : null}
+                {presentation.showPeriodLabels && xLabelIndexes.has(index) ? renderXAxisTick({ x: point.x, y: top + plotHeight, label: point.label }) : null}
               </g>
             ))}
+            {presentation.showEndpointValues && last && (()=>{ const endPoint=[...points].reverse().find(p=>p.y!==null); return endPoint ? <text x={Math.min(layout.chartRight-6,endPoint.x+6)} y={endPoint.y-10} textAnchor="end" fontSize="11" fontWeight="750" fill={singleColor.main}>{formatNumber(endPoint.count)}</text> : null; })()}
             <SummaryPanel
               {...panelLayout}
               title="Trend summary"
@@ -932,6 +1012,10 @@ function areaSegments(points) {
 }
 
 export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
+  const singleColor = useChartSingleSeriesColors();
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState message="No ordered data is available for this area chart." />;
   const layout = getChartCardLayout({ height: 438, left: 58, top: 72, bottom: 42 });
@@ -953,7 +1037,7 @@ export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, g
     y: areaFinite(point.count) ? baseline - Number(point.count) / maxValue * plotHeight : null,
   }));
   const segments = areaSegments(points);
-  const tickIndexes = temporalBins.length ? getTemporalLabelIndexes(points.map(p => p.label), (label,i) => points[i].x) : getEvenlySpacedIndexes(data.length, 7);
+  const tickIndexes = temporalBins.length ? getTemporalLabelIndexes(points.map(p => p.label), (label,i) => points[i].x, chartsIIPresentationTickCount(presentation,6)) : getEvenlySpacedIndexes(data.length, chartsIIPresentationTickCount(presentation,7));
   return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
     {{
       tooltip: <ChartTooltip tooltip={tooltip} />,
@@ -979,13 +1063,13 @@ export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, g
                 const upper = run.map(point => `L ${point.x} ${point.y}`).join(' ');
                 const path = `M ${run[0].x} ${baseline} ${upper} L ${run[run.length-1].x} ${baseline} Z`;
                 return <g key={`area-run-${index}`}>
-                  <path d={path} fill={CHART_COLORS.accent} fillOpacity="0.32" stroke="none" />
-                  <path d={`M ${run.map(point => `${point.x} ${point.y}`).join(' L ')}`} fill="none" stroke={CHART_COLORS.accentDark} strokeWidth="2.4" />
+                  <path d={path} fill={singleColor.fill} fillOpacity={markStyle('fillOpacity',0.32)} stroke="none" />
+                  <path d={`M ${run.map(point => `${point.x} ${point.y}`).join(' L ')}`} fill="none" stroke={singleColor.main} strokeWidth={markStyle('lineWidth',2.4)} />
                 </g>;
               }
               const upper = run.flatMap(point => [`L ${point.x0} ${point.y}`, `L ${point.x1} ${point.y}`]).join(' ');
               const path = `M ${run[0].x0} ${baseline} ${upper} L ${run[run.length-1].x1} ${baseline} Z`;
-              return <path key={`area-run-${index}`} d={path} fill={CHART_COLORS.accent} fillOpacity="0.38" stroke={CHART_COLORS.accentDark} strokeWidth="0.7" />;
+              return <path key={`area-run-${index}`} d={path} fill={singleColor.fill} fillOpacity={markStyle('fillOpacity',0.38)} stroke={singleColor.main} strokeWidth="0.7" />;
             });
           })()}
           {points.map((point, index) => point.y === null ? null : <rect key={`${point.label}-${index}`} x={point.x0} y={point.y} width={Math.max(0, point.x1-point.x0)} height={baseline-point.y} fill="transparent" onMouseMove={event => setTooltip(buildTooltip(event,{label:point.label,count:point.count,unit:point.unit}))} onMouseLeave={() => setTooltip(null)} />)}
@@ -993,13 +1077,14 @@ export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, g
           const path = segment.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' ');
           const fillPath = `M ${segment[0].x} ${baseline} L ${segment.map(p => `${p.x} ${p.y}`).join(' L ')} L ${segment[segment.length - 1].x} ${baseline} Z`;
           return <g key={index}>
-            <path d={fillPath} fill={CHART_COLORS.accent} fillOpacity="0.35" stroke="none" />
-            <path d={path} fill="none" stroke={CHART_COLORS.accentDark} strokeWidth="3" strokeLinejoin="round" />
+            <path d={fillPath} fill={singleColor.fill} fillOpacity={markStyle('fillOpacity',0.35)} stroke="none" />
+            <path d={path} fill="none" stroke={singleColor.main} strokeWidth={markStyle('lineWidth',3)} strokeLinejoin="round" />
           </g>;
         })}
-        {!temporalBins.length && points.map((point, i) => point.y === null ? null : <circle key={`${point.label}-${i}`} cx={point.x} cy={point.y} r="3.6" fill={CHART_COLORS.accentDark}
+        {!temporalBins.length && points.map((point, i) => point.y === null ? null : <circle key={`${point.label}-${i}`} cx={point.x} cy={point.y} r="3.6" fill={singleColor.main}
           onMouseMove={event => setTooltip(buildTooltip(event, {label: point.label, count: point.count, unit: point.unit}))} onMouseLeave={() => setTooltip(null)} />)}
-        {points.map((point, i) => tickIndexes.has(i) ? <g key={`${point.label}-${i}`}>{renderXAxisTick({x: point.x, y: baseline, label: point.label})}</g> : null)}
+        {presentation.showPeriodLabels && points.map((point, i) => tickIndexes.has(i) ? <g key={`${point.label}-${i}`}>{renderXAxisTick({x: point.x, y: baseline, label: point.label})}</g> : null)}
+        {presentation.showEndpointValues && (()=>{ const end=[...points].reverse().find(point=>point.y!==null);return end?<text x={Math.min(layout.chartRight-10,end.x)} y={end.y-10} textAnchor="end" fontSize="11" fontWeight="700" fill={singleColor.main}>{formatNumber(end.count)}</text>:null;})()}
         <SummaryPanel {...layout.legend} title="Area summary" rows={[
           { label: 'Plotted periods', value: String(values.length) },
           { label: 'Peak value', value: formatNumber(Math.max(...values)) },
@@ -1011,6 +1096,9 @@ export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, g
 }
 
 export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   if (!periods.length || !series.length) return <EmptyChartState message="No aligned series are available for Stacked Area." />;
   const layout = getChartCardLayout({ height: 438, left: 58, top: 72, bottom: 42 });
@@ -1022,11 +1110,11 @@ export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = 
   const binByLabel = new Map(temporalBins.map(bin => [bin.label, bin]));
   const xAt = index => binByLabel.has(periods[index]) ? (binByLabel.get(periods[index]).x0 + binByLabel.get(periods[index]).x1) / 2 : periods.length === 1 ? left + plotWidth / 2 : left + index / (periods.length - 1) * plotWidth;
   const yAt = value => baseline - (value / maxValue) * plotHeight;
-  const tickIndexes = temporalBins.length ? getTemporalLabelIndexes(periods, (label,i) => xAt(i)) : getEvenlySpacedIndexes(periods.length, 7);
+  const tickIndexes = temporalBins.length ? getTemporalLabelIndexes(periods, (label,i) => xAt(i), chartsIIPresentationTickCount(presentation,6)) : getEvenlySpacedIndexes(periods.length, chartsIIPresentationTickCount(presentation,7));
   const summary = series.map((layer, index) => ({
     label: layer.label,
     value: formatNumber(layer.points.reduce((sum, point) => sum + point.count, 0)),
-    color: getSeriesColor(index),
+    color: chartSeriesColor(index),
   }));
   return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
     {{
@@ -1052,11 +1140,11 @@ export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = 
                 // cumulative boundaries remain aligned across all stacked series.
                 const upper = run.map(({point,bin}) => `${(bin.x0+bin.x1)/2} ${yAt(point.top)}`).join(' L ');
                 const lower = [...run].reverse().map(({point,bin}) => `${(bin.x0+bin.x1)/2} ${yAt(point.bottom)}`).join(' L ');
-                return <path key={`stack-${layer.label}-${index}`} d={`M ${upper} L ${lower} Z`} fill={getSeriesColor(layerIndex)} fillOpacity="0.75" stroke={CHART_COLORS.chartBg} strokeWidth="0.8" />;
+                return <path key={`stack-${layer.label}-${index}`} d={`M ${upper} L ${lower} Z`} fill={chartSeriesColor(layerIndex)} fillOpacity={markStyle('fillOpacity',0.75)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('lineWidth',0.8)} />;
               }
               const upper = run.flatMap(({point,bin}) => [`L ${bin.x0} ${yAt(point.top)}`, `L ${bin.x1} ${yAt(point.top)}`]).join(' ');
               const lower = [...run].reverse().flatMap(({point,bin}) => [`L ${bin.x1} ${yAt(point.bottom)}`, `L ${bin.x0} ${yAt(point.bottom)}`]).join(' ');
-              return <path key={`stack-${layer.label}-${index}`} d={`M ${run[0].bin.x0} ${yAt(run[0].point.bottom)} ${upper} ${lower} Z`} fill={getSeriesColor(layerIndex)} fillOpacity="0.75" stroke={CHART_COLORS.chartBg} strokeWidth="0.45" />;
+              return <path key={`stack-${layer.label}-${index}`} d={`M ${run[0].bin.x0} ${yAt(run[0].point.bottom)} ${upper} ${lower} Z`} fill={chartSeriesColor(layerIndex)} fillOpacity={markStyle('fillOpacity',0.75)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('lineWidth',0.45)} />;
             });
           })}
           {series.flatMap((layer, layerIndex) => layer.points.map((point,i) => {
@@ -1067,14 +1155,15 @@ export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = 
         </> : series.map((layer, index) => {
           const upper = layer.points.map((point, i) => `${xAt(i)},${yAt(point.top)}`).join(' L ');
           const lower = [...layer.points].reverse().map((point, reverseIndex) => `${xAt(layer.points.length - reverseIndex - 1)},${yAt(point.bottom)}`).join(' L ');
-          return <path key={layer.label} d={`M ${upper} L ${lower} Z`} fill={getSeriesColor(index)} fillOpacity="0.75" stroke={CHART_COLORS.chartBg} strokeWidth="1.1" />;
+          return <path key={layer.label} d={`M ${upper} L ${lower} Z`} fill={chartSeriesColor(index)} fillOpacity={markStyle('fillOpacity',0.75)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('lineWidth',1.1)} />;
         })}
         {!temporalBins.length && series.flatMap((layer, index) => layer.points.map((point, i) => (
           <rect key={`${layer.label}-${i}`} x={xAt(i) - 4} y={yAt(point.top) - 5} width="9" height="10" fill="transparent"
             onMouseMove={event => setTooltip(buildTooltip(event, {label: layer.label, secondary: point.label, count: point.count, unit: point.unit}))}
             onMouseLeave={() => setTooltip(null)} />
         )))}
-        {periods.map((period, index) => tickIndexes.has(index) ? <g key={`${period}-${index}`}>{renderXAxisTick({x: xAt(index), y: baseline, label: period})}</g> : null)}
+        {presentation.showPeriodLabels && periods.map((period, index) => tickIndexes.has(index) ? <g key={`${period}-${index}`}>{renderXAxisTick({x: xAt(index), y: baseline, label: period})}</g> : null)}
+        {presentation.showStackedTotals && totals.length <= 18 && totals.map((value,i)=>Number.isFinite(Number(value)) && Number(value)>0?<text key={`stack-total-${i}`} x={xAt(i)} y={yAt(value)-8} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(value)}</text>:null)}
         <SummaryPanel {...layout.legend} title="Stacked contributions" rows={summary} note={gapDisplay === 'connect' ? 'Boundaries connect observations; absent categories in populated bins contribute zero.' : 'Calendar-width bins; absent combinations contribute zero.'} />
       </>,
     }}
@@ -1082,6 +1171,9 @@ export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = 
 }
 
 export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = false }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState />;
 
@@ -1107,7 +1199,7 @@ export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = 
     label: row.label,
     value: formatNumber(row.count),
     meta: `${percentLabel(row.count, total)} of shown total`,
-    color: PALETTE[index % PALETTE.length],
+    color: chartSeriesColor(index),
   }));
   const panelLayout = layout.legend;
 
@@ -1123,11 +1215,17 @@ export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = 
               const endAngle = currentAngle + angle;
               currentAngle = endAngle;
               const percent = Math.round((row.count / total) * 1000) / 10;
+              const middleAngle=(startAngle+endAngle)/2;
+              const point=polarToCartesian(middleAngle);
+              const labelRadius=presentation.sliceLabelPosition==='outside'?radius*1.15:donut?radius*.76:radius*.64;
+              const lx=cx+(point.x-cx)*labelRadius/radius;
+              const ly=cy+(point.y-cy)*labelRadius/radius;
+              const label= presentation.proportionalLabel==='name'?truncateLabel(row.label,14):presentation.proportionalLabel==='value'?formatNumber(row.count):presentation.proportionalLabel==='percent'?`${percent.toFixed(1)}%`:presentation.proportionalLabel==='name-percent'?`${truncateLabel(row.label,11)} ${percent.toFixed(1)}%`:'';
               return (
-                <path key={row.label} d={describeArc(startAngle, endAngle)} fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : PALETTE[index % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percent}% of shown total` }))} onMouseLeave={() => setTooltip(null)} />
+                <g key={row.label}><path d={describeArc(startAngle, endAngle)} fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : chartSeriesColor(index)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',2)} opacity={markStyle('markOpacity',1)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percent}% of shown total` }))} onMouseLeave={() => setTooltip(null)} />{label && percent >= presentation.minLabelShare && <text pointerEvents="none" x={lx} y={ly+4} textAnchor={presentation.sliceLabelPosition==='outside'?(lx>cx?'start':'end'):'middle'} fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{label}</text>}</g>
               );
             })}
-            {donut && <circle cx={cx} cy={cy} r={radius * 0.52} fill={CHART_COLORS.chartBg} pointerEvents="none" aria-hidden="true" />}
+            {donut && <><circle cx={cx} cy={cy} r={radius * 0.52} fill={CHART_COLORS.chartBg} pointerEvents="none" aria-hidden="true" />{presentation.showCenterTotal&&<text x={cx} y={cy+4} textAnchor="middle" fontSize="18" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(total)}</text>}</>}
             <SummaryPanel {...panelLayout} title="Slices and shares" rows={summaryRows} note={`Shown total: ${formatNumber(total)} records`} />
           </>
         ),
@@ -1138,6 +1236,9 @@ export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = 
 
 
 export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtitle, svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   if (!data.length || !series.length) return <EmptyChartState message="No period and category data is available for the current selection." />;
 
@@ -1148,7 +1249,7 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
   const maxValue = scaleMax;
   const clusterWidth = Math.max(44, plotWidth / Math.max(data.length, 1) - 10);
   const barWidth = Math.max(4, Math.min(14, clusterWidth / Math.max(series.length, 1) - 2));
-  const xLabelIndexes = getEvenlySpacedIndexes(data.length, 7);
+  const xLabelIndexes = getEvenlySpacedIndexes(data.length, chartsIIPresentationTickCount(presentation,7));
   const panelLayout = layout.legend;
   const summaryRows = series.map((label, index) => {
     const total = getSeriesTotal(data, label, 'groups');
@@ -1157,7 +1258,7 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
       label,
       value: formatNumber(total),
       meta: peak ? `Peak ${formatNumber(peak.count)} in ${peak.label}` : 'No values',
-      color: PALETTE[index % PALETTE.length],
+      color: chartSeriesColor(index),
     };
   }).sort((a, b) => Number(String(b.value).replace(/,/g, '')) - Number(String(a.value).replace(/,/g, '')));
 
@@ -1183,10 +1284,10 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
                     const x = clusterX + groupIndex * (barWidth + 2);
                     const y = top + plotHeight - barHeight;
                     return (
-                      <rect key={group.label} x={x} y={y} width={barWidth} height={Math.max(1, barHeight)} rx="3" fill={PALETTE[groupIndex % PALETTE.length]} onMouseMove={(event) => setTooltip(buildTooltip(event, { label: group.label, secondary: row.label, count: group.count, unit: group.unit }))} onMouseLeave={() => setTooltip(null)} />
+                      <g key={group.label}><rect x={x} y={y} width={barWidth} height={Math.max(1, barHeight)} rx={markStyle('cornerRadius',3)} opacity={markStyle('markOpacity',1)} fill={chartSeriesColor(groupIndex,group.label)} onMouseMove={(event) => setTooltip(buildTooltip(event, { label: group.label, secondary: row.label, count: group.count, unit: group.unit }))} onMouseLeave={() => setTooltip(null)} />{presentation.showGroupedValues && barWidth >= 9 && barHeight >= 18 && <text x={x+barWidth/2} y={y-4} textAnchor="middle" fontSize="9" fontWeight="650" fill={CHART_COLORS.text}>{formatNumber(group.count)}</text>}</g>
                     );
                   })}
-                  {xLabelIndexes.has(index) ? renderXAxisTick({ x: clusterX + clusterWidth / 2, y: top + plotHeight, label: row.label }) : null}
+                  {xLabelIndexes.has(index) ? renderXAxisTick({ x: clusterX + clusterWidth / 2, y: top + plotHeight, label: presentation.showCategoryNames ? row.label : '', angle: presentation.categoryAngle === 'default' ? null : presentation.categoryAngle }) : null}
                 </g>
               );
             })}
@@ -1200,6 +1301,9 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
 
 
 export function AnalyticsStackedBarChart({ data = [], series = [], title, subtitle, svgRef, mode = 'absolute' }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   if (!data.length || !series.length) return <EmptyChartState message="No period and category data is available for the current selection." />;
 
@@ -1215,7 +1319,7 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
   const normalizedByIndex = normalized.rows;
   const zeroGroups = normalizedByIndex.filter(row => row.total === 0).length;
   const barWidth = Math.max(18, Math.min(52, plotWidth / Math.max(data.length, 1) - 10));
-  const xLabelIndexes = getEvenlySpacedIndexes(data.length, 7);
+  const xLabelIndexes = getEvenlySpacedIndexes(data.length, chartsIIPresentationTickCount(presentation,7));
   const panelLayout = layout.legend;
   const summaryRows = series.map((label, index) => {
     const total = getSeriesTotal(data.map((row) => ({ ...row, groups: row.segments })), label, 'groups');
@@ -1223,7 +1327,7 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
       label,
       value: formatNumber(total),
       meta: `${percentLabel(total, grandTotal)} of shown total`,
-      color: PALETTE[index % PALETTE.length],
+      color: chartSeriesColor(index),
     };
   }).sort((a, b) => Number(String(b.value).replace(/,/g, '')) - Number(String(a.value).replace(/,/g, '')));
 
@@ -1259,12 +1363,14 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
                     const segmentHeight = ((percentMode ? share : segment.count) / maxTotal) * plotHeight;
                     yCursor -= segmentHeight;
                     if (!segment.count || !segmentHeight) return null;
-                    return <rect key={segment.label} x={x} y={yCursor} width={barWidth} height={Math.max(1, segmentHeight)} fill={PALETTE[segmentIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="0.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: segment.label, secondary: percentMode ? `${row.label} · ${share.toFixed(1)}% of category (${formatNumber(row.total)} total)` : row.label, count: segment.count, unit: segment.unit }))} onMouseLeave={() => setTooltip(null)} />;
+                    const selectedLabel = chartsIISegmentLabel(presentation.stackedSegmentLabels,segment.count,share);
+                    const labelFits = segmentHeight >= 24 && barWidth >= 27 && selectedLabel.length <= Math.floor(barWidth / 6.1);
+                    return <g key={segment.label}><rect x={x} y={yCursor} width={barWidth} height={Math.max(1, segmentHeight)} fill={chartSeriesColor(segmentIndex,segment.label)} fillOpacity={markStyle('markOpacity',1)} stroke={CHART_COLORS.chartBg} strokeWidth="0.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: segment.label, secondary: percentMode ? `${row.label} · ${share.toFixed(1)}% of category (${formatNumber(row.total)} total)` : row.label, count: segment.count, unit: segment.unit }))} onMouseLeave={() => setTooltip(null)} />{labelFits && <text x={x+barWidth/2} y={yCursor+segmentHeight/2+3} textAnchor="middle" fontSize="9" fontWeight="700" fill={CHART_COLORS.text} pointerEvents="none">{selectedLabel}</text>}</g>;
                   })}
-                  {(!percentMode || distribution.total === 0) ? (
+                  {(distribution.total === 0 || (!percentMode && presentation.showValueLabels)) ? (
                     <text x={x + barWidth / 2} y={percentMode ? top + plotHeight - 7 : top + plotHeight - (row.total / maxTotal) * plotHeight - 7} textAnchor="middle" fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{percentMode ? 'No total' : formatNumber(row.total)}</text>
                   ) : null}
-                  {xLabelIndexes.has(index) ? renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: row.label }) : null}
+                  {xLabelIndexes.has(index) ? renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: presentation.showCategoryNames ? row.label : '', angle: presentation.categoryAngle === 'default' ? null : presentation.categoryAngle }) : null}
                 </g>
               );
             })}
@@ -1278,6 +1384,9 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
 
 
 export function AnalyticsMultiLineChart({ series = [], periods = [], years = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   const xLabels = periods?.length ? periods : years;
   if (!series.length || !xLabels.length) return <EmptyChartState message="No period and category data is available for the current selection." />;
@@ -1291,7 +1400,7 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
   const temporalBins = chartsIITemporalPositions(temporalAxis, left, plotWidth);
   const binByLabel = new Map(temporalBins.map(bin => [bin.label, bin]));
   const xAt = (label, index) => { const bin = binByLabel.get(label); return bin ? (bin.x0 + bin.x1) / 2 : xLabels.length === 1 ? left + plotWidth / 2 : left + (index / (xLabels.length - 1)) * plotWidth; };
-  const xLabelIndexes = temporalBins.length ? getTemporalLabelIndexes(xLabels, xAt) : getEvenlySpacedIndexes(xLabels.length, 7);
+  const xLabelIndexes = temporalBins.length ? getTemporalLabelIndexes(xLabels, xAt, chartsIIPresentationTickCount(presentation,6)) : getEvenlySpacedIndexes(xLabels.length, chartsIIPresentationTickCount(presentation,7));
   const panelLayout = layout.legend;
   const summaryRows = series.map((item, index) => {
     const total = getLineTotal(item.points);
@@ -1301,7 +1410,7 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
       label: item.label,
       value: formatNumber(total),
       meta: peak ? `Peak ${formatNumber(peak.count)} in ${peak.label}${last ? `; last ${formatNumber(last.count)}` : ''}` : 'No values',
-      color: PALETTE[index % PALETTE.length],
+      color: chartSeriesColor(index),
     };
   }).sort((a, b) => Number(String(b.value).replace(/,/g, '')) - Number(String(a.value).replace(/,/g, '')));
 
@@ -1348,19 +1457,20 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
                       key={`${item.label}-segment-${segmentIndex}`}
                       d={segment.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')}
                       fill="none"
-                      stroke={PALETTE[seriesIndex % PALETTE.length]}
-                      strokeWidth="3"
+                      stroke={chartSeriesColor(seriesIndex)}
+                      strokeWidth={markStyle('lineWidth',3)}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     />
                   ))}
+                  {(presentation.showDirectSeriesLabels || presentation.showEndpointValues) && series.length <= 7 && (()=>{ const endpoint=[...points].reverse().find(p=>p.y!==null); if(!endpoint)return null;return <text x={Math.min(layout.chartRight-8,endpoint.x)-8} y={endpoint.y-8} textAnchor="end" fontSize="9.5" fontWeight="700" fill={chartSeriesColor(seriesIndex)}>{presentation.showDirectSeriesLabels?truncateLabel(item.label,19):formatNumber(endpoint.count)}</text>;})()}
                   {points.map((point, pointIndex) => point.y !== null ? (
-                    <circle key={`${item.label}-${point.label}`} cx={point.x} cy={point.y} r="4" fill={PALETTE[seriesIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="1.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: item.label, secondary: point.label, count: point.count, unit: point.unit }))} onMouseLeave={() => setTooltip(null)} />
+                    <circle key={`${item.label}-${point.label}`} cx={point.x} cy={point.y} r={markStyle('showMarkers',true)?markStyle('pointSize',4):4} fill={markStyle('showMarkers',true)?chartSeriesColor(seriesIndex):"transparent"} stroke={markStyle('showMarkers',true)?CHART_COLORS.chartBg:"transparent"} strokeWidth="1.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: item.label, secondary: point.label, count: point.count, unit: point.unit }))} onMouseLeave={() => setTooltip(null)} />
                   ) : null)}
                 </g>
               );
             })}
-            {xLabels.map((label, index) => (
+            {presentation.showPeriodLabels && xLabels.map((label, index) => (
               xLabelIndexes.has(index) ? <g key={label}>{renderXAxisTick({ x: xAt(label, index), y: top + plotHeight, label })}</g> : null
             ))}
             <SummaryPanel {...panelLayout} title="Line totals" rows={summaryRows} note={gapDisplay === 'connect' ? 'Connections interpolate visually; no missing values are created.' : 'Gaps indicate unobserved or missing numeric values.'} />
@@ -1373,6 +1483,10 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
 
 
 export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, subtitle, svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
+  const heatmapAppearance = useContext(ChartsIIAppearanceContext);
   const [tooltip, setTooltip] = useState(null);
   if (!rows.length || !columns.length) return <EmptyChartState message="No paired categorical data is available for the current selection." />;
 
@@ -1403,14 +1517,14 @@ export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, s
         tooltip: <ChartTooltip tooltip={tooltip} />,
         chart: (
           <>
-            {columns.map((column, index) => <text key={column} x={left + index * cellSize + cellSize / 2} y={top - 10} textAnchor="end" fontSize="10" fill={CHART_COLORS.mutedText} transform={`rotate(-42 ${left + index * cellSize + cellSize / 2} ${top - 10})`}>{truncateLabel(column, 18)}</text>)}
+            {presentation.showColumnLabels && columns.map((column, index) => <text key={column} x={left + index * cellSize + cellSize / 2} y={top - 10} textAnchor="end" fontSize="10" fill={CHART_COLORS.mutedText} transform={`rotate(-42 ${left + index * cellSize + cellSize / 2} ${top - 10})`}>{truncateLabel(column, 18)}</text>)}
             {rows.map((row, rowIndex) => (
               <g key={row}>
-                <text x={left - 10} y={top + rowIndex * cellSize + cellSize / 2 + 4} textAnchor="end" fontSize="11" fill={CHART_COLORS.text}>{truncateLabel(row, 24)}</text>
+                {presentation.showRowLabels && <text x={left - 10} y={top + rowIndex * cellSize + cellSize / 2 + 4} textAnchor="end" fontSize="11" fill={CHART_COLORS.text}>{truncateLabel(row, 24)}</text>}
                 {columns.map((column, columnIndex) => {
                   const cell = cellMap.get(`${row}__${column}`) || { rowLabel: row, columnLabel: column, count: 0 };
-                  const opacity = cell.count ? 0.2 + (cell.count / maxValue) * 0.75 : 0.08;
-                  return <rect key={`${row}-${column}`} x={left + columnIndex * cellSize} y={top + rowIndex * cellSize} width={cellSize - 2} height={cellSize - 2} rx="7" fill={getHeatmapCellColor(cell.count, maxValue)} opacity={opacity} stroke={tooltip?.label === row && tooltip?.secondary === column ? CHART_COLORS.accentDark : CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: row, secondary: column, count: cell.count, unit: cell.unit }))} onMouseLeave={() => setTooltip(null)} />;
+                  const opacity = (cell.count ? 0.2 + (cell.count / maxValue) * 0.75 : 0.08) * markStyle('markOpacity',1);
+                  return <g key={`${row}-${column}`}><rect x={left + columnIndex * cellSize} y={top + rowIndex * cellSize} width={Math.max(1,cellSize - markStyle('cellGap',2))} height={Math.max(1,cellSize - markStyle('cellGap',2))} rx="7" fill={heatmapAppearance?.overrides?.['Heatmap intensity'] ? chartSeriesColor(0,'Heatmap intensity') : getHeatmapCellColor(cell.count, maxValue)} opacity={opacity} stroke={tooltip?.label === row && tooltip?.secondary === column ? CHART_COLORS.accentDark : CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: row, secondary: column, count: cell.count, unit: cell.unit }))} onMouseLeave={() => setTooltip(null)} />{presentation.showCellValues && cellSize >= 30 && cell.count > 0 && <text pointerEvents="none" x={left+columnIndex*cellSize+cellSize/2} y={top+rowIndex*cellSize+cellSize/2+4} textAnchor="middle" fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(cell.count)}</text>}</g>;
                 })}
               </g>
             ))}
@@ -1424,6 +1538,9 @@ export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, s
 
 
 export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   if (!data.length) return <EmptyChartState />;
 
@@ -1455,16 +1572,16 @@ export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
               const y = top + plotHeight - barHeight;
               return (
                 <g key={row.label}>
-                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx="8" fill={getSeriesColor(index)} opacity="0.9" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of binned values` }))} onMouseLeave={() => setTooltip(null)} />
-                  <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>
-                  {renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: truncateLabel(row.label, 16), rotate: true })}
+                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of binned values` }))} onMouseLeave={() => setTooltip(null)} />
+                  {presentation.showValueLabels && <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>}
+                  {renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: presentation.showCategoryNames ? truncateLabel(row.label, 16) : '', rotate: true, angle: presentation.categoryAngle === 'default' ? null : presentation.categoryAngle })}
                 </g>
               );
             })}
             <SummaryPanel
               {...panelLayout}
               title="Bin ranges"
-              rows={data.map((row, index) => ({ label: row.label, color: getSeriesColor(index), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of binned values` }))}
+              rows={data.map((row, index) => ({ label: row.label, color: chartSeriesColor(index,row.label), value: formatNumber(row.count), meta: `${percentLabel(row.count, total)} of binned values` }))}
               note={`Binned total: ${formatNumber(total)} ${data[0]?.unit || 'items'}`}
             />
           </>
@@ -1476,6 +1593,9 @@ export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
 
 
 export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   if (!parents.length || !total) return <EmptyChartState message="No hierarchical data is available for the current selection." />;
 
@@ -1508,7 +1628,7 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
       label: parent.label,
       value: formatNumber(parent.count),
       meta: `${percentLabel(parent.count, total)}; top child ${topChild ? truncateLabel(topChild.label, 22) : 'none'}`,
-      color: PALETTE[index % PALETTE.length],
+      color: chartSeriesColor(index),
     };
   });
   const panelLayout = layout.legend;
@@ -1520,8 +1640,8 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
         chart: (
           <>
             <circle cx={cx} cy={cy} r={innerRadius - 12} fill={CHART_COLORS.accentLight} opacity="0.55" />
-            <text x={cx} y={cy - 4} textAnchor="middle" fontSize="18" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(total)}</text>
-            <text x={cx} y={cy + 16} textAnchor="middle" fontSize="11" fill={CHART_COLORS.mutedText}>total</text>
+            {presentation.showCenterTotal && <text x={cx} y={cy - 4} textAnchor="middle" fontSize="18" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(total)}</text>}
+            {presentation.showCenterTotal && <text x={cx} y={cy + 16} textAnchor="middle" fontSize="11" fill={CHART_COLORS.mutedText}>total</text>}
             {parents.map((parent, parentIndex) => {
               const parentSpan = (parent.count / total) * 360;
               const parentStart = parentAngle;
@@ -1530,13 +1650,17 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
               let childAngle = parentStart;
               return (
                 <g key={parent.label}>
-                  <path d={ringArc(parentStart, parentEnd, innerRadius, outerInnerRadius)} fill={PALETTE[parentIndex % PALETTE.length]} stroke={CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...parent, secondary: `${percentLabel(parent.count, total)} of total` }))} onMouseLeave={() => setTooltip(null)} />
+                  <path d={ringArc(parentStart, parentEnd, innerRadius, outerInnerRadius)} fill={chartSeriesColor(parentIndex,parent.label)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',2)} opacity={markStyle('markOpacity',1)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...parent, secondary: `${percentLabel(parent.count, total)} of total` }))} onMouseLeave={() => setTooltip(null)} />
+                  {presentation.showRadialParentLabels && parentSpan >= 28 && (()=>{const pt=polar((innerRadius+outerInnerRadius)/2,(parentStart+parentEnd)/2);const text=chartsIISegmentLabel(presentation.proportionalLabel,parent.count,parent.count/total*100);return <text pointerEvents="none" x={pt.x} y={pt.y+4} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={CHART_COLORS.text}>{['none','name','name-percent'].includes(presentation.proportionalLabel)?truncateLabel(parent.label,10)+(presentation.proportionalLabel==='name-percent'?' '+percentLabel(parent.count,total):''):text}</text>})()}
                   {parent.children.map((child, childIndex) => {
                     const childSpan = parentSpan * (child.count / Math.max(1, parent.count));
                     const childStart = childAngle;
                     const childEnd = childAngle + childSpan;
                     childAngle = childEnd;
-                    return <path key={`${parent.label}-${child.label}`} d={ringArc(childStart, childEnd, outerInnerRadius, outerRadius)} fill={PALETTE[(parentIndex + childIndex + 1) % PALETTE.length]} opacity="0.82" stroke={CHART_COLORS.chartBg} strokeWidth="1.5" onMouseMove={(event) => setTooltip(buildTooltip(event, { ...child, secondary: parent.label }))} onMouseLeave={() => setTooltip(null)} />;
+                    const mid=(childStart+childEnd)/2;
+                    const at=polar((outerInnerRadius+outerRadius)/2,mid);
+                    const text=['none','name'].includes(presentation.proportionalLabel)?truncateLabel(child.label,9):presentation.proportionalLabel==='name-percent'?`${truncateLabel(child.label,7)} ${percentLabel(child.count,total)}`:chartsIISegmentLabel(presentation.proportionalLabel,child.count,child.count/total*100);
+                    return <g key={`${parent.label}-${child.label}`}><path d={ringArc(childStart, childEnd, outerInnerRadius, outerRadius)} fill={chartSeriesColor(parentIndex + childIndex + 1,child.label)} opacity={markStyle('markOpacity',0.82)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',1.5)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...child, secondary: parent.label }))} onMouseLeave={() => setTooltip(null)} />{presentation.showRadialChildLabels && childSpan >= 23 && <text x={at.x} y={at.y+3} textAnchor="middle" fontSize="9" fill={CHART_COLORS.text} pointerEvents="none">{text}</text>}</g>;
                   })}
                 </g>
               );
@@ -1614,6 +1738,9 @@ function layoutTreemapTiles(items, x, y, width, height) {
 }
 
 export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treemap', subtitle = '', measureLabel = 'records', svgRef }) {
+  const presentation=useChartPresentation();
+  const chartSeriesColor = useChartSeriesColor();
+  const markStyle = useChartMarkStyle();
   const [tooltip, setTooltip] = useState(null);
   const [path, setPath] = useState([]);
   if (!(total > 0) || !parents.length) return <EmptyChartState message="No positive additive values are available for this Treemap." />;
@@ -1649,7 +1776,7 @@ export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treema
   const layout = getChartCardLayout({ height: 490, left: 22, top: 94, bottom: 24 });
   const { width, height, left, top, plotWidth, plotHeight } = layout;
   const rectangles = layoutTreemapTiles(visible, left, top, plotWidth, plotHeight);
-  const legendRows = visible.slice(0, 13).map((item, index) => ({ label: item.label, color: getSeriesColor(index), value: formatNumber(item.value) }));
+  const legendRows = visible.slice(0, 13).map((item, index) => ({ label: item.label, color: chartSeriesColor(index), value: formatNumber(item.value) }));
   const detail = (event, item, lineage = '') => setTooltip(buildTooltip(event, {
     label: lineage ? `${lineage} → ${item.label}` : item.label,
     secondary: `${localPct(item.value)} of current view · ${rootPct(item.value)} of overall total · ${item.count} contributing records${canDrill(item) ? ' · Click to explore' : ''}`,
@@ -1661,15 +1788,15 @@ export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treema
   const activate = (event, item) => { event.stopPropagation(); drill(item); };
   const keyboard = (event, item) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); drill(item); } };
   const tiles = rectangles.flatMap((parent, index) => {
-    const parentColor = getSeriesColor(index);
+    const parentColor = chartSeriesColor(index);
     const nested = !validPath.length && Array.isArray(parent.children) && parent.children.length > 0;
     const topSpace = nested ? Math.min(19, Math.max(0, parent.height * 0.3)) : 0;
     const childTiles = nested ? layoutTreemapTiles(parent.children, parent.x, parent.y + topSpace, parent.width, Math.max(0, parent.height - topSpace)) : [];
     const clickable = canDrill(parent);
     const base = <g key={`parent-${index}`}>
-      <rect x={parent.x + 1} y={parent.y + 1} width={Math.max(0, parent.width - 2)} height={Math.max(0, parent.height - 2)} rx="3" fill={parentColor} fillOpacity="0.64" stroke={CHART_COLORS.chartBg} strokeWidth="2" />
-      {parent.width > 65 && parent.height > 28 && <text pointerEvents="none" x={parent.x + 8} y={parent.y + 18} fontSize="12" fontWeight="750" fill={CHART_COLORS.text}>{truncateLabel(parent.label, Math.max(7, Math.floor(parent.width / 7.5)))}</text>}
-      {(!nested || !topSpace) && parent.width > 73 && parent.height > 54 && <text pointerEvents="none" x={parent.x + 8} y={parent.y + 36} fontSize="11" fill={CHART_COLORS.text}>{formatNumber(parent.value)} · {localPct(parent.value)}</text>}
+      <rect x={parent.x + markStyle('tileGap',2)/2} y={parent.y + markStyle('tileGap',2)/2} width={Math.max(0, parent.width - markStyle('tileGap',2))} height={Math.max(0, parent.height - markStyle('tileGap',2))} rx="3" fill={parentColor} fillOpacity="0.64" stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',2)} />
+      {presentation.showParentLabels && parent.width > presentation.tileMinWidth && parent.height > 28 && <text pointerEvents="none" x={parent.x + 8} y={parent.y + 18} fontSize="12" fontWeight="750" fill={CHART_COLORS.text}>{truncateLabel(parent.label, Math.max(7, Math.floor(parent.width / 7.5)))}</text>}
+      {presentation.showParentLabels && presentation.tileLabelMode !== 'name' && (!nested || !topSpace) && parent.width > presentation.tileMinWidth+8 && parent.height > 54 && <text pointerEvents="none" x={parent.x + 8} y={parent.y + 36} fontSize="11" fill={CHART_COLORS.text}>{presentation.tileLabelMode==='name-percent'?localPct(parent.value):formatNumber(parent.value)}</text>}
       <rect x={parent.x} y={parent.y} width={parent.width} height={nested ? Math.max(0, topSpace) : parent.height} fill="transparent"
         style={{ cursor: clickable ? 'pointer' : 'default' }} role={clickable ? 'button' : undefined}
         tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Explore ${parent.label}` : parent.label}
@@ -1678,13 +1805,13 @@ export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treema
       {!nested && clickable && parent.width > 100 && parent.height > 75 && <text pointerEvents="none" x={parent.x + 8} y={parent.y + 53} fontSize="10" fill={CHART_COLORS.mutedText}>Explore category ›</text>}
     </g>;
     return [base, ...childTiles.map((child, childIndex) => {
-      const childColor = getSeriesColor(index + childIndex + 1);
+      const childColor = chartSeriesColor(index + childIndex + 1, child.label);
       // Do not jump directly to a child's sublevel from the overview.
       // Every visible part of the parent tile is a target for parent drill-in.
       return <g key={`child-${index}-${childIndex}`}>
-        <rect x={child.x + 2.3} y={child.y + 2.3} width={Math.max(0, child.width - 4.6)} height={Math.max(0, child.height - 4.6)} rx="2.5" fill={childColor} fillOpacity="0.76" stroke={CHART_COLORS.chartBg} strokeWidth="1.5" />
-        {child.width > 65 && child.height > 30 && <text pointerEvents="none" x={child.x + 7} y={child.y + 17} fontSize="10.5" fontWeight="700" fill={CHART_COLORS.text}>{truncateLabel(child.label, Math.max(6, Math.floor(child.width / 7)))}</text>}
-        {child.width > 75 && child.height > 52 && <text pointerEvents="none" x={child.x + 7} y={child.y + 33} fontSize="10" fill={CHART_COLORS.text}>{formatNumber(child.value)}</text>}
+        <rect x={child.x + markStyle('tileGap',2)*1.15} y={child.y + markStyle('tileGap',2)*1.15} width={Math.max(0, child.width - markStyle('tileGap',2)*2.3)} height={Math.max(0, child.height - markStyle('tileGap',2)*2.3)} rx="2.5" fill={childColor} fillOpacity="0.76" stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',1.5)} />
+        {presentation.showChildLabels && child.width > presentation.tileMinWidth && child.height > 30 && <text pointerEvents="none" x={child.x + 7} y={child.y + 17} fontSize="10.5" fontWeight="700" fill={CHART_COLORS.text}>{truncateLabel(child.label, Math.max(6, Math.floor(child.width / 7)))}</text>}
+        {presentation.showChildLabels && presentation.tileLabelMode !== 'name' && child.width > presentation.tileMinWidth+10 && child.height > 52 && <text pointerEvents="none" x={child.x + 7} y={child.y + 33} fontSize="10" fill={CHART_COLORS.text}>{presentation.tileLabelMode==='name-percent'?localPct(child.value):formatNumber(child.value)}</text>}
         <rect x={child.x} y={child.y} width={child.width} height={child.height} fill="transparent"
           style={{ cursor: clickable ? 'pointer' : 'default' }} role={clickable ? 'button' : undefined}
           tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Explore ${parent.label} (from ${child.label})` : `${parent.label} → ${child.label}`}
