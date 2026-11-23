@@ -62,12 +62,12 @@ The guide is organized into three levels. **You do not need to read it straight 
 ## Current Synchronized Checkpoint
 
 ```text
-2be3ea0 — Synchronize documentation through Charts II completion and appearance customization
+9f63175 — Refine documentation governance and workflow charter
 Branch: main
 Status: HEAD, origin/main and origin/HEAD aligned; working tree clean (user-confirmed 2026-11-22)
 ```
 
-Source-development milestone immediately preceding the documentation-only commit: `e96c375` (Charts Appearance and adaptive presentation). For checkpoint interpretation and commit history, see `core_documentation/CHANGELOG.md`. The uploaded `/src` archive is a reference snapshot, not evidence of the full repository, installed dependencies, or deployed build.
+Most recent source-development milestone preceding the documentation-only commits: `e96c375` (Charts Appearance and adaptive presentation). Documentation commits `2be3ea0`, `d5d7a1b`, and `9f63175` followed. For checkpoint interpretation and commit history, see `core_documentation/CHANGELOG.md`. The uploaded `/src` archive is a reference snapshot, not evidence of the full repository, installed dependencies, or deployed build.
 
 <a id="1-current-architecture-snapshot"></a>
 

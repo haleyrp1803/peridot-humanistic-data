@@ -305,7 +305,7 @@ A Maintainer’s Guide may cite a relevant commit/hash when it materially clarif
 
 The Charter controls **how** Peridot changes are performed and how uncertainty, source authority, risk, recovery, delivery, testing, and decision history are handled. It is primarily an operating manual for ChatGPT, with its reasoning and obligations accessible to Haley and future human maintainers.
 
-### 7.2 Approved structure (Charter v03, locally applied; commit not yet confirmed)
+### 7.2 Approved structure (Charter v03, committed at `9f63175`)
 
 - Executive Summary and prominent **Golden Rule: When in Doubt, Ask Haley**.
 - Task-oriented operational index; required preflight with **Proceed / Clarification required / Blocked** outcomes.
@@ -317,7 +317,7 @@ The Charter controls **how** Peridot changes are performed and how uncertainty, 
 - Current cautions and status-labeled decision records, with intention, origin, requirements, prohibitions, failure handling and verification guidance.
 - Standard handoff and completion procedures.
 
-**Status clarification:** The user confirmed Charter v03 was copied into the local project, with `core_documentation/PROJECT_WORKFLOW_CHARTER.md` modified and uncommitted. Do not claim it is already part of Git checkpoint `d5d7a1b`.
+**Status clarification:** Charter v03 and the Governance Protocol revision were committed at `9f63175` after their approved historical-plan reference corrections. This succeeds the earlier `d5d7a1b` documentation checkpoint; the previous locally applied/uncommitted status is historical, not current.
 
 ### 7.3 Charter should own
 
@@ -473,8 +473,8 @@ Mechanical checks can establish line/character retention, exact authored text, f
 
 At a major documentation update:
 
-1. Record the **last user-confirmed clean synchronized Git checkpoint**, including its date and commit ID. For this review, that is `d5d7a1b` on `main`, clean and aligned with `origin/main` when last reported.
-2. Identify later **locally applied but uncommitted changes** separately. At this pass, Charter v03 is locally applied and uncommitted; it is not contained in `d5d7a1b`.
+1. Record the **last user-confirmed clean synchronized Git checkpoint**, including its date and commit ID. For this review, that is `9f63175` on `main`, clean and aligned with `origin/main` and `origin/HEAD` when last reported (2026-11-22).
+2. Identify any later **locally applied but uncommitted changes** separately. The Charter v03 and Governance Protocol v01 revisions, previously uncommitted at `d5d7a1b`, were subsequently committed at `9f63175`; do not continue treating them as outstanding local edits.
 3. Update the Changelog's authoritative checkpoint account when the underlying Git state actually changes and evidence is available. Do not invent a new checkpoint because a draft was prepared.
 4. Keep secondary references concise, linked, and accurately labeled as last-confirmed; refresh them during relevant documentation synchronization rather than duplicating full milestone narratives across all documents.
 5. If current file state is uncertain, apply the Charter's source-of-truth decision tree and ask Haley rather than selecting the easiest accessible version.

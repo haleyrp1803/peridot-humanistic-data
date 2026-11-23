@@ -45,7 +45,7 @@ The dated notes and screenshots are retained because Peridot is an evolving rese
 
 This is Peridot's public-facing orientation and usage guide. It documents the researcher workflow, accepted input formats, basic local installation, limitations, screenshots, and attribution. It does not replace the [Maintainer's Guide](MAINTAINERS_GUIDE.md) (technical contracts), [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) (development process), or [Changelog](CHANGELOG.md) (project history).
 
-**Last user-confirmed synchronized source checkpoint:** `2be3ea0` on `main` (November 22, 2026). This records a confirmed historical Git state, **not** a fresh check of the current working tree or deployed site. The [Changelog's checkpoint section](CHANGELOG.md#1-current-synchronized-checkpoint) is the authoritative detailed record.
+**Last user-confirmed synchronized source checkpoint:** `9f63175` on `main` (November 22, 2026), aligned at `HEAD`, `origin/main`, and `origin/HEAD` with a clean working tree. This records the last confirmed Git state, **not** a fresh check of the current working tree or deployed site. The [Changelog's checkpoint section](CHANGELOG.md#1-current-synchronized-checkpoint) is the authoritative detailed record.
 
 ## 1. Welcome to Peridot
 

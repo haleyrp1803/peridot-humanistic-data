@@ -40,12 +40,12 @@ This document owns the verified current checkpoint, reverse-chronological develo
 ## 1. Current Synchronized Checkpoint
 
 ```text
-2be3ea0 — Synchronize documentation through Charts II completion and appearance customization
+9f63175 — Refine documentation governance and workflow charter
 Branch: main
 Status: HEAD, origin/main, and origin/HEAD aligned; working tree clean (user-confirmed Git status/log, 2026-11-22)
 ```
 
-**Source of verification:** The researcher supplied `git status` and `git log --oneline -3` showing `2be3ea0` at `HEAD`, `origin/main`, and `origin/HEAD`, with nothing to commit. The preceding source commits are `e96c375` (Charts appearance customization and adaptive presentation) and `8baa733` (retire legacy Charts I and consolidate Charts II). This establishes a newer clean documentation checkpoint; it does **not** independently rerun source tests or deployed-site verification.
+**Source of verification:** The researcher supplied `git status` and `git log --oneline -5` showing `9f63175` at `HEAD`, `origin/main`, and `origin/HEAD`, with nothing to commit. The immediately preceding documentation commits are `d5d7a1b` (reorganize core information documentation and add glossaries) and `2be3ea0` (synchronize documentation through Charts II completion and appearance customization). The preceding source-development commits include `e96c375` (Charts appearance customization and adaptive presentation) and `8baa733` (retire legacy Charts I). This establishes a clean, synchronized documentation checkpoint; it does **not** independently rerun source tests or deployed-site verification.
 
 The older repository-state snapshots are preserved in the [historical checkpoint evidence archive](#5-historical-checkpoint-evidence), rather than in this current-state introduction.
 
@@ -64,7 +64,7 @@ This index points to **detailed milestone narratives**, not a second history or 
 | Data import / canonical model | [Workbook and normalization](#milestone-workbook); [generalized mapping foundations](#milestone-mapping-foundation); [canonical normalization](#milestone-canonical) |
 | Search / Inspector | [Generalized Search](#milestone-search); [Inspector / Identity](#milestone-inspector) |
 | Interface / design / About | [About animations](#milestone-about-animations); [public gateways](#milestone-gateways); [Cartographic Editorial foundation](#milestone-editorial) |
-| Infrastructure / documentation / testing | [Loader and first Map mount](#milestone-loader); [deployment and dependency maintenance](#milestone-dependencies); [documentation governance](#milestone-governance) |
+| Infrastructure / documentation / testing | [Documentation architecture and governance revision](#milestone-documentation-reorganization); [Loader and first Map mount](#milestone-loader); [deployment and dependency maintenance](#milestone-dependencies); [earlier documentation governance](#milestone-governance) |
 
 The area labels in the commit-history table are **editorial finding aids**, not original Git metadata or assertions of implementation scope. The recorded subjects and historical notes remain unchanged.
 
@@ -79,7 +79,7 @@ The area labels in the commit-history table are **editorial finding aids**, not 
 <details>
 <summary><strong>How to read this history — source and verification notes</strong></summary>
 
-**Start here.** The register below contains every entry from the v01 Changelog (619 rows), newest first. Exact recorded date strings, commit hashes, messages, area labels, historical notes, and independently recorded verification qualifiers have been retained. The first four columns facilitate scanning; the last provides the original historical note, any documented verification, and a **Details** link where the commit is discussed in the milestone archive. The **Area** labels are editorial, not original Git metadata.
+**Start here.** The register below preserves the original v01 Changelog register (619 rows) and includes later user-confirmed documentation commits, newest first. Exact recorded date strings, commit hashes, messages, area labels, historical notes, and independently recorded verification qualifiers have been retained. The first four columns facilitate scanning; the last provides the original historical note, any documented verification, and a **Details** link where the commit is discussed in the milestone archive. The **Area** labels are editorial, not original Git metadata.
 
 A dash in the historical note means none was originally recorded; absence of a verification qualifier does **not** imply that a commit was untested. Historical branch annotations are not present-day Git status. Some dates remain explicitly unverified. This register has not been checked against a fresh full-repository `git log`.
 
@@ -87,7 +87,9 @@ A dash in the historical note means none was originally recorded; absence of a v
 
 | Date | Commit | Exact recorded message | Area (editorial) | Significance / detail |
 |---|---|---|---|---|
-| <a id="history-undated"></a>Date not independently established | `2be3ea0` | Synchronize documentation through Charts II completion and appearance customization | Documentation / planning | Latest clean synchronized checkpoint per researcher-provided Git log and status (2026-11-22) <em>Verification:</em> Git status/log confirmed; no new source test implied [Details](#milestone-charts-ii) |
+| <a id="history-undated"></a>Date not independently established (confirmed by 2026-11-22) | `9f63175` | Refine documentation governance and workflow charter | Documentation / planning | Current synchronized documentation checkpoint; accepted Charter v03 and Governance Protocol v01, with the historical restructuring plan retained as non-governing provenance. <em>Verification:</em> User-confirmed Git status/log; no source-app test implied [Details](#milestone-documentation-reorganization) |
+| Date not independently established (confirmed by 2026-11-22) | `d5d7a1b` | Reorganize core information documentation and add glossaries | Documentation / planning | Accepted Changelog v04, Maintainer's Guide v04, and README v02 reorganizations; reader onboarding, indexes and glossaries. <em>Verification:</em> User-confirmed Git status/log; no source-app test implied [Details](#milestone-documentation-reorganization) |
+| Date not independently established | `2be3ea0` | Synchronize documentation through Charts II completion and appearance customization | Documentation / planning | Historical synchronized checkpoint per researcher-provided Git log and status (2026-11-22); superseded by later documentation commits. <em>Verification:</em> Git status/log confirmed; no new source test implied [Details](#milestone-charts-ii) |
 | <a id="history-2026-11"></a>2026-11-22 | `e96c375` | Implement Charts appearance customization and adaptive presentation | Charts / Analytics | current synchronized HEAD; Charts II Appearance colors, styles, adaptive labels, resizable panel, and PNG continuity <em>Verification:</em> User browser-accepted; source-level Charts tests reported passing [Details](#milestone-charts-ii) |
 | 2026-11-22 | `8baa733` | Retire legacy Charts I and consolidate Charts II workspace | Charts / Analytics | single public Charts tab; removed `AnalyticsPanel.jsx`; shared helpers/CSS retained <em>Verification:</em> User browser regression accepted; retirement test recorded [Details](#milestone-charts-ii) |
 | 2026-11-22 | `5c75472` | Implement Charts II chart-local filters and single-series selection | Charts / Analytics | filter scope isolation and compatible single/multi-series value selection <em>Verification:</em> See Charts II milestone; local filter behavior reported accepted [Details](#milestone-charts-ii) |
@@ -708,6 +710,19 @@ A dash in the historical note means none was originally recorded; absence of a v
 | 2026-04-17 | `eb3ba4b` | Initial rebuilt app baseline | Other / general | — |
 
 ## 4. Detailed Milestone Archive
+
+<details>
+<summary><a id="milestone-documentation-reorganization"></a><strong>Core documentation reorganization and governance renewal — confirmed 2026-11-22</strong></summary>
+
+### Core documentation reorganization and governance renewal — confirmed 2026-11-22
+
+- **`d5d7a1b` — `Reorganize core information documentation and add glossaries`:** Haley approved and committed a reader-oriented README (plain-language onboarding, scan-friendly summaries, 69-term glossary), a three-level Maintainer's Guide (architecture overview, authoritative subsystem contracts, implementation references, 83-term technical glossary), and a navigable Changelog (full recorded development-history table, area/period indexes, expandable milestone and checkpoint archives). Substantive historical and technical material was preserved through verified relocation, cross-reference, or contextual retention; the author's personally written README AI-collaboration statement was preserved verbatim.
+- **`9f63175` — `Refine documentation governance and workflow charter`:** Haley approved and committed the revised Project Workflow Charter and Core Documentation Governance Protocol, including the Golden Rule to ask for clarification when consequential uncertainty remains, source-authority and documentation-change decision trees, risk-based build checking, bounded scope expansion, non-destructive recovery, rule intentions/origins, historical-decision statuses, and preservation-verified restructuring rules. Targeted README, Charter, and Governance references now classify `planning_documents/PERIDOT_CORE_DOCUMENTATION_RESTRUCTURING_PLAN.md` as an **implemented historical planning record**, retained for provenance but no longer a standing maintenance authority.
+- **Review and acceptance:** The researcher reviewed and accepted the five core-document reorganization drafts and later confirmed `git status` clean with `HEAD`, `origin/main`, and `origin/HEAD` aligned at `9f63175`. This establishes documentation acceptance and repository synchronization, **not** a new source-code test or a claim of live-site verification. The present Changelog entry records that work; this synchronization draft is not itself a committed revision until Haley applies and commits it.
+
+[Back to development history](#3-full-development-history)
+
+</details>
 
 These original milestone narratives preserve the implementation history, decisions, rejected approaches, diagnoses, tests, and stated limitations. They are historical accounts, not a competing present-day source of architectural or backlog instructions. **Expand a milestone only when you need its context.** Links in the development register lead to the associated milestone heading.
 
