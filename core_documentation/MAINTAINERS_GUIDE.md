@@ -29,9 +29,9 @@ This document owns current architecture, source/module ownership, state and data
 Current synchronized checkpoint:
 
 ```text
-ea7cda8 — Remove obsolete src.zip archive
+e96c375 — Implement Charts appearance customization and adaptive presentation
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-11); only independent Charts II files and edits remain uncommitted; working tree is not clean
+Status: local and origin/main aligned after the latest sync ritual (user-confirmed 2026-11-22); working tree clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -99,7 +99,7 @@ The following tracked planning documents remain relevant maintenance references:
 | Visualizations | `PeridotVisualizationsWorkspace.jsx`, `PeridotTimelineWorkspace.jsx` | map/network/chart modes, dedicated Timeline workspace, shared playback control, header, stage, Export menu | stage sizing, Inspector overlay, search/playback scope, portal layers | map/network/timeline/chart switch; Timeline orientation/zoom/pan/categories; header/playback controls |
 | Search | `PeridotSearchWorkspace.jsx` | draft/apply search and Explore UI | active dataset, facets, Inspector handoff | Apply/Clear, suggestion, pagination, Inspect return |
 | Inspector | Inspector modules + `App.jsx` | compact/full evidence dossier and history | selection resolution, mounted overlay | node/edge/cluster; Expand; Back; close |
-| Analytics | Analytics modules | controls, derivation, SVG rendering and chart export | scope/date handling, palette roles | chart switch, series selection, export |
+| Charts II | `PeridotChartsIIFoundation.jsx`, `analyticsChartComponents.jsx`, `chartsII*` helpers | Catalogue, Builder, chart-local filters, Appearance, SVG rendering and PNG export | canonical date scope, cached fields, stable colors, drag-release, shared palette | 15 chart families, selection persistence, filters, appearance, export |
 | Theme/CSS | theme modules + stylesheets | semantic colors and component presentation | import order, dropdown/z-index, reduced motion | theme role/palette change; each workspace |
 | Export | `exportHelpers.js` + Visualizations header | image/tabular export | visible/selected/charted scope | SVG/PNG/CSV output |
 
@@ -291,7 +291,7 @@ The shared bottom Timeline/playback control remains unchanged in role. It derive
 
 ### Export
 
-Export is a header action rather than a top-level workspace. Map/network exports include SVG, PNG, nodes CSV, and edges/routes CSV; Chart Visualizations provides PNG export through the same header menu. Map PNG default output is map-only with optional title/metadata annotations, but **geographic CARTO exports always require legible Peridot and CARTO/OpenStreetMap attribution**; embedded raster tile imagery is mandatory for self-contained PNG/SVG output.
+Export is not a top-level workspace. Map/network SVG, PNG, nodes CSV, and edges/routes CSV remain on the shared Visualizations header; **Charts II PNG export is owned by its Builder's Export PNG action**, not the retired Charts I header export registration. Map PNG default output is map-only with optional title/metadata annotations, but **geographic CARTO exports always require legible Peridot and CARTO/OpenStreetMap attribution**; embedded raster tile imagery is mandatory for self-contained PNG/SVG output.
 
 ## 5. Advanced Search / Explore Contract
 
@@ -370,17 +370,21 @@ Detailed subsystem regression checks belong in the Maintainer’s Guide. Preserv
 
 ## 6. Analytics Contract
 
-Analytics is conceptually part of Visualizations. It supports Bar, Grouped Bar, Stacked Bar, Line, Multi-Line, Histogram, Pie, Sunburst, and Heatmap views; tabbed controls; manual category/series selection; persistent summaries/legends; a default finite 30-color series library; and chart PNG export.
+### Current Charts workspace: Charts II (authoritative at `e96c375`)
 
-Core ownership:
-- `AnalyticsPanel.jsx` owns the configuration UI and registers export upward.
-- `analyticsConfig.js` owns chart metadata, defaults, and curated variable definitions.
-- `analyticsDerivationHelpers.js` owns variable detection, bucketing, filtering, aggregation, and chart-ready data.
-- `analyticsChartComponents.jsx` owns SVG rendering, card/legend geometry, visible summaries, ticks/gridlines, theme-series marks, and exportable SVG surface.
+The public **Charts** tab owns the sole chart workspace. At `8baa733`, Charts I's live interface and `src/AnalyticsPanel.jsx` were retired; `PeridotVisualizationsWorkspace.jsx` routes **Charts** to the Charts II Catalogue/Builder. Do not reintroduce the legacy parallel Charts / Charts II tabs or resurrect `AnalyticsPanel.jsx` from this document's historical milestone sections. The retained `AnalyticsPanel.css` is **active shared styling** for the modern Builder, despite its historical filename.
 
-The current accepted chart model uses a quarter-width control rail and three-quarter chart/legend card. Bar charts default to vertical orientation. Use semantic chart series roles rather than local hardcoded colors.
+The **15 catalogue families** are Bar / Column, Grouped Bar, Stacked Bar (standard and 100%), Line / Multi-Line, Area, Stacked Area, Pie / Donut, Sunburst, Histogram, Heatmap, Scatter / Bubble, Box Plot, Dot Plot, Slope Chart, and Treemap. The recommendations-first Catalogue provides advisory **Likely fit** and **May not work well** flags, leaving uncertain cases unbadged and every family selectable. Suitability profiling uses usable categorical/numerical/temporal observations and paired fields where appropriate. Assigned source/target/point latitude/longitude coordinates remain manually selectable but must not count as substantive numerical evidence for chart recommendations.
 
-Analytics receives the Search-filtered/playback-visible dated scope while preserving genuinely undated/non-positionable Search-matching records for charting. Its local Start/End Year controls constrain dated records; **Exclude undated records?** is a separate explicit checkbox and is off by default. This contract was verified during the `656010d` scope pass and must remain aligned across chart derivation, visible totals/legends, category inventories, and PNG export.
+**Scope and derivation:** `App.jsx` and `PeridotVisualizationsWorkspace.jsx` supply the stable Explore/availability scope for variable inventories and recommendations and the chronology/playback-derived chart scope for render derivations. Chart-local categorical (OR within rule) and inclusive numerical-range rules (AND between rules) are applied **only to chart input**; they must not alter the uploaded dataset, Explore results, shared Search filters, or other visualization sessions. Single-series Line/Area modes allow one category per local categorical rule; multi-series modes permit plural selections. Inventory caching by source-row identity prevents repeated expensive field scans. Valid choices must remain stable when filters or chronology change. Genuinely undated records and partial-precision assertions follow the canonical shared chronology and each chart's explicit date semantics; do not invent precise dates, treat blanks as measured zeroes, or silently conflate date-axis navigation with record filtering. Chronology drag-release freezes expensive chart derivations (including Scatter/Bubble and Slope) until pointer release.
+
+**Renderer and interaction:** `PeridotChartsIIFoundation.jsx` owns the Builder configuration, selection persistence, Filters/Appearance integration, and Charts-specific export action; `analyticsChartComponents.jsx` owns shared SVG chart frames and the renderers, with the chart-specific `chartsII*Data.js` modules holding derivations. Treemap retains source-backed category members in expandable **Other** groups, allows semantic drill-down via breadcrumbs, and preserves stable subgroup identity across changing chronology. Box Plot computes quartiles and outlier definitions independently of its full/focused vertical-scale presentation. Stacked Bar's 100% mode is a percentage rendering of additive, nonnegative totals, retaining absolute values and handling zero totals explicitly. Temporal series use precision-aware interval derivation and gap semantics, including wide-format multiple numerical source columns.
+
+**Appearance:** `PeridotChartsIIAppearance.jsx` and `chartsIIAppearance.js` manage chart-local category/series color overrides keyed to semantic labels. `peridotSharedCategoryColors.js` is the shared source of the Timeline II / Charts color swatches; `PeridotTimelineCategoryEditor.jsx` consumes the same palette. `PeridotChartsIIStyle.jsx` / `chartsIIStyle.js` provide family-specific mark styling, and `PeridotChartsIIPresentation.jsx` / `chartsIIPresentation.js` provide adaptive labels, titles, legend/summary visibility, text density and format. Presentation options must never modify underlying analytical values. The resizable Builder divider applies layout width on release rather than triggering data derivation continuously. The accepted default appearance remains authoritative until changed; color overrides remain stable across filtering/reordering and PNG output.
+
+**Exports:** `chartsIIExport.js` and `exportHelpers.js` export the **live Charts II SVG** to PNG, including current marks, colors, visible titles/axes and summary if enabled. A separate export panel permits optional publication-specific title, axis annotations, multiline footnotes and Peridot provenance (record scopes, chronology interpretation and chart-local filter exclusions). The publication annotation layer is independent of Builder data/appearance configuration. Preserve the export's white background, typography, legible margins, clipping safeguards, and correct distinction between Scatter's Date-axis viewport and actual chart-record filtering. Legacy Charts I registration through the global Visualizations Export menu is removed; Map/Network export pathways remain separate.
+
+**Maintenance/regression:** Run `chartsIIRegression.test.mjs`, `chartsIIRecommendations.test.mjs`, `chartsIILocalFilters.test.mjs`, `chartsIIExport.test.mjs`, `chartsIIAppearance.test.mjs`, `chartsIIStyle.test.mjs`, `chartsIIPresentation.test.mjs`, `chartsIIAdaptivePresentation.test.mjs`, and `chartsRetirement.test.mjs`, together with relevant chronology tests, when editing these contracts. Verify browser behavior for all 15 families, chronology drag-release, valid-state persistence, filtering, category colors, adaptive controls, resized sidebar, and PNG output. The pre-existing Timeline grouped-lanes test wording mismatch (`Uncategorized` versus `No priority category`) is separate from Charts acceptance and should be addressed in a dedicated Timeline pass. Automated tests do not guarantee label-collision-free SVGs or deployed-site performance; preserve the user's visually accepted behavior and inspect dense charts manually.
 
 ## 7. Data Import and Workbook Contract
 
@@ -615,7 +619,7 @@ import './PeridotFeedbackForm.css';
 |---|---|---|---|
 | `index.css` | shared global layer | shared selectors and cross-workspace defaults | Home, Data, Visualize, Explore, About |
 | `InspectorPanel.css` | compact/full/Explore Inspector | overlay and dossier presentation | compact click, Expand, Back, Explore handoff |
-| `AnalyticsPanel.css` | chart builder and renderer chrome | controls, dropdown layering, reduced motion | chart switch, menus, export |
+| `AnalyticsPanel.css` | active Charts II Builder and renderer chrome (historical filename retained) | controls, dropdown layering, reduced motion | chart switch, menus, export |
 | `PeridotSearchWorkspace.css` | Explore workspace | three-mode local navigation, query/facet/result layout, scroll containment | Browse/Advanced Query/Refine switching; expanded criteria/facets/results |
 | `PeridotColumnMappingModal.css` | full-page role-mapping workspace (historical filename) | mapping header/section rail, page containment, step transitions, footer actions | table/workbook mapping flow; direct section navigation; Cancel/Back/Next |
 | `PeridotLearnMoreWorkspace.css` | About reading surface | local About navigation, title scale, portrait/text flow, page scrolling | About Peridot, Creator, AI Disclosure, Open Source, Feedback |
@@ -993,25 +997,49 @@ Pure helper logic for the pre-settled force-directed person-network layout.
 
 Pure interaction-resolution and selection-building helpers. This file owns helper logic for nearby candidate generation, selection resolution, cluster selection payload building, connected-correspondent ordering, `person-detail` / `place-detail` payload derivation, Unknown-as-place resolution, person-detail sent/received place-section derivation, and person-graph fallback resolution for related-person navigation from geographic contexts.
 
-### Analytics
+### Analytics / Charts II
 
-#### `src/AnalyticsPanel.jsx`
+#### `src/PeridotChartsIIFoundation.jsx`
 
-Owns the Analytics / Chart Visualizations control UI. It renders chart type selection, tabbed Chart/Fields/Categories/Present controls, chart descriptions/example questions, date controls, variable controls, manual category/series selection controls, selection-mode and comparison-total controls, optional presentation-title editing, and the large chart workspace. It preserves compatible chart settings as users switch chart types where possible, defaults Bar Chart orientation to Vertical, and registers chart PNG export with the Visualizations header Export menu rather than rendering a separate export control in the chart rail.
+Current Charts Catalogue/Builder orchestration: chart-family selection, Data & Interpretation, chart-local Filters, Appearance, chronology-scoped derivations, independently retained valid configuration, live SVG and the Builder-owned PNG export. `src/AnalyticsPanel.jsx` was deliberately deleted at `8baa733`; no active navigation route should import it.
+
+#### `src/chartsIIDataProfile.js`, `src/chartsIIFieldInventory.js`, `src/chartsIIBuilderContract.js`
+
+Catalogue suitability evidence, stable Explore-scope cached field inventories, and Builder field/variable contracts. Recommendation evidence excludes geographical coordinates while retaining deliberate manual coordinate selection.
+
+#### `src/PeridotChartsIILocalFilters.jsx`, `src/chartsIILocalFilters.js`
+
+Chart-only categorical/numeric filters and their UI. The chart-input scope is reduced without mutating Explore or other visualizations.
+
+#### `src/PeridotChartsIIAppearance.jsx`, `src/chartsIIAppearance.js`, `src/peridotSharedCategoryColors.js`
+
+Category/series color overrides and the shared 42-color Timeline II palette. Also preserve chart-session sidebar-width ownership in the Builder.
+
+#### `src/PeridotChartsIIStyle.jsx`, `src/chartsIIStyle.js`, `src/PeridotChartsIIPresentation.jsx`, `src/chartsIIPresentation.js`
+
+Family-specific mark styling and adaptive label/legend/typography controls, without changing data derivation.
+
+#### `src/chartsIIExport.js`
+
+Charts II SVG-to-PNG capture and optional publication annotations/provenance, using the shared `exportHelpers.js` path. Keep Builder presentation and export-only annotations distinct.
+
+#### `src/chartsII*Data.js`
+
+Per-family analytical derivations for temporal series, Scatter/Bubble, Box Plot, Dot Plot, Slope Chart, Treemap and related chart families. Retain canonical date precision, missing/invalid exclusions, outlier semantics and additive normalization, respectively.
 
 #### `src/analyticsConfig.js`
 
-Owns Analytics chart configuration, including chart labels/descriptions, example research questions, default Analytics state, aggregation options, top-N display options, manual-selection defaults, curated variable definitions, and **Route (Place)** / **Route (Person)** definitions.
+Retained shared/compatibility chart definitions and curated variable metadata. This file does **not** own a live Charts I route; verify active imports before removing any compatibility metadata.
 
 #### `src/analyticsDerivationHelpers.js`
 
-Owns Analytics data derivation, including available variable detection, numeric measure detection, conservative filtering of dynamic metadata fields, Year and Full date bucketing, flexible chart data construction, record-count aggregation, manual selected-category filtering, selected-only/Other/dataset-total comparison behavior, grouped/stacked/multi-line count buckets, and semantic alias handling for curated fields such as Language and Relationship.
+Retained shared analytical field discovery, numeric measures, normalization and semantic aliases consumed by Charts II's Builder and profile helpers. The original Charts I aggregation contracts are historical and must not be mistaken for a live `AnalyticsPanel.jsx` consumer.
 
 Dynamic variable detection should exclude technical or non-categorical fields such as IDs, latitude/longitude fields, date fields, mappability flags, object/array values, purely numeric values, long note-like fields, and near-unique row identifiers.
 
 #### `src/analyticsChartComponents.jsx`
 
-Owns SVG chart rendering and shared chart hover tooltip styling for Bar Chart, Grouped Bar Chart, Stacked Bar Chart, Line Chart, Multi-Line Chart, Histogram, Pie Chart, Sunburst Chart, and Heatmap. It also owns shared chart frames, the shared three-quarter chart / one-quarter legend layout, complete simplified summary/legend panels, ranked/segment/line/trend/bin/matrix/slice/sunburst annotation panels, major/minor axis ticks, gridline styling, active theme-series mark colors for every chart type, and the rendered SVG surface used for chart PNG export.
+Owns the active Charts II SVG chart components and shared chart frame, tooltip, axis, summary/legend and mark geometry across all 15 chart families, including the newer Area, Scatter/Bubble, Box Plot, Dot Plot, Slope Chart and Treemap renderers. It accepts chart-specific color, mark-style and presentation configuration and produces the SVG captured by the Charts II PNG exporter.
 
 The shared chart tooltip uses a mossy/title-green background with light text for legibility over dense charts such as heatmaps. Axis and panel styling should stay legible against the warm chart-paper background and should not depend on hover-only disclosure for core values. Keep chart-card geometry centralized through the shared layout helper rather than reintroducing unrelated per-chart spacing constants.
 
@@ -1119,7 +1147,7 @@ These areas still deserve narrow, explicit passes:
 - Review warning/validation logic: distinguish real runtime constraints from old correspondence-specific assumptions;
 - shared side-panel shell and Inspector-open interactions;
 - cluster grouping and Inspector navigation;
-- Analytics expanded overlay positioning, dynamic variable detection, and SVG-to-PNG chart export;
+- Charts II Catalogue/Builder state, cached field discovery and recommendations, 15 chart families, chart-local filters, responsive Appearance divider, adaptive labels and independent SVG-to-PNG export;
 - Search active-dataset state, especially draft/apply coordination across keyword, person, place, relationship, date, weight, Timeline, Analytics, Inspector, and Export;
 - archived MapLibre work if it is ever explicitly resumed.
 
@@ -1146,13 +1174,13 @@ These areas still deserve narrow, explicit passes:
 | Visual stage | remount/reanimation, viewport shift, or post-import freeze | repeated map/network/chart switching; full Inspector open/close |
 | CSS cascade | late stylesheet masks accepted behavior | inspect shared tokens, `styles/components/buttons.css`, `styles/components/panels.css`, Home/Data workspace CSS, and workspace imports; verify buttons and all public pages |
 | Editorial Home viewport | bottom gap, scrollbar, shifted corner artwork, or cropped hero | check full-window desktop render; confirm parent-height fill, hero/banner seam, collage crop, and optical three-column alignment |
-| Chart rendering/export | mismatched labels, colors, or PNG | multiple chart types, manual series, PNG export |
+| Chart rendering/export | mismatched calculations, labels, colors, annotation clipping, or PNG | all 15 Charts II families; manual series, filters/chronology, adaptive labels, style resets, and publication PNG |
 | Theme roles | chart-only changes recolor chrome | apply chart-targeted palette and inspect map/header |
 | Export | wrong output scope or broken render | map PNG/SVG, CSV, chart PNG |
 
 ## 11. Active Technical Backlog
 
-**Timeline priorities updated 2026-11-11 (`f5791f1`):** Grouped researcher-starred category swimlanes, adaptive lane geometry, and the five-column Categories editor with a browser-accepted native horizontal scrollbar are now implemented. Next: **event-density overview and carefully justified handling of coincident events**; then multi-orientation/keyboard/Inspector/uncertainty/large-data regression checks and consideration of durable researcher-owned configurations. Preserve the Timeline-only stage-wrapper shrink constraint and check other visualization widths if refactoring the shared shell. **Event-to-event relationship arcs are on hold** because arbitrary representative-event selection can fabricate relationships; require explicit source-backed/event-authored connection semantics first. Charts II remains parallel uncommitted work. The older numbered list is historical, including its superseded immediate-relationship priority.
+**Timeline priorities updated 2026-11-11 (`f5791f1`):** Grouped researcher-starred category swimlanes, adaptive lane geometry, and the five-column Categories editor with a browser-accepted native horizontal scrollbar are now implemented. Next: **event-density overview and carefully justified handling of coincident events**; then multi-orientation/keyboard/Inspector/uncertainty/large-data regression checks and consideration of durable researcher-owned configurations. Preserve the Timeline-only stage-wrapper shrink constraint and check other visualization widths if refactoring the shared shell. **Event-to-event relationship arcs are on hold** because arbitrary representative-event selection can fabricate relationships; require explicit source-backed/event-authored connection semantics first. Charts II is committed, and the legacy Charts I implementation was retired at `8baa733`; see the current Analytics / Charts II contract. The original note about concurrent uncommitted development is historical. The older numbered list is historical, including its superseded immediate-relationship priority.
 
 
 

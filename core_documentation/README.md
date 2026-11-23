@@ -32,9 +32,9 @@ This document owns public orientation, user-facing workflows, installation, data
 Current synchronized checkpoint:
 
 ```text
-ea7cda8 — Remove obsolete src.zip archive
+e96c375 — Implement Charts appearance customization and adaptive presentation
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-11); only independent Charts II files and edits remain uncommitted; working tree is not clean
+Status: local and origin/main aligned after the latest sync ritual (user-confirmed 2026-11-22); working tree clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -55,7 +55,7 @@ Peridot is designed for researchers working with humanistic records that may be 
 - Place and route mapping when geographic fields are available.
 - Entity/person network and force-directed exploration when source-target relationships are mapped.
 - Dedicated Timeline exploration of mapped temporal assertions in horizontal or vertical orientation, with zoom/pan, adaptive date axes, source-backed colors and symbols, and researcher-starred Grouped category swimlanes.
-- Chart-based analysis of dates, categories, numeric measures, relationships, and selected evidence fields.
+- Chart-based analysis of dates, categories, numeric measures, relationships, and selected evidence fields through the Charts II Catalogue and Builder, with 15 chart families, chart-local filters, appearance controls, and PNG export.
 - Advanced Search across loaded data, with explicit draft-and-apply filtering.
 - Evidence inspection through people/entities, places, clusters, routes, and connected records.
 - Presentation-ready SVG, PNG, and CSV export.
@@ -145,7 +145,7 @@ For suitable mapped fields, researchers can declare whether one cell contains on
 
 ### 3.3 Visualize
 
-**Visualize** provides capability-aware access to one unified **Geographic Map**, a separate **Force-Directed Network**, a dedicated **Timeline** visualization workspace, and Chart Visualizations. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
+**Visualize** provides capability-aware access to four destinations: one unified **Geographic Map**, a separate **Force-Directed Network**, a dedicated **Timeline** visualization workspace, and **Charts**. The former Charts I / Charts II parallel tabs were consolidated at `8baa733`; **Charts** now opens the Charts II Catalogue and Builder. The legacy Charts I interface has been retired. The former place-versus-person geographic split has been retired: the Geographic Map uses one generalized geographic assertion model and lets the researcher choose whether visible map nodes are labeled as Places, People / entities, or both. Unsupported views should explain why they are not available for the active dataset rather than presenting an empty surface.
 
 The Geographic Map uses a tiled Web Mercator basemap from CARTO. **Voyager** is the default; researchers can select **Positron** or **Dark Matter** in compact **Map settings**, alongside visible node identities, researcher-selected geographic anchor roles, relationship-line location rules, and fallback behavior. Settings are transactional: changes are drafted, **Apply** commits them, and **Reset** affects the draft rather than silently recomputing the graph. Geographic edges render only when both exact endpoint node instances are visible under the applied settings.
 
@@ -156,6 +156,10 @@ The active Timeline has **Timeline** and **Categories** tabs. In Categories, res
 **Grouped Timeline and category customization (2026-11-11):** Use the Timeline view's **Chronological / Grouped** choice to compare events by chronology alone or place each event in one category swimlane without changing its date. In the Categories tab, five columns—**Source columns**, **Values to track**, **Priority**, **Color**, and **Icons**—form a horizontally scrollable workspace. Drag the ordinary horizontal scrollbar beneath the columns to reach Color and Icons at narrow window widths; each column scrolls vertically as needed. **Star** a category (filled star) to make it eligible for a swimlane; an outline star means the category remains a secondary color/symbol encoding. Multiple starred matches resolve to one lane per event, and events with no eligible starred category remain in a **No priority category** lane. Swimlanes persist even when the visible interval contains no matching events, but then become narrow. Their muted category-colored backgrounds and adaptive heights help preserve the prominence of event marks as the viewing window changes. **Colors and symbols** is the default for new category configurations; **Colors only** and **Expanded labels** remain available. These choices support alternative scholarly comparisons (for example, Pope who created a cardinal versus conclave attendance) without inventing event associations or changing the original mapped evidence. For the assignment and performance contracts, see the Maintainer's Guide.
 
 Event-to-event relationship connections remain deferred. Peridot does not infer event relationships merely from shared participants, categories, or chronological proximity; future connections require researcher-defensible explicit evidence. The historical original Timeline relationship layout must not be mistaken for a completed feature in the active Timeline.
+
+**Charts — current researcher workflow (Charts II, accepted through `e96c375`):** Choose a chart in the recommendations-first **Catalogue**, where **Likely fit** and **May not work well** are advisory assessments rather than restrictions. All 15 chart families are selectable: Bar / Column, Grouped Bar, Stacked Bar (including 100% mode), Line / Multi-Line, Area, Stacked Area, Pie / Donut, Sunburst, Histogram, Heatmap, Scatter / Bubble, Box Plot, Dot Plot, Slope Chart, and Treemap. The **Builder** provides Data & Interpretation, chart-local Filters, and Appearance; it supports categorical and numerical fields (including multiple numerical source columns without requiring spreadsheet reshaping), chart-specific chronological handling, hierarchical drill-down in Treemap, and user-controlled category colors. Geographic coordinate fields may be chosen deliberately as numerical variables, but their existence alone does not promote numerical charts in Catalogue recommendations.
+
+Chart-local Filters refine only the selected chart, not the original dataset, Explore results, or other visualizations. The chart's Appearance controls reuse Timeline's color library, permit category/series overrides, chart-specific mark styling and adaptive labels, and include a resizable configuration panel. The chronology dock remains visible and its effect depends on the chart: it filters contributing dated records where applicable or navigates the visible Date x-axis; charts without meaningful chronological controls may show an inactive dock. During chronology-handle dragging, expensive chart updates wait for release. The **Export PNG** action belongs to the Charts Builder itself and offers optional publication title, axis labels, footnotes, and Peridot provenance; it captures the chosen visual configuration without including Builder controls.
 
 The existing bottom Timeline/playback control remains shared across Visualizations. It derives available **Time types** from mapped dates/periods and can play them in two analytical modes: **Cumulative Events**, which keeps records visible after their date or period begins/occurs, and **Co-current Events**, which shows only records whose date or period is active at the current playback moment. Playback highlighting is generalized: active records highlight the rendered generalized relationships and endpoint nodes they actually support rather than reconstructing a legacy Source→Target pair. Multipart records can therefore highlight several explicit relationships without inventing links among all co-occurring participants. Empty co-current moments are valid empty visualization states rather than capability failures.
 
@@ -177,7 +181,7 @@ The Inspector opens compactly after visualization node, edge, or cluster clicks.
 
 ### 3.5 Export
 
-The Visualizations header provides SVG and PNG export for map/network views, CSV export for nodes and edges/routes, and PNG export for charts. Export descriptions should make clear whether they represent loaded, filtered, visible, selected, or charted data.
+The Visualizations header provides SVG and PNG export for map/network views and CSV export for nodes and edges/routes. **Charts** has its own **Export PNG** action in the Builder, with optional figure annotations and chart-scope provenance. Export descriptions should make clear whether they represent loaded, filtered, visible, selected, or charted data.
 
 ### 3.6 About, documentation, and feedback
 
@@ -210,6 +214,8 @@ Until a researcher selects a sample or uploads data, **Visualize** and **Explore
 The illustrations are imported as build-managed assets from Peridot's existing `assets/` directory so their paths remain valid on GitHub Pages; copying files into a second public asset catalog is not part of the accepted approach. The corrective code was pushed through `fc42306`, but a successful push does not by itself verify the published site's final image rendering. Asset provenance/distribution obligations remain applicable.
 
 ## 4. Interface Examples and Current-State Note
+
+**Current Charts note (2026-11-22):** The Charts I screenshots dated 2026-06-21 below are retained as **historical interface examples**, not as instructions or images of the present Charts II Catalogue, Builder, local filters, Appearance controls, and customizable export workflow. New screenshots of the current Charts interface have not yet been added. Map/Network screenshots retain their individually stated historical dates.
 
 ### Cartographic Editorial Home — current design (established 2026-10-26, refined through 2026-10-28)
 
@@ -609,7 +615,7 @@ The sample-selection redesign, repeatable sample switching, Timeline playhead/sc
 
 One bounded Search limitation remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value. Explicit fielded criteria such as Place and canonical Evidence search already use the generalized structures.
 
-Phase 3 of the universal data work—the generalized Chart Builder—also remains deferred. The intended direction is to build charts from saved/generalized variables through structured, human-readable controls rather than unrestricted natural-language prompting.
+**Charts II is implemented, not deferred.** The active Charts Builder offers structured field and aggregation controls, 15 chart families, chart-local filters, shared-chronology integration, appearance customization, and customizable PNG export. Future improvements to label collision avoidance, accessibility, unusually large or sparse datasets, and other chart-specific controls remain possible; these do not constitute an unimplemented Chart Builder. The earlier Phase 3 plan is a historical planning reference, preserved in the Changelog and planning documents.
 
 The existing guided-tutorial implementation remains in source, but the public Tutorials destination now accurately displays a Coming Soon message. The Home directs the reader to Data onboarding for upload and explicit sample selection; no guided walkthrough is offered to users at this checkpoint. Completing and validating tutorial content, choreography, and accessibility remain deferred.
 

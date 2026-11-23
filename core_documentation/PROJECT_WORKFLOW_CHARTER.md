@@ -24,9 +24,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-ea7cda8 — Remove obsolete src.zip archive
+e96c375 — Implement Charts appearance customization and adaptive presentation
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned (user-confirmed 2026-11-11); only independent Charts II files and edits remain uncommitted; working tree is not clean
+Status: local and origin/main aligned after the latest sync ritual (user-confirmed 2026-11-22); working tree clean
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -784,6 +784,8 @@ Preserve the Visualize/Explore/Tutorials gateway distinction from active-data wo
 - One bounded follow-up remains: **Any record text** does not yet guarantee indexing of every generalized mapped semantic value.
 
 ### 7.5 Analytics
+
+**Historical decision record, superseded in its interface details:** The following principles were adopted for the original Analytics/Charts I implementation. The active interface is now the Charts II Catalogue/Builder, with a separate Builder PNG export, chart-local Filters, and adaptive Appearance; see the Maintainer's Guide, section 6, and the Changelog milestones through `e96c375`. Preserve the dated/undated distinction and the intent of stable, explicit researcher-controlled chart semantics rather than resurrecting the obsolete Charts I panel or local year controls.
 
 - Chart Visualizations belongs inside Visualizations, with tabbed controls and a large chart surface.
 - Dated chart records obey the global Timeline/playback scope; genuinely undated/non-positionable Search-matching records remain available to Analytics by default.
