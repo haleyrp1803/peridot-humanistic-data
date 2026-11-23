@@ -33,8 +33,31 @@
  *   cluster click, linked-record navigation, Back, Expand, and close behavior.
  */
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { InspectorPanelContent } from './InspectorPanel.jsx';
+
+// Keep this width preference independent of Inspector selection/history. The compact
+// shell unmounts on close, so component state alone cannot preserve the preference.
+const COMPACT_INSPECTOR_WIDTH_KEY = 'peridot-compact-inspector-width-v1';
+const DEFAULT_COMPACT_INSPECTOR_WIDTH = 420;
+const MIN_COMPACT_INSPECTOR_WIDTH = 340;
+const MAX_COMPACT_INSPECTOR_WIDTH = 680;
+const MIN_VISUALIZATION_REMAINDER = 520;
+
+function clampCompactInspectorWidth(width) {
+  const available = typeof window === 'undefined' ? 1200 : window.innerWidth;
+  const ceiling = Math.min(MAX_COMPACT_INSPECTOR_WIDTH, Math.max(MIN_COMPACT_INSPECTOR_WIDTH, available - MIN_VISUALIZATION_REMAINDER));
+  return Math.max(MIN_COMPACT_INSPECTOR_WIDTH, Math.min(ceiling, Math.round(width)));
+}
+
+function readCompactInspectorWidth() {
+  try {
+    const stored = Number(window.sessionStorage.getItem(COMPACT_INSPECTOR_WIDTH_KEY));
+    return clampCompactInspectorWidth(Number.isFinite(stored) && stored > 0 ? stored : DEFAULT_COMPACT_INSPECTOR_WIDTH);
+  } catch {
+    return DEFAULT_COMPACT_INSPECTOR_WIDTH;
+  }
+}
 
 /**
  * Shared visual surface for the compact side-panel Inspector.
@@ -66,6 +89,86 @@ export function LeftControlPanel({
   inspectorViewComponents,
 }) {
   const { showRightSidebar } = sidebarState;
+  const [panelWidth, setPanelWidth] = useState(readCompactInspectorWidth);
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeGuideRef = useRef(null);
+  const resizeGestureRef = useRef(null);
+
+  const commitWidth = (value) => {
+    const nextWidth = clampCompactInspectorWidth(value);
+    setPanelWidth(nextWidth);
+    try {
+      window.sessionStorage.setItem(COMPACT_INSPECTOR_WIDTH_KEY, String(nextWidth));
+    } catch {
+      // Session storage may be disabled; resizing remains functional in memory.
+    }
+  };
+
+  // Remove window listeners even if the panel is closed during a resize.
+  useEffect(() => {
+    const cancelGesture = () => {
+      resizeGestureRef.current?.cancel?.();
+    };
+    const onWindowResize = () => {
+      setPanelWidth((current) => clampCompactInspectorWidth(current));
+    };
+    window.addEventListener('blur', cancelGesture);
+    window.addEventListener('resize', onWindowResize);
+    return () => {
+      resizeGestureRef.current?.cancel?.();
+      window.removeEventListener('blur', cancelGesture);
+      window.removeEventListener('resize', onWindowResize);
+    };
+  }, []);
+
+  const startResize = (event) => {
+    if (event.button !== 0 || !window.matchMedia('(min-width: 1280px)').matches) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const gesture = { startX: event.clientX, startWidth: panelWidth, nextWidth: panelWidth };
+    resizeGestureRef.current = gesture;
+    setIsResizing(true);
+    const move = (pointer) => {
+      if (resizeGestureRef.current !== gesture) return;
+      const next = clampCompactInspectorWidth(gesture.startWidth + pointer.clientX - gesture.startX);
+      gesture.nextWidth = next;
+      if (resizeGuideRef.current) resizeGuideRef.current.style.left = `${next}px`;
+    };
+    const cleanup = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', stop);
+      window.removeEventListener('pointercancel', cancel);
+      window.removeEventListener('blur', cancel);
+    };
+    const stop = (pointer) => {
+      move(pointer);
+      cleanup();
+      if (resizeGestureRef.current === gesture) commitWidth(gesture.nextWidth);
+      resizeGestureRef.current = null;
+      setIsResizing(false);
+    };
+    const cancel = () => {
+      cleanup();
+      resizeGestureRef.current = null;
+      setIsResizing(false);
+    };
+    gesture.cancel = cancel;
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', stop);
+    window.addEventListener('pointercancel', cancel);
+    window.addEventListener('blur', cancel);
+  };
+
+  const resizeByKeyboard = (event) => {
+    const step = event.shiftKey ? 40 : 16;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+      event.preventDefault();
+      commitWidth(panelWidth + (event.key === 'ArrowRight' ? step : -step));
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      commitWidth(DEFAULT_COMPACT_INSPECTOR_WIDTH);
+    }
+  };
 
   if (!showRightSidebar) {
     return null;
@@ -76,6 +179,7 @@ export function LeftControlPanel({
       className={`${sidebarSurfaceClassName()} relative border-r xl:absolute xl:left-0 xl:top-0 xl:z-30 xl:h-full w-[420px]`}
       aria-label="Compact Inspector side panel"
       data-peridot-compatibility-shell="compact-inspector"
+      style={{ width: `min(${panelWidth}px, calc(100vw - 16px))` }}
     >
       <div className="h-full overflow-auto p-5 pr-5">
         <InspectorPanelContent
@@ -84,6 +188,32 @@ export function LeftControlPanel({
           viewComponents={inspectorViewComponents}
         />
       </div>
+      {/* The resizing grip sits outside the Inspector's scrollable content. */}
+      <div
+        role="separator"
+        aria-label="Resize compact Inspector"
+        aria-orientation="vertical"
+        aria-valuemin={MIN_COMPACT_INSPECTOR_WIDTH}
+        aria-valuemax={typeof window !== 'undefined' ? clampCompactInspectorWidth(MAX_COMPACT_INSPECTOR_WIDTH) : MAX_COMPACT_INSPECTOR_WIDTH}
+        aria-valuenow={panelWidth}
+        aria-valuetext={`${panelWidth} pixels wide`}
+        tabIndex={0}
+        onPointerDown={startResize}
+        onDoubleClick={() => commitWidth(DEFAULT_COMPACT_INSPECTOR_WIDTH)}
+        onKeyDown={resizeByKeyboard}
+        title="Drag to resize Inspector; double-click or press Home to reset"
+        className="group absolute inset-y-0 -right-[7px] z-40 hidden w-[14px] cursor-col-resize touch-none items-center justify-center xl:flex focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7C211E]"
+      >
+        <span aria-hidden="true" className="h-16 w-[5px] rounded-full border border-[#bfa875] bg-[#f5efe4] shadow-sm transition-colors group-hover:bg-[#d5b355] group-focus-visible:bg-[#d5b355]" />
+      </div>
+      {isResizing && (
+        <div
+          ref={resizeGuideRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 z-50 hidden w-[2px] bg-[#7C211E] xl:block"
+          style={{ left: panelWidth }}
+        />
+      )}
     </aside>
   );
 }
