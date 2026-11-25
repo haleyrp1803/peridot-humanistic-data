@@ -255,3 +255,32 @@
     font-size: 1.2rem;
   }
 }
+
+/* Support is a utility, not a route. The wrapper exists only when visible. */
+.peridot-global-header-project-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  margin-left: auto;
+  gap: 0.5rem;
+}
+.peridot-global-header-project-actions > .peridot-global-nav-secondary {
+  margin-left: 0;
+}
+
+/* Only the support-enabled header needs the additional compact spacing.
+ * Keep the original production header selectors and masthead height intact. */
+@media (max-width: 650px) {
+  .peridot-global-header-project-actions { gap: 0.25rem; }
+}
+@media (max-width: 550px) {
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-header:has(> .peridot-global-header-project-actions) {
+    gap: 0.25rem; padding-inline: 0.5rem;
+  }
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-header:has(> .peridot-global-header-project-actions) .peridot-global-nav {
+    gap: 0;
+  }
+  :root[data-peridot-palette="cartographicEditorial"] .peridot-global-header:has(> .peridot-global-header-project-actions) .peridot-global-nav-link {
+    padding-inline: 0.25rem;
+  }
+}

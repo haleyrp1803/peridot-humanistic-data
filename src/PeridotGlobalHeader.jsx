@@ -9,6 +9,11 @@
 
 import React from 'react';
 import './PeridotGlobalHeader.css';
+import { PeridotSupportPopover } from './PeridotSupportPopover.jsx';
+import { resolvePeridotSupport } from './peridotSupportConfig.js';
+
+// Vite replaces DEV at build time; preview must never leak into production.
+const SUPPORT = resolvePeridotSupport({ development: import.meta.env.DEV });
 
 const PRIMARY_NAV_ITEMS = Object.freeze([
   { key: 'data', label: 'Data' },
@@ -77,13 +82,27 @@ export function PeridotGlobalHeader({
         className="peridot-global-nav-primary"
       />
 
-      <GlobalNavGroup
-        items={SECONDARY_NAV_ITEMS}
-        activeSection={activeSection}
-        actions={actions}
-        ariaLabel="Project information navigation"
-        className="peridot-global-nav-secondary"
-      />
+      {/* Preserve the original production markup while funding is dormant. */}
+      {SUPPORT.visible ? (
+        <div className="peridot-global-header-project-actions">
+          <PeridotSupportPopover key={activeSection} support={SUPPORT} />
+          <GlobalNavGroup
+            items={SECONDARY_NAV_ITEMS}
+            activeSection={activeSection}
+            actions={actions}
+            ariaLabel="Project information navigation"
+            className="peridot-global-nav-secondary"
+          />
+        </div>
+      ) : (
+        <GlobalNavGroup
+          items={SECONDARY_NAV_ITEMS}
+          activeSection={activeSection}
+          actions={actions}
+          ariaLabel="Project information navigation"
+          className="peridot-global-nav-secondary"
+        />
+      )}
     </header>
   );
 }

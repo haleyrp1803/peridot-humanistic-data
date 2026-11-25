@@ -1,0 +1,122 @@
+/* Support disclosure: scoped editorial treatment shared by development
+ * preview and live funding. Do not couple these styles to workspace geometry. */
+.peridot-support-root { position: relative; flex: 0 0 auto; }
+.peridot-support-trigger {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.75rem; border: 1px solid #a9b49c;
+  border-radius: var(--pd-radius-round, 9999px); background: #e1e6d9;
+  color: #3b5940; font-family: var(--pd-font-editorial, Georgia, serif);
+  font-size: 0.95rem; cursor: pointer; white-space: nowrap;
+}
+.peridot-support-gem { width: 1rem; height: 1rem; flex: 0 0 auto; }
+.peridot-support-panel {
+  position: absolute; top: calc(100% + 0.6rem); right: 0; z-index: 1;
+  width: min(365px, calc(100vw - 2rem)); max-height: calc(100vh - 85px);
+  overflow: auto; box-sizing: border-box; padding: 1rem;
+  background: #fbf8f2; color: #253c32; border: 1px solid #c9bda6;
+  border-radius: var(--pd-radius-md, 8px); box-shadow: var(--pd-shadow-raised, 0 6px 18px rgb(0 0 0 / 0.12));
+  font-family: var(--pd-font-ui, system-ui, sans-serif); font-size: 0.875rem; line-height: 1.45;
+}
+.peridot-support-panel[hidden] { display: none; }
+.peridot-support-heading { display: flex; align-items: center; gap: 0.5rem; }
+.peridot-support-heading h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.peridot-support-close { margin-left: auto; padding: 0.25rem 0.5rem; background: transparent; border: 0; color: inherit; cursor: pointer; font-size: 1.25rem; }
+.peridot-support-panel p { margin: 0.75rem 0; }
+.peridot-support-providers { display: grid; gap: 0.65rem; }
+.peridot-support-provider { display: grid; gap: 0.2rem; width: 100%; text-align: left; padding: 0.75rem; border: 1px solid #c9bda6; border-radius: var(--pd-radius-sm, 4px); background: transparent; color: inherit; text-decoration: none; }
+.peridot-support-provider span, .peridot-support-preview, .peridot-support-note { font-size: 0.78rem; }
+.peridot-support-provider:disabled { opacity: 0.72; cursor: default; }
+.peridot-support-note { font-style: italic; }
+.peridot-support-trigger:focus-visible, .peridot-support-close:focus-visible, .peridot-support-provider:focus-visible { outline: 2px solid #7c211e; outline-offset: 3px; }
+
+/* Local control feedback: preserve the approved geometry and keep the open
+ * disclosure distinguishable even after the pointer leaves its trigger. */
+.peridot-support-trigger,
+.peridot-support-close {
+  transition: background-color var(--pd-duration-fast, 120ms) ease,
+    border-color var(--pd-duration-fast, 120ms) ease,
+    color var(--pd-duration-fast, 120ms) ease;
+}
+.peridot-support-trigger[aria-expanded="true"] {
+  background: #cfdac3; border-color: #899b7c;
+}
+.peridot-support-close { border-radius: var(--pd-radius-sm, 4px); }
+@media (hover: hover) {
+  .peridot-support-trigger:hover {
+    background: #d1dcc6; border-color: #899b7c; color: #253c32;
+  }
+  .peridot-support-trigger[aria-expanded="true"]:hover {
+    background: #c4d2b6;
+  }
+  .peridot-support-close:hover { background: #eee6d9; color: #7c211e; }
+}
+.peridot-support-trigger:active,
+.peridot-support-trigger[aria-expanded="true"]:active {
+  background: #bacbad; border-color: #788b6b; color: #253c32;
+}
+.peridot-support-close:active { background: #e2d4c2; color: #7c211e; }
+@media (prefers-reduced-motion: reduce) {
+  .peridot-support-trigger, .peridot-support-close { transition: none; }
+}
+
+
+/* Equal-weight provider cards: keep the approved outer spacing and use a
+ * flexible text column so longer descriptions wrap rather than overflow. */
+.peridot-support-provider {
+  grid-template-columns: 1.25rem minmax(0, 1fr) 0.875rem;
+  align-items: center;
+  column-gap: 0.65rem;
+  box-sizing: border-box;
+}
+.peridot-support-provider-icon { width: 1.25rem; height: 1.25rem; }
+.peridot-support-provider .peridot-support-provider-copy {
+  display: grid; gap: 0.2rem; min-width: 0; font-size: inherit;
+  overflow-wrap: anywhere;
+}
+.peridot-support-provider-external {
+  width: 0.875rem; height: 0.875rem; color: #8c7954; justify-self: end;
+}
+/* The inactive preview cards remain disabled; the arrow is decorative and
+ * indicates their eventual external destination, not an active link. */
+/* Live provider links borrow the shared primary action colors, but retain
+ * their own geometry and the Support trigger's sage hover treatment. */
+a.peridot-support-provider {
+  background-color: var(--peridot-role-button-primary-bg, #253c32);
+  border-color: var(--peridot-role-button-primary-border, #253c32);
+  color: var(--peridot-role-button-primary-text, #fbf8f2);
+  transition: background-color var(--pd-duration-fast, 120ms) ease,
+    border-color var(--pd-duration-fast, 120ms) ease,
+    color var(--pd-duration-fast, 120ms) ease;
+}
+a.peridot-support-provider .peridot-support-provider-external { color: inherit; }
+@media (hover: hover) {
+  a.peridot-support-provider:hover {
+    background-color: #e1e6d9; border-color: #a9b49c; color: #3b5940;
+  }
+}
+a.peridot-support-provider:active {
+  background-color: #bacbad; border-color: #788b6b; color: #253c32;
+}
+@media (prefers-reduced-motion: reduce) {
+  a.peridot-support-provider { transition: none; }
+}
+
+/* Reduce only support-specific spacing first. Below the label-fit threshold,
+ * retain the accessible name on the trigger and a substantial icon target.
+ * The exact breakpoint is subject to browser acceptance with loaded fonts. */
+@media (max-width: 650px) {
+  .peridot-support-trigger { padding-inline: 0.5rem; gap: 0.25rem; }
+}
+@media (max-width: 600px) {
+  .peridot-support-trigger { min-width: 40px; min-height: 40px; justify-content: center; }
+  .peridot-support-label { display: none; }
+}
+/* At constrained widths anchor to the header itself, rather than allowing
+ * the trigger's right edge to pull a 365px disclosure off the left edge. */
+@media (max-width: 650px) {
+  .peridot-support-root { position: static; }
+  .peridot-support-panel {
+    top: calc(100% + 0.4rem); right: 1rem;
+    max-height: calc(100vh - 85px);
+  }
+}
