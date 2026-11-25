@@ -2,10 +2,12 @@
 
 **Date:** 2026-11-25 (America/New_York)  
 **Revision:** 01  
-**Status:** Design approved; implementation authorized in principle after a clean Inspector checkpoint; public funding activation deferred.  
+**Status:** Historical approved plan, implemented and locally accepted at `59ce6a7` (November 25, 2026); see implementation addendum below.  
 **Intended location:** `planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md`
 
 ## Executive summary
+
+**Historical reading note:** The original proposal and pending requirements below record the planning state, not current implementation status. The [implementation addendum](#12-implementation-addendum--2026-11-25) records accepted outcomes and deviations; current contracts are owned by the core documentation.
 
 Peridot will provide an understated, voluntary financial-support mechanism through its persistent global header. A muted sage-green **Support** button with a fine-line faceted gemstone opens a compact, nonmodal popover offering GitHub Sponsors and Ko-fi as equally weighted alternatives. Peridot remains free and open source; contributions confer no additional access, preferential treatment, or service obligations.
 
@@ -43,7 +45,7 @@ Rejected alternatives include prominent primary-navigation fundraising, a dedica
 
 ### Popover
 
-Use the approved November 25 interactive prototype and screenshot as the visual acceptance reference. Suggested repository reference filename: `planning_documents/PERIDOT_VOLUNTARY_SUPPORT_APPROVED_MOCKUP_20261125.png` (not yet established in the repository). Original supplied screenshot: `image(20261125-155155).png`; original small gemstone reference: `image(20261125-154607).png`.
+Use the approved November 25 interactive prototype and screenshot as the visual acceptance reference. Actual repository reference: [`planning_documents/Donation Button Reference.png`](Donation%20Button%20Reference.png), committed at `59ce6a7`. The originally suggested filename was not used. Original supplied screenshot: `image(20261125-155155).png`; original small gemstone reference: `image(20261125-154607).png`.
 
 The panel opens beneath the trigger, overlays existing content rather than pushing it down, and uses an ivory/light-parchment surface, fine muted border, modest rounding, restrained shadow, and existing Peridot typography. The header contains the same gem, title, and close control. Both provider rows use matching outline treatments, recognizable restrained icons, title/subtitle hierarchy, and external-link indicators when live. Neither is designated the preferred provider.
 
@@ -224,3 +226,15 @@ Cross-reference this plan and the approved screenshot after their actual reposit
 - No production build, browser tests, deployment verification or payment testing has occurred for this feature. No source changes, Git operations or core documentation revisions have been made in this planning pass.
 
 **Completion target for the next development series:** a fully accepted, independently maintainable Support control, locally previewable without funding accounts, dormant on the public site, and documented accurately. Activation is a later explicit decision.
+
+
+## 12. Implementation addendum — 2026-11-25
+
+The original plan was approved and then executed after compact Inspector source checkpoint `01b03bc`. The final Support commit is `59ce6a7` — Implement voluntary support integration with GitHub Sponsors and Ko-fi — confirmed clean and aligned at HEAD and origin/main. The preceding Inspector documentation commit is `c60c0da`. The original proposed dormant checkpoint was superseded by the researcher's explicit decision to activate both providers before the consolidated documentation pass.
+
+- Passes 1, 2A, 2B and 3 were accepted: isolated development-only preview, feedback states, icons, responsive fallback, keyboard and interaction verification. The user reported a passing initial build and inactive production preview.
+- Pass 5A enabled the two public funding URLs; both links were user-tested successfully. Pass 5A.1 changed live provider rows to standard forest-green primary colors and sage hover treatment while preserving geometry. Pass 5B created and confirmed `.github/FUNDING.yml`.
+- Final implementation uses the five source files specified above and repository funding metadata. The proposed standalone configuration test file was not included in the commit; configuration assertions were reported in the development handoffs. No changes to `App.jsx` or Inspector modules were required. Escape is intercepted in document capture with a modal exception. The icon-only fallback is at <=600px, with compact spacing/header positioning at <=650px and further header spacing at <=550px. This is not a full mobile navigation redesign.
+- The accepted live interface is recorded in the README gallery; the original approved mockup remains historical design evidence. Post-activation production preview, deployed site and GitHub Sponsor button verification remain unconfirmed by supplied evidence. Actual payments were not tested. No private account or financial information is included.
+
+For current maintenance instructions, consult the [Maintainer's Guide](../core_documentation/MAINTAINERS_GUIDE.md#contract-voluntary-support); for history and verification, consult the [Changelog](../core_documentation/CHANGELOG.md#milestone-voluntary-support-20261125). This plan remains a historical record, not an independent current technical authority.

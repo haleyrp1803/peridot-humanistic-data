@@ -66,9 +66,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-01b03bc — Complete compact Inspector integration across Map, Network, Timeline, and Charts
+59ce6a7 — Implement voluntary support integration with GitHub Sponsors and Ko-fi
 Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree NOT clean: locally modified core documentation and uncommitted voluntary-support/header source, config, and planning files. These are not part of 01b03bc.
+Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree clean at confirmation.
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -1082,6 +1082,30 @@ Preserve worker/fallback/reduced-motion behavior, the exact Forest Study design,
 - Tutorials is now a first-class navigation destination, but substantive tutorial revision remains deferred; do not restore the old floating invitation.
 - About is the scholarly project-information destination and contains About Peridot, Creator, AI Disclosure, Open Source, and Feedback.
 - MapLibre migrated-overlay work is archived. Active `main` continues the D3/SVG path.
+
+#### Voluntary support without financial access conditions (2026-11-25)
+
+**Status:** Current — accepted and committed at `59ce6a7`. **Related authority:** [Voluntary support contract](MAINTAINERS_GUIDE.md#contract-voluntary-support); [development record](CHANGELOG.md#milestone-voluntary-support-20261125).
+
+```text
+Decision:
+Offer voluntary external financial support without altering access to Peridot or imposing obligations on researchers.
+
+Context:
+The researcher requested a subtle support pathway appropriate to a free, open-source humanities tool. GitHub Sponsors aligns with open-source maintenance; Ko-fi offers a guest-friendly alternative for researchers who may not use GitHub.
+
+Chosen approach:
+Use one unobtrusive header utility and nonmodal disclosure with equally weighted external options. Implement and accept the interface first with inactive development-only preview, then activate verified public links and repository funding metadata separately. The accepted live rows use standard forest-green button colors and sage hover feedback.
+
+Rejected alternative:
+Paywalls, paid features, preferential support, recurring in-app solicitation, prominent fundraising banners, a dedicated workspace, embedded checkout or funding-provider tracking, and collecting private payment details in Peridot.
+
+Reason:
+Research access and scholarly independence must remain unconditional. External payment services avoid coupling financial administration to research data or the application architecture; staged activation protects development continuity and avoids unfinished public links.
+
+Maintenance consequence:
+Keep payment processing external and the support control isolated from research state. Document public destinations, architecture, decisions and verification only; exclude private personal/account information, credentials, banking/tax details and transaction records. Do not imply charitable deductibility or record unperformed payment/deployment tests. Preserve the accepted interface and verify dismissal/Inspector compatibility and provider links when changing this utility.
+```
 
 #### Data entry and decorative-asset maintenance decision (2026-10-30)
 

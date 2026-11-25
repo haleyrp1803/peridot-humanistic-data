@@ -45,7 +45,7 @@ The dated notes and screenshots are retained because Peridot is an evolving rese
 
 This is Peridot's public-facing orientation and usage guide. It documents the researcher workflow, accepted input formats, basic local installation, limitations, screenshots, and attribution. It does not replace the [Maintainer's Guide](MAINTAINERS_GUIDE.md) (technical contracts), [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) (development process), or [Changelog](CHANGELOG.md) (project history).
 
-**Last user-confirmed synchronized source checkpoint:** `01b03bc` on `main` (confirmed November 25, 2026), aligned at `HEAD`, `origin/main`, and `origin/HEAD`. The working tree contains separate uncommitted core-documentation changes and voluntary-support/header work; those are **not included in this commit**. This checkpoint is not a deployed-site verification. The [Changelog's checkpoint section](CHANGELOG.md#1-current-synchronized-checkpoint) is the authoritative detailed record.
+**Last user-confirmed synchronized source checkpoint:** `59ce6a7` on `main` (confirmed November 25, 2026), aligned at `HEAD`, `origin/main`, and `origin/HEAD` with a clean working tree at confirmation. This is not a deployed-site verification; see the [Changelog checkpoint](CHANGELOG.md#1-current-synchronized-checkpoint).
 
 ## 1. Welcome to Peridot
 
@@ -74,6 +74,7 @@ Peridot is an open, research-oriented web application for exploring humanistic d
 | **Explore** | Browse, search, refine results, and inspect records. |
 | **Tutorials** | A separate destination currently marked **Coming Soon**. |
 | **About** | Read about the research project, its development, and the AI disclosure; send feedback. |
+| **Support** (utility, not a workspace) | Optionally support continued development through GitHub Sponsors or Ko-fi; all research functions remain free. |
 
 **A useful distinction:** The global header changes where you work; the active dataset remains available as you navigate. Visualization and inspection depend on which fields were actually mapped.
 
@@ -219,6 +220,8 @@ In Charts, selecting a bar, slice, point, bin, cell, segment, or other supported
 The Visualizations header provides SVG and PNG export for map/network views and CSV export for nodes and edges/routes. **Charts** has its own **Export PNG** action in the Builder, with optional figure annotations and chart-scope provenance. Export descriptions should make clear whether they represent loaded, filtered, visible, selected, or charted data.
 
 ### About, tutorials, and feedback
+
+**Voluntary support:** Peridot remains free and open source. The Support button in the persistent header opens a small panel with two optional external contribution routes: [GitHub Sponsors](https://github.com/sponsors/haleyrp1803) and [Ko-fi](https://ko-fi.com/peridot_humanistic_data). Each opens its hosted page in a new tab. Contributions do not change access to features or confer preferential treatment. Peridot does not process payments or send research data to the funding services. The links are enabled in the committed source as of November 25, 2026; deployment verification is separate.
 
 **About** is a first-class scholarly project section with local pages for **About Peridot**, **Creator**, **AI Disclosure**, **Open Source**, and **Feedback**. The public Feedback page supports questions, bug reports, issue reports, feature suggestions, and other feedback, with optional context and email fields; submission continues through the project’s Formspree integration. The feedback component retains its modal-capable implementation path for compatibility, but the normal public destination is the inline About subpage.
 
@@ -536,12 +539,43 @@ On macOS/Linux, the usual equivalent of `npm.cmd run dev` is `npm run dev`. Prer
 
 ## 7. Interface Examples and Historical Gallery
 
-The images that follow document earlier Peridot interfaces. **They are historical records, not up-to-date screenshots of the current application.** The written workflows above should be used for current navigation. Updated interface screenshots can replace the gallery's introductory role once captured and verified, without erasing the historical archive.
+The current dated examples below show the November 25, 2026 interface. The first six were captured before Support activation, so their headers do not include the Support button; the final image shows the accepted live-link design in local development. They are evidence of local presentation, not a deployed-site test. Earlier screenshots remain in the expandable historical gallery. Use the written workflows above for current navigation.
+
+
+### Interface examples — 2026-11-25
+
+![Peridot home workspace, November 25, 2026](../planning_documents/images/2026-11-25-home-workspace.png)
+
+*Home — Cartographic Editorial landing page and persistent navigation. Pre-activation capture.*
+
+![Peridot map compact inspector, November 25, 2026](../planning_documents/images/2026-11-25-map-compact-inspector.png)
+
+*Map — selected geographic entity and source-backed compact Inspector evidence. CARTO / OpenStreetMap attribution remains visible. Pre-activation capture.*
+
+![Peridot network compact inspector, November 25, 2026](../planning_documents/images/2026-11-25-network-compact-inspector.png)
+
+*Network — selected entity, relationship occurrences, distinct supporting records and compact Inspector. Pre-activation capture.*
+
+![Peridot timeline grouped, November 25, 2026](../planning_documents/images/2026-11-25-timeline-grouped.png)
+
+*Timeline — grouped category lanes, symbols, hover detail and chronology dock. Pre-activation capture.*
+
+![Peridot charts multi line, November 25, 2026](../planning_documents/images/2026-11-25-charts-multi-line.png)
+
+*Charts — Line / Multi-Line Builder, category comparison and selected chronological window. Pre-activation capture.*
+
+![Peridot charts pie donut, November 25, 2026](../planning_documents/images/2026-11-25-charts-pie-donut.png)
+
+*Charts — Pie / Donut Builder and shared color-library customization. Pre-activation capture.*
+
+![Peridot Support popover, November 25, 2026](../planning_documents/images/2026-11-25-voluntary-support.png)
+
+*Support — final accepted local design, with both funding options active and Ko-fi in its hover state. Browser chrome, taskbar and lower browser link-status area were cropped for publication.*
 
 <details>
 <summary><strong>Open dated interface examples and the 2026-06-21 screenshot gallery</strong></summary>
 
-**Current Charts note (2026-11-22):** The Charts I screenshots dated 2026-06-21 below are retained as **historical interface examples**, not as instructions or images of the present Charts II Catalogue, Builder, local filters, Appearance controls, and customizable export workflow. New screenshots of the current Charts interface have not yet been added. Map/Network screenshots retain their individually stated historical dates.
+**Historical Charts note (2026-11-22, before the November 25 screenshot additions):** The Charts I screenshots dated 2026-06-21 below are retained as **historical interface examples**, not as instructions or images of the present Charts II Catalogue, Builder, local filters, Appearance controls, and customizable export workflow. At the time of this note, new screenshots of the current Charts interface had not yet been added; the November 25 examples above now show Charts II. Map/Network screenshots retain their individually stated historical dates.
 
 ### Cartographic Editorial Home — current design (established 2026-10-26, refined through 2026-10-28)
 
@@ -552,7 +586,7 @@ The Cartographic Editorial Home originated at `4e6fb11` and was subsequently ref
 
 ### Interface snapshot — 2026-06-21 (pre-persistent-header)
 
-The screenshots in this section document Peridot as it appeared on **2026-06-21**. They remain useful records of the underlying Data, visualization, Search, Inspector, project-information, and feedback workflows, but their **navigation and framing are now historical**: the current application uses the persistent global header and the normalized Visualize, Explore, Data-mapping, and About shells described above. Until a new screenshot set is committed, treat these images as a dated interface snapshot rather than literal current-navigation instructions.
+The screenshots in this section document Peridot as it appeared on **2026-06-21**. They remain useful records of the underlying Data, visualization, Search, Inspector, project-information, and feedback workflows, but their **navigation and framing are now historical**: the current application uses the persistent global header and the normalized Visualize, Explore, Data-mapping, and About shells described above. Treat these June images as a dated interface snapshot rather than literal current-navigation instructions; the November 25 examples above supplement them.
 
 #### Start and navigate
 

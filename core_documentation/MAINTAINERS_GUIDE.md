@@ -62,12 +62,12 @@ The guide is organized into three levels. **You do not need to read it straight 
 ## Current Synchronized Checkpoint
 
 ```text
-01b03bc — Complete compact Inspector integration across Map, Network, Timeline, and Charts
+59ce6a7 — Implement voluntary support integration with GitHub Sponsors and Ko-fi
 Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree NOT clean: locally modified core documentation and uncommitted voluntary-support/header source, config, and planning files. These are not part of 01b03bc.
+Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree clean at confirmation.
 ```
 
-The latest confirmed source checkpoint `01b03bc` consolidates compact Inspector work across Map, Network, Timeline, and Charts. Its predecessor checkpoints include `d94911f` (resizable compact Inspector) and `b619be4` (Inspector mockup). Uncommitted support/header work is tracked separately and has not been audited as an implemented source milestone here. See `CHANGELOG.md` for history and verification scope; the uploaded source archive is not evidence of an installed build.
+The latest confirmed source checkpoint `59ce6a7` adds voluntary Support to the global header after the Inspector documentation checkpoint `c60c0da` and compact Inspector integration at `01b03bc`. See [CHANGELOG.md](CHANGELOG.md#1-current-synchronized-checkpoint) for history and verification scope. Support details below describe the accepted replacement files and user-reported acceptance; a fresh full-source checkout or deployed-site verification is not implied.
 
 <a id="1-current-architecture-snapshot"></a>
 
@@ -86,9 +86,9 @@ The latest confirmed source checkpoint `01b03bc` consolidates compact Inspector 
 Coordinates page routing and preserves the active research session across public workspaces.
 
 - **Function / purpose:** Owns public routing, workspace continuity and shell-level coordination.
-- **Primary modules:** `src/App.jsx`, `src/peridotWorkspaceConfig.js`, workspace components
+- **Primary modules:** `src/App.jsx`, `src/peridotWorkspaceConfig.js`, `src/PeridotGlobalHeader.jsx`, `src/PeridotSupportPopover.jsx`, `src/peridotSupportConfig.js`, workspace components
 - **Data / dependencies:** Active dataset, route state, workspace state, Inspector history
-- **Critical invariants:** Navigation must not silently unload the dataset or reset accepted workspace state.
+- **Critical invariants:** Navigation must not silently unload the dataset or reset accepted workspace state. Support is a non-route utility with no research-state or payment-processing coupling.
 - **Detailed reference:** [Shell and routing contract](#contract-application-shell-and-navigation)
 
 <a id="level1-data-import-and-generalized-mapping"></a>
@@ -214,7 +214,7 @@ Every contract follows the same ten-field order. **Not applicable** means the fi
 <a id="contract-application-shell-and-navigation"></a>
 
 - **Purpose and scope:** Coordinates page routing and preserves the active research session across public workspaces.
-- **Module ownership:** `src/App.jsx`, `src/peridotWorkspaceConfig.js`, workspace components
+- **Module ownership:** `src/App.jsx`, `src/peridotWorkspaceConfig.js`, workspace components; `PeridotGlobalHeader.jsx` and its stylesheet own the header; the Support component/configuration own the optional contribution utility.
 - **Inputs and data contracts:** Active dataset and route/workspace state
 - **Outputs and consumers:** Workspace routing, navigation and state preservation
 - **Behavior and interaction:** Persistent shell, page navigation and Inspector bridge
@@ -241,6 +241,23 @@ Peridot uses a workspace-first route model with a **persistent global header**. 
 | About | project context, creator, AI disclosure, open source, Feedback | `PeridotLearnMoreWorkspace.jsx`, `PeridotFeedbackForm.jsx` | preserve local About hierarchy, readable scroll containment, inline Feedback, and scholarly project context |
 | Themes and Accessibility | internal appearance/settings workspace | `PeridotThemeWorkspace.jsx` | retain route/component even while public entry is hidden |
 | Inspector | compact selection summary and full dossier | Inspector modules + `App.jsx` | compact/full modes share selection and Back history |
+
+<a id="contract-voluntary-support"></a>
+
+##### Voluntary support utility (accepted source, 2026-11-25)
+
+- **Purpose and scope:** An optional header disclosure for external financial support, not a workspace, account system or payment flow.
+- **Module ownership:** `PeridotGlobalHeader.jsx` / `.css` mount and position the utility; `PeridotSupportPopover.jsx` / `.css` own presentation and interaction; `peridotSupportConfig.js` owns public destination configuration and resolution; `.github/FUNDING.yml` independently exposes repository funding metadata.
+- **Inputs and data contracts:** `resolvePeridotSupport({ development, config })` returns `{ visible, preview, providers }`; the header supplies `import.meta.env.DEV`. `PERIDOT_SUPPORT` contains `enabled`, `previewInDevelopment`, `githubSponsorsUrl`, `kofiUrl`. Only public profile URLs belong in this configuration. The resolver accepts HTTPS provider-specific profile paths; credentials, ports, queries and fragments are rejected. This validates URL shape, not ownership or payment readiness.
+- **Outputs and consumers:** The header conditionally mounts the disclosure beside Tutorials; it is keyed by `activeSection`, not included in either navigation array. When not visible, original navigation markup is retained. Live providers are ordinary external links with `target="_blank" rel="noopener noreferrer"`; no provider scripts or payment callbacks are installed.
+- **Behavior and interaction:** The accepted trigger is a muted sage pill with decorative inline faceted gemstone, label Support and accessible name Support Peridot. A labelled nonmodal section uses native controls, `aria-expanded`/`aria-controls`, stable IDs and `hidden`; no focus trap/backdrop. Local `open` state owns disclosure only. Pointerdown and click capture dismiss outside; close and live link activation restore trigger focus. Route changes remount the disclosure. Escape is intercepted in document capture before the Inspector's window-bubble handler; if a modal matching the existing selector is present, close Support without claiming Escape. Focus is restored on Escape only if it was within Support. Listeners are removed when closed/unmounted.
+- **Invariants:** Support is always voluntary; no effect on access, research state, or data semantics. Do not send researcher data, add payment credentials, collect supporter identity, embed funding widgets or initiate provider requests before deliberate navigation. Do not add Support to route state or change `App.jsx` for ordinary support maintenance.
+- **Fragile dependencies:** Header height and stacking context (editorial 66px, header z-index 220); Inspector Escape priority and other dialogs; responsive navigation spacing. Panel is header-local, not portal-mounted, with viewport-constrained dimensions and scrollable overflow. At <=650px reduce spacing and anchor panel to header; <=600px hide visible label while retaining accessible name and 40px minimum trigger dimensions; <=550px compact header spacing only when Support is present. Very narrow single-row masthead limitations remain; no mobile redesign was undertaken. Live provider rows use shared semantic primary-button colors by default and the sage trigger colors on hover; preview rows stay disabled. Preserve reduced-motion and focus treatment.
+- **Verification:** User accepted visual and responsive behavior, development preview, initial build, inactive production preview, integrated pre-activation regression pass and both live destinations locally. Configuration/syntax and isolated layout checks were reported during handoffs. Exact individual test outcomes beyond those reports, post-activation production preview and deployed site/repository Sponsor button are not independently verified. Retest using the Level 3 regression matrix.
+- **Known limitations / deferred work:** Actual checkout, provider-account administration and payment processing are outside the application and were not tested. There is no integrated automated end-to-end accessibility suite claimed. Public support is enabled in committed source; live deployment remains separately verifiable.
+- **Historical context and related planning documents:** [Integration plan](../planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md), [approved mockup](../planning_documents/Donation%20Button%20Reference.png), and [Changelog milestone](CHANGELOG.md#milestone-voluntary-support-20261125).
+
+**Configuration maintenance:** `enabled: true` with at least one valid URL yields live rows only for valid providers. If no live provider is available, the development-only preview is visible when enabled, displaying both disabled rows and a preview notice; otherwise the utility is hidden. Setting `enabled: false` disables production support without removing local preview when `previewInDevelopment` remains true. Change public destinations in the source configuration and matching repository funding metadata together, validate profile ownership and link behavior, then perform an appropriate production build and deployment check. Keep private account and financial information out of source, documentation and verification artifacts.
 
 ##### First-time tutorial contract
 
@@ -1116,6 +1133,72 @@ Three reference formats are used: module, fragile-zone/regression, and compatibi
 **Related subsystem contract:** [Open current contract](#contract-application-shell-and-navigation)
 
 
+
+#### `src/PeridotGlobalHeader.jsx`
+
+- **Module / path:** `src/PeridotGlobalHeader.jsx`
+- **Responsibility:** Persistent navigation and conditional Support mount.
+- **Principal exports / components:** PeridotGlobalHeader
+- **Dependencies and consumers:** React; header CSS; Support component and resolver; App shell consumer.
+- **State ownership / data transformation:** Existing navigation callbacks/active section; resolved Support configuration is module-level, not research state.
+- **Implementation cautions:** Preserve both nav arrays and conditional original markup; Support is not a route.
+- **Related subsystem contract:** [Voluntary support](#contract-voluntary-support)
+- **Related planning documents:** [Integration plan](../planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md)
+
+#### `src/PeridotGlobalHeader.css`
+
+- **Module / path:** `src/PeridotGlobalHeader.css`
+- **Responsibility:** Header geometry, layout and conditional project-action wrapper.
+- **Principal exports / components:** Not applicable (CSS).
+- **Dependencies and consumers:** Imported by PeridotGlobalHeader.jsx; existing editorial and legacy styling.
+- **State ownership / data transformation:** Not applicable.
+- **Implementation cautions:** Keep existing masthead heights and disabled layout; compact rules scoped to the Support wrapper.
+- **Related subsystem contract:** [Voluntary support](#contract-voluntary-support)
+- **Related planning documents:** [Integration plan](../planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md)
+
+#### `src/PeridotSupportPopover.jsx`
+
+- **Module / path:** `src/PeridotSupportPopover.jsx`
+- **Responsibility:** Native disclosure, inline icons, provider rows, local focus/dismissal.
+- **Principal exports / components:** PeridotSupportPopover
+- **Dependencies and consumers:** React hooks, component CSS, header-supplied support object.
+- **State ownership / data transformation:** Local open state, refs and IDs; no research data.
+- **Implementation cautions:** Document capture Escape precedes Inspector window handler; preserve modal exception, cleanup, outside actions and focus.
+- **Related subsystem contract:** [Voluntary support](#contract-voluntary-support)
+- **Related planning documents:** [Integration plan](../planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md)
+
+#### `src/PeridotSupportPopover.css`
+
+- **Module / path:** `src/PeridotSupportPopover.css`
+- **Responsibility:** Scoped trigger, panel, provider and responsive visual treatment.
+- **Principal exports / components:** Not applicable (CSS).
+- **Dependencies and consumers:** Imported by PeridotSupportPopover.jsx; existing semantic roles and design tokens.
+- **State ownership / data transformation:** Not applicable.
+- **Implementation cautions:** Maintain equal provider weight, visible focus, contrast, reduced motion, viewport containment and sage/forest color states.
+- **Related subsystem contract:** [Voluntary support](#contract-voluntary-support)
+- **Related planning documents:** [Integration plan](../planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md)
+
+#### `src/peridotSupportConfig.js`
+
+- **Module / path:** `src/peridotSupportConfig.js`
+- **Responsibility:** Public provider configuration, strict URL-shape validation and preview/live resolution.
+- **Principal exports / components:** PERIDOT_SUPPORT; resolvePeridotSupport
+- **Dependencies and consumers:** URL platform API; header consumer; Vite DEV passed by caller.
+- **State ownership / data transformation:** Pure configuration resolution; no runtime fetch, credentials or payment data.
+- **Implementation cautions:** Fail closed for absent or invalid links; verify actual destinations separately; sync repository funding metadata.
+- **Related subsystem contract:** [Voluntary support](#contract-voluntary-support)
+- **Related planning documents:** [Integration plan](../planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md)
+
+#### `.github/FUNDING.yml`
+
+- **Module / path:** `.github/FUNDING.yml`
+- **Responsibility:** GitHub-native repository funding metadata for both providers.
+- **Principal exports / components:** Not applicable (YAML).
+- **Dependencies and consumers:** GitHub repository interface; not fetched by Peridot at runtime.
+- **State ownership / data transformation:** Public provider profile identifiers only.
+- **Implementation cautions:** Preserve unrelated funding entries if ever added; verify Sponsor display after push; no private financial information.
+- **Related subsystem contract:** [Voluntary support](#contract-voluntary-support)
+- **Related planning documents:** [Integration plan](../planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md)
 
 #### `src/App.jsx`
 
@@ -2749,6 +2832,7 @@ This is the active checklist, using the documented current Home/Tutorials contra
 | Loading overlay / preboot | wrong first-frame still, blank handoff, remounted/stalled worker, missing switch animation | cold boot and production preview; long mapped-data confirmation; repeated heavy visualization switches; reduced motion and fallback |
 | First-load Map viewport | empty stage on first upload; viewport measured only on return | load large workbook directly into Map, assert positive viewport and populated stage without switching; resize/return, preserve chronology-first fit |
 | Workspace routing | wrong workspace or lost state | Home/upload/sample actions and each persistent-header route; preserve cross-page data and viewport state |
+| Voluntary Support | clipped header/panel, Escape also dismisses Inspector, inactive or invalid links exposed, research state disturbed | full and icon-only trigger, keyboard/focus/outside dismissal, modal priority, both live links and one/no-valid-provider cases, inactive production vs development preview, workspace/Inspector continuity, production build and deployed links; no payment required |
 | First-time tutorial | obsolete Home launcher reappears, or future launcher regresses overlay behavior | now: one Get Started Home action and Tutorials Coming Soon destination; no disabled secondary Home button or floating invitation; when re-enabled: full seven-stage suite |
 | Inspector bridge | compact Inspector fails to open | node, edge, cluster, contained member, Expand, Back |
 | Compact Inspector and Charts provenance | stale chart mark, category-tab accidental selection, repeated mapped fields, missing number shown as zero, inaccessible contributors | event/period only clicks, category editor, expanded disclosure pointer exit, chart mark selection across all families, mapped Unique ID and generated fallback, filter/search/show more, Builder exit, Treemap drill-down |

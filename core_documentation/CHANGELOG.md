@@ -40,12 +40,12 @@ This document owns the verified current checkpoint, reverse-chronological develo
 ## 1. Current Synchronized Checkpoint
 
 ```text
-01b03bc — Complete compact Inspector integration across Map, Network, Timeline, and Charts
+59ce6a7 — Implement voluntary support integration with GitHub Sponsors and Ko-fi
 Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree NOT clean: locally modified core documentation and uncommitted voluntary-support/header source, config, and planning files. These are not part of 01b03bc.
+Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree clean at confirmation.
 ```
 
-**Source of verification:** The researcher supplied `git status` and `git log --oneline -15` on 2026-11-25 confirming `01b03bc` at `HEAD`, `origin/main`, and `origin/HEAD`. The commit includes the accepted accumulated compact Inspector source across Map, Network, Timeline and Charts. Working-tree changes remain outside that commit: modified Maintainer's Guide and Charter, uncommitted voluntary-support/header source and styling, `.github/FUNDING.yml`, and support planning assets. These files are **not yet recorded as a completed or committed feature**. The development's browser acceptance and source-level test reports are described in the milestone below; no fresh production-build or deployed-site verification is implied.
+**Source of verification:** The researcher supplied `git status` and `git log --oneline -5` on 2026-11-25 confirming `59ce6a7` at `HEAD`, `origin/main`, and `origin/HEAD`, with nothing to commit and a clean working tree. The preceding commits are `c60c0da` (Inspector documentation synchronization), `01b03bc` (compact Inspector integration), `b619be4` and `d94911f`. The Support commit includes the five header/support source files, repository funding metadata and two planning records. The current documentation and screenshot handoff is subsequent to that clean checkpoint and is not part of `59ce6a7`. Local interaction acceptance and pre-activation production isolation were reported; post-activation production preview and deployed-site verification are not explicitly confirmed in the supplied evidence. See [the Support milestone](#milestone-voluntary-support-20261125).
 
 The older repository-state snapshots are preserved in the [historical checkpoint evidence archive](#5-historical-checkpoint-evidence), rather than in this current-state introduction.
 
@@ -63,7 +63,7 @@ This index points to **detailed milestone narratives**, not a second history or 
 | Map / Network | [CARTO map and exports](#milestone-carto-map); [generalized Network](#milestone-generalized-network); [Map and Timeline interaction](#milestone-timeline-map) |
 | Data import / canonical model | [Workbook and normalization](#milestone-workbook); [generalized mapping foundations](#milestone-mapping-foundation); [canonical normalization](#milestone-canonical) |
 | Search / Inspector | [Compact Inspector and chart provenance](#milestone-compact-inspector-20261125); [Generalized Search](#milestone-search); [Inspector / Identity](#milestone-inspector) |
-| Interface / design / About | [About animations](#milestone-about-animations); [public gateways](#milestone-gateways); [Cartographic Editorial foundation](#milestone-editorial) |
+| Interface / design / About | [Voluntary support](#milestone-voluntary-support-20261125); [About animations](#milestone-about-animations); [public gateways](#milestone-gateways); [Cartographic Editorial foundation](#milestone-editorial) |
 | Infrastructure / documentation / testing | [Documentation architecture and governance revision](#milestone-documentation-reorganization); [Loader and first Map mount](#milestone-loader); [deployment and dependency maintenance](#milestone-dependencies); [earlier documentation governance](#milestone-governance) |
 
 The area labels in the commit-history table are **editorial finding aids**, not original Git metadata or assertions of implementation scope. The recorded subjects and historical notes remain unchanged.
@@ -87,6 +87,8 @@ A dash in the historical note means none was originally recorded; absence of a v
 
 | Date | Commit | Exact recorded message | Area (editorial) | Significance / detail |
 |---|---|---|---|---|
+| Date not independently established (confirmed 2026-11-25) | `59ce6a7` | Implement voluntary support integration with GitHub Sponsors and Ko-fi | Interface / support | Accepted header utility, staged activation, repository funding metadata and planning records. User-confirmed clean synchronized HEAD; local link and design acceptance; post-activation production/deployment not explicitly confirmed. [Details](#milestone-voluntary-support-20261125) |
+| Date not independently established (confirmed 2026-11-25) | `c60c0da` | Synchronize core documentation through Inspector integration | Documentation / planning | Core documentation checkpoint after compact Inspector integration, confirmed by supplied Git log. [Details](#milestone-compact-inspector-20261125) |
 | Date not independently established (confirmed 2026-11-25) | `01b03bc` | Complete compact Inspector integration across Map, Network, Timeline, and Charts | Inspector / Charts | Consolidated accepted compact Inspector and Charts II mark selection, provenance, records, tests and integration. <em>Verification:</em> User-confirmed synchronized HEAD; user-browser accepted chart-family passes; test report 202/203, known unrelated Timeline label mismatch. [Details](#milestone-compact-inspector-20261125) |
 | Date not independently established (confirmed by 2026-11-25) | `b619be4` | add inspector mockup to planning documents | Documentation / planning | Reference mockup preceding the bounded compact Inspector work. [Details](#milestone-compact-inspector-20261125) |
 | Date not independently established (confirmed by 2026-11-25) | `d94911f` | Implement resizable compact Inspector panel | Inspector | Initial accepted left-docked resizable panel, subsequently expanded in uncommitted iterative passes and consolidated at `01b03bc`. [Details](#milestone-compact-inspector-20261125) |
@@ -714,6 +716,23 @@ A dash in the historical note means none was originally recorded; absence of a v
 | 2026-04-17 | `eb3ba4b` | Initial rebuilt app baseline | Other / general | — |
 
 ## 4. Detailed Milestone Archive
+
+<details>
+<summary><a id="milestone-voluntary-support-20261125"></a><strong>Voluntary support integration — accepted 2026-11-25 (`59ce6a7`)</strong></summary>
+
+### Voluntary support integration — accepted 2026-11-25
+
+**Decision and collaboration:** The researcher requested a subtle, optional support mechanism for a free and open-source humanities tool. ChatGPT compared hosted funding options; the researcher selected GitHub Sponsors and Ko-fi together, the muted sage Option C trigger, custom faceted gemstone and anchored nonmodal disclosure, and accepted full-label-first responsive behavior. The plan was prepared before the concurrent Inspector work reached `01b03bc`; the researcher saved the reference as `planning_documents/Donation Button Reference.png`. See [the preserved plan](../planning_documents/PERIDOT_VOLUNTARY_SUPPORT_INTEGRATION_PLAN_20261125.md).
+
+**Development sequence:** Pass 1 introduced the isolated disclosure and fail-closed configuration, with development-only preview and disabled provider rows. The researcher reported a passing build and accepted placement and presentation. Pass 2A added trigger/close hover, pressed and open-state feedback; Pass 2B added decorative provider icons, external-link arrows, narrow-width spacing and icon-only fallback. The researcher accepted both refinements and responsive sizing. Pass 3 reviewed keyboard, focus, Escape coordination with the compact Inspector, outside dismissal, layering and research continuity; the researcher reported that it passed and supplied screenshots of the pre-activation production interface without Support. No additional source changes were made during Pass 3.
+
+**Activation:** The researcher chose to activate before documentation synchronization. Pass 5A populated the two verified public profile destinations and enabled live rows; the researcher tested both links and reported that they worked. Pass 5A.1 adopted forest-green primary-button colors for live rows with sage hover treatment at the researcher's request; the final screenshot and appearance were accepted. Pass 5B created previously absent `.github/FUNDING.yml`; its two entries were user-confirmed. The accepted implementation and planning files were committed together at `59ce6a7`, after Inspector documentation commit `c60c0da`. The intermediate ZIP handoffs are not independent Git commits. Planned dormant documentation/checkpoint was superseded by the user's decision to activate before a consolidated documentation pass.
+
+**Verification and limits:** Reported source checks included JSX/CSS syntax, configuration cases and ZIP integrity; isolated Chromium layout checks were not full-application cross-browser testing. The researcher accepted the pre-activation build and production isolation, local keyboard/interaction regression pass, responsive appearance and actual provider links. Final post-activation production build/preview and deployed GitHub Pages / native Sponsor button were requested but not explicitly confirmed in the supplied conversation. No payment transaction was performed or tested. Clean synchronized Git state at `59ce6a7` was explicitly confirmed. Private personal and financial information is excluded from the project record.
+
+**Scope:** `src/PeridotGlobalHeader.jsx`, `src/PeridotGlobalHeader.css`, `src/PeridotSupportPopover.jsx`, `src/PeridotSupportPopover.css`, `src/peridotSupportConfig.js`, `.github/FUNDING.yml`, and two planning records. No `App.jsx`, Inspector, visualization, routing, data-model or dependency changes were needed. The current implementation contract is in the [Maintainer's Guide](MAINTAINERS_GUIDE.md#contract-voluntary-support); current screenshots are in the [README gallery](README.md#7-interface-examples-and-historical-gallery).
+
+</details>
 
 <details>
 <summary><a id="milestone-compact-inspector-20261125"></a><strong>Compact Inspector and Charts II analytical provenance — accepted through 2026-11-25</strong></summary>
@@ -1872,6 +1891,21 @@ The following milestone narratives are retained as historical records. They rema
 </details>
 
 ## 5. Historical Checkpoint Evidence
+
+<details>
+<summary><strong>Historical checkpoint — Inspector integration and uncommitted Support work (2026-11-25)</strong></summary>
+
+```text
+01b03bc — Complete compact Inspector integration across Map, Network, Timeline, and Charts
+Branch: main
+Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree NOT clean: locally modified core documentation and uncommitted voluntary-support/header source, config, and planning files. These are not part of 01b03bc.
+```
+
+**Source of verification:** The researcher supplied `git status` and `git log --oneline -15` on 2026-11-25 confirming `01b03bc` at `HEAD`, `origin/main`, and `origin/HEAD`. The commit includes the accepted accumulated compact Inspector source across Map, Network, Timeline and Charts. Working-tree changes remain outside that commit: modified Maintainer's Guide and Charter, uncommitted voluntary-support/header source and styling, `.github/FUNDING.yml`, and support planning assets. These files are **not yet recorded as a completed or committed feature**. The development's browser acceptance and source-level test reports are described in the milestone below; no fresh production-build or deployed-site verification is implied.
+
+This was superseded by `c60c0da` and `59ce6a7`; its pending-work statements describe the earlier snapshot only.
+
+</details>
 
 The paragraphs below are preserved as historical records of repository states and documentation handoffs at the time recorded. Their former references to “latest” commits or pending changes **do not describe today's repository**. They are separated from the current checkpoint because routine use of the Changelog should not require reading successive historical `git status` accounts.
 
