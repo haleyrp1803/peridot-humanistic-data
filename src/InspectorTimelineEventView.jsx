@@ -9,6 +9,12 @@
 
 import React from 'react';
 import { PeridotRecordStructure } from './PeridotRecordStructure.jsx';
+import { CompactFactGrid, CompactEvidenceReveal } from './InspectorCompactEvidence.jsx';
+import { TimelineCategoryPoint } from './PeridotTimelineCategoryMarks.jsx';
+import { PeridotCategorySymbolIcon } from './PeridotTimelineCategorySymbols.jsx';
+import { timelineCompactRecordGroups, timelineVisualCategoryLegend } from './peridotInspectorTimelineCompact.js';
+import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
+import { describePeridotTimelineMark } from './peridotInspectorTimelinePresentation.js';
 
 function detailLabelClassName() {
   return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--detail-label-text)]';
@@ -105,6 +111,34 @@ function EvidenceCategorySummary({ event }) {
   );
 }
 
+function TimelineVisualCategoryLegend({ event }) {
+  const legend = timelineVisualCategoryLegend(event);
+  return <section className="peridot-inspector-timeline-categories" aria-label="How this event is categorized">
+    <div className="peridot-inspector-compact-subheading">How this {['interval','openInterval'].includes(event.temporalKind) ? 'period' : 'event'} is categorized</div>
+    {!legend.available ? <p className="peridot-inspector-compact-muted">The active Timeline category configuration is not available for this selection. The source record's category values are not evidence of an active visual encoding.</p>
+      : !legend.categories.length ? <p className="peridot-inspector-compact-muted">Uncategorized in the current Timeline category configuration. The mark uses the default charcoal appearance.</p>
+      : <>
+        <div className="peridot-inspector-timeline-legend-layout">
+          <div className="peridot-inspector-timeline-legend-mark" aria-hidden="true">
+            <TimelineCategoryPoint categories={legend.categories} displayMode={legend.displayMode}/>
+          </div>
+          <div className="peridot-inspector-timeline-legend-items">
+            {legend.categories.map(category => <div key={category.id} className="peridot-inspector-timeline-legend-item">
+              <span className="peridot-inspector-timeline-legend-swatch" style={{backgroundColor:category.color}} aria-hidden="true"/>
+              {legend.displayMode !== 'colors' && category.symbol && category.symbol !== 'none' ? <PeridotCategorySymbolIcon name={category.symbol} color={category.color} size={17}/> : null}
+              <div className="peridot-inspector-timeline-legend-entry">
+                <strong>{category.label}</strong>
+                <span>{category.sourceLabel}: {category.sourceValue}</span>
+              </div>
+            </div>)}
+          </div>
+        </div>
+        {legend.hiddenCount ? <p className="peridot-inspector-compact-muted">The mark displays the first four category colors; {legend.hiddenCount} additional active {legend.hiddenCount === 1 ? 'category is' : 'categories are'} listed above and indicated by the mark's +{legend.hiddenCount} indicator.</p> : null}
+        <p className="peridot-inspector-compact-muted">These categories explain the mark's current visual encoding. The researcher defines their source values, labels and colors.</p>
+      </>}
+  </section>;
+}
+
 export function InspectorTimelineEventView({
   selectedProps,
   clearSelection,
@@ -114,6 +148,7 @@ export function InspectorTimelineEventView({
   InspectorSummaryCardComponent,
   InspectorClearSelectionButtonComponent,
   isCompact = false,
+  selectionEvidence = null,
 }) {
   const event = selectedProps?.event || null;
   const row = selectedProps?.row || event?.row || null;
@@ -133,55 +168,62 @@ export function InspectorTimelineEventView({
     : Number(sourceRowValue);
 
   if (isCompact) {
+    const summary = describePeridotTimelineMark(event);
+    const mapped = buildPeridotRecordStructure(row);
+    const legend = timelineVisualCategoryLegend(event);
+    const grouped = timelineCompactRecordGroups(mapped, legend.categories, row);
+    // The date and role already appear in Overview. In Data, explain their
+    // interpretation rather than reprinting the same value and heading.
+    const temporalFacts = summary.details.filter(entry => ![
+      'Mapped temporal role', 'Date represented', 'Asserted period', 'Temporal form',
+    ].includes(entry.label));
+    const otherTemporal = mapped.temporal.filter(entry => !(
+      asText(entry.label) === summary.role && asText(entry.value) === summary.display
+      && (!entry.subject || asText(entry.subject) === summary.subjectLabel)
+    ));
+    const hasBroaderEvidence = grouped.participants.length || grouped.relationships.length
+      || grouped.places.length || otherTemporal.length || grouped.otherEvidence.length;
     return (
-      <div className="space-y-3">
-        <InspectorSummaryCardComponent>
-          <DetailRow label="Timeline event" value={event.temporalRole || 'Time'} />
-          <DetailRow label="Date or period" value={displayText} />
-          {sourceDiffers ? <DetailRow label="Source date text" value={sourceText} /> : null}
-          <DetailRow label="Subject" value={subjectLabel} />
-          <DetailRow label="Record" value={recordLabel} />
-        </InspectorSummaryCardComponent>
-
-        <section className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-3 shadow-[0_8px_24px_var(--peridot-color-rgba-rgba-87-58-46-0-06)]">
-          <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">At a glance</div>
-          <p className="mt-2 text-sm leading-relaxed text-[var(--text-main)]">
-            This event is one mapped temporal assertion from the current visualization scope. Expand the Inspector to examine its temporal metadata and complete source record.
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <div className="rounded-xl border border-[var(--section-border)]/80 bg-[var(--stat-card-bg)] px-3 py-2">
-              <div className="text-sm font-semibold text-[var(--text-strong)]">{eventKindLabel(event)}</div>
-              <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">temporal form</div>
-            </div>
-            <div className="rounded-xl border border-[var(--section-border)]/80 bg-[var(--stat-card-bg)] px-3 py-2">
-              <div className="text-sm font-semibold text-[var(--text-strong)]">{uncertaintyLabel(event)}</div>
-              <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">date status</div>
-            </div>
-            {categoryCount ? (
-              <div className="rounded-xl border border-[var(--section-border)]/80 bg-[var(--stat-card-bg)] px-3 py-2">
-                <div className="text-sm font-semibold text-[var(--text-strong)]">{categoryCount}</div>
-                <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">evidence categories</div>
-              </div>
-            ) : null}
-            {Number.isFinite(sourceRow) ? (
-              <div className="rounded-xl border border-[var(--section-border)]/80 bg-[var(--stat-card-bg)] px-3 py-2">
-                <div className="text-sm font-semibold text-[var(--text-strong)]">{sourceRow}</div>
-                <div className="mt-0.5 text-[11px] text-[var(--text-muted)]">source row</div>
-              </div>
-            ) : null}
-          </div>
-          {typeof onExpandInspector === 'function' ? (
-            <button
-              type="button"
-              onClick={onExpandInspector}
-              className="mt-3 w-full rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] px-3.5 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45"
-            >
-              Open full dossier
-            </button>
-          ) : null}
-        </section>
-
-        <InspectorClearSelectionButtonComponent onClear={clearSelection} />
+      <div className="peridot-inspector-compact-data-flow">
+        <div className="peridot-inspector-mark-support">
+          <div className="peridot-inspector-compact-subheading">Evidence supporting this {summary.markKind === 'period' ? 'period' : 'event'}</div>
+          <p className="peridot-inspector-compact-muted">The mapped temporal assertion determines this mark's position. Its uncertainty and precision are preserved from the source.</p>
+          <CompactFactGrid entries={[...temporalFacts, ...summary.detailFields]}/>
+          <div className="peridot-inspector-compact-subheading">Source record and provenance</div>
+          <CompactFactGrid entries={[
+            ...(recordLabel ? [{ label: 'Record', value: recordLabel }] : []),
+            ...(Number.isFinite(sourceRow) ? [{ label: 'Source row', value: String(sourceRow) }] : []),
+            ...grouped.provenance,
+          ]}/>
+          {selectionEvidence?.support?.status !== 'verified' ? <p className="peridot-inspector-compact-muted">A verified contributing source record is unavailable.</p> : null}
+          <TimelineVisualCategoryLegend event={event}/>
+        </div>
+        {hasBroaderEvidence ? <div className="peridot-inspector-mark-context">
+          <div className="peridot-inspector-compact-subheading">Other mapped information in this record</div>
+          <p className="peridot-inspector-compact-muted">Other assertions belong to the contributing record but do not necessarily determine the selected Timeline mark.</p>
+          <CompactEvidenceReveal title="Explore other mapped record information">
+            {grouped.participants.length ? <>
+              <div className="peridot-inspector-compact-subheading">Participants</div>
+              <CompactFactGrid entries={grouped.participants}/>
+            </> : null}
+            {grouped.relationships.length ? <>
+              <div className="peridot-inspector-compact-subheading">Relationships</div>
+              <CompactFactGrid entries={grouped.relationships}/>
+            </> : null}
+            {grouped.places.length ? <>
+              <div className="peridot-inspector-compact-subheading">Mapped places</div>
+              <CompactFactGrid entries={grouped.places}/>
+            </> : null}
+            {otherTemporal.length ? <>
+              <div className="peridot-inspector-compact-subheading">Other temporal assertions</div>
+              <CompactFactGrid entries={otherTemporal}/>
+            </> : null}
+            {grouped.otherEvidence.length ? <>
+              <div className="peridot-inspector-compact-subheading">Other Evidence</div>
+              <CompactFactGrid entries={grouped.otherEvidence}/>
+            </> : null}
+          </CompactEvidenceReveal>
+        </div> : null}
       </div>
     );
   }

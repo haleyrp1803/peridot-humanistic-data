@@ -106,12 +106,14 @@ export function deriveChartsIITemporalSeries({ rows = [], interval = 'year', mea
     const group = groupBy ? String(getAnalyticsFieldValue(row, groupBy) ?? '').trim() : '';
     if (groupBy && !group) { excluded.missingGrouping++; continue; }
     const { bin } = eligibility;
-    if (!grouped.has(bin.start)) grouped.set(bin.start, { ...bin, values: [], groups: new Map() });
+    if (!grouped.has(bin.start)) grouped.set(bin.start, { ...bin, values: [], rows: [], groups: new Map(), groupRows: new Map() });
     const bucket = grouped.get(bin.start);
     bucket.values.push(value);
+    bucket.rows.push(row);
     if (groupBy) {
-      if (!bucket.groups.has(group)) bucket.groups.set(group, []);
+      if (!bucket.groups.has(group)) { bucket.groups.set(group, []); bucket.groupRows.set(group, []); }
       bucket.groups.get(group).push(value);
+      bucket.groupRows.get(group).push(row);
     }
     included++;
   }
@@ -134,9 +136,10 @@ export function deriveChartsIITemporalSeries({ rows = [], interval = 'year', mea
   const axis = { ready: true, bins: bins.map(({label,start,end}) => ({label,start,end})), min: bins[0]?.start ?? null, max: bins[bins.length-1]?.end ?? null };
   const series = labels.map(label => ({ label, points: bins.map(bin => {
     const values = label === 'Other' ? others.flatMap(name => bin.groups.get(name) || []) : bin.groups.get(label) || [];
-    return { label: bin.label, count: values.length ? aggregate(values) : null, unit: isCount ? 'records' : 'value' };
+    const contributingRows = label === 'Other' ? others.flatMap(name => bin.groupRows.get(name) || []) : bin.groupRows.get(label) || [];
+    return { label: bin.label, count: values.length ? aggregate(values) : null, unit: isCount ? 'records' : 'value', contributingRows };
   }) }));
-  const data = bins.map(bin => ({ label: bin.label, count: aggregate(bin.values), unit: isCount ? 'records' : 'value' }));
+  const data = bins.map(bin => ({ label: bin.label, count: aggregate(bin.values), unit: isCount ? 'records' : 'value', contributingRows: bin.rows }));
   return { data, periods, series, temporalAxis: axis, reporting: {
     scope: rows.length, included, excluded, interval, measure, aggregation: isCount ? 'count' : aggregation,
     groupedBy: groupBy || null, assignedPeriods: bins.length,

@@ -47,7 +47,7 @@ export function deriveChartsIIBoxPlot(rows = [], { mode = 'columns', fields = []
         if (missing(raw)) { reporting.excluded.missingMeasure++; continue; }
         const value = parseAnalyticsNumber(raw);
         if (value === null || !Number.isFinite(value)) { reporting.excluded.invalidMeasure++; continue; }
-        groups.get(name).push({ value, recordIndex: recordIndex + 1, date: typeof row?.Date === 'string' || typeof row?.Date === 'number' ? String(row.Date) : null });
+        groups.get(name).push({ value, contributingRow: row, recordIndex: recordIndex + 1, date: typeof row?.Date === 'string' || typeof row?.Date === 'number' ? String(row.Date) : null });
         reporting.includedMeasurements++;
       }
     }
@@ -62,7 +62,7 @@ export function deriveChartsIIBoxPlot(rows = [], { mode = 'columns', fields = []
       const value = parseAnalyticsNumber(raw);
       if (value === null || !Number.isFinite(value)) { reporting.excluded.invalidMeasure++; continue; }
       if (!groups.has(category)) groups.set(category, []);
-      groups.get(category).push({ value, recordIndex: recordIndex + 1, date: typeof row?.Date === 'string' || typeof row?.Date === 'number' ? String(row.Date) : null });
+      groups.get(category).push({ value, contributingRow: row, recordIndex: recordIndex + 1, date: typeof row?.Date === 'string' || typeof row?.Date === 'number' ? String(row.Date) : null });
       reporting.includedMeasurements++;
     }
   }
@@ -74,7 +74,8 @@ export function deriveChartsIIBoxPlot(rows = [], { mode = 'columns', fields = []
   reporting.groupsOmitted = entries.length - shown.length;
   const boxes = shown.map(([label, observations]) => {
     const stats = chartsIIBoxStatistics(observations.map(observation => observation.value));
-    return { label, ...stats, outlierDetails: observations
+    return { label, ...stats, contributingRows: observations.map(item => item.contributingRow),
+      outlierDetails: observations
       .filter(observation => observation.value < stats.lowerFence || observation.value > stats.upperFence)
       .sort((a, b) => a.value - b.value || a.recordIndex - b.recordIndex) };
   });

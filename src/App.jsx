@@ -68,6 +68,9 @@ import { InspectorConnectedCorrespondents } from './InspectorConnectedCorrespond
 import { InspectorPersonPlaces } from './InspectorPersonPlaces';
 import { InspectorBackButton } from './InspectorBackButton';
 import { InspectorContent } from './InspectorPanel.jsx';
+import { InspectorChartMarkView } from './InspectorChartMarkView.jsx';
+import { refreshSelectedTimelinePresentation } from './peridotTimelineInspectorPresentationUpdate.js';
+import { collectPeridotNetworkNodeMarkEvidence } from './peridotInspectorSelectionEvidence.js';
 import { PeridotRecordStructure } from './PeridotRecordStructure.jsx';
 import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 import { LeftControlPanel } from './LeftControlPanel';
@@ -1125,6 +1128,7 @@ function buildPersonGraph(rows, width, height, layoutMode, searchQuery = '', sem
           anchorReasons: anchor.reasons || [],
           anchorRoles: anchor.roles || [],
           anchorOccurrenceCount: anchor.occurrenceCount || 0,
+          anchorSourceRowsForMark: anchor.sourceRowsForMark || [],
           isMostFrequentPlace: Boolean(anchor.isMostFrequentPlace),
           isMappable: true,
           degree: degreeByEntity.get(anchor.personKey) || 0,
@@ -2350,6 +2354,7 @@ function buildInspectorPanelProps(args) {
       onOpenPersonDetail: args.onOpenPersonDetail,
       onOpenPlaceDetail: args.onOpenPlaceDetail,
       onOpenLetterDetail: args.onOpenLetterDetail,
+      onSearchRelated: args.onSearchRelated,
       inspectorHistoryLength: args.inspectorHistoryLength,
       canGoBack: args.inspectorHistoryLength > 0,
       onBackInspector: args.onBackInspector,
@@ -4093,6 +4098,8 @@ export default function EuropeNetworkMapApp() {
   const [routePeopleFilter, setRoutePeopleFilter] = useState('');
   const [capabilityFilters, setCapabilityFilters] = useState([]);
   const [structuredCriteria, setStructuredCriteria] = useState([]);
+  // Explicit cross-workspace draft handoff; never applies a global filter.
+  const [inspectorExploreDraft, setInspectorExploreDraft] = useState(null);
   const [selectedSelection, setSelectedSelection] = useState(null);
   const [inspectorPresentationMode, setInspectorPresentationMode] = useState(
     INSPECTOR_PRESENTATION_MODES.CLOSED,
@@ -4148,6 +4155,18 @@ export default function EuropeNetworkMapApp() {
       index,
     });
     setShowAllLinkedLetters(false);
+  };
+
+  const prepareInspectorExploreSearch = (field, value) => {
+    const normalized = String(value || '').trim();
+    if (!normalized || !['person', 'place', 'keyword'].includes(field)) return;
+    setInspectorExploreDraft((previous) => ({ field, value: normalized, id: (previous?.id || 0) + 1 }));
+    // Preserve the current selection for return navigation, but dismiss its
+    // overlay while the researcher edits (and decides whether to Apply) a query.
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.CLOSED);
+    setShowRightSidebar(false);
+    setIsSidePanelOpen(false);
+    setResolvedWorkspaceMode(PERIDOT_WORKSPACE_MODES.SEARCH);
   };
 
   const openInspectorSearchResult = (result) => {
@@ -5151,6 +5170,9 @@ export default function EuropeNetworkMapApp() {
   // Selection and inspector derivations
   // ------------------------------------------------------------
   const selectedProps = useMemo(() => {
+    if (selectedSelection?.kind === 'chart-mark') {
+      return { ...selectedSelection, __kind: 'chart-mark' };
+    }
     if (selectedSelection?.kind === 'timeline-event') {
       const event = selectedSelection.event || null;
       const row = event?.row || selectedSelection.row || null;
@@ -5185,28 +5207,37 @@ export default function EuropeNetworkMapApp() {
       inspectorRelationshipRows: inspectorStructuralRelationshipRows,
     });
 
-    if (!resolvedSelection || resolvedSelection?.entityType === 'place' || resolvedSelection?.__kind === 'place-detail') {
-      return resolvedSelection;
+    // Mark-specific Network provenance is derived from the graph actually being
+    // displayed, never from the full entity-related record ledger. Do not apply
+    // this to dossier-only person details or geographic Map selections.
+    const networkMark = selectedSelection?.kind === 'node' && viewMode === 'person'
+      ? collectPeridotNetworkNodeMarkEvidence(graph, selectedSelection.id)
+      : null;
+    const markedSelection = networkMark && resolvedSelection
+      ? { ...resolvedSelection, networkMarkEvidence: networkMark }
+      : resolvedSelection;
+    if (!markedSelection || markedSelection?.entityType === 'place' || markedSelection?.__kind === 'place-detail') {
+      return markedSelection;
     }
 
     const resolvedEntityId = String(
-      resolvedSelection?.entityId
-      || resolvedSelection?.personMetadata?.canonicalEntityId
-      || resolvedSelection?.personMetadata?.id
+      markedSelection?.entityId
+      || markedSelection?.personMetadata?.canonicalEntityId
+      || markedSelection?.personMetadata?.id
       || '',
     ).trim();
     const canonicalDisplayLabel = resolvePeridotCanonicalEntityDisplayLabel(
       entityDisplayLabelById,
       resolvedEntityId,
-      resolvedSelection?.detailLabel || resolvedSelection?.label,
+      markedSelection?.detailLabel || markedSelection?.label,
     );
 
     const canonicalEntityEvidence = getPeridotCanonicalEntityEvidence(entityEvidenceById, resolvedEntityId);
 
-    if (!canonicalDisplayLabel && !canonicalEntityEvidence.length) return resolvedSelection;
+    if (!canonicalDisplayLabel && !canonicalEntityEvidence.length) return markedSelection;
 
     return {
-      ...resolvedSelection,
+      ...markedSelection,
       ...(canonicalDisplayLabel ? { label: canonicalDisplayLabel, detailLabel: canonicalDisplayLabel } : {}),
       canonicalEntityEvidence,
     };
@@ -6551,6 +6582,7 @@ export default function EuropeNetworkMapApp() {
     onOpenPersonDetail: openInspectorPersonDetail,
     onOpenPlaceDetail: openInspectorPlaceDetail,
     onOpenLetterDetail: openInspectorLetterDetail,
+    onSearchRelated: prepareInspectorExploreSearch,
     inspectorHistoryLength: inspectorHistory.length,
     onBackInspector: goBackInspector,
     onCloseInspector: closeCompactInspector,
@@ -6590,6 +6622,7 @@ export default function EuropeNetworkMapApp() {
         InspectorClearSelectionButtonComponent={InspectorClearSelectionButton}
       />
     ),
+    InspectorChartMarkView: InspectorChartMarkView,
     InspectorTimelineEventView: (props) => (
       <InspectorTimelineEventViewView
         {...props}
@@ -6783,6 +6816,37 @@ export default function EuropeNetworkMapApp() {
     }, { minimumDuration: 650 });
   };
 
+  const invalidateChartsIIMarkSelection = useCallback((chartKey) => {
+    setSelectedSelection(current => current?.kind === 'chart-mark' && current.chartKey === chartKey ? null : current);
+  }, []);
+
+  const handleExitChartsIIViewer = () => {
+    if (selectedSelection?.kind !== 'chart-mark') return;
+    setSelectedSelection(null);
+    setInspectorHistory([]);
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.CLOSED);
+    setShowRightSidebar(false);
+  };
+
+  // A chart-mark selection does not outlive its viewing context. Navigating
+  // to Data/Explore or another visualization clears it; an explicitly opened
+  // Inspector workspace remains available for the researcher's inspection.
+  useEffect(() => {
+    if (selectedSelection?.kind !== 'chart-mark') return;
+    const withinChartViewer = workspaceMode === PERIDOT_WORKSPACE_MODES.VISUALIZATIONS
+      && visualizationsWorkspacePanel === 'analytics';
+    if (!withinChartViewer && workspaceMode !== PERIDOT_WORKSPACE_MODES.INSPECTOR) {
+      handleExitChartsIIViewer();
+    }
+  }, [workspaceMode, visualizationsWorkspacePanel, selectedSelection?.kind]);
+
+  const handleChartsIIMarkClick = (mark) => {
+    if (!mark || mark.kind !== 'chart-mark') return;
+    setShowRightSidebar(true);
+    setSelectedSelection({ ...mark, id: `chart-mark:${mark.chartKey}:${mark.label}` });
+    setShowAllLinkedLetters(false);
+  };
+
   const handleTimelineEventClick = (event) => {
     const row = event?.row || null;
     if (!event || !row) return;
@@ -6794,6 +6858,12 @@ export default function EuropeNetworkMapApp() {
       row,
     });
     setShowAllLinkedLetters(false);
+  };
+
+  // Configuration-only updates must never open the Inspector or change its
+  // selection/history. Only an actual clicked Timeline mark opens it.
+  const handleTimelineEventPresentationChange = (event) => {
+    setSelectedSelection((current) => refreshSelectedTimelinePresentation(current, event));
   };
 
   const openAnalyticsWorkspace = () => {
@@ -6977,6 +7047,9 @@ export default function EuropeNetworkMapApp() {
     onSelectGeographicMap: selectGeographicMapVisualization,
     onSelectForceDirected: selectForceDirectedVisualization,
     onSelectTimeline: selectTimelineVisualization,
+    onInspectChartMark: handleChartsIIMarkClick,
+    onChartResultChange: invalidateChartsIIMarkSelection,
+    onExitChartViewer: handleExitChartsIIViewer,
     timelineWorkspaceProps: {
       // Key remounts Timeline only for a genuinely different mapped dataset.
       // The session itself persists across visualization and page switches.
@@ -6993,6 +7066,7 @@ export default function EuropeNetworkMapApp() {
       relationshipRows: entityRelationshipStructureRows,
       selectedEventId: selectedSelection?.kind === 'timeline-event' ? selectedSelection?.event?.id || '' : '',
       onEventClick: handleTimelineEventClick,
+      onEventPresentationChange: handleTimelineEventPresentationChange,
     },
     onOpenAnalytics: openAnalyticsWorkspace,
     onOpenSearch: () => {
@@ -7081,6 +7155,7 @@ export default function EuropeNetworkMapApp() {
     browseRows: normalizedRows,
     evidenceBrowseRows: searchRecords,
     onInspectSearchResult: openInspectorSearchResult,
+    inspectorExploreDraft,
     onOpenVisualizations: openVisualizationsWorkspace,
   };
 

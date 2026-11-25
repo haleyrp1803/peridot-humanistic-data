@@ -107,7 +107,7 @@ export function stackChartsIIAreaSeries(chart) {
       }
       const bottom = totals[index];
       const top = bottom + numeric;
-      layers[layerIndex].points.push({ label: periods[index], count: numeric, bottom, top, unit: point?.unit || 'records' });
+      layers[layerIndex].points.push({ label: periods[index], count: numeric, bottom, top, unit: point?.unit || 'records', contributingRows: point?.contributingRows || [] });
       totals[index] = top;
     }
   }
@@ -140,7 +140,8 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
     const derived = deriveChartsIITreemap(args.rows, { parentField, childField, measureField, maxGroups: args.topN });
     return { status: 'ready', chart: { chartType: 'treemap', title: 'Treemap',
       subtitle: `${measureField === 'recordCount' ? 'Record count' : `Sum of ${measureField}`} by ${parentField}${childField ? ` → ${childField}` : ''}.`,
-      parents: derived.parents, total: derived.total, measureLabel: measureField === 'recordCount' ? 'records' : measureField },
+      parents: derived.parents, total: derived.total, measureLabel: measureField === 'recordCount' ? 'records' : measureField,
+      provenance: { groupField: parentField, seriesField: childField, measureField, aggregation: derived.reporting.aggregation, scopedRecordCount: args.rows.length } },
       reporting: derived.reporting };
   }
   if (contract.chartKey === 'slope') {
@@ -166,7 +167,9 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
       subtitle:`${derived.reporting.aggregation} comparing ${settings.slopeFirstLabel || derived.reporting.firstLabel || 'period A'} and ${settings.slopeSecondLabel || derived.reporting.secondLabel || 'period B'}.`,
       firstLabel:settings.slopeFirstLabel || derived.reporting.firstLabel,
       secondLabel:settings.slopeSecondLabel || derived.reporting.secondLabel,
-      series:derived.series }, reporting:derived.reporting };
+      series:derived.series, provenance: { groupField: mode === 'columns' ? 'selected numerical columns' : settings.slopeGroupField,
+      seriesField: settings.slopeInterval, measureField: mode === 'columns' ? fields.join(', ') : settings.slopeMeasureField,
+      aggregation: derived.reporting.aggregation, scopedRecordCount: args.rows.length } }, reporting:derived.reporting };
   }
   if (contract.chartKey === 'dot') {
     const mode = settings.dotMode === 'columns' ? 'columns' : 'category';
@@ -185,7 +188,8 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
     return { status: 'ready', chart: { chartType: 'dot', title: 'Dot Plot',
       subtitle: mode === 'columns' ? `${aggregation} of observed values for each numerical column.` :
         `${aggregation} of ${settings.dotMeasureField} by ${settings.dotGroupField}.`,
-      points: derived.points, valueLabel: mode === 'category' && settings.dotMeasureField === 'recordCount'
+      points: derived.points, provenance: { groupField: mode === 'columns' ? 'selected numerical columns' : settings.dotGroupField,
+      measureField: mode === 'columns' ? fields.join(', ') : settings.dotMeasureField, aggregation, scopedRecordCount: args.rows.length }, valueLabel: mode === 'category' && settings.dotMeasureField === 'recordCount'
         ? 'Records' : mode === 'columns' ? 'Aggregated value' : settings.dotMeasureField || 'Value' }, reporting: derived.reporting };
   }
   if (contract.chartKey === 'box') {
@@ -201,7 +205,8 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
     });
     return { status: 'ready', chart: { chartType: 'box', title: 'Box Plot',
       subtitle: mode === 'columns' ? 'Distributions of selected numerical columns.' : `${settings.boxMeasureField} by ${settings.boxGroupField}.`,
-      boxes: derived.boxes }, reporting: derived.reporting };
+      boxes: derived.boxes, provenance: { groupField: mode === 'columns' ? 'selected numerical columns' : settings.boxGroupField,
+      measureField: mode === 'columns' ? selected.join(', ') : settings.boxMeasureField, aggregation: 'distribution (R type 7 quartiles)', scopedRecordCount: args.rows.length } }, reporting: derived.reporting };
   }
   if (contract.chartKey === 'scatter' || contract.chartKey === 'scatter-date') {
     const sizeField = settings.scatterMode === 'bubble' ? settings.bubbleSizeField || '' : '';
@@ -210,7 +215,8 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
     const derived = deriveChartsIIScatter(args.rows, { xField, yField: contract.values.scatterYField, sizeField });
     return { status: 'ready', chart: { chartType: 'scatter', title: settings.scatterMode === 'bubble' ? 'Bubble' : 'Scatter',
       subtitle: `${contract.values.scatterYField} against ${xField === '__canonicalDate__' ? 'canonical date' : xField}${sizeField ? `; size: ${sizeField}` : ''}. Each point represents one eligible record.`,
-      xLabel: xField === '__canonicalDate__' ? 'Date' : xField, xAxisDate: xField === '__canonicalDate__', yLabel: contract.values.scatterYField, sizeLabel: sizeField, points: derived.points },
+      xLabel: xField === '__canonicalDate__' ? 'Date' : xField, xAxisDate: xField === '__canonicalDate__', yLabel: contract.values.scatterYField, sizeLabel: sizeField, points: derived.points,
+      provenance: { groupField: xField === '__canonicalDate__' ? 'canonical date' : xField, measureField: contract.values.scatterYField, sizeField, aggregation: 'observation', scopedRecordCount: args.rows.length } },
       reporting: derived.reporting };
   }
   if (contract.chartKey === 'line-wide') {
@@ -222,7 +228,8 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
     const derived = deriveChartsIIWideTemporalSeries({ rows: args.rows, interval, fields, aggregation: aggregate });
     return { status: 'ready', chart: { chartType: 'multiLine', title: `Numerical measures by ${CHARTS_II_TIME_INTERVAL_LABELS[interval] || interval}`,
       subtitle: `${aggregate} of observed values by calendar interval; missing prices remain missing.`,
-      periods: derived.periods, series: derived.series, temporalAxis: derived.temporalAxis }, reporting: derived.reporting };
+      periods: derived.periods, series: derived.series, temporalAxis: derived.temporalAxis,
+      provenance: { groupField: interval, seriesField: fields.join(', '), measureField: 'selected numerical columns', aggregation: aggregate, scopedRecordCount: args.rows.length } }, reporting: derived.reporting };
   }
   // Charts II's chronological families share the same precision-aware calendar bins.
   // Other chart families retain their accepted shared analytics derivations.
@@ -236,7 +243,8 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
     const name = grouped ? 'Trends' : args.yField === 'recordCount' ? 'Record count' : args.yField;
     const base = { title: `${name} by ${CHARTS_II_TIME_INTERVAL_LABELS[interval] || interval}`,
       subtitle: `${aggregate} by ${CHARTS_II_TIME_INTERVAL_LABELS[interval] || interval}; source dates must fit wholly within an interval.`,
-      temporalAxis: derived.temporalAxis, reporting: derived.reporting };
+      temporalAxis: derived.temporalAxis, reporting: derived.reporting,
+      provenance: { groupField: interval, seriesField: grouped ? args.multiLineGroupBy : '', measureField: args.yField, aggregation: aggregate, scopedRecordCount: args.rows.length } };
     if (contract.chartKey === 'stacked-area') {
       const stacked = stackChartsIIAreaSeries({ periods: derived.periods, series: derived.series });
       if (!stacked.ready) return { status: 'unavailable', problems: [stacked.problem], chart: null, reporting: derived.reporting };
@@ -246,5 +254,15 @@ export function deriveChartsIIBuilderData(contract, rows = [], settings = {}) {
     return { status: 'ready', chart: { ...base, chartType: contract.chartKey === 'area' ? 'area' : 'line', data: derived.data }, reporting: derived.reporting };
   }
   const chart = buildAnalyticsChartData(args);
+  if (['bar', 'pie', 'groupedBar', 'stackedBar', 'heatmap', 'histogram', 'sunburst'].includes(chart.chartType)) {
+    chart.provenance = {
+      groupField: chart.chartType === 'pie' ? args.pieGroupBy : chart.chartType === 'bar' ? args.barGroupBy : chart.chartType === 'heatmap' ? args.heatmapRowBy : chart.chartType === 'histogram' ? args.histogramValueField : chart.chartType === 'sunburst' ? args.sunburstParentBy : args.xField,
+      seriesField: chart.chartType === 'groupedBar' ? args.groupedBarGroupBy : chart.chartType === 'stackedBar' ? args.stackSegmentBy : chart.chartType === 'heatmap' ? args.heatmapColumnBy : chart.chartType === 'sunburst' ? args.sunburstChildBy : '',
+      measureField: args.yField,
+      aggregation: chart.chartType === 'histogram' ? 'frequency' : args.yField === 'recordCount' ? 'count'
+        : ['pie', 'stackedBar', 'sunburst'].includes(chart.chartType) ? 'sum' : args.aggregation,
+      scopedRecordCount: args.rows.length,
+    };
+  }
   return { status: 'ready', chart, recordsInScope: args.rows.length };
 }

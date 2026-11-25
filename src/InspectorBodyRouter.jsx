@@ -18,6 +18,8 @@ export function InspectorBodyRouter({
   letterState,
   viewComponents,
   presentation = 'compact',
+  evidenceQuery = '',
+  selectionEvidence = null,
 }) {
   const {
     selectedProps,
@@ -47,12 +49,14 @@ export function InspectorBodyRouter({
     InspectorNodeView,
     InspectorEdgeView,
     InspectorTimelineEventView,
+    InspectorChartMarkView,
     InspectorLetterView,
   } = viewComponents;
 
   const isCompact = presentation === 'compact';
 
   const clusterViewProps = {
+    selectionEvidence,
     selectedProps,
     clearSelection,
     viewMode,
@@ -62,9 +66,11 @@ export function InspectorBodyRouter({
     onOpenRouteDetail,
     onExpandInspector,
     isCompact,
+    evidenceQuery,
   };
 
   const nodeViewProps = {
+    selectionEvidence,
     selectedProps,
     clearSelection,
     viewMode,
@@ -83,6 +89,8 @@ export function InspectorBodyRouter({
   };
 
   const edgeViewProps = {
+    selectionEvidence,
+    viewMode,
     selectedProps,
     clearSelection,
     linkedLettersToShow,
@@ -103,6 +111,9 @@ export function InspectorBodyRouter({
     return <InspectorNodeView {...nodeViewProps} />;
   }
   if (selectedKind === 'edge') return <InspectorEdgeView {...edgeViewProps} />;
+  if (selectedKind === 'chart-mark') {
+    return <InspectorChartMarkView selectedProps={selectedProps} onOpenLetterDetail={onOpenLetterDetail} isCompact={isCompact} />;
+  }
   if (selectedKind === 'timeline-event') {
     return (
       <InspectorTimelineEventView
@@ -112,6 +123,7 @@ export function InspectorBodyRouter({
         onOpenPersonDetail={onOpenPersonDetail}
         onOpenPlaceDetail={onOpenPlaceDetail}
         isCompact={isCompact}
+        selectionEvidence={selectionEvidence}
       />
     );
   }

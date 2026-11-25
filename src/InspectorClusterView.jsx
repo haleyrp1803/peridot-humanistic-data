@@ -12,7 +12,7 @@
  * - Preserve grouping by place and Back behavior when editing cluster navigation.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 
 function detailLabelClassName() {
   return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--detail-label-text)]';
@@ -103,29 +103,33 @@ function ClusterLead({ selectedProps, members, representedLabel }) {
   );
 }
 
-function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlaceDetail, isCompact = false }) {
+function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlaceDetail, isCompact = false, evidenceQuery = '' }) {
   const isGeographic = viewMode === 'geographic';
-  const memberKindLabel = isGeographic ? 'places' : 'people';
-  const memberKindSingular = isGeographic ? 'place' : 'person';
+  const memberKindLabel = isGeographic && isCompact ? 'visual nodes' : isGeographic ? 'places' : 'people';
+  const memberKindSingular = isGeographic && isCompact ? 'visual node' : isGeographic ? 'place' : 'person';
   const actionLabel = isGeographic ? 'Open place' : 'Open person';
   const openDetail = isGeographic ? onOpenPlaceDetail : onOpenPersonDetail;
-  const groups = buildMemberGroups(members, isGeographic);
-  const visibleGroups = isCompact ? groups.slice(0, 4) : groups;
+  const query = String(evidenceQuery || '').trim().toLocaleLowerCase();
+  const visibleMembers = query ? members.filter((member) => [member.label, getMemberPlaceLabel(member, isGeographic)]
+    .some((value) => String(value || '').toLocaleLowerCase().includes(query))) : members;
+  const groups = buildMemberGroups(visibleMembers, isGeographic);
+  const [showAllCompact, setShowAllCompact] = useState(false);
+  const visibleGroups = isCompact && !showAllCompact ? groups.slice(0, 3) : groups;
 
-  if (!members.length) {
+  if (!visibleMembers.length) {
     return (
       <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-3 text-sm text-[var(--text-muted)]">
-        No contained {memberKindLabel} were found for this cluster.
+        {query ? 'No members match this selection search.' : `No contained ${memberKindLabel} were found for this cluster.`}
       </div>
     );
   }
 
   return (
-    <section className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-3">
+    <section className={isCompact ? "peridot-inspector-compact-member-groups" : "rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-3"}>
       <div className={detailLabelClassName()}>{isGeographic ? 'Places in this cluster' : 'People in this cluster'}</div>
-      <div className="mt-2 divide-y divide-[var(--section-border)]/70 overflow-hidden rounded-xl border border-[var(--section-border)]/75 bg-[var(--panel-bg)]/55">
+      <div className={isCompact ? "mt-2 divide-y divide-[var(--section-border)]/70" : "mt-2 divide-y divide-[var(--section-border)]/70 overflow-hidden rounded-xl border border-[var(--section-border)]/75 bg-[var(--panel-bg)]/55"}>
         {visibleGroups.map((group) => (
-          <div key={group.label} className="px-3 py-2">
+          <div key={group.label} className={isCompact ? "py-2" : "px-3 py-2"}>
             <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-[var(--text-strong)]">{group.label}</div>
@@ -168,10 +172,10 @@ function ClusterMemberGroups({ members, viewMode, onOpenPersonDetail, onOpenPlac
           </div>
         ))}
       </div>
-      {isCompact && groups.length > visibleGroups.length ? (
-        <div className="mt-2 rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2 text-xs text-[var(--text-muted)]">
-          Expand the Inspector to view all cluster groups and members.
-        </div>
+      {isCompact && groups.length > 3 ? (
+        <button type="button" className="peridot-inspector-compact-member-toggle" onClick={() => setShowAllCompact((current) => !current)}>
+          {showAllCompact ? 'Show fewer groups' : `Show ${groups.length - 3} more groups`}
+        </button>
       ) : null}
     </section>
   );
@@ -186,6 +190,8 @@ export function InspectorClusterView({
   onOpenPersonDetail,
   onOpenPlaceDetail,
   isCompact = false,
+  evidenceQuery = '',
+  selectionEvidence = null,
 }) {
   const memberDetails = (selectedProps?.memberDetails || [])
     .filter((member) => member?.label)
@@ -214,12 +220,12 @@ export function InspectorClusterView({
 
   if (isCompact) {
     return (
-      <div className="space-y-3">
-        <InspectorSummaryCardComponent>
-          <DetailRow label="Cluster" value={selectedProps.label} />
-          <DetailRow label={representedLabel} value={selectedProps.memberCount || selectedProps.clusterSize || members.length} />
-          <DetailRow label="Preview" value={memberLabels.slice(0, 8).join('; ')} />
-        </InspectorSummaryCardComponent>
+      <div className="peridot-inspector-compact-cluster space-y-2">
+        <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--support">
+          <div className="peridot-inspector-compact-subheading">Evidence supporting this cluster</div>
+          <p className="peridot-inspector-compact-muted">The selected cluster contains {selectionEvidence?.representation?.details?.find((item) => item.kind === 'member-count')?.value ?? members.length} visual nodes. Its supported constituents are the grouped nodes below, not a verified inventory of distinct source records.</p>
+          <p className="peridot-inspector-compact-muted">Locations organize the nodes for inspection. Open a location to explore it separately; its records and related entities form broader context.</p>
+        </div>
 
         <ClusterMemberGroups
           members={members}
@@ -227,9 +233,10 @@ export function InspectorClusterView({
           onOpenPersonDetail={onOpenPersonDetail}
           onOpenPlaceDetail={onOpenPlaceDetail}
           isCompact={isCompact}
+          evidenceQuery={evidenceQuery}
         />
 
-        <InspectorClearSelectionButtonComponent onClear={clearSelection} />
+        {/* Clear selection is available in compact Next steps. */}
       </div>
     );
   }

@@ -51,7 +51,7 @@ export function deriveChartsIIScatter(rows = [], { xField, yField, sizeField = '
     const coordinateKey = JSON.stringify([x, y]);
     const overlapIndex = exactCoordinates.get(coordinateKey) || 0;
     exactCoordinates.set(coordinateKey, overlapIndex + 1);
-    points.push({ index, x, y, size, overlapIndex, coordinateKey });
+    points.push({ index, x, y, size, overlapIndex, coordinateKey, contributingRows: [row] });
   }
   const overlappingCoordinates = [...exactCoordinates.values()].filter(count => count > 1).length;
   const overlappingRecords = [...exactCoordinates.values()].reduce((count, value) => count + Math.max(0, value - 1), 0);

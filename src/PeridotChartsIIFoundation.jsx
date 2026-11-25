@@ -308,7 +308,7 @@ function InfoPopover({ label, compact = false, align = 'end', children }) {
   </span>;
 }
 
-function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null, localFiltersByChart, setLocalFiltersByChart, appearanceByChart, setAppearanceByChart, stylesByChart, setStylesByChart, presentationByChart, setPresentationByChart, sidebarWidth, setSidebarWidth, colorRegistryRef }) {
+function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows, chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null, localFiltersByChart, setLocalFiltersByChart, appearanceByChart, setAppearanceByChart, stylesByChart, setStylesByChart, presentationByChart, setPresentationByChart, sidebarWidth, setSidebarWidth, colorRegistryRef, onInspectChartMark, onChartResultChange }) {
   const chartSvgContainerRef = useRef(null);
   const resizeGridRef = useRef(null);
   const resizeGuideRef = useRef(null);
@@ -521,6 +521,34 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
     if (chart?.key === 'scatter' && !chronologyDragging) settledScatterResult.current = next;
     return next;
   }, [chart?.key, chronologyDragging, isLiveFamily, contract, scatterRows, settings, scatterMode, bubbleSizeField, wideSeriesFields, filteredExploreRows, boxMode, boxFields, boxMeasureField, boxGroupField, dotMode, dotFields, dotMeasureField, dotGroupField, dotAggregation, dotOrder, treemapHierarchy, treemapParentField, treemapChildField, treemapMeasureField, slopeMode, slopeFields, slopeMeasureField, slopeGroupField, slopeAggregation, slopeInterval, effectiveSlopeFirst, effectiveSlopeSecond, slopeFirstLabel, slopeSecondLabel]);
+  const inspectCalculatedMark = (mark, parent = null) => {
+    if (!mark || chartResult?.status !== 'ready' || !onInspectChartMark || !Array.isArray(mark.contributingRows)) return;
+    const calculation = chartResult.chart?.provenance;
+    if (!calculation || !Array.isArray(mark.contributingRows)) return;
+    onInspectChartMark({
+      kind: 'chart-mark', chartType: chartResult.chart.chartType,
+      chartKey: chart.key, title: chartResult.chart.title,
+      label: parent ? `${parent.label} · ${mark.label}` : mark.label,
+      category: parent?.label || mark.label, series: parent ? mark.label : '',
+      ...(mark.xValue !== undefined ? { xValue: mark.xValue, yValue: mark.yValue, sizeValue: mark.size } : {}),
+      ...(mark.contributingCategoryLabels ? { contributingCategoryLabels: mark.contributingCategoryLabels, observationCount: mark.observationCount } : {}),
+      ...(mark.statistics ? { statistics: mark.statistics } : {}),
+      ...(mark.comparison ? { comparison: mark.comparison } : {}),
+      ...(mark.hierarchy ? { hierarchy: mark.hierarchy } : {}),
+      ...(mark.observationCount != null ? { observationCount: mark.observationCount } : {}),
+      value: mark.value ?? mark.count, unit: mark.unit,
+      calculation, contributingRows: mark.contributingRows,
+      shownTotal: chartResult.chart.total ?? (chartResult.chart.data || []).reduce((total, row) => {
+        const value = Number.isFinite(Number(row.count)) ? Number(row.count)
+          : Number.isFinite(Number(row.total)) ? Number(row.total)
+          : Array.isArray(row.groups) ? row.groups.reduce((sum, group) => sum + (Number(group.count) || 0), 0) : 0;
+        return total + value;
+      }, 0),
+    });
+  };
+  // A new calculation can invalidate the inspected aggregate. Never leave an
+  // old bar/slice value in the Inspector after chart settings or scope change.
+  useEffect(() => { onChartResultChange?.(chart?.key); }, [chartResult, chart?.key, onChartResultChange]);
   // Appearance is visual-only and intentionally outside chart derivation deps.
   const appearanceLabels = getChartsIIAppearanceLabels(chartResult?.chart);
   const registry = colorRegistryRef.current[chart?.key] ||= {};
@@ -1073,22 +1101,22 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
                 ) : isResultPopulated ? (
                   <div ref={chartSvgContainerRef} className="h-full min-h-[320px] min-w-0">
                     <ChartsIIAppearanceProvider value={appearanceContext}>
-                    {chartResult.chart.chartType === 'treemap' && <AnalyticsTreemapChart key={`${treemapHierarchy ? "h" : "s"}:${treemapParentField}:${treemapChildField}:${treemapMeasureField}`} parents={chartResult.chart.parents} total={chartResult.chart.total} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} measureLabel={chartResult.chart.measureLabel} />}
-                    {chartResult.chart.chartType === 'slope' && <AnalyticsSlopeChart series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} firstLabel={chartResult.chart.firstLabel} secondLabel={chartResult.chart.secondLabel} />}
-                    {chartResult.chart.chartType === 'dot' && <AnalyticsDotPlotChart points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} valueLabel={chartResult.chart.valueLabel} />}
-                    {chartResult.chart.chartType === 'box' && <AnalyticsBoxPlotChart boxes={chartResult.chart.boxes} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} scaleMode={boxScale} />}
-                    {chartResult.chart.chartType === 'scatter' && <AnalyticsScatterChart pointLabels={chartPresentation.showPointLabels && chartPresentation.pointLabelField ? scatterRows.map(row=>{ const raw=row?.[chartPresentation.pointLabelField]; return ['string','number'].includes(typeof raw)?String(raw):''; }) : []} dateRange={chartResult.chart.xAxisDate ? renderedScatterDateRange : null} points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} xLabel={chartResult.chart.xLabel} xAxisDate={chartResult.chart.xAxisDate} yLabel={chartResult.chart.yLabel} sizeLabel={chartResult.chart.sizeLabel} />}
-                    {chartResult.chart.chartType === 'bar' && <AnalyticsBarChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} orientation={chartResult.chart.orientation} />}
-                    {chartResult.chart.chartType === 'area' && <AnalyticsAreaChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
-                    {chartResult.chart.chartType === 'stackedArea' && <AnalyticsStackedAreaChart series={chartResult.chart.series} periods={chartResult.chart.periods} totals={chartResult.chart.totals} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
-                    {chartResult.chart.chartType === 'line' && <AnalyticsLineChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
-                    {chartResult.chart.chartType === 'multiLine' && <AnalyticsMultiLineChart series={chartResult.chart.series} periods={chartResult.chart.periods} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
-                    {chartResult.chart.chartType === 'groupedBar' && <AnalyticsGroupedBarChart data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
-                    {chartResult.chart.chartType === 'stackedBar' && <AnalyticsStackedBarChart data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} mode={stackedBarMode} />}
-                    {chartResult.chart.chartType === 'pie' && <AnalyticsPieChart data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} donut={pieMode === 'donut'} />}
-                    {chartResult.chart.chartType === 'histogram' && <AnalyticsHistogram data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
-                    {chartResult.chart.chartType === 'heatmap' && <AnalyticsHeatmap rows={chartResult.chart.rows} columns={chartResult.chart.columns} cells={chartResult.chart.cells} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
-                    {chartResult.chart.chartType === 'sunburst' && <AnalyticsSunburst parents={chartResult.chart.parents} total={chartResult.chart.total} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
+                    {chartResult.chart.chartType === 'treemap' && <AnalyticsTreemapChart onSelectMark={inspectCalculatedMark} key={`${treemapHierarchy ? "h" : "s"}:${treemapParentField}:${treemapChildField}:${treemapMeasureField}`} parents={chartResult.chart.parents} total={chartResult.chart.total} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} measureLabel={chartResult.chart.measureLabel} />}
+                    {chartResult.chart.chartType === 'slope' && <AnalyticsSlopeChart onSelectMark={inspectCalculatedMark} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} firstLabel={chartResult.chart.firstLabel} secondLabel={chartResult.chart.secondLabel} />}
+                    {chartResult.chart.chartType === 'dot' && <AnalyticsDotPlotChart onSelectMark={inspectCalculatedMark} points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} valueLabel={chartResult.chart.valueLabel} />}
+                    {chartResult.chart.chartType === 'box' && <AnalyticsBoxPlotChart onSelectMark={inspectCalculatedMark} boxes={chartResult.chart.boxes} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} scaleMode={boxScale} />}
+                    {chartResult.chart.chartType === 'scatter' && <AnalyticsScatterChart onSelectMark={inspectCalculatedMark} pointLabels={chartPresentation.showPointLabels && chartPresentation.pointLabelField ? scatterRows.map(row=>{ const raw=row?.[chartPresentation.pointLabelField]; return ['string','number'].includes(typeof raw)?String(raw):''; }) : []} dateRange={chartResult.chart.xAxisDate ? renderedScatterDateRange : null} points={chartResult.chart.points} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} xLabel={chartResult.chart.xLabel} xAxisDate={chartResult.chart.xAxisDate} yLabel={chartResult.chart.yLabel} sizeLabel={chartResult.chart.sizeLabel} />}
+                    {chartResult.chart.chartType === 'bar' && <AnalyticsBarChart onSelectMark={inspectCalculatedMark} data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} orientation={chartResult.chart.orientation} />}
+                    {chartResult.chart.chartType === 'area' && <AnalyticsAreaChart onSelectMark={inspectCalculatedMark} data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
+                    {chartResult.chart.chartType === 'stackedArea' && <AnalyticsStackedAreaChart onSelectMark={inspectCalculatedMark} series={chartResult.chart.series} periods={chartResult.chart.periods} totals={chartResult.chart.totals} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
+                    {chartResult.chart.chartType === 'line' && <AnalyticsLineChart onSelectMark={inspectCalculatedMark} data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
+                    {chartResult.chart.chartType === 'multiLine' && <AnalyticsMultiLineChart onSelectMark={inspectCalculatedMark} series={chartResult.chart.series} periods={chartResult.chart.periods} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} temporalAxis={chartResult.chart.temporalAxis} gapDisplay={gapDisplay} />}
+                    {chartResult.chart.chartType === 'groupedBar' && <AnalyticsGroupedBarChart onSelectMark={inspectCalculatedMark} data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
+                    {chartResult.chart.chartType === 'stackedBar' && <AnalyticsStackedBarChart onSelectMark={inspectCalculatedMark} data={chartResult.chart.data} series={chartResult.chart.series} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} mode={stackedBarMode} />}
+                    {chartResult.chart.chartType === 'pie' && <AnalyticsPieChart onSelectMark={inspectCalculatedMark} data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} donut={pieMode === 'donut'} />}
+                    {chartResult.chart.chartType === 'histogram' && <AnalyticsHistogram onSelectMark={inspectCalculatedMark} data={chartResult.chart.data} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
+                    {chartResult.chart.chartType === 'heatmap' && <AnalyticsHeatmap onSelectMark={inspectCalculatedMark} rows={chartResult.chart.rows} columns={chartResult.chart.columns} cells={chartResult.chart.cells} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
+                    {chartResult.chart.chartType === 'sunburst' && <AnalyticsSunburst onSelectMark={inspectCalculatedMark} parents={chartResult.chart.parents} total={chartResult.chart.total} title={chartResult.chart.title} subtitle={chartResult.chart.subtitle} />}
                     </ChartsIIAppearanceProvider>
                   </div>
                 ) : (
@@ -1116,7 +1144,7 @@ function FoundationBuilder({ chart, onBackToCatalogue, profileRows, previewRows,
   );
 }
 
-export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSelectChart, onNavigatePage, profileRows = [], previewRows = [], chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null }) {
+export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSelectChart, onNavigatePage, profileRows = [], previewRows = [], chronologyDragging = false, scatterChronologyAvailable = true, scatterDateRange = null, onInspectChartMark, onChartResultChange }) {
   // Keep separate chart-local rules when the researcher browses the Catalogue
   // and returns to another Builder chart during this mounted workspace session.
   const [localFiltersByChart, setLocalFiltersByChart] = useState({});
@@ -1135,7 +1163,7 @@ export function PeridotChartsIIFoundation({ selectedChartKey, currentPage, onSel
   return (
     <div className={`min-h-0 flex-1 rounded-xl px-4 pb-4 text-[var(--peridot-color-hex-24382d)] sm:px-5 sm:pb-5 ${showingBuilder ? "overflow-hidden bg-[var(--peridot-color-hex-f8f4e6)] pt-1" : "overflow-auto bg-[#f9f4e9] pt-9"}`}>
       {showingBuilder
-        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} scatterChronologyAvailable={scatterChronologyAvailable} scatterDateRange={scatterDateRange} localFiltersByChart={localFiltersByChart} setLocalFiltersByChart={setLocalFiltersByChart} appearanceByChart={appearanceByChart} setAppearanceByChart={setAppearanceByChart} stylesByChart={stylesByChart} setStylesByChart={setStylesByChart} presentationByChart={presentationByChart} setPresentationByChart={setPresentationByChart} sidebarWidth={sidebarWidth} setSidebarWidth={setSidebarWidth} colorRegistryRef={colorRegistryRef} onBackToCatalogue={() => onNavigatePage('catalogue')} />
+        ? <FoundationBuilder chart={chart} profileRows={profileRows} previewRows={previewRows} chronologyDragging={chronologyDragging} scatterChronologyAvailable={scatterChronologyAvailable} scatterDateRange={scatterDateRange} localFiltersByChart={localFiltersByChart} setLocalFiltersByChart={setLocalFiltersByChart} appearanceByChart={appearanceByChart} setAppearanceByChart={setAppearanceByChart} stylesByChart={stylesByChart} setStylesByChart={setStylesByChart} presentationByChart={presentationByChart} setPresentationByChart={setPresentationByChart} sidebarWidth={sidebarWidth} setSidebarWidth={setSidebarWidth} colorRegistryRef={colorRegistryRef} onInspectChartMark={onInspectChartMark} onChartResultChange={onChartResultChange} onBackToCatalogue={() => onNavigatePage('catalogue')} />
         : <FoundationCatalogue onSelectChart={onSelectChart} charts={charts} profile={profile} />}
     </div>
   );

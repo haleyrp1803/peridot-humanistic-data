@@ -44,7 +44,8 @@ export function deriveChartsIISlope(rows = [], {
   const selectedFields = unique(fields);
   const first = Number(firstPeriod), second = Number(secondPeriod);
   const groups = new Map();
-  if (columnMode) selectedFields.forEach(name => groups.set(name, [[],[]]));
+  const sourceGroups = new Map();
+  if (columnMode) selectedFields.forEach(name => { groups.set(name, [[],[]]); sourceGroups.set(name, [[],[]]); });
   const excluded = { missingDate:0, invalidDate:0, insufficientPrecision:0, otherPeriods:0, missingCategory:0, missingMeasure:0, invalidMeasure:0 };
   const includedRecords = [0,0];
   let firstLabel = '', secondLabel = '';
@@ -63,18 +64,20 @@ export function deriveChartsIISlope(rows = [], {
         const value = parseAnalyticsNumber(raw);
         if (value === null || !Number.isFinite(value)) { excluded.invalidMeasure++; continue; }
         groups.get(name)[index].push(value);
+        sourceGroups.get(name)[index].push(row);
       }
     } else {
       const rawCategory = getAnalyticsFieldValue(row, categoryField);
       if (empty(rawCategory)) { excluded.missingCategory++; continue; }
       const name = String(rawCategory).trim();
-      if (!groups.has(name)) groups.set(name, [[],[]]);
-      if (measureIsCount) { groups.get(name)[index].push(1); continue; }
+      if (!groups.has(name)) { groups.set(name, [[],[]]); sourceGroups.set(name, [[],[]]); }
+      if (measureIsCount) { groups.get(name)[index].push(1); sourceGroups.get(name)[index].push(row); continue; }
       const rawValue = getAnalyticsFieldValue(row, measureField);
       if (empty(rawValue)) { excluded.missingMeasure++; continue; }
       const value = parseAnalyticsNumber(rawValue);
       if (value === null || !Number.isFinite(value)) { excluded.invalidMeasure++; continue; }
       groups.get(name)[index].push(value);
+      sourceGroups.get(name)[index].push(row);
     }
   }
   let entries = [...groups.entries()].filter(([, values]) => values[0].length || values[1].length);
@@ -88,6 +91,9 @@ export function deriveChartsIISlope(rows = [], {
     const before = summarize(values[0], operation);
     const after = summarize(values[1], operation);
     return { label, before, after, nBefore:values[0].length, nAfter:values[1].length,
+      contributingRowsBefore: sourceGroups.get(label)[0],
+      contributingRowsAfter: sourceGroups.get(label)[1],
+      contributingRows: [...sourceGroups.get(label)[0], ...sourceGroups.get(label)[1]],
       delta: before === null || after === null ? null : after - before };
   });
   const paired = series.filter(s => s.delta !== null).length;

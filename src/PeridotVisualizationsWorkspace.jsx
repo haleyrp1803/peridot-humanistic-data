@@ -995,6 +995,9 @@ export function PeridotVisualizationsWorkspace({
   onSelectGeographicMap,
   onSelectForceDirected,
   onSelectTimeline,
+  onInspectChartMark,
+  onChartResultChange,
+  onExitChartViewer,
   timelineWorkspaceProps,
   onOpenAnalytics,
   onOpenSearch,
@@ -1038,6 +1041,12 @@ export function PeridotVisualizationsWorkspace({
   // discard a configured chart just because the researcher browses again.
   const [chartsIIPage, setChartsIIPage] = useState('catalogue');
   const [chartsIIChronologyDragging, setChartsIIChronologyDragging] = useState(false);
+  // A chart mark is inspectable only while its Builder remains visible.
+  useEffect(() => {
+    if (selectedTool !== VISUALIZATION_TOOLS.CHARTS_II || chartsIIPage !== 'builder') {
+      onExitChartViewer?.();
+    }
+  }, [selectedTool, chartsIIPage, onExitChartViewer]);
   // Read the same canonical domain and selected window as the shared dock.
   // No independent Scatter date window or competing filter state is created.
   const scatterChronologyDomain = useMemo(() => {
@@ -1242,6 +1251,8 @@ export function PeridotVisualizationsWorkspace({
     if (selectedTool === VISUALIZATION_TOOLS.CHARTS_II) {
       return (
         <PeridotChartsIIFoundation
+          onInspectChartMark={onInspectChartMark}
+          onChartResultChange={onChartResultChange}
           selectedChartKey={chartsIIChartKey}
           currentPage={chartsIIPage}
           profileRows={analyticsWorkspaceProps?.chartsIIProfileRows || []}

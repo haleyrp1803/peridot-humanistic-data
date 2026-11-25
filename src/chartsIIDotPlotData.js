@@ -33,7 +33,7 @@ export function deriveChartsIIDotPlot(rows = [], { mode = 'category', fields = [
     includedMeasurements: 0, excluded: { missingMeasure: 0, invalidMeasure: 0, missingCategory: 0 },
     groupsOmitted: 0, plottedGroups: 0, note: 'One dot is one aggregated category or numerical column. No missing observation is assigned zero.' };
   if (columnMode) {
-    for (const field of selectedFields) byGroup.set(field, { values: [], records: 0 });
+    for (const field of selectedFields) byGroup.set(field, { values: [], records: 0, contributingRows: [] });
     for (const row of records) for (const field of selectedFields) {
       const raw = row?.[field];
       if (missing(raw)) { reporting.excluded.missingMeasure++; continue; }
@@ -41,6 +41,7 @@ export function deriveChartsIIDotPlot(rows = [], { mode = 'category', fields = [
       if (numeric === null || !Number.isFinite(numeric)) { reporting.excluded.invalidMeasure++; continue; }
       byGroup.get(field).values.push(numeric);
       byGroup.get(field).records++;
+      byGroup.get(field).contributingRows.push(row);
       reporting.includedMeasurements++;
     }
   } else {
@@ -48,15 +49,16 @@ export function deriveChartsIIDotPlot(rows = [], { mode = 'category', fields = [
       const categoryRaw = getAnalyticsFieldValue(row, categoryField);
       if (missing(categoryRaw)) { reporting.excluded.missingCategory++; continue; }
       const category = String(categoryRaw).trim();
-      if (!byGroup.has(category)) byGroup.set(category, { values: [], records: 0 });
+      if (!byGroup.has(category)) byGroup.set(category, { values: [], records: 0, contributingRows: [] });
       const group = byGroup.get(category);
-      if (actualAggregate === 'count') { group.records++; reporting.includedMeasurements++; continue; }
+      if (actualAggregate === 'count') { group.records++; group.contributingRows.push(row); reporting.includedMeasurements++; continue; }
       const raw = getAnalyticsFieldValue(row, measureField);
       if (missing(raw)) { reporting.excluded.missingMeasure++; continue; }
       const numeric = parseAnalyticsNumber(raw);
       if (numeric === null || !Number.isFinite(numeric)) { reporting.excluded.invalidMeasure++; continue; }
       group.values.push(numeric);
       group.records++;
+      group.contributingRows.push(row);
       reporting.includedMeasurements++;
     }
   }
@@ -67,7 +69,7 @@ export function deriveChartsIIDotPlot(rows = [], { mode = 'category', fields = [
   let points = [...byGroup.entries()].filter(([, info]) => info.records).map(([label, info]) => ({
     label,
     value: actualAggregate === 'count' ? info.records : aggregate(info.values, actualAggregate),
-    n: info.records,
+    n: info.records, contributingRows: info.contributingRows,
   }));
   points.sort((a,b) => b.value - a.value || a.label.localeCompare(b.label));
   const limit = Number.isFinite(Number(maxGroups)) && Number(maxGroups) > 0 ? Math.floor(Number(maxGroups)) : 10;

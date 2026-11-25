@@ -11,8 +11,11 @@
  * - Do not split compact and full Inspector into independent state systems. They must remain views over the same selected evidence state.
  */
 
-import React from 'react';
+import React, { useRef, useState } from 'react';
+import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 import { InspectorBodyRouter } from './InspectorBodyRouter.jsx';
+import { buildPeridotInspectorSelectionEvidence } from './peridotInspectorSelectionEvidence.js';
+import { describePeridotTimelineMark } from './peridotInspectorTimelinePresentation.js';
 
 /**
  * Shared Inspector content boundary.
@@ -47,6 +50,11 @@ export function InspectorContent({
     onBackInspector,
     onCloseInspector,
     onExpandInspector,
+    onOpenPersonDetail,
+    onOpenPlaceDetail,
+    onOpenLetterDetail,
+    onSearchRelated,
+    clearSelection,
   } = inspectorState;
 
   const {
@@ -54,6 +62,136 @@ export function InspectorContent({
   } = shellComponents;
 
   const isWorkspace = presentation === 'workspace';
+  // Compact inspection has one stationary banner and one independently scrollable
+  // reading surface. Refs are local navigation only; selection/history remain in App.
+  const compactScrollRef = useRef(null);
+  const overviewRef = useRef(null);
+  const dataRef = useRef(null);
+  const nextStepsRef = useRef(null);
+  const [keywordInput, setKeywordInput] = useState('');
+  // Disclosure state follows deliberate user toggles, never hover. The stable
+  // selection key keeps it open through category/presentation updates while
+  // allowing the next selected mark to start with its own disclosure state.
+  const [markMethodDisclosure, setMarkMethodDisclosure] = useState({});
+  const methodSelectionKey = String(inspectorState?.selectedProps?.id
+    ?? inspectorState?.selectedProps?.event?.id
+    ?? inspectorState?.selectedProps?.label
+    ?? 'unknown-selection');
+  const methodExpanded = Boolean(markMethodDisclosure[methodSelectionKey]);
+  const onMethodToggle = (event) => {
+    const nextOpen = event.currentTarget.open;
+    setMarkMethodDisclosure((previous) => previous[methodSelectionKey] === nextOpen
+      ? previous : { ...previous, [methodSelectionKey]: nextOpen });
+  };
+
+  const selected = inspectorState?.selectedProps;
+  const selectedKind = inspectorState?.selectedKind;
+  const selectionEvidence = buildPeridotInspectorSelectionEvidence({
+    selectedKind, selectedProps: selected, viewMode: inspectorState?.viewMode,
+  });
+  const geographicEvidence = selectionEvidence.representation.markType === 'geographic-entity-anchor'
+    && selectionEvidence.support.status === 'verified';
+  const clusterEvidence = selectedKind === 'cluster' && inspectorState?.viewMode === 'geographic';
+  const networkEvidence = selectionEvidence.representation.markType === 'network-entity-node';
+  const markRoleLabels = selectionEvidence.representation.details
+    .filter((item) => item.kind === 'mapped-role' || item.kind === 'derived-anchor')
+    .map((item) => item.value);
+  const markLocation = selectionEvidence.representation.details
+    .find((item) => item.kind === 'mapped-place')?.value || ''; 
+  // Mark-level orientation only: do not promote linked-record attributes to
+  // properties of an entity, or confuse cluster members with source records.
+  const event = selected?.event;
+  const timelineDescription = event ? describePeridotTimelineMark(event) : null;
+  const timelineKind = event?.temporalKind === 'interval' || event?.temporalKind === 'openInterval'
+    ? 'Selected period' : 'Selected event';
+  const isPlace = selectedKind === 'place-detail' || selected?.entityType === 'place';
+  const isCluster = selectedKind === 'cluster';
+  const isEdge = selectedKind === 'edge';
+  const isTimeline = selectedKind === 'timeline-event';
+  const isChart = selectedKind === 'chart-mark';
+  const markType = isCluster ? 'Selected cluster'
+    : isChart ? 'Selected chart mark'
+    : isEdge ? 'Selected connection'
+      : isTimeline ? timelineKind
+        : selectedKind === 'letter-detail' ? 'Selected source record'
+          : isPlace ? 'Selected place'
+            : selectedKind === 'node' || selectedKind === 'person-detail' ? 'Selected person or entity'
+              : 'Current selection';
+  const clusterMembers = selected?.memberCount ?? selected?.clusterSize
+    ?? selected?.memberDetails?.length;
+  const eventLabel = event?.displayLabel || event?.sourceText || event?.temporalRole;
+  const selectedLabel = isChart ? selected?.label
+    : isEdge
+    ? [selected?.sourceLabel, selected?.targetLabel].filter(Boolean).join(selected?.direction === 'directed' ? ' → ' : ' — ')
+    : isTimeline ? eventLabel
+      : selected?.detailLabel || selected?.label || selected?.sourceLabel || '';
+  // These targets come from the actual selected mark and associated mapped
+  // records, not from guessing all co-occurring row values are entity traits.
+  const selectedRows = isTimeline ? [selected?.row || event?.row].filter(Boolean)
+    : isEdge ? (selected?.letterMetadata || [])
+      : (letterState?.selectedLetterMetadata || []);
+  const selectedRecord = isTimeline ? (selected?.row || event?.row)
+    : selectedKind === 'letter-detail' ? selected?.letter : selectedRows[0];
+  const recordStructure = selectedRecord ? buildPeridotRecordStructure(selectedRecord) : null;
+  const selectedEntityId = selected?.entityId || selected?.personMetadata?.canonicalEntityId || '';
+  const personCandidate = isChart ? '' : isTimeline
+    ? (event?.subject?.label && event.subject.label !== 'Record' ? event.subject.label : '')
+    : isEdge ? '' // Edge endpoint object types are not guaranteed by a label alone.
+      : !isPlace && !isCluster && selectedKind !== 'letter-detail' ? selectedLabel : '';
+  const placeCandidate = isChart ? '' : isPlace ? selectedLabel
+    : (!isCluster && !isEdge && (selected?.anchorLabel || selected?.placeLabel || selected?.locationLabel
+      || recordStructure?.places?.[0]?.value || ''));
+  const personCandidateId = !isEdge && !isTimeline ? selectedEntityId : '';
+  // A Map-mark action must open a row that actually produced that visual mark,
+  // not the first record in the broader entity's linked-record list.
+  const nextActionRecords = isChart ? selected?.contributingRows || []
+    : geographicEvidence
+    ? selectionEvidence.support.records
+    : selectedRecord ? [selectedRecord] : selectedRows;
+  const markExplanation = isChart
+    ? selected?.chartType === 'scatter'
+      ? 'This point represents one eligible source observation at its original X and Y values. Bubble size, when enabled, comes from a mapped numerical field; any display offset for coincident points does not change the measurements.'
+      : selected?.chartType === 'histogram'
+        ? `This bin counts ${selected?.unit === 'categories' ? 'category totals' : 'numerical observations'} within the displayed range. Its frequency is not necessarily the number of distinct contributing source records.`
+        : selected?.chartType === 'heatmap'
+          ? `This cell represents ${selected?.calculation?.aggregation || 'a calculation'} for the intersection of two mapped category fields. The supporting records are restricted to this intersection.`
+          : selected?.chartType === 'box'
+            ? selected?.statistics?.outlier
+              ? 'This point is an individual observed measurement outside the displayed distribution’s 1.5 × IQR fences. The source record, not the quartile calculation, supplies its value.'
+              : 'This box summarizes the distribution of valid numerical observations. Quartiles use R type 7 interpolation; whiskers show the most extreme inliers within 1.5 × IQR. The median is a derived statistic, not necessarily one observed record.'
+          : selected?.chartType === 'dot'
+            ? 'Each dot represents a calculated summary for one category or numerical column, rather than a single source record. Only eligible contributing measurements determine its value.'
+          : selected?.chartType === 'slope'
+            ? selected?.comparison?.period
+              ? 'This endpoint is an observed or calculated value for one selected calendar period. A missing value in the other period is not treated as zero.'
+              : 'This comparison connects values from two separately selected calendar periods. Its change is calculated only when both endpoints are observed; the connecting line does not represent intermediate observations.'
+          : selected?.chartType === 'treemap'
+            ? 'This tile represents a nonnegative additive category total. Its area is proportional to that value. A consolidated Other tile combines omitted categories without discarding their contributing records.'
+          : selected?.chartType === 'sunburst'
+            ? 'This ring segment represents a parent category or a child within its mapped parent. Its angular share is calculated from the displayed total; hierarchy reflects the fields selected by the researcher.'
+          : ['line','multiLine','area','stackedArea'].includes(selected?.chartType)
+            ? `This ${selected?.chartType === 'stackedArea' ? 'stacked area segment' : selected?.chartType === 'area' ? 'area interval' : 'time-series point'} represents ${selected?.calculation?.aggregation || 'a calculation'} in the displayed calendar interval. Connected lines and filled geometry are visual representations, not additional source observations.`
+            : `The ${selected?.chartType === 'pie' ? 'slice' : selected?.chartType === 'groupedBar' ? 'grouped bar' : selected?.chartType === 'stackedBar' ? 'stacked segment' : 'bar'} represents ${selected?.calculation?.aggregation || 'a calculation'} of ${selected?.calculation?.measureField || 'the selected measure'} grouped by ${selected?.calculation?.groupField || 'the selected category'}. This is an analytical result, not an individual source record.`
+    : isCluster
+    ? `This is a display grouping of ${clusterMembers ?? 'multiple'} visible nodes, not necessarily the same number of distinct source records.`
+    : isEdge
+      ? `This ${selected?.direction === 'directed' ? 'directed' : 'mapped'} connection summarizes the relationship between the selected endpoints. Its supporting records and represented weight are listed below.`
+      : isTimeline
+        ? `This ${timelineKind === 'Selected period' ? 'period' : 'point'} is positioned from the mapped ${event?.temporalRole || 'time'} assertion${event?.subject?.label && event.subject.label !== 'Record' ? ` about ${event.subject.label}` : ''}.`
+        : selectedKind === 'letter-detail'
+          ? 'An individual mapped source record; open the dossier to examine its complete contents and provenance.'
+          : isPlace
+            ? `A place represented in the current ${inspectorState?.viewMode === 'geographic' ? 'map' : 'visualization'}. Its mapped associations are listed below.`
+            : selectedKind === 'node' || selectedKind === 'person-detail'
+              ? `${selected?.anchorLabel ? `Shown at ${selected.anchorLabel} under the current map anchor settings.` : 'A mapped entity in the current visualization.'} The evidence section distinguishes assertions about this entity from fields in related records.`
+              : 'Supporting mapped evidence is shown below.';
+  const jumpToCompactSection = (sectionRef) => {
+    const scrollArea = compactScrollRef.current;
+    const section = sectionRef.current;
+    if (!scrollArea || !section) return;
+    // The scroll surface is positioned, so the section offset is local to it.
+    scrollArea.scrollTo({ top: section.offsetTop, behavior: 'smooth' });
+  };
 
   const inspectorPaletteStyle = {
     /*
@@ -193,6 +331,164 @@ export function InspectorContent({
   const actionButtonClassName = 'rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[0.16em] text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45';
 
   const closeButtonClassName = 'flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[var(--button-border)] bg-[var(--button-bg)] text-base font-bold leading-none text-[var(--button-text)] shadow-sm transition hover:border-[var(--button-hover-border)] hover:bg-[var(--button-hover-bg)] hover:text-[var(--button-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/45';
+
+  // Keep the original source-backed data reader intact; Next steps provides
+  // a draft keyword handoff to Explore rather than filtering this small panel.
+  if (!isWorkspace && showHeader) {
+    return (
+      <div
+        className="peridot-inspector-shell peridot-inspector-shell-compact peridot-inspector-reference-ground peridot-inspector-compact-layout"
+        style={inspectorPaletteStyle}
+        data-inspector-presentation="compact"
+      >
+        <div className="peridot-inspector-compact-banner">
+          <div className="peridot-inspector-compact-banner-top">
+            <div className="peridot-inspector-compact-title">
+              <InspectorHeaderComponent
+                showInspectorInfo={showInspectorInfo}
+                setShowInspectorInfo={setShowInspectorInfo}
+              />
+            </div>
+            <div className="peridot-inspector-compact-controls" aria-label="Inspector controls">
+              {showBackButton && canGoBack && typeof onBackInspector === 'function' ? (
+                <button type="button" className="peridot-inspector-compact-control" onClick={onBackInspector} title="Back" aria-label="Go back in Inspector history">Back</button>
+              ) : null}
+              {showExpandButton && typeof onExpandInspector === 'function' ? (
+                <button type="button" className="peridot-inspector-compact-control" onClick={onExpandInspector} title="Open full dossier" aria-label="Expand Inspector workspace">Expand</button>
+              ) : null}
+              {showInlineCloseButton && typeof onCloseInspector === 'function' ? (
+                <button type="button" className="peridot-inspector-compact-close" onClick={onCloseInspector} title="Close Inspector" aria-label="Close Inspector">×</button>
+              ) : null}
+            </div>
+          </div>
+          <nav className="peridot-inspector-compact-nav" aria-label="Inspector sections">
+            <button type="button" onClick={() => jumpToCompactSection(overviewRef)}>Overview</button>
+            <button type="button" onClick={() => jumpToCompactSection(dataRef)}>Data</button>
+            <button type="button" onClick={() => jumpToCompactSection(nextStepsRef)}>Next steps</button>
+          </nav>
+        </div>
+        <div className="peridot-inspector-compact-scroll" ref={compactScrollRef}>
+          <section className="peridot-inspector-compact-section" ref={overviewRef} aria-labelledby="inspector-compact-overview-heading">
+            <h3 id="inspector-compact-overview-heading">What am I seeing?</h3>
+            <div className="peridot-inspector-compact-orientation">
+              <span className="peridot-inspector-compact-eyebrow">{markType}</span>
+              {selectedLabel ? <strong>{selectedLabel}</strong> : null}
+              {geographicEvidence ? (
+                <>
+                  <p className="peridot-inspector-representation-lead">At <strong>{markLocation}</strong>{markRoleLabels.length ? ` · ${markRoleLabels.join(' · ')}` : ''}</p>
+                  <div className="peridot-inspector-mark-explanation">
+                    <strong>Why this mark appears</strong>
+                    <p>{markRoleLabels.some((role) => role === 'Most frequent place')
+                      ? `The Map positions this entity at ${markLocation} using the enabled Most frequent place calculation, based on its mapped place observations in the displayed scope.`
+                      : markRoleLabels.length
+                        ? `The Map positions this entity at ${markLocation} because ${markRoleLabels.join(' and ')} ${markRoleLabels.length === 1 ? 'is an enabled geographic role' : 'are enabled geographic roles'}.`
+                        : `The current Map anchor settings position this entity at ${markLocation}.`}</p>
+                    <details className="peridot-inspector-mark-method" open={methodExpanded} onToggle={onMethodToggle}>
+                      <summary>How Peridot determined this</summary>
+                      <p>The source supplies place values; the researcher defines their mapped roles; the Map uses enabled anchor settings to construct this visual node.</p>
+                      <p>{selectionEvidence.support.recordCount} distinct supporting source {selectionEvidence.support.recordCount === 1 ? 'record is' : 'records are'} retained for this mark in the displayed Map scope. This does not necessarily describe all records associated with the entity.</p>
+                    </details>
+                  </div>
+                </>
+              ) : networkEvidence ? (
+                <div className="peridot-inspector-mark-explanation">
+                  <strong>Why this mark appears</strong>
+                  {selectionEvidence.support.status === 'verified' || selectionEvidence.support.status === 'partial' ? (
+                    <>
+                      <p>The Network displays this entity through {selected?.networkMarkEvidence?.edgeCount ?? 0} incident connection{selected?.networkMarkEvidence?.edgeCount === 1 ? '' : 's'} in the current visualization. {selected?.networkMarkEvidence?.representedWeight !== null ? `Those connections represent ${selected.networkMarkEvidence.representedWeight} relationship occurrences.` : 'A complete relationship-occurrence weight is unavailable.'}</p>
+                      <details className="peridot-inspector-mark-method" open={methodExpanded} onToggle={onMethodToggle}>
+                        <summary>How Peridot determined this</summary>
+                        <p>The researcher defines relationship participants and their mappings; Peridot constructs the visible Network nodes and edges from those relationships in the displayed scope.</p>
+                        <p>{selectionEvidence.support.status === 'verified' ? `${selectionEvidence.support.recordCount} distinct supporting source records are retained for these connections.` : 'Some displayed connections lack record-level provenance, so a complete distinct-record total is not available.'} Other entity evidence may extend beyond the visible Network connections.</p>
+                      </details>
+                    </>
+                  ) : <p>This entity appears in the current Network. The selected node has not supplied verified displayed-edge provenance; associated entity records cannot be treated as support for this mark.</p>}
+                </div>
+              ) : isTimeline && timelineDescription ? (
+                <>
+                  <p className="peridot-inspector-representation-lead">
+                    {timelineDescription.subjectLabel ? <strong>{timelineDescription.subjectLabel}</strong> : <strong>{timelineDescription.role}</strong>}
+                    {' · '}{timelineDescription.markKind === 'period' ? 'Period' : 'Point event'}
+                  </p>
+                  <div className="peridot-inspector-mark-explanation">
+                    <strong>Why this mark appears</strong>
+                    <p>{timelineDescription.explanation}</p>
+                    <details className="peridot-inspector-mark-method" open={methodExpanded} onToggle={onMethodToggle}>
+                      <summary>How Peridot determined this</summary>
+                      <p>The source supplies the date assertion; the researcher maps its temporal role and subject; Peridot positions the mark using the mapped date and its declared precision. No historical-calendar conversion is performed.</p>
+                      <p>{selectionEvidence.support.status === 'verified' ? 'The selection retains its supporting source record.' : 'Verified source-record provenance is not available for this selection.'} A partial date’s possible occurrence window is not an asserted historical period.</p>
+                    </details>
+                  </div>
+                </>
+              ) : clusterEvidence ? (
+                <div className="peridot-inspector-mark-explanation">
+                  <strong>Why this mark appears</strong>
+                  <p>The Map groups {clusterMembers ?? 'multiple'} nearby visual nodes at this map scale. This is a display grouping, not a count of distinct source records.</p>
+                </div>
+              ) : <p>{markExplanation}</p>}
+            </div>
+          </section>
+          <section className="peridot-inspector-compact-section" ref={dataRef} aria-labelledby="inspector-compact-data-heading">
+            <h3 id="inspector-compact-data-heading">What data is being visualized?</h3>
+            <div className="peridot-inspector-body peridot-inspector-compact-evidence">
+              <InspectorBodyRouter
+                inspectorState={inspectorState}
+                letterState={letterState}
+                viewComponents={viewComponents}
+                presentation={presentation}
+                selectionEvidence={selectionEvidence}
+              />
+            </div>
+          </section>
+          <section className="peridot-inspector-compact-section" ref={nextStepsRef} aria-labelledby="inspector-compact-next-heading">
+            <h3 id="inspector-compact-next-heading">Where can I go next?</h3>
+            {typeof onSearchRelated === 'function' ? (
+              <form className="peridot-inspector-explore-search" role="search" onSubmit={(event) => {
+                event.preventDefault();
+                const term = keywordInput.trim();
+                if (term) onSearchRelated('keyword', term);
+              }}>
+                <label htmlFor="peridot-inspector-explore-keyword">Search your dataset</label>
+                <div className="peridot-inspector-explore-search-controls">
+                  <input
+                    id="peridot-inspector-explore-keyword"
+                    type="search"
+                    value={keywordInput}
+                    placeholder="Search people, places, records…"
+                    onChange={(event) => setKeywordInput(event.target.value)}
+                  />
+                  <button type="submit" disabled={!keywordInput.trim()}>Search</button>
+                </div>
+              </form>
+            ) : null}
+            <div className="peridot-inspector-next-actions">
+              {showExpandButton && typeof onExpandInspector === 'function' ? (
+                <button type="button" className="peridot-inspector-next-primary" onClick={onExpandInspector}>{isChart ? 'Open expanded Inspector' : 'Open full dossier'}</button>
+              ) : null}
+              {nextActionRecords.length && typeof onOpenLetterDetail === 'function' ? (
+                <button type="button" onClick={() => onOpenLetterDetail(nextActionRecords[0], 0)}>View contributing record</button>
+              ) : null}
+              {personCandidate && typeof onOpenPersonDetail === 'function' ? (
+                <button type="button" onClick={() => onOpenPersonDetail(personCandidate, personCandidateId)}>Inspect person · {personCandidate}</button>
+              ) : null}
+              {placeCandidate && typeof onOpenPlaceDetail === 'function' ? (
+                <button type="button" onClick={() => onOpenPlaceDetail(placeCandidate)}>Inspect place · {placeCandidate}</button>
+              ) : null}
+              {personCandidate && typeof onSearchRelated === 'function' ? (
+                <button type="button" onClick={() => onSearchRelated('person', personCandidate)}>Search person · {personCandidate}</button>
+              ) : null}
+              {placeCandidate && typeof onSearchRelated === 'function' ? (
+                <button type="button" onClick={() => onSearchRelated('place', placeCandidate)}>Search place · {placeCandidate}</button>
+              ) : null}
+            </div>
+            {typeof clearSelection === 'function' ? (
+              <button type="button" className="peridot-inspector-next-clear" onClick={clearSelection}>Clear selection</button>
+            ) : null}
+          </section>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={rootClassName} style={inspectorPaletteStyle} data-inspector-presentation={presentation}>

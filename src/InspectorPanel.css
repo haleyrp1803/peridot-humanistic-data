@@ -154,3 +154,620 @@
 .peridot-inspector-reference-body {
   background: transparent;
 }
+
+
+/* Compact Inspector: structural three-section navigation (Pass 2).
+ * The left-panel parent no longer scrolls: this shell owns the sole reading
+ * scrollbar, leaving the title, history controls, and anchor navigation fixed.
+ * Full dossier/workspace CSS remains on the original path above.
+ */
+.peridot-inspector-compact-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--peridot-role-inspector-chrome-border);
+  border-radius: 1.25rem;
+  color: var(--peridot-role-inspector-chrome-text);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.2);
+}
+.peridot-inspector-compact-banner {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  padding: 0.8rem 0.8rem 0.7rem;
+  border-bottom: 1px solid var(--peridot-role-inspector-header-border);
+  background: var(--peridot-role-inspector-header-bg);
+}
+.peridot-inspector-compact-banner-top {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.peridot-inspector-compact-title { min-width: 0; }
+.peridot-inspector-compact-title h2 { font-size: 1.45rem; }
+.peridot-inspector-compact-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+.peridot-inspector-compact-control,
+.peridot-inspector-compact-close {
+  flex: none;
+  padding: 0.36rem 0.55rem;
+  border: 1px solid var(--peridot-role-inspector-chrome-border);
+  border-radius: 0.65rem;
+  background: var(--peridot-role-inspector-clickable-bg);
+  color: var(--peridot-role-inspector-chrome-text);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+.peridot-inspector-compact-close { font-size: 1rem; line-height: 1; }
+.peridot-inspector-compact-nav {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+.peridot-inspector-compact-nav button {
+  min-width: 0;
+  padding: 0.55rem 0.25rem;
+  border: 1px solid var(--peridot-role-inspector-chrome-border);
+  border-radius: 0.6rem;
+  background: var(--peridot-role-inspector-clickable-bg);
+  color: var(--peridot-role-inspector-chrome-text);
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+.peridot-inspector-compact-nav button:hover,
+.peridot-inspector-compact-nav button:focus-visible {
+  background: var(--peridot-role-inspector-clickable-hover-bg);
+}
+.peridot-inspector-compact-scroll {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0.8rem;
+  scrollbar-gutter: stable;
+}
+.peridot-inspector-compact-section {
+  margin: 0 0 0.85rem;
+  padding: 0.8rem;
+  border: 1px solid var(--peridot-role-inspector-body-border);
+  border-radius: 0.9rem;
+  background: var(--peridot-role-inspector-body-bg);
+}
+.peridot-inspector-compact-section > h3 {
+  margin: 0 0 0.6rem;
+  color: var(--peridot-role-inspector-heading-text);
+  font-family: Georgia, 'Palatino Linotype', serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.peridot-inspector-compact-orientation {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.7rem;
+  border: 1px solid var(--peridot-role-inspector-card-border);
+  border-radius: 0.65rem;
+  background: var(--peridot-role-inspector-card-bg);
+  color: var(--peridot-role-inspector-card-text);
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+.peridot-inspector-compact-eyebrow {
+  color: var(--peridot-role-inspector-card-muted-text);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.075em;
+  text-transform: uppercase;
+}
+.peridot-inspector-compact-orientation p { margin: 0; line-height: 1.5; }
+.peridot-inspector-compact-evidence { padding: 0; border: 0; box-shadow: none; }
+.peridot-inspector-compact-guidance {
+  color: var(--peridot-role-inspector-chrome-text);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.peridot-inspector-compact-next-action {
+  margin-top: 0.55rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--peridot-role-inspector-button-border);
+  border-radius: 0.8rem;
+  background: var(--peridot-role-inspector-button-bg);
+  color: var(--peridot-role-inspector-button-text);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+@media (max-width: 420px) {
+  .peridot-inspector-compact-banner-top { flex-wrap: wrap; }
+}
+
+
+/* Compact Inspector editorial-cartographic finish — Pass 3 refinement.
+ * Only the docked three-section presentation is restyled. The full dossier,
+ * selection semantics, routed evidence views, and persistent banner behavior
+ * retain their existing component contracts. The original repository assets
+ * below are resolved by Vite from top-level /assets.
+ */
+.peridot-inspector-compact-layout {
+  border-color: rgba(126, 79, 31, 0.75);
+  border-radius: 0.85rem;
+  background: #dfc9a7;
+  color: #28261e;
+  box-shadow: 0 13px 28px rgba(32, 19, 10, 0.34), inset 0 0 0 1px rgba(255, 241, 206, 0.45);
+}
+
+/* The reference-ground stripe treatment is reserved for full dossiers. */
+.peridot-inspector-compact-layout.peridot-inspector-reference-ground::before {
+  display: none;
+}
+
+.peridot-inspector-compact-banner {
+  isolation: isolate;
+  padding: 0.9rem 0.9rem 0.8rem;
+  border-bottom: 2px solid #b28a4c;
+  background:
+    radial-gradient(circle at 15% 20%, rgba(188, 158, 89, 0.15), transparent 51%),
+    radial-gradient(circle at 90% 0%, rgba(196, 164, 99, 0.13), transparent 52%),
+    linear-gradient(145deg, #1c4432, #0d2c20 76%);
+  box-shadow: 0 3px 9px rgba(58, 33, 12, 0.24);
+}
+.peridot-inspector-compact-title h2 {
+  font-family: Georgia, 'Palatino Linotype', serif;
+  font-size: 1.55rem;
+  line-height: 1.13;
+  letter-spacing: 0.012em;
+  color: #fff3d9;
+}
+.peridot-inspector-compact-controls { gap: 0.28rem; }
+.peridot-inspector-compact-control,
+.peridot-inspector-compact-close {
+  border-color: rgba(226, 194, 119, 0.60);
+  background: rgba(247, 230, 187, 0.12);
+  color: #fff2d4;
+  border-radius: 0.45rem;
+}
+.peridot-inspector-compact-control:hover,
+.peridot-inspector-compact-close:hover {
+  border-color: #e8c781;
+  background: rgba(247, 230, 187, 0.24);
+}
+.peridot-inspector-compact-nav { margin-top: 0.75rem; gap: 0.4rem; }
+.peridot-inspector-compact-nav button {
+  border: 1px solid rgba(216, 182, 109, 0.7);
+  border-radius: 1rem;
+  background: rgba(252, 244, 219, 0.10);
+  color: #f8e7c2;
+  padding: 0.58rem 0.22rem;
+  font-size: 0.73rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+.peridot-inspector-compact-nav button:hover,
+.peridot-inspector-compact-nav button:focus-visible {
+  background: #fff3d9;
+  color: #742e23;
+}
+
+/* A distinct parchment ground between lighter, untextured reading leaves
+ * makes the illustrated paper legible without putting texture under small text.
+ */
+.peridot-inspector-compact-scroll {
+  padding: 0.9rem 0.68rem 1.05rem;
+  color: #24291f;
+  background-color: #e6c99b;
+  background-image:
+    linear-gradient(rgba(255, 244, 220, 0.30), rgba(255, 244, 220, 0.34)),
+    url('../assets/base_parchment_2.png');
+  background-position: center, center;
+  background-size: auto, cover;
+  scrollbar-color: #a18a5e #f4e9d5;
+}
+.peridot-inspector-compact-section {
+  position: relative;
+  margin: 0 0 1.85rem;
+  padding: 0.88rem 0.78rem 0.96rem;
+  border: 1px solid rgba(145, 103, 53, 0.45);
+  border-radius: 0.48rem;
+  background: rgba(255, 252, 243, 0.96);
+  color: #26291f;
+  box-shadow: 0 3px 10px rgba(80, 55, 26, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.peridot-inspector-compact-section:last-child { margin-bottom: 0.12rem; }
+.peridot-inspector-compact-section > h3 {
+  margin: 0 0 0.8rem;
+  padding: 0 0 0.38rem;
+  border-bottom: 1px solid rgba(158, 82, 56, 0.36);
+  color: #792c22;
+  font-family: Georgia, 'Palatino Linotype', serif;
+  font-size: clamp(0.97rem, 1.08vw, 1.13rem);
+  line-height: 1.27;
+  font-weight: 700;
+  letter-spacing: 0.005em;
+}
+/* Section decoration belongs BETWEEN the reading leaves, never under their
+ * titles. The last section has no trailing ornament. Absolute positioning
+ * keeps section offsetTop stable for the existing navigation buttons.
+ */
+.peridot-inspector-compact-section:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: -1.49rem;
+  height: 1.12rem;
+  pointer-events: none;
+  background: url('../assets/divider_simple_interlaced.png') center center / contain no-repeat;
+  opacity: 0.82;
+}
+.peridot-inspector-compact-orientation {
+  border: 1px solid rgba(174, 131, 76, 0.27);
+  border-radius: 0.35rem;
+  background: rgba(248, 241, 221, 0.70);
+  color: #283127;
+  box-shadow: none;
+}
+.peridot-inspector-compact-orientation strong {
+  color: #17392c;
+  font-family: Georgia, 'Palatino Linotype', serif;
+  font-size: 1.05rem;
+  line-height: 1.3;
+}
+.peridot-inspector-compact-eyebrow { color: #875a29; }
+.peridot-inspector-compact-guidance { color: #41483d; }
+.peridot-inspector-compact-next-action {
+  border-color: #b49362;
+  border-radius: 0.4rem;
+  background: #783024;
+  color: #fff5da;
+  box-shadow: 0 2px 5px rgba(81, 36, 25, 0.18);
+}
+.peridot-inspector-compact-next-action:hover {
+  background: #963e2d;
+  border-color: #c9aa6c;
+}
+/* Compact evidence still uses legacy routed-card tokens. Tame its internal
+ * nesting through inherited CSS variables, without rewriting record views or
+ * modifying their full-dossier palette and interaction semantics.
+ */
+.peridot-inspector-compact-evidence {
+  --section-bg: rgba(246, 237, 215, 0.65);
+  --section-border: rgba(168, 120, 66, 0.34);
+  --panel-card-bg: #f9f1de;
+  --panel-bg: #f7edda;
+  --stat-card-bg: #f0e1c2;
+  --badge-bg: #efe0c3;
+  background: transparent;
+  color: #253427;
+}
+/* Compact Inspector layout simplification — no redundant outer green folio.
+ * The left compatibility panel now has no inset. The compact Inspector fills it,
+ * while full dossiers continue to use their original framed workspace shell.
+ */
+.peridot-inspector-compact-layout {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.peridot-inspector-compact-banner {
+  border-radius: 0;
+}
+.peridot-inspector-compact-scroll {
+  padding: 0.7rem 0.58rem 0.85rem;
+}
+.peridot-inspector-compact-section {
+  padding: 0.78rem 0.7rem 0.82rem;
+}
+/* Only compact evidence receives the flattened treatment. Detail rows retain
+ * their rules, interactive buttons retain their backgrounds, and full-dossier
+ * cards are unaffected. The shared summary component remains unchanged.
+ */
+.peridot-inspector-compact-evidence [class*="bg-[var(--summary-card-bg)]"] {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.peridot-inspector-compact-member-groups {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.peridot-inspector-compact-member-groups > [class*="divide-y"] {
+  margin-top: 0.4rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .peridot-inspector-compact-layout :is(button, a) { transition: none; }
+}
+
+/* Pass 4: evidence is text-first, not a stack of secondary dashboard cards.
+ * The underlying full dossier retains its existing component framing. */
+.peridot-inspector-compact-orientation {
+  gap: 0.28rem;
+  padding: 0.3rem 0.1rem 0.4rem;
+  border: 0;
+  background: transparent;
+}
+.peridot-inspector-compact-evidence-note {
+  margin: 0.35rem 0 0.5rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(158, 82, 56, 0.2);
+  color: #51574b;
+  font-size: 0.73rem;
+  line-height: 1.5;
+}
+.peridot-inspector-compact-temporal-details {
+  border-top: 1px solid rgba(158, 82, 56, 0.2);
+}
+
+/* Pass 4 v02: progressive evidence disclosure. Flat reading surface, not nested cards. */
+.peridot-inspector-compact-data-flow { display: grid; gap: 0.45rem; }
+.peridot-inspector-compact-fact { display: flex; flex-direction: column; gap: 0.17rem; padding: 0.33rem 0 0.45rem; border-bottom: 1px solid rgba(158, 82, 56, 0.19); }
+.peridot-inspector-compact-fact-label, .peridot-inspector-compact-subheading { color: #936232; font: 700 0.66rem/1.45 Georgia, 'Palatino Linotype', serif; letter-spacing: 0.095em; text-transform: uppercase; }
+.peridot-inspector-compact-fact-value { color: #24342c; font-size: 0.86rem; line-height: 1.42; overflow-wrap: anywhere; }
+.peridot-inspector-compact-subheading { margin-top: 0.45rem; }
+.peridot-inspector-compact-muted { margin: 0.24rem 0; color: #586052; font-size: 0.75rem; line-height: 1.48; }
+.peridot-inspector-compact-record-preview { display: grid; gap: 0.35rem; margin-top: 0.4rem; }
+.peridot-inspector-compact-record-item { padding: 0.25rem 0 0.35rem; border-bottom: 1px solid rgba(158, 82, 56, 0.16); }
+.peridot-inspector-compact-record-id { color: #183b2b; font-weight: 650; font-size: 0.81rem; overflow-wrap: anywhere; }
+.peridot-inspector-compact-reveal { margin: 0.6rem 0 0.25rem; border-top: 1px solid rgba(150, 85, 52, 0.30); border-bottom: 1px solid rgba(150, 85, 52, 0.22); }
+.peridot-inspector-compact-reveal > summary, .peridot-inspector-compact-member-toggle { cursor: pointer; padding: 0.62rem 0.2rem; color: #80362a; font-weight: 700; font-size: 0.79rem; line-height: 1.4; }
+.peridot-inspector-compact-reveal > summary:hover, .peridot-inspector-compact-member-toggle:hover { color: #a74736; }
+.peridot-inspector-compact-reveal > summary:focus-visible, .peridot-inspector-compact-member-toggle:focus-visible { outline: 2px solid #945331; outline-offset: 2px; }
+.peridot-inspector-compact-reveal-content { padding: 0.22rem 0.22rem 0.7rem; display: grid; gap: 0.38rem; }
+.peridot-inspector-compact-member-toggle { width: 100%; text-align: left; background: transparent; border: 0; border-top: 1px solid rgba(158, 82, 56, 0.24); }
+
+/* Pass 4 v03 — Density follows evidence shape and the Inspector's own width.
+ * Container queries are scoped to the compact reading surface; no changes to
+ * the expanded dossier, source values, or calculation semantics. */
+.peridot-inspector-compact-evidence { container-type: inline-size; }
+.peridot-inspector-fact-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 0.85rem;
+  row-gap: 0;
+  min-width: 0;
+}
+.peridot-inspector-fact-grid > .peridot-inspector-compact-fact {
+  min-width: 0;
+  padding: 0.35rem 0 0.43rem;
+}
+.peridot-inspector-compact-reveal-content > .peridot-inspector-fact-grid { margin-bottom: 0.2rem; }
+.peridot-inspector-compact-record-ledger { display: grid; gap: 0.48rem; }
+.peridot-inspector-compact-record-item { min-width: 0; }
+.peridot-inspector-compact-record-id { font-size: 0.77rem; margin-bottom: 0.13rem; }
+.peridot-inspector-compact-record-item .peridot-inspector-compact-fact-value { font-size: 0.81rem; }
+@container (min-width: 355px) {
+  .peridot-inspector-fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .peridot-inspector-fact-grid > .peridot-inspector-compact-fact--wide { grid-column: 1 / -1; }
+}
+@container (min-width: 480px) {
+  .peridot-inspector-fact-grid { column-gap: 1.1rem; }
+}
+
+/* Inspector compact v04: factual density and research navigation. */
+.peridot-inspector-compact-metric-strip { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0.25rem 0; margin: 0.4rem 0; border-block: 1px solid rgba(158,82,56,.28); }
+.peridot-inspector-compact-metric { display: flex; align-items: center; gap: .45rem; min-width: 0; padding: .55rem .35rem; border-inline-end: 1px solid rgba(158,82,56,.18); }
+.peridot-inspector-compact-metric strong { color: #56331d; font: 700 1.2rem/1.1 Georgia,serif; flex: none; }
+.peridot-inspector-compact-metric span { color: #743e2c; text-transform: uppercase; font: 700 .61rem/1.18 Georgia,serif; letter-spacing: .035em; overflow-wrap: anywhere; }
+.peridot-inspector-evidence-search { display: flex; gap: .4rem; margin: .5rem 0 .75rem; }
+.peridot-inspector-evidence-search input { width: 100%; min-width: 0; background: #fffdf7; border: 1px solid #ba986d; border-radius: .48rem; padding: .58rem .7rem; font-size: .83rem; color: #183b2b; }
+.peridot-inspector-evidence-search input:focus-visible { outline: 2px solid #a75f3e; outline-offset: 1px; }
+.peridot-inspector-evidence-search button { border: 1px solid #a77a4f; border-radius: .45rem; color: #6d2d23; padding: .35rem .55rem; font-size: .73rem; font-weight: 700; }
+.peridot-inspector-next-actions { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .45rem; margin-top: .65rem; }
+.peridot-inspector-next-actions button { min-width: 0; text-align: left; border: 1px solid #c8aa79; border-radius: .5rem; padding: .55rem .65rem; background: #fbf2df; color: #6d2c23; font-size: .77rem; line-height: 1.34; overflow-wrap: anywhere; box-shadow: 0 2px 4px rgba(83,50,21,.07); }
+.peridot-inspector-next-actions button:hover { background: #f0dec0; border-color: #a36c40; }
+.peridot-inspector-next-actions button:focus-visible, .peridot-inspector-next-clear:focus-visible { outline: 2px solid #8b3b2a; outline-offset: 2px; }
+.peridot-inspector-next-actions .peridot-inspector-next-primary { background: #863127; color: #fff7e9; border-color: #863127; font-weight: 700; }
+.peridot-inspector-next-actions .peridot-inspector-next-primary:hover { background: #9b4335; }
+.peridot-inspector-next-clear { display: block; margin: .6rem 0 0 auto; border: 0; background: transparent; color: #823629; font-size: .75rem; text-decoration: underline; }
+@container (min-width: 420px) { .peridot-inspector-compact-metric-strip { grid-template-columns: repeat(4,minmax(0,1fr)); } }
+@container (max-width: 390px) { .peridot-inspector-next-actions { grid-template-columns: 1fr; } }
+
+.peridot-inspector-search-scope-note { color: #684934; font-size: .71rem; line-height: 1.35; margin: -.3rem 0 .45rem; }
+
+.peridot-inspector-evidence-search button[type="submit"] { background: #19412b; color: #fff5df; border-color: #19412b; }
+.peridot-inspector-evidence-search button[type="submit"]:hover { background: #275840; }
+
+
+/* Inspector hierarchy refinement v05b — compact only.
+ * Section titles retain oxblood serif display hierarchy; secondary field labels
+ * move to quiet sans-serif, so source values rather than labels lead reading.
+ * This deliberately does not restyle the full dossier. */
+.peridot-inspector-compact-layout .peridot-inspector-compact-fact-label {
+  color: #66665b;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.69rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.012em;
+  text-transform: none;
+}
+.peridot-inspector-compact-layout .peridot-inspector-compact-subheading {
+  color: #7a382a;
+  font-family: Georgia, 'Palatino Linotype', serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.peridot-inspector-compact-layout .peridot-inspector-compact-fact-value {
+  color: #1e3128;
+  font-size: 0.88rem;
+  line-height: 1.38;
+}
+.peridot-inspector-compact-layout .peridot-inspector-compact-record-id {
+  font-family: ui-monospace, SFMono-Regular, Consolas, 'Liberation Mono', monospace;
+  color: #244c38;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+.peridot-inspector-compact-layout .peridot-inspector-compact-metric strong {
+  color: #213c2d;
+  font-family: Georgia, 'Palatino Linotype', serif;
+  font-size: 1.25rem;
+}
+.peridot-inspector-compact-layout .peridot-inspector-compact-metric span {
+  color: #555b51;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.peridot-inspector-compact-layout .peridot-inspector-compact-reveal > summary {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+.peridot-inspector-compact-layout .peridot-inspector-next-actions button {
+  color: #334238;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.79rem;
+}
+.peridot-inspector-compact-layout .peridot-inspector-next-actions .peridot-inspector-next-primary {
+  color: #fff7e9;
+}
+/* Keyword search is part of navigation, not an evidence-filtering subpanel. */
+.peridot-inspector-compact-layout .peridot-inspector-explore-search {
+  margin-top: 0.65rem;
+  padding-bottom: 0.72rem;
+  border-bottom: 1px solid rgba(150,85,52,0.22);
+}
+.peridot-inspector-compact-layout .peridot-inspector-explore-search label {
+  display: block;
+  margin-bottom: 0.34rem;
+  color: #4f594d;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.77rem;
+  font-weight: 650;
+}
+.peridot-inspector-compact-layout .peridot-inspector-explore-search-controls {
+  display: flex;
+  gap: 0.42rem;
+  min-width: 0;
+}
+.peridot-inspector-compact-layout .peridot-inspector-explore-search-controls input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0.58rem 0.7rem;
+  border: 1px solid #ae966f;
+  border-radius: 0.45rem;
+  background: #fffdf8;
+  color: #23382d;
+  font: 400 0.8rem/1.4 system-ui, sans-serif;
+}
+.peridot-inspector-compact-layout .peridot-inspector-explore-search-controls input:focus-visible,
+.peridot-inspector-compact-layout .peridot-inspector-explore-search-controls button:focus-visible {
+  outline: 2px solid #8b3b2a;
+  outline-offset: 2px;
+}
+.peridot-inspector-compact-layout .peridot-inspector-explore-search-controls button {
+  padding: 0.45rem 0.72rem;
+  border-radius: 0.45rem;
+  background: #19412b;
+  color: #fff5df;
+  font: 650 0.78rem/1.4 system-ui, sans-serif;
+}
+.peridot-inspector-compact-layout .peridot-inspector-explore-search-controls button:hover:not(:disabled) {
+  background: #275840;
+}
+.peridot-inspector-compact-layout .peridot-inspector-explore-search-controls button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Compact Inspector: expand a long mapped Evidence value in place. Keep the
+ * complete text legible while leaving default previews short and scannable. */
+.peridot-inspector-compact-layout .peridot-inspector-compact-fact-reading { min-width: 0; }
+.peridot-inspector-compact-layout .peridot-inspector-compact-fact-value--expanded {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.peridot-inspector-compact-layout .peridot-inspector-compact-fact-expand {
+  display: block;
+  width: fit-content;
+  margin: 0.25rem 0 0;
+  padding: 0.12rem 0;
+  border: 0;
+  background: transparent;
+  color: #80362a;
+  font: 600 0.76rem/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+.peridot-inspector-compact-layout .peridot-inspector-compact-fact-expand:hover { color: #a74736; }
+.peridot-inspector-compact-layout .peridot-inspector-compact-fact-expand:focus-visible {
+  outline: 2px solid #945331;
+  outline-offset: 2px;
+}
+
+/* Inspector evidence hierarchy: presentation-only, compact Map selections (Pass B). */
+.peridot-inspector-compact-layout .peridot-inspector-representation-lead { margin: .36rem 0; font-size: .84rem; color: #283e32; }
+.peridot-inspector-compact-layout .peridot-inspector-representation-lead strong { color: #193d2c; }
+.peridot-inspector-compact-layout .peridot-inspector-mark-explanation { margin-top: .6rem; padding: .68rem .75rem; background: #f4ecd9; border: 1px solid rgba(161,126,65,.36); border-radius: .6rem; }
+.peridot-inspector-compact-layout .peridot-inspector-mark-explanation > strong { display: block; color: #7e3128; font: 700 .9rem/1.3 Georgia, serif; }
+.peridot-inspector-compact-layout .peridot-inspector-mark-explanation p { margin: .25rem 0 0; font-size: .78rem; line-height: 1.5; color: #33483c; }
+.peridot-inspector-compact-layout .peridot-inspector-mark-method { border-top: 1px solid rgba(161,126,65,.28); margin-top: .55rem; padding-top: .35rem; }
+.peridot-inspector-compact-layout .peridot-inspector-mark-method summary { cursor: pointer; font-size: .72rem; font-weight: 650; color: #783c30; }
+.peridot-inspector-compact-layout .peridot-inspector-mark-method summary:focus-visible { outline: 2px solid #783c30; outline-offset: 2px; }
+.peridot-inspector-compact-layout .peridot-inspector-evidence-tier { margin: .3rem 0 .5rem; padding: .55rem .65rem; border-radius: .55rem; }
+.peridot-inspector-compact-layout .peridot-inspector-evidence-tier--support { background: rgba(226,233,215,.45); border: 1px solid rgba(72,111,79,.22); }
+.peridot-inspector-compact-layout .peridot-inspector-evidence-tier--context { background: rgba(245,236,216,.6); border: 1px solid rgba(161,126,65,.2); }
+.peridot-inspector-compact-layout .peridot-inspector-evidence-tier .peridot-inspector-compact-subheading { margin-top: 0; }
+
+/* Compact evidence grouping: show a mapped role once, then its distinct
+ * attributed values. This only affects the compact reading surface. */
+.peridot-inspector-compact-layout .peridot-inspector-grouped-values { display: grid; gap: .58rem; margin: .35rem 0 .55rem; }
+.peridot-inspector-compact-layout .peridot-inspector-grouped-value-section { min-width: 0; border-bottom: 1px solid rgba(158,82,56,.16); padding-bottom: .4rem; }
+.peridot-inspector-compact-layout .peridot-inspector-grouped-value-heading {
+  color: #754236; font: 700 .76rem/1.4 Georgia, 'Palatino Linotype', serif; margin: 0 0 .25rem;
+}
+.peridot-inspector-compact-layout .peridot-inspector-grouped-value-heading span { color: #697168; font: 500 .69rem/1.4 system-ui, sans-serif; }
+.peridot-inspector-compact-layout .peridot-inspector-grouped-values-list {
+  display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .1rem .7rem;
+}
+.peridot-inspector-compact-layout .peridot-inspector-grouped-value { min-width: 0; padding: .2rem 0; overflow-wrap: anywhere; }
+.peridot-inspector-compact-layout .peridot-inspector-grouped-value .peridot-inspector-compact-fact-value { font-size: .82rem; }
+.peridot-inspector-compact-layout .peridot-inspector-grouped-value-more { margin: .18rem 0 0; }
+.peridot-inspector-compact-layout .peridot-inspector-grouped-value-more > summary {
+  cursor: pointer; color: #80362a; font: 650 .73rem/1.45 system-ui,sans-serif; padding: .25rem 0;
+}
+.peridot-inspector-compact-layout .peridot-inspector-grouped-value-more > summary:focus-visible { outline: 2px solid #945331; outline-offset: 2px; }
+@container (max-width: 355px) {
+  .peridot-inspector-compact-layout .peridot-inspector-grouped-values-list { grid-template-columns: minmax(0,1fr); }
+}
+
+/* Pass D refinement: compact legend mirrors the Timeline's resolved mark colors. */
+.peridot-inspector-timeline-categories { margin-top: 14px; border-top: 1px solid var(--section-border); padding-top: 10px; }
+.peridot-inspector-timeline-legend-layout { display: flex; align-items: flex-start; gap: 12px; margin: 10px 0; }
+.peridot-inspector-timeline-legend-mark { position: relative; width: 48px; height: 48px; flex: 0 0 48px; border: 2px solid #3b352e; border-radius: 50%; background: #484848; }
+.peridot-inspector-timeline-legend-items { min-width: 0; flex: 1; display: grid; gap: 8px; }
+.peridot-inspector-timeline-legend-item { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; }
+.peridot-inspector-timeline-legend-swatch { flex: 0 0 12px; height: 12px; margin-top: 3px; border: 1px solid #75634c; border-radius: 3px; }
+.peridot-inspector-timeline-legend-item svg { flex-shrink: 0; margin-top: 1px; }
+.peridot-inspector-timeline-legend-entry { min-width: 0; display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.peridot-inspector-timeline-legend-entry strong { font-weight: 650; color: var(--text-main); }
+.peridot-inspector-timeline-legend-entry span { color: var(--panel-card-muted-text); font-size: 11px; }
+
+/* Charts II Inspector: record-ID search must read as a field, not a filled button. */
+.peridot-chart-record-search[type="search"] {
+  -webkit-appearance: none; appearance: none;
+  background-color: #fffdf6 !important; color: #203b2c !important;
+  border: 2px solid #88744d !important; border-radius: .42rem;
+  min-height: 2.65rem; box-shadow: 0 1px 2px rgba(46, 46, 29, .10);
+}
+.peridot-chart-record-search[type="search"]::placeholder { color: #536356 !important; opacity: 1; }
+.peridot-chart-record-search[type="search"]:focus-visible { outline: 2px solid #2b5b44; outline-offset: 2px; border-color: #2b5b44 !important; }

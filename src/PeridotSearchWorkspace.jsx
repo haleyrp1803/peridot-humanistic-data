@@ -1428,6 +1428,7 @@ export function PeridotSearchWorkspace({
   browseRows = searchRows,
   evidenceBrowseRows = [],
   onInspectSearchResult,
+  inspectorExploreDraft = null,
   viewMode,
   timelineMonths,
   rangeStart,
@@ -1739,6 +1740,15 @@ export function PeridotSearchWorkspace({
     ));
   };
 
+
+  useEffect(() => {
+    if (!inspectorExploreDraft?.id) return;
+    if (inspectorExploreDraft.field === 'keyword') setDraftSearch(inspectorExploreDraft.value);
+    if (inspectorExploreDraft.field === 'person') setDraftPersonFilter(inspectorExploreDraft.value);
+    if (inspectorExploreDraft.field === 'place') setDraftPlaceFilter(inspectorExploreDraft.value);
+    setActiveTab('build');
+    setFilterStatusMessage('Inspector search added to draft criteria. Apply Filters to update results.');
+  }, [inspectorExploreDraft]);
 
   const updateDraftStructuredCriterion = (nextCriterion) => {
     setDraftStructuredCriteria((current) => (

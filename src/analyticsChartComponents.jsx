@@ -510,7 +510,7 @@ function ChartFrame({ children, title, subtitle, svgRef, width, height }) {
 
 // Charts II B3.5: continuous numeric axes and record-level scatter/bubble marks.
 // Identical coordinates receive display-only offsets; actual values remain in tooltips.
-export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yLabel, xAxisDate = false, dateRange = null, sizeLabel = '', pointLabels = [], svgRef }) {
+export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yLabel, xAxisDate = false, dateRange = null, sizeLabel = '', pointLabels = [], svgRef, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -584,7 +584,7 @@ export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yL
                 count: 1,
                 unit: 'observation',
               }))}
-              onMouseLeave={() => setTooltip(null)} />;
+              onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.({ ...point, label: `Record ${point.index + 1}`, count: 1, unit: 'observation', xValue: point.x, yValue: point.y })} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />;
           })}
           {presentation.showPointLabels && visiblePoints.length <= 35 && visiblePoints.map(point => {
             const overlap = point.overlapIndex;
@@ -607,7 +607,7 @@ export function AnalyticsScatterChart({ points = [], title, subtitle, xLabel, yL
 
 // Charts II B3.8: Tukey box plots. The model supplies exact quartiles,
 // whiskers, and every outlier; this component only renders those values.
-export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle = '', svgRef, scaleMode = 'full' }) {
+export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle = '', svgRef, scaleMode = 'full' , onSelectMark}) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -652,16 +652,19 @@ export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle
         const showDetail = event => setTooltip(buildTooltip(event, { label: box.label,
           secondary: `n=${box.count}; Q1 ${labelValue(box.q1)}; median ${labelValue(box.median)}; Q3 ${labelValue(box.q3)}; whiskers ${labelValue(box.lowerWhisker)}–${labelValue(box.upperWhisker)}; ${box.outliers.length} outliers`,
           count: box.median, unit: '(median)' }));
+        const inspectDistribution = () => onSelectMark?.({ ...box, value: box.median, unit: '(median)', statistics: { count: box.count, min: box.min, q1: box.q1, median: box.median, q3: box.q3, max: box.max, lowerWhisker: box.lowerWhisker, upperWhisker: box.upperWhisker, outlierCount: box.outliers.length } });
         return <g key={box.label}>
           <line x1={x} x2={x} y1={yAt(box.upperWhisker)} y2={yAt(box.lowerWhisker)} stroke={color} strokeWidth="2" />
           {[box.upperWhisker, box.lowerWhisker].map((v, i) => <line key={i} x1={x - boxWidth * .22} x2={x + boxWidth * .22} y1={yAt(v)} y2={yAt(v)} stroke={color} strokeWidth="2" />)}
           <rect x={x - boxWidth * markStyle('boxWidth',1) / 2} y={yAt(box.q3)} width={boxWidth * markStyle('boxWidth',1)} height={Math.max(1, yAt(box.q1) - yAt(box.q3))}
-            fill={color} fillOpacity=".4" stroke={color} strokeWidth="1.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)} />
-          <line x1={x - boxWidth * markStyle('boxWidth',1) / 2} x2={x + boxWidth * markStyle('boxWidth',1) / 2} y1={yAt(box.median)} y2={yAt(box.median)} stroke={CHART_COLORS.accentDark} strokeWidth="2.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)} />
+            fill={color} fillOpacity=".4" stroke={color} strokeWidth="1.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)}
+            onClick={inspectDistribution} style={{cursor: onSelectMark ? 'pointer' : 'default'}} />
+          <line x1={x - boxWidth * markStyle('boxWidth',1) / 2} x2={x + boxWidth * markStyle('boxWidth',1) / 2} y1={yAt(box.median)} y2={yAt(box.median)} stroke={CHART_COLORS.accentDark} strokeWidth="2.8" onMouseMove={showDetail} onMouseLeave={() => setTooltip(null)} onClick={inspectDistribution} style={{cursor:onSelectMark?'pointer':'default'}} />
           {presentation.showMedianLabels && <text x={x} y={yAt(box.median)-8} textAnchor="middle" fontSize="10.5" fontWeight="750" fill={CHART_COLORS.text} pointerEvents="none">{labelValue(box.median)}</text>}
           {presentation.showQuartileLabels && <g pointerEvents="none" fill={CHART_COLORS.text} fontSize="9"><text x={x+boxWidth*.65} y={yAt(box.q3)+3}>{labelValue(box.q3)}</text><text x={x+boxWidth*.65} y={yAt(box.q1)+3}>{labelValue(box.q1)}</text></g>}
           {within.map((item, outlierIndex) => <circle key={`out-${outlierIndex}`} cx={x + ((outlierIndex % 5) - 2) * 1.6} cy={yAt(item.value)} r={markStyle('pointSize',3.5)}
-            fill={CHART_COLORS.accentDark} fillOpacity=".76" onMouseMove={event => detailTooltip(event, box, item)} onMouseLeave={() => setTooltip(null)} />)}
+            fill={CHART_COLORS.accentDark} fillOpacity=".76" onMouseMove={event => detailTooltip(event, box, item)} onMouseLeave={() => setTooltip(null)}
+            onClick={() => onSelectMark?.({ label: `${box.label} · outlier`, value: item.value, unit: '(outlier measurement)', contributingRows: item.contributingRow ? [item.contributingRow] : [], statistics: { outlier: true, lowerFence: box.lowerFence, upperFence: box.upperFence } })} style={{cursor: onSelectMark ? 'pointer' : 'default'}} />)}
           {presentation.showOutlierCounts && focused && above.length > 0 && <g onMouseMove={event => detailTooltip(event, box, above[above.length - 1], true)} onMouseLeave={() => setTooltip(null)}>
             <path d={`M ${x - 6} ${top + 10} L ${x} ${top + 2} L ${x + 6} ${top + 10} Z`} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth=".6" />
             <text x={x + 9} y={top + 10} fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>+{above.length}</text>
@@ -687,7 +690,7 @@ export function AnalyticsBoxPlotChart({ boxes = [], title = 'Box Plot', subtitle
 // category/column value, and all dots share one linear numeric scale.
 // Charts II B3.10. Two endpoints share one numerical scale. A missing
 // category/measure in either period is drawn as a single dot, not a zero slope.
-export function AnalyticsSlopeChart({ series = [], title = 'Slope Chart', subtitle = '', firstLabel = 'First period', secondLabel = 'Second period', svgRef }) {
+export function AnalyticsSlopeChart({ series = [], title = 'Slope Chart', subtitle = '', firstLabel = 'First period', secondLabel = 'Second period', svgRef , onSelectMark}) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -721,11 +724,14 @@ export function AnalyticsSlopeChart({ series = [], title = 'Slope Chart', subtit
         const color=chartSeriesColor(index);
         const a=Number.isFinite(item.before), b=Number.isFinite(item.after);
         const onMove=event=>setTooltip(buildTooltip(event,{label:item.label,secondary:`${firstLabel}: ${format(item.before)} (n=${item.nBefore}); ${secondLabel}: ${format(item.after)} (n=${item.nAfter})`,count:item.delta===null?null:item.delta,unit:'change'}));
+        const selectComparison = () => onSelectMark?.({ ...item, value: item.delta, unit: '(change)', comparison: { firstLabel, secondLabel, before: item.before, after: item.after, delta: item.delta, nBefore: item.nBefore, nAfter: item.nAfter } });
+        const selectEndpoint = (event, side) => { event.stopPropagation(); onSelectMark?.({ ...item, label: `${item.label} · ${side === 'before' ? firstLabel : secondLabel}`, value: item[side], unit: '(period value)', contributingRows: side === 'before' ? item.contributingRowsBefore : item.contributingRowsAfter, comparison: { period: side === 'before' ? firstLabel : secondLabel, before: item.before, after: item.after, nBefore: item.nBefore, nAfter: item.nAfter } }); };
         return <g key={`${item.label}-${index}`} onMouseMove={onMove} onMouseLeave={()=>setTooltip(null)}>
           <title>{`${item.label} — ${firstLabel}: ${format(item.before)} (n=${item.nBefore}); ${secondLabel}: ${format(item.after)} (n=${item.nAfter}); change: ${format(item.delta)}`}</title>
           {a&&b&&<path d={`M${xFirst} ${yAt(item.before)}L${xSecond} ${yAt(item.after)}`} stroke={color} strokeWidth={markStyle('lineWidth',2.2)} strokeOpacity=".88" fill="none"/>}
-          {a&&<circle cx={xFirst} cy={yAt(item.before)} r={markStyle('pointSize',5)} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1"/>}
-          {b&&<circle cx={xSecond} cy={yAt(item.after)} r={markStyle('pointSize',5)} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1"/>}
+          {a&&b&&<path d={`M${xFirst} ${yAt(item.before)}L${xSecond} ${yAt(item.after)}`} stroke="transparent" strokeWidth="12" fill="none" pointerEvents="stroke" onClick={selectComparison} style={{cursor:onSelectMark?'pointer':'default'}}/>}
+          {a&&<circle cx={xFirst} cy={yAt(item.before)} r={markStyle('pointSize',5)} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1" onClick={event=>selectEndpoint(event,'before')} style={{cursor:onSelectMark?'pointer':'default'}}/>}
+          {b&&<circle cx={xSecond} cy={yAt(item.after)} r={markStyle('pointSize',5)} fill={color} stroke={CHART_COLORS.accentDark} strokeWidth="1" onClick={event=>selectEndpoint(event,'after')} style={{cursor:onSelectMark?'pointer':'default'}}/>}
           {presentation.showEndpointValues && visible.length <= 12 && a && <text x={xFirst-10} y={yAt(item.before)-7} textAnchor="end" fontSize="10" fill={CHART_COLORS.text}>{format(item.before)}</text>}
           {presentation.showEndpointValues && visible.length <= 12 && b && <text x={xSecond+10} y={yAt(item.after)-7} fontSize="10" fill={CHART_COLORS.text}>{format(item.after)}</text>}
           {presentation.showDirectSeriesLabels && visible.length <= 8 && <text x={b?xSecond+10:xFirst+10} y={yAt(b?item.after:item.before)+13} fontSize="9.5" fill={color}>{truncateLabel(item.label,22)}</text>}
@@ -740,7 +746,7 @@ export function AnalyticsSlopeChart({ series = [], title = 'Slope Chart', subtit
   </ChartFrame>;
 }
 
-export function AnalyticsDotPlotChart({ points = [], title = 'Dot Plot', subtitle = '', valueLabel = 'Value', svgRef }) {
+export function AnalyticsDotPlotChart({ points = [], title = 'Dot Plot', subtitle = '', valueLabel = 'Value', svgRef , onSelectMark}) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -799,7 +805,7 @@ export function AnalyticsDotPlotChart({ points = [], title = 'Dot Plot', subtitl
           <WrappedAxisLabel x={left - 12} y={y + 4} label={presentation.showCategoryNames ? point.label : ''} maxLineLength={29}/>
           <circle cx={xAt(point.value)} cy={y} r={markStyle('pointSize',6.2)} stroke={CHART_COLORS.accentDark} strokeWidth={markStyle('outlineWidth',1.1)} fill={color}
             onMouseMove={event=>setTooltip(buildTooltip(event, {label: point.label, secondary: `${point.n} contributing observations`, count: point.value, unit: '(aggregated value)'}))}
-            onMouseLeave={()=>setTooltip(null)} style={{cursor:'default'}}>
+            onMouseLeave={()=>setTooltip(null)} onClick={()=>onSelectMark?.({ ...point, unit: '(aggregated value)' })} style={{cursor:onSelectMark?'pointer':'default'}}>
             <title>{`${point.label}: ${formatValue(point.value)} (${point.n} contributing observations)`}</title>
           </circle>
         </g>;
@@ -812,7 +818,7 @@ export function AnalyticsDotPlotChart({ points = [], title = 'Dot Plot', subtitl
   </ChartFrame>;
 }
 
-export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientation = 'vertical' }) {
+export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientation = 'vertical', onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -844,7 +850,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
                 return (
                   <g key={row.label}>
                     <WrappedAxisLabel x={left - 12} y={y + 13} label={presentation.showCategoryNames ? row.label : ''} />
-                    <rect x={left} y={y} width={barWidth} height="22" rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} style={{ cursor: 'default' }} />
+                    <rect x={left} y={y} width={barWidth} height="22" rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(row)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />
                     {presentation.showValueLabels && <text x={Math.min(left + barWidth + 8, layout.chartRight - 10)} y={y + 16} fontSize="12" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>}
                   </g>
                 );
@@ -891,7 +897,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
               const y = top + plotHeight - barHeight;
               return (
                 <g key={row.label}>
-                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} />
+                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of shown total` }))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(row)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />
                   {presentation.showValueLabels && <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>}
                   {xLabelIndexes.has(index) ? renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: presentation.showCategoryNames ? truncateLabel(row.label, 16) : '', rotate: true, angle: presentation.categoryAngle === 'default' ? null : presentation.categoryAngle }) : null}
                 </g>
@@ -911,7 +917,7 @@ export function AnalyticsBarChart({ data = [], title, subtitle, svgRef, orientat
 }
 
 
-export function AnalyticsLineChart({ data = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+export function AnalyticsLineChart({ data = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -964,7 +970,7 @@ export function AnalyticsLineChart({ data = [], title, subtitle, temporalAxis, g
             </g>) : <path d={points.filter((point) => point.y !== null).map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(' ')} fill="none" stroke={singleColor.main} strokeWidth={markStyle('lineWidth',4)} strokeLinecap="round" strokeLinejoin="round" />}
             {points.map((point, index) => (
               <g key={point.label}>
-                {point.y !== null ? <circle cx={point.x} cy={point.y} r={markStyle('showMarkers',true) ? markStyle('pointSize',5) : 5} fill={markStyle('showMarkers',true) ? singleColor.fill : "transparent"} stroke={markStyle('showMarkers',true) ? CHART_COLORS.chartBg : "transparent"} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, point))} onMouseLeave={() => setTooltip(null)} /> : null}
+                {point.y !== null ? <circle cx={point.x} cy={point.y} r={markStyle('showMarkers',true) ? markStyle('pointSize',5) : 5} fill={markStyle('showMarkers',true) ? singleColor.fill : "transparent"} stroke={markStyle('showMarkers',true) ? CHART_COLORS.chartBg : "transparent"} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, point))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(point)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} /> : null}
                 {presentation.showPeriodLabels && xLabelIndexes.has(index) ? renderXAxisTick({ x: point.x, y: top + plotHeight, label: point.label }) : null}
               </g>
             ))}
@@ -1011,7 +1017,7 @@ function areaSegments(points) {
   return result;
 }
 
-export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1072,7 +1078,7 @@ export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, g
               return <path key={`area-run-${index}`} d={path} fill={singleColor.fill} fillOpacity={markStyle('fillOpacity',0.38)} stroke={singleColor.main} strokeWidth="0.7" />;
             });
           })()}
-          {points.map((point, index) => point.y === null ? null : <rect key={`${point.label}-${index}`} x={point.x0} y={point.y} width={Math.max(0, point.x1-point.x0)} height={baseline-point.y} fill="transparent" onMouseMove={event => setTooltip(buildTooltip(event,{label:point.label,count:point.count,unit:point.unit}))} onMouseLeave={() => setTooltip(null)} />)}
+          {points.map((point, index) => point.y === null ? null : <rect key={`${point.label}-${index}`} x={point.x0} y={point.y} width={Math.max(0, point.x1-point.x0)} height={baseline-point.y} fill="transparent" onMouseMove={event => setTooltip(buildTooltip(event,{label:point.label,count:point.count,unit:point.unit}))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(point)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />)}
         </> : segments.map((segment, index) => {
           const path = segment.map((p, i) => `${i ? 'L' : 'M'} ${p.x} ${p.y}`).join(' ');
           const fillPath = `M ${segment[0].x} ${baseline} L ${segment.map(p => `${p.x} ${p.y}`).join(' L ')} L ${segment[segment.length - 1].x} ${baseline} Z`;
@@ -1082,7 +1088,7 @@ export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, g
           </g>;
         })}
         {!temporalBins.length && points.map((point, i) => point.y === null ? null : <circle key={`${point.label}-${i}`} cx={point.x} cy={point.y} r="3.6" fill={singleColor.main}
-          onMouseMove={event => setTooltip(buildTooltip(event, {label: point.label, count: point.count, unit: point.unit}))} onMouseLeave={() => setTooltip(null)} />)}
+          onMouseMove={event => setTooltip(buildTooltip(event, {label: point.label, count: point.count, unit: point.unit}))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(point)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />)}
         {presentation.showPeriodLabels && points.map((point, i) => tickIndexes.has(i) ? <g key={`${point.label}-${i}`}>{renderXAxisTick({x: point.x, y: baseline, label: point.label})}</g> : null)}
         {presentation.showEndpointValues && (()=>{ const end=[...points].reverse().find(point=>point.y!==null);return end?<text x={Math.min(layout.chartRight-10,end.x)} y={end.y-10} textAnchor="end" fontSize="11" fontWeight="700" fill={singleColor.main}>{formatNumber(end.count)}</text>:null;})()}
         <SummaryPanel {...layout.legend} title="Area summary" rows={[
@@ -1095,7 +1101,7 @@ export function AnalyticsAreaChart({ data = [], title, subtitle, temporalAxis, g
   </ChartFrame>;
 }
 
-export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1150,7 +1156,7 @@ export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = 
           {series.flatMap((layer, layerIndex) => layer.points.map((point,i) => {
             const bin = binByLabel.get(point.label);
             if (!bin || !point.count) return null;
-            return <rect key={`hover-${layer.label}-${point.label}-${i}`} x={bin.x0} y={yAt(point.top)} width={Math.max(0, bin.x1-bin.x0)} height={Math.max(0,yAt(point.bottom)-yAt(point.top))} fill="transparent" onMouseMove={event => setTooltip(buildTooltip(event,{label:layer.label,secondary:point.label,count:point.count,unit:point.unit}))} onMouseLeave={() => setTooltip(null)}/>;
+            return <rect key={`hover-${layer.label}-${point.label}-${i}`} x={bin.x0} y={yAt(point.top)} width={Math.max(0, bin.x1-bin.x0)} height={Math.max(0,yAt(point.bottom)-yAt(point.top))} fill="transparent" onMouseMove={event => setTooltip(buildTooltip(event,{label:layer.label,secondary:point.label,count:point.count,unit:point.unit}))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(point, layer)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }}/>;
           }))}
         </> : series.map((layer, index) => {
           const upper = layer.points.map((point, i) => `${xAt(i)},${yAt(point.top)}`).join(' L ');
@@ -1160,7 +1166,7 @@ export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = 
         {!temporalBins.length && series.flatMap((layer, index) => layer.points.map((point, i) => (
           <rect key={`${layer.label}-${i}`} x={xAt(i) - 4} y={yAt(point.top) - 5} width="9" height="10" fill="transparent"
             onMouseMove={event => setTooltip(buildTooltip(event, {label: layer.label, secondary: point.label, count: point.count, unit: point.unit}))}
-            onMouseLeave={() => setTooltip(null)} />
+            onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(point, layer)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />
         )))}
         {presentation.showPeriodLabels && periods.map((period, index) => tickIndexes.has(index) ? <g key={`${period}-${index}`}>{renderXAxisTick({x: xAt(index), y: baseline, label: period})}</g> : null)}
         {presentation.showStackedTotals && totals.length <= 18 && totals.map((value,i)=>Number.isFinite(Number(value)) && Number(value)>0?<text key={`stack-total-${i}`} x={xAt(i)} y={yAt(value)-8} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(value)}</text>:null)}
@@ -1170,7 +1176,7 @@ export function AnalyticsStackedAreaChart({ series = [], periods = [], totals = 
   </ChartFrame>;
 }
 
-export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = false }) {
+export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = false, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1222,7 +1228,7 @@ export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = 
               const ly=cy+(point.y-cy)*labelRadius/radius;
               const label= presentation.proportionalLabel==='name'?truncateLabel(row.label,14):presentation.proportionalLabel==='value'?formatNumber(row.count):presentation.proportionalLabel==='percent'?`${percent.toFixed(1)}%`:presentation.proportionalLabel==='name-percent'?`${truncateLabel(row.label,11)} ${percent.toFixed(1)}%`:'';
               return (
-                <g key={row.label}><path d={describeArc(startAngle, endAngle)} fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : chartSeriesColor(index)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',2)} opacity={markStyle('markOpacity',1)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percent}% of shown total` }))} onMouseLeave={() => setTooltip(null)} />{label && percent >= presentation.minLabelShare && <text pointerEvents="none" x={lx} y={ly+4} textAnchor={presentation.sliceLabelPosition==='outside'?(lx>cx?'start':'end'):'middle'} fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{label}</text>}</g>
+                <g key={row.label}><path d={describeArc(startAngle, endAngle)} fill={tooltip?.label === row.label ? CHART_COLORS.hoverFill : chartSeriesColor(index)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',2)} opacity={markStyle('markOpacity',1)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percent}% of shown total` }))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(row)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />{label && percent >= presentation.minLabelShare && <text pointerEvents="none" x={lx} y={ly+4} textAnchor={presentation.sliceLabelPosition==='outside'?(lx>cx?'start':'end'):'middle'} fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{label}</text>}</g>
               );
             })}
             {donut && <><circle cx={cx} cy={cy} r={radius * 0.52} fill={CHART_COLORS.chartBg} pointerEvents="none" aria-hidden="true" />{presentation.showCenterTotal&&<text x={cx} y={cy+4} textAnchor="middle" fontSize="18" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(total)}</text>}</>}
@@ -1235,7 +1241,7 @@ export function AnalyticsPieChart({ data = [], title, subtitle, svgRef, donut = 
 }
 
 
-export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtitle, svgRef }) {
+export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtitle, svgRef, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1284,7 +1290,7 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
                     const x = clusterX + groupIndex * (barWidth + 2);
                     const y = top + plotHeight - barHeight;
                     return (
-                      <g key={group.label}><rect x={x} y={y} width={barWidth} height={Math.max(1, barHeight)} rx={markStyle('cornerRadius',3)} opacity={markStyle('markOpacity',1)} fill={chartSeriesColor(groupIndex,group.label)} onMouseMove={(event) => setTooltip(buildTooltip(event, { label: group.label, secondary: row.label, count: group.count, unit: group.unit }))} onMouseLeave={() => setTooltip(null)} />{presentation.showGroupedValues && barWidth >= 9 && barHeight >= 18 && <text x={x+barWidth/2} y={y-4} textAnchor="middle" fontSize="9" fontWeight="650" fill={CHART_COLORS.text}>{formatNumber(group.count)}</text>}</g>
+                      <g key={group.label}><rect x={x} y={y} width={barWidth} height={Math.max(1, barHeight)} rx={markStyle('cornerRadius',3)} opacity={markStyle('markOpacity',1)} fill={chartSeriesColor(groupIndex,group.label)} onMouseMove={(event) => setTooltip(buildTooltip(event, { label: group.label, secondary: row.label, count: group.count, unit: group.unit }))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(group, row)} style={{ cursor: onSelectMark && group.contributingRows?.length ? 'pointer' : 'default' }} />{presentation.showGroupedValues && barWidth >= 9 && barHeight >= 18 && <text x={x+barWidth/2} y={y-4} textAnchor="middle" fontSize="9" fontWeight="650" fill={CHART_COLORS.text}>{formatNumber(group.count)}</text>}</g>
                     );
                   })}
                   {xLabelIndexes.has(index) ? renderXAxisTick({ x: clusterX + clusterWidth / 2, y: top + plotHeight, label: presentation.showCategoryNames ? row.label : '', angle: presentation.categoryAngle === 'default' ? null : presentation.categoryAngle }) : null}
@@ -1300,7 +1306,7 @@ export function AnalyticsGroupedBarChart({ data = [], series = [], title, subtit
 }
 
 
-export function AnalyticsStackedBarChart({ data = [], series = [], title, subtitle, svgRef, mode = 'absolute' }) {
+export function AnalyticsStackedBarChart({ data = [], series = [], title, subtitle, svgRef, mode = 'absolute', onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1365,7 +1371,7 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
                     if (!segment.count || !segmentHeight) return null;
                     const selectedLabel = chartsIISegmentLabel(presentation.stackedSegmentLabels,segment.count,share);
                     const labelFits = segmentHeight >= 24 && barWidth >= 27 && selectedLabel.length <= Math.floor(barWidth / 6.1);
-                    return <g key={segment.label}><rect x={x} y={yCursor} width={barWidth} height={Math.max(1, segmentHeight)} fill={chartSeriesColor(segmentIndex,segment.label)} fillOpacity={markStyle('markOpacity',1)} stroke={CHART_COLORS.chartBg} strokeWidth="0.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: segment.label, secondary: percentMode ? `${row.label} · ${share.toFixed(1)}% of category (${formatNumber(row.total)} total)` : row.label, count: segment.count, unit: segment.unit }))} onMouseLeave={() => setTooltip(null)} />{labelFits && <text x={x+barWidth/2} y={yCursor+segmentHeight/2+3} textAnchor="middle" fontSize="9" fontWeight="700" fill={CHART_COLORS.text} pointerEvents="none">{selectedLabel}</text>}</g>;
+                    return <g key={segment.label}><rect x={x} y={yCursor} width={barWidth} height={Math.max(1, segmentHeight)} fill={chartSeriesColor(segmentIndex,segment.label)} fillOpacity={markStyle('markOpacity',1)} stroke={CHART_COLORS.chartBg} strokeWidth="0.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: segment.label, secondary: percentMode ? `${row.label} · ${share.toFixed(1)}% of category (${formatNumber(row.total)} total)` : row.label, count: segment.count, unit: segment.unit }))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(segment, row)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />{labelFits && <text x={x+barWidth/2} y={yCursor+segmentHeight/2+3} textAnchor="middle" fontSize="9" fontWeight="700" fill={CHART_COLORS.text} pointerEvents="none">{selectedLabel}</text>}</g>;
                   })}
                   {(distribution.total === 0 || (!percentMode && presentation.showValueLabels)) ? (
                     <text x={x + barWidth / 2} y={percentMode ? top + plotHeight - 7 : top + plotHeight - (row.total / maxTotal) * plotHeight - 7} textAnchor="middle" fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{percentMode ? 'No total' : formatNumber(row.total)}</text>
@@ -1383,7 +1389,7 @@ export function AnalyticsStackedBarChart({ data = [], series = [], title, subtit
 }
 
 
-export function AnalyticsMultiLineChart({ series = [], periods = [], years = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef }) {
+export function AnalyticsMultiLineChart({ series = [], periods = [], years = [], title, subtitle, temporalAxis, gapDisplay = 'connect', svgRef, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1465,7 +1471,7 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
                   ))}
                   {(presentation.showDirectSeriesLabels || presentation.showEndpointValues) && series.length <= 7 && (()=>{ const endpoint=[...points].reverse().find(p=>p.y!==null); if(!endpoint)return null;return <text x={Math.min(layout.chartRight-8,endpoint.x)-8} y={endpoint.y-8} textAnchor="end" fontSize="9.5" fontWeight="700" fill={chartSeriesColor(seriesIndex)}>{presentation.showDirectSeriesLabels?truncateLabel(item.label,19):formatNumber(endpoint.count)}</text>;})()}
                   {points.map((point, pointIndex) => point.y !== null ? (
-                    <circle key={`${item.label}-${point.label}`} cx={point.x} cy={point.y} r={markStyle('showMarkers',true)?markStyle('pointSize',4):4} fill={markStyle('showMarkers',true)?chartSeriesColor(seriesIndex):"transparent"} stroke={markStyle('showMarkers',true)?CHART_COLORS.chartBg:"transparent"} strokeWidth="1.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: item.label, secondary: point.label, count: point.count, unit: point.unit }))} onMouseLeave={() => setTooltip(null)} />
+                    <circle key={`${item.label}-${point.label}`} cx={point.x} cy={point.y} r={markStyle('showMarkers',true)?markStyle('pointSize',4):4} fill={markStyle('showMarkers',true)?chartSeriesColor(seriesIndex):"transparent"} stroke={markStyle('showMarkers',true)?CHART_COLORS.chartBg:"transparent"} strokeWidth="1.8" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: item.label, secondary: point.label, count: point.count, unit: point.unit }))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(point, item)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />
                   ) : null)}
                 </g>
               );
@@ -1482,7 +1488,7 @@ export function AnalyticsMultiLineChart({ series = [], periods = [], years = [],
 }
 
 
-export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, subtitle, svgRef }) {
+export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, subtitle, svgRef, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1524,7 +1530,7 @@ export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, s
                 {columns.map((column, columnIndex) => {
                   const cell = cellMap.get(`${row}__${column}`) || { rowLabel: row, columnLabel: column, count: 0 };
                   const opacity = (cell.count ? 0.2 + (cell.count / maxValue) * 0.75 : 0.08) * markStyle('markOpacity',1);
-                  return <g key={`${row}-${column}`}><rect x={left + columnIndex * cellSize} y={top + rowIndex * cellSize} width={Math.max(1,cellSize - markStyle('cellGap',2))} height={Math.max(1,cellSize - markStyle('cellGap',2))} rx="7" fill={heatmapAppearance?.overrides?.['Heatmap intensity'] ? chartSeriesColor(0,'Heatmap intensity') : getHeatmapCellColor(cell.count, maxValue)} opacity={opacity} stroke={tooltip?.label === row && tooltip?.secondary === column ? CHART_COLORS.accentDark : CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: row, secondary: column, count: cell.count, unit: cell.unit }))} onMouseLeave={() => setTooltip(null)} />{presentation.showCellValues && cellSize >= 30 && cell.count > 0 && <text pointerEvents="none" x={left+columnIndex*cellSize+cellSize/2} y={top+rowIndex*cellSize+cellSize/2+4} textAnchor="middle" fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(cell.count)}</text>}</g>;
+                  return <g key={`${row}-${column}`}><rect x={left + columnIndex * cellSize} y={top + rowIndex * cellSize} width={Math.max(1,cellSize - markStyle('cellGap',2))} height={Math.max(1,cellSize - markStyle('cellGap',2))} rx="7" fill={heatmapAppearance?.overrides?.['Heatmap intensity'] ? chartSeriesColor(0,'Heatmap intensity') : getHeatmapCellColor(cell.count, maxValue)} opacity={opacity} stroke={tooltip?.label === row && tooltip?.secondary === column ? CHART_COLORS.accentDark : CHART_COLORS.chartBg} strokeWidth="2" onMouseMove={(event) => setTooltip(buildTooltip(event, { label: row, secondary: column, count: cell.count, unit: cell.unit }))} onMouseLeave={() => setTooltip(null)} onClick={() => cell.contributingRows?.length && onSelectMark?.({ ...cell, label: `${row} × ${column}` })} style={{ cursor: cell.contributingRows?.length && onSelectMark ? 'pointer' : 'default' }} />{presentation.showCellValues && cellSize >= 30 && cell.count > 0 && <text pointerEvents="none" x={left+columnIndex*cellSize+cellSize/2} y={top+rowIndex*cellSize+cellSize/2+4} textAnchor="middle" fontSize="10" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(cell.count)}</text>}</g>;
                 })}
               </g>
             ))}
@@ -1537,7 +1543,7 @@ export function AnalyticsHeatmap({ rows = [], columns = [], cells = [], title, s
 }
 
 
-export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
+export function AnalyticsHistogram({ data = [], title, subtitle, svgRef, onSelectMark }) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1572,7 +1578,7 @@ export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
               const y = top + plotHeight - barHeight;
               return (
                 <g key={row.label}>
-                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of binned values` }))} onMouseLeave={() => setTooltip(null)} />
+                  <rect x={x} y={y} width={barWidth} height={Math.max(2, barHeight)} rx={markStyle('cornerRadius',8)} fill={chartSeriesColor(index)} opacity={markStyle('markOpacity',0.9)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...row, secondary: `${percentLabel(row.count, total)} of binned values` }))} onMouseLeave={() => setTooltip(null)} onClick={() => onSelectMark?.(row)} style={{ cursor: onSelectMark ? 'pointer' : 'default' }} />
                   {presentation.showValueLabels && <text x={x + barWidth / 2} y={y - 6} textAnchor="middle" fontSize="11" fontWeight="700" fill={CHART_COLORS.text}>{formatNumber(row.count)}</text>}
                   {renderXAxisTick({ x: x + barWidth / 2, y: top + plotHeight, label: presentation.showCategoryNames ? truncateLabel(row.label, 16) : '', rotate: true, angle: presentation.categoryAngle === 'default' ? null : presentation.categoryAngle })}
                 </g>
@@ -1592,7 +1598,7 @@ export function AnalyticsHistogram({ data = [], title, subtitle, svgRef }) {
 }
 
 
-export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, svgRef }) {
+export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, svgRef , onSelectMark}) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1650,7 +1656,9 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
               let childAngle = parentStart;
               return (
                 <g key={parent.label}>
-                  <path d={ringArc(parentStart, parentEnd, innerRadius, outerInnerRadius)} fill={chartSeriesColor(parentIndex,parent.label)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',2)} opacity={markStyle('markOpacity',1)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...parent, secondary: `${percentLabel(parent.count, total)} of total` }))} onMouseLeave={() => setTooltip(null)} />
+                  <path d={ringArc(parentStart, parentEnd, innerRadius, outerInnerRadius)} fill={chartSeriesColor(parentIndex,parent.label)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',2)} opacity={markStyle('markOpacity',1)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...parent, secondary: `${percentLabel(parent.count, total)} of total` }))} onMouseLeave={() => setTooltip(null)}
+                    onClick={() => onSelectMark?.({ ...parent, value: parent.count, hierarchy: { level:'parent', parent:parent.label, shareOfTotal: total > 0 ? parent.count/total : null } })}
+                    style={{cursor:onSelectMark?'pointer':'default'}} />
                   {presentation.showRadialParentLabels && parentSpan >= 28 && (()=>{const pt=polar((innerRadius+outerInnerRadius)/2,(parentStart+parentEnd)/2);const text=chartsIISegmentLabel(presentation.proportionalLabel,parent.count,parent.count/total*100);return <text pointerEvents="none" x={pt.x} y={pt.y+4} textAnchor="middle" fontSize="9.5" fontWeight="700" fill={CHART_COLORS.text}>{['none','name','name-percent'].includes(presentation.proportionalLabel)?truncateLabel(parent.label,10)+(presentation.proportionalLabel==='name-percent'?' '+percentLabel(parent.count,total):''):text}</text>})()}
                   {parent.children.map((child, childIndex) => {
                     const childSpan = parentSpan * (child.count / Math.max(1, parent.count));
@@ -1660,7 +1668,9 @@ export function AnalyticsSunburst({ parents = [], total = 0, title, subtitle, sv
                     const mid=(childStart+childEnd)/2;
                     const at=polar((outerInnerRadius+outerRadius)/2,mid);
                     const text=['none','name'].includes(presentation.proportionalLabel)?truncateLabel(child.label,9):presentation.proportionalLabel==='name-percent'?`${truncateLabel(child.label,7)} ${percentLabel(child.count,total)}`:chartsIISegmentLabel(presentation.proportionalLabel,child.count,child.count/total*100);
-                    return <g key={`${parent.label}-${child.label}`}><path d={ringArc(childStart, childEnd, outerInnerRadius, outerRadius)} fill={chartSeriesColor(parentIndex + childIndex + 1,child.label)} opacity={markStyle('markOpacity',0.82)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',1.5)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...child, secondary: parent.label }))} onMouseLeave={() => setTooltip(null)} />{presentation.showRadialChildLabels && childSpan >= 23 && <text x={at.x} y={at.y+3} textAnchor="middle" fontSize="9" fill={CHART_COLORS.text} pointerEvents="none">{text}</text>}</g>;
+                    return <g key={`${parent.label}-${child.label}`}><path d={ringArc(childStart, childEnd, outerInnerRadius, outerRadius)} fill={chartSeriesColor(parentIndex + childIndex + 1,child.label)} opacity={markStyle('markOpacity',0.82)} stroke={CHART_COLORS.chartBg} strokeWidth={markStyle('outlineWidth',1.5)} onMouseMove={(event) => setTooltip(buildTooltip(event, { ...child, secondary: parent.label }))} onMouseLeave={() => setTooltip(null)}
+                      onClick={() => onSelectMark?.({ ...child, value:child.count, hierarchy: { level:'child', parent:parent.label, child:child.label, shareOfTotal: total > 0 ? child.count/total : null } }, parent)}
+                      style={{cursor:onSelectMark?'pointer':'default'}} />{presentation.showRadialChildLabels && childSpan >= 23 && <text x={at.x} y={at.y+3} textAnchor="middle" fontSize="9" fill={CHART_COLORS.text} pointerEvents="none">{text}</text>}</g>;
                   })}
                 </g>
               );
@@ -1737,7 +1747,7 @@ function layoutTreemapTiles(items, x, y, width, height) {
   return partition(active, x, y, width, height);
 }
 
-export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treemap', subtitle = '', measureLabel = 'records', svgRef }) {
+export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treemap', subtitle = '', measureLabel = 'records', svgRef , onSelectMark}) {
   const presentation=useChartPresentation();
   const chartSeriesColor = useChartSeriesColor();
   const markStyle = useChartMarkStyle();
@@ -1785,8 +1795,14 @@ export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treema
   // At overview every part of a parent, including its smallest child tile,
   // navigates exactly one level to that parent. Once viewing the parent,
   // the visitor can click its expandable Other tile to navigate deeper.
-  const activate = (event, item) => { event.stopPropagation(); drill(item); };
-  const keyboard = (event, item) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); drill(item); } };
+  const inspect = (item, parent = null) => onSelectMark?.({ ...item, hierarchy: {
+    level: parent ? 'child' : validPath.length ? 'nested category' : 'parent', parent: parent?.label || focused?.label || '', child: item.label,
+    shareOfTotal: total > 0 ? item.value/total : null, shareOfVisible: focusTotal > 0 ? item.value/focusTotal : null,
+    consolidatedOther: Boolean(item.other), members: item.other ? (item.members || []).map(member => member.label) : [],
+  } }, parent);
+  // Existing primary click keeps drill-down; Shift+click explicitly inspects the tile.
+  const activate = (event, item) => { event.stopPropagation(); if (event.shiftKey && onSelectMark) inspect(item); else if (canDrill(item)) drill(item); else inspect(item); };
+  const keyboard = (event, item) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (event.shiftKey && onSelectMark) inspect(item); else if (canDrill(item)) drill(item); else inspect(item); } };
   const tiles = rectangles.flatMap((parent, index) => {
     const parentColor = chartSeriesColor(index);
     const nested = !validPath.length && Array.isArray(parent.children) && parent.children.length > 0;
@@ -1815,7 +1831,7 @@ export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treema
         <rect x={child.x} y={child.y} width={child.width} height={child.height} fill="transparent"
           style={{ cursor: clickable ? 'pointer' : 'default' }} role={clickable ? 'button' : undefined}
           tabIndex={clickable ? 0 : undefined} aria-label={clickable ? `Explore ${parent.label} (from ${child.label})` : `${parent.label} → ${child.label}`}
-          onClick={event => activate(event, parent)} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); activate(event, parent); } }}
+          onClick={event => { if (event.shiftKey && onSelectMark) { event.stopPropagation(); inspect(child, parent); } else activate(event, parent); }} onKeyDown={event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (event.shiftKey && onSelectMark) inspect(child,parent); else activate(event, parent); } }}
           onMouseMove={event => detail(event, child, parent.label)} onMouseLeave={() => setTooltip(null)} />
       </g>;
     })];
@@ -1834,6 +1850,7 @@ export function AnalyticsTreemapChart({ parents = [], total = 0, title = 'Treema
   return <ChartFrame title={title} subtitle={subtitle} svgRef={svgRef} width={width} height={height}>
     {{tooltip: <ChartTooltip tooltip={tooltip}/>, chart: <>
       {crumbs}
+      {onSelectMark && <text x={left} y="85" fontSize="10" fill={CHART_COLORS.accentDark}>Click to explore categories · Shift+click a tile to inspect its evidence</text>}
       {tiles}
       <SummaryPanel {...layout.legend} title={validPath.length ? `Within ${truncateLabel(levelTitle, 22)}` : 'Share by category'} rows={legendRows}
         note={`${formatNumber(focusTotal)} ${unit} in view · ${rootPct(focusTotal)} overall`} />

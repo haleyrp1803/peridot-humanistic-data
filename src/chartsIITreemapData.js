@@ -17,7 +17,7 @@ function retainWithOther(entries, limit, labelPrefix) {
   const keep = sorted.slice(0, limit);
   const rest = sorted.slice(limit);
   const value = rest.reduce((sum, item) => sum + item.value, 0);
-  keep.push({ label: `Other (${rest.length} ${rest.length === 1 ? labelPrefix.replace(/s$/, '') : labelPrefix})`, value, count: rest.reduce((sum, item) => sum + item.count, 0), other: true, members: rest });
+  keep.push({ label: `Other (${rest.length} ${rest.length === 1 ? labelPrefix.replace(/s$/, '') : labelPrefix})`, value, count: rest.reduce((sum, item) => sum + item.count, 0), contributingRows: rest.flatMap(item => item.contributingRows || []), other: true, members: rest });
   return { entries: keep, omitted: rest.length };
 }
 
@@ -48,13 +48,13 @@ export function deriveChartsIITreemap(rows = [], { parentField = '', childField 
     }
     const parent = keyOf(parentRaw);
     const child = hierarchy ? keyOf(childRaw) : null;
-    if (!groups.has(parent)) groups.set(parent, { label: parent, value: 0, count: 0, children: new Map() });
+    if (!groups.has(parent)) groups.set(parent, { label: parent, value: 0, count: 0, contributingRows: [], children: new Map() });
     const group = groups.get(parent);
-    group.value += value; group.count++;
+    group.value += value; group.count++; group.contributingRows.push(row);
     if (hierarchy) {
-      if (!group.children.has(child)) group.children.set(child, { label: child, value: 0, count: 0 });
+      if (!group.children.has(child)) group.children.set(child, { label: child, value: 0, count: 0, contributingRows: [] });
       const subgroup = group.children.get(child);
-      subgroup.value += value; subgroup.count++;
+      subgroup.value += value; subgroup.count++; subgroup.contributingRows.push(row);
     }
     reporting.includedRecords++;
   }
@@ -65,7 +65,7 @@ export function deriveChartsIITreemap(rows = [], { parentField = '', childField 
   // presentation metadata only: aggregate values and top-level totals remain
   // unchanged, and the researcher can drill into all retained subcategories.
   const allParents = [...groups.values()].filter(group => group.value > 0).map(group => ({
-    label: group.label, value: group.value, count: group.count,
+    label: group.label, value: group.value, count: group.count, contributingRows: group.contributingRows,
     children: hierarchy ? [...group.children.values()].filter(child => child.value > 0)
       .sort((a,b) => b.value - a.value || a.label.localeCompare(b.label)) : [],
   }));

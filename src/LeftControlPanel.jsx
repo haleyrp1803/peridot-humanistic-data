@@ -67,7 +67,9 @@ function readCompactInspectorWidth() {
  * obsolete non-Inspector panel contents were removed.
  */
 function sidebarSurfaceClassName() {
-  return 'relative overflow-visible border-[var(--sidebar-border)] bg-[var(--sidebar-bg)] backdrop-blur-sm transition-all duration-300';
+  // Compact Inspector itself owns the full-height banner and parchment body.
+  // Avoid a second green frame and inset padding in this compatibility shell.
+  return 'relative overflow-visible bg-transparent';
 }
 
 /**
@@ -176,12 +178,12 @@ export function LeftControlPanel({
 
   return (
     <aside
-      className={`${sidebarSurfaceClassName()} relative border-r xl:absolute xl:left-0 xl:top-0 xl:z-30 xl:h-full w-[420px]`}
+      className={`${sidebarSurfaceClassName()} xl:absolute xl:left-0 xl:top-0 xl:z-30 xl:h-full w-[420px]`}
       aria-label="Compact Inspector side panel"
       data-peridot-compatibility-shell="compact-inspector"
       style={{ width: `min(${panelWidth}px, calc(100vw - 16px))` }}
     >
-      <div className="h-full overflow-auto p-5 pr-5">
+      <div className="h-full min-h-0 overflow-hidden">
         <InspectorPanelContent
           {...inspectorPanelProps}
           shellComponents={inspectorShellComponents}

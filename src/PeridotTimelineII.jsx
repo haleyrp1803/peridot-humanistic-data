@@ -415,7 +415,7 @@ function spanCaption(days) {
 
 export function PeridotTimelineII({
   events = [], domainEvents = [], chronologySourceBounds = null,
-  relationshipRows = [], selectedEventId = '', onEventClick,
+  relationshipRows = [], selectedEventId = '', onEventClick, onEventPresentationChange,
   initialChronologySession = null, onChronologySessionChange,
   datasetSessionKey = 0, isChronologyActive = true,
 }) {
@@ -931,7 +931,33 @@ export function PeridotTimelineII({
     rulerDragRef.current=null;
     if(event.currentTarget.hasPointerCapture(event.pointerId))event.currentTarget.releasePointerCapture(event.pointerId);
   };
-  const select=item=>{setLocalSelected(item.event.id);onEventClick?.(item.event);};
+  // The Inspector receives the EXACT categories and display mode used to render
+  // this mark. categoryMemberships alone includes unselected Evidence values.
+  const select=item=>{
+    setLocalSelected(item.event.id);
+    onEventClick?.({
+      ...item.event,
+      inspectorVisualCategories: timelineMarkCategories(item.event.id,categoriesById,eventCategoriesById),
+      inspectorCategoryDisplayMode: activeCategoryConfiguration.displayMode,
+    });
+  };
+  // Category configuration edits are NOT mark-selection gestures. Update the
+  // visual legend of an already selected mark without reopening the Inspector,
+  // altering its navigation mode, or resetting expanded evidence. Only the
+  // explicit event/period click handler above is allowed to open the Inspector.
+  const priorInspectorCategoryConfigRef=useRef(activeCategoryConfiguration);
+  useEffect(()=>{
+    const changed=priorInspectorCategoryConfigRef.current !== activeCategoryConfiguration;
+    priorInspectorCategoryConfigRef.current=activeCategoryConfiguration;
+    if (!changed || !selectedEventId) return;
+    const selectedEvent=categorizedEvents.find(event=>String(event.id)===String(selectedEventId));
+    if (!selectedEvent) return;
+    onEventPresentationChange?.({
+      ...selectedEvent,
+      inspectorVisualCategories: timelineMarkCategories(selectedEvent.id,categoriesById,eventCategoriesById),
+      inspectorCategoryDisplayMode: activeCategoryConfiguration.displayMode,
+    });
+  },[activeCategoryConfiguration,selectedEventId,categorizedEvents,categoriesById,eventCategoriesById,onEventPresentationChange]);
   const placeHover = event => {
     const element = viewportRef.current;
     if (!element) return;

@@ -22,7 +22,9 @@
 import React, { useState } from 'react';
 import { buildPeridotInspectorEntityProfile } from './peridotInspectorSemantics.js';
 import { filterPeridotCanonicalEntityEvidenceToRows } from './peridotEntityEvidence.js';
+import { omitRedundantCompactRelationshipEntries } from './peridotInspectorCompactGrouping.js';
 import { PeridotRecordStructure } from './PeridotRecordStructure.jsx';
+import { CompactEvidenceRows, CompactGroupedValues, CompactFactGrid, CompactEvidenceReveal, CompactRecordPreview, CompactRecordMore, CompactMetricStrip } from './InspectorCompactEvidence.jsx';
 
 function detailLabelClassName() {
   return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--detail-label-text)]';
@@ -402,55 +404,6 @@ function ReferenceLead({ selectedProps, profile }) {
   );
 }
 
-function CompactSummaryTile({ count, label, onOpenFullInspector }) {
-  return (
-    <button
-      type="button"
-      onClick={onOpenFullInspector}
-      className="rounded-lg border border-[var(--section-border)]/75 bg-[var(--section-bg)]/80 px-3 py-2 text-left text-xs text-[var(--text-main)] transition hover:border-[var(--inspector-clickable-hover-border)] hover:bg-[var(--inspector-clickable-hover-bg)] hover:text-[var(--inspector-clickable-hover-text)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary-bg)]/70"
-    >
-      <div className="font-semibold">{count || 0}</div>
-      <div className="text-[var(--text-muted)]">{label}</div>
-    </button>
-  );
-}
-
-function CompactDossierPrompt({
-  entityType,
-  linkedLetterCount,
-  relatedPeopleCount,
-  relatedPlacesCount,
-  routeCount,
-  onOpenFullInspector,
-}) {
-  const entityLabel = entityType === 'place' ? 'place' : 'entity';
-
-  return (
-    <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-3 text-sm text-[var(--text-main)] shadow-sm">
-      <div className="font-semibold uppercase tracking-[0.14em] text-[var(--detail-label-text)]">
-        At a glance
-      </div>
-      <p className="mt-2 leading-relaxed text-[var(--text-muted)]">
-        This {entityLabel} profile summarizes the current filtered records. Open the full dossier for connected people,
-        places, and chronological records.
-      </p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <CompactSummaryTile count={linkedLetterCount} label="related records" onOpenFullInspector={onOpenFullInspector} />
-        <CompactSummaryTile count={relatedPeopleCount} label="connected people" onOpenFullInspector={onOpenFullInspector} />
-        <CompactSummaryTile count={relatedPlacesCount} label="connected places" onOpenFullInspector={onOpenFullInspector} />
-        <CompactSummaryTile count={routeCount} label="connections" onOpenFullInspector={onOpenFullInspector} />
-      </div>
-      <button
-        type="button"
-        onClick={onOpenFullInspector}
-        className="mt-3 w-full rounded-full border border-[var(--button-primary-border)] bg-[var(--button-primary-bg)] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[var(--button-primary-text)] shadow-sm transition hover:bg-[var(--button-primary-hover)] focus:outline-none focus:ring-2 focus:ring-[var(--button-primary-bg)]/70"
-      >
-        Open full dossier
-      </button>
-    </div>
-  );
-}
-
 export function InspectorNodeView({
   InspectorSummaryCardComponent,
   PersonMetadataCardComponent,
@@ -475,6 +428,7 @@ export function InspectorNodeView({
   onOpenRouteDetail,
   onExpandInspector,
   isCompact = false,
+  selectionEvidence = null,
 }) {
   const entityType = getSelectedEntityType(selectedProps, viewMode);
   const profile = buildEntityProfile(selectedProps, selectedLetterMetadata, viewMode);
@@ -482,26 +436,136 @@ export function InspectorNodeView({
   const entityMappedStructure = profile.structure;
 
   if (isCompact) {
+    // The attributed structure is deliberately narrower than all fields in
+    // related records. Present the former as entity-owned assertions; preview
+    // the latter explicitly as evidence from contributing records.
+    const ownedEntries = entityType === 'place'
+      ? [...entityMappedStructure.places, ...entityMappedStructure.participants]
+      : [...entityMappedStructure.temporal, ...entityMappedStructure.places, ...entityMappedStructure.relationships, ...entityMappedStructure.evidence];
+    const compactOwnedEntries = omitRedundantCompactRelationshipEntries(ownedEntries);
+    const records = profile.matchingLetters || [];
+    // Pass B: only the verified selected-mark contract can supply mark evidence.
+    // Entity-profile records remain broader context, even when they share a subject.
+    const isGeographicMark = selectionEvidence?.representation?.markType === 'geographic-entity-anchor'
+      && selectionEvidence?.support?.status === 'verified';
+    const isNetworkMark = selectionEvidence?.representation?.markType === 'network-entity-node';
+    const networkMark = isNetworkMark ? selectedProps.networkMarkEvidence : null;
+    const networkMarkRows = isNetworkMark ? (selectionEvidence.support.records || []) : [];
+    const networkEdges = networkMark?.edges || [];
+    const networkCounterparts = networkEdges.map((edge) => ({
+      label: edge.sourceLabel === selectedLabel ? edge.targetLabel : edge.sourceLabel,
+      count: edge.count,
+      relationshipLabel: edge.relationshipLabel,
+      direction: edge.direction,
+    })).filter((edge) => edge.label);
+    const markRecords = isGeographicMark ? selectionEvidence.support.records : [];
+    const markReasons = isGeographicMark ? selectionEvidence.representation.details : [];
+    const anchorReasonLabel = markReasons
+      .filter((item) => item.kind === 'mapped-role' || item.kind === 'derived-anchor')
+      .map((item) => item.value).join(' · ');
+    const broaderRecordCount = getProfileRecordCount(selectedProps, profile);
     return (
-      <div className="space-y-3">
-        <InspectorSummaryCardComponent>
-          <DetailRow label={entityType === 'place' ? 'Place' : 'Person / entity'} value={selectedLabel} />
-          <DetailRow label="Related records" value={getProfileRecordCount(selectedProps, profile)} />
-          <DetailRow label="Dates of Visible Records" value={profile.dateSpan} />
-          {selectedProps.anchorLabel ? <DetailRow label="Anchor location" value={selectedProps.anchorLabel} /> : null}
-          <DetailRow label="Network weight" value={selectedProps.degree} />
-        </InspectorSummaryCardComponent>
-
-        <CompactDossierPrompt
-          entityType={entityType}
-          linkedLetterCount={getProfileRecordCount(selectedProps, profile)}
-          relatedPeopleCount={profile.relatedPeopleCount}
-          relatedPlacesCount={profile.relatedPlacesCount}
-          routeCount={profile.routeCount}
-          onOpenFullInspector={onExpandInspector}
-        />
-
-        <InspectorClearSelectionButtonComponent onClear={clearSelection} />
+      <div className="peridot-inspector-compact-data-flow">
+        {isGeographicMark ? (
+          <>
+            <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--support">
+              <div className="peridot-inspector-compact-subheading">Evidence supporting this mark</div>
+              <p className="peridot-inspector-compact-muted">These mapped place observations and source records specifically support the selected visual node in the displayed Map scope.</p>
+              <CompactFactGrid entries={[
+                { label: 'Mapped place', value: selectedProps.anchorLabel },
+                ...(anchorReasonLabel ? [{ label: 'Mapped role or Map calculation', value: anchorReasonLabel }] : []),
+                { label: 'Distinct supporting source records', value: String(selectionEvidence.support.recordCount) },
+              ]}/>
+              <CompactRecordPreview rows={markRecords} maxRecords={1}/>
+              {markRecords.length > 1 ? <CompactRecordMore rows={markRecords} maxRecords={3}/> : null}
+            </div>
+            <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--context">
+              <div className="peridot-inspector-compact-subheading">Broader evidence about this {entityType === 'place' ? 'place' : 'entity'}</div>
+              <p className="peridot-inspector-compact-muted">Other associated records and assertions in the applied search scope. These do not necessarily produce the selected geographic mark.</p>
+              <CompactFactGrid entries={[{ label: 'Associated records · applied search scope', value: String(broaderRecordCount) }]}/>
+            </div>
+            <CompactEvidenceReveal title="Explore broader mapped information and counts">
+              {compactOwnedEntries.length ? <CompactGroupedValues entries={compactOwnedEntries} initialLimit={20}/> : null}
+              <CompactRecordPreview rows={records} maxRecords={1}/>
+              <CompactMetricStrip entries={[
+                { label: 'Connected people / entities', shortLabel: 'Connected entities', value: profile.relatedPeopleCount },
+                { label: 'Connected places', shortLabel: 'Connected places', value: profile.relatedPlacesCount },
+                ...(profile.routeCount ? [{ label: 'Directed place connections', shortLabel: 'Directed links', value: profile.routeCount }] : []),
+                ...(selectedProps.degree != null ? [{ label: 'Visualized network weight', shortLabel: 'Network weight', value: selectedProps.degree }] : []),
+              ]}/>
+              <CompactRecordMore rows={records} maxRecords={2}/>
+              {profile.dateSpan ? <CompactFactGrid entries={[{ label: 'Date range across related records', value: profile.dateSpan }]}/> : null}
+            </CompactEvidenceReveal>
+          </>
+        ) : isNetworkMark ? (
+          <>
+            <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--support">
+              <div className="peridot-inspector-compact-subheading">Evidence supporting this Network mark</div>
+              <p className="peridot-inspector-compact-muted">These connections belong to the selected node in the displayed Network. Relationship occurrences are not necessarily distinct source records.</p>
+              {networkMark ? <CompactFactGrid entries={[
+                { label: 'Displayed connections', value: String(networkMark.edgeCount) },
+                ...(networkMark.representedWeight !== null ? [{ label: 'Represented relationship occurrences', value: String(networkMark.representedWeight) }] : []),
+                ...(selectionEvidence.support.status === 'verified' ? [{ label: 'Distinct supporting source records', value: String(selectionEvidence.support.recordCount) }] : []),
+              ]}/> : <p className="peridot-inspector-compact-muted">Mark-level connection provenance is unavailable for this selection.</p>}
+              {networkCounterparts.length ? (
+                <>
+                  <div className="peridot-inspector-compact-subheading">Connected participants in this Network</div>
+                  <CompactGroupedValues initialLimit={4} moreLabel="Show other displayed connections" entries={networkCounterparts.map((edge) => ({
+                    label: edge.relationshipLabel || 'Connected with',
+                    value: `${edge.label}${edge.count != null ? ` · ${edge.count} occurrence${edge.count === 1 ? '' : 's'}` : ''}`,
+                  }))}/>
+                </>
+              ) : null}
+              {selectionEvidence.support.status === 'partial' ? <p className="peridot-inspector-compact-muted">Some displayed edges lack record provenance; the distinct-record count may be incomplete.</p> : null}
+              {networkMarkRows.length ? <CompactRecordPreview rows={networkMarkRows} maxRecords={1}/> : null}
+            </div>
+            <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--context">
+              <div className="peridot-inspector-compact-subheading">Broader evidence about this {entityType === 'place' ? 'place' : 'entity'}</div>
+              <p className="peridot-inspector-compact-muted">Other mapped assertions and records associated with this entity in the applied search scope. They are not necessarily the evidence producing the displayed connections.</p>
+              <CompactFactGrid entries={[{ label: 'Associated records · applied search scope', value: String(broaderRecordCount) }]}/>
+            </div>
+            <CompactEvidenceReveal title="Explore broader mapped information and counts">
+              {compactOwnedEntries.length ? <CompactGroupedValues entries={compactOwnedEntries} initialLimit={20}/> : null}
+              <CompactRecordPreview rows={records} maxRecords={1}/>
+              <CompactMetricStrip entries={[
+                { label: 'Connected people / entities', shortLabel: 'Connected entities', value: profile.relatedPeopleCount },
+                { label: 'Connected places', shortLabel: 'Connected places', value: profile.relatedPlacesCount },
+                ...(profile.routeCount ? [{ label: 'Directed place connections', shortLabel: 'Directed links', value: profile.routeCount }] : []),
+                ...(selectedProps.degree != null ? [{ label: 'Visualized network weight', shortLabel: 'Network weight', value: selectedProps.degree }] : []),
+              ]}/>
+              <CompactRecordMore rows={records} maxRecords={2}/>
+              {profile.dateSpan ? <CompactFactGrid entries={[{ label: 'Date range across related records', value: profile.dateSpan }]}/> : null}
+            </CompactEvidenceReveal>
+          </>
+        ) : (
+          <>
+        <CompactFactGrid entries={[{ label: 'Related records · applied scope', value: String(broaderRecordCount) }]}/>
+        {compactOwnedEntries.length ? (
+          <>
+            <div className="peridot-inspector-compact-subheading">{entityType === 'place' ? 'Mapped associations with this place' : 'Mapped assertions about this entity'}</div>
+            <CompactGroupedValues entries={compactOwnedEntries.slice(0, 3)} initialLimit={3}/>
+          </>
+        ) : null}
+        {selectedProps.anchorLabel && !ownedEntries.some((entry) => entry.value === selectedProps.anchorLabel) ? (
+          <CompactFactGrid entries={[{ label: 'Visualized map anchor', value: selectedProps.anchorLabel }]}/>
+        ) : null}
+        {!ownedEntries.length && profile.dateSpan ? <DetailRow label="Dates of related records" value={profile.dateSpan} /> : null}
+        <CompactRecordPreview rows={records} maxRecords={1}/>
+        <CompactMetricStrip entries={[
+          { label: 'Connected people / entities', shortLabel: 'Connected entities', value: profile.relatedPeopleCount },
+          { label: 'Connected places', shortLabel: 'Connected places', value: profile.relatedPlacesCount },
+          ...(profile.routeCount ? [{ label: 'Directed place connections', shortLabel: 'Directed links', value: profile.routeCount }] : []),
+          ...(selectedProps.degree != null ? [{ label: 'Visualized network weight', shortLabel: 'Network weight', value: selectedProps.degree }] : []),
+        ]}/>
+        <CompactEvidenceReveal title="Show more mapped information">
+          <CompactGroupedValues entries={compactOwnedEntries.slice(3)} initialLimit={20}/>
+          <CompactRecordMore rows={records} maxRecords={2}/>
+          {profile.dateSpan ? <CompactFactGrid entries={[{ label: 'Date range across related records', value: profile.dateSpan }]}/> : null}
+          <p className="peridot-inspector-compact-muted">Record-level fields describe their source records, not automatically this entity. Complete source text and navigation remain in the full dossier.</p>
+        </CompactEvidenceReveal>
+          </>
+        )}
+        {/* Clear selection is available in compact Next steps. */}
       </div>
     );
   }

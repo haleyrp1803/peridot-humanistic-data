@@ -521,10 +521,15 @@ export function derivePeridotGeographicPersonAnchors(locations = [], options = {
         labels: new Map(),
         roles: new Map(),
         sourceRows: [],
+        // Keep the original subject-attributed occurrence, not only its place.
+        // A coordinate can be supported by several distinct researcher roles;
+        // the selected map setting determines which rows explain this mark.
+        sourceOccurrences: [],
       });
     }
 
     const place = person.places.get(coordinateKey);
+    place.sourceOccurrences.push({ row: location.sourceRow, role: asText(location.role) });
     place.occurrenceCount += 1;
     const label = asText(location.label);
     if (label) place.labels.set(label, (place.labels.get(label) || 0) + 1);
@@ -570,6 +575,18 @@ export function derivePeridotGeographicPersonAnchors(locations = [], options = {
       }
       if (!reasons.length) return;
 
+      // Role-only anchors are explained by rows bearing an enabled role.
+      // The derived most-frequent anchor legitimately uses all occurrences
+      // at this coordinate. Do not merge unrelated roles into a role-only mark.
+      const sourceRowsForMark = [];
+      const seenSourceRows = new Set();
+      place.sourceOccurrences.forEach(({ row, role }) => {
+        if (!row || (!isMostFrequentPlace && !selectedRoleKeys.has(role.toLowerCase()))) return;
+        if (seenSourceRows.has(row)) return;
+        seenSourceRows.add(row);
+        sourceRowsForMark.push(row);
+      });
+
       const preferredLabel = Array.from(place.labels.entries())
         .sort((a, b) => b[1] - a[1])[0]?.[0] || place.label || `${place.latitude}, ${place.longitude}`;
       anchors.push({
@@ -588,6 +605,9 @@ export function derivePeridotGeographicPersonAnchors(locations = [], options = {
         reasons,
         isMostFrequentPlace,
         sourceRows: place.sourceRows.slice(),
+        // Source-backed records contributing to this particular node, after
+        // evaluating the enabled geographic-anchor reasons.
+        sourceRowsForMark,
       });
     });
   });

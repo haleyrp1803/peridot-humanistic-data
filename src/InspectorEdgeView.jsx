@@ -13,6 +13,7 @@
  */
 
 import React from 'react';
+import { CompactEvidenceReveal, CompactFactGrid, CompactRecordPreview, CompactRecordMore } from './InspectorCompactEvidence.jsx';
 
 function detailLabelClassName() {
   return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--detail-label-text)]';
@@ -23,24 +24,6 @@ function DetailRow({ label, value }) {
     <div className="border-b border-[var(--section-border)]/80 py-1.5 last:border-b-0">
       <div className={detailLabelClassName()}>{label}</div>
       <div className="mt-0.5 break-words text-sm text-[var(--text-main)]">{value || '—'}</div>
-    </div>
-  );
-}
-
-function CompactRoutePrompt({ linkedRecordCount }) {
-  return (
-    <div className="rounded-2xl border border-[var(--section-border)] bg-[var(--section-bg)] p-3 text-sm text-[var(--text-main)] shadow-sm">
-      <div className="font-semibold uppercase tracking-[0.14em] text-[var(--detail-label-text)]">
-        At a glance
-      </div>
-      <p className="mt-2 leading-relaxed text-[var(--text-muted)]">
-        This compact Inspector shows the connection direction, represented weight, and related-record count.
-        Expand the Inspector for the chronological record list.
-      </p>
-      <div className="mt-3 rounded-xl border border-[var(--section-border)]/70 bg-[var(--panel-card-bg)] px-3 py-2 text-xs">
-        <div className="font-semibold text-[var(--text-strong)]">{linkedRecordCount || 0}</div>
-        <div className="text-[var(--text-muted)]">related records</div>
-      </div>
     </div>
   );
 }
@@ -84,24 +67,66 @@ export function InspectorEdgeView({
   toggleLetterSection,
   onOpenLetterDetail,
   isCompact = false,
+  selectionEvidence = null,
+  viewMode = 'geographic',
 }) {
   const linkedRecordCount = (selectedProps.letterMetadata || []).length;
 
-  if (isCompact) {
+  if (isCompact && viewMode === 'person') {
+    const contributing = selectionEvidence?.support?.status === 'verified'
+      ? selectionEvidence.support.records : (selectedProps.letterMetadata || []);
+    const relationshipLabel = selectedProps.relationshipLabel || selectedProps.relationshipType;
+    const hasMarkProvenance = selectionEvidence?.support?.status === 'verified';
     return (
-      <div className="space-y-3">
-        <InspectorSummaryCardComponent>
-          <DetailRow label="Connection" value={`${selectedProps.sourceLabel} ${selectedProps.direction === 'directed' ? '→' : '—'} ${selectedProps.targetLabel}`} />
-          <DetailRow label="Relationship" value={selectedProps.relationshipType || selectedProps.relationshipLabel} />
-          <DetailRow label="Direction" value={selectedProps.direction || 'undirected'} />
-          <DetailRow label="Weight" value={selectedProps.count} />
-          <DetailRow label="Dates represented" value={(selectedProps.dates || []).join('; ')} />
-          <DetailRow label="Related records" value={linkedRecordCount} />
-        </InspectorSummaryCardComponent>
+      <div className="peridot-inspector-compact-data-flow">
+        <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--support">
+          <div className="peridot-inspector-compact-subheading">Evidence supporting this connection</div>
+          <p className="peridot-inspector-compact-muted">The displayed edge represents mapped relationship occurrences between its endpoints. A represented weight is not necessarily a count of distinct source records.</p>
+          <CompactFactGrid entries={[
+            { label: 'Source endpoint', value: selectedProps.sourceLabel },
+            { label: 'Target endpoint', value: selectedProps.targetLabel },
+            { label: 'Mapped relationship', value: relationshipLabel || (selectedProps.direction === 'directed' ? 'Directed relationship' : 'Relationship') },
+            { label: 'Direction', value: selectedProps.direction || 'Not specified' },
+            ...(selectedProps.count != null ? [{ label: 'Represented relationship occurrences', value: String(selectedProps.count) }] : []),
+            ...(hasMarkProvenance ? [{ label: 'Contributing row entries on this edge', value: String(contributing.length) }] : []),
+          ]}/>
+          {hasMarkProvenance ? <CompactRecordPreview rows={contributing} maxRecords={1}/> : <p className="peridot-inspector-compact-muted">This edge has not supplied verified contributing-row provenance.</p>}
+          {contributing.length > 1 ? <CompactRecordMore rows={contributing} maxRecords={2}/> : null}
+        </div>
+        <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--context">
+          <div className="peridot-inspector-compact-subheading">Broader evidence about the participants</div>
+          <p className="peridot-inspector-compact-muted">The endpoints may have other relationships and mapped assertions beyond this selected edge. Inspect either participant for its wider evidence profile.</p>
+        </div>
+        <CompactEvidenceReveal title="Explore additional connection details">
+          <CompactFactGrid entries={[
+            { label: 'Endpoint roles', value: [selectedProps.sourceRole, selectedProps.targetRole].filter(Boolean).join(' · ') },
+            { label: 'Dates represented', value: (selectedProps.dates || []).join('; ') },
+            { label: 'Source-supported pairs', value: (selectedProps.samplePairs || []).join('; ') },
+          ]}/>
+        </CompactEvidenceReveal>
+      </div>
+    );
+  }
 
-        <CompactRoutePrompt linkedRecordCount={linkedRecordCount} />
-
-        <InspectorClearSelectionButtonComponent onClear={clearSelection} />
+  if (isCompact) {
+    const contributing = selectedProps.letterMetadata || [];
+    const relationshipLabel = selectedProps.relationshipLabel || selectedProps.relationshipType;
+    return (
+      <div className="peridot-inspector-compact-data-flow">
+        <CompactFactGrid entries={[
+          { label: 'Mapped relationship', value: relationshipLabel || (selectedProps.direction === 'directed' ? 'Directed relationship' : 'Relationship') },
+          { label: 'Represented weight', value: String(selectedProps.count ?? 0) },
+          { label: 'Related records', value: String(contributing.length) },
+        ]}/>
+        <CompactRecordPreview rows={contributing} maxRecords={1}/>
+        <CompactEvidenceReveal title="Show additional connection evidence">
+          <CompactFactGrid entries={[
+            { label: 'Endpoint roles', value: [selectedProps.sourceRole, selectedProps.targetRole].filter(Boolean).join(' · ') },
+            { label: 'Dates represented', value: (selectedProps.dates || []).join('; ') },
+            { label: 'Source-supported pairs', value: (selectedProps.samplePairs || []).join('; ') },
+          ]}/>
+          <CompactRecordMore rows={contributing} maxRecords={2}/>
+        </CompactEvidenceReveal>
       </div>
     );
   }
@@ -126,7 +151,7 @@ export function InspectorEdgeView({
         <InspectorSummaryCardComponent>
           <DetailRow label="Relationship" value={selectedProps.relationshipType || selectedProps.relationshipLabel} />
           <DetailRow label="Direction" value={selectedProps.direction || 'undirected'} />
-          <DetailRow label="Related records" value={linkedRecordCount} />
+          <DetailRow label="Related records" value={String(linkedRecordCount)} />
         </InspectorSummaryCardComponent>
       </div>
 
