@@ -40,12 +40,12 @@ This document owns the verified current checkpoint, reverse-chronological develo
 ## 1. Current Synchronized Checkpoint
 
 ```text
-9f63175 — Refine documentation governance and workflow charter
+01b03bc — Complete compact Inspector integration across Map, Network, Timeline, and Charts
 Branch: main
-Status: HEAD, origin/main, and origin/HEAD aligned; working tree clean (user-confirmed Git status/log, 2026-11-22)
+Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree NOT clean: locally modified core documentation and uncommitted voluntary-support/header source, config, and planning files. These are not part of 01b03bc.
 ```
 
-**Source of verification:** The researcher supplied `git status` and `git log --oneline -5` showing `9f63175` at `HEAD`, `origin/main`, and `origin/HEAD`, with nothing to commit. The immediately preceding documentation commits are `d5d7a1b` (reorganize core information documentation and add glossaries) and `2be3ea0` (synchronize documentation through Charts II completion and appearance customization). The preceding source-development commits include `e96c375` (Charts appearance customization and adaptive presentation) and `8baa733` (retire legacy Charts I). This establishes a clean, synchronized documentation checkpoint; it does **not** independently rerun source tests or deployed-site verification.
+**Source of verification:** The researcher supplied `git status` and `git log --oneline -15` on 2026-11-25 confirming `01b03bc` at `HEAD`, `origin/main`, and `origin/HEAD`. The commit includes the accepted accumulated compact Inspector source across Map, Network, Timeline and Charts. Working-tree changes remain outside that commit: modified Maintainer's Guide and Charter, uncommitted voluntary-support/header source and styling, `.github/FUNDING.yml`, and support planning assets. These files are **not yet recorded as a completed or committed feature**. The development's browser acceptance and source-level test reports are described in the milestone below; no fresh production-build or deployed-site verification is implied.
 
 The older repository-state snapshots are preserved in the [historical checkpoint evidence archive](#5-historical-checkpoint-evidence), rather than in this current-state introduction.
 
@@ -58,11 +58,11 @@ This index points to **detailed milestone narratives**, not a second history or 
 
 | Development area | Start with these milestone narratives |
 |---|---|
-| Charts / Analytics | [Charts II completion](#milestone-charts-ii); [earlier Charts foundations](#milestone-charts-foundations) |
+| Charts / Analytics | [Compact Inspector and chart provenance](#milestone-compact-inspector-20261125); [Charts II completion](#milestone-charts-ii); [earlier Charts foundations](#milestone-charts-foundations) |
 | Timeline / chronology | [Grouped swimlanes](#milestone-timeline-grouped); [source-backed categories](#milestone-timeline-categories); [shared calendar navigation](#milestone-chronology); [Timeline II foundation](#milestone-timeline-foundation) |
 | Map / Network | [CARTO map and exports](#milestone-carto-map); [generalized Network](#milestone-generalized-network); [Map and Timeline interaction](#milestone-timeline-map) |
 | Data import / canonical model | [Workbook and normalization](#milestone-workbook); [generalized mapping foundations](#milestone-mapping-foundation); [canonical normalization](#milestone-canonical) |
-| Search / Inspector | [Generalized Search](#milestone-search); [Inspector / Identity](#milestone-inspector) |
+| Search / Inspector | [Compact Inspector and chart provenance](#milestone-compact-inspector-20261125); [Generalized Search](#milestone-search); [Inspector / Identity](#milestone-inspector) |
 | Interface / design / About | [About animations](#milestone-about-animations); [public gateways](#milestone-gateways); [Cartographic Editorial foundation](#milestone-editorial) |
 | Infrastructure / documentation / testing | [Documentation architecture and governance revision](#milestone-documentation-reorganization); [Loader and first Map mount](#milestone-loader); [deployment and dependency maintenance](#milestone-dependencies); [earlier documentation governance](#milestone-governance) |
 
@@ -87,10 +87,14 @@ A dash in the historical note means none was originally recorded; absence of a v
 
 | Date | Commit | Exact recorded message | Area (editorial) | Significance / detail |
 |---|---|---|---|---|
-| <a id="history-undated"></a>Date not independently established (confirmed by 2026-11-22) | `9f63175` | Refine documentation governance and workflow charter | Documentation / planning | Current synchronized documentation checkpoint; accepted Charter v03 and Governance Protocol v01, with the historical restructuring plan retained as non-governing provenance. <em>Verification:</em> User-confirmed Git status/log; no source-app test implied [Details](#milestone-documentation-reorganization) |
+| Date not independently established (confirmed 2026-11-25) | `01b03bc` | Complete compact Inspector integration across Map, Network, Timeline, and Charts | Inspector / Charts | Consolidated accepted compact Inspector and Charts II mark selection, provenance, records, tests and integration. <em>Verification:</em> User-confirmed synchronized HEAD; user-browser accepted chart-family passes; test report 202/203, known unrelated Timeline label mismatch. [Details](#milestone-compact-inspector-20261125) |
+| Date not independently established (confirmed by 2026-11-25) | `b619be4` | add inspector mockup to planning documents | Documentation / planning | Reference mockup preceding the bounded compact Inspector work. [Details](#milestone-compact-inspector-20261125) |
+| Date not independently established (confirmed by 2026-11-25) | `d94911f` | Implement resizable compact Inspector panel | Inspector | Initial accepted left-docked resizable panel, subsequently expanded in uncommitted iterative passes and consolidated at `01b03bc`. [Details](#milestone-compact-inspector-20261125) |
+| Date not independently established (confirmed by 2026-11-25) | `e3798f4` | Synchronize core documentation after governance reorganization | Documentation / planning | Documentation checkpoint preceding compact Inspector development; confirmed in latest supplied Git log. [Details](#milestone-documentation-reorganization) |
+| <a id="history-undated"></a>Date not independently established (confirmed by 2026-11-22) | `9f63175` | Refine documentation governance and workflow charter | Documentation / planning | Historical synchronized documentation checkpoint; accepted Charter v03 and Governance Protocol v01, with the historical restructuring plan retained as non-governing provenance. <em>Verification:</em> User-confirmed Git status/log; no source-app test implied [Details](#milestone-documentation-reorganization) |
 | Date not independently established (confirmed by 2026-11-22) | `d5d7a1b` | Reorganize core information documentation and add glossaries | Documentation / planning | Accepted Changelog v04, Maintainer's Guide v04, and README v02 reorganizations; reader onboarding, indexes and glossaries. <em>Verification:</em> User-confirmed Git status/log; no source-app test implied [Details](#milestone-documentation-reorganization) |
 | Date not independently established | `2be3ea0` | Synchronize documentation through Charts II completion and appearance customization | Documentation / planning | Historical synchronized checkpoint per researcher-provided Git log and status (2026-11-22); superseded by later documentation commits. <em>Verification:</em> Git status/log confirmed; no new source test implied [Details](#milestone-charts-ii) |
-| <a id="history-2026-11"></a>2026-11-22 | `e96c375` | Implement Charts appearance customization and adaptive presentation | Charts / Analytics | current synchronized HEAD; Charts II Appearance colors, styles, adaptive labels, resizable panel, and PNG continuity <em>Verification:</em> User browser-accepted; source-level Charts tests reported passing [Details](#milestone-charts-ii) |
+| <a id="history-2026-11"></a>2026-11-22 | `e96c375` | Implement Charts appearance customization and adaptive presentation | Charts / Analytics | historical Charts II Appearance checkpoint; Charts II Appearance colors, styles, adaptive labels, resizable panel, and PNG continuity <em>Verification:</em> User browser-accepted; source-level Charts tests reported passing [Details](#milestone-charts-ii) |
 | 2026-11-22 | `8baa733` | Retire legacy Charts I and consolidate Charts II workspace | Charts / Analytics | single public Charts tab; removed `AnalyticsPanel.jsx`; shared helpers/CSS retained <em>Verification:</em> User browser regression accepted; retirement test recorded [Details](#milestone-charts-ii) |
 | 2026-11-22 | `5c75472` | Implement Charts II chart-local filters and single-series selection | Charts / Analytics | filter scope isolation and compatible single/multi-series value selection <em>Verification:</em> See Charts II milestone; local filter behavior reported accepted [Details](#milestone-charts-ii) |
 | 2026-11 (day unverified) | `1dba2eb` | Refine Charts II recommendations using analytical data suitability | Charts / Analytics | genuine paired/numeric/temporal evidence; coordinates excluded from recommendation evidence [Details](#milestone-charts-ii) |
@@ -710,6 +714,25 @@ A dash in the historical note means none was originally recorded; absence of a v
 | 2026-04-17 | `eb3ba4b` | Initial rebuilt app baseline | Other / general | — |
 
 ## 4. Detailed Milestone Archive
+
+<details>
+<summary><a id="milestone-compact-inspector-20261125"></a><strong>Compact Inspector and Charts II analytical provenance — accepted through 2026-11-25</strong></summary>
+
+### Compact Inspector and Charts II analytical provenance — accepted through 2026-11-25 (`01b03bc`)
+
+**Development sequence and collaboration.** After the initial left-docked resizable panel was committed at `d94911f`, the researcher and ChatGPT iterated on its three-section organization, source/representation distinction, editorial styling, search/navigation, grouped evidence, and data density. The researcher tested screenshots and browser behavior repeatedly, requested reductions in duplicated mapped fields, and required expanded disclosures to persist after pointer exit. The reference mockup was committed at `b619be4`. The implementation was built through bounded ZIP handoffs, with acceptance of Map/Network node/cluster, Timeline event/period and eventually Charts II mark presentations. These intermediate handoffs were not separately committed; `01b03bc` is the accepted consolidated source checkpoint. It is incorrect to imply that their separate phases have distinct Git commits.
+
+**Timeline:** Selected event/period explanations distinguish mapped temporal assertions from visual computation, including partial and open-ended dates. A mini-legend identifies actual rendered category colors/symbols and memberships; source/provenance fields are presented once when identities match. Category Editor interactions do not create Inspector selections; changing active category configuration can refresh existing legend content without reopening the panel.
+
+**Charts II:** An audit established that existing SVG charts largely provided hover values but lacked a general Inspector selection pipeline and complete per-mark source references. The researcher suggested retaining source and calculation information at derivation time, eliminating the need to reconstruct it for the Inspector. Four accepted passes implemented (1) categorical Bar/Column, Pie/Donut, Grouped/Stacked Bar; (2) temporal and numerical Line/Multi-Line, Area/Stacked Area, Scatter/Bubble, Histogram, Heatmap, plus improved record-ID search contrast; (3) Box Plot, Dot Plot, Slope Chart, Treemap, Sunburst, preserving direct drill-down; (4) integration/regression and correction of absent numeric values formerly rendered as zero. The resulting contract is calculate once, retain contributing source/observation references, render and inspect from the same analytical result. Treemap uses ordinary click to drill down and Shift+click to inspect expandable tiles. Navigating out of the Builder clears chart-mark Inspector state; changes to the chart's calculations invalidate stale selections.
+
+**Evidence-access refinements:** The researcher identified an arbitrary `25` compact / `100` full cutoff and found researcher-mapped Unique IDs were incorrectly displayed as generated compatibility IDs. Corrections made the compact list searchable across all contributors, progressively show 25 then 50 more per click without a terminal restriction, and resolve display identity from generalized authoritative mapping before falling back to Peridot-generated ID. Links retain internal stable record references. Distinguish records, contributing observations, plotted aggregate values and missing numerical evidence. The archive retains user screenshots and assistant handoff discussions as evidence of design iteration; they are not substitute source-code verification.
+
+**Verification and limits:** Browser acceptance was explicitly reported for the first three Charts passes and subsequent Pass 4 correction was accepted. The reported final source-level suite passed 202/203 tests; the sole failure was the already known grouped Timeline label mismatch (`Uncategorized` vs `No priority category`). Some individual passes reported syntax and ZIP checks; an integrated Vite production build and deployed-site check were **not** performed in the final handoff. Map/Network edge click selection and hit testing still require a focused audit despite existing Inspector edge views. Next work: edge inspection, cross-visualization compact regression, contextual settings shortcut, expanded dossier, Explore redesign. Automatic category/series palette completeness in Timeline and Charts is separately deferred. The November 25 voluntary-support/header files remain uncommitted as reported; no completion or acceptance is attributed to them in this milestone.
+
+[Back to development history](#3-full-development-history)
+
+</details>
 
 <details>
 <summary><a id="milestone-documentation-reorganization"></a><strong>Core documentation reorganization and governance renewal — confirmed 2026-11-22</strong></summary>

@@ -66,9 +66,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-9f63175 — Refine documentation governance and workflow charter
+01b03bc — Complete compact Inspector integration across Map, Network, Timeline, and Charts
 Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned; working tree clean (user-confirmed 2026-11-22, America/New_York)
+Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree NOT clean: locally modified core documentation and uncommitted voluntary-support/header source, config, and planning files. These are not part of 01b03bc.
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -177,6 +177,19 @@ After the user applies and tests an uncommitted replacement, script, or manual e
 Do **not** ask the user to upload a current file again merely because it was supplied earlier in the same active conversation. Re-request only when there is concrete ambiguity, drift, an uncommitted local change not represented in the conversation, or inability to access the exact file bytes.
 
 Do not regenerate a broad replacement from an earlier upload, superseded generated artifact, or remembered snapshot. This is especially important for shared files such as `src/index.css`, where unrelated workspace rules may coexist and a stale full-file handoff can silently revert a successful visual repair.
+
+
+### Source availability check before requesting uploads
+
+**Intention:** Prevent unnecessary reuploads while keeping exact-file verification mandatory. A new conversation, new pass, or intervening commit is not by itself evidence that earlier available source files have become unusable.
+
+**Trigger:** Before asking Haley to upload or reupload any source file, especially after a verified checkpoint or an assistant-delivered replacement.
+
+**Required check:** (1) Inventory accessible raw source uploads/archives and exact assistant-generated replacement files; (2) trace which replacements Haley confirmed were installed and which intervening commits or local edits could affect the target files; (3) identify the latest exact raw version of **each affected file** and read it in full; (4) check for conflicting versions or undocumented edits. An unaffected file may be reused from the verified baseline; an affected file may be reused from the exact latest verified replacement. Treat a reconstructed sequence as a provenance aid, **not** as a substitute for the exact current raw file required by Section 1.3.
+
+**If missing or uncertain:** Request only the particular unavailable or unverifiable files, stating the established baseline, known later changes, and specific verification gap. Do not reflexively request the entire `src` folder. If an exact replacement or upload is accessible and its application is confirmed, proceed without requesting it again. Do not assert file equivalence from Git log/status alone.
+
+**Verification:** Before a reupload request, be able to state the available baseline, accepted/applied replacements, relevant intervening changes, and the exact missing material. Preserve the most-recent-upload, full-file review, and applied-file continuity rules above.
 
 Current branch note:
 
@@ -368,7 +381,7 @@ A **checkpoint** is a tested intermediate state that may still be revised soon. 
 - **Default Peridot coding and documentation delivery:** provide one uniquely versioned ZIP bundle per pass containing all new/replacement files for that pass.
 - Always provide exact PowerShell commands to extract the bundle into a uniquely named temporary folder and copy each contained file to its intended path under `C:\Users\haley\OneDrive\Desktop\Peridot\`.
 - **Before delivery, inspect the completed ZIP's actual internal path structure and write the PowerShell copy commands against those exact paths.** Do not assume the archive contains `src\...`, a versioned top-level directory, or any other layout without checking it.
-- The handoff commands must be complete enough to execute the pass from the project root: extraction, every required `Copy-Item`, and the **verification commands warranted by the pass**. Include `git status` when appropriate; do not automatically repeat `npm.cmd run build` or `npm.cmd run dev` after every small source pass. Apply the risk-based build-check rule below.
+- The handoff commands must be complete enough to execute the pass from the project root: extraction, every required `Copy-Item`, concise verification commands, and **`npm.cmd run dev` after installing source files** so Haley can immediately test locally. Include `git status` when appropriate. Do not automatically repeat `npm.cmd run build` after every small pass; apply the risk-based build-check rule below. Documentation-only deliveries do not require starting Vite.
 - Bundle-internal replacement filenames should also be unique/versioned when practical so downloads from different passes cannot be confused. Repository destination filenames remain the canonical project filenames.
 - Avoid separate individual-file downloads unless there is a specific reason to provide one, such as isolated recovery of one file.
 - Do not use executable apply/patch scripts unless explicitly requested. The bundle should contain ordinary source/document/asset files and the chat should provide transparent copy commands.
@@ -376,6 +389,7 @@ A **checkpoint** is a tested intermediate state that may still be revised soon. 
 - For image, brand, screenshot, or other asset passes, include the assets inside the same pass bundle and provide exact copy destinations.
 - Do not use `git add .` while generated artifacts such as `itch_upload/` or unrelated working files are untracked.
 - Use targeted `git add <file>...` commands by default. Use `git add -A src` only when an intentional source-file rename or deletion requires it.
+- **Human-readable Git review:** Do not include unrestricted/full `git diff` commands in handoffs. Prefer `git diff --check`, `git diff --stat`, `git diff --name-only`, or `git diff --summary`; show a targeted abbreviated diff only when necessary for a specific review question.
 
 ### Diagnostic-output requests and source-workflow clarification (2026-11-03)
 
@@ -1126,6 +1140,15 @@ Preserve the Visualize/Explore/Tutorials gateway distinction from active-data wo
 - Correspondence-specific sender/recipient or origin/destination summaries remain valid when the mapping genuinely supports them; non-correspondence datasets must not inherit fake directed routes or omit later n-part participants because of a compatibility projection.
 - Participant attribution is authoritative: mapped Time, Places, and Evidence about one participant must not bleed onto another merely because both occur in the same row. Entity Inspector Evidence should consume canonical subject-aware assertions rather than re-scraping source rows.
 - `Unknown` remains a first-class bucket only for genuinely unresolved source evidence; connected-record sorting/filtering/pagination behavior remains a preservation contract.
+
+**Compact Inspector and chart-mark provenance decision (accepted through `01b03bc`, 2026-11-25).**
+
+- **Decision:** Interpret a selected visualization mark before presenting the contributing records and broader context; preserve shared dossier history.
+- **Context:** Map, Network, Timeline and the Charts II Builder now share a compact Inspector. A chart aggregate is not itself a historical record, and a category editor is not an event-selection surface.
+- **Chosen approach:** Calculate charts once, retain record/observation provenance in those calculations, and use the same result in the renderer and Inspector; prefer researcher-mapped Unique IDs as record labels while retaining stable Peridot internal IDs. Preserve meaningful distinctions among source evidence, mapped interpretation and derived calculation.
+- **Rejected alternative:** Independent Inspector-side reaggregation, treating every category-editor click as a selected event, a permanent 25-record ceiling, or converting missing numerical evidence to zero.
+- **Reason:** The shared calculation/provenance boundary prevents drifting totals and false assertions; progressive disclosure makes complete evidence accessible without rendering thousands of links at once.
+- **Maintenance consequence:** Chart-viewer exit clears its mark selection; Treemap drill-down has priority over inspection on ordinary expandable-tile clicks (Shift+click inspects). Map/Network edge-selection reliability remains a separate audit. Use the Maintainer's Guide for file ownership, exact display contract and regression tests.
 
 ### 7.4 Search and data scope
 

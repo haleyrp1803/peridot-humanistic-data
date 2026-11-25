@@ -62,12 +62,12 @@ The guide is organized into three levels. **You do not need to read it straight 
 ## Current Synchronized Checkpoint
 
 ```text
-9f63175 — Refine documentation governance and workflow charter
+01b03bc — Complete compact Inspector integration across Map, Network, Timeline, and Charts
 Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned; working tree clean (user-confirmed 2026-11-22)
+Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree NOT clean: locally modified core documentation and uncommitted voluntary-support/header source, config, and planning files. These are not part of 01b03bc.
 ```
 
-Most recent source-development milestone preceding the documentation-only commits: `e96c375` (Charts Appearance and adaptive presentation). Documentation commits `2be3ea0`, `d5d7a1b`, and `9f63175` followed. For checkpoint interpretation and commit history, see `core_documentation/CHANGELOG.md`. The uploaded `/src` archive is a reference snapshot, not evidence of the full repository, installed dependencies, or deployed build.
+The latest confirmed source checkpoint `01b03bc` consolidates compact Inspector work across Map, Network, Timeline, and Charts. Its predecessor checkpoints include `d94911f` (resizable compact Inspector) and `b619be4` (Inspector mockup). Uncommitted support/header work is tracked separately and has not been audited as an implemented source milestone here. See `CHANGELOG.md` for history and verification scope; the uploaded source archive is not evidence of an installed build.
 
 <a id="1-current-architecture-snapshot"></a>
 
@@ -170,7 +170,7 @@ Builds and applies global research queries and provides browse/refine/results in
 Presents compact selection summaries and deep evidence dossiers with linked-history navigation.
 
 - **Function / purpose:** Provides evidence dossiers and reversible linked-data navigation.
-- **Primary modules:** `src/InspectorPanel.jsx`, `src/InspectorBodyRouter.jsx`, `src/App.jsx`
+- **Primary modules:** `src/InspectorPanel.jsx`, `src/InspectorBodyRouter.jsx`, `src/InspectorChartMarkView.jsx`, `src/peridotInspectorSelectionEvidence.js`, `src/App.jsx`
 - **Data / dependencies:** Selected records/entities/places/relationships and applied linked evidence
 - **Critical invariants:** Preserve subject attribution, canonical entity identity and dossier history across navigation.
 - **Detailed reference:** [Inspector contract](#contract-inspector)
@@ -756,6 +756,8 @@ The **15 catalogue families** are Bar / Column, Grouped Bar, Stacked Bar (standa
 
 **Exports:** `chartsIIExport.js` and `exportHelpers.js` export the **live Charts II SVG** to PNG, including current marks, colors, visible titles/axes and summary if enabled. A separate export panel permits optional publication-specific title, axis annotations, multiline footnotes and Peridot provenance (record scopes, chronology interpretation and chart-local filter exclusions). The publication annotation layer is independent of Builder data/appearance configuration. Preserve the export's white background, typography, legible margins, clipping safeguards, and correct distinction between Scatter's Date-axis viewport and actual chart-record filtering. Legacy Charts I registration through the global Visualizations Export menu is removed; Map/Network export pathways remain separate.
 
+**Chart-to-Inspector provenance (accepted through `01b03bc`):** The chart families retain calculated mark values together with lightweight contributing-record references so the renderer and compact Inspector consume a single analytical result. Categorical, temporal, numerical, distribution, hierarchical and paired-period marks have distinct observation/record semantics. This preservation adds metadata to the derivations without changing their documented aggregation formulas; it must remain aligned with current filtering and chronology eligibility. The Inspector's search is not restricted to the first displayed records and should prefer researcher-mapped record identifiers while retaining internal Peridot IDs for navigation. See [the Inspector contract](#contract-inspector) for detailed selection/invalidation, click-versus-drill, and test boundaries.
+
 **Maintenance/regression:** Run `chartsIIRegression.test.mjs`, `chartsIIRecommendations.test.mjs`, `chartsIILocalFilters.test.mjs`, `chartsIIExport.test.mjs`, `chartsIIAppearance.test.mjs`, `chartsIIStyle.test.mjs`, `chartsIIPresentation.test.mjs`, `chartsIIAdaptivePresentation.test.mjs`, and `chartsRetirement.test.mjs`, together with relevant chronology tests, when editing these contracts. Verify browser behavior for all 15 families, chronology drag-release, valid-state persistence, filtering, category colors, adaptive controls, resized sidebar, and PNG output. The pre-existing Timeline grouped-lanes test wording mismatch (`Uncategorized` versus `No priority category`) is separate from Charts acceptance and should be addressed in a dedicated Timeline pass. Automated tests do not guarantee label-collision-free SVGs or deployed-site performance; preserve the user's visually accepted behavior and inspect dense charts manually.
 
 <a id="5-advanced-search--explore-contract"></a>
@@ -863,14 +865,28 @@ Detailed subsystem regression checks belong in the Maintainer’s Guide. Preserv
 
 - **Purpose and scope:** Presents compact selection summaries and deep evidence dossiers with linked-history navigation.
 - **Module ownership:** `src/InspectorPanel.jsx`, `src/InspectorBodyRouter.jsx`, `src/App.jsx`
-- **Inputs and data contracts:** Canonical selected records, subjects, entities, places and applied linked evidence
+- **Inputs and data contracts:** Canonical selected records, subjects, entities, places, temporal assertions, relationships and chart-mark analytical provenance
 - **Outputs and consumers:** Compact Inspector, full dossiers and linked-history navigation
-- **Behavior and interaction:** Multi-step Back, entities, places, person connections and provenance
+- **Behavior and interaction:** Compact Overview/Data/Next steps, persistent expanded disclosures, category legend, contributing-record search, full dossier and multi-step Back
 - **Invariants:** Subject-aware Evidence and canonical entity identity must survive navigation
 - **Fragile dependencies:** Shared shell and App-controlled selection history
 - **Verification:** Compact/Expand/Back and multi-step navigation regressions
-- **Known limitations / deferred work:** Not applicable
+- **Known limitations / deferred work:** Map/Network edge click reliability audit; cross-visualization regression; contextual settings shortcut; expanded dossier and Explore redesign
 - **Historical context and related planning documents:** `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md` (recorded in original guide)
+
+#### Current compact selection-evidence hierarchy (accepted through `01b03bc`)
+
+The compact Inspector is a resizable, left-docked panel with the persistent navigation **What am I seeing? / What data is being visualized? / Where can I go next?** (Overview, Data and Next steps). A selected mark must be described as a representation, its supporting mapped assertions and source records identified separately, and broader linked evidence presented without misrepresenting it as support for that particular mark. Expandable long evidence and mapping explanations remain open on pointer exit; a different selected mark may start with its own compact disclosure state. Compact and full Inspector navigation must preserve the accepted shared selection/history contract.
+
+**Map and Network:** Nodes and clusters use the shared `peridotInspectorSelectionEvidence.js` contract and compact grouped-evidence presentation. Source and target roles must only appear where mapped semantics warrant them; counts of relationship occurrences and distinct contributing records are not interchangeable. `InspectorEdgeView.jsx` exists, but reliable edge/connection hit testing, selection, and evidence accuracy across Geographic Map and Force Network are the **next targeted audit**, not yet accepted through this milestone.
+
+**Timeline:** Clicking an actual event/period mark opens the Inspector; interacting with the Categories editor, including color/symbol/priority/label changes, does not create new selections. The selected mark's date placement, partial/open precision, and point-versus-duration meaning follow mapped temporal assertions, not invented calendar certainty. The category mini-legend is based on the **active rendered memberships, labels, colors and optional symbols**, not all mapped source fields. Category changes may refresh an existing selection's presentation without reopening it. Source provenance and broader record fields are deduplicated by field identity rather than matching display strings.
+
+**Charts II:** `analyticsChartComponents.jsx` dispatches supported chart-mark selections through `PeridotChartsIIFoundation.jsx` and `PeridotVisualizationsWorkspace.jsx` to the shared `App.jsx` Inspector bridge. The analytical results carry their contributing source-row references **as calculated**, so the Inspector does not independently recompute counts, averages, comparisons, temporal bins, frequencies, or distributions. `InspectorChartMarkView.jsx` displays the analytical result, measure/series/category, number of contributing records, and a searchable incremental record list. Display IDs prefer generalized researcher-mapped Unique IDs (including composite mappings), then Peridot's generated identity; internal record links remain stable and distinct from display labels. First 25 records are shown, followed by 50 per request; all contributors remain accessible. Missing values must not be rendered as numerical zero, and record counts must not be confused with numerical measurements or observation counts. Returning to the Charts Catalogue or leaving the Builder closes the chart Inspector; changed calculations invalidate the old chart mark. Treemap primary click preserves drill-down; Shift+click inspects expandable tiles, while terminal tiles can be inspected directly. Preserve semantics for Box Plot quartiles/outliers, Slope endpoint-versus-comparison, hierarchical Other groups, Scatter's measured coordinates, histogram bin frequencies, and partial/undated temporal data.
+
+**Acceptance and limitations:** Haley browser-accepted the compact Map/Network and Timeline improvements, and the four Charts Inspector passes through 2026-11-25. The last source-level Charts test report was 202/203 passing, with the previously observed unrelated grouped-lane label test mismatch; an integrated production build was not verified in that pass. This acceptance does **not** establish all edge clicks, all chart accessibility interactions, or deployed-site performance.
+
+**Targeted tests:** `peridotInspectorSelectionEvidence.test.mjs`, `peridotInspectorCompactGrouping.test.mjs`, `peridotInspectorTimelineCompact.test.mjs`, `peridotInspectorTimelinePresentation.test.mjs`, `peridotTimelineInspectorPresentationUpdate.test.mjs`, `chartsIIInspectorProvenance.test.mjs`, `chartsIIInspectorPass2Provenance.test.mjs`, `chartsIIInspectorPass3Provenance.test.mjs`, `chartsIIInspectorIntegrationRegression.test.mjs`, `peridotChartContributingRecordLabel.test.mjs`, `peridotChartContributionList.test.mjs`, and `peridotChartInspectorFormatting.test.mjs`. Check the actual source/test tree when making further changes.
 
 #### Inspector evidence and history contract
 
@@ -2735,6 +2751,7 @@ This is the active checklist, using the documented current Home/Tutorials contra
 | Workspace routing | wrong workspace or lost state | Home/upload/sample actions and each persistent-header route; preserve cross-page data and viewport state |
 | First-time tutorial | obsolete Home launcher reappears, or future launcher regresses overlay behavior | now: one Get Started Home action and Tutorials Coming Soon destination; no disabled secondary Home button or floating invitation; when re-enabled: full seven-stage suite |
 | Inspector bridge | compact Inspector fails to open | node, edge, cluster, contained member, Expand, Back |
+| Compact Inspector and Charts provenance | stale chart mark, category-tab accidental selection, repeated mapped fields, missing number shown as zero, inaccessible contributors | event/period only clicks, category editor, expanded disclosure pointer exit, chart mark selection across all families, mapped Unique ID and generated fallback, filter/search/show more, Builder exit, Treemap drill-down |
 | Search scope | generalized place/Evidence values disappear, count conditions mis-scope, or Results/facets use playback visibility | draft suggestion, Apply, Clear, attached count conditions, Place/Evidence criteria, pagination, Inspect handoff during playback |
 | Geographic Map / Network | hidden endpoints, wrong anchor role, viewport reset, or correspondence-shaped playback | toggle node labels/anchors; Apply/Reset; relationship-line fallback; pan/zoom; multipart playback; Force/Geographic switch |
 | Timeline workspace | wrong chronology/orientation, grouped lane precedence, missing scrollbar thumb, clipped scroll extent, zoom/pan regression, category mis-filter, card collision, or invented relationship | Correspondence / Family Tree / Cardinals; Chronological vs Grouped; star/unstar; No priority category; horizontal/vertical; resize and drag native scrollbar to Icons; wheel/+/- zoom; Inspector and shared chronology |
@@ -2800,6 +2817,8 @@ These areas still deserve narrow, explicit passes:
 ### Active technical backlog
 
 **Current priorities from the uploaded guide and confirmed source-development history:** Timeline event-density/coincident-event readability, cross-layout and accessibility/Inspector regressions, targeted Network/Map presentation and generalized Search text follow-ups, interface/tutorial work, and careful later compatibility review. Event-to-event Timeline arcs remain deferred pending a source-defensible authoring contract. Charts II is implemented and Charts I retired. See the Changelog for completed milestones.
+
+**Current Inspector continuation after `01b03bc` (ordered):** (1) Audit and repair selectable Geographic Map / Force Network edges with correct endpoints, direction, relationship evidence and overlapping mark hit targets; (2) complete cross-visualization compact Inspector regression for Map, Network, Timeline, and Charts, including filters, playback, panel resizing, disclosure persistence and chart Builder exit; (3) add context-sensitive **Adjust visualization settings** navigation within Next steps without resetting selection/state; (4) separately redesign the expanded dossier, then Explore. **Separate deferred task:** verify automatic Timeline II category and Charts II series color assignment uses the full intended palette, stable mappings, distinguishable marks and respected researcher overrides. Do not silently combine this audit with Inspector passes.
 
 The longer backlog below is retained as an **historical planning record**, not a second set of current instructions. Several entries were overtaken by completed work (notably Charts II and the single-action Home). Assess each item against the current contract before treating it as active.
 
@@ -2972,6 +2991,10 @@ The archived MapLibre branch, legacy side-panel naming, and responsive panel les
 3. Read the Project Workflow Charter before edits, then navigate from Level 1 to the relevant Level 2 contract and Level 3 regression/module entry.
 4. Verify current raw source files in full before editing; preserve already applied changes and keep passes bounded.
 5. Consult the *current* technical backlog above, not the historical backlog snapshot. Use the Changelog for commit chronology and verification history.
+
+**Source availability check before requesting uploads (handoff reminder; the Charter remains authoritative):** Before asking the researcher for source files, inventory accessible original full-file uploads, source archives, and the assistant’s own complete replacement artifacts. Establish the latest relevant baseline, check which subsequent accepted or committed replacements affect the specific files in scope, and verify that the resulting *exact current* full-file contents are available for inspection. A new conversation, a new pass, or a later documentation/planning-only commit is **not**, by itself, grounds for another upload. Do not equate a Git hash or file-summary narrative with access to the exact current file. If an intervening change is not verifiable, or the required complete current file cannot be established, request **only the specific missing or uncertain files**, explaining the gap; never reconstruct source from remembered code or excerpts as a substitute for the Charter’s exact-raw-source rule.
+
+**Researcher-facing command convention:** For review, use concise Git summaries (`git diff --stat`, `git diff --name-only`, `git diff --check`, `git status --short`), not full textual `git diff` output unless explicitly requested. After source-file replacement/copy instructions, include `npm.cmd run dev` so the researcher can immediately launch the local browser test. A development-server command is not necessary for documentation-only edits. The binding process wording for these reminders belongs in the Project Workflow Charter at the next formal core-documentation synchronization; this Guide records their practical handoff application in the meantime.
 
 **Status reminders:** sole public Timeline is implemented by Timeline II; sole public Charts uses Charts II and has 15 families; Peridot begins with no dataset; generalized mappings and canonical semantic attribution remain authoritative; shared chronology dock uses consistent date-faithful behavior.
 

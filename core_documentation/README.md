@@ -45,7 +45,7 @@ The dated notes and screenshots are retained because Peridot is an evolving rese
 
 This is Peridot's public-facing orientation and usage guide. It documents the researcher workflow, accepted input formats, basic local installation, limitations, screenshots, and attribution. It does not replace the [Maintainer's Guide](MAINTAINERS_GUIDE.md) (technical contracts), [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) (development process), or [Changelog](CHANGELOG.md) (project history).
 
-**Last user-confirmed synchronized source checkpoint:** `9f63175` on `main` (November 22, 2026), aligned at `HEAD`, `origin/main`, and `origin/HEAD` with a clean working tree. This records the last confirmed Git state, **not** a fresh check of the current working tree or deployed site. The [Changelog's checkpoint section](CHANGELOG.md#1-current-synchronized-checkpoint) is the authoritative detailed record.
+**Last user-confirmed synchronized source checkpoint:** `01b03bc` on `main` (confirmed November 25, 2026), aligned at `HEAD`, `origin/main`, and `origin/HEAD`. The working tree contains separate uncommitted core-documentation changes and voluntary-support/header work; those are **not included in this commit**. This checkpoint is not a deployed-site verification. The [Changelog's checkpoint section](CHANGELOG.md#1-current-synchronized-checkpoint) is the authoritative detailed record.
 
 ## 1. Welcome to Peridot
 
@@ -204,7 +204,15 @@ The playback range control includes a draggable playhead/scrubber in addition to
 
 Search now works directly with generalized mapped Places and canonical subject-aware Evidence. Results use neutral **Date / People or entities / Places** presentation rather than treating every record as a Source→Target route. Structured Required / Any-of / Excluded criteria can also carry an optional plain-language count condition attached to that specific criterion—for example, **This place has at least 20 connected places** or **People in these records have at least 40 connected entities**. The older global minimum correspondence/connection-weight control has been retired.
 
-The Inspector opens compactly after visualization node, edge, or cluster clicks. **Expand**, linked data, and deeper record navigation open the full evidence-dossier workspace while preserving the underlying visualization or Explore state.
+The compact Inspector opens for supported visualization marks, including chart marks and Timeline events/periods; Map and Network edges remain under targeted interaction review. **Expand**, linked data, and deeper record navigation open the full evidence-dossier workspace while preserving the underlying visualization or Explore state.
+
+#### Inspecting visual evidence (accepted compact Inspector, November 2026)
+
+Select an event or period on Timeline; a supported node or cluster on Map/Network; or a mark in the Charts Builder to open the compact Inspector. It is organized into **What am I seeing?**, **What data is being visualized?**, and **Where can I go next?** The first explains the particular visual mark, the second distinguishes the evidence supporting it from broader record context, and the third provides relevant research navigation. The Inspector is resizable and its expanded explanations remain open when the pointer leaves the panel. Editing Timeline categories does not itself open a new Inspector selection.
+
+In Charts, selecting a bar, slice, point, bin, cell, segment, or other supported mark explains its plotted value and underlying contributing records, which may differ from its observation count or calculated result. Record links prefer researcher-mapped Unique IDs, falling back to Peridot IDs; record-ID search and **Show 50 more** give access beyond the first 25 entries without an arbitrary terminal cutoff. The Inspector closes when leaving the chart Builder. Treemap preserves click-to-drill-down; use **Shift+click** to inspect an expandable tile (terminal tiles can be inspected directly). Missing numerical observations are not reported as zero. The compact Inspector is not a substitute for a full source dossier, which remains available for deeper inspection.
+
+**Current limitation:** Map and Network connection/edge click behavior is awaiting a targeted audit and acceptance review, even though these views have edge evidence presentations. Cross-visualization regression and an Inspector shortcut to visualization settings are also planned. These are not described as completed functionality.
 
 ### Export
 
