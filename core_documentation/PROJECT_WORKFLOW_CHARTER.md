@@ -66,12 +66,12 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-4bdab6c — Update Timeline grouped-lane test to match priority semantics
-Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned in the user-supplied 2026-11-27 log; last separately confirmed clean working tree at 6c149e7.
+1203087 — Synchronize core documentation through Evidence Workspace completion
+Branch: main (newest commit in user-supplied author-date log, 2026-11-27)
+Status: Current local commit observed; last separately confirmed remote-ref alignment at 4bdab6c and clean working tree at 6c149e7.
 ```
 
-For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
+For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md). The exact Git date and self-referential documentation-baseline policy is governed by the [Core Documentation Governance Protocol](PERIDOT_CORE_DOCUMENTATION_GOVERNANCE_PROTOCOL.md#111a-exact-git-dates-and-documentation-commit-baseline-lag-current-rule-2026-11-27); this embedded checkpoint is not a claim about future documentation commits.
 
 
 ## Required Preflight and Source-Authority Decision Tree

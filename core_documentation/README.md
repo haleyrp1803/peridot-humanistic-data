@@ -45,7 +45,7 @@ The dated notes and screenshots are retained because Peridot is an evolving rese
 
 This is Peridot's public-facing orientation and usage guide. It documents the researcher workflow, accepted input formats, basic local installation, limitations, screenshots, and attribution. It does not replace the [Maintainer's Guide](MAINTAINERS_GUIDE.md) (technical contracts), [Project Workflow Charter](PROJECT_WORKFLOW_CHARTER.md) (development process), or [Changelog](CHANGELOG.md) (project history).
 
-**Last user-confirmed synchronized Git refs:** `4bdab6c` on `main` (November 27, 2026), aligned at `HEAD`, `origin/main`, and `origin/HEAD` in the supplied log. The previous Inspector integration commit `6c149e7` additionally has a confirmed clean working tree and successful push; a fresh working-tree status at `4bdab6c` was not supplied. Neither confirmation establishes deployed-site verification. See the [Changelog checkpoint](CHANGELOG.md#1-current-synchronized-checkpoint).
+**Last documented Git baseline:** `1203087` (recorded Git author date November 27, 2026), confirmed as the newest local commit in the supplied dated log; the last separately confirmed alignment of `HEAD`, `origin/main`, and `origin/HEAD` is `4bdab6c`. Current working-tree cleanliness and ref alignment at `1203087` were not independently shown. A documentation commit necessarily follows the baseline it can name, so the embedded reference is historical rather than a live HEAD indicator. See the [Changelog checkpoint](CHANGELOG.md#1-current-synchronized-checkpoint).
 
 ## 1. Welcome to Peridot
 

@@ -473,11 +473,25 @@ Mechanical checks can establish line/character retention, exact authored text, f
 
 At a major documentation update:
 
-1. Record the **last user-confirmed clean synchronized Git checkpoint**, including its date and commit ID. For this review, that is `9f63175` on `main`, clean and aligned with `origin/main` and `origin/HEAD` when last reported (2026-11-22).
-2. Identify any later **locally applied but uncommitted changes** separately. The Charter v03 and Governance Protocol v01 revisions, previously uncommitted at `d5d7a1b`, were subsequently committed at `9f63175`; do not continue treating them as outstanding local edits.
+1. Record the **latest user-confirmed Git revision** with its exact verification limits: whether the commit is known locally, whether `HEAD` aligns with remote refs, and whether the working tree has actually been observed clean. Do not equate these separate facts. The formerly documented `9f63175` clean synchronized checkpoint (2026-11-22) is historical evidence, not the current revision.
+2. Identify any later **locally applied but uncommitted changes** separately. Historical example: Charter v03 and Governance Protocol v01, previously uncommitted at `d5d7a1b`, were committed at `9f63175` and must not be treated as still outstanding.
 3. Update the Changelog's authoritative checkpoint account when the underlying Git state actually changes and evidence is available. Do not invent a new checkpoint because a draft was prepared.
 4. Keep secondary references concise, linked, and accurately labeled as last-confirmed; refresh them during relevant documentation synchronization rather than duplicating full milestone narratives across all documents.
 5. If current file state is uncertain, apply the Charter's source-of-truth decision tree and ask Haley rather than selecting the easiest accessible version.
+
+### 11.1a Exact Git dates and documentation-commit baseline lag (current rule, 2026-11-27)
+
+**Date authority:** For a Changelog commit entry, use the exact date recorded in Git when available; do not substitute the conversation date or the day the commit was first observed. The preferred chronological convention is the **committer date** (Git `%cd`, formatted `--date=short`). When only an author date (`%ad`) is available, it may be recorded as the exact *author date* with that provenance explicitly identified, not silently presented as a verified committer date. Retain the distinction where dates disagree or history has been rebased/amended. Useful verification:
+
+```powershell
+git log -10 --format="%h | %cd | %s" --date=short
+# When needed to compare both date authorities:
+git log -10 --format="%h | author=%ad | committer=%cd | %s" --date=short
+```
+
+**Unknown dates:** When neither Git date can be verified, mark the date unverified and optionally record a separately sourced observation/confirmation date. Never convert that confirmation date into a commit date. Preserve historically recorded dates unless new evidence justifies a correction; when correcting them, preserve the provenance distinction and retain the original historical meaning.
+
+**Self-referential checkpoint lag:** A documentation file cannot truthfully name the hash of the commit that first introduces that very file revision before the commit exists. Therefore its embedded Git checkpoint will normally describe a preceding verified commit, **at least one commit behind** the later documentation commit. This is expected and is not documentary staleness by itself. Do not manufacture a prospective commit hash, amend repeatedly merely to chase the current hash, or claim that the documented checkpoint must be *exactly* one behind: intervening commits and subsequent development can increase the gap. Treat the documented checkpoint as **the last verified baseline at authoring time**, and determine actual current `HEAD`, ref alignment and working-tree cleanliness by a fresh Git check. Record the just-created documentation commit in the next appropriate documentation pass, not retroactively inside itself.
 
 ### 11.2 Canonical data-scope vocabulary
 

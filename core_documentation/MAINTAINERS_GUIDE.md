@@ -62,12 +62,12 @@ The guide is organized into three levels. **You do not need to read it straight 
 ## Current Synchronized Checkpoint
 
 ```text
-4bdab6c — Update Timeline grouped-lane test to match priority semantics
-Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed log, 2026-11-27); fresh post-commit working-tree status not supplied.
+1203087 — Synchronize core documentation through Evidence Workspace completion
+Branch: main (latest user-reported commit, Git author date 2026-11-27)
+Status: Local commit confirmed by dated Git log; remote-ref alignment and clean working-tree status not reverified at this hash.
 ```
 
-The latest user-confirmed ref alignment is `4bdab6c`, following expanded Evidence Workspace commits `3c64813` and `6c149e7` and the earlier Support integration. The most recent separately confirmed clean working tree and push belong to `6c149e7`; the supplied `4bdab6c` log aligns the refs but is not a fresh status or build. See [CHANGELOG.md](CHANGELOG.md#1-current-synchronized-checkpoint) for the dated history, source-reconstructed 217/217 Node test result and verification limits. The user accepted the expanded Inspector screenshots; deployed-site and full production-build checks remain unverified.
+The latest user-reported commit is `1203087`; the last user-confirmed ref alignment is `4bdab6c`, following expanded Evidence Workspace commits `3c64813` and `6c149e7` and the earlier Support integration. The most recent separately confirmed clean working tree and push belong to `6c149e7`; the supplied `4bdab6c` log aligns the refs but is not a fresh status or build. The dated author-date output for `1203087` establishes its author date, not its committer date or current remote alignment. An embedded documentation checkpoint is normally at least one commit behind the later commit introducing that document revision; compare current Git when resuming work. See [CHANGELOG.md](CHANGELOG.md#1-current-synchronized-checkpoint) for the dated history, source-reconstructed 217/217 Node test result and verification limits. The user accepted the expanded Inspector screenshots; deployed-site and full production-build checks remain unverified.
 
 <a id="1-current-architecture-snapshot"></a>
 
