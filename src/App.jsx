@@ -19,6 +19,8 @@
 
 // Core React hooks used throughout the app.
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import './PeridotEvidenceWorkspace.css';
+import { getPeridotResearchTrailLabel } from './peridotResearchTrailLabels.mjs';
 import { geoMercator, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature } from 'topojson-client';
 import countries50m from 'world-atlas/countries-50m.json';
@@ -34,6 +36,7 @@ import {
   resolveSelection,
 } from './interactionHelpers';
 import { buildMapInteractionHandlers } from './mapInteractionHandlers';
+import { projectVisibleEdgeHitCandidates } from './peridotVisibleEdgeHitGeometry.mjs';
 import {
   buildPlaybackRows,
   buildTimelineMonths,
@@ -72,6 +75,8 @@ import { InspectorChartMarkView } from './InspectorChartMarkView.jsx';
 import { refreshSelectedTimelinePresentation } from './peridotTimelineInspectorPresentationUpdate.js';
 import { collectPeridotNetworkNodeMarkEvidence } from './peridotInspectorSelectionEvidence.js';
 import { PeridotRecordStructure } from './PeridotRecordStructure.jsx';
+import { PeridotRecordDossier } from './PeridotRecordDossier.jsx';
+import { PeridotInvestigateContext, PeridotInvestigateFurther } from './PeridotInvestigateFurther.jsx';
 import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 import { LeftControlPanel } from './LeftControlPanel';
 import { PeridotGlobalHeader } from './PeridotGlobalHeader';
@@ -1845,29 +1850,14 @@ function LinkedLetterListItem({ letter, index, onOpenLetter }) {
 
 function LinkedLetterDetailPage({ letter, index, onBack, onOpenPersonDetail, onOpenPlaceDetail }) {
   const uniqueId = getLinkedLetterUniqueId(letter, index);
-
-  return (
-    <div className="rounded-2xl border border-[var(--section-border)]/80 bg-[var(--section-bg)] p-4 shadow-[0_8px_24px_var(--peridot-role-card-shadow)]">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div>
-          <div className="font-semibold uppercase tracking-[0.16em] text-[var(--panel-card-muted-text)]">
-            Linked record detail
-          </div>
-          <div className="mt-1 text-lg font-semibold text-[var(--panel-card-text)]">{uniqueId}</div>
-        </div>
-        <button type="button" onClick={onBack} className={buttonClassName()}>
-          Back to linked records
-        </button>
-      </div>
-
-      <PeridotRecordStructure
-        row={letter}
-        onOpenPersonDetail={onOpenPersonDetail}
-        onOpenPlaceDetail={onOpenPlaceDetail}
-      />
-
-    </div>
-  );
+  return <PeridotRecordDossier
+    key={uniqueId}
+    row={letter}
+    recordId={uniqueId}
+    onBack={onBack}
+    onOpenPersonDetail={onOpenPersonDetail}
+    onOpenPlaceDetail={onOpenPlaceDetail}
+  />;
 }
 
 function LinkedLetterCard({
@@ -2905,6 +2895,14 @@ function SvgMap({
     return result;
   }, [renderResearchEdgesForDiagnostic, dragState, screenEdges, worldCopies, isWrappedMap, worldWidth, view, frame.x, frame.y, frame.w, frame.h]);
 
+  // Background-click proximity must use the same visible world copies and
+  // viewport transform as SVG; the untransformed `screenEdges.curve` is in
+  // research coordinates, not screen pixels. Keep the actual edge object as
+  // the selection payload so Inspector IDs and provenance are unchanged.
+  const visibleEdgeHitCandidates = useMemo(() => projectVisibleEdgeHitCandidates(
+    visibleResearchEdgePaths, view, worldWidth,
+  ), [visibleResearchEdgePaths, view, worldWidth]);
+
   const visibleLabelIds = useMemo(
     () => renderResearchLabelsForDiagnostic ? buildVisibleLabelIds(labelCandidates, showLabels, labelDensityThreshold, labelFontSize, labelOffset) : new Set(),
     [renderResearchLabelsForDiagnostic, showLabels, labelCandidates, labelDensityThreshold, labelFontSize, labelOffset]
@@ -2949,7 +2947,7 @@ function SvgMap({
     };
   };
 
-  const getNearbyCandidates = (point) => buildNearbyCandidates(point, renderedScreenNodes, screenEdges, clusterSingularLabel, clusterPluralLabel);
+  const getNearbyCandidates = (point) => buildNearbyCandidates(point, renderedScreenNodes, visibleEdgeHitCandidates, clusterSingularLabel, clusterPluralLabel);
 
   const dispatchSelectionFromPoint = (point, fallbackKind = null, fallbackPayload = null) => {
     const candidates = getNearbyCandidates(point);
@@ -3388,25 +3386,64 @@ function SvgMap({
                     ? edge.screenWidth + 0.6
                     : edge.screenWidth;
                 return (
-                  <path
-                    key={`${edge.id}-world-${copy}`}
-                    d={path}
-                    
-                    fill="none"
-                    stroke={edgeStroke}
-                    strokeOpacity={edgeOpacity}
-                    strokeWidth={edgeStrokeWidth}
-                    vectorEffect="non-scaling-stroke"
-                    strokeLinecap="round"
-                    strokeDasharray={dragState ? 'none' : isAnimated ? 'none' : edge.count <= 2 ? '2.5 2' : 'none'}
-                    markerEnd={!dragState && endpointVisible && edge.direction === 'directed' ? 'url(#peridot-directed-edge-arrow)' : undefined}
-                    onMouseEnter={dragState ? undefined : (event) => onEdgeEnter(edge, getPointerPosition(event))}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      dispatchSelectionFromPoint(getPointerPosition(event), 'edge', edge);
-                    }}
-                    style={{ cursor: dragState ? 'grabbing' : 'pointer', pointerEvents: dragState ? 'none' : 'auto' }}
-                  />
+                  <React.Fragment key={`${edge.id}-world-${copy}`}>
+                    {/* Keep the visual stroke unchanged; the larger transparent
+                        stroke makes fine or dashed connections selectable. */}
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke={edgeStroke}
+                      strokeOpacity={edgeOpacity}
+                      strokeWidth={edgeStrokeWidth}
+                      vectorEffect="non-scaling-stroke"
+                      strokeLinecap="round"
+                      strokeDasharray={dragState ? 'none' : isAnimated ? 'none' : edge.count <= 2 ? '2.5 2' : 'none'}
+                      markerEnd={!dragState && endpointVisible && edge.direction === 'directed' ? 'url(#peridot-directed-edge-arrow)' : undefined}
+                      pointerEvents="none"
+                    />
+                    <path
+                      d={path}
+                      fill="none"
+                      stroke="transparent"
+                      strokeWidth={Math.max(12, edgeStrokeWidth + 7)}
+                      vectorEffect="non-scaling-stroke"
+                      strokeLinecap="round"
+                      pointerEvents={dragState ? 'none' : 'stroke'}
+                      role="button"
+                      aria-label={`Inspect connection: ${edge.sourceLabel} ${edge.direction === 'directed' ? 'to' : 'and'} ${edge.targetLabel}`}
+                      tabIndex={dragState ? -1 : 0}
+                      onMouseEnter={dragState ? undefined : (event) => onEdgeEnter(edge, getPointerPosition(event))}
+                      onFocus={dragState ? undefined : () => {
+                        const svg = svgRef.current;
+                        const rect = svg?.getBoundingClientRect();
+                        onEdgeEnter(edge, {
+                          x: rect ? rect.width / 2 : width / 2,
+                          y: rect ? rect.height / 2 : height / 2,
+                          clientX: rect ? rect.left + rect.width / 2 : 0,
+                          clientY: rect ? rect.top + rect.height / 2 : 0,
+                        });
+                      }}
+                      onBlur={dragState ? undefined : () => onEdgeLeave()}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (!dragState) dispatchSelectionFromPoint(getPointerPosition(event), 'edge', edge);
+                      }}
+                      onKeyDown={(event) => {
+                        if (dragState || (event.key !== 'Enter' && event.key !== ' ')) return;
+                        event.preventDefault();
+                        event.stopPropagation();
+                        const svg = svgRef.current;
+                        const rect = svg?.getBoundingClientRect();
+                        dispatchSelectionFromPoint({
+                          x: rect ? rect.width / 2 : width / 2,
+                          y: rect ? rect.height / 2 : height / 2,
+                          clientX: rect ? rect.left + rect.width / 2 : 0,
+                          clientY: rect ? rect.top + rect.height / 2 : 0,
+                        }, 'edge', edge);
+                      }}
+                      style={{ cursor: dragState ? 'grabbing' : 'pointer', outline: 'none' }}
+                    />
+                  </React.Fragment>
                 );
               })}
             </g>
@@ -3866,6 +3903,7 @@ function InspectorHeader({ showInspectorInfo, setShowInspectorInfo }) {
   );
 }
 
+
 function AppMainWorkspace({
   pageTitle,
   setPageTitle,
@@ -3885,6 +3923,34 @@ function AppMainWorkspace({
   searchWorkspaceProps,
   inspectorWorkspaceProps,
 }) {
+  // The expanded Evidence Workspace shares existing Inspector and Explore state.
+  // Switching folder tabs does not change the applied query or research history.
+  const [evidenceTab, setEvidenceTab] = useState('inspector');
+  const [dossierSheet, setDossierSheet] = useState('overview');
+  const continueInvestigation = (criteria) => {
+    searchWorkspaceProps?.onPrepareInvestigateDraft?.(criteria);
+    setEvidenceTab('explore');
+  };
+  const selection = inspectorWorkspaceProps?.selectedSelection;
+  const selectionIdentifier = `${selection?.kind || ''}:${selection?.id || selection?.entityId || selection?.detailLabel || selection?.label || ''}`;
+  useEffect(() => {
+    setDossierSheet('overview');
+  }, [selectionIdentifier]);
+  const isEntityDossier = Boolean(selection) && (
+    selection?.kind === 'person-detail' || selection?.kind === 'place-detail' || selection?.kind === 'node'
+  );
+  const sheetIndex = [
+    ['overview', 'Overview'], ['people', 'Connected people'], ['places', 'Connected places'],
+    ['relationships', 'Relationships'], ['records', 'Contributing records'],
+    ['investigate', 'Investigate further'],
+  ];
+  useEffect(() => {
+    if (inspectorWorkspaceProps?.inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE
+      || inspectorWorkspaceProps?.inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE) {
+      setEvidenceTab('inspector');
+    }
+  }, [inspectorWorkspaceProps?.inspectorPresentationMode]);
+
   const workspaceInspectorPanelProps = inspectorWorkspaceProps?.inspectorPanelProps
     ? {
         ...inspectorWorkspaceProps.inspectorPanelProps,
@@ -3899,23 +3965,119 @@ function AppMainWorkspace({
     INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE,
   ].includes(inspectorWorkspaceProps?.inspectorPresentationMode);
 
+  const evidenceTrailLabel = inspectorWorkspaceProps?.getTrailLabel || getPeridotResearchTrailLabel;
+  const evidenceTrail = [
+    ...(inspectorWorkspaceProps?.inspectorHistory || []),
+    ...(inspectorWorkspaceProps?.selectedSelection ? [inspectorWorkspaceProps.selectedSelection] : []),
+  ];
+
+  // Explore owns the dataset suggestion inventories. The shared Investigate sheet
+  // consumes those same options; neither suggestions nor selections apply filters.
+  const investigateSuggestions = {
+    people: searchWorkspaceProps?.personSuggestions || [],
+    places: searchWorkspaceProps?.placeSuggestions || [],
+    peopleRoutes: searchWorkspaceProps?.routePeopleSuggestions || [],
+    placeRoutes: searchWorkspaceProps?.routePlaceSuggestions || [],
+    years: Array.from(new Set((searchWorkspaceProps?.timelineMonths || [])
+      .map((month) => String(month || '').slice(0, 4)).filter(Boolean)))
+      .sort((a, b) => Number(a) - Number(b)),
+  };
   const inspectorWorkspaceOverlay = isInspectorWorkspaceOpen ? (
-    <div className="absolute inset-0 z-40 flex items-stretch justify-center bg-[var(--peridot-role-interface-scrim-strong)] p-4 backdrop-blur-[4px] sm:p-6">
-      <section
-        className="peridot-inspector-reference-ground flex h-full w-full max-w-[82rem] flex-col overflow-hidden rounded-[2.5rem] border border-[var(--peridot-role-inspector-card-border)] p-3 text-[var(--peridot-role-inspector-heading-text)] shadow-[0_30px_100px_var(--peridot-role-card-shadow)] ring-1 ring-[var(--peridot-role-interface-focus-ring)] sm:p-4"
-        aria-label="Inspector workspace"
-      >
-        {workspaceInspectorPanelProps ? (
-          <InspectorContent
-            {...workspaceInspectorPanelProps}
-            shellComponents={inspectorWorkspaceProps.inspectorShellComponents}
-            viewComponents={inspectorWorkspaceProps.inspectorViewComponents}
-            showExpandButton={false}
-            presentation="workspace"
-          />
-        ) : null}
+    <PeridotInvestigateContext.Provider value={{ onContinue: continueInvestigation, suggestions: investigateSuggestions }}>
+    <div className="peridot-evidence-scrim">
+      <section className="peridot-evidence-workspace" aria-label="Evidence Workspace" role="dialog" aria-modal="true">
+        <div className="peridot-evidence-masthead">
+          <div className="peridot-evidence-brand">
+            <span className="peridot-evidence-compass" aria-hidden="true">✥</span>
+            <div>
+              <div className="peridot-evidence-eyebrow">Peridot · Research evidence</div>
+              <h2>Evidence Workspace</h2>
+            </div>
+          </div>
+          <p className="peridot-evidence-description">Inspect sources, explore your data, and follow a research trail.</p>
+          <button type="button" className="peridot-evidence-close" aria-label="Close Evidence Workspace"
+            onClick={inspectorWorkspaceProps.onCloseInspectorWorkspace}>×</button>
+        </div>
+        <div className="peridot-evidence-folder-tabs" role="tablist" aria-label="Evidence Workspace views">
+          <button type="button" role="tab" id="peridot-evidence-inspector-tab"
+            aria-controls="peridot-evidence-inspector-panel" aria-selected={evidenceTab === 'inspector'}
+            className={`peridot-evidence-folder-tab ${evidenceTab === 'inspector' ? 'is-active' : ''}`}
+            onClick={() => setEvidenceTab('inspector')}>Inspector</button>
+          <button type="button" role="tab" id="peridot-evidence-explore-tab"
+            aria-controls="peridot-evidence-explore-panel" aria-selected={evidenceTab === 'explore'}
+            className={`peridot-evidence-folder-tab ${evidenceTab === 'explore' ? 'is-active' : ''}`}
+            onClick={() => setEvidenceTab('explore')}>Explore</button>
+        </div>
+        <div className="peridot-evidence-paper">
+          <div className="peridot-evidence-trail" aria-label="Research navigation trail">
+            <div className="peridot-evidence-trail-label">Research trail</div>
+            <nav className="peridot-evidence-trail-items" aria-label="Visited research objects">
+              {evidenceTrail.length ? evidenceTrail.map((entry, index) => {
+                const isCurrent = index === evidenceTrail.length - 1;
+                return (
+                  <React.Fragment key={`${entry.kind || 'selection'}-${entry.id || entry.name || entry.label || index}-${index}`}>
+                    {index > 0 ? <span className="peridot-evidence-trail-chevron" aria-hidden="true">›</span> : null}
+                    {isCurrent ? (
+                      <span className="peridot-evidence-crumb is-current" aria-current="page" title={evidenceTrailLabel(entry)}>{evidenceTrailLabel(entry)}</span>
+                    ) : (
+                      <button type="button" className="peridot-evidence-crumb" title={evidenceTrailLabel(entry)}
+                        onClick={() => { inspectorWorkspaceProps.onJumpToHistory(index); setEvidenceTab('inspector'); }}>
+                        {evidenceTrailLabel(entry)}
+                      </button>
+                    )}
+                  </React.Fragment>
+                );
+              }) : <span className="peridot-evidence-empty-trail">Select a record or mark to begin a trail.</span>}
+            </nav>
+            {selection && !isEntityDossier && selection.kind !== 'letter-detail' ? (
+              <button type="button" className="peridot-evidence-back peridot-evidence-investigate-shortcut"
+                onClick={() => { setDossierSheet((current) => current === 'investigate' ? 'overview' : 'investigate'); setEvidenceTab('inspector'); }}>
+                {dossierSheet === 'investigate' ? 'Return to inspection' : 'Investigate further'}
+              </button>
+            ) : null}
+            {workspaceInspectorPanelProps?.inspectorState?.canGoBack ? (
+              <button type="button" className="peridot-evidence-back" onClick={workspaceInspectorPanelProps.inspectorState.onBackInspector}>Back</button>
+            ) : null}
+          </div>
+          <div className={`peridot-evidence-inspector-layout ${isEntityDossier ? 'has-sheet-index' : ''}`}
+            id="peridot-evidence-inspector-panel" role="tabpanel" aria-labelledby="peridot-evidence-inspector-tab"
+            hidden={evidenceTab !== 'inspector'}>
+            {isEntityDossier ? <nav className="peridot-evidence-sheet-index" aria-label="Dossier sheets">
+              <div className="peridot-evidence-sheet-index-heading">{selection?.kind === 'place-detail' || selection?.entityType === 'place' ? 'Place dossier' : 'Person dossier'}</div>
+              {sheetIndex.map(([key, label]) => (
+                <button key={key} type="button" className={`peridot-evidence-sheet-link ${dossierSheet === key ? 'is-active' : ''}`}
+                  aria-current={dossierSheet === key ? 'page' : undefined}
+                  onClick={() => setDossierSheet(key)}>{label}</button>
+              ))}
+            </nav> : null}
+            <div className="peridot-evidence-content peridot-evidence-dossier-reading" key={`${selectionIdentifier}:${dossierSheet}`}>
+              {selection && !isEntityDossier && selection.kind !== 'letter-detail' && dossierSheet === 'investigate' ? (
+                <div className="peridot-evidence-general-investigate">
+                  <header className="peridot-evidence-subject-heading"><h2>{evidenceTrailLabel(selection)}</h2></header>
+                  <PeridotInvestigateFurther />
+                </div>
+              ) : workspaceInspectorPanelProps ? (
+                <InspectorContent
+                  {...workspaceInspectorPanelProps}
+                  shellComponents={inspectorWorkspaceProps.inspectorShellComponents}
+                  viewComponents={inspectorWorkspaceProps.inspectorViewComponents}
+                  showHeader={false}
+                  showExpandButton={false}
+                  presentation="workspace"
+                  dossierSheet={isEntityDossier ? dossierSheet : 'overview'}
+                  onOpenExplore={() => setEvidenceTab('explore')}
+                />
+              ) : null}
+            </div>
+          </div>
+          <div className="peridot-evidence-content peridot-evidence-search-content" id="peridot-evidence-explore-panel" role="tabpanel"
+            aria-labelledby="peridot-evidence-explore-tab" hidden={evidenceTab !== 'explore'}>
+            <PeridotSearchWorkspace {...searchWorkspaceProps} />
+          </div>
+        </div>
       </section>
     </div>
+    </PeridotInvestigateContext.Provider>
   ) : null;
 
   const isVisualizationRoute = [
@@ -3986,7 +4148,6 @@ function AppMainWorkspace({
               {...visualizationWorkspaceProps}
               suppressFloatingFrameToggles={isInspectorWorkspaceOpen && isVisualizationRoute}
             />
-            {isVisualizationRoute ? inspectorWorkspaceOverlay : null}
           </div>
         </div>
       ) : null}
@@ -3999,12 +4160,11 @@ function AppMainWorkspace({
         >
           <div className="relative h-full overflow-hidden" data-peridot-explore-with-inspector={isInspectorWorkspaceOpen && isExploreRoute ? 'true' : 'false'}>
             <PeridotExploreWorkspace {...exploreWorkspaceProps} />
-            {isExploreRoute ? inspectorWorkspaceOverlay : null}
           </div>
         </div>
       ) : null}
 
-      {(keepSearchMounted || isSearchRoute) ? (
+      {((keepSearchMounted || isSearchRoute) && !(isInspectorWorkspaceOpen && evidenceTab === 'explore')) ? (
         <div
           className={workspaceLayerClass(isSearchRoute)}
           data-peridot-persistent-workspace="search"
@@ -4012,12 +4172,12 @@ function AppMainWorkspace({
         >
           <div className="relative h-full overflow-hidden" data-peridot-search-with-inspector={isInspectorWorkspaceOpen && isSearchRoute ? 'true' : 'false'}>
             <PeridotSearchWorkspace {...searchWorkspaceProps} />
-            {isSearchRoute ? inspectorWorkspaceOverlay : null}
           </div>
         </div>
       ) : null}
 
       {!isPersistentRoute ? renderTransientWorkspace() : null}
+      {inspectorWorkspaceOverlay}
     </main>
   );
 }
@@ -4173,6 +4333,18 @@ export default function EuropeNetworkMapApp() {
     const row = result?.row || result?.letter || null;
     if (!row) return;
     openInspectorLetterDetail(row, result?.index || 0);
+  };
+
+  // Jumping to an earlier breadcrumb is equivalent to repeated Back actions:
+  // discard the forward branch and retain the trail up to the visited item.
+  const jumpToInspectorHistory = (index) => {
+    if (index < 0 || index >= inspectorHistory.length) return;
+    const entry = inspectorHistory[index];
+    inspectorNavigationRef.current = true;
+    setSelectedSelection(entry);
+    setInspectorHistory(inspectorHistory.slice(0, index));
+    setShowAllLinkedLetters(false);
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
   };
 
   const goBackInspector = () => {
@@ -7156,6 +7328,7 @@ export default function EuropeNetworkMapApp() {
     evidenceBrowseRows: searchRecords,
     onInspectSearchResult: openInspectorSearchResult,
     inspectorExploreDraft,
+    onPrepareInvestigateDraft: (criteria) => setInspectorExploreDraft((previous) => ({ id: (previous?.id || 0) + 1, criteria })),
     onOpenVisualizations: openVisualizationsWorkspace,
   };
 
@@ -7234,6 +7407,23 @@ export default function EuropeNetworkMapApp() {
     inspectorViewComponents,
     inspectorPresentationMode,
     onCloseInspectorWorkspace: closeInspectorWorkspace,
+    inspectorHistory,
+    selectedSelection,
+    // Resolve display labels against the active graph, not the opaque
+    // selection keys. This function never changes stored history or identity.
+    getTrailLabel: (entry) => {
+      if (entry?.kind === 'node' || entry?.kind === 'cluster') {
+        const node = graph?.nodes?.find((candidate) => candidate.id === entry.id)
+          || (entry.kind === 'cluster' ? entry.clusterNode : null);
+        return getPeridotResearchTrailLabel(node ? { ...entry, ...node, kind: entry.kind } : entry);
+      }
+      if (entry?.kind === 'edge') {
+        const edge = graph?.edges?.find((candidate) => candidate.id === entry.id);
+        return getPeridotResearchTrailLabel(edge ? { ...entry, ...edge, kind: 'edge' } : entry);
+      }
+      return getPeridotResearchTrailLabel(entry);
+    },
+    onJumpToHistory: jumpToInspectorHistory,
   };
 
   const exploreWorkspaceProps = {

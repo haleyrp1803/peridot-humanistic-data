@@ -1,0 +1,914 @@
+/* Evidence Workspace v01 — editorial cartography folder shell.
+ * Visual-only framing around the existing Inspector and Search components.
+ * No generated illustration or embedded data; all controls stay live DOM.
+ */
+.peridot-evidence-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: clamp(10px, 2.2vh, 24px) clamp(8px, 2.5vw, 32px);
+  background: rgba(17, 29, 22, .52);
+  backdrop-filter: blur(3px);
+}
+.peridot-evidence-workspace {
+  --evidence-oxblood: #702a24;
+  --evidence-forest: #103723;
+  --evidence-gold: #b99758;
+  --evidence-paper: #fbf4e7;
+  isolation: isolate;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(1180px, 100%);
+  height: min(850px, 100%);
+  min-height: 0;
+  padding: 10px 12px 12px;
+  border: 2px solid #c9a567;
+  border-radius: 32px;
+  box-shadow: 0 24px 80px rgba(8, 17, 10, .5), inset 0 0 0 5px #123b29, inset 0 0 0 6px rgba(207, 174, 104, .72);
+  background: radial-gradient(circle at 16% -32%, #31563b, transparent 48%), linear-gradient(145deg, #102e20, #082718);
+  color: #fff5df;
+}
+.peridot-evidence-masthead {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 32px);
+  padding: 17px 48px 10px 23px;
+}
+.peridot-evidence-brand { display:flex; align-items:center; gap:17px; flex:0 1 auto; min-width:0; }
+.peridot-evidence-compass { font: 54px/1 Georgia,serif; color:#d7b775; text-shadow:0 0 1px #ffe9b5; }
+.peridot-evidence-eyebrow { color:#dfc88d; font:700 10px/1.4 Georgia,serif; letter-spacing:.24em; text-transform:uppercase; }
+.peridot-evidence-masthead h2 { font: 500 clamp(26px,3.3vw,37px)/1.12 Georgia, 'Times New Roman',serif; color:#fff4d9; margin:3px 0 0; }
+.peridot-evidence-description { border-left:1px solid #b99d69; max-width:355px; padding:0 0 0 20px; font:italic 17px/1.4 Georgia,serif; color:#f4ebd6; }
+.peridot-evidence-close {
+  position:absolute; top:19px; right:22px; border-radius:50%; width:37px; height:37px;
+  display:grid; place-items:center; border:1px solid #b58c43; background:linear-gradient(#fbe5ac,#ddb772);
+  color:#173525; font:26px/1 Georgia,serif; cursor:pointer; box-shadow:0 2px 3px #09190b70;
+}
+.peridot-evidence-folder-tabs { display:flex; align-items:end; position:relative; z-index:2; padding-left:21px; gap:0; min-height:46px; }
+.peridot-evidence-folder-tab {
+  position:relative; min-width:170px; padding:10px 29px 11px;
+  border:1px solid #bda17a; border-bottom:0; border-radius:17px 17px 0 0;
+  color:#efe0bf; background:linear-gradient(180deg,#49634a,#274832);
+  box-shadow:inset 0 1px #ffffff2e;
+  font:600 22px/1.1 Georgia,'Times New Roman',serif; cursor:pointer;
+}
+.peridot-evidence-folder-tab + .peridot-evidence-folder-tab { margin-left:-5px; }
+.peridot-evidence-folder-tab.is-active {
+  z-index:3; color:#792b26;
+  background:linear-gradient(180deg,#fff9ed,#f5e7d1);
+  box-shadow:0 -2px 10px rgba(11,19,13,.25), inset 0 2px #fff;
+}
+.peridot-evidence-folder-tab:focus-visible,
+.peridot-evidence-close:focus-visible,
+.peridot-evidence-crumb:focus-visible,
+.peridot-evidence-back:focus-visible { outline:3px solid #dfaf5c; outline-offset:2px; }
+.peridot-evidence-paper {
+  position:relative; z-index:2; display:flex; flex:1; min-height:0; flex-direction:column;
+  border:1px solid #d1b17b; border-radius:16px 16px 19px 19px;
+  padding:13px 17px 14px;
+  background: radial-gradient(circle at 5% 15%, rgba(190,148,89,.08) 0 1px, transparent 2px) 0 0 / 22px 22px, linear-gradient(125deg,#fffaf1,#f3e4ce);
+  box-shadow:0 8px 0 rgba(5,16,11,.4), inset 0 0 0 3px rgba(255,252,241,.72);
+  color:#22382c;
+}
+.peridot-evidence-trail {
+  display:flex; align-items:center; gap:12px; min-height:54px;
+  border-bottom:1px solid #bea782; margin-bottom:12px; padding:2px 5px 11px;
+}
+.peridot-evidence-trail-label { flex:0 0 auto; color:#6c2b26; font:700 12px Georgia,serif; letter-spacing:.12em; text-transform:uppercase; }
+.peridot-evidence-trail-items { min-width:0; flex:1; display:flex; align-items:center; overflow:auto; gap:6px; scrollbar-width:thin; padding:2px; }
+.peridot-evidence-trail-chevron { color:#815f35; font:24px Georgia,serif; }
+.peridot-evidence-crumb {
+  display:block; flex:0 0 auto; max-width:190px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  padding:7px 11px; border:1px solid #b9a77e; border-radius:16px;
+  color:#244332; background:linear-gradient(#fdf8e9,#e7dfc8);
+  font:600 13px Georgia,serif; box-shadow:0 2px 2px #68582e25; cursor:pointer;
+}
+.peridot-evidence-crumb.is-current { color:#fff7e4; background:#234e32; border-color:#668b64; cursor:default; }
+.peridot-evidence-empty-trail { font:italic 13px Georgia,serif; color:#765f42; }
+.peridot-evidence-back { flex:0 0 auto; border:1px solid #b7a17e; background:#fff9e8; color:#66332a; padding:7px 15px; border-radius:19px; cursor:pointer; font:600 13px Georgia,serif; }
+.peridot-evidence-content { flex:1; min-height:0; overflow:auto; scrollbar-width:thin; scrollbar-color:#caa566 #f6e6ce; }
+.peridot-evidence-content[hidden] { display:none !important; }
+.peridot-evidence-content .peridot-inspector-shell-workspace {
+  background:transparent !important; border:0 !important; box-shadow:none !important;
+  padding:0 !important; border-radius:0 !important; min-height:0; height:auto;
+}
+.peridot-evidence-content .peridot-inspector-shell-workspace .peridot-inspector-reference-body {
+  border:0 !important; background:transparent; border-radius:8px; padding:6px !important; box-shadow:none !important;
+}
+.peridot-evidence-search-content { padding:5px; background:#faf3e6; border-radius:12px; }
+.peridot-evidence-search-content .peridot-search-workspace { background:transparent; }
+@media (max-width:800px) {
+  .peridot-evidence-workspace { border-radius:22px; padding:8px; }
+  .peridot-evidence-masthead { min-height:75px; padding:12px 42px 9px 9px; }
+  .peridot-evidence-compass { font-size:36px; }
+  .peridot-evidence-description { display:none; }
+  .peridot-evidence-folder-tabs { padding-left:6px; }
+  .peridot-evidence-folder-tab { min-width:120px; padding:9px 15px; font-size:18px; }
+  .peridot-evidence-paper { padding:9px; }
+  .peridot-evidence-trail { flex-wrap:wrap; gap:5px; }
+  .peridot-evidence-trail-items { order:3; flex-basis:100%; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .peridot-evidence-workspace *, .peridot-evidence-workspace *::before, .peridot-evidence-workspace *::after { scroll-behavior:auto !important; animation-duration:0.01ms !important; }
+}
+
+/* v02 — a wider reading folio. Keep the viewport inset so the visualization
+ * remains recognizable behind the floating workspace on desktop screens. */
+@media (min-width: 1100px) {
+  .peridot-evidence-scrim {
+    padding-inline: clamp(18px, 3vw, 56px);
+  }
+  .peridot-evidence-workspace {
+    width: min(1490px, 100%);
+  }
+}
+
+/* Expanded Inspector only: bring the reused legacy dossier sections into the
+ * Evidence Workspace's paper system. No global Inspector, Explore, or chart
+ * classes are changed. This is deliberately presentational, preserving every
+ * existing evidence link, source record, and navigation callback. */
+.peridot-evidence-content:not(.peridot-evidence-search-content) {
+  --panel-bg: #fbf6ea;
+  --panel-card-border: #d4bc91;
+  --panel-card-text: #243b2b;
+  --panel-card-muted-text: #5f654f;
+  --utility-panel-bg: #fcf7eb;
+  --section-bg: #f4e8d1;
+  --section-border: #d5bd92;
+  --text-main: #243c2e;
+  --detail-label-text: #915b2f;
+  --inspector-clickable-bg: #e9eddc;
+  --inspector-clickable-text: #173e2a;
+  --inspector-clickable-border: #abb994;
+  --inspector-clickable-hover-bg: #d9e4cd;
+  --inspector-clickable-hover-text: #103622;
+  --inspector-clickable-hover-border: #76926f;
+  background: linear-gradient(125deg, rgba(255, 252, 245, .72), rgba(248, 235, 215, .35));
+  border-radius: 11px;
+  padding: 5px 7px 8px;
+}
+
+/* Remove the old green channel between dossier cards and give the body a
+ * continuous light paper surface, leaving independently scrollable tables and
+ * evidence disclosure controls untouched. */
+.peridot-evidence-content:not(.peridot-evidence-search-content) .peridot-inspector-shell-workspace,
+.peridot-evidence-content:not(.peridot-evidence-search-content) .peridot-inspector-reference-body,
+.peridot-evidence-content:not(.peridot-evidence-search-content) .peridot-inspector-body {
+  background: transparent !important;
+  color: #243b2d;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) .peridot-inspector-reference-ground::before {
+  display: none;
+}
+
+/* Existing cards use utility classes from multiple Inspector view families.
+ * Reskin their outer card surfaces without changing their grid or flow layout. */
+.peridot-evidence-content:not(.peridot-evidence-search-content) :is(section, article, div)[class*="bg-[var(--utility-panel-bg)]"],
+.peridot-evidence-content:not(.peridot-evidence-search-content) :is(section, article, div)[class*="bg-[var(--panel-card-bg)]"] {
+  background: linear-gradient(145deg, #fff9ed, #f1e2c8) !important;
+  border-color: #d1b58a !important;
+  box-shadow: 0 2px 5px rgba(89, 66, 37, .09), inset 0 1px rgba(255, 255, 255, .8) !important;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) :is(section, article, div)[class*="bg-[var(--section-bg)]"] {
+  background: #f5ead6 !important;
+  border-color: #dbc5a3 !important;
+}
+
+/* Human-readable hierarchy: scholarly serif for the selected subject and
+ * prominent section titles; compact uppercase labels remain clear but quiet. */
+.peridot-evidence-content:not(.peridot-evidence-search-content) :is(h1, h2, h3) {
+  color: #742e27 !important;
+  font-family: Georgia, 'Palatino Linotype', 'Book Antiqua', serif;
+  line-height: 1.22;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) h2 {
+  font-size: clamp(22px, 2vw, 29px);
+  letter-spacing: -.015em;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) h3 {
+  font-size: clamp(17px, 1.4vw, 21px);
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) :is(p, td, dd) {
+  line-height: 1.55;
+}
+
+/* Keep actual linked data recognizable as interactive, not decoration. */
+.peridot-evidence-content:not(.peridot-evidence-search-content) button:focus-visible,
+.peridot-evidence-content:not(.peridot-evidence-search-content) a:focus-visible {
+  outline: 2px solid #8a4b32;
+  outline-offset: 2px;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) button[class*="bg-[var(--inspector-clickable-bg)]"] {
+  background: #e5ead9 !important;
+  color: #153e2a !important;
+  border-color: #a7b58b !important;
+  box-shadow: 0 1px 3px rgba(38, 62, 37, .1);
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) button[class*="bg-[var(--inspector-clickable-bg)]"]:hover {
+  background: #d5e0c9 !important;
+}
+
+/* More room for evidence, especially the mapped-information grid and record
+ * table, without forcing side columns on narrow devices. */
+@media (min-width: 1200px) {
+  .peridot-evidence-content:not(.peridot-evidence-search-content) .peridot-inspector-reference-body {
+    padding-inline: 10px !important;
+  }
+}
+@media (max-width: 650px) {
+  .peridot-evidence-content:not(.peridot-evidence-search-content) { padding: 3px; }
+  .peridot-evidence-content:not(.peridot-evidence-search-content) h2 { font-size: 21px; }
+}
+
+/* v03 — individual research sheets inside the Inspector folder. These styles
+ * are scoped to the floating Evidence Workspace; compact Inspector untouched. */
+.peridot-evidence-inspector-layout { display:flex; flex:1; min-height:0; min-width:0; gap:14px; }
+.peridot-evidence-inspector-layout[hidden] { display:none !important; }
+.peridot-evidence-inspector-layout .peridot-evidence-dossier-reading { flex:1; min-width:0; overflow:auto; }
+.peridot-evidence-sheet-index {
+  display:flex; flex:0 0 clamp(190px, 19%, 246px); flex-direction:column; align-self:stretch;
+  min-width:0; overflow-y:auto; padding:15px 8px;
+  border:1px solid #d6b989; border-radius:13px;
+  background:linear-gradient(135deg,#fff8eb,#f3e3cc);
+  box-shadow:inset -3px 0 7px rgba(126,90,48,.055);
+}
+.peridot-evidence-sheet-index-heading { padding:4px 10px 12px; color:#7a3329; font:700 12px Georgia,serif; letter-spacing:.13em; text-transform:uppercase; }
+.peridot-evidence-sheet-link {
+  position:relative; text-align:left; width:100%; flex:0 0 auto;
+  padding:11px 12px; min-height:42px; border:0; border-bottom:1px solid #dcc6a8;
+  border-radius:4px; background:transparent; color:#263b2b;
+  font:600 16px/1.25 Georgia, 'Palatino Linotype', serif; cursor:pointer;
+}
+.peridot-evidence-sheet-link:hover { background:#e9e0cb; }
+.peridot-evidence-sheet-link.is-active {
+  color:#fff5df; border-bottom-color:#52734e; background:linear-gradient(105deg,#17432e,#315f3c);
+  box-shadow:2px 2px 3px #2c3a2b26; border-radius:6px 12px 12px 6px;
+}
+.peridot-evidence-sheet-link:focus-visible { outline:3px solid #b98e49; outline-offset:2px; z-index:1; }
+.peridot-evidence-overview-sheet, .peridot-evidence-leaf-page { display:flex; flex-direction:column; gap:14px; }
+.peridot-evidence-leaf-heading {
+  padding:16px 21px; border:1px solid #d5ba8f; border-radius:12px;
+  background:linear-gradient(145deg,#fffaf0,#f1e1c7);
+}
+.peridot-evidence-leaf-eyebrow { color:#906035; font:700 11px/1.4 Georgia,serif; letter-spacing:.14em; text-transform:uppercase; }
+.peridot-evidence-leaf-heading h2 { color:#782d27; font:600 clamp(24px,2.2vw,32px)/1.2 Georgia,serif; margin:6px 0; }
+.peridot-evidence-leaf-heading p { max-width:78ch; color:#3d5143; font-size:14px; line-height:1.55; margin:0; }
+.peridot-evidence-leaf-body { min-width:0; display:flex; flex-direction:column; gap:12px; }
+.peridot-evidence-overview-footnote {
+  border-left:3px solid #a88a54; padding:10px 14px; color:#526149;
+  font-size:13px; line-height:1.55; background:#f6ebd8;
+}
+.peridot-evidence-investigate { display:grid; justify-items:start; gap:14px; padding:20px; border:1px solid #d5ba8f; border-radius:12px; background:#fff7e9; }
+.peridot-evidence-investigate h3 { color:#782d27; font:600 23px Georgia,serif; margin:0; }
+.peridot-evidence-investigate p { margin:0; max-width:66ch; }
+.peridot-evidence-investigate button { padding:9px 17px; border:1px solid #587252; border-radius:9px; color:#fff5e5; background:#184530; cursor:pointer; }
+.peridot-evidence-investigate button:focus-visible { outline:3px solid #b98e49; outline-offset:2px; }
+@media (max-width:900px) {
+  .peridot-evidence-inspector-layout.has-sheet-index { flex-direction:column; }
+  .peridot-evidence-sheet-index { flex:none; display:flex; flex-direction:row; overflow-x:auto; overflow-y:hidden; padding:7px; align-self:auto; }
+  .peridot-evidence-sheet-index-heading { flex:0 0 auto; align-self:center; padding:5px 10px; }
+  .peridot-evidence-sheet-link { width:auto; white-space:nowrap; border-bottom:0; padding:9px 12px; }
+}
+
+/* v04 — Connected people and places as full-width, scholarly reference lists.
+ * The visual distinction is between the selected research subject, the other
+ * recorded entity/place, and source-derived assertions. No global styles. */
+.peridot-evidence-connected-groups { display:flex; flex-direction:column; gap:15px; }
+.peridot-evidence-connected-context { margin:0; padding:11px 15px; border-left:3px solid #95713d; background:#f3e9d7; color:#334936; font-size:13px; line-height:1.55; }
+.peridot-evidence-connected-context strong { color:#75342b; }
+.peridot-evidence-connected-group { min-width:0; border:1px solid #d6bc94; border-radius:12px; padding:15px; background:linear-gradient(140deg,#fff9ed,#f4e6d0); box-shadow:0 3px 7px #493b2610; }
+.peridot-evidence-connected-group-heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:10px; padding-bottom:9px; border-bottom:1px solid #d3ba90; }
+.peridot-evidence-connected-group-heading h3 { margin:0; color:#7c3029; font:600 21px/1.2 Georgia,serif; }
+.peridot-evidence-connected-group-heading > span { font-size:12px; color:#5d6957; font-variant-numeric:tabular-nums; }
+.peridot-evidence-connected-group-role { margin:9px 0 0; font-size:13px; color:#405344; }
+.peridot-evidence-connected-group-role strong { font-weight:650; }
+.peridot-evidence-connected-rows { display:flex; flex-direction:column; margin-top:9px; }
+.peridot-evidence-connected-row { display:flex; align-items:center; width:100%; min-width:0; gap:12px; padding:13px 8px; text-align:left; color:#233b2e; background:transparent; border:0; border-bottom:1px solid #e2d2b7; }
+.peridot-evidence-connected-row:last-child { border-bottom:0; }
+.peridot-evidence-connected-row.is-linked { cursor:pointer; border-radius:5px; }
+.peridot-evidence-connected-row.is-linked:hover { background:#e9efdf; }
+.peridot-evidence-connected-row.is-linked:focus-visible, .peridot-evidence-connected-more:focus-visible { outline:2px solid #8d4d33; outline-offset:2px; }
+.peridot-evidence-connected-row-main { display:flex; flex:1; flex-direction:column; min-width:0; gap:3px; }
+.peridot-evidence-connected-row-kind { color:#8d6940; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.11em; }
+.peridot-evidence-connected-row-name { color:#24432e; font:600 17px/1.35 Georgia,serif; overflow-wrap:anywhere; }
+.peridot-evidence-connected-row-evidence { display:flex; flex-direction:column; color:#536653; font-size:12px; line-height:1.5; }
+.peridot-evidence-connected-row-count { flex:0 0 auto; display:flex; flex-direction:column; align-items:flex-end; gap:2px; color:#684b2d; font-size:14px; font-weight:700; font-variant-numeric:tabular-nums; }
+.peridot-evidence-connected-row-count span { font-size:10px; font-weight:500; }
+.peridot-evidence-connected-row-arrow { font:27px/1 Georgia,serif; color:#916d37; }
+.peridot-evidence-connected-more { align-self:start; margin-top:10px; padding:8px 15px; border:1px solid #a88751; border-radius:8px; color:#27432f; background:#eee1c6; font-size:13px; font-weight:650; cursor:pointer; }
+.peridot-evidence-connected-empty { padding:25px; background:#faf0df; border:1px dashed #cfb78e; border-radius:10px; color:#586150; }
+@media (max-width:650px) {
+  .peridot-evidence-connected-group { padding:10px; }
+  .peridot-evidence-connected-row { gap:8px; }
+  .peridot-evidence-connected-row-name { font-size:15px; }
+}
+
+
+/* v05 — flat editorial folio and oxblood corner ornament.
+ * The four transparent corner images are part of the existing /assets library.
+ * Only the Evidence Workspace is restyled; selection, evidence, and Explore
+ * state are unchanged. Keep functional focus indicators and hover feedback. */
+.peridot-evidence-workspace {
+  background: #103723;
+  background-image: none;
+  box-shadow: none;
+  border-radius: 14px;
+}
+.peridot-evidence-compass { text-shadow: none; }
+.peridot-evidence-close {
+  background: #f7edda;
+  background-image: none;
+  box-shadow: none;
+  border-radius: 50%;
+}
+.peridot-evidence-folder-tab {
+  background: #30513a;
+  background-image: none;
+  box-shadow: none;
+}
+.peridot-evidence-folder-tab.is-active {
+  background: #f9f0df;
+  background-image: none;
+  box-shadow: none;
+}
+/* Four matched transparent oxblood corners frame the reading sheet.
+ * The paper texture is an existing image, not a simulated light/shadow gradient.
+ * Background layers remain non-interactive; no extra hit targets are created. */
+.peridot-evidence-paper {
+  background-color: #fbf4e7;
+  background-image:
+    url('../assets/corner_simple_red_TL.png'),
+    url('../assets/corner_simple_red_TR.png'),
+    url('../assets/corner_simple_red_BL.png'),
+    url('../assets/corner_simple_red_BR.png'),
+    url('../assets/base_parchment_1.png');
+  background-position: left 2px top 2px, right 2px top 2px, left 2px bottom 2px, right 2px bottom 2px, center;
+  background-size: 112px auto, 112px auto, 112px auto, 112px auto, cover;
+  background-repeat: no-repeat;
+  box-shadow: none;
+  border-radius: 8px;
+}
+.peridot-evidence-crumb {
+  background: #f3ebd9;
+  background-image: none;
+  box-shadow: none;
+}
+.peridot-evidence-crumb.is-current { background: #234e32; }
+.peridot-evidence-back { background: #fbf3e4; box-shadow: none; }
+.peridot-evidence-content:not(.peridot-evidence-search-content) {
+  background: transparent;
+  background-image: none;
+}
+.peridot-evidence-sheet-index {
+  background: #f7eddd;
+  background-image: url('../assets/base_parchment_2.png');
+  background-position: center;
+  background-size: cover;
+  box-shadow: none;
+  border-radius: 5px;
+}
+.peridot-evidence-sheet-link.is-active {
+  background: #215239;
+  background-image: none;
+  box-shadow: none;
+  border-radius: 4px;
+}
+.peridot-evidence-leaf-heading,
+.peridot-evidence-connected-group,
+.peridot-evidence-investigate {
+  background: #faf2e4;
+  background-image: none;
+  box-shadow: none;
+  border-radius: 6px;
+}
+.peridot-evidence-connected-row,
+.peridot-evidence-connected-row.is-linked,
+.peridot-evidence-connected-more {
+  box-shadow: none;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) :is(section, article, div)[class*="bg-[var(--utility-panel-bg)]"],
+.peridot-evidence-content:not(.peridot-evidence-search-content) :is(section, article, div)[class*="bg-[var(--panel-card-bg)]"] {
+  background: #f8f0e2 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border-radius: 6px;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) :is(section, article, div)[class*="bg-[var(--section-bg)]"] {
+  background: #f3e9d7 !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) button[class*="bg-[var(--inspector-clickable-bg)]"] {
+  background: #e7ebde !important;
+  box-shadow: none !important;
+}
+/* Neutralize remaining decorative elevation inside the floating folio only.
+ * Focus outlines, navigation colors, and interactive states are retained. */
+.peridot-evidence-workspace .peridot-evidence-paper :is(section, article, button, [class*="rounded"]):not(.peridot-evidence-crumb) {
+  text-shadow: none;
+}
+.peridot-evidence-workspace .peridot-evidence-content :is(section, article) {
+  box-shadow: none !important;
+}
+.peridot-evidence-search-content { background: #f9f1e4; box-shadow: none; }
+@media (max-width: 800px) {
+  .peridot-evidence-paper { background-size: 70px auto, 70px auto, 70px auto, 70px auto, cover; }
+}
+
+
+/* v06 — decorative corners sit above the folio content, without intercepting
+ * pointer or keyboard interaction. The paper remains flat and textured.
+ * Keep the trail and reading sheets within the ornamented inner margin. */
+.peridot-evidence-paper {
+  padding: 24px 29px 28px;
+  background-image: url('../assets/base_parchment_1.png');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.peridot-evidence-paper::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  background-image:
+    url('../assets/corner_simple_red_TL.png'),
+    url('../assets/corner_simple_red_TR.png'),
+    url('../assets/corner_simple_red_BL.png'),
+    url('../assets/corner_simple_red_BR.png');
+  background-position: left 2px top 2px, right 2px top 2px,
+                       left 2px bottom 2px, right 2px bottom 2px;
+  background-size: 112px auto, 112px auto, 112px auto, 112px auto;
+  background-repeat: no-repeat;
+}
+.peridot-evidence-paper > * {
+  position: relative;
+  z-index: 1;
+}
+/* Leave the corner filigree its own space along the research-trail band. */
+.peridot-evidence-paper > .peridot-evidence-trail {
+  padding-left: 85px;
+  padding-right: 85px;
+}
+@media (max-width: 800px) {
+  .peridot-evidence-paper { padding: 17px 17px 21px; }
+  .peridot-evidence-paper::after {
+    background-size: 70px auto, 70px auto, 70px auto, 70px auto;
+  }
+  .peridot-evidence-paper > .peridot-evidence-trail {
+    padding-left: 53px;
+    padding-right: 53px;
+  }
+}
+
+/* v07 — Relationships sheet: flat, source-row-backed editorial register. */
+.peridot-evidence-relationship-register { display:flex; flex-direction:column; gap:15px; color:#263c30; }
+.peridot-evidence-relationship-intro { padding:12px 15px; border-left:3px solid #926539; background:#f3e8d6; font-size:13px; line-height:1.55; }
+.peridot-evidence-relationship-intro strong { color:#782e29; }
+.peridot-evidence-relationship-intro p { margin:5px 0 0; }
+.peridot-evidence-relationship-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid #d1b98f; background:#f9f0df; }
+.peridot-evidence-relationship-metrics > div { padding:12px 14px; display:flex; flex-direction:column; gap:3px; }
+.peridot-evidence-relationship-metrics > div+div { border-left:1px solid #d1b98f; }
+.peridot-evidence-relationship-metrics strong { font:600 23px/1 Georgia,serif; color:#7d302b; font-variant-numeric:tabular-nums; }
+.peridot-evidence-relationship-metrics span { font-size:12px; color:#435747; }
+.peridot-evidence-relationship-controls { display:grid; grid-template-columns:minmax(0,2fr) minmax(175px,1fr); gap:12px; }
+.peridot-evidence-relationship-controls label { display:flex; flex-direction:column; gap:5px; font-size:12px; font-weight:700; color:#385244; }
+.peridot-evidence-relationship-controls :is(input,select) { width:100%; min-width:0; border:1px solid #bfa77f; border-radius:5px; background:#fff9ed; color:#183727; font-family:inherit; font-size:13px; line-height:1.4; font-weight:400; padding:9px 11px; }
+.peridot-evidence-relationship-list { display:flex; flex-direction:column; border-top:1px solid #c7aa81; }
+.peridot-evidence-relationship-entry { border-bottom:1px solid #c7aa81; padding:15px 8px; background:transparent; }
+.peridot-evidence-relationship-entry-head { display:flex; justify-content:space-between; align-items:flex-start; gap:18px; }
+.peridot-evidence-relationship-entry-main { flex:1; min-width:0; }
+.peridot-evidence-relationship-kind { color:#80552d; text-transform:uppercase; font:700 10px/1.4 Georgia,serif; letter-spacing:.1em; }
+.peridot-evidence-relationship-pair { display:flex; align-items:baseline; flex-wrap:wrap; gap:9px; margin:6px 0 9px; font:600 18px/1.35 Georgia,serif; color:#782d29; }
+.peridot-evidence-relationship-entity-link { font:inherit; color:#1f4d32; text-align:left; padding:0; border:0; background:none; cursor:pointer; text-decoration:underline; text-underline-offset:3px; text-decoration-color:#a9b4a3; overflow-wrap:anywhere; }
+.peridot-evidence-relationship-entity-link:hover { text-decoration-color:#1f4d32; }
+.peridot-evidence-relationship-direction-symbol { color:#866332; }
+.peridot-evidence-relationship-facts { display:flex; flex-wrap:wrap; gap:5px 16px; color:#48584b; font-size:12px; line-height:1.5; }
+.peridot-evidence-relationship-facts strong { color:#314633; }
+.peridot-evidence-relationship-entry-side { display:flex; flex-wrap:wrap; justify-content:flex-end; align-items:start; gap:12px; flex:0 0 auto; }
+.peridot-evidence-relationship-count { display:flex; flex-direction:column; align-items:center; min-width:50px; }
+.peridot-evidence-relationship-count strong { color:#78342a; font:600 19px/1.2 Georgia,serif; font-variant-numeric:tabular-nums; }
+.peridot-evidence-relationship-count span { font-size:11px; color:#4e5d4c; }
+.peridot-evidence-relationship-expand, .peridot-evidence-relationship-show-more, .peridot-evidence-relationship-route-link { border:1px solid #a88658; background:#eee1c9; border-radius:4px; color:#203c2b; padding:8px 10px; cursor:pointer; font-size:12px; font-weight:650; }
+.peridot-evidence-relationship-expand:hover, .peridot-evidence-relationship-show-more:hover, .peridot-evidence-relationship-route-link:hover { background:#dce8d8; }
+.peridot-evidence-relationship-evidence { margin-top:13px; padding:14px; background:#edf0e6; border-left:3px solid #657f64; }
+.peridot-evidence-relationship-evidence-title { font:600 17px/1.3 Georgia,serif; color:#782d29; }
+.peridot-evidence-relationship-evidence p { font-size:12px; line-height:1.5; margin:5px 0 12px; }
+.peridot-evidence-relationship-records { display:flex; flex-direction:column; }
+.peridot-evidence-relationship-records > * { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 5px; border:0; border-bottom:1px solid #c7d3c0; background:transparent; text-align:left; color:#1d4a31; font-size:13px; font-weight:650; overflow-wrap:anywhere; }
+.peridot-evidence-relationship-records button { cursor:pointer; }
+.peridot-evidence-relationship-records button:hover { background:#dae8d6; }
+.peridot-evidence-relationship-records span { font-size:12px; font-weight:500; white-space:nowrap; }
+.peridot-evidence-relationship-route-link { margin-top:12px; }
+.peridot-evidence-relationship-empty { padding:20px 10px; color:#546052; font-size:13px; }
+.peridot-evidence-relationship-show-more { margin:14px auto 0; }
+.peridot-evidence-relationship-register :is(button,input,select):focus-visible { outline:2px solid #873d31; outline-offset:2px; }
+@media (max-width:900px) {
+ .peridot-evidence-relationship-entry-head { flex-direction:column; }
+ .peridot-evidence-relationship-entry-side { width:100%; justify-content:flex-start; }
+ .peridot-evidence-relationship-controls { grid-template-columns:1fr; }
+}
+@media (max-width:560px) {
+ .peridot-evidence-relationship-metrics { grid-template-columns:1fr; }
+ .peridot-evidence-relationship-metrics > div+div { border-left:0; border-top:1px solid #d1b98f; }
+}
+
+/* v08 — The sheet index names the active page; the content heading names the
+ * research subject. No repeated heading card or decorative depth. */
+.peridot-evidence-subject-heading {
+  padding: 2px 3px 6px;
+  border: 0;
+  background: transparent;
+}
+.peridot-evidence-subject-heading h2 {
+  margin: 0;
+  color: #782d27;
+  font: 600 clamp(24px, 2.2vw, 32px)/1.2 Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  letter-spacing: -.015em;
+  overflow-wrap: anywhere;
+}
+
+/* v09 — Compact orientation sheet: no unused image placeholder, no inferred
+ * historical biography, and no conflation of mark provenance with broader
+ * subject-related rows. All styling is scoped to the Evidence Workspace. */
+.peridot-evidence-overview-intro {
+  display:flex; align-items:flex-start; justify-content:space-between; gap:20px;
+  padding:12px 0 17px; border-bottom:1px solid #c7a97a;
+}
+.peridot-evidence-overview-intro-text { flex:1; min-width:0; }
+.peridot-evidence-overview-eyebrow {
+  color:#765327; font:700 11px/1.45 Georgia,serif; text-transform:uppercase; letter-spacing:.1em;
+}
+.peridot-evidence-overview-intro p {
+  max-width:88ch; margin:8px 0 14px; color:#263c30; font-size:14px; line-height:1.55;
+}
+.peridot-evidence-overview-stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid #d9c7a8; }
+.peridot-evidence-overview-stats > div { padding:12px 11px 2px; border-right:1px solid #d9c7a8; }
+.peridot-evidence-overview-stats > div:first-child { padding-left:0; }
+.peridot-evidence-overview-stats > div:last-child { border-right:0; }
+.peridot-evidence-overview-stats span { display:block; font:700 11px/1.4 Georgia,serif; color:#7b572c; }
+.peridot-evidence-overview-stats strong { display:block; margin-top:4px; color:#284a32; font-size:20px; line-height:1.2; }
+.peridot-evidence-overview-image { width:128px; max-height:154px; object-fit:contain; border:1px solid #c7a97a; }
+.peridot-evidence-overview-interpretation { padding:14px 0; border-bottom:1px solid #c7a97a; }
+.peridot-evidence-overview-interpretation h3,
+.peridot-evidence-overview-mapped > h3 { margin:0 0 7px; color:#7d2d27; font:600 22px/1.2 Georgia,serif; }
+.peridot-evidence-overview-interpretation > p,
+.peridot-evidence-overview-mapped > p { margin:0 0 10px; color:#304936; font-size:14px; line-height:1.55; }
+.peridot-evidence-overview-scope { display:flex; flex-wrap:wrap; gap:8px 18px; margin-top:10px; padding:11px 13px; border-left:3px solid #a48950; background:#f2e9d8; color:#33493a; font-size:13px; }
+.peridot-evidence-overview-scope p { width:100%; margin:0; line-height:1.5; }
+.peridot-evidence-overview-mapped { min-width:0; padding-top:8px; }
+@media(max-width:780px) {
+  .peridot-evidence-overview-stats { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .peridot-evidence-overview-stats > div:nth-child(2) { border-right:0; }
+  .peridot-evidence-overview-image { width:90px; }
+}
+
+.peridot-evidence-overview-more { margin-top:10px; }
+.peridot-evidence-overview-more > summary { cursor:pointer; padding:10px 12px; border:1px solid #bea77b; color:#244932; font:600 14px Georgia,serif; background:#f3ecdc; }
+.peridot-evidence-overview-more[open] > summary { margin-bottom:12px; }
+.peridot-evidence-overview-more > summary:focus-visible { outline:3px solid #a67c35; outline-offset:2px; }
+
+
+/* v10 — Overview is already the expanded dossier: mapped assertions are fully
+ * visible. A provenance-provided image or an accessible, non-photographic
+ * silhouette occupies the top-right portrait space. No mapping heuristics. */
+.peridot-evidence-overview-portrait {
+  flex: 0 0 218px;
+  width: 218px;
+  min-height: 222px;
+  margin: 0;
+  border: 1px solid #b8a17b;
+  background: #efe5d1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.peridot-evidence-overview-portrait img {
+  width: 100%;
+  height: 192px;
+  object-fit: contain;
+  display: block;
+  background: #f5ecdb;
+}
+.peridot-evidence-overview-silhouette {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 192px;
+  color: #6b745b;
+}
+.peridot-evidence-overview-silhouette svg { width: 155px; height: 155px; }
+.peridot-evidence-overview-portrait figcaption {
+  border-top: 1px solid #cbb797;
+  padding: 6px 3px;
+  font: 700 10px/1.3 Georgia,serif;
+  color: #56634d;
+  text-align: center;
+}
+.peridot-evidence-overview-assertions { margin-top: 11px; }
+.peridot-evidence-overview-assertions > section {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.peridot-evidence-overview-assertions > section > div:first-child { display: none; }
+.peridot-evidence-overview-assertions > section > div:last-child { gap: 16px; }
+.peridot-evidence-overview-assertions section section {
+  border: 0 !important;
+  border-top: 1px solid #cdb997 !important;
+  border-radius: 0 !important;
+  padding: 12px 0 7px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.peridot-evidence-overview-assertions section section > div:first-child {
+  color: #7b3029 !important;
+  font: 600 17px/1.25 Georgia,serif !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+}
+.peridot-evidence-overview-assertions section section button {
+  display: inline-flex;
+  padding: 3px 2px;
+  border: 0;
+  border-bottom: 1px solid #9aaa85;
+  border-radius: 0;
+  background: transparent;
+  color: #214930;
+  font-weight: 650;
+  box-shadow: none;
+}
+.peridot-evidence-overview-assertions section section button:hover {
+  color: #173a24;
+  background: #e2e6d4;
+  border-bottom-color: #51754b;
+}
+.peridot-evidence-overview-assertions section section button:focus-visible { outline: 2px solid #8e4439; outline-offset: 3px; }
+
+/* Warm botanical greens for selectable rows and hover/highlight states.
+ * Do not change the meaning of status, provenance, or other category colors. */
+.peridot-evidence-workspace {
+  --evidence-highlight-green: #e2e7d6;
+  --evidence-highlight-green-strong: #d2dcc5;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) {
+  --inspector-clickable-bg: #e8e9d9;
+  --inspector-clickable-hover-bg: #d2dcc5;
+  --inspector-clickable-hover-border: #718667;
+  --button-hover-bg: #d2dcc5;
+  --button-hover-border: #82916d;
+}
+.peridot-evidence-connected-row.is-linked:hover,
+.peridot-evidence-relationship-expand:hover,
+.peridot-evidence-relationship-show-more:hover,
+.peridot-evidence-relationship-route-link:hover,
+.peridot-evidence-relationship-records button:hover {
+  background: var(--evidence-highlight-green) !important;
+}
+.peridot-evidence-content:not(.peridot-evidence-search-content) button[class*="bg-[var(--inspector-clickable-bg)]"]:hover {
+  background: var(--evidence-highlight-green-strong) !important;
+}
+@media (max-width: 780px) {
+  .peridot-evidence-overview-portrait { flex-basis: 115px; width: 115px; min-height: 130px; }
+  .peridot-evidence-overview-portrait img,
+  .peridot-evidence-overview-silhouette { height: 107px; }
+  .peridot-evidence-overview-silhouette svg { width: 82px; height: 82px; }
+}
+@media (max-width: 540px) {
+  .peridot-evidence-overview-intro { flex-wrap: wrap; }
+  .peridot-evidence-overview-portrait { order: -1; margin-left: auto; }
+}
+
+.peridot-evidence-content:not(.peridot-evidence-search-content) button[class*="bg-[var(--inspector-clickable-bg)]"] {
+  background: #e8e9d9 !important;
+  border-color: #9fae88 !important;
+}
+
+/* v12 — Anchor the dossier illustration beside the subject heading, at the
+ * top-right of the reading sheet. Reserve its footprint so the introductory
+ * text, statistics, and subsequent evidence cannot slide underneath it. */
+@media (min-width: 781px) {
+  .peridot-evidence-overview-sheet {
+    position: relative;
+  }
+  .peridot-evidence-overview-sheet > .peridot-evidence-subject-heading {
+    padding-right: 244px;
+  }
+  .peridot-evidence-overview-sheet > .peridot-evidence-overview-intro {
+    padding-right: 244px;
+    min-height: 178px;
+    box-sizing: border-box;
+  }
+  .peridot-evidence-overview-sheet .peridot-evidence-overview-portrait {
+    position: absolute;
+    top: 0;
+    right: 3px;
+    margin: 0;
+  }
+}
+
+/* v13 · Dedicated contributing-records folio. Flat archival register; scoped to
+   the Evidence Workspace only. No changes to search or visualization filters. */
+.peridot-evidence-workspace .peridot-record-ledger { color:#253b2d; min-width:0; font-size:14px; }
+.peridot-evidence-workspace .peridot-record-ledger-intro { margin:0 0 16px; padding:0 0 12px; border-bottom:1px solid #cdb88f; }
+.peridot-evidence-workspace .peridot-record-ledger-intro > span { color:#7c3028; font:600 17px/1.4 Georgia,serif; }
+.peridot-evidence-workspace .peridot-record-ledger-intro p { margin:6px 0 0; max-width:78ch; line-height:1.5; }
+.peridot-evidence-workspace .peridot-record-ledger-controls { display:grid; grid-template-columns:minmax(0,2fr) minmax(150px,1fr) minmax(120px,.65fr); gap:12px; align-items:end; padding-bottom:12px; }
+.peridot-evidence-workspace .peridot-record-ledger-controls label { display:flex; flex-direction:column; gap:5px; min-width:0; color:#6f3a29; font:700 12px/1.3 Georgia,serif; }
+.peridot-evidence-workspace .peridot-record-ledger-controls input,
+.peridot-evidence-workspace .peridot-record-ledger-controls select { width:100%; min-width:0; padding:9px 10px; border:1px solid #bca780; border-radius:3px; color:#203a2b; background:#f8f0df; font:13px/1.4 inherit; font-family:inherit; }
+.peridot-evidence-workspace .peridot-record-ledger-controls :is(input,select):focus-visible { outline:2px solid #8d4034; outline-offset:2px; }
+.peridot-evidence-workspace .peridot-record-ledger-list { border-top:1px solid #cbb48c; }
+.peridot-evidence-workspace .peridot-record-ledger-entry { border-bottom:1px solid #d8c6a5; }
+.peridot-evidence-workspace .peridot-record-ledger-entry:nth-child(even) { background:rgba(224,210,175,.27); }
+.peridot-evidence-workspace .peridot-record-ledger-entry-main { display:grid; grid-template-columns:minmax(105px,.8fr) minmax(0,3fr) auto; gap:14px; padding:14px 10px; align-items:start; }
+.peridot-evidence-workspace .peridot-record-ledger-date { font:600 13px/1.5 Georgia,serif; color:#72562e; }
+.peridot-evidence-workspace .peridot-record-ledger-description { min-width:0; }
+.peridot-evidence-workspace .peridot-record-ledger-id { color:#812f27; font:600 18px/1.3 Georgia,serif; overflow-wrap:anywhere; }
+.peridot-evidence-workspace .peridot-record-ledger-description p { margin:4px 0 6px; line-height:1.5; overflow-wrap:anywhere; }
+.peridot-evidence-workspace .peridot-record-ledger-relevance { color:#53614b; font-size:12px; line-height:1.45; }
+.peridot-evidence-workspace .peridot-record-ledger-relevance strong { color:#294431; }
+.peridot-evidence-workspace .peridot-record-ledger-actions { display:flex; flex-wrap:wrap; justify-content:end; gap:7px; }
+.peridot-evidence-workspace .peridot-record-ledger button { border:1px solid #ab9168; background:#f6eddb; color:#244832; border-radius:3px; padding:7px 10px; font:600 12px/1.3 Georgia,serif; cursor:pointer; white-space:nowrap; box-shadow:none; }
+.peridot-evidence-workspace .peridot-record-ledger button:hover { background:#dfe6d4; border-color:#6e855d; color:#1e3f2a; }
+.peridot-evidence-workspace .peridot-record-ledger button:focus-visible { outline:2px solid #873b31; outline-offset:2px; }
+.peridot-evidence-workspace .peridot-record-ledger button:disabled { opacity:.5; cursor:default; background:#f6eddb; }
+.peridot-evidence-workspace .peridot-record-ledger button.peridot-record-ledger-open { background:#214f35; border-color:#214f35; color:#fff8e9; }
+.peridot-evidence-workspace .peridot-record-ledger button.peridot-record-ledger-open:hover { background:#336747; }
+.peridot-evidence-workspace .peridot-record-ledger-expanded { padding:4px 12px 16px; border-left:3px solid #8a9b74; background:rgba(233,224,199,.35); }
+.peridot-evidence-workspace .peridot-record-ledger-expanded > p { margin:5px 0 14px; color:#4c614d; font-size:12px; line-height:1.5; }
+.peridot-evidence-workspace .peridot-record-ledger-evidence-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 22px; }
+.peridot-evidence-workspace .peridot-record-ledger-evidence-grid section { min-width:0; }
+.peridot-evidence-workspace .peridot-record-ledger-evidence-grid h4 { margin:0 0 5px; color:#7c3028; font:600 17px Georgia,serif; }
+.peridot-evidence-workspace .peridot-record-ledger-evidence-grid dl { margin:0; }
+.peridot-evidence-workspace .peridot-record-ledger-evidence-grid dl > div { padding:6px 0; border-top:1px solid #d7c9ac; }
+.peridot-evidence-workspace .peridot-record-ledger-evidence-grid dt { color:#705638; font-size:11px; font-weight:700; }
+.peridot-evidence-workspace .peridot-record-ledger-evidence-grid dd { margin:3px 0 0; line-height:1.5; overflow-wrap:anywhere; white-space:pre-wrap; }
+.peridot-evidence-workspace .peridot-record-ledger-attribution { display:block; color:#54674e; font-size:12px; }
+.peridot-evidence-workspace .peridot-record-ledger-empty { padding:22px 10px; }
+.peridot-evidence-workspace .peridot-record-ledger-footer { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px; padding:14px 0 2px; border-top:1px solid #cbb48c; color:#51624d; font-size:12px; }
+.peridot-evidence-workspace .peridot-record-ledger-pager { display:flex; flex-wrap:wrap; align-items:center; gap:5px; }
+.peridot-evidence-workspace .peridot-record-ledger-pager > span { margin:0 6px; font-weight:600; color:#253b2d; }
+@media (max-width:950px) {
+  .peridot-evidence-workspace .peridot-record-ledger-controls { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .peridot-evidence-workspace .peridot-record-ledger-controls label:first-child { grid-column:1/-1; }
+  .peridot-evidence-workspace .peridot-record-ledger-entry-main { grid-template-columns:minmax(0,1fr); gap:5px; }
+  .peridot-evidence-workspace .peridot-record-ledger-actions { justify-content:start; margin-top:6px; }
+}
+@media (max-width:650px) {
+  .peridot-evidence-workspace .peridot-record-ledger-evidence-grid { grid-template-columns:minmax(0,1fr); }
+}
+.peridot-evidence-workspace .peridot-record-ledger-advanced { border-top:1px solid #d3bf9a; padding:9px 0 12px; }
+.peridot-evidence-workspace .peridot-record-ledger-advanced summary { color:#214b32; font:600 13px Georgia,serif; cursor:pointer; }
+.peridot-evidence-workspace .peridot-record-ledger-advanced summary:focus-visible { outline:2px solid #873b31; }
+.peridot-evidence-workspace .peridot-record-ledger-advanced-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin:12px 0; }
+.peridot-evidence-workspace .peridot-record-ledger-advanced-grid label { display:flex; flex-direction:column; gap:5px; font-size:12px; font-weight:600; color:#6c4a32; }
+.peridot-evidence-workspace .peridot-record-ledger-advanced-grid input { width:100%; min-width:0; border:1px solid #bca780; border-radius:3px; background:#f8f0df; padding:8px 10px; color:#203a2b; }
+@media(max-width:650px){.peridot-evidence-workspace .peridot-record-ledger-advanced-grid { grid-template-columns:minmax(0,1fr); }}
+
+/* v14 — source-record research sheets. Presentation only; the full record
+ * structure and person/place callbacks remain owned by existing models. */
+.peridot-evidence-workspace .peridot-record-dossier { min-width:0; color:#283e2e; }
+.peridot-evidence-workspace .peridot-record-dossier-reading { padding:6px 10px 18px; }
+.peridot-evidence-workspace .peridot-record-dossier-title { display:flex; justify-content:space-between; align-items:start; gap:16px; padding:0 0 13px; margin-bottom:16px; border-bottom:1px solid #c9b48e; }
+.peridot-evidence-workspace .peridot-record-dossier-title h2 { margin:0 0 6px; color:#7c3028; font:600 clamp(25px,2.3vw,33px)/1.2 Georgia,serif; overflow-wrap:anywhere; }
+.peridot-evidence-workspace .peridot-record-dossier-eyebrow { margin:0; color:#705638; font:600 12px/1.5 Georgia,serif; }
+.peridot-evidence-workspace .peridot-record-dossier-back { border:1px solid #b9a580; border-radius:3px; background:#f7eddb; padding:8px 12px; color:#264735; font:600 12px Georgia,serif; cursor:pointer; }
+.peridot-evidence-workspace .peridot-record-dossier-sheet { display:flex; flex-direction:column; gap:18px; min-width:0; }
+.peridot-evidence-workspace .peridot-record-dossier-lead { max-width:85ch; margin:0; color:#435542; line-height:1.55; font-size:14px; }
+.peridot-evidence-workspace .peridot-record-dossier-metrics { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-block:1px solid #cdb896; }
+.peridot-evidence-workspace .peridot-record-dossier-metrics > div { padding:10px 12px; border-right:1px solid #d4c1a0; }
+.peridot-evidence-workspace .peridot-record-dossier-metrics > div:last-child { border-right:0; }
+.peridot-evidence-workspace .peridot-record-dossier-metrics span { display:block; font:600 12px Georgia,serif; color:#7d4c32; }
+.peridot-evidence-workspace .peridot-record-dossier-metrics strong { display:block; color:#214f35; font-size:18px; margin-top:3px; }
+.peridot-evidence-workspace .peridot-record-dossier-section { min-width:0; }
+.peridot-evidence-workspace .peridot-record-dossier-section h3 { margin:0 0 10px; padding-bottom:6px; border-bottom:1px solid #c9b48e; font:600 20px/1.3 Georgia,serif; color:#7c3028; }
+.peridot-evidence-workspace .peridot-record-dossier-fields { margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:26px; }
+.peridot-evidence-workspace .peridot-record-dossier-fields > div { min-width:0; padding:10px 0; border-bottom:1px solid #dfcfb2; }
+.peridot-evidence-workspace .peridot-record-dossier-fields dt { margin:0 0 4px; font-weight:600; font-size:12px; color:#7d5837; }
+.peridot-evidence-workspace .peridot-record-dossier-fields dd { margin:0; overflow-wrap:anywhere; white-space:pre-wrap; line-height:1.6; }
+.peridot-evidence-workspace .peridot-record-dossier-fields dd small { display:block; font-size:12px; line-height:1.4; color:#5c6a55; margin-top:4px; }
+.peridot-evidence-workspace .peridot-record-dossier-muted { margin:0; color:#637063; font-style:italic; }
+.peridot-evidence-workspace .peridot-record-dossier-entity-link { border:0; border-bottom:1px solid #aa956c; border-radius:0; background:transparent; color:#1f5636; padding:0 2px 2px 0; display:inline-flex; align-items:center; gap:7px; cursor:pointer; font:600 15px Georgia,serif; text-align:left; white-space:normal; }
+.peridot-evidence-workspace .peridot-record-dossier-entity-link:hover { color:#7c3028; border-color:#7c3028; background:#e1e9d7; }
+.peridot-evidence-workspace .peridot-record-dossier-entity-link:focus-visible,
+.peridot-evidence-workspace .peridot-record-dossier-back:focus-visible,
+.peridot-evidence-workspace .peridot-record-dossier-actions button:focus-visible { outline:2px solid #7c3028; outline-offset:2px; }
+.peridot-evidence-workspace .peridot-record-dossier-participants { display:flex; flex-wrap:wrap; gap:10px 20px; margin-top:8px; }
+.peridot-evidence-workspace .peridot-record-dossier-note { margin:0; padding:11px 13px; border-left:3px solid #a18a55; background:#f5ecda; color:#53644e; line-height:1.55; }
+.peridot-evidence-workspace .peridot-record-dossier-actions { display:flex; align-items:start; flex-direction:column; gap:10px; }
+.peridot-evidence-workspace .peridot-record-dossier-actions button { border:1px solid #b5a17c; background:#f8efdf; color:#244c34; border-radius:3px; padding:10px 13px; font:600 14px Georgia,serif; cursor:pointer; }
+.peridot-evidence-workspace .peridot-record-dossier-actions button:hover { background:#e3ead8; }
+@media(max-width:850px) {
+  .peridot-evidence-workspace .peridot-record-dossier-fields { grid-template-columns:1fr; }
+  .peridot-evidence-workspace .peridot-record-dossier-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .peridot-evidence-workspace .peridot-record-dossier-title { flex-wrap:wrap; }
+}
+
+/* Shared Investigate Further — same flat editorial sheet across dossier types. */
+.peridot-evidence-workspace .peridot-investigate-sheet { width:100%; max-width:100%; border:0; padding:2px 0 12px; background:transparent; color:#24402e; box-shadow:none; }
+.peridot-evidence-workspace .peridot-investigate-intro { margin:0 0 18px; max-width:95ch; font-size:14px; line-height:1.55; }
+.peridot-evidence-workspace .peridot-investigate-subject { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:18px; padding:10px 0; border-block:1px solid #d5c29e; }
+.peridot-evidence-workspace .peridot-investigate-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px 22px; }
+.peridot-evidence-workspace .peridot-investigate-field { display:flex; flex-direction:column; min-width:0; gap:5px; font-size:12px; font-weight:700; color:#70482b; }
+.peridot-evidence-workspace .peridot-investigate-field.is-wide { grid-column:1/-1; }
+.peridot-evidence-workspace .peridot-investigate-field input { width:100%; min-width:0; border:1px solid #bda780; border-radius:3px; padding:10px 12px; background:#faf3e6; color:#1c3829; font:400 14px/1.4 Arial,sans-serif; box-shadow:none; }
+.peridot-evidence-workspace .peridot-investigate-field input:focus-visible { outline:2px solid #315f3f; outline-offset:1px; }
+.peridot-evidence-workspace .peridot-investigate-hint { margin:14px 0 16px; color:#596550; font-size:12px; line-height:1.5; }
+.peridot-evidence-workspace .peridot-investigate-actions { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:10px; }
+.peridot-evidence-workspace .peridot-investigate-actions button,
+.peridot-evidence-workspace .peridot-investigate-seed { cursor:pointer; padding:9px 13px; border:1px solid #819075; border-radius:4px; color:#1e5036; background:#f4ecd9; box-shadow:none; font:600 13px Georgia,serif; }
+.peridot-evidence-workspace .peridot-investigate-actions .is-primary { color:#fff7e8; background:#204e34; border-color:#204e34; }
+.peridot-evidence-workspace .peridot-investigate-actions button:hover:not(:disabled),
+.peridot-evidence-workspace .peridot-investigate-seed:hover { background:#dfe8d8; color:#183e2a; }
+.peridot-evidence-workspace .peridot-investigate-actions .is-primary:hover:not(:disabled) { background:#326044; color:#fff7e8; }
+.peridot-evidence-workspace .peridot-investigate-actions button:disabled { opacity:.45; cursor:default; }
+@media (max-width:780px) { .peridot-evidence-workspace .peridot-investigate-grid { grid-template-columns:1fr; } }
+
+.peridot-evidence-workspace .peridot-evidence-general-investigate { padding:7px 12px 18px; }
+.peridot-evidence-workspace .peridot-evidence-investigate-shortcut { white-space:nowrap; }
+
+/* Investigate Further shares Explore's actual autocomplete component and lists.
+ * The folder uses its own flat editorial surfaces rather than Explore's rounded popup. */
+.peridot-evidence-workspace .peridot-investigate-field .peridot-search-autocomplete { position: relative; width: 100%; }
+.peridot-evidence-workspace .peridot-investigate-field .peridot-search-autocomplete > label {
+  display: block; margin-bottom: 5px; font-size: 12px; font-weight: 700;
+  letter-spacing: normal; text-transform: none; color: #70482b;
+}
+.peridot-evidence-workspace .peridot-investigate-field .peridot-investigate-autocomplete-input {
+  width:100%; min-width:0; border:1px solid #bda780; border-radius:3px;
+  padding:10px 12px; background:#faf3e6; color:#1c3829;
+  font:400 14px/1.4 Arial,sans-serif; box-shadow:none;
+}
+.peridot-evidence-workspace .peridot-investigate-field .peridot-investigate-autocomplete-input:focus-visible {
+  outline:2px solid #315f3f; outline-offset:1px;
+}
+.peridot-evidence-workspace .peridot-investigate-field .peridot-search-autocomplete-menu {
+  position:absolute; top:100%; left:0; right:0; z-index:60;
+  max-height:224px; overflow-y:auto; margin-top:4px; padding:4px;
+  background:#faf3e6; border:1px solid #bda780; border-radius:3px;
+  color:#1c3829; box-shadow:none;
+}
+.peridot-evidence-workspace .peridot-investigate-field .peridot-search-autocomplete-kicker {
+  color:#70482b; font-size:10px; letter-spacing:.08em;
+}
+.peridot-evidence-workspace .peridot-investigate-field .peridot-search-autocomplete-option {
+  display:block; width:100%; text-align:left; padding:8px 10px;
+  border:0; border-radius:2px; background:transparent;
+  color:#1c3829; box-shadow:none; font-size:13px;
+}
+.peridot-evidence-workspace .peridot-investigate-field .peridot-search-autocomplete-option:hover,
+.peridot-evidence-workspace .peridot-investigate-field .peridot-search-autocomplete-option:focus-visible {
+  background:#dce5d4; color:#173a25;
+}
+
+/* v20 — Overview mapped information uses the same ledger treatment as
+ * Connected Places, with two columns and one shared framed surface. The
+ * record-detail renderer is deliberately unchanged. */
+.peridot-evidence-workspace .peridot-evidence-overview-assertions .peridot-overview-ledger {
+  border: 1px solid #d6bc94;
+  border-radius: 6px;
+  background: #faf1e2;
+  padding: 13px 15px;
+  min-width: 0;
+}
+.peridot-evidence-workspace .peridot-overview-ledger-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 26px;
+}
+.peridot-evidence-workspace .peridot-overview-ledger-group { min-width: 0; }
+.peridot-evidence-workspace .peridot-overview-ledger-group h4 {
+  margin: 0 0 5px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid #d3ba90;
+  font: 600 17px/1.25 Georgia, serif;
+  color: #7c3029;
+}
+.peridot-evidence-workspace .peridot-overview-ledger-rows { display: flex; flex-direction: column; }
+.peridot-evidence-workspace .peridot-overview-ledger-row {
+  width: 100%; min-width: 0; display: flex; align-items: center;
+  gap: 10px; padding: 11px 8px; text-align: left;
+  border: 0; border-bottom: 1px solid #e2d2b7; border-radius: 0;
+  background: transparent; color: #233b2e; box-shadow: none;
+  font: inherit;
+}
+.peridot-evidence-workspace .peridot-overview-ledger-row:last-child { border-bottom: 0; }
+.peridot-evidence-workspace .peridot-overview-ledger-row.is-linked { cursor: pointer; border-radius: 5px; }
+.peridot-evidence-workspace .peridot-overview-ledger-row.is-linked:hover { background: #e2e7d6; }
+.peridot-evidence-workspace .peridot-overview-ledger-row.is-linked:focus-visible { outline: 2px solid #8d4d33; outline-offset: -2px; }
+.peridot-evidence-workspace .peridot-overview-ledger-row-body { display: flex; flex: 1; flex-direction: column; min-width: 0; gap: 3px; }
+.peridot-evidence-workspace .peridot-overview-ledger-label { color: #715334; font-size: 11px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+.peridot-evidence-workspace .peridot-overview-ledger-subject { color: #52634f; font-weight: 400; }
+.peridot-evidence-workspace .peridot-overview-ledger-value { color: #24432e; font: 600 16px/1.4 Georgia, serif; overflow-wrap: anywhere; white-space: pre-wrap; }
+.peridot-evidence-workspace .peridot-overview-ledger-detail { color: #536653; font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 850px) {
+  .peridot-evidence-workspace .peridot-overview-ledger-grid { grid-template-columns: 1fr; }
+}

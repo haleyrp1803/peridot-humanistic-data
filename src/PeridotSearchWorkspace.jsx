@@ -855,7 +855,7 @@ function MetadataFacetPanel({ groups, onChooseMetadataFacet }) {
 }
 
 
-function AutocompleteTextInput({
+export function AutocompleteTextInput({
   id,
   label,
   value,
@@ -1743,9 +1743,20 @@ export function PeridotSearchWorkspace({
 
   useEffect(() => {
     if (!inspectorExploreDraft?.id) return;
-    if (inspectorExploreDraft.field === 'keyword') setDraftSearch(inspectorExploreDraft.value);
-    if (inspectorExploreDraft.field === 'person') setDraftPersonFilter(inspectorExploreDraft.value);
-    if (inspectorExploreDraft.field === 'place') setDraftPlaceFilter(inspectorExploreDraft.value);
+    if (inspectorExploreDraft.criteria && typeof inspectorExploreDraft.criteria === 'object') {
+      const values = inspectorExploreDraft.criteria;
+      if (String(values.keyword || '').trim()) setDraftSearch(String(values.keyword).trim());
+      if (String(values.person || '').trim()) setDraftPersonFilter(String(values.person).trim());
+      if (String(values.place || '').trim()) setDraftPlaceFilter(String(values.place).trim());
+      if (String(values.routePeople || '').trim()) setDraftRoutePeopleFilter(String(values.routePeople).trim());
+      if (String(values.routePlace || '').trim()) setDraftRoutePlaceFilter(String(values.routePlace).trim());
+      if (String(values.startYear || '').trim()) setDraftStartYear(String(values.startYear).trim());
+      if (String(values.endYear || '').trim()) setDraftEndYear(String(values.endYear).trim());
+    } else {
+      if (inspectorExploreDraft.field === 'keyword') setDraftSearch(inspectorExploreDraft.value);
+      if (inspectorExploreDraft.field === 'person') setDraftPersonFilter(inspectorExploreDraft.value);
+      if (inspectorExploreDraft.field === 'place') setDraftPlaceFilter(inspectorExploreDraft.value);
+    }
     setActiveTab('build');
     setFilterStatusMessage('Inspector search added to draft criteria. Apply Filters to update results.');
   }, [inspectorExploreDraft]);

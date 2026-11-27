@@ -39,7 +39,8 @@ export function buildNearbyCandidates(point, screenNodes, screenEdges, clusterSi
     .map((edge) => {
       if (!edge.curve) return null;
       const distance = pointToQuadraticDistance(point.x, point.y, edge.curve);
-      const threshold = Math.max(3, edge.screenWidth * 0.35 + 1.5);
+      // Match the generous invisible SVG stroke, without expanding visual lines.
+      const threshold = Math.max(6, (edge.screenWidth || 0) * 0.5 + 3.5);
       if (distance > threshold) return null;
       return {
         id: `edge:${edge.id}`,

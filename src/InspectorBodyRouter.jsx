@@ -20,6 +20,8 @@ export function InspectorBodyRouter({
   presentation = 'compact',
   evidenceQuery = '',
   selectionEvidence = null,
+  dossierSheet = 'overview',
+  onOpenExplore = null,
 }) {
   const {
     selectedProps,
@@ -86,6 +88,8 @@ export function InspectorBodyRouter({
     onOpenRouteDetail,
     onExpandInspector,
     isCompact,
+    dossierSheet,
+    onOpenExplore,
   };
 
   const edgeViewProps = {

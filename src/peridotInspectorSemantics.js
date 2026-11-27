@@ -127,6 +127,38 @@ function buildExplicitDirectedPlacePair(row) {
   return { source, target, label: `${sourceValue} → ${targetValue}` };
 }
 
+/**
+ * Places connected by explicitly mapped geographic source/target pairs.
+ * A shared record alone is not enough to create a place connection. Both
+ * endpoints must be mapped, and the selected place may be on either side.
+ * The count measures mapped pair appearances in the scoped source rows.
+ */
+function buildConnectedPlaceSections(rows, selectedLabel) {
+  const outgoing = new Map();
+  const incoming = new Map();
+  const selected = comparable(selectedLabel);
+  if (!selected) return [];
+
+  for (const row of rows || []) {
+    const pair = buildExplicitDirectedPlacePair(row);
+    if (!pair) continue;
+    const origin = asText(pair.source.value);
+    const destination = asText(pair.target.value);
+    const originKey = comparable(origin);
+    const destinationKey = comparable(destination);
+    if (originKey === destinationKey) continue;
+
+    if (originKey === selected) {
+      addCount(outgoing, 'Outgoing mapped connections', destination);
+    }
+    if (destinationKey === selected) {
+      addCount(incoming, 'Incoming mapped connections', origin);
+    }
+  }
+
+  return [...sectionsFromMap(outgoing), ...sectionsFromMap(incoming)];
+}
+
 function entityOwnsPlaceAssociation(entry, entityLabel, entityId) {
   return sameEntity(entry?.subject, entry?.subjectId, entityLabel, entityId);
 }
@@ -188,7 +220,9 @@ export function buildPeridotInspectorEntityProfile(rows = [], options = {}) {
 
   const routeSections = buildRouteSections(matchingRows, { entityType, entityLabel, entityId });
   const relatedPeopleSections = sectionsFromMap(peopleGroups);
-  const relatedPlacesSections = sectionsFromMap(placeGroups);
+  const relatedPlacesSections = entityType === 'place'
+    ? buildConnectedPlaceSections(matchingRows, entityLabel)
+    : sectionsFromMap(placeGroups);
 
   return {
     entityType,

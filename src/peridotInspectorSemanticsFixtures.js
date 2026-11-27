@@ -118,4 +118,37 @@ const namedPlaceObservation = buildPeridotGeneralizedObservation(
 );
 assert(namedPlaceObservation.places[0]?.role === 'Place of childbirth', 'Researcher-declared fixed place role should override the source column heading while preserving the place value.');
 
+
+// A directed mapped geographic pair connects both place dossiers. Unpaired
+// co-occurring places must not be misrepresented as geographic connections.
+const pairedPlaceRow = {
+  id: 'place-pair',
+  generalizedObservation: {
+    places: [
+      { role: 'Letter sent from', label: 'Cafaggiuolo' },
+      { role: 'Letter sent to', label: 'Siena' },
+    ],
+  },
+};
+const unpairedPlaceRow = {
+  id: 'unpaired-places',
+  generalizedObservation: {
+    places: [
+      { role: 'Birthplace', label: 'Cafaggiuolo' },
+      { role: 'Residence', label: 'Florence' },
+    ],
+  },
+};
+const cafaggiuoloProfile = buildPeridotInspectorEntityProfile([pairedPlaceRow, unpairedPlaceRow], {
+  entityType: 'place', entityLabel: 'Cafaggiuolo',
+});
+const sienaConnectedProfile = buildPeridotInspectorEntityProfile([pairedPlaceRow, unpairedPlaceRow], {
+  entityType: 'place', entityLabel: 'Siena',
+});
+assert(cafaggiuoloProfile.relatedPlacesCount === 1, 'Origin place must count its explicitly mapped destination.');
+assert(cafaggiuoloProfile.relatedPlacesSections.some((section) => section.title === 'Outgoing mapped connections' && section.items.some((item) => item.label === 'Siena' && item.count === 1)), 'Cafaggiuolo should link to Siena in outgoing connected places.');
+assert(sienaConnectedProfile.relatedPlacesCount === 1, 'Destination place must count its explicitly mapped origin.');
+assert(sienaConnectedProfile.relatedPlacesSections.some((section) => section.title === 'Incoming mapped connections' && section.items.some((item) => item.label === 'Cafaggiuolo')), 'Siena should link to Cafaggiuolo in incoming connected places.');
+assert(!cafaggiuoloProfile.relatedPlacesSections.flatMap((section) => section.items).some((item) => item.label === 'Florence'), 'Ordinary co-occurrence must not become a connected place.');
+
 console.log('Peridot Inspector semantic fixtures passed');

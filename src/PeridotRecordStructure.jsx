@@ -54,9 +54,62 @@ function Section({ title, entries, onOpenPersonDetail, onOpenPlaceDetail, kind }
   );
 }
 
-export function PeridotRecordStructure({ row, structure: providedStructure = null, compact = false, title = 'Mapped information', onOpenPersonDetail, onOpenPlaceDetail }) {
+/** Overview-only ledger presentation; source-backed entries and navigation are
+ * identical to the standard record structure. The whole assertion row is the
+ * interactive target, matching the Connected People / Places sheets. */
+function OverviewLedgerGroup({ title, entries, kind, onOpenPersonDetail, onOpenPlaceDetail }) {
+  if (!entries?.length) return null;
+  const canOpen = (kind === 'participants' || kind === 'relationships')
+    ? typeof onOpenPersonDetail === 'function'
+    : kind === 'places' && typeof onOpenPlaceDetail === 'function';
+  return (
+    <div className="peridot-overview-ledger-group">
+      <h4>{title}</h4>
+      <div className="peridot-overview-ledger-rows">
+        {entries.map((entry, index) => {
+          const follow = kind === 'places'
+            ? () => onOpenPlaceDetail(entry.value)
+            : () => onOpenPersonDetail(entry.counterpart || entry.value, entry.counterpartId || entry.entityId || '');
+          const content = <>
+            <span className="peridot-overview-ledger-row-body">
+              <span className="peridot-overview-ledger-label">
+                {entry.label}
+                {entry.subject ? <span className="peridot-overview-ledger-subject"> for {entry.subject}</span> : null}
+              </span>
+              <span className="peridot-overview-ledger-value">{entry.value}</span>
+              {entry.detail ? <span className="peridot-overview-ledger-detail">{entry.detail}</span> : null}
+              {entry.notes?.map((note, noteIndex) => <span className="peridot-overview-ledger-detail" key={`${note.label}:${noteIndex}`}><strong>{note.label}:</strong> {note.value}</span>)}
+            </span>
+            {canOpen ? <span className="peridot-evidence-connected-row-arrow" aria-hidden="true">›</span> : null}
+          </>;
+          const key = `${title}:${entry.label}:${entry.value}:${index}`;
+          return canOpen
+            ? <button key={key} type="button" className="peridot-overview-ledger-row is-linked" onClick={follow}>{content}</button>
+            : <div key={key} className="peridot-overview-ledger-row">{content}</div>;
+        })}
+      </div>
+    </div>
+  );
+}
+
+function OverviewMappedLedger({ structure, onOpenPersonDetail, onOpenPlaceDetail }) {
+  return (
+    <div className="peridot-overview-ledger" aria-label="Mapped assertions for the selected subject">
+      <div className="peridot-overview-ledger-grid">
+        <OverviewLedgerGroup title="Dates and periods" entries={structure.temporal} kind="temporal" />
+        <OverviewLedgerGroup title="People / entities" entries={structure.participants} kind="participants" onOpenPersonDetail={onOpenPersonDetail} />
+        <OverviewLedgerGroup title="Places" entries={structure.places} kind="places" onOpenPlaceDetail={onOpenPlaceDetail} />
+        <OverviewLedgerGroup title="Relationships" entries={structure.relationships} kind="relationships" onOpenPersonDetail={onOpenPersonDetail} />
+        <OverviewLedgerGroup title="Evidence / other fields" entries={structure.evidence} kind="evidence" />
+      </div>
+    </div>
+  );
+}
+
+export function PeridotRecordStructure({ row, structure: providedStructure = null, compact = false, title = 'Mapped information', onOpenPersonDetail, onOpenPlaceDetail, presentation = 'default' }) {
   const structure = providedStructure || buildPeridotRecordStructure(row || {});
   if (!peridotRecordStructureHasContent(structure)) return null;
+  if (presentation === 'overview-ledger') return <OverviewMappedLedger structure={structure} onOpenPersonDetail={onOpenPersonDetail} onOpenPlaceDetail={onOpenPlaceDetail} />;
 
   const content = (
     <div className={`grid gap-2 ${compact ? 'md:grid-cols-2' : 'lg:grid-cols-2'}`}>

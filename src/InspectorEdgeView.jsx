@@ -109,23 +109,40 @@ export function InspectorEdgeView({
   }
 
   if (isCompact) {
-    const contributing = selectedProps.letterMetadata || [];
+    // Do not substitute participant-related records for mark-level source rows.
+    // The selection contract verifies edge contributions separately from the
+    // connection's represented weight, which can count repeated occurrences.
+    const hasMarkProvenance = selectionEvidence?.support?.status === 'verified';
+    const contributing = hasMarkProvenance ? selectionEvidence.support.records : [];
     const relationshipLabel = selectedProps.relationshipLabel || selectedProps.relationshipType;
     return (
       <div className="peridot-inspector-compact-data-flow">
-        <CompactFactGrid entries={[
-          { label: 'Mapped relationship', value: relationshipLabel || (selectedProps.direction === 'directed' ? 'Directed relationship' : 'Relationship') },
-          { label: 'Represented weight', value: String(selectedProps.count ?? 0) },
-          { label: 'Related records', value: String(contributing.length) },
-        ]}/>
-        <CompactRecordPreview rows={contributing} maxRecords={1}/>
-        <CompactEvidenceReveal title="Show additional connection evidence">
+        <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--support">
+          <div className="peridot-inspector-compact-subheading">Evidence supporting this connection</div>
+          <p className="peridot-inspector-compact-muted">The Map route represents displayed, mapped relationship occurrences between these endpoints. Its weight need not equal the number of distinct source records.</p>
+          <CompactFactGrid entries={[
+            { label: 'Source endpoint', value: selectedProps.sourceLabel },
+            { label: 'Target endpoint', value: selectedProps.targetLabel },
+            { label: 'Mapped relationship', value: relationshipLabel || (selectedProps.direction === 'directed' ? 'Directed relationship' : 'Relationship') },
+            { label: 'Direction', value: selectedProps.direction || 'Not specified' },
+            ...(selectedProps.count != null ? [{ label: 'Represented relationship occurrences', value: String(selectedProps.count) }] : []),
+            ...(hasMarkProvenance ? [{ label: 'Contributing row entries on this edge', value: String(contributing.length) }] : []),
+          ]}/>
+          {hasMarkProvenance
+            ? <CompactRecordPreview rows={contributing} maxRecords={1}/>
+            : <p className="peridot-inspector-compact-muted">Verified contributing-row provenance is not available for this edge.</p>}
+          {hasMarkProvenance && contributing.length > 1 ? <CompactRecordMore rows={contributing} maxRecords={2}/> : null}
+        </div>
+        <div className="peridot-inspector-evidence-tier peridot-inspector-evidence-tier--context">
+          <div className="peridot-inspector-compact-subheading">Broader evidence about the endpoints</div>
+          <p className="peridot-inspector-compact-muted">The source and target may have other mapped places, relationships and records beyond this selected route. Inspect an endpoint for its wider evidence.</p>
+        </div>
+        <CompactEvidenceReveal title="Explore additional route details">
           <CompactFactGrid entries={[
             { label: 'Endpoint roles', value: [selectedProps.sourceRole, selectedProps.targetRole].filter(Boolean).join(' · ') },
             { label: 'Dates represented', value: (selectedProps.dates || []).join('; ') },
             { label: 'Source-supported pairs', value: (selectedProps.samplePairs || []).join('; ') },
           ]}/>
-          <CompactRecordMore rows={contributing} maxRecords={2}/>
         </CompactEvidenceReveal>
       </div>
     );

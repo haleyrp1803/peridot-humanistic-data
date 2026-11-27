@@ -39,6 +39,8 @@ export function InspectorContent({
   showInlineCloseButton = true,
   showExpandButton = true,
   presentation = 'compact',
+  dossierSheet = 'overview',
+  onOpenExplore = null,
 }) {
   const {
     showInspectorInfo,
@@ -552,6 +554,8 @@ export function InspectorContent({
           letterState={letterState}
           viewComponents={viewComponents}
           presentation={presentation}
+          dossierSheet={dossierSheet}
+          onOpenExplore={onOpenExplore}
         />
       </div>
     </div>
