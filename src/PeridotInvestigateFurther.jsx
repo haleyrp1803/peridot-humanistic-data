@@ -8,13 +8,14 @@ export const PeridotInvestigateContext = createContext(null);
 
 const initial = { keyword: '', person: '', place: '', routePeople: '', routePlace: '', startYear: '', endYear: '' };
 
-export function PeridotInvestigateFurther({ subjectLabel = '', subjectType = '', className = '' }) {
+export function PeridotInvestigateFurther({ subjectLabel = '', subjectType = '', className = '', seedField = '', seedValue = '' }) {
   const integration = useContext(PeridotInvestigateContext);
   const [criteria, setCriteria] = useState(initial);
   const update = (name, value) => setCriteria((previous) => ({ ...previous, [name]: value }));
   const isPerson = subjectType === 'person';
   const isPlace = subjectType === 'place';
   const canSeed = Boolean(subjectLabel && (isPerson || isPlace));
+  const canSeedConnection = Boolean(seedValue && (seedField === 'routePeople' || seedField === 'routePlace'));
   const populated = Object.values(criteria).some((v) => String(v || '').trim());
   // Use the very same dataset-derived suggestions and popup component as Explore.
   // Choosing a suggestion edits this sheet's local draft only.
@@ -42,11 +43,14 @@ export function PeridotInvestigateFurther({ subjectLabel = '', subjectType = '',
   };
   return <section className={`peridot-investigate-sheet ${className}`} aria-label="Investigate further search">
     <p className="peridot-investigate-intro">Develop a search from the evidence you are examining. These are draft criteria: the active visualization and its filters will not change until you choose <strong>Apply Filters</strong> in Explore.</p>
-    {canSeed && <div className="peridot-investigate-subject">
+    {(canSeed || canSeedConnection) && <div className="peridot-investigate-subject">
       <span>Currently inspecting: <strong>{subjectLabel}</strong></span>
-      <button type="button" className="peridot-investigate-seed" onClick={() => update(isPerson ? 'person' : 'place', subjectLabel)}>
+      {canSeed ? <button type="button" className="peridot-investigate-seed" onClick={() => update(isPerson ? 'person' : 'place', subjectLabel)}>
         Use this {isPerson ? 'person' : 'place'} in search
-      </button>
+      </button> : null}
+      {canSeedConnection ? <button type="button" className="peridot-investigate-seed" onClick={() => update(seedField, seedValue)}>
+        Use this connection in search
+      </button> : null}
     </div>}
     <form onSubmit={submit}>
       <div className="peridot-investigate-grid">

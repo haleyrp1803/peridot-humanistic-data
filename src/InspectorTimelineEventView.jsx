@@ -15,6 +15,8 @@ import { PeridotCategorySymbolIcon } from './PeridotTimelineCategorySymbols.jsx'
 import { timelineCompactRecordGroups, timelineVisualCategoryLegend } from './peridotInspectorTimelineCompact.js';
 import { buildPeridotRecordStructure } from './peridotRecordStructure.js';
 import { describePeridotTimelineMark } from './peridotInspectorTimelinePresentation.js';
+import { PeridotContributingRecordsLedger } from './PeridotContributingRecordsLedger.jsx';
+import { PeridotInvestigateFurther } from './PeridotInvestigateFurther.jsx';
 
 function detailLabelClassName() {
   return '[font-family:Georgia,"Palatino_Linotype","Book_Antiqua",Palatino,serif] text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--detail-label-text)]';
@@ -145,6 +147,8 @@ export function InspectorTimelineEventView({
   onExpandInspector,
   onOpenPersonDetail,
   onOpenPlaceDetail,
+  onOpenLetterDetail,
+  dossierSheet = 'overview',
   InspectorSummaryCardComponent,
   InspectorClearSelectionButtonComponent,
   isCompact = false,
@@ -228,38 +232,92 @@ export function InspectorTimelineEventView({
     );
   }
 
+  // The selected event retains its own source row. Do not use all records
+  // associated with an entity as evidence for this particular Timeline mark.
+  const summary = describePeridotTimelineMark(event);
+  const mapped = buildPeridotRecordStructure(row);
+  const subjects = new Map();
+  const addSubject = (kind, entry) => {
+    const name = asText(entry?.value);
+    if (!name || /^(unknown|not specified)$/i.test(name)) return;
+    const entityId = kind === 'person' ? asText(entry.entityId) : '';
+    const key = `${kind}:${entityId || name.toLocaleLowerCase()}`;
+    const prior = subjects.get(key);
+    if (prior) { if (!prior.roles.includes(asText(entry.label))) prior.roles.push(asText(entry.label)); return; }
+    subjects.set(key, { kind, name, entityId, roles: [asText(entry.label)].filter(Boolean) });
+  };
+  (mapped.participants || []).forEach(entry => addSubject('person', entry));
+  (mapped.places || []).forEach(entry => addSubject('place', entry));
+  const subjectMatches = [...subjects.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const roleSpecificSubject = eventSubjectLabel(event);
+  const subjectId = asText(event?.subject?.entityId || event?.subject?.canonicalEntityId);
+  const categoryEntries = categoryGroups(event);
+  const visualLegend = timelineVisualCategoryLegend(event);
+  const details = [
+    ...summary.details,
+    ...summary.detailFields,
+    ...(asText(event.consistency) ? [{label:'Consistency',value:asText(event.consistency)}] : []),
+    ...(Number.isFinite(sourceRow) ? [{label:'Source row',value:String(sourceRow)}] : []),
+    ...(recordLabel ? [{label:'Record identifier',value:recordLabel}] : []),
+  ];
+  const distinctDetails = details.filter((entry, index) => entry.value !== null && entry.value !== undefined && asText(entry.value) &&
+    details.findIndex(candidate => candidate.label === entry.label && candidate.value === entry.value) === index);
+  const recordRows = [row];
   return (
-    <article className="space-y-3">
-      <InspectorSummaryCardComponent>
-        <DetailRow label="Timeline event" value={event.temporalRole || 'Time'} />
-        <DetailRow label="Date or period" value={displayText} />
-        {sourceDiffers ? <DetailRow label="Source date text" value={sourceText} /> : null}
-        <DetailRow label="Subject" value={subjectLabel} />
-        <DetailRow label="Temporal form" value={eventKindLabel(event)} />
-        <DetailRow label="Date status" value={uncertaintyLabel(event)} />
-        <DetailRow label="Precision" value={precision} />
-        <DetailRow label="Qualifier" value={qualifier} />
-        <DetailRow label="Boundedness" value={asText(event?.boundedness)} />
-        <DetailRow label="Consistency" value={asText(event?.consistency)} />
-        <DetailRow label="Source row" value={Number.isFinite(sourceRow) ? String(sourceRow) : ''} />
-        <DetailRow label="Record" value={recordLabel} />
-      </InspectorSummaryCardComponent>
-
-      <EvidenceCategorySummary event={event} />
-
-      <div className="peridot-ornament-divider py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--detail-label-text)]">
-        Source record
-      </div>
-
-      <PeridotRecordStructure
-        row={row}
-        onOpenPersonDetail={onOpenPersonDetail}
-        onOpenPlaceDetail={onOpenPlaceDetail}
-      />
-
-      <div className="flex justify-end">
-        <InspectorClearSelectionButtonComponent onClear={clearSelection} />
-      </div>
+    <article className="peridot-timeline-dossier">
+      <header className="peridot-evidence-subject-heading"><h2>{summary.role}: {summary.display}</h2></header>
+      {dossierSheet === 'overview' ? <div className="peridot-timeline-dossier-overview">
+        <p className="peridot-timeline-dossier-intro">{summary.explanation} Other mapped assertions in the source record are available below, but do not necessarily determine this mark's position.</p>
+        <section className="peridot-timeline-dossier-panel" aria-label="Temporal information">
+          <h3>Temporal information</h3>
+          <div className="peridot-timeline-dossier-facts">
+            {distinctDetails.map((entry, index) => <div key={`${entry.label}:${index}`} className="peridot-timeline-dossier-fact">
+              <small>{entry.label}</small><strong>{String(entry.value)}</strong>
+            </div>)}
+          </div>
+        </section>
+        {(visualLegend.available || categoryEntries.length > 0) && <section className="peridot-timeline-dossier-panel" aria-label="Event categories">
+          <h3>Categories</h3>
+          {visualLegend.available ? <>
+            <p>Active Timeline category encoding for this selected mark.</p>
+            {visualLegend.categories.length ? <div className="peridot-timeline-dossier-visual-categories">{visualLegend.categories.map(category =>
+              <div key={category.id} className="peridot-timeline-dossier-category">
+                <span className="peridot-timeline-dossier-color" style={{backgroundColor:category.color}} aria-hidden="true"/>
+                <span><strong>{category.label}</strong><small>{category.sourceLabel}: {category.sourceValue}</small></span>
+              </div>)}</div> : <p>Uncategorized in the current Timeline category configuration.</p>}
+            {visualLegend.hiddenCount ? <p>{visualLegend.hiddenCount} additional active categories are represented by the mark's indicator.</p> : null}
+          </> : <p>The active Timeline category configuration is unavailable; the record values below do not establish a visual encoding.</p>}
+          {categoryEntries.length ? <div className="peridot-timeline-dossier-category-source">{categoryEntries.map(group => <div key={group.label}>
+            <small>{group.label}</small><strong>{group.values.join(', ')}</strong>
+          </div>)}</div> : null}
+        </section>}
+        <section className="peridot-timeline-dossier-panel" aria-label="People and places in the source record">
+          <h3>Mapped people and places in the contributing record</h3>
+          <p>These subjects appear in this event's source record. Their presence does not establish that they are the event's temporal subject or that every association is directed.</p>
+          {subjectMatches.length ? <div className="peridot-chart-dossier-subject-grid">
+            {subjectMatches.map(subject => {
+              const isEventSubject = subject.kind === 'person' && (subjectId && subject.entityId === subjectId || roleSpecificSubject && subject.name === roleSpecificSubject);
+              const canOpen = subject.kind === 'person' ? typeof onOpenPersonDetail === 'function' : typeof onOpenPlaceDetail === 'function';
+              return <button type="button" key={`${subject.kind}:${subject.entityId || subject.name}`}
+                className="peridot-chart-dossier-subject-row" disabled={!canOpen}
+                onClick={() => subject.kind === 'person' ? onOpenPersonDetail(subject.name,subject.entityId) : onOpenPlaceDetail(subject.name)}>
+                <span className="peridot-chart-dossier-subject-body">
+                  <small>{subject.kind === 'person' ? 'Person / entity' : 'Place'}{subject.roles.length ? ` · ${subject.roles.join(', ')}` : ''}</small>
+                  <strong>{subject.name}</strong>
+                  {isEventSubject && <em className="peridot-chart-dossier-category-note">Mapped temporal subject</em>}
+                </span><span className="peridot-chart-dossier-subject-count" aria-hidden="true">›</span>
+              </button>;
+            })}
+          </div> : <p>No mapped person or place is available in this event's retained source row.</p>}
+        </section>
+      </div> : dossierSheet === 'records' ? <section className="peridot-timeline-dossier-records">
+        <h3>Contributing records</h3>
+        <p>The source record retained for this selected Timeline event or period. Other records associated with its people or places are not included automatically.</p>
+        <PeridotContributingRecordsLedger rows={recordRows} subjectLabel={`${summary.role}: ${summary.display}`} entityType="timeline-event" onOpenRecord={onOpenLetterDetail}/>
+      </section> : <section className="peridot-timeline-dossier-investigate">
+        <h3>Investigate further</h3>
+        <PeridotInvestigateFurther />
+      </section>}
     </article>
   );
 }

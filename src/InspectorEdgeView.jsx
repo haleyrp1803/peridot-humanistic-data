@@ -13,6 +13,9 @@
  */
 
 import React from 'react';
+import { PeridotContributingRecordsLedger } from './PeridotContributingRecordsLedger.jsx';
+import { PeridotInvestigateFurther } from './PeridotInvestigateFurther.jsx';
+import { buildPeridotInspectorSelectionEvidence } from './peridotInspectorSelectionEvidence.js';
 import { CompactEvidenceReveal, CompactFactGrid, CompactRecordPreview, CompactRecordMore } from './InspectorCompactEvidence.jsx';
 
 function detailLabelClassName() {
@@ -69,6 +72,9 @@ export function InspectorEdgeView({
   isCompact = false,
   selectionEvidence = null,
   viewMode = 'geographic',
+  dossierSheet = 'overview',
+  onOpenPersonDetail,
+  onOpenPlaceDetail,
 }) {
   const linkedRecordCount = (selectedProps.letterMetadata || []).length;
 
@@ -148,43 +154,77 @@ export function InspectorEdgeView({
     );
   }
 
-  return (
-    <article className="space-y-3">
-      <RouteLead selectedProps={selectedProps} linkedRecordCount={linkedRecordCount} />
+  // A selected edge is a visualization mark. The selection-evidence contract,
+  // rather than all records about either endpoint, defines its record provenance.
+  const evidence = buildPeridotInspectorSelectionEvidence({ selectedKind: 'edge', selectedProps, viewMode });
+  const isVerified = evidence.support.status === 'verified';
+  const supportingRows = isVerified ? evidence.support.records : [];
+  const relationship = selectedProps.relationshipLabel || selectedProps.relationshipType || '';
+  const isDirected = selectedProps.direction === 'directed';
+  const pairSeparator = isDirected ? ' → ' : ' — ';
+  const subject = [selectedProps.sourceLabel, selectedProps.targetLabel].filter(Boolean).join(pairSeparator) || 'Selected connection';
+  const isNetwork = viewMode === 'person';
+  // The geographic Map can display *people* at geographic anchors. The map
+  // view mode is not an endpoint type. Registered geographic origin/destination
+  // pairs, conversely, really do have place endpoints.
+  const endpointType = selectedProps.endpointType === 'place' ? 'place' : 'person';
+  const openEndpoint = endpointType === 'place' ? onOpenPlaceDetail : onOpenPersonDetail;
+  const pairCriterion = [selectedProps.sourceLabel, selectedProps.targetLabel].filter(Boolean).join(pairSeparator);
+  const leafHeading = <header className="peridot-evidence-subject-heading"><h2>{subject}</h2></header>;
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <InspectorSummaryCardComponent>
-          <DetailRow
-            label={selectedProps.direction === 'directed' ? 'Source endpoint' : (selectedProps.sourceRole || 'Endpoint A')}
-            value={selectedProps.sourceLabel}
-          />
-          <DetailRow
-            label={selectedProps.direction === 'directed' ? 'Target endpoint' : (selectedProps.targetRole || 'Endpoint B')}
-            value={selectedProps.targetLabel}
-          />
-          <DetailRow label="Sample pairs" value={(selectedProps.samplePairs || []).join('; ')} />
-        </InspectorSummaryCardComponent>
+  if (dossierSheet === 'investigate') return <article className="peridot-evidence-leaf-page">
+    {leafHeading}
+    <PeridotInvestigateFurther subjectLabel={subject} subjectType="connection"
+      seedField={endpointType === 'person' ? 'routePeople' : 'routePlace'} seedValue={pairCriterion}/>
+  </article>;
 
-        <InspectorSummaryCardComponent>
-          <DetailRow label="Relationship" value={selectedProps.relationshipType || selectedProps.relationshipLabel} />
-          <DetailRow label="Direction" value={selectedProps.direction || 'undirected'} />
-          <DetailRow label="Related records" value={String(linkedRecordCount)} />
-        </InspectorSummaryCardComponent>
+  if (dossierSheet === 'records') return <article className="peridot-evidence-leaf-page">
+    {leafHeading}
+    <h3 className="peridot-connection-sheet-heading">Contributing records</h3>
+    <p className="peridot-connection-sheet-intro">Source records retained for this selected visual connection, not all records associated with either endpoint.</p>
+    {isVerified ? <PeridotContributingRecordsLedger rows={supportingRows} subjectLabel={subject}
+      onOpenRecord={onOpenLetterDetail}/> :
+      <p className="peridot-record-dossier-note">Verified contributing-record provenance is not available for this selected connection. Its represented weight must not be treated as a count of source records.</p>}
+  </article>;
+
+  return <article className="peridot-evidence-overview-sheet peridot-connection-dossier">
+    <header className="peridot-evidence-subject-heading"><h2>{subject}</h2></header>
+    <p className="peridot-connection-sheet-intro">{selectedProps.kind === 'registered-connection'
+      ? (endpointType === 'place' ? 'This pair represents an explicit mapped geographic origin–destination assertion in the selected records.' : 'This pair represents explicit mapped participant relationship assertions in the selected records.')
+      : isNetwork
+        ? 'This line represents a mapped Network connection between the endpoints shown below.'
+        : 'This line represents a mapped relationship connection as displayed under the current Map settings.'}
+      {' '}Endpoint positions do not, by themselves, establish historical direction.</p>
+    <div className="peridot-connection-metrics" aria-label="Connection counts">
+      <div><span>Represented relationship occurrences</span><strong>{selectedProps.count != null ? selectedProps.count : 'Not available'}</strong></div>
+      <div><span>Contributing source rows</span><strong>{isVerified ? supportingRows.length : 'Not verified'}</strong></div>
+    </div>
+    <section className="peridot-connection-ledger">
+      <h3>Endpoints</h3>
+      <p className="peridot-connection-section-note">{isDirected
+        ? 'The mapped connection distinguishes its source and target endpoints.'
+        : 'The source and target fields identify stored endpoint positions; this connection is not mapped as directed.'}</p>
+      <div className="peridot-connection-endpoint-grid">
+        {[
+          ['Source endpoint', selectedProps.sourceLabel, selectedProps.sourceRole],
+          ['Target endpoint', selectedProps.targetLabel, selectedProps.targetRole],
+        ].map(([label, value, role], index) => <div key={index} className="peridot-connection-endpoint">
+          <span className="peridot-connection-field-label">{isDirected ? label : `Endpoint ${index ? 'B' : 'A'} · ${label.toLowerCase()}`}</span>
+          {typeof openEndpoint === 'function' && value ? <button type="button" className="peridot-connection-endpoint-link" onClick={() => openEndpoint(value, index ? (selectedProps.targetEntityId || '') : (selectedProps.sourceEntityId || ''))}>
+            <span>{value}</span><span aria-hidden="true">›</span>
+          </button> : <strong>{value || 'Not supplied'}</strong>}
+          {role ? <small>Mapped role: {role}</small> : null}
+        </div>)}
       </div>
-
-      <LinkedLettersPanelComponent
-        linkedLettersToShow={linkedLettersToShow}
-        selectedLetterMetadata={selectedLetterMetadata}
-        showAllLinkedLetters={showAllLinkedLetters}
-        setShowAllLinkedLetters={setShowAllLinkedLetters}
-        isLetterSectionExpanded={isLetterSectionExpanded}
-        toggleLetterSection={toggleLetterSection}
-        onOpenLetterDetail={onOpenLetterDetail}
-      />
-
-      <div className="flex justify-end">
-        <InspectorClearSelectionButtonComponent onClear={clearSelection} />
-      </div>
-    </article>
-  );
+    </section>
+    <section className="peridot-connection-ledger">
+      <h3>Mapped relationship</h3>
+      <dl className="peridot-connection-facts">
+        <div><dt>Relationship type</dt><dd>{relationship || 'Not specified in this selection'}</dd></div>
+        <div><dt>Direction</dt><dd>{selectedProps.direction || 'Not specified'}</dd></div>
+        {(selectedProps.dates || []).length ? <div><dt>Dates represented</dt><dd>{selectedProps.dates.join('; ')}</dd></div> : null}
+      </dl>
+    </section>
+    <p className="peridot-connection-provenance-note">Represented occurrences count mapped connections aggregated into this mark. Retained source-row entries are a separate quantity and need not equal that weight. Open Contributing records to inspect their evidence.</p>
+  </article>;
 }

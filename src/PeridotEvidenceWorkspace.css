@@ -912,3 +912,98 @@
 @media (max-width: 850px) {
   .peridot-evidence-workspace .peridot-overview-ledger-grid { grid-template-columns: 1fr; }
 }
+
+/* v21 — Connection dossiers use the same flat parchment ledger vocabulary as entity dossiers. */
+.peridot-evidence-workspace .peridot-connection-dossier { gap: 17px; }
+.peridot-evidence-workspace .peridot-connection-sheet-heading,
+.peridot-evidence-workspace .peridot-connection-ledger h3 { margin:0; color:#7c3028; font:600 21px/1.3 Georgia,serif; }
+.peridot-evidence-workspace .peridot-connection-sheet-intro { margin:0; color:#405840; font-size:14px; line-height:1.6; }
+.peridot-evidence-workspace .peridot-connection-metrics { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-block:1px solid #cdb896; }
+.peridot-evidence-workspace .peridot-connection-metrics > div { padding:12px 16px; min-width:0; }
+.peridot-evidence-workspace .peridot-connection-metrics > div + div { border-left:1px solid #cdb896; }
+.peridot-evidence-workspace .peridot-connection-metrics span { display:block; color:#755137; font:600 12px/1.4 Georgia,serif; }
+.peridot-evidence-workspace .peridot-connection-metrics strong { display:block; margin-top:5px; color:#205037; font:600 21px Georgia,serif; }
+.peridot-evidence-workspace .peridot-connection-ledger { border:1px solid #d4b98b; border-radius:6px; background:#f9f0e1; padding:13px 15px; }
+.peridot-evidence-workspace .peridot-connection-ledger h3 { padding-bottom:8px; border-bottom:1px solid #d4b98b; }
+.peridot-evidence-workspace .peridot-connection-section-note { margin:10px 0; font-size:13px; line-height:1.5; color:#4d5d4e; }
+.peridot-evidence-workspace .peridot-connection-endpoint-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.peridot-evidence-workspace .peridot-connection-endpoint { min-width:0; display:flex; flex-direction:column; gap:5px; padding:10px 0; }
+.peridot-evidence-workspace .peridot-connection-field-label,
+.peridot-evidence-workspace .peridot-connection-facts dt { color:#825a33; font:700 11px/1.4 Arial,sans-serif; letter-spacing:.07em; text-transform:uppercase; }
+.peridot-evidence-workspace .peridot-connection-endpoint > strong { color:#234a33; font:600 16px/1.4 Georgia,serif; }
+.peridot-evidence-workspace .peridot-connection-endpoint small { color:#52634f; font-size:12px; }
+.peridot-evidence-workspace .peridot-connection-endpoint-link { width:100%; padding:10px; border:0; border-radius:5px; background:transparent; color:#205037; display:flex; justify-content:space-between; align-items:center; gap:12px; cursor:pointer; text-align:left; font:600 16px/1.4 Georgia,serif; }
+.peridot-evidence-workspace .peridot-connection-endpoint-link:hover { background:#e2e7d6; }
+.peridot-evidence-workspace .peridot-connection-endpoint-link:focus-visible { outline:2px solid #8d4d33; outline-offset:2px; }
+.peridot-evidence-workspace .peridot-connection-facts { margin:8px 0 0; }
+.peridot-evidence-workspace .peridot-connection-facts > div { padding:10px 0; border-bottom:1px solid #dfc9a6; }
+.peridot-evidence-workspace .peridot-connection-facts > div:last-child { border:0; }
+.peridot-evidence-workspace .peridot-connection-facts dd { margin:4px 0 0; color:#24432e; font:600 15px/1.4 Georgia,serif; }
+.peridot-evidence-workspace .peridot-connection-provenance-note { border-left:3px solid #ac8b55; padding:9px 12px; margin:0; color:#51614c; font-size:13px; line-height:1.55; background:#f6ebd6; }
+@media(max-width:700px) { .peridot-evidence-workspace .peridot-connection-endpoint-grid, .peridot-evidence-workspace .peridot-connection-metrics { grid-template-columns:1fr; } .peridot-evidence-workspace .peridot-connection-metrics > div + div { border-left:0; border-top:1px solid #cdb896; } }
+
+/* Charts II: chart-specific calculation + standard research dossier navigation. */
+.peridot-evidence-workspace .peridot-chart-dossier { color:#24382d; min-width:0; }
+.peridot-evidence-workspace .peridot-chart-dossier-intro,
+.peridot-evidence-workspace .peridot-chart-dossier-subjects > p,
+.peridot-evidence-workspace .peridot-chart-dossier-records > p { margin:7px 0 15px; line-height:1.5; max-width:90ch; font-size:13px; }
+.peridot-evidence-workspace .peridot-chart-dossier h3 { margin:0 0 8px; color:#803029; font:700 20px/1.3 Georgia,serif; }
+/* v24 — Charts II Overview shares the framed, two-column ledger vocabulary
+ * of the accepted entity Overview. Chart calculations retain their full data. */
+.peridot-evidence-workspace .peridot-chart-dossier-calculation,
+.peridot-evidence-workspace .peridot-chart-dossier-subjects {
+  margin-top:16px; border:1px solid #d6bc94; background:#faf1e2;
+  border-radius:6px; padding:13px 15px; min-width:0;
+}
+.peridot-evidence-workspace .peridot-chart-dossier-calculation > h4 {
+  color:#7c3029; font:600 19px/1.3 Georgia,serif;
+  margin:0; padding-bottom:8px; border-bottom:1px solid #d3ba90;
+}
+.peridot-evidence-workspace .peridot-chart-dossier-subjects > h3 {
+  padding-bottom:8px; border-bottom:1px solid #d3ba90;
+}
+.peridot-evidence-workspace .peridot-chart-dossier-subject-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 26px; }
+.peridot-evidence-workspace .peridot-chart-dossier-subject-row {
+  display:flex; width:100%; justify-content:space-between; align-items:center;
+  gap:12px; min-width:0; padding:11px 8px; text-align:left;
+  border:0; border-bottom:1px solid #e2d2b7; border-radius:5px;
+  background:transparent; color:#24432e; cursor:pointer; box-shadow:none; font:inherit;
+}
+.peridot-evidence-workspace .peridot-chart-dossier-subject-row:hover { background:#e2e7d6; }
+.peridot-evidence-workspace .peridot-chart-dossier-subject-row:focus-visible { outline:2px solid #8d4d33; outline-offset:-2px; }
+.peridot-evidence-workspace .peridot-chart-dossier-subject-row:disabled { cursor:default; opacity:.7; }
+.peridot-evidence-workspace .peridot-chart-dossier-subject-body { display:flex; flex:1; flex-direction:column; min-width:0; gap:3px; }
+.peridot-evidence-workspace .peridot-chart-dossier-subject-row small { color:#715334; font:650 11px/1.4 sans-serif; overflow-wrap:anywhere; }
+.peridot-evidence-workspace .peridot-chart-dossier-subject-row strong { color:#24432e; font:600 16px/1.4 Georgia,serif; overflow-wrap:anywhere; }
+.peridot-evidence-workspace .peridot-chart-dossier-category-note { color:#52634f; font:normal 12px/1.4 sans-serif; }
+.peridot-evidence-workspace .peridot-chart-dossier-subject-count { display:flex; align-items:center; flex-shrink:0; color:#66553a; font:12px/1.3 Georgia,serif; white-space:nowrap; }
+.peridot-evidence-workspace .peridot-chart-dossier-subject-count span { color:#8d6b36; font:22px/1 Georgia,serif; margin-left:7px; }
+.peridot-evidence-workspace .peridot-chart-dossier-more { margin-top:12px; padding:8px 12px; border:1px solid #ad916a; background:#f6eddb; color:#254e35; border-radius:3px; cursor:pointer; }
+.peridot-evidence-workspace .peridot-chart-dossier-records { margin-top:4px; }
+@media(max-width:800px) { .peridot-evidence-workspace .peridot-chart-dossier-subject-grid { grid-template-columns:1fr; } }
+
+/* Timeline II full Evidence Workspace: same ledger language as Charts and entity dossiers. */
+.peridot-evidence-workspace .peridot-timeline-dossier { min-width:0; color:#24382d; }
+.peridot-evidence-workspace .peridot-timeline-dossier h3 { margin:0 0 9px; color:#803029; font:700 20px/1.3 Georgia,serif; }
+.peridot-evidence-workspace .peridot-timeline-dossier-intro,
+.peridot-evidence-workspace .peridot-timeline-dossier-panel > p,
+.peridot-evidence-workspace .peridot-timeline-dossier-records > p { font:13px/1.55 sans-serif; color:#375445; margin:7px 0 14px; }
+.peridot-evidence-workspace .peridot-timeline-dossier-panel { background:#faf1e2; border:1px solid #d8bd91; border-radius:5px; padding:13px; margin:14px 0; }
+.peridot-evidence-workspace .peridot-timeline-dossier-panel > h3 { padding-bottom:8px; border-bottom:1px solid #d4b989; }
+.peridot-evidence-workspace .peridot-timeline-dossier-facts { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:24px; }
+.peridot-evidence-workspace .peridot-timeline-dossier-fact { display:flex; flex-direction:column; gap:4px; padding:10px 5px; border-bottom:1px solid #decbaa; min-width:0; }
+.peridot-evidence-workspace .peridot-timeline-dossier-fact small,
+.peridot-evidence-workspace .peridot-timeline-dossier-category-source small { color:#715334; font:650 11px/1.4 sans-serif; }
+.peridot-evidence-workspace .peridot-timeline-dossier-fact strong,
+.peridot-evidence-workspace .peridot-timeline-dossier-category-source strong { font:600 15px/1.45 Georgia,serif; color:#24432e; overflow-wrap:anywhere; }
+.peridot-evidence-workspace .peridot-timeline-dossier-visual-categories { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.peridot-evidence-workspace .peridot-timeline-dossier-category { display:flex; align-items:center; gap:9px; padding:7px 5px; border-bottom:1px solid #decbaa; }
+.peridot-evidence-workspace .peridot-timeline-dossier-category span:last-child { display:flex; flex-direction:column; gap:2px; min-width:0; }
+.peridot-evidence-workspace .peridot-timeline-dossier-category strong { color:#24432e; font:600 14px Georgia,serif; }
+.peridot-evidence-workspace .peridot-timeline-dossier-category small { color:#52634f; font:12px sans-serif; }
+.peridot-evidence-workspace .peridot-timeline-dossier-color { flex:none; display:inline-block; width:15px; height:15px; border:1px solid #998364; border-radius:50%; }
+.peridot-evidence-workspace .peridot-timeline-dossier-category-source { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 24px; margin-top:12px; }
+.peridot-evidence-workspace .peridot-timeline-dossier-category-source > div { display:flex; flex-direction:column; gap:3px; padding:7px 5px; border-bottom:1px solid #decbaa; }
+@media(max-width:800px) { .peridot-evidence-workspace .peridot-timeline-dossier-facts,
+  .peridot-evidence-workspace .peridot-timeline-dossier-visual-categories,
+  .peridot-evidence-workspace .peridot-timeline-dossier-category-source {grid-template-columns:minmax(0,1fr);} }

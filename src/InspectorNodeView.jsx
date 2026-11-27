@@ -352,10 +352,9 @@ function ConnectedEvidenceSheet({ kind, selectedLabel, sections, relationships =
  * Expansion does not change Inspector history; navigation to a different
  * source record or entity uses the existing App-owned callbacks.
  */
-function RelationshipRegisterSheet({ selectedLabel, entityType, entityId, rows, onOpenPersonDetail, onOpenPlaceDetail, onOpenLetterDetail, onOpenRouteDetail }) {
+function RelationshipRegisterSheet({ selectedLabel, entityType, entityId, rows, onOpenPersonDetail, onOpenPlaceDetail, onOpenLetterDetail, onOpenRouteDetail, onOpenMappedConnection }) {
   const [query, setQuery] = useState('');
   const [groupFilter, setGroupFilter] = useState('all');
-  const [expandedKeys, setExpandedKeys] = useState({});
   const [showAll, setShowAll] = useState(false);
   const model = useMemo(() => buildPeridotRelationshipRegister(rows, { entityLabel: selectedLabel, entityId, entityType }, buildPeridotRecordStructure), [rows, selectedLabel, entityId, entityType]);
   const combined = [
@@ -399,7 +398,6 @@ function RelationshipRegisterSheet({ selectedLabel, entityType, entityId, rows, 
     </div>
     <div className="peridot-evidence-relationship-list">
       {shown.map((entry) => {
-        const expanded = Boolean(expandedKeys[entry.key]);
         const isPlace = entry.group === 'place';
         const connector = entry.direction === 'directed' ? '→' : '—';
         const canFollow = isPlace ? canOpenPlace : canOpenParticipant;
@@ -422,22 +420,9 @@ function RelationshipRegisterSheet({ selectedLabel, entityType, entityId, rows, 
             <div className="peridot-evidence-relationship-entry-side">
               <div className="peridot-evidence-relationship-count"><strong>{entry.occurrences}</strong><span>occurrence{entry.occurrences === 1 ? '' : 's'}</span></div>
               <div className="peridot-evidence-relationship-count"><strong>{entry.records.length}</strong><span>source row{entry.records.length === 1 ? '' : 's'}</span></div>
-              <button type="button" aria-expanded={expanded} className="peridot-evidence-relationship-expand" onClick={() => setExpandedKeys((previous) => ({ ...previous, [entry.key]: !expanded }))}>{expanded ? 'Hide evidence' : 'View evidence'} <span aria-hidden="true">{expanded ? '▴' : '▾'}</span></button>
+              {typeof onOpenMappedConnection === 'function' ? <button type="button" className="peridot-evidence-relationship-expand" onClick={() => onOpenMappedConnection(entry)} aria-label={`Inspect connection ${entry.source} ${connector} ${entry.target}`}>Inspect connection <span aria-hidden="true">›</span></button> : null}
             </div>
           </div>
-          {expanded ? <div className="peridot-evidence-relationship-evidence">
-            <div className="peridot-evidence-relationship-evidence-title">Contributing source records</div>
-            <p>These records contain the mapped assertions represented above. An occurrence count is not necessarily a count of distinct records.</p>
-            <div className="peridot-evidence-relationship-records">
-              {entry.records.map((record, index) => {
-                const id = normalizeEntityText(record?.id || record?.recordId || record?.sourceRowId || record?.uniqueId) || `Source row ${index + 1}`;
-                return typeof onOpenLetterDetail === 'function'
-                  ? <button type="button" key={`${id}:${index}`} onClick={() => onOpenLetterDetail(record, index)}>{id}<span>Inspect record ›</span></button>
-                  : <div key={`${id}:${index}`}>{id}</div>;
-              })}
-            </div>
-            {isPlace && typeof onOpenRouteDetail === 'function' ? <button className="peridot-evidence-relationship-route-link" type="button" onClick={() => onOpenRouteDetail(`${entry.source} → ${entry.target}`)}>Inspect mapped place pair</button> : null}
-          </div> : null}
         </article>;
       })}
       {!filtered.length ? <p className="peridot-evidence-relationship-empty">{combined.length ? 'No mapped connections match these search criteria.' : 'No explicit mapped relationships or directed place pairs are available for this selection.'}</p> : null}
@@ -652,6 +637,7 @@ export function InspectorNodeView({
   onOpenPlaceDetail,
   onOpenLetterDetail,
   onOpenRouteDetail,
+  onOpenMappedConnection,
   onExpandInspector,
   isCompact = false,
   selectionEvidence = null,
@@ -826,7 +812,7 @@ export function InspectorNodeView({
       description: 'Recorded connections and directed place pairs. A mapped participant role is not, by itself, a claim of historical agency.',
       content: <RelationshipRegisterSheet key={`${profile.entityId || profile.entityLabel}:relationships`} selectedLabel={profile.entityLabel} entityId={profile.entityId}
         entityType={profile.entityType} rows={profile.matchingLetters} onOpenPersonDetail={onOpenPersonDetail}
-        onOpenPlaceDetail={onOpenPlaceDetail} onOpenLetterDetail={onOpenLetterDetail} onOpenRouteDetail={onOpenRouteDetail} />,
+        onOpenPlaceDetail={onOpenPlaceDetail} onOpenLetterDetail={onOpenLetterDetail} onOpenRouteDetail={onOpenRouteDetail} onOpenMappedConnection={onOpenMappedConnection} />,
     },
     records: {
       title: 'Contributing records',

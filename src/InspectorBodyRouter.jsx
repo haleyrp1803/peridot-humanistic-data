@@ -32,6 +32,7 @@ export function InspectorBodyRouter({
     onOpenPlaceDetail,
     onOpenLetterDetail,
     onOpenRouteDetail,
+    onOpenMappedConnection,
     onBackInspector,
     onExpandInspector,
   } = inspectorState;
@@ -86,6 +87,7 @@ export function InspectorBodyRouter({
     onOpenPlaceDetail,
     onOpenLetterDetail,
     onOpenRouteDetail,
+    onOpenMappedConnection,
     onExpandInspector,
     isCompact,
     dossierSheet,
@@ -105,7 +107,10 @@ export function InspectorBodyRouter({
     toggleLetterSection,
     onOpenLetterDetail,
     onOpenRouteDetail,
-    onExpandInspector,
+    onOpenPersonDetail,
+    onOpenPlaceDetail,
+    dossierSheet,
+    onOpenExplore,
     isCompact,
   };
 
@@ -116,7 +121,9 @@ export function InspectorBodyRouter({
   }
   if (selectedKind === 'edge') return <InspectorEdgeView {...edgeViewProps} />;
   if (selectedKind === 'chart-mark') {
-    return <InspectorChartMarkView selectedProps={selectedProps} onOpenLetterDetail={onOpenLetterDetail} isCompact={isCompact} />;
+    return <InspectorChartMarkView selectedProps={selectedProps} onOpenLetterDetail={onOpenLetterDetail}
+      onOpenPersonDetail={onOpenPersonDetail} onOpenPlaceDetail={onOpenPlaceDetail}
+      dossierSheet={dossierSheet} isCompact={isCompact} />;
   }
   if (selectedKind === 'timeline-event') {
     return (
@@ -126,6 +133,8 @@ export function InspectorBodyRouter({
         onExpandInspector={onExpandInspector}
         onOpenPersonDetail={onOpenPersonDetail}
         onOpenPlaceDetail={onOpenPlaceDetail}
+        onOpenLetterDetail={onOpenLetterDetail}
+        dossierSheet={dossierSheet}
         isCompact={isCompact}
         selectionEvidence={selectionEvidence}
       />

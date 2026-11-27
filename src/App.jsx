@@ -2344,6 +2344,7 @@ function buildInspectorPanelProps(args) {
       onOpenPersonDetail: args.onOpenPersonDetail,
       onOpenPlaceDetail: args.onOpenPlaceDetail,
       onOpenLetterDetail: args.onOpenLetterDetail,
+      onOpenMappedConnection: args.onOpenMappedConnection,
       onSearchRelated: args.onSearchRelated,
       inspectorHistoryLength: args.inspectorHistoryLength,
       canGoBack: args.inspectorHistoryLength > 0,
@@ -3939,11 +3940,17 @@ function AppMainWorkspace({
   const isEntityDossier = Boolean(selection) && (
     selection?.kind === 'person-detail' || selection?.kind === 'place-detail' || selection?.kind === 'node'
   );
-  const sheetIndex = [
-    ['overview', 'Overview'], ['people', 'Connected people'], ['places', 'Connected places'],
-    ['relationships', 'Relationships'], ['records', 'Contributing records'],
-    ['investigate', 'Investigate further'],
-  ];
+  const isConnectionDossier = selection?.kind === 'edge' || selection?.kind === 'registered-connection';
+  const isChartDossier = selection?.kind === 'chart-mark';
+  const isTimelineDossier = selection?.kind === 'timeline-event';
+  const hasSheetIndex = isEntityDossier || isConnectionDossier || isChartDossier || isTimelineDossier;
+  const sheetIndex = (isConnectionDossier || isChartDossier || isTimelineDossier)
+    ? [['overview', 'Overview'], ['records', 'Contributing records'], ['investigate', 'Investigate further']]
+    : [
+      ['overview', 'Overview'], ['people', 'Connected people'], ['places', 'Connected places'],
+      ['relationships', 'Relationships'], ['records', 'Contributing records'],
+      ['investigate', 'Investigate further'],
+    ];
   useEffect(() => {
     if (inspectorWorkspaceProps?.inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.WORKSPACE
       || inspectorWorkspaceProps?.inspectorPresentationMode === INSPECTOR_PRESENTATION_MODES.EMPTY_WORKSPACE) {
@@ -4029,7 +4036,7 @@ function AppMainWorkspace({
                 );
               }) : <span className="peridot-evidence-empty-trail">Select a record or mark to begin a trail.</span>}
             </nav>
-            {selection && !isEntityDossier && selection.kind !== 'letter-detail' ? (
+            {selection && !hasSheetIndex && selection.kind !== 'letter-detail' ? (
               <button type="button" className="peridot-evidence-back peridot-evidence-investigate-shortcut"
                 onClick={() => { setDossierSheet((current) => current === 'investigate' ? 'overview' : 'investigate'); setEvidenceTab('inspector'); }}>
                 {dossierSheet === 'investigate' ? 'Return to inspection' : 'Investigate further'}
@@ -4039,11 +4046,11 @@ function AppMainWorkspace({
               <button type="button" className="peridot-evidence-back" onClick={workspaceInspectorPanelProps.inspectorState.onBackInspector}>Back</button>
             ) : null}
           </div>
-          <div className={`peridot-evidence-inspector-layout ${isEntityDossier ? 'has-sheet-index' : ''}`}
+          <div className={`peridot-evidence-inspector-layout ${hasSheetIndex ? 'has-sheet-index' : ''}`}
             id="peridot-evidence-inspector-panel" role="tabpanel" aria-labelledby="peridot-evidence-inspector-tab"
             hidden={evidenceTab !== 'inspector'}>
-            {isEntityDossier ? <nav className="peridot-evidence-sheet-index" aria-label="Dossier sheets">
-              <div className="peridot-evidence-sheet-index-heading">{selection?.kind === 'place-detail' || selection?.entityType === 'place' ? 'Place dossier' : 'Person dossier'}</div>
+            {hasSheetIndex ? <nav className="peridot-evidence-sheet-index" aria-label="Dossier sheets">
+              <div className="peridot-evidence-sheet-index-heading">{isConnectionDossier ? 'Connection dossier' : isChartDossier ? 'Chart mark dossier' : isTimelineDossier ? (['interval', 'openInterval'].includes(selection?.event?.temporalKind) ? 'Timeline period dossier' : 'Timeline event dossier') : selection?.kind === 'place-detail' || selection?.entityType === 'place' ? 'Place dossier' : 'Person dossier'}</div>
               {sheetIndex.map(([key, label]) => (
                 <button key={key} type="button" className={`peridot-evidence-sheet-link ${dossierSheet === key ? 'is-active' : ''}`}
                   aria-current={dossierSheet === key ? 'page' : undefined}
@@ -4051,7 +4058,7 @@ function AppMainWorkspace({
               ))}
             </nav> : null}
             <div className="peridot-evidence-content peridot-evidence-dossier-reading" key={`${selectionIdentifier}:${dossierSheet}`}>
-              {selection && !isEntityDossier && selection.kind !== 'letter-detail' && dossierSheet === 'investigate' ? (
+              {selection && !hasSheetIndex && selection.kind !== 'letter-detail' && dossierSheet === 'investigate' ? (
                 <div className="peridot-evidence-general-investigate">
                   <header className="peridot-evidence-subject-heading"><h2>{evidenceTrailLabel(selection)}</h2></header>
                   <PeridotInvestigateFurther />
@@ -4064,7 +4071,7 @@ function AppMainWorkspace({
                   showHeader={false}
                   showExpandButton={false}
                   presentation="workspace"
-                  dossierSheet={isEntityDossier ? dossierSheet : 'overview'}
+                  dossierSheet={hasSheetIndex ? dossierSheet : 'overview'}
                   onOpenExplore={() => setEvidenceTab('explore')}
                 />
               ) : null}
@@ -4269,6 +4276,30 @@ export default function EuropeNetworkMapApp() {
   const [hoveredEdgeId, setHoveredEdgeId] = useState('');
   const [hoveredNodeId, setHoveredNodeId] = useState('');
   const [hoverCard, setHoverCard] = useState(null);
+
+  // Registered pair selections retain their exact mapped definition and
+  // contributing rows. They are not reconstructed from a visual edge ID or
+  // from endpoint names, which may represent several distinct relationships.
+  const openInspectorMappedConnection = (entry) => {
+    if (!entry || !Array.isArray(entry.records)) return;
+    if (selectedSelection) setInspectorHistory((previous) => [...previous, selectedSelection]);
+    inspectorNavigationRef.current = true;
+    setInspectorPresentationMode(INSPECTOR_PRESENTATION_MODES.WORKSPACE);
+    setIsSidePanelOpen(false);
+    setActivePanelTab('inspector');
+    setSelectedSelection({
+      ...entry,
+      kind: 'registered-connection',
+      mappedConnectionKind: entry.kind,
+      id: `registered-connection:${entry.kind}:${entry.sourceId || entry.source}:${entry.targetId || entry.target}:${entry.relationshipType || ''}:${entry.direction}:${entry.sourceRole || ''}:${entry.targetRole || ''}`,
+      // Never mistake a geographic origin/destination for an individual.
+      endpointType: entry.kind === 'place' ? 'place' : 'person',
+      label: `${entry.source} ${entry.direction === 'directed' ? '→' : '—'} ${entry.target}`,
+      letterMetadata: [...entry.records],
+      count: entry.occurrences,
+    });
+    setShowAllLinkedLetters(false);
+  };
 
   const openInspectorPersonDetail = (name, entityId = '') => {
     if (!name && !entityId) return;
@@ -5342,6 +5373,21 @@ export default function EuropeNetworkMapApp() {
   // Selection and inspector derivations
   // ------------------------------------------------------------
   const selectedProps = useMemo(() => {
+    if (selectedSelection?.kind === 'registered-connection') {
+      return {
+        ...selectedSelection,
+        __kind: 'edge',
+        sourceLabel: selectedSelection.source,
+        targetLabel: selectedSelection.target,
+        sourceEntityId: selectedSelection.sourceId || '',
+        targetEntityId: selectedSelection.targetId || '',
+        sourceRole: selectedSelection.sourceRole,
+        targetRole: selectedSelection.targetRole,
+        relationshipLabel: selectedSelection.relationshipType || '',
+        letterMetadata: selectedSelection.letterMetadata || selectedSelection.records || [],
+        endpointType: selectedSelection.endpointType,
+      };
+    }
     if (selectedSelection?.kind === 'chart-mark') {
       return { ...selectedSelection, __kind: 'chart-mark' };
     }
@@ -6754,6 +6800,7 @@ export default function EuropeNetworkMapApp() {
     onOpenPersonDetail: openInspectorPersonDetail,
     onOpenPlaceDetail: openInspectorPlaceDetail,
     onOpenLetterDetail: openInspectorLetterDetail,
+    onOpenMappedConnection: openInspectorMappedConnection,
     onSearchRelated: prepareInspectorExploreSearch,
     inspectorHistoryLength: inspectorHistory.length,
     onBackInspector: goBackInspector,
@@ -7417,6 +7464,7 @@ export default function EuropeNetworkMapApp() {
           || (entry.kind === 'cluster' ? entry.clusterNode : null);
         return getPeridotResearchTrailLabel(node ? { ...entry, ...node, kind: entry.kind } : entry);
       }
+      if (entry?.kind === 'registered-connection') return `Connection: ${entry.label || 'Mapped pair'}`;
       if (entry?.kind === 'edge') {
         const edge = graph?.edges?.find((candidate) => candidate.id === entry.id);
         return getPeridotResearchTrailLabel(edge ? { ...entry, ...edge, kind: 'edge' } : entry);
