@@ -66,9 +66,9 @@ This Charter owns mandatory process rules, source-of-truth continuity, delivery/
 Current synchronized checkpoint:
 
 ```text
-59ce6a7 — Implement voluntary support integration with GitHub Sponsors and Ko-fi
+4bdab6c — Update Timeline grouped-lane test to match priority semantics
 Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree clean at confirmation.
+Status: HEAD, origin/main and origin/HEAD aligned in the user-supplied 2026-11-27 log; last separately confirmed clean working tree at 6c149e7.
 ```
 
 For detailed milestone interpretation and full commit history, see [CHANGELOG.md](CHANGELOG.md).
@@ -1173,6 +1173,15 @@ Preserve the Visualize/Explore/Tutorials gateway distinction from active-data wo
 - **Rejected alternative:** Independent Inspector-side reaggregation, treating every category-editor click as a selected event, a permanent 25-record ceiling, or converting missing numerical evidence to zero.
 - **Reason:** The shared calculation/provenance boundary prevents drifting totals and false assertions; progressive disclosure makes complete evidence accessible without rendering thousands of links at once.
 - **Maintenance consequence:** Chart-viewer exit clears its mark selection; Treemap drill-down has priority over inspection on ordinary expandable-tile clicks (Shift+click inspects). Map/Network edge-selection reliability remains a separate audit. Use the Maintainer's Guide for file ownership, exact display contract and regression tests.
+
+**Expanded Evidence Workspace / typed evidence navigation decision (Current; accepted at `3c64813`, `6c149e7`, 2026-11-27).**
+
+- **Decision:** Keep the full Inspector as a shared, source-faithful dossier and research-trail workspace across Map, Network, Charts II and Timeline II rather than four unrelated mark-detail panels.
+- **Context:** A researcher must be able to move from a visual pattern into mapped evidence, follow typed entity/connection/record links and return, while retaining what the selected visual actually represented.
+- **Chosen approach:** Use selection-specific sheets, a common evidence ledger, typed person/place/connection links, and shared Investigate further draft search. Retain chart-local calculated provenance, Timeline precision and mapped subject, and explicit geographic or relationship endpoints; a different linked dossier has its own scope. The established parchment/gold folder presentation was accepted across all four visualizations.
+- **Rejected alternative:** Invent route edges from place co-occurrence, treat geographical Map marks as place identities irrespective of mapped person type, recompute chart aggregates in the Inspector, treat all co-occurring people as temporal subjects, silently apply Explore filters during navigation, or add redundant Overview-local search controls.
+- **Reason:** Historical inference, mapped association, source-record identity and rendered aggregate are different epistemic levels; the application must help researchers move among them without collapsing their provenance.
+- **Maintenance consequence:** Preserve sheet-versus-history separation, accurate endpoint/direction semantics, contributing-row provenance, draft/Apply separation and multi-step Back across selection types. Follow the [Inspector contract](MAINTAINERS_GUIDE.md#contract-inspector) and [milestone history](CHANGELOG.md#milestone-evidence-workspace-20261127) before altering this workflow; the broader Explore redesign remains a separate pass.
 
 ### 7.4 Search and data scope
 

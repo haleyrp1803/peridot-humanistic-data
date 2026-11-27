@@ -62,12 +62,12 @@ The guide is organized into three levels. **You do not need to read it straight 
 ## Current Synchronized Checkpoint
 
 ```text
-59ce6a7 — Implement voluntary support integration with GitHub Sponsors and Ko-fi
+4bdab6c — Update Timeline grouped-lane test to match priority semantics
 Branch: main
-Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed 2026-11-25); working tree clean at confirmation.
+Status: HEAD, origin/main and origin/HEAD aligned (user-confirmed log, 2026-11-27); fresh post-commit working-tree status not supplied.
 ```
 
-The latest confirmed source checkpoint `59ce6a7` adds voluntary Support to the global header after the Inspector documentation checkpoint `c60c0da` and compact Inspector integration at `01b03bc`. See [CHANGELOG.md](CHANGELOG.md#1-current-synchronized-checkpoint) for history and verification scope. Support details below describe the accepted replacement files and user-reported acceptance; a fresh full-source checkout or deployed-site verification is not implied.
+The latest user-confirmed ref alignment is `4bdab6c`, following expanded Evidence Workspace commits `3c64813` and `6c149e7` and the earlier Support integration. The most recent separately confirmed clean working tree and push belong to `6c149e7`; the supplied `4bdab6c` log aligns the refs but is not a fresh status or build. See [CHANGELOG.md](CHANGELOG.md#1-current-synchronized-checkpoint) for the dated history, source-reconstructed 217/217 Node test result and verification limits. The user accepted the expanded Inspector screenshots; deployed-site and full production-build checks remain unverified.
 
 <a id="1-current-architecture-snapshot"></a>
 
@@ -170,9 +170,9 @@ Builds and applies global research queries and provides browse/refine/results in
 Presents compact selection summaries and deep evidence dossiers with linked-history navigation.
 
 - **Function / purpose:** Provides evidence dossiers and reversible linked-data navigation.
-- **Primary modules:** `src/InspectorPanel.jsx`, `src/InspectorBodyRouter.jsx`, `src/InspectorChartMarkView.jsx`, `src/peridotInspectorSelectionEvidence.js`, `src/App.jsx`
+- **Primary modules:** `src/InspectorPanel.jsx`, `src/InspectorBodyRouter.jsx`, `src/InspectorChartMarkView.jsx`, `src/InspectorTimelineEventView.jsx`, `src/PeridotContributingRecordsLedger.jsx`, `src/PeridotInvestigateFurther.jsx`, `src/peridotInspectorSelectionEvidence.js`, `src/App.jsx`
 - **Data / dependencies:** Selected records/entities/places/relationships and applied linked evidence
-- **Critical invariants:** Preserve subject attribution, canonical entity identity and dossier history across navigation.
+- **Critical invariants:** Preserve subject attribution, typed person/place endpoints, chart-local and temporal-mark source scope, draft-versus-applied Explore state, and canonical entity identity/research-trail history across navigation.
 - **Detailed reference:** [Inspector contract](#contract-inspector)
 
 <a id="level1-exports"></a>
@@ -881,15 +881,15 @@ Detailed subsystem regression checks belong in the Maintainer’s Guide. Preserv
 <a id="contract-inspector"></a>
 
 - **Purpose and scope:** Presents compact selection summaries and deep evidence dossiers with linked-history navigation.
-- **Module ownership:** `src/InspectorPanel.jsx`, `src/InspectorBodyRouter.jsx`, `src/App.jsx`
-- **Inputs and data contracts:** Canonical selected records, subjects, entities, places, temporal assertions, relationships and chart-mark analytical provenance
-- **Outputs and consumers:** Compact Inspector, full dossiers and linked-history navigation
-- **Behavior and interaction:** Compact Overview/Data/Next steps, persistent expanded disclosures, category legend, contributing-record search, full dossier and multi-step Back
-- **Invariants:** Subject-aware Evidence and canonical entity identity must survive navigation
-- **Fragile dependencies:** Shared shell and App-controlled selection history
-- **Verification:** Compact/Expand/Back and multi-step navigation regressions
-- **Known limitations / deferred work:** Map/Network edge click reliability audit; cross-visualization regression; contextual settings shortcut; expanded dossier and Explore redesign
-- **Historical context and related planning documents:** `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md` (recorded in original guide)
+- **Module ownership:** `src/App.jsx` owns selected target, folder/sheet state, research history and Explore handoff; `src/InspectorPanel.jsx` owns shared chrome, `src/InspectorBodyRouter.jsx` dispatches selected-object bodies; `src/InspectorNodeView.jsx`, `src/InspectorEdgeView.jsx`, `src/InspectorChartMarkView.jsx`, `src/InspectorTimelineEventView.jsx`, `src/PeridotContributingRecordsLedger.jsx`, `src/PeridotInvestigateFurther.jsx`, `src/peridotRecordStructure.js` and supporting views/helpers own specialized presentation and generalized evidence. Exact import graph requires current-source confirmation before edits.
+- **Inputs and data contracts:** Canonical selected records, people, places, temporal assertions, explicit mapped relationships, chart-result calculations and actual contributing source rows; active Explore draft and applied scopes remain distinct.
+- **Outputs and consumers:** Compact Inspector, expanded Evidence Workspace dossier sheets, typed linked entity/connection/record navigation and multi-step research trail; Investigate further drafts feed Explore.
+- **Behavior and interaction:** Compact What am I seeing? / What data is being visualized? / Where can I go next? remains distinct from the expanded Inspector/Explore folder with object-specific Overview, Contributing records and Investigate further sheets; person/place folders additionally expose specialized connected-entity and Relationships sheets, and record dossiers their own information sheet. Opening a link adds navigable history; switching sheets does not.
+- **Invariants:** Preserve canonical person/place identity, source-faithful temporal subject and precision, explicit geographic or relational pair/direction, actual chart-local contributing record scope, distinction of distinct source rows from aggregated values, correct linked records, and draft-versus-applied filtering. Never manufacture a route or historical agency from source/target storage slots.
+- **Fragile dependencies:** `App.jsx` selected-object/history state, mounted visualization lifetime, typed endpoint routing, `PeridotSearchWorkspace.jsx` draft/apply coordination, chart calculation identity and Timeline category/temporal presentation; shared Evidence Workspace CSS.
+- **Verification:** Node suite 217/217 passed in reconstructed v25 + test-only correction (not a full production build); accepted local screenshots for connection v22, chart v24 and Timeline v25. Retest typed Map/Network endpoints, researched paths with Back, chart values vs source rows, Timeline point/uncertain/period semantics, Explore draft/apply, keyboard/focus, large datasets, build and deployed site when scope demands.
+- **Known limitations / deferred work:** Context-sensitive Adjust visualization settings shortcut, broader Explore content redesign, accessibility/keyboard and large-data regression, integrated production/deployed-site check. The former expanded dossier implementation and original specific Map/Network edge-selection audit are no longer blanket unfinished features; targeted interaction regressions remain valuable.
+- **Historical context and related planning documents:** `planning_documents/PERIDOT_INSPECTOR_WORKSPACE_CONTRACT.md` (path recorded in original guide); [accepted expanded Evidence Workspace milestone](CHANGELOG.md#milestone-evidence-workspace-20261127); [compact Inspector milestone](CHANGELOG.md#milestone-compact-inspector-20261125).
 
 #### Current compact selection-evidence hierarchy (accepted through `01b03bc`)
 
@@ -935,6 +935,24 @@ Ownership remains:
 
 Minimum regression checks: node, edge, and cluster click; compact close; Expand; related person/place; record and legitimate route navigation; at least a five-step linked-data chain; repeated Back; branch from an earlier history state; Explore-to-Inspector return; full Inspector open/close without stage reanimation; genealogy mother/father/partner coverage; participant-specific time/place attribution; duplicate-label identity cases; and correspondence sender/recipient preservation.
 
+
+#### Expanded Evidence Workspace — accepted shared dossier contract (`3c64813`, `6c149e7`)
+
+**Presentation and navigation.** The expanded Inspector is a distinct full evidence workspace rather than an enlarged compact card. It uses a single editorial frame (forest-green outer frame, oxblood manuscript corners, parchment, restrained gold ledger borders), shared **Inspector** and **Explore** folder tabs, and left-side sheet navigation for the selected object. The research trail records movement to a different selected person/place/connection/record while sheet changes are local to that selection. Retain intuitive Back/branch behavior through chains of at least three linked objects; opening the modal must not remount the visualization or reset its analysis state.
+
+**Object-specific sheets.** A person/place dossier contains Overview, Connected people, Connected places, Relationships, Contributing records and Investigate further; connections, Chart marks and Timeline event/period selections use Overview, Contributing records and Investigate further, while an individual record has Record information and Investigate further. The shared record ledger supports chronological ordering, search/filter/pagination, inline source fields and navigation to a record dossier. Present only data actually mapped by the researcher; missing Evidence fields are not implied. Source record information is distinguishable from inferred summary or visual calculation.
+
+**Typed connections and geographic pairs.** From the Relationships sheet, **Inspect connection** opens a connection dossier of the actual pair, with its mapped relationship/endpoint types and contributing rows. Map location does not force a geographic place type for a person shown at that location. Place **Connected places** must distinguish explicit outgoing mapped geographic pairs (Target places in related records) and incoming mapped geographic pairs (Source places in related records), with clear direction-of-lookup subtitles. Co-occurrence without an explicit mapped pair is insufficient. Source/Target storage ordering may be useful but cannot be equated with historic agency; undirected relationships stay undirected.
+
+**Charts II dossier selection.** The chart mark retains the exact rendered calculation, measure, grouping and series, plus `contributingRows` from that selected chart result, respecting chart-local filters. The selected plotted value is not interchangeable with a distinct record count or total entity dossier records. A two-column mapped people/place register is derived from contributing source rows; only a real mapped subject matching the category receives the inline **Matches chart category** note. No second matching-subject card and no Overview-local search. Following a subject opens the full ordinary person/place dossier without changing the source scope of the original chart mark.
+
+**Timeline dossier selection.** The mark's temporal assertion retains its actual date, period, endpoints, precision/qualifier, boundedness and source provenance, together with active category presentation and subject-aware role. Its retained source row supports the selected mark's contributing-record sheet; linked mapped people/places from the same row do not automatically become temporal subjects. Verify point events, duration periods, uncertain dates and open intervals separately. The Timeline category editor does not create an event selection.
+
+**Investigate further / Explore.** The shared draft-query interface offers suggestions for dataset-backed mapped people, places, connection endpoints and year values, and handoff to the Explore workspace. A draft is not an applied filter; the user must use **Apply Filters** in Explore to change global scope. Dossier navigation must not silently mutate chart-local filters, range clamps or the active visualization.
+
+**Scope and count distinctions:** Explicitly separate loaded/normalized, applied/filtered, selected mark, charted contributing rows, and broader entity dossier evidence. One selected chart or Timeline mark may have substantially fewer contributing rows than the person's/place's full associated-record ledger. Never promote co-appearing mapped record attributes to the identity of a visual mark without its original selection/provenance relationship.
+
+**Verification boundary (2026-11-27):** The 217/217 Node test result was obtained on an assistant reconstruction from the supplied source archive plus accepted handoffs after a test-only grouped-lane label fix; static JSX/CSS and source-wiring checks passed. The user accepted browser screenshots of the completed connection, Charts and Timeline dossiers. The assistant did **not** independently verify a production Vite build, accessibility/keyboard matrix, deployed GitHub Pages or very-large-data performance. These are explicit future checks, not failures discovered during the pass.
 
 #### Additional source-preserved architectural context
 
@@ -2725,6 +2743,76 @@ Inspector-internal Back button. It uses a small local history model for inspecto
 ---
 
 
+#### Current expanded Evidence Workspace module references (2026-11-27)
+
+These entries supplement rather than replace the historical Inspector module register. Responsibilities are grounded in the accepted v22–v25 handoffs; exact imports/exports and potential later source edits must be checked against the authoritative current file before implementation.
+
+##### `src/InspectorChartMarkView.jsx`
+
+- **Module / path:** `src/InspectorChartMarkView.jsx`
+- **Responsibility:** Presents the selected Chart mark's analytical context, mapped subject register, contributing-record ledger and Investigate further sheet.
+- **Principal exports / components:** `InspectorChartMarkView` (known from the accepted source handoff); other exports Not verified.
+- **Dependencies and consumers:** `InspectorBodyRouter.jsx`, chart result selection, record-ledger/search components; exact full import graph Not verified.
+- **State ownership / data transformation:** Consumes the selected chart result's calculation and retained source rows; does not own chart aggregation.
+- **Implementation cautions:** Do not equate plotted numeric value, observation count, distinct contributing rows or broader entity records; category match requires actual mapped subject identity.
+- **Related subsystem contract:** [Inspector contract](#contract-inspector) and [Charts contract](#contract-charts).
+- **Related planning documents:** [Evidence Workspace milestone](CHANGELOG.md#milestone-evidence-workspace-20261127); additional specific plan Not verified.
+
+##### `src/InspectorTimelineEventView.jsx`
+
+- **Module / path:** `src/InspectorTimelineEventView.jsx`
+- **Responsibility:** Presents point/period temporal information, category encoding, mapped linked entities, and mark-specific source records.
+- **Principal exports / components:** `InspectorTimelineEventView` (known from the accepted source handoff); other exports Not verified.
+- **Dependencies and consumers:** `InspectorBodyRouter.jsx`, Timeline presentation helpers and retained source row; exact full import graph Not verified.
+- **State ownership / data transformation:** Consumes an already-selected temporal assertion; keeps row-level mapped people/places distinct from temporal subjects.
+- **Implementation cautions:** Preserve partial/uncertain/open endpoints, qualifiers, mapped temporal role and category configuration; do not infer dates or multiply event provenance.
+- **Related subsystem contract:** [Inspector contract](#contract-inspector) and [Timeline contract](#contract-timeline).
+- **Related planning documents:** [Evidence Workspace milestone](CHANGELOG.md#milestone-evidence-workspace-20261127); additional specific plan Not verified.
+
+##### `src/PeridotContributingRecordsLedger.jsx`
+
+- **Module / path:** `src/PeridotContributingRecordsLedger.jsx`
+- **Responsibility:** Shared source-record list and source-record navigation for selection-specific dossiers.
+- **Principal exports / components:** `PeridotContributingRecordsLedger` (known from the accepted source handoff); other exports Not verified.
+- **Dependencies and consumers:** Expanded chart and Timeline selection bodies; exact full consumer graph Not verified.
+- **State ownership / data transformation:** Receives rows within the calling selection's source scope; presents source evidence without replacing its mapping authority.
+- **Implementation cautions:** Preserve row identity, chronological ordering, usable discovery/filtering and record navigation; never broaden mark-local contributing rows into all records about a mapped person.
+- **Related subsystem contract:** [Inspector contract](#contract-inspector).
+- **Related planning documents:** [Evidence Workspace milestone](CHANGELOG.md#milestone-evidence-workspace-20261127); additional specific plan Not verified.
+
+##### `src/PeridotInvestigateFurther.jsx`
+
+- **Module / path:** `src/PeridotInvestigateFurther.jsx`
+- **Responsibility:** Common dossier query-drafting and Explore handoff.
+- **Principal exports / components:** `PeridotInvestigateFurther` (known from the accepted source handoff); other exports Not verified.
+- **Dependencies and consumers:** Expanded dossier views and Explore draft state; exact full import graph Not verified.
+- **State ownership / data transformation:** Builds/stages query criteria; Explore owns applying the filters.
+- **Implementation cautions:** Use dataset-backed mapped subject/place/endpoints/year suggestions; a draft must not silently change the applied global research scope or the underlying visualization.
+- **Related subsystem contract:** [Inspector contract](#contract-inspector) and [Explore contract](#contract-explore-and-search).
+- **Related planning documents:** [Evidence Workspace milestone](CHANGELOG.md#milestone-evidence-workspace-20261127); additional specific plan Not verified.
+
+##### `src/PeridotEvidenceWorkspace.css`
+
+- **Module / path:** `src/PeridotEvidenceWorkspace.css`
+- **Responsibility:** Presentation of the expanded Evidence Workspace folder, subject and evidence ledgers, chart and Timeline dossiers.
+- **Principal exports / components:** Not applicable (CSS stylesheet).
+- **Dependencies and consumers:** Expanded Inspector workspace and selected dossier components; exact stylesheet import order Not verified in this documentation pass.
+- **State ownership / data transformation:** Not applicable (presentation rules only).
+- **Implementation cautions:** Preserve forest-green/oxblood/parchment hierarchy, legible full-row hover, gold separators, responsive containment and other Inspector views; check CSS cascade on every broad edit.
+- **Related subsystem contract:** [Inspector contract](#contract-inspector) and [editorial presentation](#contract-themes-editorial-presentation-and-loading).
+- **Related planning documents:** [Evidence Workspace milestone](CHANGELOG.md#milestone-evidence-workspace-20261127); additional specific plan Not verified.
+
+##### `src/peridotRecordStructure.js`
+
+- **Module / path:** `src/peridotRecordStructure.js`
+- **Responsibility:** Generalized mapped data interpretation for source record, person/place and linked evidence displays.
+- **Principal exports / components:** `buildPeridotRecordStructure` (known from the accepted source handoff); other exports Not verified.
+- **Dependencies and consumers:** Inspector record and mark-specific views, normalized mappings; exact source import graph Not verified.
+- **State ownership / data transformation:** Reads researcher-mapped temporal, participation, place, relationship and evidence data in one source-row context.
+- **Implementation cautions:** Do not invent Source/Target semantics, recipient/sender agency, transcription fields, subject attribution, mapped dates or pair connections from ordinary co-occurrence.
+- **Related subsystem contract:** [Inspector contract](#contract-inspector) and [Data mapping contract](#contract-data-import-and-generalized-mapping).
+- **Related planning documents:** [Evidence Workspace milestone](CHANGELOG.md#milestone-evidence-workspace-20261127); additional specific plan Not verified.
+
 <a id="module-group-theme-styles-and-visual-language"></a>
 
 #### Theme, styles, and visual language
@@ -2836,6 +2924,7 @@ This is the active checklist, using the documented current Home/Tutorials contra
 | First-time tutorial | obsolete Home launcher reappears, or future launcher regresses overlay behavior | now: one Get Started Home action and Tutorials Coming Soon destination; no disabled secondary Home button or floating invitation; when re-enabled: full seven-stage suite |
 | Inspector bridge | compact Inspector fails to open | node, edge, cluster, contained member, Expand, Back |
 | Compact Inspector and Charts provenance | stale chart mark, category-tab accidental selection, repeated mapped fields, missing number shown as zero, inaccessible contributors | event/period only clicks, category editor, expanded disclosure pointer exit, chart mark selection across all families, mapped Unique ID and generated fallback, filter/search/show more, Builder exit, Treemap drill-down |
+| Expanded Evidence Workspace and dossier trail | an edge endpoint becomes wrong person/place type, a place pair is inferred from mere co-occurrence, chart/timeline source rows expand incorrectly, Apply Filters happens from a draft, or Back loses its research branch | Map person-at-place and geographic pair in both lookup directions; Network directed/undirected connections; Relationships → Inspect connection → record; Charts aggregate vs distinct contributing records; Timeline point/uncertain/period source; links across at least three dossiers with Back; Explore draft then Apply; keyboard/close and modal/visualization continuity |
 | Search scope | generalized place/Evidence values disappear, count conditions mis-scope, or Results/facets use playback visibility | draft suggestion, Apply, Clear, attached count conditions, Place/Evidence criteria, pagination, Inspect handoff during playback |
 | Geographic Map / Network | hidden endpoints, wrong anchor role, viewport reset, or correspondence-shaped playback | toggle node labels/anchors; Apply/Reset; relationship-line fallback; pan/zoom; multipart playback; Force/Geographic switch |
 | Timeline workspace | wrong chronology/orientation, grouped lane precedence, missing scrollbar thumb, clipped scroll extent, zoom/pan regression, category mis-filter, card collision, or invented relationship | Correspondence / Family Tree / Cardinals; Chronological vs Grouped; star/unstar; No priority category; horizontal/vertical; resize and drag native scrollbar to Icons; wheel/+/- zoom; Inspector and shared chronology |
@@ -2902,7 +2991,7 @@ These areas still deserve narrow, explicit passes:
 
 **Current priorities from the uploaded guide and confirmed source-development history:** Timeline event-density/coincident-event readability, cross-layout and accessibility/Inspector regressions, targeted Network/Map presentation and generalized Search text follow-ups, interface/tutorial work, and careful later compatibility review. Event-to-event Timeline arcs remain deferred pending a source-defensible authoring contract. Charts II is implemented and Charts I retired. See the Changelog for completed milestones.
 
-**Current Inspector continuation after `01b03bc` (ordered):** (1) Audit and repair selectable Geographic Map / Force Network edges with correct endpoints, direction, relationship evidence and overlapping mark hit targets; (2) complete cross-visualization compact Inspector regression for Map, Network, Timeline, and Charts, including filters, playback, panel resizing, disclosure persistence and chart Builder exit; (3) add context-sensitive **Adjust visualization settings** navigation within Next steps without resetting selection/state; (4) separately redesign the expanded dossier, then Explore. **Separate deferred task:** verify automatic Timeline II category and Charts II series color assignment uses the full intended palette, stable mappings, distinguishable marks and respected researcher overrides. Do not silently combine this audit with Inspector passes.
+**Current Inspector continuation after `6c149e7` and `4bdab6c` (ordered):** The expanded Evidence Workspace and typed connection, Charts II and Timeline II dossiers are implemented and user-accepted; the earlier **edge reliability audit**, expanded-dossier redesign and first cross-visualization source-level regression are no longer blanket unstarted work. Remaining tasks are (1) complete browser/keyboard/accessibility and production-build/deployed-site checks, including overlapping Map/Network hit targets, complex research trails, chart-local scope, Timeline uncertainty and large-data performance; (2) add a context-sensitive **Adjust visualization settings** action without resetting current selection or visualization; (3) separately redesign the broader Explore page, preserving the already working draft-query handoff. **Separate deferred task:** verify automatic Timeline II category and Charts II series palette coverage, overrides and distinguishability. Do not silently combine these distinct workstreams. The original test mismatch `Uncategorized` vs `No priority category` was corrected in the test only at `4bdab6c`; reconstructed Node suite 217/217, not a fully verified browser/build release.
 
 The longer backlog below is retained as an **historical planning record**, not a second set of current instructions. Several entries were overtaken by completed work (notably Charts II and the single-action Home). Assess each item against the current contract before treating it as active.
 
